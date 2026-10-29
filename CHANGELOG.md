@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.9 — 2026-10-30
+
+- أُضيف رابط مستقل للفريق يفتح «مؤشراتي» أولًا ويعرض الأدوات وأفاقي برو والدليل فقط، بينما رابط الإدارة الحالي يحتفظ بكل الصفحات.
+- فصل الرابطين للعرض فقط وليس حماية؛ إشارة «مؤشراتي» تعيد الموظف إلى رابط الفريق بعد قراءة عمله من ماي أفاقي.
+
+<details><summary>English</summary>
+
+- A separate team link now opens My KPIs first and shows Tools, Afaqy PRO and Guide, while the existing admin link retains all pages.
+- The links separate the presentation, not access security. The My KPIs bookmark returns the employee to the team URL after reading their own myafaqy work.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹیم کا الگ لنک اب پہلے «میرے اشاریے» کھولتا ہے اور صرف ٹولز، آفاقی پرو اور رہنما دکھاتا ہے؛ موجودہ انتظامی لنک پر تمام صفحات موجود ہیں۔
+- یہ لنکس صرف ظاہری ترتیب الگ کرتے ہیں، سیکیورٹی نہیں۔ «میرے اشاریے» بک مارک ملازم کا کام پڑھنے کے بعد ٹیم کے لنک پر واپس آتا ہے۔
+
+</div>
+</details>
+
+
 ## v8.8 — 2026-10-30
 
 - أُضيف «أفاقي هنت — محرك الاستهداف» إلى «أدوات أخرى» في الصفحة الرئيسية. يفتح في نافذة جديدة لأنه على عنوان لوفابل لا على عنوان البوابة.
