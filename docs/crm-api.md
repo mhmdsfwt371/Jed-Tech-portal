@@ -51,6 +51,40 @@
 ١٨٧ إيقاف خدمة، ١٨٨ إعادة خدمة، ١٩٨ إعادة خدمة عن بعد، ١٩٠ نقل وحدات. شبكة الصيانة تفترض آخر ٩٠ يومًا ما لم يُرسل
 `isSearchFilter: true` مع `dateRangeIntialDaysCount: 0`، ولا تحمل وقت الإنجاز.
 
+## ما حسمه اكتشاف ٢٩ أكتوبر ٢٠٢٦
+- **«مهامي» (`100000`) = المسندة للمستخدم فقط** — صفر صفوف بمسؤول غيره، وصفر صفوف أنشأها هو لغيره.
+- **حجم الصفحة:** الخادم يقبل ما يُطلب (١٠٠ و٥٠٠ أعادا ١٠٠ و٥٠٠ صفًّا)، والأوعية الثلاثة مستقلة.
+- **الأوقات UTC** بلا علامة منطقة (انظر جدول الحقول).
+
+### أوامر العمل — اثنتا عشرة شاشة
+كلها `POST` بغلاف الشبكة القياسي، ومرشح التاريخ الوحيد `dateRangeIntialDaysCount` (آخر N يوم). الشاشات: طلب التسليم
+`DeliveryRequest/GetAllDeliveryRequests`، مذكرة التسليم `Delivery/GetAllDeliveryNotes`، الإرجاع `DeliveryReturn/GetAllDeliveryReturns`،
+الصيانة `Maintenance/GetAllMaintenanceRequests`، الإيقاف `StopService/GetAllStopServiceTransactionsGrid`، إعادة الخدمة
+`Reservice/GetAllReServiceTransactionsGrid`، النقل `TransferServerUnit/GetAllTransferServerUnits`، الدخول والخروج
+`Maintenance/GetAllInOutTransaction`، إعادة الخدمة عن بعد `ReserviceRemotely/GetAllReserviceRemotelyGrid`، التعليق وفكّه
+`HoldService/GetHoldServiceGrid` و`UnHoldService/GetUnHoldServiceGrid`، تفعيل الذكاء الاصطناعي `AiActivation/GetGrid`.
+- **الفنيون أسماء لا معرّفات** (`technicians` مصفوفة نصوص)، و**لا تاريخ إغلاق** في إحدى عشرة شاشة منها — لذلك لا يُبنى منها
+  مؤشر لكل فني؛ تقرير «نقاط الفنيين» يغطي العمل الميداني بمعرّف الفني.
+- الوحدات من صفوف المهام: ١٧٥ صيانة، ١٧٩ طلب تسليم (تركيب)، ١٨٧ إيقاف، ١٨٨ إعادة خدمة، ١٤٦ و١٧٠ بريد العميل.
+
+### تقارير لكل موظف
+| التقرير | الطلب | الفترة · الفرع | الحقول |
+|---|---|---|---|
+| نقاط الفنيين | `POST TechnicianReport/GetTechnicianReportStatic` | `yearId`/`quarterId`/`monthId` و`requestDate` (أول الشهر وآخره `T00:00:00.000Z`) · `branchIds` | ٣١ حقلًا: التركيب والصيانة والإصلاح وإعادة الخدمة والإيقاف للأجهزة والملحقات، والتركيب الجماعي، والأعمال الإضافية، والمخالفات، والنقاط، و`technicianId` |
+| لوحة ما بعد البيع | `POST AfterSalesBoardReport/GetAfterSalesAgentsGrid` | `createDate` (حدود اليوم السعودي بـUTC) · `branch` | `id`، `afterSalesName`، والمفتوحة والمعلّقة والمنجزة والإجمالي |
+| المهام المنجزة | `POST ActivityWorkTime/GetCompletedTasksGrid` | `durationReference` (٠ = اليوم؛ الباقي غير مثبت) · لا فرع | `firstResponseTime` بالدقائق (مثبت على الشاشة)، `trackedTime` |
+| حالات المهام | `POST ActivityWorkTime/GetTaskStatusReport` | `durationReference` · `branchCode` | أعداد فقط |
+
+تقرير نقاط الفنيين فيه قيم مكافآت وأرقام هواتف وتقييمات — **لا تُنقل أبدًا** (القاعدة ١٩ في الحارس).
+
+### الطوابير
+`Task/GetUsersTasksGroups`: يدوية ٣، تشغيل ٥، مالية ٧، ما بعد البيع ٨، **البحث والتطوير ١٢**، DVR ١٤، ومهامي ١٠٠٠٠٠،
+وكل المهام ١٠٠٠٠١. لا طابور للبري سيلز.
+
+### البريد
+لا شاشة في ماي أفاقي لرسائل العملاء الواردة — البريد يظهر مهامَّ «نشاط بريد العميل» فقط، بلا رابط لرسالة. شاشة التذاكر
+`ActivityLog/GetTicketsGrid` تربط التذكرة بمهمتها لكنها ليست بريدًا.
+
 ## مجهول حتى الآن
-مسار تسجيل الدخول ورمز التحقق، وأقصى حجم صفحة تقبله شبكة المهام، وقيم `durationReference`، ووحدة زمني الاستجابة
-والمعالجة في لوحة الإحصاءات.
+مسار تسجيل الدخول ورمز التحقق، وقيم `durationReference` بعد الصفر، ووحدة `trackedTime` (مستنتجة دقائق، غير مثبتة)، وشاشات
+الوحدات ١٧٣ و١٩٠ و١٩٨.

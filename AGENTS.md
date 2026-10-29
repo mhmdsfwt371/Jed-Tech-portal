@@ -75,6 +75,7 @@
 | المؤشر الأول | `factor1()`، `creditOf()` |
 | الفريق والأسماء | `peopleOf()`، `defaultTeam()`، `nameOf()` |
 | «مؤشراتي» | `buildBookmarklet()`، `parseMe()`، `myProfile()` |
+| المؤشران ٢ و٣ | `buildReportsPrompt()`، `parseReports()`، `techTotals()`، `afterSalesTotals()` |
 | الوقت والفترات بتوقيت السعودية | `toIso()`، `saudiDay()`، `saudiBoundsZ()` |
 | الدليل ودليل المستخدم | `GUIDE` و`DEFINITIONS` ونصوص `g_*` في `core.js`، و`scripts/build-manual.mjs` |
 | ما الجديد وتنبيه النسخة الأحدث | `loadRelease()`، `openNews()` |

@@ -1,21 +1,24 @@
 {
-  "version": "6.7",
+  "version": "6.8",
   "date": "2026-10-29",
   "notes": {
     "ar": [
-      "تصحيح مهم في الأوقات: ماي أفاقي يرسل الأوقات بتوقيت غرينتش لا السعودية — ثبت ذلك بمقارنة الشاشة في أول سحب حقيقي. «مؤشراتي» كان سيؤخّر كل وقت ثلاث ساعات وينقل مهام ما بعد منتصف الليل لليوم والربع الخطأ؛ صُحّح. أرقام لوحة المؤشرات لم تتأثر.",
-      "الفريق الافتراضي صار الفرق الفنية في جدة: يدخل من كان أحد فرقه في جدة ولو كان فريقه الآخر في فرع غيرها، ويخرج من كانت فرقه كلها مبيعات أو تحصيل. ويبقى التعديل اليدوي متاحًا.",
-      "أمر كلود كروم في صفحة البيانات صار يحدّد بالاسم الطلبات الأربعة المسموحة ويمنع كل ما سواها، ويحفظ النتيجة ملفًّا على الجهاز بدل لصقها في المحادثة."
+      "المؤشر الثاني — نقاط الفنيين: لكل فني في جدة التركيبات والصيانة والإصلاح وإعادة الخدمة والإيقاف والتركيب الجماعي والأعمال الإضافية والمخالفات والنقاط، من تقرير «نقاط الفنيين» في ماي أفاقي نفسه، مجموعة لأشهر الفترة.",
+      "المؤشر الثالث — تذاكر ما بعد البيع: لكل موظف المفتوحة والمعلّقة والمنجزة، من لوحة «ما بعد البيع» في ماي أفاقي لفرع جدة.",
+      "لكل فترة في صفحة البيانات أمر ثانٍ «نسخ أمر التقارير» يسحب المؤشرين بطلبين مسموحين فقط، ويحفظ ملفًّا يُرفع في الصندوق نفسه. ولا تُنقل قيم المكافآت ولا الهواتف ولا التقييمات أبدًا.",
+      "عمود «بحث وتطوير» في المؤشر الأول: المنجز من طابور مهام البحث والتطوير. والسحب صار أسرع خمس مرات."
     ],
     "en": [
-      "An important time correction: myafaqy sends times in UTC, not Saudi time — proved against the screen on the first real pull. “My KPIs” would have shifted every time by three hours and moved after-midnight tasks to the wrong day and quarter; corrected. The KPI board’s figures were not affected.",
-      "The default team is now Jeddah’s technical teams: a person is in if any of their teams is in Jeddah, even if another team is in a different branch, and out if all their teams are sales or collection. Manual adjustment stays available.",
-      "The Claude in Chrome prompt on the Data page now names the four allowed requests and forbids everything else, and saves the result as a file on the computer instead of pasting it into the chat."
+      "Factor 2 — technician points: for every Jeddah technician, installations, maintenance, repairs, re-service, stop service, group installs, additional work, violations and points, from myafaqy’s own “Technicians Points” report, summed over the period’s months.",
+      "Factor 3 — after-sales tickets: per employee, open, pending and done, from myafaqy’s “After Sales Board” for the Jeddah branch.",
+      "Each period on the Data page has a second prompt, “Copy the reports prompt”, which pulls both factors with two allowed requests only and saves a file uploaded in the same box. Bonus values, phone numbers and evaluations are never carried.",
+      "An “R&D” column in Factor 1: the completed tasks from the R&D queue. And pulling is five times faster."
     ],
     "ur": [
-      "اوقات میں ایک اہم درستی: مائی آفاقی اوقات سعودی وقت میں نہیں بلکہ UTC میں بھیجتا ہے — پہلی حقیقی کھینچائی میں اسکرین سے موازنہ کر کے ثابت ہوا۔ «میرے اشاریے» ہر وقت کو تین گھنٹے پیچھے کر دیتا اور آدھی رات کے بعد کے ٹاسک غلط دن اور سہ ماہی میں ڈال دیتا؛ درست کر دیا گیا۔ اشاریوں کے بورڈ کے اعداد متاثر نہیں ہوئے۔",
-      "پہلے سے منتخب ٹیم اب جدہ کی تکنیکی ٹیمیں ہیں: جس کی کوئی ٹیم جدہ میں ہو وہ شامل ہے چاہے اس کی دوسری ٹیم کسی اور برانچ میں ہو، اور جس کی سب ٹیمیں سیلز یا وصولی کی ہوں وہ شامل نہیں۔ دستی تبدیلی بدستور ممکن ہے۔",
-      "ڈیٹا کے صفحے پر کلاڈ کروم کی ہدایت اب چار اجازت شدہ درخواستوں کے نام لیتی ہے اور باقی سب سے منع کرتی ہے، اور نتیجہ چیٹ میں پیسٹ کرنے کے بجائے کمپیوٹر پر فائل کے طور پر محفوظ کرتی ہے۔"
+      "دوسرا اشاریہ — ٹیکنیشن پوائنٹس: جدہ کے ہر ٹیکنیشن کی تنصیبات، مرمت، درستی، دوبارہ سروس، بندش، اجتماعی تنصیب، اضافی کام، خلاف ورزیاں اور پوائنٹس، مائی آفاقی کی اپنی «ٹیکنیشن پوائنٹس» رپورٹ سے، مدت کے مہینوں کا مجموعہ۔",
+      "تیسرا اشاریہ — آفٹر سیلز ٹکٹس: ہر ملازم کے کھلے، زیر التوا اور مکمل، جدہ برانچ کے لیے مائی آفاقی کے «آفٹر سیلز بورڈ» سے۔",
+      "ڈیٹا کے صفحے پر ہر مدت کی دوسری ہدایت «رپورٹس کی ہدایت کاپی کریں» صرف دو اجازت شدہ درخواستوں سے دونوں اشاریے لاتی ہے اور فائل محفوظ کرتی ہے جو اسی خانے میں اپ لوڈ ہوتی ہے۔ بونس کی رقمیں، فون نمبر اور تشخیصات کبھی نہیں لائی جاتیں۔",
+      "پہلے اشاریے میں «تحقیق و ترقی» کا کالم: R&D قطار کے مکمل شدہ ٹاسک۔ اور ڈیٹا لانا پانچ گنا تیز ہو گیا۔"
     ]
   }
 }

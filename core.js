@@ -60,11 +60,11 @@ export const STRINGS = {
     g_tools_h: 'الأدوات',
     g_tools_b: 'القائمة الجانبية فيها كل شيء: «الرئيسية»، ثم مجموعة «الوحدات» — مخطط توزيع الحساسات، ومساعد الإنتجريشن، وكانفال، وقارئات أفاقي — ثم مجموعة «المؤشرات» بصفحتي البيانات ولوحة المؤشرات، ثم «أنظمة الشركة»، ثم «الدليل». المجموعة تُفتح وتُطوى بالضغط على اسمها، وتُفتح وحدها حين تكون فيها. اضغط وحدة فتفتح تحت الشريط العلوي وتبقى مفتوحة على حالها حين تنتقل لغيرها؛ و«فتح في نافذة مستقلة» في الشريط يفتحها وحدها. كل أداة تطلب الدخول بحسابها المعتاد. أنظمة الشركة — ماي أفاقي وأفاقي برو والبريد — تفتح في نافذة جديدة، لأنها لا تسمح بعرضها داخل صفحة أخرى. اللغة والوضع الداكن أسفل القائمة، وعلى الجوال تفتح القائمة من الزر أعلى الشاشة.',
     g_data_h: 'بيانات المؤشرات',
-    g_data_b: 'البوابة لا تقرأ ماي أفاقي بنفسها، لأن خادمه لا يقبل طلبات من موقع خارجي. لذلك يسحب كلود كروم البيانات من داخل ماي أفاقي ويعيدها بصيغة ثابتة. اختر طول الفترة وعددها، وانسخ الأمر بجانب كل فترة، والصقه في كلود كروم وأنت داخل ماي أفاقي، ثم الصق رده هنا أو ارفعه كملف.',
+    g_data_b: 'لكل فترة أمران: «نسخ الأمر» يسحب مهام الفترة للمؤشر الأول، و«نسخ أمر التقارير» يسحب نقاط الفنيين وتذاكر ما بعد البيع للمؤشرين الثاني والثالث. كل أمر يسمّي بالاسم الطلبات المسموحة له ويمنع ما سواها، فلا يتغيّر شيء في ماي أفاقي. شغّل الأمر في كلود كروم وأنت داخل ماي أفاقي؛ يحفظ النتيجة ملفًّا على جهازك، فترفعه هنا من «اختيار ملف» — الصندوق نفسه يقبل النوعين. البوابة لا تقرأ ماي أفاقي بنفسها لأن خادمه لا يقبل طلبات من عنوان آخر.',
     g_parts_h: 'الرد الطويل والفترة الناقصة',
     g_parts_b: 'إذا قسّم كلود كروم الرد إلى أجزاء، ارفعها كلها؛ تُدمج بحسب رقم المهمة. تبقى الفترة «ناقصة» حتى يساوي عدد المهام العدد الذي أعلنه ماي أفاقي نفسه، وتظهر فوق أرقامها علامة تحذير.',
     g_kpi_h: 'المؤشرات',
-    g_kpi_b: 'اختر الفترة من القائمة. الجدول يعرض لكل موظف ما أُسند إليه وما أنجزه ونسبة الإنجاز ومدة الإنجاز وما هو مفتوح الآن، ثم إجمالي الفريق. الفريق المحسوب يُحدَّد تلقائيًّا من فرق فرع جدة في ماي أفاقي، ويمكن تعديله من «الفريق المحسوب في المؤشرات». وإذا رُفعت أكثر من فترة تظهر المقارنة بينها. طريقة حساب كل رقم مكتوبة أسفل الصفحة.',
+    g_kpi_b: 'اختر الفترة من القائمة. المؤشر الأول يعرض لكل موظف ما أُسند إليه وما أنجزه ونسبة الإنجاز ومدة الإنجاز وما هو مفتوح الآن، ثم إجمالي الفريق. تحته المؤشر الثاني — نقاط الفنيين: التركيبات والصيانة وإعادة الخدمة والإيقاف والمخالفات والنقاط لكل فني — والمؤشر الثالث — تذاكر ما بعد البيع لكل موظف — حين يُرفع ملف التقارير للفترة نفسها. الفريق المحسوب يُحدَّد تلقائيًّا من الفرق الفنية في جدة، ويمكن تعديله من «الفريق المحسوب في المؤشرات». وإذا رُفعت أكثر من فترة تظهر المقارنة بينها. طريقة حساب كل رقم مكتوبة أسفل الصفحة.',
     g_privacy_h: 'أين تُحفظ البيانات',
     g_privacy_b: 'على هذا الجهاز وفي هذا المتصفح فقط، ولا يُرسل منها شيء لأي جهة. لنقلها إلى جهاز آخر أو الاحتفاظ بنسخة استخدم «تصدير نسخة احتياطية» ثم «استعادة نسخة». مسح بيانات المتصفح يمسحها.',
     def_5: '«المفتوحة الآن» صورة لحظة السحب، أيًّا كان تاريخ إنشاء المهمة.',
@@ -149,6 +149,35 @@ export const STRINGS = {
     pro_more: 'و{n} وحدة أخرى — ضيّق البحث لتظهر.',
     g_pro_h: 'أفاقي برو',
     g_pro_b: 'صفحة «أفاقي برو» تعرض وحدات حسابك من داخل البوابة: الاسم وIMEI وآخر إرسال بتوقيت السعودية والحالة والموقع على الخريطة، والضغط على أي وحدة يعرض كل بياناتها. ادخل باسم المستخدم وكلمة المرور؛ كلمة المرور لا تُحفظ، والجلسة تنتهي بإغلاق التبويب، ولا يُكتب شيء في أفاقي برو. الحسابات التي تستخدم رمز تحقق لا تكمل الدخول من هنا — أفاقي برو يمنع ذلك من خارج موقعه — فتفتح الموقع نفسه من الزر. ماي أفاقي لا يُعرض داخل البوابة ولا يسمح لها بقراءة بياناته، فيفتح في نافذة جديدة.',
+    copy_reports: 'نسخ أمر التقارير',
+    reports_loaded: 'وصلت تقارير {range}: {n} صف نقاط فنيين و{a} موظف ما بعد البيع',
+    reports_meta: 'تقارير: {m} شهر نقاط فنيين، و{a} موظف ما بعد البيع',
+    reports_none: 'لا تقارير لهذه الفترة بعد. من صفحة البيانات انسخ «أمر التقارير» للفترة نفسها، وشغّله في كلود كروم، وارفع الملف.',
+    col_rd: 'بحث وتطوير',
+    f2_title: 'المؤشر الثاني — نقاط الفنيين',
+    f2_sub: 'من تقرير «نقاط الفنيين» في ماي أفاقي لفرع جدة، مجموع الأشهر: {months}.',
+    f2_none: 'لا عمل ميداني مسجّل في هذه الفترة.',
+    f2_name: 'الفني',
+    f2_installed: 'تركيب أجهزة',
+    f2_maint: 'صيانة أجهزة',
+    f2_fix: 'إصلاح',
+    f2_reservice: 'إعادة خدمة',
+    f2_stop: 'إيقاف خدمة',
+    f2_group: 'تركيب جماعي',
+    f2_extra: 'أعمال إضافية',
+    f2_viol: 'مخالفات',
+    f2_points: 'النقاط',
+    f3_title: 'المؤشر الثالث — تذاكر ما بعد البيع',
+    f3_sub: 'من لوحة «ما بعد البيع» في ماي أفاقي لفرع جدة، للتذاكر التي أُنشئت في الفترة.',
+    f3_none: 'لا تذاكر في هذه الفترة.',
+    f3_name: 'الموظف',
+    f3_open: 'مفتوحة',
+    f3_pending: 'معلّقة',
+    f3_done: 'منجزة',
+    f3_total: 'الإجمالي',
+    def_7: '«بحث وتطوير»: من المنجزة في الفترة، ما كان في طابور «مهام البحث والتطوير» في ماي أفاقي. يظهر حين يحمل ملف الفترة قائمة هذا الطابور.',
+    def_8: 'المؤشر الثاني ينقل تقرير «نقاط الفنيين» كما يحسبه ماي أفاقي شهرًا شهرًا لفرع جدة، ويجمع أشهر الفترة لكل فني. لا تُنقل منه قيم المكافآت ولا أرقام الهواتف ولا التقييمات.',
+    def_9: 'المؤشر الثالث ينقل لوحة «ما بعد البيع» لفرع جدة كما هي: لكل موظف تذاكره المفتوحة والمعلّقة والمنجزة، من التذاكر التي أُنشئت في الفترة.',
   },
   en: {
     brand: 'Afaqy', portal: 'Technical team portal — Jeddah',
@@ -200,11 +229,11 @@ export const STRINGS = {
     g_tools_h: 'Tools',
     g_tools_b: 'The side menu holds everything: “Home”, then the “Modules” group — the sensor displacement tool, the API helper, canval and Afaqy readers — then the “KPIs” group with the Data page and the KPI board, then “Company systems”, then “Guide”. A group opens and folds when you press its name, and opens by itself when you are in it. Press a module and it opens under the top bar, staying open as it was while you move to another; “Open in its own tab” in the bar opens it on its own. Each tool asks for its usual sign-in. The company systems — myafaqy, Afaqy PRO and email — open in a new tab, because they do not allow being shown inside another page. Language and dark mode are at the foot of the menu; on a phone the menu opens from the button at the top of the screen.',
     g_data_h: 'KPI data',
-    g_data_b: 'The portal does not read myafaqy itself, because its server refuses calls from another website. Claude in Chrome pulls the data from inside myafaqy and returns it in a fixed format. Choose the period length and count, copy the prompt next to each period, paste it into Claude in Chrome while signed in to myafaqy, then paste its reply here or upload it as a file.',
+    g_data_b: 'Each period has two prompts: “Copy the prompt” pulls the period’s tasks for Factor 1, and “Copy the reports prompt” pulls technician points and after-sales tickets for Factors 2 and 3. Each prompt names the requests it may make and forbids all others, so nothing changes in myafaqy. Run the prompt in Claude in Chrome while signed in to myafaqy; it saves the result as a file on your computer, which you upload here with “Choose file” — the same box takes both kinds. The portal does not read myafaqy itself because its server refuses requests from another address.',
     g_parts_h: 'Long replies and incomplete periods',
     g_parts_b: 'If Claude in Chrome splits its reply into parts, upload them all; they merge by task id. A period stays “incomplete” until its task count equals the total myafaqy itself reported, and its figures carry a warning.',
     g_kpi_h: 'KPIs',
-    g_kpi_b: 'Choose the period from the list. The table shows, per employee, what was assigned, what was completed, the completion rate, the time to complete and what is open now, then the team total. The team counted is set automatically from the Jeddah-branch teams in myafaqy and can be changed under “The team counted in the KPIs”. With more than one period uploaded, a comparison appears. How each figure is calculated is written at the bottom.',
+    g_kpi_b: 'Choose the period from the list. Factor 1 shows, per employee, what was assigned, what was completed, the completion rate, the time to complete and what is open now, then the team total. Below it come Factor 2 — technician points: installations, maintenance, re-service, stop service, violations and points per technician — and Factor 3 — after-sales tickets per employee — once the reports file for the same period is uploaded. The team counted is set automatically from Jeddah’s technical teams and can be changed under “The team counted in the KPIs”. With more than one period uploaded, a comparison appears. How each figure is calculated is written at the bottom.',
     g_privacy_h: 'Where the data is kept',
     g_privacy_b: 'On this device and in this browser only; nothing is sent anywhere. To move it to another device or keep a copy, use “Export a backup” then “Restore a backup”. Clearing the browser’s data clears it.',
     def_5: '“Open now” is a snapshot at the moment of extraction, whatever the task’s creation date.',
@@ -289,6 +318,35 @@ export const STRINGS = {
     pro_more: 'And {n} more units — narrow the search to see them.',
     g_pro_h: 'Afaqy PRO',
     g_pro_b: 'The “Afaqy PRO” page shows your account’s units inside the portal: name, IMEI, last report in Saudi time, state and location on the map; pressing a unit shows all its data. Sign in with your username and password; the password is not saved, the session ends when the tab closes, and nothing is written to Afaqy PRO. Accounts that use a verification code cannot complete the sign-in here — Afaqy PRO forbids it from outside its own site — so they open the site itself from the button. myafaqy cannot be shown inside the portal and does not let it read its data, so it opens in a new tab.',
+    copy_reports: 'Copy the reports prompt',
+    reports_loaded: 'Reports for {range} arrived: {n} technician-point rows and {a} after-sales people',
+    reports_meta: 'Reports: {m} months of technician points, {a} after-sales people',
+    reports_none: 'No reports for this period yet. On the Data page copy the “reports prompt” for the same period, run it in Claude in Chrome, and upload the file.',
+    col_rd: 'R&D',
+    f2_title: 'Factor 2 — technician points',
+    f2_sub: 'From myafaqy’s “Technicians Points” report for the Jeddah branch, summed over the months: {months}.',
+    f2_none: 'No field work recorded in this period.',
+    f2_name: 'Technician',
+    f2_installed: 'Devices installed',
+    f2_maint: 'Devices maintained',
+    f2_fix: 'Repairs',
+    f2_reservice: 'Re-service',
+    f2_stop: 'Stop service',
+    f2_group: 'Group installs',
+    f2_extra: 'Additional work',
+    f2_viol: 'Violations',
+    f2_points: 'Points',
+    f3_title: 'Factor 3 — after-sales tickets',
+    f3_sub: 'From myafaqy’s “After Sales Board” for the Jeddah branch, for tickets created in the period.',
+    f3_none: 'No tickets in this period.',
+    f3_name: 'Employee',
+    f3_open: 'Open',
+    f3_pending: 'Pending',
+    f3_done: 'Done',
+    f3_total: 'Total',
+    def_7: '“R&D”: of the tasks completed in the period, those in myafaqy’s “R&D Tasks” queue. It shows when the period’s file carries that queue’s list.',
+    def_8: 'Factor 2 carries myafaqy’s “Technicians Points” report as myafaqy computes it, month by month for the Jeddah branch, and sums the period’s months per technician. Bonus values, phone numbers and evaluations are not carried.',
+    def_9: 'Factor 3 carries the Jeddah branch’s “After Sales Board” as it is: per employee, their open, pending and done tickets, among tickets created in the period.',
   },
   ur: {
     brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ',
@@ -340,11 +398,11 @@ export const STRINGS = {
     g_tools_h: 'ٹولز',
     g_tools_b: 'سائیڈ مینو میں سب کچھ ہے: «ہوم»، پھر «ماڈیولز» کا گروپ — سینسرز کی تقسیم کا نقشہ، انٹیگریشن ہیلپر، کینوال اور آفاقی ریڈرز — پھر «اشاریے» کا گروپ جس میں ڈیٹا کا صفحہ اور اشاریوں کا بورڈ ہے، پھر «کمپنی کے سسٹمز»، پھر «رہنما»۔ گروپ اپنے نام پر دبانے سے کھلتا اور بند ہوتا ہے، اور جب آپ اس کے اندر ہوں تو خود کھل جاتا ہے۔ کسی ماڈیول کو دبائیں تو وہ اوپر والی پٹی کے نیچے کھلتا ہے، اور جب آپ دوسرے پر جاتے ہیں تو اپنی حالت میں کھلا رہتا ہے؛ پٹی میں «الگ ٹیب میں کھولیں» اسے الگ کھولتا ہے۔ ہر ٹول اپنے معمول کے اکاؤنٹ سے لاگ اِن مانگتا ہے۔ کمپنی کے سسٹمز — مائی آفاقی، آفاقی پرو اور ای میل — نئی ٹیب میں کھلتے ہیں، کیونکہ وہ کسی دوسرے صفحے کے اندر دکھائے جانے کی اجازت نہیں دیتے۔ زبان اور تاریک انداز مینو کے نیچے ہیں؛ موبائل پر مینو اسکرین کے اوپر والے بٹن سے کھلتا ہے۔',
     g_data_h: 'اشاریوں کا ڈیٹا',
-    g_data_b: 'پورٹل مائی آفاقی کو خود نہیں پڑھتا، کیونکہ اس کا سرور کسی دوسری ویب سائٹ سے آنے والی درخواستیں قبول نہیں کرتا۔ اس لیے کلاڈ کروم مائی آفاقی کے اندر سے ڈیٹا نکال کر ایک مقررہ فارمیٹ میں واپس کرتا ہے۔ مدت کی لمبائی اور تعداد منتخب کریں، ہر مدت کے سامنے والی ہدایت کاپی کریں، مائی آفاقی میں لاگ اِن ہو کر اسے کلاڈ کروم میں پیسٹ کریں، پھر اس کا جواب یہاں پیسٹ کریں یا فائل کے طور پر اپ لوڈ کریں۔',
+    g_data_b: 'ہر مدت کی دو ہدایات ہیں: «ہدایت کاپی کریں» پہلے اشاریے کے لیے مدت کے ٹاسک لاتی ہے، اور «رپورٹس کی ہدایت کاپی کریں» دوسرے اور تیسرے اشاریے کے لیے ٹیکنیشن پوائنٹس اور آفٹر سیلز ٹکٹس لاتی ہے۔ ہر ہدایت اپنی اجازت شدہ درخواستوں کے نام لیتی ہے اور باقی سب سے منع کرتی ہے، اس لیے مائی آفاقی میں کچھ نہیں بدلتا۔ مائی آفاقی میں لاگ اِن ہو کر ہدایت کلاڈ کروم میں چلائیں؛ یہ نتیجہ آپ کے کمپیوٹر پر فائل کے طور پر محفوظ کرتی ہے، جسے آپ یہاں «فائل منتخب کریں» سے اپ لوڈ کرتے ہیں — وہی خانہ دونوں قسمیں قبول کرتا ہے۔ پورٹل خود مائی آفاقی نہیں پڑھتا کیونکہ اس کا سرور کسی دوسرے پتے سے آنے والی درخواستیں قبول نہیں کرتا۔',
     g_parts_h: 'لمبے جوابات اور نامکمل مدتیں',
     g_parts_b: 'اگر کلاڈ کروم اپنا جواب کئی حصوں میں تقسیم کرے تو تمام حصے اپ لوڈ کریں؛ یہ ٹاسک نمبر کے حساب سے آپس میں جڑ جاتے ہیں۔ کوئی مدت اس وقت تک «نامکمل» رہتی ہے جب تک اس کے ٹاسکس کی تعداد مائی آفاقی کی بتائی ہوئی کل تعداد کے برابر نہ ہو جائے، اور اس کے اعداد پر انتباہ دکھائی دیتا ہے۔',
     g_kpi_h: 'کارکردگی کے اشاریے',
-    g_kpi_b: 'فہرست سے مدت منتخب کریں۔ جدول ہر ملازم کے لیے دکھاتا ہے کہ اسے کیا تفویض ہوا، اس نے کیا مکمل کیا، تکمیل کی شرح، تکمیل کا وقت اور اس وقت کیا کھلا ہے؛ پھر ٹیم کا مجموعہ۔ شامل ٹیم مائی آفاقی میں جدہ برانچ کی ٹیموں سے خود بخود منتخب ہوتی ہے اور «اشاریوں میں شامل ٹیم» سے بدلی جا سکتی ہے۔ ایک سے زیادہ مدتیں اپ لوڈ ہوں تو ان کا موازنہ ظاہر ہوتا ہے۔ ہر عدد کا حساب کیسے ہوتا ہے، یہ صفحے کے نیچے لکھا ہے۔',
+    g_kpi_b: 'فہرست سے مدت منتخب کریں۔ پہلا اشاریہ ہر ملازم کے لیے دکھاتا ہے کہ اسے کیا تفویض ہوا، اس نے کیا مکمل کیا، تکمیل کی شرح، تکمیل کا وقت اور اس وقت کیا کھلا ہے؛ پھر ٹیم کا مجموعہ۔ اس کے نیچے دوسرا اشاریہ — ٹیکنیشن پوائنٹس: ہر ٹیکنیشن کی تنصیبات، مرمت، دوبارہ سروس، بندش، خلاف ورزیاں اور پوائنٹس — اور تیسرا اشاریہ — ہر ملازم کے آفٹر سیلز ٹکٹس — دکھائی دیتے ہیں جب اسی مدت کی رپورٹس فائل اپ لوڈ ہو۔ شامل ٹیم جدہ کی تکنیکی ٹیموں سے خود بخود منتخب ہوتی ہے اور «اشاریوں میں شامل ٹیم» سے بدلی جا سکتی ہے۔ ایک سے زیادہ مدتیں اپ لوڈ ہوں تو ان کا موازنہ ظاہر ہوتا ہے۔ ہر عدد کا حساب کیسے ہوتا ہے، یہ صفحے کے نیچے لکھا ہے۔',
     g_privacy_h: 'ڈیٹا کہاں محفوظ رہتا ہے',
     g_privacy_b: 'صرف اسی ڈیوائس اور اسی براؤزر میں؛ کہیں بھی کچھ نہیں بھیجا جاتا۔ کسی دوسری ڈیوائس پر منتقل کرنے یا نقل رکھنے کے لیے «بیک اپ برآمد کریں» اور پھر «بیک اپ بحال کریں» استعمال کریں۔ براؤزر کا ڈیٹا صاف کرنے سے یہ بھی مٹ جاتا ہے۔',
     def_5: '«اس وقت کھلے» ڈیٹا نکالنے کے لمحے کی تصویر ہے، ٹاسک کسی بھی تاریخ کو بنا ہو۔',
@@ -429,12 +487,41 @@ export const STRINGS = {
     pro_more: 'اور {n} مزید یونٹس — انہیں دیکھنے کے لیے تلاش محدود کریں۔',
     g_pro_h: 'آفاقی پرو',
     g_pro_b: '«آفاقی پرو» کا صفحہ پورٹل کے اندر آپ کے اکاؤنٹ کے یونٹس دکھاتا ہے: نام، IMEI، سعودی وقت میں آخری رپورٹ، حالت اور نقشے پر مقام؛ کسی یونٹ کو دبانے سے اس کا سارا ڈیٹا دکھائی دیتا ہے۔ صارف نام اور پاس ورڈ سے لاگ اِن کریں؛ پاس ورڈ محفوظ نہیں ہوتا، ٹیب بند ہونے پر سیشن ختم ہو جاتا ہے، اور آفاقی پرو میں کچھ نہیں لکھا جاتا۔ تصدیقی کوڈ والے اکاؤنٹ یہاں سے لاگ اِن مکمل نہیں کر سکتے — آفاقی پرو اپنی سائٹ کے باہر سے اس کی اجازت نہیں دیتا — اس لیے وہ بٹن سے سائٹ ہی کھولتے ہیں۔ مائی آفاقی پورٹل کے اندر نہیں دکھایا جا سکتا اور اسے اپنا ڈیٹا پڑھنے نہیں دیتا، اس لیے یہ نئی ٹیب میں کھلتا ہے۔',
+    copy_reports: 'رپورٹس کی ہدایت کاپی کریں',
+    reports_loaded: '{range} کی رپورٹس آ گئیں: ٹیکنیشن پوائنٹس کی {n} قطاریں اور آفٹر سیلز کے {a} افراد',
+    reports_meta: 'رپورٹس: ٹیکنیشن پوائنٹس کے {m} مہینے، آفٹر سیلز کے {a} افراد',
+    reports_none: 'اس مدت کی رپورٹس ابھی نہیں۔ ڈیٹا کے صفحے سے اسی مدت کی «رپورٹس کی ہدایت» کاپی کریں، کلاڈ کروم میں چلائیں، اور فائل اپ لوڈ کریں۔',
+    col_rd: 'تحقیق و ترقی',
+    f2_title: 'دوسرا اشاریہ — ٹیکنیشن پوائنٹس',
+    f2_sub: 'مائی آفاقی کی «ٹیکنیشن پوائنٹس» رپورٹ سے، جدہ برانچ کے لیے، ان مہینوں کا مجموعہ: {months}۔',
+    f2_none: 'اس مدت میں کوئی فیلڈ کام درج نہیں۔',
+    f2_name: 'ٹیکنیشن',
+    f2_installed: 'نصب شدہ ڈیوائسز',
+    f2_maint: 'مرمت شدہ ڈیوائسز',
+    f2_fix: 'درستی',
+    f2_reservice: 'دوبارہ سروس',
+    f2_stop: 'سروس بندش',
+    f2_group: 'اجتماعی تنصیب',
+    f2_extra: 'اضافی کام',
+    f2_viol: 'خلاف ورزیاں',
+    f2_points: 'پوائنٹس',
+    f3_title: 'تیسرا اشاریہ — آفٹر سیلز ٹکٹس',
+    f3_sub: 'مائی آفاقی کے «آفٹر سیلز بورڈ» سے، جدہ برانچ کے لیے، اس مدت میں بنے ٹکٹس۔',
+    f3_none: 'اس مدت میں کوئی ٹکٹ نہیں۔',
+    f3_name: 'ملازم',
+    f3_open: 'کھلے',
+    f3_pending: 'زیر التوا',
+    f3_done: 'مکمل',
+    f3_total: 'کل',
+    def_7: '«تحقیق و ترقی»: اس مدت میں مکمل ہونے والے ٹاسکس میں سے وہ جو مائی آفاقی کی «R&D Tasks» قطار میں تھے۔ یہ تب دکھائی دیتا ہے جب مدت کی فائل میں اس قطار کی فہرست ہو۔',
+    def_8: 'دوسرا اشاریہ مائی آفاقی کی «ٹیکنیشن پوائنٹس» رپورٹ کو ویسے ہی لاتا ہے جیسے مائی آفاقی اسے جدہ برانچ کے لیے مہینہ بہ مہینہ حساب کرتا ہے، اور ہر ٹیکنیشن کے لیے مدت کے مہینے جمع کرتا ہے۔ بونس کی رقمیں، فون نمبر اور تشخیصات نہیں لائی جاتیں۔',
+    def_9: 'تیسرا اشاریہ جدہ برانچ کا «آفٹر سیلز بورڈ» جیسا ہے ویسا لاتا ہے: ہر ملازم کے کھلے، زیر التوا اور مکمل ٹکٹ، اس مدت میں بنے ٹکٹس میں سے۔',
   },
 };
 
 // The user guide: one list, read by the page (Guide tab) and by scripts/build-manual.mjs, so they can never differ.
 export const GUIDE = [['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
-export const DEFINITIONS = ['def_1', 'def_2', 'def_3', 'def_4', 'def_5', 'def_6'];
+export const DEFINITIONS = ['def_1', 'def_2', 'def_3', 'def_4', 'def_5', 'def_6', 'def_7', 'def_8', 'def_9'];
 
 export function t(lang, key, vars = {}) {
   const s = (STRINGS[lang] && STRINGS[lang][key]) ?? STRINGS.ar[key] ?? key;
@@ -531,10 +618,11 @@ STEP 2 — TASKS: POST https://crmbackend.afaqy.sa/Task/GetMyTasksGrid with "tas
     "orderBy":1,"taskGroupId":100001,"searchKey":"","tasksGridStatusId":1,
     "assignedBy":[],"createdBy":[],"agent":[],"statusIds":[],"type":[],"priority":[],"assignedOn":[],"completedOn":[]}
    The response has three buckets (toDo, open, done) that page INDEPENDENTLY: to walk one bucket, increment only its page number.
-   Page size: the app sends 20. You may send 100 once; use 100 only if that bucket's "pageSize" comes back as 100, otherwise keep 20.
+   Page size: send 500 (the server honoured 500 on 29 Oct 2026); if a bucket's "pageSize" comes back smaller, use what it returns.
 a. DONE IN THE PERIOD: set "completedOn": ["${fromZ}", "${toZ}"]. Record done.listCount as "doneInRangeTotal". Walk the whole done bucket.${later ? `
 b. CREATED IN THE PERIOD, DONE LATER: set "completedOn": ["${toZ}", "${nowZ}"]. Walk the done bucket and keep only rows whose createdOn falls inside the period.` : ''}
 ${later ? 'c' : 'b'}. OPEN NOW: send "completedOn": []. Walk the toDo and open buckets completely (ignore done here). Record toDo.listCount + open.listCount as "openTotal".
+${later ? 'd' : 'c'}. THE R&D QUEUE: repeat ${later ? 'a and c' : 'a and b'} with "taskGroupId": 12 (R&D Tasks) instead of 100001, and list the ids of every task it returns as "rdTaskIds". Nothing else from these calls.
 
 TIMES: createdOn and closeDate carry no time zone and are UTC (verified 29 Oct 2026: a task shown 12:30 PM on screen came back 09:30:41). Write every time as returned with "Z" added (for example 2026-10-29T09:30:41Z), and confirm the check on one task in "notes".
 
@@ -569,6 +657,7 @@ The result is one JSON document, exactly in this format:
       "bucket": "<done | open | toDo>"
     }
   ],
+  "rdTaskIds": ["<id of every task in the R&D queue (taskGroupId 12) from step 2>"],
   "notes": ["<the time offset you established, anything the app now sends differently, filters you could not apply>"]
 }
 
@@ -662,11 +751,18 @@ export function parseDataset(text) {
       crmTotal: v2 ? null : num(src.crmTotal),
       notes: Array.isArray(raw.notes) ? raw.notes.map(String).slice(0, 50) : [],
       part: typeof raw.part === 'string' ? raw.part : null, sample: raw.sample === true,
-      people, tasks,
+      people, tasks: markRd(tasks, raw.rdTaskIds),
+      rdKnown: Array.isArray(raw.rdTaskIds),
     },
     skipped,
   };
 }
+
+const markRd = (tasks, ids) => {
+  if (!Array.isArray(ids)) return tasks;
+  const set = new Set(ids.map(String));
+  return tasks.map((x) => (set.has(x.id) ? { ...x, rd: true } : x));
+};
 
 /** Add a part to the stored datasets: same period → tasks and people merged by id (the newer copy wins). */
 export function mergeDataset(list, incoming) {
@@ -782,7 +878,7 @@ export function factor1(tasks, { range = null, team = null } = {}) {
   const keep = team ? new Set(team) : null;
   const rows = new Map();
   const row = (id, name) => {
-    if (!rows.has(id)) rows.set(id, { id, name, assigned: 0, done: 0, cohortDone: 0, open: 0, cancelled: 0, created: 0, fromEmail: 0, selfLogged: 0, durations: [] });
+    if (!rows.has(id)) rows.set(id, { id, name, assigned: 0, done: 0, cohortDone: 0, open: 0, cancelled: 0, created: 0, fromEmail: 0, selfLogged: 0, rd: 0, durations: [] });
     const r = rows.get(id);
     if (name && (!r.name || r.name === r.id)) r.name = name;
     return r;
@@ -803,6 +899,7 @@ export function factor1(tasks, { range = null, team = null } = {}) {
     }
     if (doneHere) {
       r.done++;
+      if (x.rd === true) r.rd++;
       if (x.completedAt) {
         const h = (Date.parse(x.completedAt) - Date.parse(x.createdAt)) / 3600000;
         if (h >= 0) r.durations.push(h);
@@ -822,7 +919,7 @@ export function factor1(tasks, { range = null, team = null } = {}) {
   const finish = (r) => {
     const counted = r.assigned - r.cancelled;
     return {
-      id: r.id, name: r.name, assigned: r.assigned, done: r.done, open: r.open, cancelled: r.cancelled, created: r.created, fromEmail: r.fromEmail, selfLogged: r.selfLogged,
+      id: r.id, name: r.name, assigned: r.assigned, done: r.done, open: r.open, cancelled: r.cancelled, created: r.created, fromEmail: r.fromEmail, selfLogged: r.selfLogged, rd: r.rd,
       rate: counted > 0 ? r.cohortDone / counted : null,
       avgHours: mean(r.durations), medianHours: median(r.durations), timed: r.durations.length,
     };
@@ -830,10 +927,10 @@ export function factor1(tasks, { range = null, team = null } = {}) {
   const people = [...rows.values()].filter((r) => r.id !== GROUP && (r.assigned > 0 || r.created > 0 || r.done > 0 || r.open > 0)).map(finish)
     .sort((a, b) => b.done - a.done || b.assigned - a.assigned || String(a.name).localeCompare(String(b.name)));
   const group = rows.has(GROUP) ? finish(rows.get(GROUP)) : null;
-  const all = { id: '__team__', name: '__team__', assigned: 0, done: 0, cohortDone: 0, open: 0, cancelled: 0, created: 0, fromEmail: 0, selfLogged: 0, durations: [] };
+  const all = { id: '__team__', name: '__team__', assigned: 0, done: 0, cohortDone: 0, open: 0, cancelled: 0, created: 0, fromEmail: 0, selfLogged: 0, rd: 0, durations: [] };
   for (const r of rows.values()) {
     all.assigned += r.assigned; all.done += r.done; all.cohortDone += r.cohortDone; all.open += r.open; all.cancelled += r.cancelled;
-    all.fromEmail += r.fromEmail; all.selfLogged += r.selfLogged; all.created += r.created; all.durations.push(...r.durations);
+    all.fromEmail += r.fromEmail; all.selfLogged += r.selfLogged; all.rd += r.rd; all.created += r.created; all.durations.push(...r.durations);
   }
   return { people, group, team: finish(all) };
 }
@@ -845,6 +942,126 @@ export function formatHours(h, lang) {
   return t(lang, 'days', { n: Math.round((h / 24) * 10) / 10 });
 }
 export const formatRate = (r) => (r == null ? '—' : `${Math.round(r * 100)}%`);
+
+// ===================== reports: technician points and after-sales tickets (ADR-0012) =====================
+// Both are ready-made per-person reports inside myafaqy (capture of 29 Oct 2026). The technician report is monthly, so a
+// period is pulled month by month; the after-sales board takes the period as a date window.
+export const REPORTS_SCHEMA = 'afaqy-crm-reports/v1';
+export const TECH_FIELDS = ['installedDeviceCount', 'maintainedDeviceCount', 'maintainedFixDeviceCount', 'reServiceDeviceCount', 'stopServiceDeviceCount',
+  'installedAccessoriesCount', 'maintainedAccessoriesCount', 'maintainedFixAccessoriesCount', 'reServiceAccessoriesCount', 'stopServiceAccessoriesCount',
+  'groupInstallationCount', 'additionalWorkCount', 'violationCount', 'totalPoint',
+  'installedTransactionCount', 'maintainedTransactionCount', 'reServiceTransactionCount', 'stopServiceTransactionCount',
+  'fridayWorkDaysCount', 'saturdayWorkDaysCount'];
+
+/** The calendar months a period touches, each with the bounds the technician report expects. */
+export function monthsOf(from, to) {
+  const out = [];
+  let y = +from.slice(0, 4), m = +from.slice(5, 7);
+  while (`${y}-${pad(m)}` <= to.slice(0, 7)) {
+    const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    out.push({ key: `${y}-${pad(m)}`, yearId: y, quarterId: Math.floor((m - 1) / 3) + 1, monthId: m,
+      requestDate: [`${y}-${pad(m)}-01T00:00:00.000Z`, `${y}-${pad(m)}-${pad(last)}T00:00:00.000Z`] });
+    if (++m > 12) { m = 1; y++; }
+  }
+  return out;
+}
+
+export function buildReportsPrompt({ from, to, branch = JEDDAH_BRANCH }) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) throw new Error('invalid range');
+  const [fromZ, toZ] = saudiBoundsZ(from, to);
+  const months = monthsOf(from, to);
+  const body = (mo) => JSON.stringify({ pageNumber: 1, pageSize: 100, searchKey: '', isSearchFilter: true,
+    search: { yearId: mo.yearId, quarterId: mo.quarterId, monthId: mo.monthId, branchIds: branch, userIds: [], requestDate: mo.requestDate } });
+  return `You are reading two per-employee reports from the myafaqy CRM (https://myafaqy.com, API at https://crmbackend.afaqy.sa) for a read-only KPI dashboard. I am signed in with my own manager account in this tab.
+
+ABSOLUTE RULE — NOTHING MAY CHANGE IN MYAFAQY
+- You may call ONLY these two endpoints, exactly as named:
+    TechnicianReport/GetTechnicianReportStatic · AfterSalesBoardReport/GetAfterSalesAgentsGrid
+- Never call anything else. Never call any endpoint whose name contains Add, Create, Insert, Edit, Update, Delete, Remove, Save, Assign, Reassign, Close, Complete, Approve, Reject, Sync, Send, Upload, Import, Change, Set, Mark, Read, Seen, Logout.
+- Never press any button in the page. Never change any filter, sort, column or setting on screen.
+- myafaqy uses POST to READ these reports; that is expected. The two names above are reads.
+- If anything is unclear, or the app now needs a different endpoint, STOP and ask me. Do not improvise.
+- Never put tokens, cookies, passwords, phone numbers, identity numbers or any pay or bonus value in your answer.
+
+PERIOD: ${from} to ${to}, Saudi time.
+
+HOW
+- Open Technicians → Technicians Points once, and Dashboards → After Sales Board once, and confirm in the network traffic that the app sends the two requests as below. If either differs, STOP and tell me what changed.
+- Replay with your JavaScript tool, reusing the headers the app sends (Authorization, X-Timezone-Offset, X-Client-Id, lang). Wait 300 ms between calls. Change only what is written below.
+
+STEP 1 — TECHNICIAN POINTS, one call per month (the report is monthly). POST https://crmbackend.afaqy.sa/TechnicianReport/GetTechnicianReportStatic with:
+${months.map((mo) => `  ${mo.key}: ${body(mo)}`).join('\n')}
+   The rows are in data.gridResult.data; page with pageNumber (it starts at 1) until listCount is reached.
+   From each row keep ONLY: technicianId, employeeId, nameEn, nameAr, ${TECH_FIELDS.join(', ')}.
+   Do NOT keep phoneNumber, bonusValue, fridayWorkDaysBonus, saturdayWorkDaysPoints, evaluation, leadEvaluation or branchPercentage.
+
+STEP 2 — AFTER-SALES TICKETS, one call. POST https://crmbackend.afaqy.sa/AfterSalesBoardReport/GetAfterSalesAgentsGrid with:
+  {"categoryId":null,"createDate":["${fromZ}","${toZ}"],"branch":"${branch}","afterSalesId":null}
+   Keep every row: id, afterSalesName, openTickets, pendingTickets, doneTickets, totalTickets.
+
+THE RESULT — ONE FILE ON MY COMPUTER, NOT IN CHAT
+Save this JSON as ONE file with a download (a Blob and an <a download> link) named afaqy-reports-${from}_${to}.json:
+
+{
+  "schema": "${REPORTS_SCHEMA}",
+  "range": { "from": "${from}", "to": "${to}" },
+  "branch": "${branch}",
+  "extractedAt": "<ISO date-time now>",
+  "techPoints": [ { "month": "<YYYY-MM>", "listCount": <n>, "rows": [ { "technicianId": <n>, "employeeId": <n>, "nameEn": "<…>", "nameAr": "<…>", ${TECH_FIELDS.map((f) => `"${f}": <n>`).join(', ')} } ] } ],
+  "afterSales": { "rows": [ { "id": <n>, "name": "<afterSalesName>", "open": <n>, "pending": <n>, "done": <n>, "total": <n> } ] },
+  "notes": ["<anything the app sends differently>"]
+}
+
+Then reply with only four lines: the file name, the number of technician rows per month, the number of after-sales rows, and "No write endpoint was called."`;
+}
+
+/** Read a reports file. Returns { reports } or { error, vars }. Pay fields are dropped even if present. */
+export function parseReports(text) {
+  const raw = typeof text === 'string' ? extractJson(text) : text;
+  if (!raw || typeof raw !== 'object') return { error: 'err_json' };
+  if (raw.schema !== REPORTS_SCHEMA) return { error: 'err_schema', vars: { schema: REPORTS_SCHEMA } };
+  const from = raw.range && raw.range.from, to = raw.range && raw.range.to;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from || '') || !/^\d{4}-\d{2}-\d{2}$/.test(to || '') || from > to) return { error: 'err_range' };
+  const n = (v) => (Number.isFinite(+v) ? +v : 0);
+  const techPoints = (Array.isArray(raw.techPoints) ? raw.techPoints : []).filter((m) => m && /^\d{4}-\d{2}$/.test(m.month || '')).map((m) => ({
+    month: m.month, listCount: n(m.listCount),
+    rows: (Array.isArray(m.rows) ? m.rows : []).filter((r) => r && (r.technicianId != null || r.nameEn || r.nameAr)).map((r) => {
+      const o = { technicianId: r.technicianId == null ? null : String(r.technicianId), employeeId: r.employeeId == null ? null : String(r.employeeId),
+        nameEn: String(r.nameEn || ''), nameAr: String(r.nameAr || '') };
+      for (const f of TECH_FIELDS) o[f] = n(r[f]);
+      return o;
+    }),
+  }));
+  const rows = (raw.afterSales && Array.isArray(raw.afterSales.rows) ? raw.afterSales.rows : []).filter((r) => r && r.id != null).map((r) => ({
+    id: String(r.id), name: String(r.name || r.afterSalesName || ''), open: n(r.open ?? r.openTickets), pending: n(r.pending ?? r.pendingTickets),
+    done: n(r.done ?? r.doneTickets), total: n(r.total ?? r.totalTickets) }));
+  return { reports: { key: rangeKey({ from, to }), schema: REPORTS_SCHEMA, range: { from, to }, branch: String(raw.branch || ''),
+    extractedAt: toIso(raw.extractedAt), techPoints, afterSales: rows, notes: Array.isArray(raw.notes) ? raw.notes.map(String).slice(0, 30) : [] } };
+}
+
+/** Factor 2: technician points over the period — the months summed per technician; people with no field work left out. */
+export function techTotals(reports) {
+  const by = new Map();
+  for (const m of reports.techPoints || []) for (const r of m.rows) {
+    const key = r.technicianId || r.nameEn || r.nameAr;
+    if (!by.has(key)) by.set(key, { technicianId: r.technicianId, nameEn: r.nameEn, nameAr: r.nameAr, months: 0, ...Object.fromEntries(TECH_FIELDS.map((f) => [f, 0])) });
+    const t = by.get(key); t.months++;
+    for (const f of TECH_FIELDS) t[f] += r[f];
+  }
+  const work = (t) => t.installedDeviceCount + t.maintainedDeviceCount + t.maintainedFixDeviceCount + t.reServiceDeviceCount + t.stopServiceDeviceCount
+    + t.groupInstallationCount + t.additionalWorkCount + t.installedAccessoriesCount + t.maintainedAccessoriesCount + t.violationCount + t.totalPoint;
+  const rows = [...by.values()].filter((t) => work(t) > 0).sort((a, b) => b.totalPoint - a.totalPoint || b.installedDeviceCount - a.installedDeviceCount);
+  const total = Object.fromEntries(TECH_FIELDS.map((f) => [f, rows.reduce((s, t) => s + t[f], 0)]));
+  return { rows, total };
+}
+
+/** Factor 3: after-sales tickets per person, busiest first; people with no tickets left out. */
+export function afterSalesTotals(reports) {
+  const rows = (reports.afterSales || []).filter((r) => r.total > 0 || r.open > 0 || r.pending > 0 || r.done > 0)
+    .sort((a, b) => b.total - a.total || b.done - a.done);
+  const total = rows.reduce((s, r) => ({ open: s.open + r.open, pending: s.pending + r.pending, done: s.done + r.done, total: s.total + r.total }), { open: 0, pending: 0, done: 0, total: 0 });
+  return { rows, total };
+}
 
 // ===================== my KPIs: an engineer's own profile, read through their own myafaqy session =====================
 // ADR-0010. A bookmark runs on myafaqy's page, reads «My Tasks» (taskGroupId 100000 — only the signed-in person's tasks,
@@ -872,7 +1089,7 @@ const since=sa(now-${ME_MONTHS}*30.5*day),end=sa(now+day);
 const base=(c,b,n,s)=>({donePageNumber:b==='done'?n:0,donePageSize:b==='done'?s:1,openPageNumber:b==='open'?n:0,openPageSize:b==='open'?s:1,toDoPageNumber:b==='toDo'?n:0,toDoPageSize:b==='toDo'?s:1,orderBy:1,taskGroupId:100000,searchKey:'',tasksGridStatusId:1,assignedBy:[],createdBy:[],agent:[],statusIds:[],type:[],priority:[],assignedOn:[],completedOn:c});
 const ask=async b=>{const r=await fetch('https://crmbackend.afaqy.sa/Task/GetMyTasksGrid',{method:'POST',headers:H,body:JSON.stringify(b)});if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();if(!j.success&&j.success!==undefined)throw new Error(j.message||'refused');return j.data};
 const out=[];let n=0;
-for(const[b,c]of[['done',[since,end]],['open',[]],['toDo',[]]]){let size=100,pg=0,total=null;
+for(const[b,c]of[['done',[since,end]],['open',[]],['toDo',[]]]){let size=500,pg=0,total=null;
 for(;;){const d=(await ask(base(c,b,pg,size)))[b];if(pg===0&&d.pageSize!==size)size=d.pageSize||20;total=d.listCount;
 for(const x of d.data||[])out.push({i:String(x.id),c:x.createdOn,d:x.statusId===3&&!x.isCancelled?x.closeDate:null,s:x.isCancelled?'cancelled':x.statusId===3?'done':'open',m:x.moduleId,o:String(x.createUserId)===String(u.UserId),b});
 n+=(d.data||[]).length;box.textContent=M[2]+' '+n;pg++;if(!d.data||!d.data.length||pg*size>=total)break;await new Promise(r=>setTimeout(r,250))}}

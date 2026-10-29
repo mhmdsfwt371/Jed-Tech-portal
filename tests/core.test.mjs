@@ -5,6 +5,7 @@ import {
   factor1, creditOf, GROUP, formatHours, formatRate, sampleDataset, saudiToday, ymd,
   saudiBoundsZ, toIso, saudiDay, peopleOf, defaultTeam, nameOf, EMAIL_MODULE, SCHEMAS,
   buildBookmarklet, parseMe, myProfile, ME_SCHEMA,
+  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
 
@@ -275,6 +276,52 @@ test('self-logged: tasks the assignee opened for himself, not from e-mail (Whats
   const me = (await parseMe(handOver(ME([MT(1, { o: true }), MT(2, { o: true, m: EMAIL_MODULE }), MT(3, { o: false })])))).me;
   const q = myProfile(me, new Date('2026-10-29T12:00:00Z'));
   assert.equal(q[0].row.selfLogged, 1, 'from My KPIs: the bookmark’s yes/no flag, never an id');
+});
+
+const TR = (id, o = {}) => ({ technicianId: id, employeeId: 9000 + id, nameEn: `Tech ${id}`, nameAr: `فني ${id}`,
+  ...Object.fromEntries(TECH_FIELDS.map((f) => [f, 0])), ...o });
+const REP = (extra = {}) => JSON.stringify({ schema: REPORTS_SCHEMA, range: { from: '2026-10-01', to: '2026-11-30' }, branch: '2', extractedAt: '2026-11-30T10:00:00Z',
+  techPoints: [
+    { month: '2026-10', listCount: 3, rows: [TR(1, { installedDeviceCount: 10, totalPoint: 40, bonusValue: 999, phoneNumber: '05x' }), TR(2, { maintainedDeviceCount: 4, totalPoint: 12 }), TR(3)] },
+    { month: '2026-11', listCount: 2, rows: [TR(1, { installedDeviceCount: 5, violationCount: 1, totalPoint: 18 }), TR(2, { stopServiceDeviceCount: 2, totalPoint: 6 })] },
+  ],
+  afterSales: { rows: [{ id: 68, name: 'Agent A', open: 1, pending: 0, done: 2, total: 3 }, { id: 69, name: 'Agent B', open: 0, pending: 0, done: 0, total: 0 },
+                       { id: 70, afterSalesName: 'Agent C', openTickets: 0, pendingTickets: 2, doneTickets: 9, totalTickets: 11 }] }, ...extra });
+
+test('reports: months in the format the technician report expects', () => {
+  assert.deepEqual(monthsOf('2026-10-15', '2026-12-31').map((m) => [m.key, m.quarterId, m.requestDate[0], m.requestDate[1]]),
+    [['2026-10', 4, '2026-10-01T00:00:00.000Z', '2026-10-31T00:00:00.000Z'], ['2026-11', 4, '2026-11-01T00:00:00.000Z', '2026-11-30T00:00:00.000Z'],
+     ['2026-12', 4, '2026-12-01T00:00:00.000Z', '2026-12-31T00:00:00.000Z']]);
+  assert.equal(monthsOf('2026-12-01', '2027-01-31')[1].key, '2027-01', 'crosses the year');
+});
+
+test('reports: read, pay and phone fields dropped, months summed per technician, idle people left out', () => {
+  const r = parseReports(REP()).reports;
+  assert.ok(r && r.techPoints.length === 2);
+  assert.ok(!JSON.stringify(r).includes('999') && !JSON.stringify(r).includes('05x'), 'bonus and phone never kept');
+  const tt = techTotals(r);
+  assert.deepEqual(tt.rows.map((x) => [x.technicianId, x.installedDeviceCount, x.totalPoint, x.months]), [['1', 15, 58, 2], ['2', 0, 18, 2]], 'Tech 3 did nothing and is left out');
+  assert.equal(tt.total.violationCount, 1);
+  const at = afterSalesTotals(r);
+  assert.deepEqual(at.rows.map((x) => x.name), ['Agent C', 'Agent A'], 'both field namings are read; the idle agent is left out');
+  assert.deepEqual(at.total, { open: 1, pending: 2, done: 11, total: 14 });
+  assert.equal(parseReports(REP({ schema: 'x' })).error, 'err_schema');
+});
+
+test('reports prompt: two named reads, one call per month, the after-sales window in Saudi bounds', () => {
+  const p = buildReportsPrompt({ from: '2026-10-01', to: '2026-11-30' });
+  assert.ok(p.includes('TechnicianReport/GetTechnicianReportStatic · AfterSalesBoardReport/GetAfterSalesAgentsGrid'));
+  assert.equal((p.match(/"monthId":/g) || []).length, 2);
+  assert.ok(p.includes('"branchIds":"2"') && p.includes('"createDate":["2026-09-30T21:00:00.000Z","2026-11-30T21:00:00.000Z"]'));
+  assert.ok(p.includes('Do NOT keep phoneNumber, bonusValue'));
+});
+
+test('R&D: tasks in the R&D queue are counted among the completed', () => {
+  const d = parseDataset(V2([R('1'), R('2'), R('3', { state: 'open', statusId: 2, completedAt: null, bucket: 'open' })], { rdTaskIds: ['2', '3'] })).dataset;
+  assert.ok(d.rdKnown);
+  const row = factor1(d.tasks, { range: { from: '2026-10-01', to: '2026-10-31' }, team: ['70'] }).people[0];
+  assert.equal(row.rd, 1, 'only task 2 is both R&D and completed in the period');
+  assert.equal(parseDataset(V2([R('1')])).dataset.rdKnown, false, 'older files carry no R&D list');
 });
 
 test('formatting', () => {

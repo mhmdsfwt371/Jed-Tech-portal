@@ -17,6 +17,35 @@
 
 <!-- releases -->
 
+## v6.8 — 2026-10-29
+
+- المؤشر الثاني — نقاط الفنيين: لكل فني في جدة التركيبات والصيانة والإصلاح وإعادة الخدمة والإيقاف والتركيب الجماعي والأعمال الإضافية والمخالفات والنقاط، من تقرير «نقاط الفنيين» في ماي أفاقي نفسه، مجموعة لأشهر الفترة.
+- المؤشر الثالث — تذاكر ما بعد البيع: لكل موظف المفتوحة والمعلّقة والمنجزة، من لوحة «ما بعد البيع» في ماي أفاقي لفرع جدة.
+- لكل فترة في صفحة البيانات أمر ثانٍ «نسخ أمر التقارير» يسحب المؤشرين بطلبين مسموحين فقط، ويحفظ ملفًّا يُرفع في الصندوق نفسه. ولا تُنقل قيم المكافآت ولا الهواتف ولا التقييمات أبدًا.
+- عمود «بحث وتطوير» في المؤشر الأول: المنجز من طابور مهام البحث والتطوير. والسحب صار أسرع خمس مرات.
+
+<details><summary>English</summary>
+
+- Factor 2 — technician points: for every Jeddah technician, installations, maintenance, repairs, re-service, stop service, group installs, additional work, violations and points, from myafaqy’s own “Technicians Points” report, summed over the period’s months.
+- Factor 3 — after-sales tickets: per employee, open, pending and done, from myafaqy’s “After Sales Board” for the Jeddah branch.
+- Each period on the Data page has a second prompt, “Copy the reports prompt”, which pulls both factors with two allowed requests only and saves a file uploaded in the same box. Bonus values, phone numbers and evaluations are never carried.
+- An “R&D” column in Factor 1: the completed tasks from the R&D queue. And pulling is five times faster.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- دوسرا اشاریہ — ٹیکنیشن پوائنٹس: جدہ کے ہر ٹیکنیشن کی تنصیبات، مرمت، درستی، دوبارہ سروس، بندش، اجتماعی تنصیب، اضافی کام، خلاف ورزیاں اور پوائنٹس، مائی آفاقی کی اپنی «ٹیکنیشن پوائنٹس» رپورٹ سے، مدت کے مہینوں کا مجموعہ۔
+- تیسرا اشاریہ — آفٹر سیلز ٹکٹس: ہر ملازم کے کھلے، زیر التوا اور مکمل، جدہ برانچ کے لیے مائی آفاقی کے «آفٹر سیلز بورڈ» سے۔
+- ڈیٹا کے صفحے پر ہر مدت کی دوسری ہدایت «رپورٹس کی ہدایت کاپی کریں» صرف دو اجازت شدہ درخواستوں سے دونوں اشاریے لاتی ہے اور فائل محفوظ کرتی ہے جو اسی خانے میں اپ لوڈ ہوتی ہے۔ بونس کی رقمیں، فون نمبر اور تشخیصات کبھی نہیں لائی جاتیں۔
+- پہلے اشاریے میں «تحقیق و ترقی» کا کالم: R&D قطار کے مکمل شدہ ٹاسک۔ اور ڈیٹا لانا پانچ گنا تیز ہو گیا۔
+
+</div>
+</details>
+
+
 ## v6.7 — 2026-10-29
 
 - تصحيح مهم في الأوقات: ماي أفاقي يرسل الأوقات بتوقيت غرينتش لا السعودية — ثبت ذلك بمقارنة الشاشة في أول سحب حقيقي. «مؤشراتي» كان سيؤخّر كل وقت ثلاث ساعات وينقل مهام ما بعد منتصف الليل لليوم والربع الخطأ؛ صُحّح. أرقام لوحة المؤشرات لم تتأثر.

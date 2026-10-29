@@ -44,7 +44,7 @@ if (!/^\d{4}-\d{2}-\d{2}$/.test(vj.date || '')) note('version.json: date must be
 // The Claude prompt and the my-KPIs bookmark both run on myafaqy's page, not in the portal; they have their own rules (9, 17).
 // The Afaqy PRO page is the one exception in the portal itself (ADR-0011) — it has its own rule (18); everything else holds.
 const appWithoutPro = app.replace(/\/\/ ---------- AFAQY PRO inside the portal[\s\S]*?\/\/ ---------- the side menu ----------/, '');
-const coreWithoutPrompt = core.replace(/export function buildPrompt[\s\S]*?\n}\n/, '').replace(/export function buildBookmarklet[\s\S]*?\n}\n/, '');
+const coreWithoutPrompt = core.replace(/export function buildPrompt[\s\S]*?\n}\n/, '').replace(/export function buildBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildReportsPrompt[\s\S]*?\n}\n/, '');
 for (const [name, src] of [['index.html', html], ['app.js', appWithoutPro], ['core.js', coreWithoutPrompt], ['config.js', cfg]]) {
   if (/firebase/i.test(src)) note(`${name}: Firebase is referenced — the portal runs without it`);
   if (/afaqy\.sa|afaqy\.pro\/|crmbackend/.test(src.replace(/https:\/\/afaqy\.pro\/'/g, ''))) note(`${name}: an Afaqy API address appeared — the portal never calls an Afaqy API`);
@@ -187,6 +187,19 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   const keys = [...row.matchAll(/(?:^|,)([a-z]+)(?=[:,]|$)/g)].map((m) => m[1]);
   if (keys.join(',') !== 'i,c,d,s,m,o,b') note(`bookmark: hands over fields ${keys.join(',')} — only i,c,d,s,m,o,b are allowed`);
   if (!/o:String\(x\.createUserId\)===String\(u\.UserId\)/.test(row)) note('bookmark: "o" must be the yes/no "I opened it myself", not an id');
+}
+
+// 19. The reports prompt (ADR-0012): two named read endpoints only, and no pay, phone or evaluation field ever carried.
+{
+  const { buildReportsPrompt, TECH_FIELDS } = await import(new URL('core.js', root));
+  const rp = buildReportsPrompt({ from: '2026-10-01', to: '2026-12-31' });
+  if (!rp.includes('TechnicianReport/GetTechnicianReportStatic · AfterSalesBoardReport/GetAfterSalesAgentsGrid') || !rp.includes('ABSOLUTE RULE — NOTHING MAY CHANGE IN MYAFAQY') || !rp.includes('STOP and ask me'))
+    note('reports prompt: lost its allowlist of the two read endpoints');
+  const urls = [...rp.matchAll(/https:\/\/crmbackend\.afaqy\.sa\/([A-Za-z/]+)/g)].map((m) => m[1]);
+  if (urls.some((u) => !['TechnicianReport/GetTechnicianReportStatic', 'AfterSalesBoardReport/GetAfterSalesAgentsGrid'].includes(u))) note(`reports prompt: calls ${[...new Set(urls)].join(', ')} — only the two reports are allowed`);
+  const banned = ['bonusValue', 'fridayWorkDaysBonus', 'saturdayWorkDaysPoints', 'phoneNumber', 'evaluation', 'leadEvaluation', 'branchPercentage'];
+  if (TECH_FIELDS.some((f) => banned.includes(f))) note('reports: a pay, phone or evaluation field is kept — never carry those');
+  if (!banned.every((f) => rp.includes(f))) note('reports prompt: must tell Claude in Chrome not to keep pay, phone and evaluation fields');
 }
 
 // 18. The Afaqy PRO page (ADR-0011): one address, two read requests, and the password never kept.

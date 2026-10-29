@@ -4,6 +4,7 @@ import {
   t as tr, L, LANGS, dirOf, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1,
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, myProfile,
+  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, REPORTS_SCHEMA,
 } from './core.js';
 
 const $ = (id) => document.getElementById(id);
@@ -34,7 +35,7 @@ function toast(msg) {
 
 // ---------- storage: IndexedDB, with an in-memory fallback where it is unavailable ----------
 const store = (() => {
-  let mem = []; let memMe = null;
+  let mem = []; let memMe = null; let memRep = [];
   const open = () => new Promise((res, rej) => {
     if (!('indexedDB' in window)) return rej(new Error('no idb'));
     const r = indexedDB.open('afaqy-portal', 1);
@@ -46,11 +47,14 @@ const store = (() => {
     async get() { try { return (await run('readonly', (s) => s.get('datasets'))) || []; } catch { return mem; } },
     async put(list) { try { await run('readwrite', (s) => s.put(list, 'datasets')); } catch { mem = list; } },
     // "my KPIs" — an engineer's own profile, kept apart from the manager's datasets
+    async getReports() { try { return (await run('readonly', (s) => s.get('reports'))) || []; } catch { return memRep; } },
+    async putReports(v) { try { await run('readwrite', (s) => s.put(v, 'reports')); } catch { memRep = v; } },
     async getMe() { try { return (await run('readonly', (s) => s.get('me'))) || null; } catch { return memMe; } },
     async putMe(v) { try { await run('readwrite', (s) => (v ? s.put(v, 'me') : s.delete('me'))); } catch { memMe = v; } },
   };
 })();
 let datasets = [];
+let reports = [];   // technician points and after-sales tickets per period (ADR-0012)
 
 // ---------- icons for the three core tools ----------
 const ICONS = {
@@ -297,10 +301,12 @@ function renderBlocks() {
     b.partial ? el('span', { class: 'pill', text: t('block_partial') }) : null,
     have.has(`${b.from}_${b.to}`) ? el('span', { class: 'have', text: '✓' }) : null,
     el('button', { type: 'button', class: 'btn', text: t('copy_prompt'), onclick: () => copyPrompt(b) }),
+    reports.some((r) => r.key === `${b.from}_${b.to}`) ? el('span', { class: 'have', text: '✓' }) : null,
+    el('button', { type: 'button', class: 'btn', text: t('copy_reports'), onclick: () => copyPrompt(b, buildReportsPrompt) }),
   )));
 }
-async function copyPrompt(b) {
-  const text = buildPrompt({ from: b.from, to: b.to });
+async function copyPrompt(b, build = buildPrompt) {
+  const text = build({ from: b.from, to: b.to });
   try { await navigator.clipboard.writeText(text); toast(t('copied')); }
   catch {
     // clipboard blocked: show the text so it can be copied by hand
@@ -310,8 +316,18 @@ async function copyPrompt(b) {
 
 // ---------- data: upload ----------
 async function ingest(text) {
-  const out = parseDataset(text);
   const msg = $('read-msg');
+  if (String(text).includes(REPORTS_SCHEMA)) {
+    const r = parseReports(text);
+    if (r.error) { msg.className = 'msg err'; msg.textContent = t(r.error, r.vars); return false; }
+    reports = [...reports.filter((x) => x.key !== r.reports.key), r.reports].sort((a, b) => (a.range.from < b.range.from ? 1 : -1));
+    await store.putReports(reports);
+    msg.className = 'msg';
+    msg.textContent = t('reports_loaded', { range: `${r.reports.range.from} → ${r.reports.range.to}`, n: r.reports.techPoints.reduce((s, m) => s + m.rows.length, 0), a: r.reports.afterSales.length });
+    renderDatasets(); renderBlocks();
+    return true;
+  }
+  const out = parseDataset(text);
   if (out.error) { msg.className = 'msg err'; msg.textContent = t(out.error, out.vars); return false; }
   datasets = mergeDataset(datasets, out.dataset);
   await store.put(datasets);
@@ -321,8 +337,12 @@ async function ingest(text) {
   return true;
 }
 function renderDatasets() {
-  if (!datasets.length) { set($('datasets'), el('div', { class: 'empty', text: t('none_yet') })); return; }
-  set($('datasets'), datasets.map((d) => {
+  if (!datasets.length && !reports.length) { set($('datasets'), el('div', { class: 'empty', text: t('none_yet') })); return; }
+  const reportRows = reports.map((r) => el('div', { class: 'ds' },
+    el('span', { class: 'k ltr', text: `${r.range.from} → ${r.range.to}` }),
+    el('span', { class: 'meta', text: t('reports_meta', { m: r.techPoints.length, a: r.afterSales.length }) }),
+    el('button', { type: 'button', class: 'btn quiet', text: t('remove'), onclick: async () => { reports = reports.filter((x) => x.key !== r.key); await store.putReports(reports); renderDatasets(); renderBlocks(); } })));
+  set($('datasets'), [...datasets.map((d) => {
     const c = completeness(d);
     return el('div', { class: 'ds' },
       el('span', { class: 'k ltr', text: `${d.range.from} → ${d.range.to}` }),
@@ -331,7 +351,7 @@ function renderDatasets() {
       c.known ? el('span', { class: `pill ${c.complete ? 'ok' : 'warn'}`, text: c.complete ? t('complete') : t('incomplete', { got: c.got, want: c.want }) }) : null,
       el('button', { type: 'button', class: 'btn quiet', text: t('remove'), onclick: async () => { datasets = datasets.filter((x) => x.key !== d.key); await store.put(datasets); renderDatasets(); renderBlocks(); } }),
     );
-  }));
+  }), ...reportRows]);
 }
 function download(name, text) {
   const a = el('a', { href: URL.createObjectURL(new Blob([text], { type: 'application/json' })), download: name });
@@ -379,14 +399,14 @@ function renderKpi() {
     datasets.map((d) => el('option', { value: d.key, selected: d.key === kpiKey, text: `${d.range.from} → ${d.range.to}${d.sample ? ' *' : ''}` })));
   const rateCell = (r) => el('span', { class: 'rate' }, el('i', {}, el('b', { style: `width:${Math.round((r || 0) * 100)}%` })), formatRate(r));
   const name = (r) => (r.id === GROUP ? t('group_bucket') : (nameOf(peopleById.get(r.id), lang) || r.name));
-  const cols = ['col_person', 'col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_median', 'col_open', 'col_cancelled', 'col_email', 'col_self', 'col_created'];
+  const cols = ['col_person', 'col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_median', 'col_open', 'col_cancelled', 'col_email', 'col_self', ...(ds.rdKnown ? ['col_rd'] : []), 'col_created'];
   const line = (r, cls) => el('tr', { class: cls },
     el('td', { text: cls === 'total' ? t('team') : name(r) }),
     el('td', { class: 'num', text: r.assigned }), el('td', { class: 'num', text: r.done }),
     el('td', { class: 'num' }, rateCell(r.rate)),
     el('td', { class: 'num', text: formatHours(r.avgHours, lang) }), el('td', { class: 'num', text: formatHours(r.medianHours, lang) }),
     el('td', { class: 'num', text: r.open }), el('td', { class: 'num', text: r.cancelled }),
-    el('td', { class: 'num', text: r.fromEmail }), el('td', { class: 'num', text: r.selfLogged }), el('td', { class: 'num', text: r.created }));
+    el('td', { class: 'num', text: r.fromEmail }), el('td', { class: 'num', text: r.selfLogged }), ds.rdKnown ? el('td', { class: 'num', text: r.rd }) : null, el('td', { class: 'num', text: r.created }));
   const table = el('div', { class: 'table-wrap' }, el('table', {},
     el('thead', {}, el('tr', {}, cols.map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
     el('tbody', {}, f.people.map((r) => line(r)), f.group ? line({ ...f.group, id: GROUP }, 'group') : null, line(f.team, 'total'))));
@@ -412,8 +432,34 @@ function renderKpi() {
       el('div', {}, el('b', { text: formatHours(f.team.medianHours, lang) }), el('span', { text: t('col_median') }))),
     table,
     datasets.length > 1 ? [el('h2', { text: t('trend') }), trendTable] : null,
+    renderReports(ds.key),
     el('h2', { text: t('definitions') }),
     el('ul', { class: 'defs' }, DEFINITIONS.map((k) => el('li', { text: t(k) }))));
+}
+
+// ---------- Factor 2 (technician points) and Factor 3 (after-sales tickets), from the reports file of the same period ----------
+function renderReports(key) {
+  const rep = reports.find((r) => r.key === key);
+  const head = [el('h2', { text: t('f2_title') })];
+  if (!rep) return [...head, el('p', { class: 'note info', text: t('reports_none') })];
+  const nm = (r) => (lang === 'en' ? r.nameEn || r.nameAr : r.nameAr || r.nameEn) || r.technicianId;
+  const tt = techTotals(rep), at = afterSalesTotals(rep);
+  const months = rep.techPoints.map((m) => m.month).join('، ');
+  const tcols = [['f2_name', null], ['f2_installed', 'installedDeviceCount'], ['f2_maint', 'maintainedDeviceCount'], ['f2_fix', 'maintainedFixDeviceCount'],
+    ['f2_reservice', 'reServiceDeviceCount'], ['f2_stop', 'stopServiceDeviceCount'], ['f2_group', 'groupInstallationCount'],
+    ['f2_extra', 'additionalWorkCount'], ['f2_viol', 'violationCount'], ['f2_points', 'totalPoint']];
+  const line = (r, cls, label) => el('tr', { class: cls }, el('td', { text: label || nm(r) }), ...tcols.slice(1).map(([, f]) => el('td', { class: 'num', text: r[f] })));
+  return [...head,
+    el('p', { class: 'hint', text: t('f2_sub', { months }) }),
+    tt.rows.length ? el('div', { class: 'table-wrap' }, el('table', {},
+      el('thead', {}, el('tr', {}, tcols.map(([k], i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+      el('tbody', {}, tt.rows.map((r) => line(r)), line(tt.total, 'total', t('team'))))) : el('div', { class: 'empty', text: t('f2_none') }),
+    el('h2', { text: t('f3_title') }),
+    el('p', { class: 'hint', text: t('f3_sub') }),
+    at.rows.length ? el('div', { class: 'table-wrap' }, el('table', {},
+      el('thead', {}, el('tr', {}, ['f3_name', 'f3_open', 'f3_pending', 'f3_done', 'f3_total'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+      el('tbody', {}, at.rows.map((r) => el('tr', {}, el('td', { text: r.name }), ...[r.open, r.pending, r.done, r.total].map((v) => el('td', { class: 'num', text: v })))),
+        el('tr', { class: 'total' }, el('td', { text: t('team') }), ...[at.total.open, at.total.pending, at.total.done, at.total.total].map((v) => el('td', { class: 'num', text: v })))))) : el('div', { class: 'empty', text: t('f3_none') })];
 }
 
 // ---------- guide: every feature is written here — a feature missing from the guide does not exist for the team ----------
@@ -534,6 +580,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {});
   applyTheme();
   datasets = await store.get();
+  reports = await store.getReports();
   me = await store.getMe();
   applyLang();   // renders everything and routes
   loadRelease();
