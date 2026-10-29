@@ -500,6 +500,14 @@ export function buildPrompt({ from, to, today = null }) {
   const later = to < todayYmd;
   return `You are extracting task data from the myafaqy CRM (https://myafaqy.com, API at https://crmbackend.afaqy.sa) for a read-only KPI dashboard. I am signed in with my own manager account in this tab.
 
+ABSOLUTE RULE — NOTHING MAY CHANGE IN MYAFAQY
+- You may call ONLY these four endpoints, exactly as named:
+    Security/GetAllHierarchyUsersDropDown · Teams/GetAllTeams · Teams/GetTeamById · Task/GetMyTasksGrid
+- Never call anything else. Never call any endpoint whose name contains Add, Create, Insert, Edit, Update, Delete, Remove, Save, Assign, Reassign, Close, Complete, Approve, Reject, Sync, Send, Upload, Import, Change, Set, Mark, Read, Seen, Logout.
+- Never press any button in the page. Never change any filter, sort, column or setting on screen.
+- myafaqy uses POST to READ lists; that is expected. The four names above are reads.
+- If anything is unclear, or the app now needs a different endpoint, STOP and ask me. Do not improvise.
+
 PERIOD: ${from} to ${to}, Saudi time (UTC+3). In the app's own filter format that is:
   completedOn: ["${fromZ}", "${toZ}"]
 
@@ -528,12 +536,12 @@ a. DONE IN THE PERIOD: set "completedOn": ["${fromZ}", "${toZ}"]. Record done.li
 b. CREATED IN THE PERIOD, DONE LATER: set "completedOn": ["${toZ}", "${nowZ}"]. Walk the done bucket and keep only rows whose createdOn falls inside the period.` : ''}
 ${later ? 'c' : 'b'}. OPEN NOW: send "completedOn": []. Walk the toDo and open buckets completely (ignore done here). Record toDo.listCount + open.listCount as "openTotal".
 
-TIMES: createdOn and closeDate carry no time zone. Check once whether they are Saudi local time: open one task on screen and compare the time it shows with createdOn in the response. Write every time in your answer with the offset you established (normally +03:00) and state it in "notes".
+TIMES: createdOn and closeDate carry no time zone and are UTC (verified 29 Oct 2026: a task shown 12:30 PM on screen came back 09:30:41). Write every time as returned with "Z" added (for example 2026-10-29T09:30:41Z), and confirm the check on one task in "notes".
 
 DO NOT USE: "dateOfCompletion" (always null), "isAutomaticTask" (contradicts itself between the grid and the detail), the "createdBy" / "assignee" name strings (unreliable — names come from step 1), "type" and "priorty" (always null).
 
 WHAT TO RETURN
-Return ONLY one JSON code block, exactly in this format and nothing else around it:
+The result is one JSON document, exactly in this format:
 
 {
   "schema": "${SCHEMA}",
@@ -567,7 +575,10 @@ Return ONLY one JSON code block, exactly in this format and nothing else around 
 MAPPING
 - "state": "cancelled" when isCancelled is true; otherwise "done" when statusId is 3; otherwise "open".
 - "people": only users who appear in "tasks" as assignee or creator.
-- If the JSON is too long for one message, split it into parts: the same format in every part with an added field "part": "1/3", "2/3", "3/3", each holding a different slice of "tasks" (put "people" in part 1). I will upload all parts.`;
+
+THE RESULT — ONE FILE ON MY COMPUTER, NOT IN CHAT
+Build the JSON in the page and save it as ONE file with a download (a Blob and an <a download> link) named afaqy-tasks-${from}_${to}.json. Do not paste it. Then reply with only four lines: the file name, the number of tasks in it, doneInRangeTotal, and "No write endpoint was called."
+Only if a download is impossible: paste it instead, split into parts if needed — the same format in every part with an added field "part": "1/3", "2/3", "3/3", each holding a different slice of "tasks" (put "people" in part 1).`;
 }
 
 // ===================== reading what Claude in Chrome returns =====================
@@ -588,13 +599,14 @@ export function extractJson(text) {
 }
 
 /**
- * CRM times carry no zone. Without one, JavaScript reads them in the zone of whatever machine opens the page —
- * three hours apart between Riyadh and UTC. A time with no zone is therefore read as Saudi time, always.
+ * myafaqy's raw times carry no zone mark and are UTC — verified 29 Oct 2026 against the screen on four tasks (shown
+ * 12:30 PM, returned 09:30:41; X-Timezone-Offset -180). A zone-less time is therefore read as UTC, on any machine.
+ * (Until v6.6 it was read as Saudi time: three hours late.) A time that carries its zone is respected as written.
  */
 export function toIso(v) {
   if (v == null || v === '') return null;
   let s = String(v).trim();
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(s)) s += TZ_OFFSET;
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(s)) s += 'Z';
   const d = new Date(s);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
@@ -719,8 +731,14 @@ export function peopleOf(datasets) {
 export const nameOf = (p, lang) => (p ? ((lang === 'en' ? p.nameEn : p.nameAr) || p.nameEn || p.nameAr || p.id) : '');
 
 /** The default team: everyone in a Jeddah-branch team; if the data names no branches, everyone assigned a task. */
+// Teams that are not technical: left out of the default when they are a person's only teams (the manager can tick them).
+export const NON_TECH_TEAMS = /^jeddah[- ]+(sales|collection) team$/i;
+const inJeddah = (p) => p.branchCode === JEDDAH_BRANCH || (p.teams || []).some((t) => /jeddah|جدة/i.test(t));
+const onlyNonTech = (p) => (p.teams || []).length > 0 && p.teams.every((t) => NON_TECH_TEAMS.test(String(t).trim()));
 export function defaultTeam(people, tasks) {
-  const jeddah = (people || []).filter((p) => p.branchCode === JEDDAH_BRANCH).map((p) => p.id);
+  // Jeddah = a team on branch 2, or a team whose name says Jeddah (a person's own branch code follows only one of their
+  // teams — on 29 Oct 2026 an after-sales engineer carried a Riyadh code through his second team)
+  const jeddah = (people || []).filter((p) => inJeddah(p) && !onlyNonTech(p)).map((p) => p.id);
   if (jeddah.length) return jeddah;
   return [...new Set((tasks || []).filter((x) => !x.assignedToGroup).map((x) => x.assigneeId).filter(Boolean))];
 }

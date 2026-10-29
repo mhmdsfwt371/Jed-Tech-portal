@@ -40,7 +40,8 @@ test('the prompt carries the period in the CRM’s own format, the schema and th
   assert.ok(p.includes('CREATED IN THE PERIOD, DONE LATER'), 'a past period also collects tasks created in it and closed after it');
   assert.ok(p.includes('"completedOn": ["2026-09-30T21:00:00.000Z", "2026-10-29T21:00:00.000Z"]'), '…up to the end of today');
   assert.ok(!buildPrompt({ from: '2026-10-01', to: '2026-10-29', today: '2026-10-29' }).includes('DONE LATER'), 'the current period needs no such step');
-  for (const must of ['taskGroupId": 100001', 'GetAllHierarchyUsersDropDown', 'Teams/GetTeamById', 'Do NOT open tasks one by one', '"dateOfCompletion" (always null)', '"isAutomaticTask"'])
+  for (const must of ['taskGroupId": 100001', 'GetAllHierarchyUsersDropDown', 'Teams/GetTeamById', 'Do NOT open tasks one by one', '"dateOfCompletion" (always null)', '"isAutomaticTask"',
+                      'ABSOLUTE RULE — NOTHING MAY CHANGE IN MYAFAQY', 'are UTC', 'afaqy-tasks-2026-07-01_2026-09-30.json', 'No write endpoint was called'])
     assert.ok(p.includes(must), `prompt is missing: ${must}`);
   assert.ok(p.includes(`"schema": "${SCHEMA}"`));
   assert.ok(/READ-ONLY/.test(p) && /NEVER GUESS AN API PATH/.test(p) && /Never put tokens/.test(p));
@@ -137,10 +138,13 @@ test('Saudi day boundaries are exactly what the CRM’s own October filter sent'
   assert.deepEqual(saudiBoundsZ('2026-10-01', '2026-10-29'), ['2026-09-30T21:00:00.000Z', '2026-10-29T21:00:00.000Z']);
 });
 
-test('CRM times without a zone are Saudi time on any machine; seven-digit fractions are read', () => {
-  assert.equal(toIso('2026-10-28T10:27:56.8339878'), '2026-10-28T07:27:56.833Z');
-  assert.equal(toIso('2026-10-28T19:08:51.341833+03:00'), '2026-10-28T16:08:51.341Z');
-  assert.equal(toIso('2026-10-29T00:00:00'), '2026-10-28T21:00:00.000Z');
+test('myafaqy times without a zone are UTC on any machine (verified against the screen); seven-digit fractions are read', () => {
+  // 29 Oct 2026: task shown at 12:30 PM in myafaqy came back from the API as 2026-10-29T09:30:41
+  assert.equal(toIso('2026-10-29T09:30:41'), '2026-10-29T09:30:41.000Z');
+  assert.equal(saudiDay(toIso('2026-10-29T09:30:41')), '2026-10-29');
+  assert.equal(saudiDay(toIso('2026-10-29T22:30:00')), '2026-10-30', 'half past one in the morning in Jeddah is the next day');
+  assert.equal(toIso('2026-10-28T10:27:56.8339878'), '2026-10-28T10:27:56.833Z');
+  assert.equal(toIso('2026-10-28T19:08:51.341833+03:00'), '2026-10-28T16:08:51.341Z', 'a written zone is respected');
   assert.equal(toIso('2026-10-28T10:00:00Z'), '2026-10-28T10:00:00.000Z', 'an explicit zone is respected');
   assert.equal(toIso('nonsense'), null);
   assert.equal(saudiDay('2026-10-31T21:30:00.000Z'), '2026-11-01', 'half past midnight in Jeddah is the next day');
@@ -202,6 +206,10 @@ test('the default team is the Jeddah branch; names follow the language', () => {
   const d = parseDataset(V2([R('1'), R('2', { assigneeId: '124' }), R('3', { assigneeId: '999' })])).dataset;
   const ppl = peopleOf([d]);
   assert.deepEqual(defaultTeam(ppl, d.tasks), ['70'], 'Jeddah is branch code 2');
+  const mixed = [{ id: 'a', teams: ['Riyadh Pre sales', 'Jeddah After sales Team'], branchCode: '1' },
+                 { id: 's', teams: ['Jeddah-Sales Team'], branchCode: '2' }, { id: 'c', teams: ['Jeddah-Collection Team'], branchCode: '2' },
+                 { id: 'p', teams: ['Jeddah-Sales Team', 'Jeddah Presales Team'], branchCode: '2' }, { id: 'n', teams: [], branchCode: null }];
+  assert.deepEqual(defaultTeam(mixed, []).sort(), ['a', 'p'], 'a Jeddah-named team counts; sales or collection alone does not; no team is the manager’s call');
   assert.deepEqual(defaultTeam(ppl.map((p) => ({ ...p, branchCode: null })), d.tasks).sort(), ['124', '70', '999'], 'no branches known → everyone assigned');
   assert.equal(nameOf(ppl.find((p) => p.id === '70'), 'ar'), 'المهندس الأول');
   assert.equal(nameOf(ppl.find((p) => p.id === '70'), 'en'), 'Engineer One');
@@ -219,7 +227,7 @@ test('my KPIs: the hand-over is read back, times in Saudi time, e-mail by module
   assert.ok(r.me, JSON.stringify(r));
   assert.equal(r.me.user.id, '7001');
   assert.equal(r.me.tasks.length, 3);
-  assert.equal(r.me.tasks[0].createdAt, '2026-10-05T06:00:00.000Z');
+  assert.equal(r.me.tasks[0].createdAt, '2026-10-05T09:00:00.000Z', 'the bookmark hands over raw myafaqy times, which are UTC');
   assert.equal(r.me.tasks[1].fromEmail, true);
   assert.ok(r.me.tasks.every((x) => x.assigneeId === '7001'), 'every task in «My Tasks» is this person’s');
   assert.equal(r.me.tasks[2].completedAt, null);

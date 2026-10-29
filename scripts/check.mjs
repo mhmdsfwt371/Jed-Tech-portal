@@ -87,7 +87,8 @@ const { buildPrompt } = await import(new URL('core.js', root));
 const p = buildPrompt({ from: '2026-01-01', to: '2026-03-31' });
 for (const rule of ['READ-ONLY', 'NEVER GUESS AN API PATH', 'Never put tokens']) if (!p.includes(rule)) note(`prompt lost its rule: ${rule}`);
 // …and the pitfalls the capture of 28 Oct 2026 proved, so a later edit cannot quietly reintroduce them
-for (const pit of ['"dateOfCompletion" (always null)', '"isAutomaticTask"', 'Do NOT open tasks one by one', 'carry no time zone']) if (!p.includes(pit)) note(`prompt lost a verified pitfall: ${pit}`);
+for (const pit of ['"dateOfCompletion" (always null)', '"isAutomaticTask"', 'Do NOT open tasks one by one', 'carry no time zone and are UTC',
+                   'ABSOLUTE RULE — NOTHING MAY CHANGE IN MYAFAQY', 'Security/GetAllHierarchyUsersDropDown · Teams/GetAllTeams · Teams/GetTeamById · Task/GetMyTasksGrid', 'STOP and ask me']) if (!p.includes(pit)) note(`prompt lost a verified pitfall: ${pit}`);
 
 // 10. Nothing secret in a public repository.
 for (const f of ['index.html', 'app.js', 'core.js', 'config.js', 'sw.js', 'README.md', 'AGENTS.md']) {

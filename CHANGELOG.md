@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v6.7 — 2026-10-29
+
+- تصحيح مهم في الأوقات: ماي أفاقي يرسل الأوقات بتوقيت غرينتش لا السعودية — ثبت ذلك بمقارنة الشاشة في أول سحب حقيقي. «مؤشراتي» كان سيؤخّر كل وقت ثلاث ساعات وينقل مهام ما بعد منتصف الليل لليوم والربع الخطأ؛ صُحّح. أرقام لوحة المؤشرات لم تتأثر.
+- الفريق الافتراضي صار الفرق الفنية في جدة: يدخل من كان أحد فرقه في جدة ولو كان فريقه الآخر في فرع غيرها، ويخرج من كانت فرقه كلها مبيعات أو تحصيل. ويبقى التعديل اليدوي متاحًا.
+- أمر كلود كروم في صفحة البيانات صار يحدّد بالاسم الطلبات الأربعة المسموحة ويمنع كل ما سواها، ويحفظ النتيجة ملفًّا على الجهاز بدل لصقها في المحادثة.
+
+<details><summary>English</summary>
+
+- An important time correction: myafaqy sends times in UTC, not Saudi time — proved against the screen on the first real pull. “My KPIs” would have shifted every time by three hours and moved after-midnight tasks to the wrong day and quarter; corrected. The KPI board’s figures were not affected.
+- The default team is now Jeddah’s technical teams: a person is in if any of their teams is in Jeddah, even if another team is in a different branch, and out if all their teams are sales or collection. Manual adjustment stays available.
+- The Claude in Chrome prompt on the Data page now names the four allowed requests and forbids everything else, and saves the result as a file on the computer instead of pasting it into the chat.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اوقات میں ایک اہم درستی: مائی آفاقی اوقات سعودی وقت میں نہیں بلکہ UTC میں بھیجتا ہے — پہلی حقیقی کھینچائی میں اسکرین سے موازنہ کر کے ثابت ہوا۔ «میرے اشاریے» ہر وقت کو تین گھنٹے پیچھے کر دیتا اور آدھی رات کے بعد کے ٹاسک غلط دن اور سہ ماہی میں ڈال دیتا؛ درست کر دیا گیا۔ اشاریوں کے بورڈ کے اعداد متاثر نہیں ہوئے۔
+- پہلے سے منتخب ٹیم اب جدہ کی تکنیکی ٹیمیں ہیں: جس کی کوئی ٹیم جدہ میں ہو وہ شامل ہے چاہے اس کی دوسری ٹیم کسی اور برانچ میں ہو، اور جس کی سب ٹیمیں سیلز یا وصولی کی ہوں وہ شامل نہیں۔ دستی تبدیلی بدستور ممکن ہے۔
+- ڈیٹا کے صفحے پر کلاڈ کروم کی ہدایت اب چار اجازت شدہ درخواستوں کے نام لیتی ہے اور باقی سب سے منع کرتی ہے، اور نتیجہ چیٹ میں پیسٹ کرنے کے بجائے کمپیوٹر پر فائل کے طور پر محفوظ کرتی ہے۔
+
+</div>
+</details>
+
+
 ## v6.6 — 2026-10-29
 
 - تفاصيل كل وحدة في «أفاقي برو» صارت تعرض أيضًا أمر العمل والمجموعات والعدادات — الأقسام الموثقة رسميًّا في أفاقي برو — لنرى إن كان أمر العمل يحمل من ركّب الجهاز ومتى.
