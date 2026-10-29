@@ -262,7 +262,7 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   if (!tj || typeof tj.people !== 'object') note('team.json: must be {"v":1,"people":{…}}');
   else for (const [id, p] of Object.entries(tj.people)) {
     if (!/^\d+$/.test(id)) note(`team.json: key ${id} is not a myafaqy id`);
-    for (const k of Object.keys(p || {})) if (!['position', 'positionEn', 'leaderId'].includes(k)) note(`team.json: field "${k}" on ${id} is not allowed — only position, positionEn, leaderId`);
+    for (const k of Object.keys(p || {})) if (!['position', 'positionEn', 'leaderId', 'onLeave'].includes(k)) note(`team.json: field "${k}" on ${id} is not allowed — only position, positionEn, leaderId, onLeave`);
   }
 }
 

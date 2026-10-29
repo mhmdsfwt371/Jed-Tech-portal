@@ -329,6 +329,66 @@ export const STRINGS = {
     w_you_some: 'لديك صلاحية تعديل {n} نوعًا — الباقي للقراءة. نزّل ملف الأوزان بعد تعديلك وأرسله للمدير ليعتمده.',
     w_you_none: 'الأوزان للقراءة فقط لك. من يملك صلاحية التعديل يُحدَّد في ملف الأوزان.',
     w_you_unknown: 'للتعديل اضغط إشارة «مؤشراتي» أولًا حتى تعرف البوابة من أنت — الصلاحيات برقم ماي أفاقي.',
+    card_h: 'بطاقة الشهر',
+    card_sub: 'نمط شغلك هذا الشهر مقارنة بفريقك — كل جملة معها رقمها. الشهر يُقفل تلقائيًّا بعد انتهائه ولا تتغير بطاقته.',
+    card_live: 'جارٍ',
+    card_points: 'نقطة موزونة',
+    card_vs_prev: '{d} عن الشهر الماضي · {done} مهمة منجزة',
+    card_quartile: '{q} · وسيط الفريق {med} نقطة',
+    card_rank: 'المرتبة {r} من {n} · وسيط الفريق {med} نقطة',
+    card_consistency: 'ثبات أسبوعي {pct}٪ على {w} أسابيع',
+    card_radar: 'بصمة العمل: توزيع النقاط على الفئات الأربع مقارنة بالفريق',
+    card_me: 'أنا',
+    card_strengths: 'أكثر ما تميّزت به',
+    card_development: 'ما يستحق التطوير',
+    card_suggestions: 'اقتراحات للشهر القادم',
+    card_none_yet: 'لا تميّز واضح بعد بالأعداد المتاحة — أقل من خمس مهام في كل نوع.',
+    card_none_dev: 'لا إشارات تحتاج نظرة هذا الشهر.',
+    card_none_sug: 'لا اقتراح بعد — الأعداد قليلة.',
+    card_on_leave: 'في إجازة',
+    card_team_h: 'بطاقات فريقك ({n})',
+    card_print: 'طباعة البطاقة',
+    card_closed: 'أُقفلت بطاقة {m} — لن تتغير بعد الآن.',
+    card_arch: 'النمط',
+    quartile_1: 'في الربع الأعلى من الفريق',
+    quartile_2: 'فوق وسيط الفريق',
+    quartile_3: 'تحت وسيط الفريق',
+    quartile_4: 'في الربع الأدنى من الفريق',
+    arch_field: 'المنفّذ الميداني',
+    arch_field_why: 'الربط والتنسيق الميداني ومتعدد المراحل عندك أعلى من الفريق بثلث فأكثر.',
+    arch_voice: 'صوت العميل',
+    arch_voice_why: 'الرد على العملاء والتشخيص عندك أعلى من الفريق بثلث فأكثر.',
+    arch_volume: 'محرّك الحجم',
+    arch_volume_why: 'حجم فوق وسيط الفريق وبتركيز على الإجراءات السريعة.',
+    arch_balanced: 'المتوازن',
+    arch_balanced_why: 'توزيع عملك قريب من توزيع الفريق في الفئات الأربع.',
+    arch_early: 'قليل للحكم',
+    arch_early_why: 'أقل من عشر نقاط هذا الشهر — لا يُستخلص نمط من هذا القدر.',
+    tier_short_admin: 'إداري',
+    tier_short_customer: 'عميل',
+    tier_short_integration: 'ربط',
+    tier_short_multistage: 'مراحل',
+    str_spec: 'تخصص في «{type}»: أنجزت {pct}٪ منها في الفريق ({n}) وأنت {my}٪ من حجم الفريق.',
+    str_speed: 'أسرع الفريق في «{type}»: وسيطك {me} مقابل {team} للفريق.',
+    str_initiative: 'مبادرة: سجّلت {n} نشاطًا مع {c} عميلًا خارج المهام.',
+    dev_tierGap: 'فئة «{tier}» عند الفريق {team}٪ من العمل وعندك {mine}٪.',
+    dev_slow: '«{type}»: وسيطك {me} مقابل {team} للفريق.',
+    dev_self: '{pct}٪ من مهامك سجّلتها لنفسك — يُراجع مع القائد.',
+    dev_aging: '{n} مهمة مفتوحة منذ أكثر من {days} أيام.',
+    dev_rate: 'نسبة إنجاز ما أُسند إليك هذا الشهر {pct}٪.',
+    sug_stretch: 'تمدّد: أسند له «{type}» (فئة {tier}) — الفريق يعمل منها {n} ولم يعمل هو إلا القليل.',
+    sug_invest: 'استثمار: أكثر من «{type}» — هو أسرع الفريق فيها ({me} مقابل {team}).',
+    sug_balanceUp: 'توازن: {pts} نقطة مقابل وسيط {med} — زِد له مهام سريعة مثل «{type}».',
+    sug_balanceDeep: 'توازن: {pts} نقطة مقابل وسيط {med} — أسند له عملًا متعدد المراحل مثل «{type}» بدل الحجم.',
+    heat_h: 'خريطة الفريق — {m}',
+    heat_sub: 'النقاط الموزونة لكل شخص في كل فئة. الأغمق أكثر. تُظهر أين يتكدّس العمل وأين يفرغ.',
+    plan_h: 'خطة الشهر القادم',
+    plan_sub: 'بطاقة كل شخص مع اقتراحات التوزيع — بقاعدة معلنة وسبب مكتوب. للمدير والقادة.',
+    plan_none: 'لا اقتراحات بعد — الأعداد قليلة.',
+    help_card: 'بطاقة الشهر تصف نمط عملك من الأرقام: حجمك مقارنة بوسيط الفريق وربعك، وبصمتك على الفئات الأربع، وأكثر ما تميّزت به (تخصص، سرعة، مبادرة)، وما يستحق التطوير. كل جملة معها رقمها. الشهر المنتهي يُقفل ولا تتغير بطاقته. القادة يرون بطاقات من تحتهم مع اقتراحات التوزيع.',
+    help_heat: 'كل صف شخص وكل عمود فئة؛ الرقم نقاطه الموزونة فيها والخلفية بقدرها. نظرة واحدة تقول أين يتركز الفريق وأين الفجوات.',
+    help_plan: 'ثلاث قواعد تُولّد الاقتراحات: تمدّد (نوع من فئة أعلى يعمله الفريق)، استثمار (النوع الذي هو أسرع الفريق فيه)، توازن (تحت الوسيط: مهام سريعة؛ في الربع الأعلى: عمل متعدد المراحل). كل اقتراح معه سببه.',
+    card_team_legend: 'الفريق',
   },
   en: {
     brand: 'Afaqy', portal: 'Technical team portal — Jeddah', nav_data: 'Data', nav_kpi: 'KPIs',
@@ -649,6 +709,66 @@ export const STRINGS = {
     w_you_some: 'You may edit {n} types — the rest are read-only. Download the weights file after your change and send it to the manager to adopt.',
     w_you_none: 'The weights are read-only for you. Who may edit is set in the weights file.',
     w_you_unknown: 'To edit, press the “My KPIs” bookmark first so the portal knows who you are — rights go by myafaqy id.',
+    card_h: 'The month’s card',
+    card_sub: 'Your work pattern this month against your team — every line with its number. A month closes by itself once over, and its card never changes.',
+    card_live: 'in progress',
+    card_points: 'weighted points',
+    card_vs_prev: '{d} vs last month · {done} tasks completed',
+    card_quartile: '{q} · team median {med} points',
+    card_rank: 'Rank {r} of {n} · team median {med} points',
+    card_consistency: 'Weekly consistency {pct}% over {w} weeks',
+    card_radar: 'Work fingerprint: points by the four tiers against the team',
+    card_me: 'me',
+    card_strengths: 'Where you stood out',
+    card_development: 'What deserves development',
+    card_suggestions: 'Suggestions for next month',
+    card_none_yet: 'No clear strength yet at these numbers — fewer than five tasks per type.',
+    card_none_dev: 'No signals needing a look this month.',
+    card_none_sug: 'No suggestion yet — the numbers are small.',
+    card_on_leave: 'On leave',
+    card_team_h: 'Your team’s cards ({n})',
+    card_print: 'Print the card',
+    card_closed: 'The card for {m} is closed — it will not change again.',
+    card_arch: 'Pattern',
+    quartile_1: 'In the team’s top quarter',
+    quartile_2: 'Above the team median',
+    quartile_3: 'Below the team median',
+    quartile_4: 'In the team’s bottom quarter',
+    arch_field: 'The field executor',
+    arch_field_why: 'Integration, field coordination and multi-stage work are a third or more above the team’s share.',
+    arch_voice: 'The customer’s voice',
+    arch_voice_why: 'Dealing with customers and diagnosing is a third or more above the team’s share.',
+    arch_volume: 'The volume engine',
+    arch_volume_why: 'Volume above the team median, concentrated on quick actions.',
+    arch_balanced: 'The balanced one',
+    arch_balanced_why: 'Your spread across the four tiers is close to the team’s.',
+    arch_early: 'Too little to judge',
+    arch_early_why: 'Fewer than ten points this month — no pattern is drawn from that little.',
+    tier_short_admin: 'Admin',
+    tier_short_customer: 'Customer',
+    tier_short_integration: 'Integration',
+    tier_short_multistage: 'Multi-stage',
+    str_spec: 'Specialist in “{type}”: you completed {pct}% of the team’s ({n}) while being {my}% of its volume.',
+    str_speed: 'Fastest in the team on “{type}”: your median {me} against the team’s {team}.',
+    str_initiative: 'Initiative: you logged {n} activities with {c} customers outside tasks.',
+    dev_tierGap: 'The “{tier}” tier is {team}% of the team’s work and {mine}% of yours.',
+    dev_slow: '“{type}”: your median {me} against the team’s {team}.',
+    dev_self: '{pct}% of your tasks were self-logged — to review with the leader.',
+    dev_aging: '{n} tasks open for more than {days} days.',
+    dev_rate: 'Completion of what was assigned to you this month: {pct}%.',
+    sug_stretch: 'Stretch: assign “{type}” ({tier} tier) — the team did {n} of these and this person few.',
+    sug_invest: 'Invest: more “{type}” — the team’s fastest on it ({me} against {team}).',
+    sug_balanceUp: 'Balance: {pts} points against a median of {med} — add quick tasks such as “{type}”.',
+    sug_balanceDeep: 'Balance: {pts} points against a median of {med} — assign multi-stage work such as “{type}” instead of volume.',
+    heat_h: 'Team map — {m}',
+    heat_sub: 'Weighted points per person per tier. Darker is more. It shows where work piles up and where it is empty.',
+    plan_h: 'Next month’s plan',
+    plan_sub: 'Each person’s card with assignment suggestions — by a stated rule with a written reason. For the manager and leaders.',
+    plan_none: 'No suggestions yet — the numbers are small.',
+    help_card: 'The month’s card describes your work pattern from the numbers: your volume against the team median and your quarter, your fingerprint across the four tiers, where you stood out (specialisation, speed, initiative) and what deserves development. Every line carries its number. A finished month is closed and its card never changes. Leaders see their people’s cards with assignment suggestions.',
+    help_heat: 'Each row is a person and each column a tier; the number is their weighted points there and the shade its size. One look says where the team concentrates and where the gaps are.',
+    help_plan: 'Three rules generate the suggestions: stretch (a type from a higher tier the team works), invest (the type this person is fastest at), balance (below median: quick tasks; top quarter: multi-stage work). Each suggestion carries its reason.',
+    card_team_legend: 'team',
   },
   ur: {
     brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ', nav_data: 'ڈیٹا', nav_kpi: 'کارکردگی کے اشاریے',
@@ -969,6 +1089,66 @@ export const STRINGS = {
     w_you_some: 'آپ {n} اقسام بدل سکتے ہیں — باقی صرف پڑھنے کے لیے۔ تبدیلی کے بعد اوزان کی فائل ڈاؤن لوڈ کر کے منظوری کے لیے مینیجر کو بھیجیں۔',
     w_you_none: 'اوزان آپ کے لیے صرف پڑھنے کے لیے ہیں۔ کون بدل سکتا ہے، یہ اوزان کی فائل میں طے ہے۔',
     w_you_unknown: 'بدلنے کے لیے پہلے «میرے اشاریے» بک مارک دبائیں تاکہ پورٹل جانے کہ آپ کون ہیں — حقوق مائی آفاقی شناخت سے ہیں۔',
+    card_h: 'مہینے کا کارڈ',
+    card_sub: 'اس مہینے آپ کے کام کا انداز آپ کی ٹیم کے مقابلے میں — ہر سطر اپنے عدد کے ساتھ۔ مہینہ ختم ہونے پر خود بند ہو جاتا ہے اور اس کا کارڈ نہیں بدلتا۔',
+    card_live: 'جاری',
+    card_points: 'وزنی پوائنٹس',
+    card_vs_prev: 'پچھلے مہینے سے {d} · {done} مکمل ٹاسک',
+    card_quartile: '{q} · ٹیم کا وسط {med} پوائنٹس',
+    card_rank: '{n} میں {r}واں درجہ · ٹیم کا وسط {med} پوائنٹس',
+    card_consistency: '{w} ہفتوں پر {pct}٪ ہفتہ وار استحکام',
+    card_radar: 'کام کا نقش: چار درجوں پر پوائنٹس کی تقسیم ٹیم کے مقابلے میں',
+    card_me: 'میں',
+    card_strengths: 'آپ کہاں نمایاں رہے',
+    card_development: 'جو ترقی کا مستحق ہے',
+    card_suggestions: 'اگلے مہینے کے لیے تجاویز',
+    card_none_yet: 'ان اعداد پر ابھی کوئی واضح نمایاں بات نہیں — ہر قسم میں پانچ سے کم ٹاسک۔',
+    card_none_dev: 'اس مہینے کوئی قابلِ توجہ اشارہ نہیں۔',
+    card_none_sug: 'ابھی کوئی تجویز نہیں — اعداد کم ہیں۔',
+    card_on_leave: 'چھٹی پر',
+    card_team_h: 'آپ کی ٹیم کے کارڈ ({n})',
+    card_print: 'کارڈ پرنٹ کریں',
+    card_closed: '{m} کا کارڈ بند ہو گیا — اب نہیں بدلے گا۔',
+    card_arch: 'انداز',
+    quartile_1: 'ٹیم کے اوپری چوتھائی میں',
+    quartile_2: 'ٹیم کے وسط سے اوپر',
+    quartile_3: 'ٹیم کے وسط سے نیچے',
+    quartile_4: 'ٹیم کے نچلے چوتھائی میں',
+    arch_field: 'فیلڈ ایگزیکیوٹر',
+    arch_field_why: 'ربط، فیلڈ کوآرڈینیشن اور کثیر مرحلہ کام ٹیم کے حصے سے ایک تہائی یا زیادہ۔',
+    arch_voice: 'گاہک کی آواز',
+    arch_voice_why: 'گاہکوں سے معاملہ اور تشخیص ٹیم کے حصے سے ایک تہائی یا زیادہ۔',
+    arch_volume: 'حجم کا انجن',
+    arch_volume_why: 'ٹیم کے وسط سے زیادہ حجم، تیز کاموں پر مرکوز۔',
+    arch_balanced: 'متوازن',
+    arch_balanced_why: 'چاروں درجوں میں آپ کی تقسیم ٹیم جیسی ہے۔',
+    arch_early: 'فیصلے کے لیے کم',
+    arch_early_why: 'اس مہینے دس سے کم پوائنٹس — اتنے سے کوئی انداز اخذ نہیں ہوتا۔',
+    tier_short_admin: 'انتظامی',
+    tier_short_customer: 'گاہک',
+    tier_short_integration: 'ربط',
+    tier_short_multistage: 'مراحل',
+    str_spec: '«{type}» میں مہارت: ٹیم کے {pct}٪ ({n}) آپ نے مکمل کیے جبکہ آپ ٹیم کے حجم کا {my}٪ ہیں۔',
+    str_speed: '«{type}» میں ٹیم میں سب سے تیز: آپ کا وسط {me} بمقابلہ ٹیم {team}۔',
+    str_initiative: 'پہل: آپ نے ٹاسکس سے باہر {c} گاہکوں کے ساتھ {n} سرگرمیاں درج کیں۔',
+    dev_tierGap: '«{tier}» درجہ ٹیم کے کام کا {team}٪ ہے اور آپ کے کام کا {mine}٪۔',
+    dev_slow: '«{type}»: آپ کا وسط {me} بمقابلہ ٹیم {team}۔',
+    dev_self: 'آپ کے {pct}٪ ٹاسک خود درج شدہ ہیں — لیڈر کے ساتھ جائزہ۔',
+    dev_aging: '{n} ٹاسک {days} دن سے زیادہ کھلے ہیں۔',
+    dev_rate: 'اس مہینے تفویض شدہ کام کی تکمیل {pct}٪۔',
+    sug_stretch: 'توسیع: «{type}» ({tier} درجہ) تفویض کریں — ٹیم نے {n} کیے اور اس نے بہت کم۔',
+    sug_invest: 'سرمایہ کاری: مزید «{type}» — ٹیم میں اس پر سب سے تیز ({me} بمقابلہ {team})۔',
+    sug_balanceUp: 'توازن: {pts} پوائنٹس بمقابلہ وسط {med} — «{type}» جیسے تیز ٹاسک بڑھائیں۔',
+    sug_balanceDeep: 'توازن: {pts} پوائنٹس بمقابلہ وسط {med} — حجم کے بجائے «{type}» جیسا کثیر مرحلہ کام دیں۔',
+    heat_h: 'ٹیم کا نقشہ — {m}',
+    heat_sub: 'ہر فرد کے ہر درجے میں وزنی پوائنٹس۔ گہرا زیادہ ہے۔ دکھاتا ہے کام کہاں جمع ہے اور کہاں خالی۔',
+    plan_h: 'اگلے مہینے کا منصوبہ',
+    plan_sub: 'ہر فرد کا کارڈ تفویض کی تجاویز کے ساتھ — واضح اصول اور لکھی ہوئی وجہ سے۔ مینیجر اور لیڈرز کے لیے۔',
+    plan_none: 'ابھی کوئی تجویز نہیں — اعداد کم ہیں۔',
+    help_card: 'مہینے کا کارڈ اعداد سے آپ کے کام کا انداز بیان کرتا ہے: ٹیم کے وسط کے مقابلے میں آپ کا حجم اور آپ کی چوتھائی، چار درجوں پر آپ کا نقش، آپ کہاں نمایاں رہے (مہارت، رفتار، پہل) اور کیا ترقی کا مستحق ہے۔ ہر سطر اپنا عدد رکھتی ہے۔ ختم شدہ مہینہ بند ہوتا ہے اور اس کا کارڈ نہیں بدلتا۔ لیڈر اپنے لوگوں کے کارڈ تفویض کی تجاویز کے ساتھ دیکھتے ہیں۔',
+    help_heat: 'ہر قطار ایک فرد اور ہر کالم ایک درجہ؛ عدد وہاں اس کے وزنی پوائنٹس اور رنگ اس کی مقدار۔ ایک نظر بتاتی ہے ٹیم کہاں مرکوز ہے اور خلا کہاں۔',
+    help_plan: 'تین اصول تجاویز بناتے ہیں: توسیع (اونچے درجے کی قسم جو ٹیم کرتی ہے)، سرمایہ کاری (وہ قسم جس میں یہ فرد سب سے تیز ہے)، توازن (وسط سے نیچے: تیز ٹاسک؛ اوپری چوتھائی: کثیر مرحلہ کام)۔ ہر تجویز اپنی وجہ کے ساتھ۔',
+    card_team_legend: 'ٹیم',
   },
 };
 
@@ -1780,7 +1960,8 @@ export function parseRoster(raw) {
     if (!p || typeof p !== 'object') continue;
     const o = { position: String(p.position || '').slice(0, 80), leaderId: p.leaderId == null || p.leaderId === '' ? null : String(p.leaderId) };
     if (p.positionEn) o.positionEn = String(p.positionEn).slice(0, 80);
-    if (o.position || o.leaderId || o.positionEn) people[String(id)] = o;
+    if (p.onLeave === true) o.onLeave = true;
+    if (o.position || o.leaderId || o.positionEn || o.onLeave) people[String(id)] = o;
   }
   return { v: 1, schema: ROSTER_SCHEMA, people };
 }
@@ -1824,6 +2005,7 @@ export function parseWeights(raw) {
     out.tasks[typeKey(k)] = { w, tier: TIERS.includes(x && x.tier) ? x.tier : null, team: ['aftersales', 'rd', 'both', 'general'].includes(x && x.team) ? x.team : null };
   }
   for (const [k, x] of Object.entries(raw.activities || {})) { const w = num(x); if (w != null) out.activities[String(k).toLowerCase().trim()] = w; }
+  out.card = {}; for (const [k, v] of Object.entries(raw.card || {})) if (k in CARD_DEFAULTS && Number.isFinite(Number(v))) out.card[k] = Number(v);
   out.editors = {};
   for (const [uid, list] of Object.entries(raw.editors || {})) if (/^\d+$/.test(uid) && Array.isArray(list)) out.editors[uid] = list.map((k) => (k === '*' ? '*' : typeKey(k))).filter(Boolean).slice(0, 100);
   return out;
@@ -1831,7 +2013,7 @@ export function parseWeights(raw) {
 /** The device's own entries win over the repository's, type by type. */
 export function mergeWeights(repo, device) {
   const a = parseWeights(repo), b = parseWeights(device);
-  return { ...a, default: device && device.default != null ? b.default : a.default, tasks: { ...a.tasks, ...b.tasks }, activities: { ...a.activities, ...b.activities }, editors: { ...a.editors, ...b.editors }, reviewed: b.reviewed || a.reviewed };
+  return { ...a, default: device && device.default != null ? b.default : a.default, tasks: { ...a.tasks, ...b.tasks }, activities: { ...a.activities, ...b.activities }, editors: { ...a.editors, ...b.editors }, card: { ...a.card, ...b.card }, reviewed: b.reviewed || a.reviewed };
 }
 /** Editing rights: editors[userId] = ['*'] or a list of type keys; nobody else may change a weight on the page. */
 export const canEditWeight = (wt, userId, key) => { const e = wt && wt.editors && wt.editors[String(userId)]; return !!(e && (e.includes('*') || e.includes(typeKey(key)) || e.includes(String(key).toLowerCase()))); };
@@ -1859,6 +2041,107 @@ export function weightedPoints(tasks, activities, wt, { range, team = null } = {
   }
   const people = [...by.values()].map((r) => ({ ...r, total: r.taskPoints + r.activityPoints })).sort((a, b) => b.total - a.total);
   return { people, total: people.reduce((s, r) => s + r.total, 0), byId: new Map(people.map((r) => [r.id, r])) };
+}
+
+// ===================== the monthly card (ADR-0020): a work pattern described from the numbers, every line with its "why" =====================
+export const CARD_DEFAULTS = { minN: 5, spec: 1.5, speed: 0.3, selfLogged: 0.4, agingDays: 7, rate: 0.85, minPoints: 10, tierIdx: 1.3 };
+export const ARCHETYPES = ['field', 'voice', 'volume', 'balanced', 'early'];
+const monthOf = (iso) => (saudiDay(iso) || '').slice(0, 7);
+export const monthRange = (ym) => { const [y, m] = ym.split('-').map(Number); const last = new Date(Date.UTC(y, m, 0)).getUTCDate(); return { from: `${ym}-01`, to: `${ym}-${pad(last)}` }; };
+export const prevMonth = (ym) => { const [y, m] = ym.split('-').map(Number); return m === 1 ? `${y - 1}-12` : `${y}-${pad(m - 1)}`; };
+const medianOf = (arr) => { const a = arr.filter((v) => v != null).sort((x, y) => x - y); return a.length ? a[Math.floor(a.length / 2)] : null; };
+const hoursBetween = (a, b) => (a && b ? (Date.parse(b) - Date.parse(a)) / 3600000 : null);
+const isoWeek = (iso) => { const d = new Date(Date.parse(iso) + 3 * 3600000); const day = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - day + 3); const w1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 4)); return `${d.getUTCFullYear()}-${pad(1 + Math.round(((d - w1) / 86400000 - 3 + ((w1.getUTCDay() + 6) % 7)) / 7))}`; };
+
+/**
+ * One person's card for a month, against their team. ctx = { tasks, activities, weights, team (ids), roster, now, thresholds }.
+ * Nothing here is a verdict without its numbers: strengths, gaps and suggestions each carry the figures that produced them.
+ */
+export function monthCard(ctx, personId, ym) {
+  const T = { ...CARD_DEFAULTS, ...((ctx.weights && ctx.weights.card) || {}), ...(ctx.thresholds || {}) };
+  const wt = ctx.weights, team = ctx.team || [], range = monthRange(ym), prev = monthRange(prevMonth(ym));
+  const inM = (iso, r) => { const d = saudiDay(iso); return d && d >= r.from && d <= r.to; };
+  const doneIn = (r) => (ctx.tasks || []).filter((x) => x.state === 'done' && x.completedAt && inM(x.completedAt, r) && x.assigneeId);
+  const done = doneIn(range), donePrev = doneIn(prev);
+  const tierOf = (type) => { const x = wt && wt.tasks[typeKey(type)]; return (x && x.tier) || 'admin'; };
+  const pts = (rows) => rows.reduce((s, x) => s + taskWeight(wt, x.type), 0);
+  const mine = done.filter((x) => x.assigneeId === personId), minePrev = donePrev.filter((x) => x.assigneeId === personId);
+  const teamRows = done.filter((x) => team.includes(x.assigneeId));
+  // volume: points against the team's median, and the quartile band
+  const perPerson = team.map((id) => ({ id, points: pts(done.filter((x) => x.assigneeId === id)), done: done.filter((x) => x.assigneeId === id).length }));
+  const myPoints = pts(mine), teamMedian = medianOf(perPerson.map((p) => p.points)) || 0;
+  const sorted = [...perPerson].sort((a, b) => b.points - a.points);
+  const rank = sorted.findIndex((p) => p.id === personId) + 1;
+  const quartile = rank ? Math.min(4, Math.ceil((rank / sorted.length) * 4)) : null;
+  const prevPoints = pts(minePrev);
+  // fingerprint: points by tier, mine against the team's
+  const byTier = (rows) => { const o = { admin: 0, customer: 0, integration: 0, multistage: 0 }; for (const x of rows) o[tierOf(x.type)] += taskWeight(wt, x.type); return o; };
+  const mineT = byTier(mine), teamT = byTier(teamRows);
+  const share = (o) => { const tot = Object.values(o).reduce((a, b) => a + b, 0) || 1; return Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v / tot])); };
+  const ms = share(mineT), ts = share(teamT);
+  const idx = Object.fromEntries(TIERS.map((k) => [k, ts[k] > 0 ? ms[k] / ts[k] : (ms[k] > 0 ? 2 : 1)]));
+  let archetype = 'balanced';
+  if (myPoints < T.minPoints) archetype = 'early';
+  else if ((ms.integration + ms.multistage) / Math.max(0.01, ts.integration + ts.multistage) >= T.tierIdx) archetype = 'field';
+  else if (idx.customer >= T.tierIdx) archetype = 'voice';
+  else if (idx.admin >= T.tierIdx && myPoints >= teamMedian) archetype = 'volume';
+  // strengths: specialisation (my share of the team's work on a type vs my share overall), speed, initiative
+  const myShare = teamRows.length ? mine.length / teamRows.length : 0;
+  const types = [...new Set(teamRows.map((x) => typeKey(x.type)))];
+  const perType = types.map((k) => {
+    const tm = teamRows.filter((x) => typeKey(x.type) === k), me = mine.filter((x) => typeKey(x.type) === k);
+    const name = (me[0] || tm[0]).type;
+    const myMed = medianOf(me.map((x) => hoursBetween(x.createdAt, x.completedAt))), tmMed = medianOf(tm.map((x) => hoursBetween(x.createdAt, x.completedAt)));
+    return { key: k, name, team: tm.length, mine: me.length, teamShare: tm.length / Math.max(1, teamRows.length), spec: myShare > 0 && tm.length ? (me.length / tm.length) / myShare : 0, myMed, tmMed };
+  });
+  const strengths = [];
+  for (const p of perType) if (p.mine >= T.minN && p.spec >= T.spec) strengths.push({ kind: 'spec', type: p.name, mine: p.mine, team: p.team, pct: Math.round((p.mine / p.team) * 100), myPct: Math.round(myShare * 100) });
+  for (const p of perType) if (p.mine >= T.minN && p.myMed != null && p.tmMed != null && p.myMed <= p.tmMed * (1 - T.speed)) strengths.push({ kind: 'speed', type: p.name, myMed: p.myMed, teamMed: p.tmMed });
+  const myActs = (ctx.activities || []).filter((a) => a.createdById === personId && /^done$/i.test(a.status || '') && inM(a.createdAt, range)).length;
+  if (myActs > 0) strengths.push({ kind: 'initiative', n: myActs, customers: new Set((ctx.activities || []).filter((a) => a.createdById === personId && inM(a.createdAt, range)).map((a) => a.customerId)).size });
+  // development: tier gaps, slow types, signals
+  const development = [];
+  for (const k of TIERS) if (ts[k] >= 0.10 && ms[k] <= ts[k] / 2 && myPoints >= T.minPoints) development.push({ kind: 'tierGap', tier: k, mine: Math.round(ms[k] * 100), team: Math.round(ts[k] * 100) });
+  for (const p of perType) if (p.mine >= T.minN && p.myMed != null && p.tmMed != null && p.myMed >= p.tmMed * (1 + T.speed)) development.push({ kind: 'slow', type: p.name, myMed: p.myMed, teamMed: p.tmMed });
+  const selfLogged = mine.filter((x) => !x.fromEmail && x.createdById && x.createdById === x.assigneeId).length;
+  if (mine.length >= T.minN && selfLogged / mine.length > T.selfLogged) development.push({ kind: 'selfLogged', pct: Math.round((selfLogged / mine.length) * 100) });
+  const nowIso = ctx.now ? ctx.now.toISOString() : new Date().toISOString();
+  const aging = (ctx.tasks || []).filter((x) => x.assigneeId === personId && x.state === 'open' && x.createdAt && hoursBetween(x.createdAt, nowIso) > T.agingDays * 24).length;
+  if (aging > 0) development.push({ kind: 'aging', n: aging, days: T.agingDays });
+  const assigned = (ctx.tasks || []).filter((x) => x.assigneeId === personId && inM(x.createdAt, range) && x.state !== 'cancelled');
+  const rate = assigned.length >= T.minN ? assigned.filter((x) => x.state === 'done').length / assigned.length : null;
+  if (rate != null && rate < T.rate) development.push({ kind: 'rate', pct: Math.round(rate * 100) });
+  // suggestions for the manager: stretch, invest, balance — each with its reason
+  const suggestions = [];
+  const myMainTier = TIERS.reduce((a, b) => (mineT[a] >= mineT[b] ? a : b));
+  const upTier = TIERS[Math.min(TIERS.length - 1, TIERS.indexOf(myMainTier) + 1)];
+  if (upTier !== myMainTier && myPoints >= T.minPoints) {
+    const cand = perType.filter((p) => tierOf(p.name) === upTier && p.team >= T.minN).sort((a, b) => b.team - a.team)[0];
+    if (cand) suggestions.push({ kind: 'stretch', type: cand.name, tier: upTier, teamN: cand.team, mine: cand.mine });
+  }
+  const fast = strengths.find((x) => x.kind === 'speed'); if (fast) suggestions.push({ kind: 'invest', type: fast.type, myMed: fast.myMed, teamMed: fast.teamMed });
+  if (quartile === 4 && perPerson.length >= 3) { const quick = perType.filter((p) => tierOf(p.name) === 'admin' && p.team >= T.minN).sort((a, b) => b.team - a.team)[0]; if (quick) suggestions.push({ kind: 'balanceUp', type: quick.name }); }
+  if (quartile === 1 && perPerson.length >= 3) { const deep = perType.filter((p) => tierOf(p.name) === 'multistage' && p.team >= 1).sort((a, b) => b.team - a.team)[0]; if (deep) suggestions.push({ kind: 'balanceDeep', type: deep.name }); }
+  // consistency: points per week inside the month
+  const weeks = {}; for (const x of mine) { const w = isoWeek(x.completedAt); weeks[w] = (weeks[w] || 0) + taskWeight(wt, x.type); }
+  const wv = Object.values(weeks); const mean = wv.length ? wv.reduce((a, b) => a + b, 0) / wv.length : 0;
+  const sd = wv.length > 1 ? Math.sqrt(wv.reduce((a, b) => a + (b - mean) ** 2, 0) / wv.length) : 0;
+  const consistency = wv.length >= 3 && mean > 0 ? Math.max(0, Math.min(1, 1 - sd / mean)) : null;
+  const onLeave = !!(ctx.roster && ctx.roster.people && ctx.roster.people[personId] && ctx.roster.people[personId].onLeave);
+  return { month: ym, personId, onLeave, points: myPoints, done: mine.length, rank: rank || null, prevPoints, prevDone: minePrev.length, teamMedian, quartile, teamSize: perPerson.length,
+    tiers: { mine: mineT, team: teamT, mineShare: ms, teamShare: ts }, archetype, strengths, development, suggestions, consistency, weeks: wv.length, activities: myActs, selfLoggedPct: mine.length ? Math.round((selfLogged / mine.length) * 100) : 0 };
+}
+/** The team's month: a card per person, the heat map (people × tiers) and the next month's plan from the suggestions. */
+export function teamMonth(ctx, ym) {
+  const cards = (ctx.team || []).map((id) => monthCard(ctx, id, ym));
+  const heat = cards.map((c) => ({ id: c.id || c.personId, ...c.tiers.mine, total: c.points }));
+  return { month: ym, cards, heat, plan: cards.filter((c) => c.suggestions.length).map((c) => ({ id: c.personId, suggestions: c.suggestions, archetype: c.archetype })) };
+}
+/** Months fully inside the data and already over: these get closed cards. */
+export function closableMonths(ranges, now = new Date()) {
+  const today = ymd(saudiToday(now)); const out = new Set();
+  for (const r of ranges || []) { let ym = r.from.slice(0, 7); while (ym <= r.to.slice(0, 7)) { const m = monthRange(ym); if (m.from >= r.from && m.to <= r.to && m.to < today) out.add(ym); ym = ym === r.to.slice(0, 7) ? '9999-99' : (([y, mm]) => (mm === 12 ? `${y + 1}-01` : `${y}-${pad(mm + 1)}`))(ym.split('-').map(Number)); } }
+  return [...out].sort();
 }
 
 /** Parts of a whole as donut segments: each gets its share, and the SVG dash pair for a circle of radius r. */

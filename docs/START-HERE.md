@@ -37,6 +37,7 @@
 | `docs/decisions/0018-assignment-panel-the-one-write.md` | لوحة التعيين — الكتابة الوحيدة، داخل ماي أفاقي |
 | `docs/decisions/0019-weights-install-auto-update-help.md` | الأوزان، التثبيت، التحديث التلقائي، علامات «؟» |
 | `docs/kpi-weights-study.md` | دراسة الأوزان — المنهج والخريطة والحوكمة |
+| `docs/decisions/0020-monthly-card.md` | بطاقة الشهر: النمط والتميّز والتطوير والاقتراحات، وقفل الشهر |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

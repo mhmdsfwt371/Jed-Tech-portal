@@ -19,7 +19,8 @@
     "343": {
       "position": "مهندس ما بعد البيع",
       "positionEn": "After-sales engineer",
-      "leaderId": "124"
+      "leaderId": "124",
+      "onLeave": true
     },
     "344": {
       "position": "مهندس ما بعد البيع",

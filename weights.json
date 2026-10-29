@@ -166,5 +166,15 @@
     "70": [
       "*"
     ]
+  },
+  "card": {
+    "minN": 5,
+    "spec": 1.5,
+    "speed": 0.3,
+    "selfLogged": 0.4,
+    "agingDays": 7,
+    "rate": 0.85,
+    "minPoints": 10,
+    "tierIdx": 1.3
   }
 }

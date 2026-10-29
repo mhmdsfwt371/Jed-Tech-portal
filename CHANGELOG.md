@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v8.4 — 2026-10-29
+
+- بطاقة الشهر في «مؤشراتي»: نمط عملك من الأرقام — حجمك مقابل وسيط الفريق وربعك، وبصمتك على الفئات الأربع برسمة عنكبوتية ولقب للنمط، وأكثر ما تميّزت به (تخصص، سرعة، مبادرة)، وما يستحق التطوير — كل جملة معها رقمها. والشهر المنتهي يُقفل تلقائيًّا ولا تتغير بطاقته.
+- القادة والمدير يرون بطاقات من تحتهم بالمرتبة واقتراحات التوزيع للشهر القادم: تمدّد، استثمار، توازن — بقاعدة معلنة وسبب مكتوب. المهندس يرى ربعه لا مرتبته.
+- في لوحة المؤشرات: خريطة الفريق (الأشخاص × الفئات) وخطة الشهر القادم. والبطاقة تُطبع صفحة واحدة للقاء الشهري.
+
+<details><summary>English</summary>
+
+- The month’s card on “My KPIs”: your work pattern from the numbers — volume against the team median and your quarter, your fingerprint across the four tiers as a radar with a pattern name, where you stood out (specialisation, speed, initiative) and what deserves development — every line with its number. A finished month closes by itself and its card never changes.
+- Leaders and the manager see their people’s cards with rank and next month’s assignment suggestions: stretch, invest, balance — by a stated rule with a written reason. An engineer sees their quarter, not their rank.
+- On the KPI board: the team map (people × tiers) and next month’s plan. The card prints on one page for the monthly one-to-one.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «میرے اشاریے» پر مہینے کا کارڈ: اعداد سے آپ کے کام کا انداز — ٹیم کے وسط کے مقابلے میں حجم اور آپ کی چوتھائی، چار درجوں پر آپ کا نقش ریڈار اور انداز کے نام کے ساتھ، آپ کہاں نمایاں رہے (مہارت، رفتار، پہل) اور کیا ترقی کا مستحق ہے — ہر سطر اپنے عدد کے ساتھ۔ ختم شدہ مہینہ خود بند ہوتا ہے اور اس کا کارڈ نہیں بدلتا۔
+- لیڈر اور مینیجر اپنے لوگوں کے کارڈ درجے اور اگلے مہینے کی تفویض کی تجاویز کے ساتھ دیکھتے ہیں: توسیع، سرمایہ کاری، توازن — واضح اصول اور لکھی وجہ سے۔ انجینئر اپنی چوتھائی دیکھتا ہے، درجہ نہیں۔
+- اشاریوں کے بورڈ پر: ٹیم کا نقشہ (افراد × درجے) اور اگلے مہینے کا منصوبہ۔ کارڈ ماہانہ ون ٹو ون کے لیے ایک صفحے پر پرنٹ ہوتا ہے۔
+
+</div>
+</details>
+
+
 ## v8.3 — 2026-10-29
 
 - الأوزان مربوطة بماي أفاقي: إشارة المدير تجلب مع المهام أنواع المهام المربوطة بكل فريق كما يعرّفها ماي أفاقي، فأي نوع جديد يظهر في صفحة «الأوزان» وحده معلَّمًا «بلا وزن» حتى يُحدَّد.

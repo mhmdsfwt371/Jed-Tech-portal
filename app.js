@@ -6,6 +6,7 @@ import {
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet,
 } from './core.js';
 
@@ -37,7 +38,7 @@ function toast(msg) {
 
 // ---------- storage: IndexedDB, with an in-memory fallback where it is unavailable ----------
 const store = (() => {
-  let mem = []; let memMe = null; let memRep = []; let memRoster = null; let memWeights = null;
+  let mem = []; let memMe = null; let memRep = []; let memRoster = null; let memWeights = null; let memCards = {};
   const open = () => new Promise((res, rej) => {
     if (!('indexedDB' in window)) return rej(new Error('no idb'));
     const r = indexedDB.open('afaqy-portal', 1);
@@ -51,6 +52,8 @@ const store = (() => {
     // "my KPIs" — an engineer's own profile, kept apart from the manager's datasets
     async getReports() { try { return (await run('readonly', (s) => s.get('reports'))) || []; } catch { return memRep; } },
     async putReports(v) { try { await run('readwrite', (s) => s.put(v, 'reports')); } catch { memRep = v; } },
+    async getCards() { try { return (await run('readonly', (s) => s.get('cards'))) || {}; } catch { return memCards; } },
+    async putCards(v) { try { await run('readwrite', (s) => s.put(v, 'cards')); } catch { memCards = v; } },
     async getWeights() { try { return (await run('readonly', (s) => s.get('weights'))) || null; } catch { return memWeights; } },
     async putWeights(v) { try { await run('readwrite', (s) => (v ? s.put(v, 'weights') : s.delete('weights'))); } catch { memWeights = v; } },
     async getRoster() { try { return (await run('readonly', (s) => s.get('roster'))) || null; } catch { return memRoster; } },
@@ -108,6 +111,74 @@ document.addEventListener('click', (e) => {
   const h = b.closest('h1, h2, h3, summary'); const title = h ? h.textContent.replace(/\?\s*$/, '').trim() : '';
   openHelp(b.dataset.help, b.dataset.helpTitle, title);
 });
+// ---------- the monthly card: a work pattern described from the numbers, every line with its "why" ----------
+let monthCards = {};        // closed months, frozen: { 'YYYY-MM': { personId: card } }
+let cardMonth = null;       // the month shown on the profile
+const fmtH = (h) => formatHours(h, lang);
+const monthLabel = (ym) => { const [y, m] = ym.split('-').map(Number); return new Intl.DateTimeFormat(lang === 'ar' ? 'ar-EG-u-ca-gregory-nu-latn' : lang === 'ur' ? 'ur-PK-u-ca-gregory-nu-latn' : 'en-GB-u-ca-gregory', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(y, m - 1, 15))); };
+function radar(mine, team, size = 180) {
+  const svg = document.createElementNS(SVG, 'svg'); svg.setAttribute('viewBox', '0 0 200 200'); svg.setAttribute('width', size); svg.setAttribute('height', size); svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', t('card_radar'));
+  const c = 100, R = 78, axes = TIERS.map((k, i) => ({ k, a: -Math.PI / 2 + (i * Math.PI) / 2 }));
+  const pt = (a, r) => [c + Math.cos(a) * r, c + Math.sin(a) * r];
+  const mk = (tag, attrs) => { const n = document.createElementNS(SVG, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
+  for (const f of [0.33, 0.66, 1]) svg.append(mk('polygon', { points: axes.map(({ a }) => pt(a, R * f).join(',')).join(' '), fill: 'none', stroke: 'var(--line-strong)', 'stroke-width': 1 }));
+  for (const { a } of axes) { const [x, y] = pt(a, R); svg.append(mk('line', { x1: c, y1: c, x2: x, y2: y, stroke: 'var(--line-strong)', 'stroke-width': 1 })); }
+  const poly = (sh, fill, stroke) => mk('polygon', { points: axes.map(({ k, a }) => pt(a, R * Math.min(1, sh[k] || 0)).join(',')).join(' '), fill, stroke, 'stroke-width': 2, 'fill-opacity': 0.35 });
+  svg.append(poly(team, 'var(--slate)', 'var(--slate)'));
+  svg.append(poly(mine, 'var(--accent)', 'var(--accent-dark)'));
+  for (const { k, a } of axes) { const [x, y] = pt(a, R + 14); const tx = mk('text', { x, y, 'text-anchor': 'middle', 'dominant-baseline': 'middle', 'font-size': 10, fill: 'var(--title)' }); tx.textContent = t(`tier_short_${k}`); svg.append(tx); }
+  return svg;
+}
+const why = (text) => el('span', { class: 'why', text });
+function renderCard(card, nm, { showRank = false, showSuggestions = false, compact = false } = {}) {
+  if (!card) return null;
+  const arch = t(`arch_${card.archetype}`), archWhy = t(`arch_${card.archetype}_why`);
+  const q = card.quartile ? t(`quartile_${card.quartile}`) : '—';
+  const delta = card.points - card.prevPoints;
+  const S = card.strengths.slice(0, compact ? 2 : 4).map((s) => s.kind === 'spec' ? t('str_spec', { type: s.type, pct: s.pct, my: s.myPct, n: s.mine })
+    : s.kind === 'speed' ? t('str_speed', { type: s.type, me: fmtH(s.myMed), team: fmtH(s.teamMed) }) : t('str_initiative', { n: s.n, c: s.customers }));
+  const D = card.development.slice(0, compact ? 2 : 4).map((d) => d.kind === 'tierGap' ? t('dev_tierGap', { tier: t(`tier_${d.tier}`), mine: d.mine, team: d.team })
+    : d.kind === 'slow' ? t('dev_slow', { type: d.type, me: fmtH(d.myMed), team: fmtH(d.teamMed) }) : d.kind === 'selfLogged' ? t('dev_self', { pct: d.pct })
+    : d.kind === 'aging' ? t('dev_aging', { n: d.n, days: d.days }) : t('dev_rate', { pct: d.pct }));
+  const G = card.suggestions.map((g) => g.kind === 'stretch' ? t('sug_stretch', { type: g.type, tier: t(`tier_${g.tier}`), n: g.teamN })
+    : g.kind === 'invest' ? t('sug_invest', { type: g.type, me: fmtH(g.myMed), team: fmtH(g.teamMed) }) : g.kind === 'balanceUp' ? t('sug_balanceUp', { type: g.type, pts: card.points, med: card.teamMedian }) : t('sug_balanceDeep', { type: g.type, pts: card.points, med: card.teamMedian }));
+  return el('div', { class: `card-month${compact ? ' compact' : ''}` },
+    el('div', { class: 'card-head' },
+      el('div', {}, el('h3', { text: nm }), el('div', { class: 'arch' }, el('b', { text: arch }), why(archWhy))),
+      card.onLeave ? el('span', { class: 'pill on-leave', text: t('card_on_leave') }) : null),
+    el('div', { class: 'card-grid' },
+      el('div', { class: 'card-volume' },
+        el('div', { class: 'big' }, el('b', { text: String(card.points) }), el('span', { text: t('card_points') })),
+        el('div', { class: 'hint', text: t('card_vs_prev', { d: (delta >= 0 ? '+' : '−') + Math.abs(delta), done: card.done }) }),
+        el('div', { class: 'hint', text: showRank && card.rank ? t('card_rank', { r: card.rank, n: card.teamSize, med: card.teamMedian }) : t('card_quartile', { q, med: card.teamMedian }) }),
+        card.consistency != null ? el('div', { class: 'hint', text: t('card_consistency', { pct: Math.round(card.consistency * 100), w: card.weeks }) }) : null),
+      el('div', { class: 'card-radar' }, radar(card.tiers.mineShare, card.tiers.teamShare, compact ? 140 : 180), el('div', { class: 'hint radar-legend' }, el('i', { class: 'me' }), t('card_me'), el('i', { class: 'team' }), t('card_team_legend')))),
+    el('div', { class: 'card-cols' },
+      el('div', { class: 'card-col good' }, el('h4', { text: t('card_strengths') }), S.length ? el('ul', {}, S.map((x) => el('li', { text: x }))) : el('p', { class: 'hint', text: t('card_none_yet') })),
+      el('div', { class: 'card-col grow' }, el('h4', { text: t('card_development') }), D.length ? el('ul', {}, D.map((x) => el('li', { text: x }))) : el('p', { class: 'hint', text: t('card_none_dev') })),
+      showSuggestions ? el('div', { class: 'card-col plan' }, el('h4', { text: t('card_suggestions') }), G.length ? el('ul', {}, G.map((x) => el('li', { text: x }))) : el('p', { class: 'hint', text: t('card_none_sug') })) : null));
+}
+// the card's context from the manager's data (board) or from a person's own hand-over (profile)
+function cardCtxFromDatasets(team) {
+  const tasks = allTasks(); const acts = reports.flatMap((r) => r.activities || []);
+  return { tasks, activities: acts, weights: weights(), team, roster: roster(), now: new Date() };
+}
+function cardCtxFromMe(team) { return { tasks: me.tasks, activities: [], weights: weights(), team, roster: roster(), now: new Date() }; }
+// closing months: the first pull after a month ends freezes that month's cards for the scope; they never change afterwards
+async function closeMonths() {
+  if (!datasets.length) return;
+  const ranges = datasets.filter((d) => !d.sample).map((d) => d.range);
+  const months = closableMonths(ranges, new Date());
+  const team = currentTeam(scoped(peopleOf(datasets)), allTasks());
+  let added = [];
+  for (const ym of months) {
+    if (monthCards[ym] && team.every((id) => monthCards[ym][id])) continue;
+    const tm = teamMonth(cardCtxFromDatasets(team), ym);
+    monthCards[ym] = { ...(monthCards[ym] || {}), ...Object.fromEntries(tm.cards.filter((c) => !(monthCards[ym] || {})[c.personId]).map((c) => [c.personId, c])) };
+    added.push(ym);
+  }
+  if (added.length) { await store.putCards(monthCards); toast(t('card_closed', { m: added.map(monthLabel).join('، ') })); }
+}
 // ---------- install on Android, iPhone and Windows ----------
 let installPrompt = null;
 const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -235,6 +306,18 @@ function renderMe(waiting = false) {
       (alerts.attention || alerts.improved) ? el('div', { class: 'alerts' },
         alerts.attention ? el('div', { class: 'alert warn', text: t('alert_attention', { name: nm(alerts.attention.id), why: alerts.attention.why.map(whyText).join('، ') }) }) : null,
         alerts.improved ? el('div', { class: 'alert ok', text: t('alert_improved', { name: nm(alerts.improved.id), n: alerts.improved.delta }) }) : null) : null] : null,
+    el('div', { class: 'row', style: 'justify-content:space-between;align-items:flex-end' },
+      el('h2', { style: 'margin:0' }, t('card_h'), helpQ('help_card')),
+      (() => { const months = [...new Set([...Object.keys(monthCards), ymd(new Date()).slice(0, 7)])].sort().reverse(); if (!cardMonth || !months.includes(cardMonth)) cardMonth = months[0];
+        return el('select', { class: 'w-sel', onchange: (e) => { cardMonth = e.target.value; renderMe(); } }, months.map((m) => el('option', { value: m, selected: m === cardMonth, text: `${monthLabel(m)}${monthCards[m] ? '' : ` · ${t('card_live')}`}` }))); })()),
+    el('p', { class: 'hint', text: t('card_sub') }),
+    (() => { const ymNow = cardMonth; const team = pm.scope.team; const ctx = cardCtxFromMe(team);
+      const own = (monthCards[ymNow] && monthCards[ymNow][me.user.id]) || monthCard(ctx, me.user.id, ymNow);
+      const below = pm.below.map((r) => r.id);
+      return [renderCard(own, who, { showRank: false, showSuggestions: false }),
+        below.length ? [el('h3', { class: 'card-team-h', text: t('card_team_h', { n: below.length }) }),
+          el('div', { class: 'cards-grid' }, below.map((id) => renderCard((monthCards[ymNow] && monthCards[ymNow][id]) || monthCard(ctx, id, ymNow), nm(id), { showRank: true, showSuggestions: true, compact: true })))] : null,
+        el('div', { class: 'row', style: 'margin-top:8px' }, el('button', { type: 'button', class: 'btn', text: t('card_print'), onclick: () => window.print() }))]; })(),
     el('h2', { text: t('me_history_h') }),
     el('div', { class: 'table-wrap' }, el('table', {},
       el('thead', {}, el('tr', {}, ...['me_q', 'col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_median', 'col_email', 'col_self', 'col_cancelled'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
@@ -468,6 +551,7 @@ async function ingest(text) {
   const out = parseDataset(text);
   if (out.error) { msg.className = 'msg err'; msg.textContent = t(out.error, out.vars); return false; }
   datasets = mergeDataset(datasets, out.dataset);
+  setTimeout(closeMonths, 0);
   await store.put(datasets);
   msg.className = 'msg';
   msg.textContent = t('loaded', { n: out.dataset.tasks.length, range: `${out.dataset.range.from} → ${out.dataset.range.to}` }) + (out.skipped ? ` ${t('warn_rows', { n: out.skipped })}` : '');
@@ -605,6 +689,15 @@ function renderKpi() {
         el('button', { type: 'button', class: `pill-btn${kpiSort === k ? ' on' : ''}`, text: t(label), onclick: () => { kpiSort = k; renderKpi(); } })))),
     table,
     renderKpiDonuts(ds, f, team),
+    (() => { const ym = ds.range.to.slice(0, 7); const tm = teamMonth(cardCtxFromDatasets(team), ym); const nmB = (id) => (nameOf(peopleById.get(id), lang) || id);
+      const max = Math.max(1, ...tm.heat.flatMap((h) => TIERS.map((k) => h[k])));
+      const cell = (v) => el('td', { class: 'num heat', style: `--heat:${(v / max).toFixed(2)}`, text: v ? String(v) : '' });
+      return [el('h2', {}, t('heat_h', { m: monthLabel(ym) }), helpQ('help_heat')), el('p', { class: 'hint', text: t('heat_sub') }),
+        el('div', { class: 'table-wrap' }, el('table', { class: 'heatmap' },
+          el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), ...TIERS.map((k) => el('th', { class: 'num', text: t(`tier_short_${k}`) })), el('th', { class: 'num', text: t('card_points') }), el('th', { text: t('card_arch') }))),
+          el('tbody', {}, tm.cards.sort((x, y) => y.points - x.points).map((c) => el('tr', {}, el('td', { text: nmB(c.personId) }), ...TIERS.map((k) => cell(c.tiers.mine[k])), el('td', { class: 'num', text: String(c.points) }), el('td', { text: t(`arch_${c.archetype}`) })))))),
+        el('h2', {}, t('plan_h'), helpQ('help_plan')), el('p', { class: 'hint', text: t('plan_sub') }),
+        tm.plan.length ? el('div', { class: 'cards-grid' }, tm.plan.map((p) => { const c = tm.cards.find((x) => x.personId === p.id); return renderCard(c, nmB(p.id), { showRank: true, showSuggestions: true, compact: true }); })) : el('div', { class: 'empty', text: t('plan_none') })]; })(),
     datasets.length > 1 ? [el('h2', { text: t('trend') }), el('p', { class: 'hint', text: t('trend_sub') }),
       el('div', { class: 'columns' }, trend.map(({ d, f: x }) => el('div', { class: `column${d.key === kpiKey ? ' on' : ''}` },
         el('b', { text: String(x.done) }), el('i', { style: `height:${Math.max(6, Math.round((x.done / Math.max(1, ...trend.map((q) => q.f.done))) * 140))}px` }),
@@ -980,6 +1073,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   rosterDevice = parseRoster(await store.getRoster());
   try { const r = await fetch('./team.json', { cache: 'no-store' }); rosterRepo = r.ok ? parseRoster(await r.json()) : null; } catch { rosterRepo = null; }
   weightsDevice = await store.getWeights();
+  monthCards = (await store.getCards()) || {};
   try { const r = await fetch('./weights.json', { cache: 'no-store' }); weightsRepo = r.ok ? await r.json() : null; } catch { weightsRepo = null; }
   applyLang();   // renders everything and routes
   loadRelease(); announceUpdate(); showInstall();

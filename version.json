@@ -1,21 +1,21 @@
 {
-  "version": "8.3",
+  "version": "8.4",
   "date": "2026-10-29",
   "notes": {
     "ar": [
-      "الأوزان مربوطة بماي أفاقي: إشارة المدير تجلب مع المهام أنواع المهام المربوطة بكل فريق كما يعرّفها ماي أفاقي، فأي نوع جديد يظهر في صفحة «الأوزان» وحده معلَّمًا «بلا وزن» حتى يُحدَّد.",
-      "الدراسة أُعيدت على الأنواع المربوطة بالفريقين فقط — ٢١ لما بعد البيع و٧ للبحث والتطوير — مع نوعين عامين يحملان ٦٠٪ من عمل ما بعد البيع. الدراسة كاملة في docs/kpi-weights-study.md.",
-      "صلاحيات التعديل: المدير يعدّل كل الأوزان ويمنح أي شخص صلاحية على أنواع بعينها من عمود «من يعدّل»؛ من لا صلاحية له يرى الأوزان للقراءة. الصلاحيات برقم ماي أفاقي، وتُعتمد بملف weights.json."
+      "بطاقة الشهر في «مؤشراتي»: نمط عملك من الأرقام — حجمك مقابل وسيط الفريق وربعك، وبصمتك على الفئات الأربع برسمة عنكبوتية ولقب للنمط، وأكثر ما تميّزت به (تخصص، سرعة، مبادرة)، وما يستحق التطوير — كل جملة معها رقمها. والشهر المنتهي يُقفل تلقائيًّا ولا تتغير بطاقته.",
+      "القادة والمدير يرون بطاقات من تحتهم بالمرتبة واقتراحات التوزيع للشهر القادم: تمدّد، استثمار، توازن — بقاعدة معلنة وسبب مكتوب. المهندس يرى ربعه لا مرتبته.",
+      "في لوحة المؤشرات: خريطة الفريق (الأشخاص × الفئات) وخطة الشهر القادم. والبطاقة تُطبع صفحة واحدة للقاء الشهري."
     ],
     "en": [
-      "Weights linked to myafaqy: the manager bookmark brings, with the tasks, each team’s linked task types as myafaqy defines them, so any new type appears on the “Weights” page by itself, marked “no weight” until one is set.",
-      "The study was redone on the two teams’ linked types only — 21 after-sales and 7 R&D — plus two general types carrying 60% of after-sales work. The full study is in docs/kpi-weights-study.md.",
-      "Editing rights: the admin edits every weight and grants anyone rights on specific types from the “Who may edit” column; without rights the weights are read-only. Rights go by myafaqy id and are adopted through weights.json."
+      "The month’s card on “My KPIs”: your work pattern from the numbers — volume against the team median and your quarter, your fingerprint across the four tiers as a radar with a pattern name, where you stood out (specialisation, speed, initiative) and what deserves development — every line with its number. A finished month closes by itself and its card never changes.",
+      "Leaders and the manager see their people’s cards with rank and next month’s assignment suggestions: stretch, invest, balance — by a stated rule with a written reason. An engineer sees their quarter, not their rank.",
+      "On the KPI board: the team map (people × tiers) and next month’s plan. The card prints on one page for the monthly one-to-one."
     ],
     "ur": [
-      "اوزان مائی آفاقی سے منسلک: مینیجر بک مارک ٹاسکس کے ساتھ ہر ٹیم کی منسلک ٹاسک اقسام لاتا ہے جیسے مائی آفاقی انہیں بیان کرتا ہے، اس لیے کوئی بھی نئی قسم «اوزان» کے صفحے پر خود ظاہر ہوتی ہے، «بغیر وزن» کے نشان کے ساتھ جب تک طے نہ ہو۔",
-      "مطالعہ صرف دونوں ٹیموں کی منسلک اقسام پر دوبارہ کیا گیا — آفٹر سیلز کی ۲۱ اور تحقیق و ترقی کی ۷ — دو عام اقسام کے ساتھ جو آفٹر سیلز کے ۶۰٪ کام کی حامل ہیں۔ مکمل مطالعہ docs/kpi-weights-study.md میں ہے۔",
-      "ترمیم کے حقوق: ایڈمن ہر وزن بدلتا ہے اور «کون بدل سکتا ہے» کے کالم سے کسی کو بھی مخصوص اقسام پر حق دیتا ہے؛ حق کے بغیر اوزان صرف پڑھنے کے لیے ہیں۔ حقوق مائی آفاقی شناخت سے ہیں اور weights.json سے منظور ہوتے ہیں۔"
+      "«میرے اشاریے» پر مہینے کا کارڈ: اعداد سے آپ کے کام کا انداز — ٹیم کے وسط کے مقابلے میں حجم اور آپ کی چوتھائی، چار درجوں پر آپ کا نقش ریڈار اور انداز کے نام کے ساتھ، آپ کہاں نمایاں رہے (مہارت، رفتار، پہل) اور کیا ترقی کا مستحق ہے — ہر سطر اپنے عدد کے ساتھ۔ ختم شدہ مہینہ خود بند ہوتا ہے اور اس کا کارڈ نہیں بدلتا۔",
+      "لیڈر اور مینیجر اپنے لوگوں کے کارڈ درجے اور اگلے مہینے کی تفویض کی تجاویز کے ساتھ دیکھتے ہیں: توسیع، سرمایہ کاری، توازن — واضح اصول اور لکھی وجہ سے۔ انجینئر اپنی چوتھائی دیکھتا ہے، درجہ نہیں۔",
+      "اشاریوں کے بورڈ پر: ٹیم کا نقشہ (افراد × درجے) اور اگلے مہینے کا منصوبہ۔ کارڈ ماہانہ ون ٹو ون کے لیے ایک صفحے پر پرنٹ ہوتا ہے۔"
     ]
   }
 }
