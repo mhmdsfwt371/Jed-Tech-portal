@@ -8,12 +8,24 @@ import {
   parseRoster, mergeRoster, positionOf, leaderOf, reportsOf, donutParts, periodWindows, teamAlerts, activityTotals, descendantsOf,
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, scopeIds, inScope,
   weeklyDigest, goalProgress, patternPath, coverageTotals, monthCard, closableMonths, repairCheck, parseRepairLines,
-  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS, portalRoute,
+  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS, portalRoute, tourState, TOUR_DEVICES,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
 
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
+test('reopenable KPI walkthrough keeps all five steps in bounds for every device', () => {
+  assert.deepEqual(TOUR_DEVICES, ['desktop', 'android', 'ios']);
+  for (const device of TOUR_DEVICES) {
+    for (let i = 0; i <= 4; i++) {
+      assert.deepEqual(tourState(i, device), { step: i, total: 5, progress: (i + 1) * 20, device });
+    }
+  }
+  assert.equal(tourState(-20, 'unknown').step, 0);
+  assert.equal(tourState(99, 'android').step, 4);
+  assert.equal(tourState(2.5, 'ios').step, 0);
+  assert.equal(tourState(1, 'unknown').device, 'desktop');
+});
 
 test('every language has every key', () => {
   for (const lang of LANGS) for (const k of Object.keys(STRINGS.ar)) assert.ok(k in STRINGS[lang], `${lang} missing ${k}`);

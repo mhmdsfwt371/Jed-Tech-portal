@@ -1,18 +1,18 @@
 {
-  "version": "8.9",
+  "version": "8.10",
   "date": "2026-10-30",
   "notes": {
     "ar": [
-      "أُضيف رابط مستقل للفريق يفتح «مؤشراتي» أولًا ويعرض الأدوات وأفاقي برو والدليل فقط، بينما رابط الإدارة الحالي يحتفظ بكل الصفحات.",
-      "فصل الرابطين للعرض فقط وليس حماية؛ إشارة «مؤشراتي» تعيد الموظف إلى رابط الفريق بعد قراءة عمله من ماي أفاقي."
+      "أُضيف زر «إرشادي خطوة بخطوة» يظل ظاهرًا في صفحة «مؤشراتي» في كل مرة، سواء كانت بيانات المهندس موجودة أو لم تُسحب بعد.",
+      "الشرح التفاعلي يوضح خمس خطوات بحسب الكمبيوتر أو أندرويد أو آيفون، ويتيح نسخ الإشارة وفتح ماي أفاقي والرجوع لأي خطوة وإعادة فتح الشرح دون التأثير على البيانات."
     ],
     "en": [
-      "A separate team link now opens My KPIs first and shows Tools, Afaqy PRO and Guide, while the existing admin link retains all pages.",
-      "The links separate the presentation, not access security. The My KPIs bookmark returns the employee to the team URL after reading their own myafaqy work."
+      "The Step-by-step help button now stays visible on My KPIs at all times, whether the employee has already imported data or not.",
+      "The interactive five-step walkthrough adapts to a computer, Android or iPhone. It supports copying the bookmark, opening myafaqy, returning to previous steps and reopening without affecting saved KPIs."
     ],
     "ur": [
-      "ٹیم کا الگ لنک اب پہلے «میرے اشاریے» کھولتا ہے اور صرف ٹولز، آفاقی پرو اور رہنما دکھاتا ہے؛ موجودہ انتظامی لنک پر تمام صفحات موجود ہیں۔",
-      "یہ لنکس صرف ظاہری ترتیب الگ کرتے ہیں، سیکیورٹی نہیں۔ «میرے اشاریے» بک مارک ملازم کا کام پڑھنے کے بعد ٹیم کے لنک پر واپس آتا ہے۔"
+      "قدم بہ قدم رہنمائی کا بٹن اب «میرے اشاریے» کے صفحے پر ہر وقت نظر آتا ہے، خواہ ملازم نے اپنا ڈیٹا پہلے حاصل کیا ہو یا ابھی نہ کیا ہو۔",
+      "پانچ مرحلوں والی رہنمائی کمپیوٹر، اینڈرائیڈ اور آئی فون کے مطابق ہدایات دیتی ہے۔ اس میں بک مارک کا کوڈ کاپی کرنا، مائی آفاقی کھولنا، پچھلے مرحلے پر جانا اور محفوظ ڈیٹا بدلے بغیر رہنمائی دوبارہ کھولنا شامل ہے۔"
     ]
   }
 }

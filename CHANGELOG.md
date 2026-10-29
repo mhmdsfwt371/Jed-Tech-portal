@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.10 — 2026-10-30
+
+- أُضيف زر «إرشادي خطوة بخطوة» يظل ظاهرًا في صفحة «مؤشراتي» في كل مرة، سواء كانت بيانات المهندس موجودة أو لم تُسحب بعد.
+- الشرح التفاعلي يوضح خمس خطوات بحسب الكمبيوتر أو أندرويد أو آيفون، ويتيح نسخ الإشارة وفتح ماي أفاقي والرجوع لأي خطوة وإعادة فتح الشرح دون التأثير على البيانات.
+
+<details><summary>English</summary>
+
+- The Step-by-step help button now stays visible on My KPIs at all times, whether the employee has already imported data or not.
+- The interactive five-step walkthrough adapts to a computer, Android or iPhone. It supports copying the bookmark, opening myafaqy, returning to previous steps and reopening without affecting saved KPIs.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- قدم بہ قدم رہنمائی کا بٹن اب «میرے اشاریے» کے صفحے پر ہر وقت نظر آتا ہے، خواہ ملازم نے اپنا ڈیٹا پہلے حاصل کیا ہو یا ابھی نہ کیا ہو۔
+- پانچ مرحلوں والی رہنمائی کمپیوٹر، اینڈرائیڈ اور آئی فون کے مطابق ہدایات دیتی ہے۔ اس میں بک مارک کا کوڈ کاپی کرنا، مائی آفاقی کھولنا، پچھلے مرحلے پر جانا اور محفوظ ڈیٹا بدلے بغیر رہنمائی دوبارہ کھولنا شامل ہے۔
+
+</div>
+</details>
+
+
 ## v8.9 — 2026-10-30
 
 - أُضيف رابط مستقل للفريق يفتح «مؤشراتي» أولًا ويعرض الأدوات وأفاقي برو والدليل فقط، بينما رابط الإدارة الحالي يحتفظ بكل الصفحات.

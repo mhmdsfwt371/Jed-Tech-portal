@@ -1,7 +1,7 @@
 // app.js — everything on the page. Data stays in this browser (IndexedDB); nothing is sent anywhere.
 import { PRIMARY, SYSTEMS, MORE, PORTAL_VERSION, MODULE_ALLOW } from './config.js';
 import {
-  t as tr, L, LANGS, dirOf, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1,
+  t as tr, L, LANGS, dirOf, tourState, TOUR_DEVICES, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1,
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
@@ -105,6 +105,74 @@ function renderTools() {
 }
 
 // ---------- my KPIs (ADR-0010) ----------
+// This guide can be reopened after importing KPIs; it does not start any CRM request itself.
+let tourStep = 0;
+let tourDevice = /iPad|iPhone|iPod/i.test(navigator.userAgent) ? 'ios'
+  : /Android/i.test(navigator.userAgent) ? 'android' : 'desktop';
+function renderMeTour() {
+  if (!$('me-tour').open) return;
+  const state = tourState(tourStep, tourDevice);
+  tourStep = state.step; tourDevice = state.device;
+  const count = t('tour_count', { n: state.step + 1, total: state.total });
+  $('tour-count').textContent = count;
+  $('tour-progress').setAttribute('aria-valuenow', String(state.progress));
+  $('tour-progress').setAttribute('aria-valuetext', count);
+  $('tour-progress-bar').style.width = state.progress + '%';
+  $('tour-title').textContent = t('tour_' + state.step + '_title');
+  const descKey = state.step === 1 || state.step === 3
+    ? 'tour_' + state.step + '_' + state.device
+    : state.step === 0 ? 'tour_0_desc' : 'tour_' + state.step + '_desc';
+  $('tour-desc').textContent = t(descKey);
+  const options = state.step === 0 ? TOUR_DEVICES.map((device) =>
+    el('button', { type: 'button', class: 'tour-device' + (device === tourDevice ? ' picked' : ''),
+      'aria-pressed': String(device === tourDevice), text: t('tour_' + device),
+      onclick: () => { tourDevice = device; renderMeTour(); } })) : [];
+  set($('tour-options'), options);
+  const action = [];
+  if (state.step === 1) {
+    if (state.device === 'desktop') {
+      action.push(el('a', { class: 'btn primary bm', href: buildBookmarklet(portalHome(), lang), draggable: 'true',
+        text: t('tour_bookmark'), onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } }));
+    } else {
+      action.push(el('button', { type: 'button', class: 'btn primary', text: t('tour_copy'),
+        onclick: async () => {
+          try {
+            await navigator.clipboard.writeText(decodeURIComponent(buildBookmarklet(portalHome(), lang)));
+            toast(t('me_copied'));
+          } catch { toast(t('me_copy_fail')); }
+        } }));
+    }
+  }
+  if (state.step === 2 || state.step === 3) action.push(el('a', {
+    class: 'btn primary', href: 'https://myafaqy.com/', target: '_blank', rel: 'noopener',
+    text: t('tour_open_site') }));
+  set($('tour-actions'), action);
+  $('tour-status').textContent = state.step === 4 ? t(me ? 'tour_4_present' : 'tour_4_pending') : '';
+  $('tour-privacy').hidden = state.step !== 4;
+  $('tour-privacy').textContent = t('tour_privacy_note');
+  $('tour-back').disabled = state.step === 0;
+  $('tour-back').textContent = t('tour_back');
+  $('tour-next').textContent = t(state.step === 4 ? 'tour_finish' : 'tour_next');
+  // Re-enter the current slide after each step so its movement is visible.
+  const slide = $('tour-slide');
+  slide.classList.remove('tour-arrive');
+  void slide.offsetWidth;
+  slide.classList.add('tour-arrive');
+}
+function openMeTour() {
+  tourStep = 0;
+  $('me-tour').showModal();
+  renderMeTour();
+}
+$('me-tour-open').addEventListener('click', openMeTour);
+$('me-tour-close').addEventListener('click', () => $('me-tour').close());
+$('tour-back').addEventListener('click', () => { tourStep--; renderMeTour(); });
+$('tour-next').addEventListener('click', () => {
+  if (tourStep === 4) $('me-tour').close();
+  else { tourStep++; renderMeTour(); }
+});
+$('me-tour').addEventListener('close', () => $('me-tour-open').focus());
+
 let me = null;
 // a "?" beside a heading: what it is and how to use it, in the reader's language
 const helpQ = (key, titleKey) => el('button', { type: 'button', class: 'help-q', 'data-help': key, 'data-help-title': titleKey || '', 'aria-label': '?', text: '?' });
@@ -461,7 +529,7 @@ async function receiveMe(fragment) {
   history.replaceState(null, '', '#me');            // the data never stays in the address or the history
   if (r.error) { toast(t(r.error, r.vars || {})); renderMe(); return; }
   me = r.me; await store.putMe(me);
-  toast(t('me_loaded', { n: me.tasks.length })); renderMe();
+  toast(t('me_loaded', { n: me.tasks.length })); renderMe(); renderMeTour();
 }
 // The bookmark hands the data over by message (ADR-0014): accepted only from myafaqy itself and only in our shape.
 const MYAFAQY_ORIGIN = 'https://myafaqy.com';
@@ -477,7 +545,7 @@ window.addEventListener('message', async (e) => {
   if (r.error) { toast(t(r.error, r.vars || {})); return; }
   me = r.me; await store.putMe(me);
   if (location.hash !== '#me') history.replaceState(null, '', '#me');
-  route(); toast(t('me_loaded', { n: me.tasks.length })); renderMe();
+  route(); toast(t('me_loaded', { n: me.tasks.length })); renderMe(); renderMeTour();
 });
 
 // ---------- AFAQY PRO inside the portal (ADR-0011) ----------
@@ -1137,7 +1205,7 @@ function applyLang() {
   document.title = `${t('brand')} — ${t('portal')}`;
   renderSide(); renderTools(); renderBlocks(); renderDatasets(); renderKpi(); renderGuide(); renderMe(); renderPro(); renderMgr(); renderTeam(); renderWeights();
   for (const [id, f] of frames) f.title = L((MODULES.find((m) => m.id === id) || {}).name, lang);
-  route();
+  route(); renderMeTour();
 }
 const isDark = () => document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
 function paintThemeButton() { $('theme-btn').textContent = isDark() ? t('theme_light') : t('theme_dark'); }
