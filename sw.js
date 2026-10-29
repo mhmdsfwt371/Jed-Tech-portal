@@ -1,7 +1,7 @@
 // sw.js — offline shell for the portal. Scope is this folder only (registered with scope './'), so it never touches
 // the other tools that live on the same domain. The shell is served from the cache of this version; version.json is
 // always read from the network so a new release is noticed.
-const VERSION = '8.12';   // stamped by scripts/bump.mjs — never edit by hand
+const VERSION = '8.13';   // stamped by scripts/bump.mjs — never edit by hand
 const CACHE = 'afaqy-portal-' + VERSION;
 const SHELL = [
   './', './index.html', './app.js', './core.js', './tour-demo.js', './config.js', './manifest.webmanifest',
@@ -25,5 +25,17 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || url.origin !== location.origin) return;
   if (!url.pathname.startsWith(new URL('./', self.registration.scope).pathname)) return;
   if (url.pathname.endsWith('/version.json')) return;   // always from the network
+  // A GitHub-approved weights.json change must reach employees without an application release.
+  // Try the official file first, update the offline cache, and only use the cache if offline.
+  if (url.pathname.endsWith('/weights.json')) {
+    event.respondWith(fetch(event.request).then(async (response) => {
+      if (response.ok) {
+        try { const cache = await caches.open(CACHE); await cache.put(event.request, response.clone()); }
+        catch { /* online result still works if the offline cache cannot be written */ }
+      }
+      return response;
+    }).catch(() => caches.match(event.request, { ignoreSearch: true })));
+    return;
+  }
   event.respondWith(caches.match(event.request, { ignoreSearch: true }).then((hit) => hit || fetch(event.request)));
 });

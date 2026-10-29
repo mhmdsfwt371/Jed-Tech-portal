@@ -199,7 +199,7 @@ export const STRINGS = {
     me_refresh: 'للتحديث: افتح ماي أفاقي واضغط الإشارة مرة أخرى.',
     me_forget: 'حذف مؤشراتي من هذا الجهاز',
     g_me_h: 'مؤشراتي',
-    g_me_b: 'صفحة «مؤشراتي» ملفّك أنت. مرة واحدة: اسحب زر «مؤشراتي» إلى شريط الإشارات في المتصفح. ثم كلما أردت: افتح ماي أفاقي بحسابك واضغط الإشارة — تقرأ شغلك وتفتح البوابة عليه. تجد بياناتك وفرقك، ثم «شغلي المفتوح الآن» بعناوين مهامك وعمرها، ثم «هذا الشهر مقابل الشهر الماضي» على الأيام نفسها بأسهم تقول أين تحسّنت وأين تراجعت، ثم مقارنتك بمتوسط الفريق بلا أسماء، ثم تاريخك لآخر اثني عشر شهرًا. وإن كان ماي أفاقي يضع أشخاصًا تحتك في هيكله — قائد فريق أو مدير — يظهر قسم «فريقي» بأرقام كل واحد منهم. البوابة تعرض لك بالضبط ما يعرضه لك ماي أفاقي ولا شيء زائدًا. كل شيء يبقى على جهازك؛ لا يُنقل رمز الدخول ولا أسماء العملاء ولا عناوين مهام غيرك ولا عناوين المنجزة، وزر «حذف مؤشراتي» يمحوه من الجهاز. زر «إرشادي خطوة بخطوة» موجود دائمًا أعلى الصفحة، حتى بعد تحميل البيانات. يفتح شرحًا تفاعليًا بخمس خطوات مخصصًا للكمبيوتر أو أندرويد أو آيفون: حفظ الإشارة، الدخول إلى ماي أفاقي، تشغيلها، ثم التأكد من وصول المؤشرات. يمكن الرجوع لأي خطوة وإغلاقه وإعادة فتحه دون فقد بياناتك. والآن يضم الدليل نافذة متصفح توضيحية متحركة، فيها مؤشر ماوس أو لمسة تنتقل للمكان المطلوب وتبين النقر أو سحب إشارة «مؤشراتي» إلى شريط الإشارات. زر «إعادة حركة الماوس» يعرض الحركة مرة ثانية. العرض محاكاة مرئية فقط، ولا يتحكم في المتصفح الحقيقي أو داخل ماي أفاقي.',
+    g_me_b: 'صفحة «مؤشراتي» ملفّك أنت. مرة واحدة: اسحب زر «مؤشراتي» إلى شريط الإشارات في المتصفح. ثم كلما أردت: افتح ماي أفاقي بحسابك واضغط الإشارة — تقرأ شغلك وتفتح البوابة عليه. تجد بياناتك وفرقك، ثم «شغلي المفتوح الآن» بعناوين مهامك وعمرها، ثم «هذا الشهر مقابل الشهر الماضي» على الأيام نفسها بأسهم تقول أين تحسّنت وأين تراجعت، ثم مقارنتك بمتوسط الفريق بلا أسماء، ثم تاريخك لآخر اثني عشر شهرًا. وإن كان ماي أفاقي يضع أشخاصًا تحتك في هيكله — قائد فريق أو مدير — يظهر قسم «فريقي» بأرقام كل واحد منهم. البوابة تعرض لك بالضبط ما يعرضه لك ماي أفاقي ولا شيء زائدًا. كل شيء يبقى على جهازك؛ لا يُنقل رمز الدخول ولا أسماء العملاء ولا عناوين مهام غيرك ولا عناوين المنجزة، وزر «حذف مؤشراتي» يمحوه من الجهاز. زر «إرشادي خطوة بخطوة» موجود دائمًا أعلى الصفحة، حتى بعد تحميل البيانات. يفتح شرحًا تفاعليًا بخمس خطوات مخصصًا للكمبيوتر أو أندرويد أو آيفون: حفظ الإشارة، الدخول إلى ماي أفاقي، تشغيلها، ثم التأكد من وصول المؤشرات. يمكن الرجوع لأي خطوة وإغلاقه وإعادة فتحه دون فقد بياناتك. والآن يضم الدليل نافذة متصفح توضيحية متحركة، فيها مؤشر ماوس أو لمسة تنتقل للمكان المطلوب وتبين النقر أو سحب إشارة «مؤشراتي» إلى شريط الإشارات. زر «إعادة حركة الماوس» يعرض الحركة مرة ثانية. العرض محاكاة مرئية فقط، ولا يتحكم في المتصفح الحقيقي أو داخل ماي أفاقي. وبجانب النقاط في البطاقة الشهرية زر «تفصيل نقاط المهام» يعرض عدد المهام المنجزة لكل نوع ووزنها ومجموع نقاطها؛ أي نوع بلا وزن مُعلن يُحسب بالوزن الافتراضي مع تنبيه واضح. الشهور المقفولة القديمة تظل أرقامها محفوظة كما هي، ولا نعرض تفصيلًا تاريخيًا غير موجود.',
     col_self: 'سجّلها لنفسه',
     def_6: '«سجّلها لنفسه» من المسندة: مهام فتحها الموظف وأسندها لنفسه، لا من البريد — وهي عند الفريق الطلبات التي تصل بالواتساب أو بالمكالمات. ماي أفاقي يسجّل منشئ المهمة لا قناتها، فلا يُفصل الواتساب عن المكالمة. تُقرأ مع بقية الأعمدة: تُظهر من أين جاء الحمل، لا جودة العمل.',
     nav_pro: 'أفاقي برو',
@@ -359,8 +359,36 @@ export const STRINGS = {
     team_by_myafaqy: 'فريق كما في ماي أفاقي:',
     nav_weights: 'الأوزان',
     weights_sub: 'نقاط كل نوع مهمة وكل نشاط مع العملاء — بمعايير معلنة، ويمكن تعديلها.',
+    points_detail_title: 'تفصيل نقاط المهام',
+    points_detail_sub: 'النقاط من المهام المنجزة فقط، كل نوع مهمة × وزنه المعتمد. أنشطة العملاء الإضافية ليست ضمن سحب «مؤشراتي» الشخصي.',
+    points_col_type: 'نوع المهمة',
+    points_col_count: 'عدد المنجزة',
+    points_col_weight: 'الوزن',
+    points_col_sum: 'النقاط',
+    points_total: 'الإجمالي',
+    points_none: 'لا توجد مهام منجزة في هذه الفترة.',
+    points_unknown: 'نوع بدون وزن محدد؛ احتسبنا له الوزن الافتراضي.',
+    points_unknown_summary: 'فيه {n} نوع مهمة غير معرّف له وزن. راجع الأوزان المعتمدة.',
+    points_old_card: 'هذه بطاقة شهر مقفول قبل إضافة التفصيل. إجماليها محفوظ كما كان، والتفصيل التاريخي غير متاح بدون إعادة الحساب من مصدره.',
+    points_source_official: 'محسوبة من أوزان المهام المعتمدة المنشورة في البوابة.',
+    points_source_draft: 'معاينة بأوزان مسودة الإدارة على هذا الجهاز؛ لا يراها الفريق حتى تُنشر.',
+    weights_draft_notice: 'عندك {n} تغيير في الأوزان لم يُنشر للفريق. الفريق يرى فقط weights.json المنشور، وليس إعدادات جهازك.',
+    weights_official_notice: 'الأوزان الحالية مطابقة للملف المنشور. الفريق يقرأها عند فتح الصفحة أو تحديث البيانات.',
+    weights_publish_button: 'اعتماد وتجهيز النشر',
+    weights_publish_title: 'مراجعة ونشر أوزان الفريق',
+    weights_publish_intro: 'تم تجهيز {n} تغيير. آخر خطوة تتطلب الدخول إلى GitHub بحساب يملك حق التعديل؛ البوابة لا تحفظ مفاتيح GitHub ولا تنشر وحدها.',
+    weights_publish_1: 'انسخ محتوى weights.json الجاهز من الزر أدناه.',
+    weights_publish_2: 'افتح محرر الملف في GitHub والصق المحتوى بدل النص القديم بالكامل.',
+    weights_publish_3: 'اضغط Commit changes في GitHub. بعدها تظهر الأوزان المعتمدة للفريق عند فتح البوابة أو تحديث الصفحة.',
+    weights_copy_json: 'نسخ ملف الأوزان الجاهز',
+    weights_json_copied: 'تم نسخ الملف. افتح محرر GitHub والصقه واحفظ التغيير.',
+    weights_json_copy_fail: 'تعذر النسخ التلقائي؛ انسخ النص يدويًا من الصندوق أدناه.',
+    weights_github_open: 'فتح محرر weights.json على GitHub',
+    weights_publish_manual: 'هذا الزر يجهّز النشر ولا يُنشر مباشرة؛ اعتماد التغيير النهائي يحصل بعد Commit في GitHub.',
+    weights_publish_none: 'لا توجد تغييرات جديدة تحتاج النشر.',
+    weights_release_note: 'لم يُطلب تغيير الأوزان المعتمدة حاليًا؛ هذه معاينة لمسودة الجهاز حتى يتم Commit.',
     g_weights_h: 'الأوزان — نقاط كل نوع من العمل',
-    g_weights_b: 'لكل نوع مهمة في ماي أفاقي وزن، ولكل تصنيف نشاط مع العملاء وزن. المهمة المنجزة في الفترة تُحسب لصاحبها بوزن نوعها، والنشاط يُحسب بوزن تصنيفه حين يصير «Done». الأوزان أربع فئات معلنة: ١ إجراء إداري سريع، ٢ تعامل مع العميل أو تشخيص، ٣ ربط بجهة خارجية أو تنسيق ميداني، ٥ عمل متعدد المراحل. النقاط تظهر بجانب عدد المنجزة في لوحة المؤشرات ولا تحل محله. يمكن تغيير وزن أي نوع من القائمة؛ التغيير يبقى على هذا الجهاز، ولكي يعتمده الجميع يُنزَّل «weights.json» ويوضع في المستودع. الأوزان تُراجع كل ربع بالبيانات.',
+    g_weights_b: 'لكل نوع مهمة في ماي أفاقي وزن، ولكل تصنيف نشاط مع العملاء وزن. المهمة المنجزة في الفترة تُحسب لصاحبها بوزن نوعها، والنشاط يُحسب بوزن تصنيفه حين يصير «Done». الأوزان أربع فئات معلنة: ١ إجراء إداري سريع، ٢ تعامل مع العميل أو تشخيص، ٣ ربط بجهة خارجية أو تنسيق ميداني، ٥ عمل متعدد المراحل. النقاط تظهر بجانب عدد المنجزة في لوحة المؤشرات ولا تحل محله. يمكن تغيير وزن أي نوع من القائمة؛ التغيير يبقى على هذا الجهاز، ولكي يعتمده الجميع يُنزَّل «weights.json» ويوضع في المستودع. الأوزان تُراجع كل ربع بالبيانات. «مؤشراتي» تعرض الآن تفصيل نقاط كل نوع من المهام المنجزة: عددها ووزنها ومجموعها، مع إشارة واضحة لو نوع المهمة له وزن افتراضي. بطاقات الأشهر المقفولة القديمة تحتفظ بأرقامها ولن تُعرض تفاصيل لم تكن محفوظة. التعديلات المحلية للأوزان في الإدارة تعتبر مسودة، ولا تظهر للفريق إلا بعد نشر weights.json في المستودع. زر «اعتماد وتجهيز النشر» ينسخ الملف ويفتح GitHub لإتمام Commit يدويًا؛ البوابة لا تنشر بمفردها ولا تطلب مفتاح دخول.',
     tier_admin: 'إجراء إداري سريع',
     tier_admin_why: 'بلا تشخيص ولا طرف خارجي: إظهار مركبات، تفعيل، بيانات دخول، مهمة يدوية.',
     tier_customer: 'تعامل مع العميل أو تشخيص',
@@ -702,7 +730,7 @@ export const STRINGS = {
     me_refresh: 'To refresh: open myafaqy and press the bookmark again.',
     me_forget: 'Remove my KPIs from this device',
     g_me_h: 'My KPIs',
-    g_me_b: 'The “My KPIs” page is your own profile. Once: drag the “My KPIs” button onto the browser’s bookmarks bar. Then whenever you want: open myafaqy with your account and press the bookmark — it reads your work and opens the portal on it. You find your details and teams, then “My open work now” with your tasks’ titles and age, then “This month against last month” over the same days with arrows showing where you improved and where you slipped, then your comparison with the team average without names, then your history over the last twelve months. If myafaqy places people below you in its hierarchy — a team leader or a manager — a “My team” section shows each of them with their figures. The portal shows you exactly what myafaqy shows you, nothing more. Everything stays on your device; the sign-in token, customer names, the titles of others’ tasks and of completed tasks are never carried, and “Remove my KPIs” erases it from the device. The Step-by-step help button remains visible at the top even after loading your data. It opens an interactive five-step walkthrough for a computer, Android or iPhone: save the bookmark, sign in to myafaqy, run it and check your metrics. You can go back, close and reopen the guide without losing any data. The guide also contains an animated sample browser: a moving pointer or touch indicator demonstrates exactly where to click, or how to drag the My KPIs bookmark onto the bookmarks bar. Replay mouse movement repeats the scene. This is a visual simulation, not remote control of your browser or myafaqy.',
+    g_me_b: 'The “My KPIs” page is your own profile. Once: drag the “My KPIs” button onto the browser’s bookmarks bar. Then whenever you want: open myafaqy with your account and press the bookmark — it reads your work and opens the portal on it. You find your details and teams, then “My open work now” with your tasks’ titles and age, then “This month against last month” over the same days with arrows showing where you improved and where you slipped, then your comparison with the team average without names, then your history over the last twelve months. If myafaqy places people below you in its hierarchy — a team leader or a manager — a “My team” section shows each of them with their figures. The portal shows you exactly what myafaqy shows you, nothing more. Everything stays on your device; the sign-in token, customer names, the titles of others’ tasks and of completed tasks are never carried, and “Remove my KPIs” erases it from the device. The Step-by-step help button remains visible at the top even after loading your data. It opens an interactive five-step walkthrough for a computer, Android or iPhone: save the bookmark, sign in to myafaqy, run it and check your metrics. You can go back, close and reopen the guide without losing any data. The guide also contains an animated sample browser: a moving pointer or touch indicator demonstrates exactly where to click, or how to drag the My KPIs bookmark onto the bookmarks bar. Replay mouse movement repeats the scene. This is a visual simulation, not remote control of your browser or myafaqy. The monthly card also has Task points breakdown: completed count, weight and points for each task type, with a clear fallback-weight warning for unlisted types. Older closed cards retain their original totals and do not invent missing historical detail.',
     col_self: 'Self-logged',
     def_6: '“Self-logged”, among the assigned: tasks the employee opened and assigned to himself, not from email — in this team, the requests that arrive by WhatsApp or by phone. myafaqy records who created a task, not its channel, so WhatsApp and calls cannot be separated. Read it with the other columns: it shows where the load came from, not the quality of the work.',
     nav_pro: 'Afaqy PRO',
@@ -862,8 +890,36 @@ export const STRINGS = {
     team_by_myafaqy: 'A team as myafaqy lists it:',
     nav_weights: 'Weights',
     weights_sub: 'Points for each task type and each activity with customers — by stated criteria, and adjustable.',
+    points_detail_title: 'Task points breakdown',
+    points_detail_sub: 'Points come from completed tasks only: each task type multiplied by its approved weight. Additional customer activities are not included in the personal My KPIs import.',
+    points_col_type: 'Task type',
+    points_col_count: 'Completed',
+    points_col_weight: 'Weight',
+    points_col_sum: 'Points',
+    points_total: 'Total',
+    points_none: 'No completed tasks are available for this period.',
+    points_unknown: 'This task type has no assigned weight, so the default weight was applied.',
+    points_unknown_summary: 'There are {n} task types without an assigned weight. Review the approved weights.',
+    points_old_card: 'This month was closed before itemised points were stored. Its original total is preserved; the historical breakdown is unavailable without recalculation from its source.',
+    points_source_official: 'Calculated using the published task weights approved for this portal.',
+    points_source_draft: 'Preview using an unpublished management draft saved on this device; team members will not see it until it is published.',
+    weights_draft_notice: 'You have {n} unpublished weight changes. The team uses only the published weights.json, not changes saved on your device.',
+    weights_official_notice: 'Your local weights match the published file. Team members read it when they open the portal or refresh their data.',
+    weights_publish_button: 'Approve and prepare publication',
+    weights_publish_title: 'Review and publish team weights',
+    weights_publish_intro: 'Prepared {n} changes. The final step requires a GitHub account with write access. This portal does not store GitHub credentials or publish directly.',
+    weights_publish_1: 'Copy the prepared weights.json using the button below.',
+    weights_publish_2: 'Open the file editor on GitHub and replace its previous content with the copied text.',
+    weights_publish_3: 'Select Commit changes in GitHub. Approved weights then become available to your team when they open or refresh the portal.',
+    weights_copy_json: 'Copy prepared weights.json',
+    weights_json_copied: 'File copied. Open the GitHub editor, paste it and commit the change.',
+    weights_json_copy_fail: 'Automatic copy failed. Select and copy the text manually from the box below.',
+    weights_github_open: 'Open weights.json editor on GitHub',
+    weights_publish_manual: 'This action prepares publication; it does not publish by itself. Publication happens only after a GitHub commit.',
+    weights_publish_none: 'There are no new changes awaiting publication.',
+    weights_release_note: 'The currently published weights are unchanged; this previews the device draft until you commit it.',
     g_weights_h: 'Weights — points for each kind of work',
-    g_weights_b: 'Each task type in myafaqy has a weight, and so does each category of activity with customers. A task completed in the period counts for its assignee at its type’s weight; an activity counts at its category’s weight once it is “Done”. The weights fall into four stated tiers: 1 a quick administrative action, 2 dealing with the customer or diagnosing, 3 integration with an outside party or field coordination, 5 multi-stage work. The points show beside the completed count on the KPI board and never replace it. Any type’s weight can be changed from the list; the change stays on this device, and for everyone to use it, “weights.json” is downloaded and placed in the repository. The weights are reviewed every quarter against the data.',
+    g_weights_b: 'Each task type in myafaqy has a weight, and so does each category of activity with customers. A task completed in the period counts for its assignee at its type’s weight; an activity counts at its category’s weight once it is “Done”. The weights fall into four stated tiers: 1 a quick administrative action, 2 dealing with the customer or diagnosing, 3 integration with an outside party or field coordination, 5 multi-stage work. The points show beside the completed count on the KPI board and never replace it. Any type’s weight can be changed from the list; the change stays on this device, and for everyone to use it, “weights.json” is downloaded and placed in the repository. The weights are reviewed every quarter against the data. My KPIs now includes a breakdown of completed task points by task type, count, weight and total, with a clear indicator when a task uses the fallback weight. Previously closed monthly cards retain their original values without inventing a missing breakdown. Changes made to management weights are local drafts until weights.json is committed to the repository. The Approve and prepare publication action copies the file and opens GitHub for a manual commit; this portal does not publish on its own or request a token.',
     tier_admin: 'Quick administrative action',
     tier_admin_why: 'No diagnosis and no outside party: showing units, activation, sign-in details, a manual task.',
     tier_customer: 'Dealing with the customer or diagnosing',
@@ -1205,7 +1261,7 @@ export const STRINGS = {
     me_refresh: 'تازہ کرنے کے لیے: مائی آفاقی کھولیں اور بک مارک دوبارہ دبائیں۔',
     me_forget: 'میرے اشاریے اس ڈیوائس سے ہٹائیں',
     g_me_h: 'میرے اشاریے',
-    g_me_b: '«میرے اشاریے» کا صفحہ آپ کا اپنا پروفائل ہے۔ ایک بار: «میرے اشاریے» کا بٹن براؤزر کی بک مارکس بار پر کھینچیں۔ پھر جب چاہیں: اپنے اکاؤنٹ سے مائی آفاقی کھولیں اور بک مارک دبائیں — یہ آپ کا کام پڑھتا ہے اور پورٹل اسی پر کھولتا ہے۔ آپ کو اپنی تفصیلات اور ٹیمیں ملتی ہیں، پھر «میرا کھلا کام ابھی» آپ کے ٹاسکس کے عنوان اور عمر کے ساتھ، پھر انہی دنوں پر «یہ مہینہ بمقابلہ پچھلا مہینہ» تیروں کے ساتھ جو بتاتے ہیں کہاں بہتری آئی اور کہاں کمی، پھر ناموں کے بغیر ٹیم کی اوسط سے آپ کا موازنہ، پھر پچھلے بارہ مہینوں کی آپ کی تاریخ۔ اگر مائی آفاقی اپنے ڈھانچے میں کچھ افراد کو آپ کے نیچے رکھتا ہے — ٹیم لیڈر یا مینیجر — تو «میری ٹیم» کا حصہ ان میں سے ہر ایک کو ان کے اعداد کے ساتھ دکھاتا ہے۔ پورٹل آپ کو بالکل وہی دکھاتا ہے جو مائی آفاقی دکھاتا ہے، اس سے زیادہ کچھ نہیں۔ سب کچھ آپ کے آلے پر رہتا ہے؛ لاگ اِن ٹوکن، گاہکوں کے نام، دوسروں کے ٹاسکس کے عنوان اور مکمل شدہ ٹاسکس کے عنوان کبھی نہیں لائے جاتے، اور «میرے اشاریے حذف کریں» اسے آلے سے مٹا دیتا ہے۔ قدم بہ قدم رہنمائی کا بٹن آپ کا ڈیٹا آنے کے بعد بھی صفحے کے اوپر ہمیشہ موجود رہتا ہے۔ اس میں کمپیوٹر، اینڈرائیڈ یا آئی فون کے لیے پانچ مراحل ہیں: بک مارک محفوظ کرنا، مائی آفاقی میں داخل ہونا، بک مارک چلانا اور اشاریے چیک کرنا۔ آپ پچھلے مراحل پر جا سکتے ہیں، رہنمائی بند کر کے دوبارہ کھول سکتے ہیں اور آپ کا ڈیٹا محفوظ رہتا ہے۔ رہنمائی میں اب فرضی براؤزر کی متحرک کھڑکی بھی ہے۔ اس میں ماؤس کا نشان یا انگلی کی نشانی درست جگہ کی طرف جاتی ہے، کلک دکھاتی ہے یا میرے اشاریوں کا بک مارک پٹی تک کھینچنا دکھاتی ہے۔ حرکت دوبارہ دکھانے کا بٹن منظر دوبارہ چلاتا ہے۔ یہ صرف بصری مثال ہے، اصل براؤزر یا مائی آفاقی پر کنٹرول نہیں کرتا۔',
+    g_me_b: '«میرے اشاریے» کا صفحہ آپ کا اپنا پروفائل ہے۔ ایک بار: «میرے اشاریے» کا بٹن براؤزر کی بک مارکس بار پر کھینچیں۔ پھر جب چاہیں: اپنے اکاؤنٹ سے مائی آفاقی کھولیں اور بک مارک دبائیں — یہ آپ کا کام پڑھتا ہے اور پورٹل اسی پر کھولتا ہے۔ آپ کو اپنی تفصیلات اور ٹیمیں ملتی ہیں، پھر «میرا کھلا کام ابھی» آپ کے ٹاسکس کے عنوان اور عمر کے ساتھ، پھر انہی دنوں پر «یہ مہینہ بمقابلہ پچھلا مہینہ» تیروں کے ساتھ جو بتاتے ہیں کہاں بہتری آئی اور کہاں کمی، پھر ناموں کے بغیر ٹیم کی اوسط سے آپ کا موازنہ، پھر پچھلے بارہ مہینوں کی آپ کی تاریخ۔ اگر مائی آفاقی اپنے ڈھانچے میں کچھ افراد کو آپ کے نیچے رکھتا ہے — ٹیم لیڈر یا مینیجر — تو «میری ٹیم» کا حصہ ان میں سے ہر ایک کو ان کے اعداد کے ساتھ دکھاتا ہے۔ پورٹل آپ کو بالکل وہی دکھاتا ہے جو مائی آفاقی دکھاتا ہے، اس سے زیادہ کچھ نہیں۔ سب کچھ آپ کے آلے پر رہتا ہے؛ لاگ اِن ٹوکن، گاہکوں کے نام، دوسروں کے ٹاسکس کے عنوان اور مکمل شدہ ٹاسکس کے عنوان کبھی نہیں لائے جاتے، اور «میرے اشاریے حذف کریں» اسے آلے سے مٹا دیتا ہے۔ قدم بہ قدم رہنمائی کا بٹن آپ کا ڈیٹا آنے کے بعد بھی صفحے کے اوپر ہمیشہ موجود رہتا ہے۔ اس میں کمپیوٹر، اینڈرائیڈ یا آئی فون کے لیے پانچ مراحل ہیں: بک مارک محفوظ کرنا، مائی آفاقی میں داخل ہونا، بک مارک چلانا اور اشاریے چیک کرنا۔ آپ پچھلے مراحل پر جا سکتے ہیں، رہنمائی بند کر کے دوبارہ کھول سکتے ہیں اور آپ کا ڈیٹا محفوظ رہتا ہے۔ رہنمائی میں اب فرضی براؤزر کی متحرک کھڑکی بھی ہے۔ اس میں ماؤس کا نشان یا انگلی کی نشانی درست جگہ کی طرف جاتی ہے، کلک دکھاتی ہے یا میرے اشاریوں کا بک مارک پٹی تک کھینچنا دکھاتی ہے۔ حرکت دوبارہ دکھانے کا بٹن منظر دوبارہ چلاتا ہے۔ یہ صرف بصری مثال ہے، اصل براؤزر یا مائی آفاقی پر کنٹرول نہیں کرتا۔ ماہانہ کارڈ میں «کام کے پوائنٹس کی مکمل تفصیل» بھی موجود ہے۔ اس میں ہر قسم کے مکمل کاموں کی تعداد، اس کا وزن اور مجموعی پوائنٹس دکھتے ہیں۔ جس قسم کا وزن مقرر نہ ہو اس کے لیے پہلے سے طے شدہ وزن کے استعمال کی تنبیہ ظاہر ہوتی ہے۔ پرانے بند ماہانہ کارڈوں کے اصل مجموعے برقرار رہتے ہیں اور ان کی غیر محفوظ شدہ تاریخی تفصیل نہیں بنائی جاتی۔',
     col_self: 'خود درج کیے',
     def_6: '«خود درج کیے»، تفویض شدہ میں سے: وہ ٹاسک جو ملازم نے خود کھولے اور خود کو تفویض کیے، ای میل سے نہیں — اس ٹیم میں وہ درخواستیں جو واٹس ایپ یا کال سے آتی ہیں۔ مائی آفاقی ٹاسک بنانے والے کو درج کرتا ہے، اس کا ذریعہ نہیں، اس لیے واٹس ایپ اور کال کو الگ نہیں کیا جا سکتا۔ اسے باقی کالموں کے ساتھ پڑھیں: یہ بتاتا ہے کہ کام کا بوجھ کہاں سے آیا، کام کا معیار نہیں۔',
     nav_pro: 'آفاقی پرو',
@@ -1365,8 +1421,36 @@ export const STRINGS = {
     team_by_myafaqy: 'مائی آفاقی کی ٹیم:',
     nav_weights: 'اوزان',
     weights_sub: 'ہر ٹاسک کی قسم اور گاہکوں کے ساتھ ہر سرگرمی کے پوائنٹس — واضح معیارات پر، اور قابلِ ترمیم۔',
+    points_detail_title: 'کام کے پوائنٹس کی مکمل تفصیل',
+    points_detail_sub: 'پوائنٹس صرف مکمل ہونے والے کاموں سے بنتے ہیں: ہر قسم کے کام کی تعداد کو اس کے منظور شدہ وزن سے ضرب دی جاتی ہے۔ اضافی کسٹمر سرگرمیاں ذاتی «میرے اشاریے» کے ڈیٹا میں شامل نہیں ہیں۔',
+    points_col_type: 'کام کی قسم',
+    points_col_count: 'مکمل کام',
+    points_col_weight: 'وزن',
+    points_col_sum: 'پوائنٹس',
+    points_total: 'کل پوائنٹس',
+    points_none: 'اس مدت میں کوئی مکمل شدہ کام موجود نہیں ہے۔',
+    points_unknown: 'اس قسم کے کام کے لیے مخصوص وزن نہیں ہے؛ اس لیے پہلے سے طے شدہ وزن استعمال ہوا ہے۔',
+    points_unknown_summary: 'کام کی {n} اقسام کے لیے مخصوص وزن موجود نہیں ہے۔ منظور شدہ اوزان کا جائزہ لیں۔',
+    points_old_card: 'یہ ماہانہ کارڈ تفصیلی پوائنٹس محفوظ کرنے سے پہلے بند ہوا تھا۔ اس کا اصل مجموعہ برقرار ہے، مگر تاریخی تفصیل پرانے ماخذ سے دوبارہ حساب کیے بغیر دستیاب نہیں۔',
+    points_source_official: 'یہ حساب پورٹل میں شائع ہونے والے منظور شدہ اوزان کے مطابق کیا گیا ہے۔',
+    points_source_draft: 'یہ صرف اس آلے پر محفوظ غیر شائع شدہ انتظامی مسودے کے مطابق پیش نظارہ ہے۔ شائع ہونے تک ٹیم اسے نہیں دیکھے گی۔',
+    weights_draft_notice: 'آپ کے اوزان میں {n} تبدیلیاں ابھی شائع نہیں ہوئیں۔ ٹیم صرف شائع شدہ weights.json استعمال کرتی ہے، آپ کے آلے کی تبدیلیاں نہیں۔',
+    weights_official_notice: 'آپ کے مقامی اوزان شائع شدہ فائل سے مطابقت رکھتے ہیں۔ ٹیم کے ارکان پورٹل کھولتے یا ڈیٹا تازہ کرتے وقت یہی فائل پڑھتے ہیں۔',
+    weights_publish_button: 'منظور کر کے اشاعت تیار کریں',
+    weights_publish_title: 'ٹیم کے اوزان کا جائزہ اور اشاعت',
+    weights_publish_intro: '{n} تبدیلیاں تیار ہیں۔ آخری مرحلے کے لیے GitHub میں ترمیم کی اجازت رکھنے والا اکاؤنٹ ضروری ہے۔ پورٹل GitHub کی اسناد محفوظ نہیں کرتا اور خود اشاعت نہیں کرتا۔',
+    weights_publish_1: 'نیچے والے بٹن سے تیار کردہ weights.json کا پورا متن کاپی کریں۔',
+    weights_publish_2: 'GitHub پر فائل کا ایڈیٹر کھولیں اور پرانے متن کی جگہ کاپی کیا ہوا متن چسپاں کریں۔',
+    weights_publish_3: 'GitHub پر Commit changes دبائیں۔ اس کے بعد ٹیم پورٹل کھولنے یا تازہ کرنے پر منظور شدہ وزن دیکھ سکتی ہے۔',
+    weights_copy_json: 'تیار weights.json کاپی کریں',
+    weights_json_copied: 'فائل کاپی ہوگئی۔ GitHub ایڈیٹر کھولیں، متن چسپاں کریں اور تبدیلی محفوظ کریں۔',
+    weights_json_copy_fail: 'خودکار کاپی ناکام ہوگئی۔ نیچے والے خانے سے متن منتخب کر کے خود کاپی کریں۔',
+    weights_github_open: 'GitHub میں weights.json کا ایڈیٹر کھولیں',
+    weights_publish_manual: 'یہ بٹن صرف اشاعت کی تیاری کرتا ہے۔ اصل اشاعت GitHub میں Commit کرنے کے بعد ہوتی ہے۔',
+    weights_publish_none: 'ابھی اشاعت کے لیے کوئی نئی تبدیلی باقی نہیں ہے۔',
+    weights_release_note: 'فی الحال شائع شدہ اوزان نہیں بدلے گئے؛ یہ صرف آلے کے مسودے کی پیشگی جھلک ہے۔',
     g_weights_h: 'اوزان — ہر قسم کے کام کے پوائنٹس',
-    g_weights_b: 'مائی آفاقی میں ہر ٹاسک کی قسم کا ایک وزن ہے، اور گاہکوں کے ساتھ سرگرمی کے ہر زمرے کا بھی۔ مدت میں مکمل ہونے والا ٹاسک اپنے ذمہ دار کے لیے اپنی قسم کے وزن پر گنا جاتا ہے؛ سرگرمی «Done» ہونے پر اپنے زمرے کے وزن پر گنی جاتی ہے۔ اوزان چار واضح درجوں میں ہیں: ۱ تیز انتظامی کام، ۲ گاہک سے معاملہ یا تشخیص، ۳ بیرونی فریق سے ربط یا فیلڈ کوآرڈینیشن، ۵ کثیر مرحلہ کام۔ پوائنٹس اشاریوں کے بورڈ پر مکمل کی تعداد کے ساتھ دکھتے ہیں اور اس کی جگہ نہیں لیتے۔ کسی بھی قسم کا وزن فہرست سے بدلا جا سکتا ہے؛ تبدیلی اسی آلے پر رہتی ہے، اور سب کے لیے «weights.json» ڈاؤن لوڈ کر کے ریپوزٹری میں رکھا جاتا ہے۔ اوزان ہر سہ ماہی ڈیٹا کے ساتھ دیکھے جاتے ہیں۔',
+    g_weights_b: 'مائی آفاقی میں ہر ٹاسک کی قسم کا ایک وزن ہے، اور گاہکوں کے ساتھ سرگرمی کے ہر زمرے کا بھی۔ مدت میں مکمل ہونے والا ٹاسک اپنے ذمہ دار کے لیے اپنی قسم کے وزن پر گنا جاتا ہے؛ سرگرمی «Done» ہونے پر اپنے زمرے کے وزن پر گنی جاتی ہے۔ اوزان چار واضح درجوں میں ہیں: ۱ تیز انتظامی کام، ۲ گاہک سے معاملہ یا تشخیص، ۳ بیرونی فریق سے ربط یا فیلڈ کوآرڈینیشن، ۵ کثیر مرحلہ کام۔ پوائنٹس اشاریوں کے بورڈ پر مکمل کی تعداد کے ساتھ دکھتے ہیں اور اس کی جگہ نہیں لیتے۔ کسی بھی قسم کا وزن فہرست سے بدلا جا سکتا ہے؛ تبدیلی اسی آلے پر رہتی ہے، اور سب کے لیے «weights.json» ڈاؤن لوڈ کر کے ریپوزٹری میں رکھا جاتا ہے۔ اوزان ہر سہ ماہی ڈیٹا کے ساتھ دیکھے جاتے ہیں۔ میرے اشاریوں میں اب مکمل کاموں کے پوائنٹس کی تفصیل دکھائی جاتی ہے: ہر قسم کی تعداد، وزن اور مجموعہ، اور اگر کسی کام کے لیے خاص وزن نہ ہو تو اس کی نشاندہی بھی ہوتی ہے۔ پہلے سے بند ماہانہ کارڈ اپنے پرانے اعداد برقرار رکھتے ہیں اور غیر محفوظ شدہ تفصیل ایجاد نہیں کی جاتی۔ انتظامی اوزان میں مقامی تبدیلیاں تب تک مسودہ ہیں جب تک weights.json مستودع میں شائع نہ ہو۔ «منظور کر کے اشاعت تیار کریں» فائل کا متن کاپی کرتا اور GitHub کھولتا ہے تاکہ آپ خود Commit کر سکیں؛ پورٹل خود شائع نہیں کرتا اور ٹوکن نہیں مانگتا۔',
     tier_admin: 'تیز انتظامی کام',
     tier_admin_why: 'نہ تشخیص نہ بیرونی فریق: گاڑیاں دکھانا، فعال کرنا، لاگ اِن کی معلومات، دستی ٹاسک۔',
     tier_customer: 'گاہک سے معاملہ یا تشخیص',
@@ -2451,6 +2535,66 @@ export const isWeightsAdmin = (wt, userId) => { const e = wt && wt.editors && wt
 export const taskWeight = (wt, typeName) => { const x = wt && wt.tasks[typeKey(typeName)]; return x ? x.w : (wt ? wt.default : 1); };
 export const activityWeight = (wt, category) => { const x = wt && wt.activities[String(category || '').toLowerCase().trim()]; return x != null ? x : (wt ? wt.default : 1); };
 /**
+ * Break down completed tasks that have already been filtered to a single person and period.
+ * Count each completed task once; an unlisted type uses the published default with a visible warning.
+ */
+export function taskPointBreakdown(completedTasks, wt) {
+  const types = new Map();
+  for (const x of completedTasks || []) {
+    if (x.state !== 'done' || !x.completedAt) continue;
+    const key = typeKey(x.type) || '—';
+    const weight = taskWeight(wt, x.type);
+    if (!types.has(key)) types.set(key, {
+      key, name: String(x.type || key), count: 0, weight, points: 0,
+      unmapped: !Boolean(wt && wt.tasks && Object.prototype.hasOwnProperty.call(wt.tasks, key)),
+    });
+    const row = types.get(key);
+    row.count += 1;
+    row.points += weight;
+  }
+  const rows = [...types.values()].sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
+  return {
+    rows, count: rows.reduce((n, row) => n + row.count, 0),
+    points: rows.reduce((n, row) => n + row.points, 0),
+    unmapped: rows.filter((row) => row.unmapped).length,
+  };
+}
+
+/** The team always sees approved weights; local drafts are an explicit management preview. */
+export const portalWeights = (repoWeights, draft, teamMode = false) =>
+  teamMode ? parseWeights(repoWeights) : mergeWeights(repoWeights, draft);
+
+/** Compare the proposed browser-local draft with the official repo file, ignoring review dates. */
+export function weightPublishDiff(repoWeights, draft) {
+  const base = parseWeights(repoWeights);
+  const proposed = mergeWeights(repoWeights, draft);
+  const different = (a, b) => JSON.stringify(a ?? null) !== JSON.stringify(b ?? null);
+  const changed = (a, b, normalize = (v) => v) => {
+    const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+    return [...keys].filter((key) => different(normalize(a && a[key]), normalize(b && b[key]))).sort();
+  };
+  const tasks = changed(base.tasks, proposed.tasks);
+  const activities = changed(base.activities, proposed.activities);
+  const editors = changed(base.editors, proposed.editors, (v) => (v || []).slice().sort());
+  const card = changed(base.card, proposed.card);
+  const defaults = base.default !== proposed.default ? 1 : 0;
+  return {
+    tasks, activities, editors, card, defaults,
+    count: tasks.length + activities.length + editors.length + card.length + defaults,
+  };
+}
+
+/** Keep the reviewed tiers and other published metadata when exporting a proposed GitHub change. */
+export function publishableWeights(repoWeights, draft, reviewed) {
+  const merged = mergeWeights(repoWeights, draft);
+  return {
+    ...(repoWeights && typeof repoWeights === 'object' ? repoWeights : {}),
+    ...merged, schema: WEIGHTS_SCHEMA, v: 1,
+    reviewed: /^\d{4}-\d{2}-\d{2}$/.test(reviewed || '') ? reviewed : (merged.reviewed || ''),
+  };
+}
+
+/**
  * Weighted points per person in a period: completed tasks (closed in the period, credited to the assignee, cancelled
  * left out) × their type's weight, plus activities with customers marked Done in the period × their category's weight.
  * The raw counts stay beside the points — points never replace them.
@@ -2499,7 +2643,8 @@ export function monthCard(ctx, personId, ym) {
   const teamRows = done.filter((x) => team.includes(x.assigneeId));
   // volume: points against the team's median, and the quartile band
   const perPerson = team.map((id) => ({ id, points: pts(done.filter((x) => x.assigneeId === id)), done: done.filter((x) => x.assigneeId === id).length }));
-  const myPoints = pts(mine), teamMedian = medianOf(perPerson.map((p) => p.points)) || 0;
+  const breakdown = taskPointBreakdown(mine, wt);
+  const myPoints = breakdown.points, teamMedian = medianOf(perPerson.map((p) => p.points)) || 0;
   const sorted = [...perPerson].sort((a, b) => b.points - a.points);
   const rank = sorted.findIndex((p) => p.id === personId) + 1;
   const quartile = rank ? Math.min(4, Math.ceil((rank / sorted.length) * 4)) : null;
@@ -2558,7 +2703,7 @@ export function monthCard(ctx, personId, ym) {
   const sd = wv.length > 1 ? Math.sqrt(wv.reduce((a, b) => a + (b - mean) ** 2, 0) / wv.length) : 0;
   const consistency = wv.length >= 3 && mean > 0 ? Math.max(0, Math.min(1, 1 - sd / mean)) : null;
   const onLeave = !!(ctx.roster && ctx.roster.people && ctx.roster.people[personId] && ctx.roster.people[personId].onLeave);
-  return { month: ym, personId, onLeave, points: myPoints, done: mine.length, rank: rank || null, prevPoints, prevDone: minePrev.length, teamMedian, quartile, teamSize: perPerson.length,
+  return { month: ym, personId, onLeave, points: myPoints, breakdown, weightsReviewed: wt && wt.reviewed || '', done: mine.length, rank: rank || null, prevPoints, prevDone: minePrev.length, teamMedian, quartile, teamSize: perPerson.length,
     tiers: { mine: mineT, team: teamT, mineShare: ms, teamShare: ts }, archetype, strengths, development, suggestions, consistency, weeks: wv.length, activities: myActs, selfLoggedPct: mine.length ? Math.round((selfLogged / mine.length) * 100) : 0 };
 }
 /** The team's month: a card per person, the heat map (people × tiers) and the next month's plan from the suggestions. */

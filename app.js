@@ -6,7 +6,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, repairCheck, parseRepairLines,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, portalRoute,
@@ -245,7 +245,32 @@ function renderCard(card, nm, { showRank = false, showSuggestions = false, compa
     el('div', { class: 'card-cols' },
       el('div', { class: 'card-col good' }, el('h4', { text: t('card_strengths') }), S.length ? el('ul', {}, S.map((x) => el('li', { text: x }))) : el('p', { class: 'hint', text: t('card_none_yet') })),
       el('div', { class: 'card-col grow' }, el('h4', { text: t('card_development') }), D.length ? el('ul', {}, D.map((x) => el('li', { text: x }))) : el('p', { class: 'hint', text: t('card_none_dev') })),
-      showSuggestions ? el('div', { class: 'card-col plan' }, el('h4', { text: t('card_suggestions') }), G.length ? el('ul', {}, G.map((x) => el('li', { text: x }))) : el('p', { class: 'hint', text: t('card_none_sug') })) : null));
+      showSuggestions ? el('div', { class: 'card-col plan' }, el('h4', { text: t('card_suggestions') }), G.length ? el('ul', {}, G.map((x) => el('li', { text: x }))) : el('p', { class: 'hint', text: t('card_none_sug') })) : null),
+    el('details', { class: 'points-details' },
+      el('summary', { text: t('points_detail_title') }),
+      card.breakdown ? [
+        el('p', { class: 'hint', text: t('points_detail_sub') }),
+        el('p', { class: 'hint', text: !isTeamPortal && weightPublishDiff(weightsRepo, weightsDevice).count
+          ? t('points_source_draft') : t('points_source_official') }),
+        card.breakdown.rows.length ? el('div', { class: 'table-wrap' },
+          el('table', { class: 'points-table' },
+            el('thead', {}, el('tr', {},
+              ['points_col_type', 'points_col_count', 'points_col_weight', 'points_col_sum'].map((k) =>
+                el('th', { text: t(k) })))),
+            el('tbody', {}, card.breakdown.rows.map((r) => el('tr', {},
+              el('td', {}, el('span', { text: r.name }), r.unmapped
+                ? el('small', { class: 'points-unmapped', text: t('points_unknown') }) : null),
+              el('td', { text: String(r.count) }),
+              el('td', { text: String(r.weight) }),
+              el('td', { text: String(r.points) }))),
+              el('tr', { class: 'points-total' },
+                el('td', { text: t('points_total') }),
+                el('td', { text: String(card.breakdown.count) }),
+                el('td', { text: '—' }),
+                el('td', { text: String(card.breakdown.points) }))))) :
+          el('p', { class: 'hint', text: t('points_none') }),
+        card.breakdown.unmapped ? el('p', { class: 'note', text: t('points_unknown_summary', { n: card.breakdown.unmapped }) }) : null,
+      ] : el('p', { class: 'hint', text: t('points_old_card') })));
 }
 // the card's context from the manager's data (board) or from a person's own hand-over (profile)
 function cardCtxFromDatasets(team) {
@@ -388,7 +413,17 @@ let rosterRepo = null;      // team.json from the repository (ids, positions, le
 let rosterDevice = null;    // this device's own entries, which win
 const roster = () => mergeRoster(rosterRepo, rosterDevice);
 let weightsRepo = null, weightsDevice = null;
-const weights = () => mergeWeights(weightsRepo, weightsDevice);
+// Only the official published file drives the team view. Managers preview local edits here until committing.
+const weights = () => portalWeights(weightsRepo, weightsDevice, isTeamPortal);
+async function refreshOfficialWeights() {
+  try {
+    const r = await fetch('./weights.json', { cache: 'no-store' });
+    if (r.ok) {
+      const published = await r.json();
+      if (published && published.schema === 'afaqy-weights/v1') weightsRepo = published;
+    }
+  } catch { /* keep the latest weights when offline */ }
+}
 // a donut: parts of a whole, drawn with circles — colours from the identity palette
 const SVG = 'http://www.w3.org/2000/svg';
 const DONUT_COLORS = ['var(--accent)', 'var(--signal)', 'var(--note)', 'var(--ok)', 'var(--warn)', 'var(--accent-dark)', 'var(--ink-soft)', 'var(--slate)'];
@@ -541,7 +576,7 @@ async function receiveMe(fragment) {
   const r = await parseMe(fragment);
   history.replaceState(null, '', '#me');            // the data never stays in the address or the history
   if (r.error) { toast(t(r.error, r.vars || {})); renderMe(); return; }
-  me = r.me; await store.putMe(me);
+  me = r.me; await store.putMe(me); await refreshOfficialWeights();
   toast(t('me_loaded', { n: me.tasks.length })); renderMe(); renderMeTour();
 }
 // The bookmark hands the data over by message (ADR-0014): accepted only from myafaqy itself and only in our shape.
@@ -556,7 +591,7 @@ window.addEventListener('message', async (e) => {
   meReceived = stamp;
   const r = parseMePayload(e.data.payload);
   if (r.error) { toast(t(r.error, r.vars || {})); return; }
-  me = r.me; await store.putMe(me);
+  me = r.me; await store.putMe(me); await refreshOfficialWeights();
   if (location.hash !== '#me') history.replaceState(null, '', '#me');
   route(); toast(t('me_loaded', { n: me.tasks.length })); renderMe(); renderMeTour();
 });
@@ -970,7 +1005,7 @@ function renderWeights() {
     { id: 'rd', title: t('wteam_rd'), live: !!rdTeam, rows: linked(rdTeam, 'rd') },
     { id: 'general', title: t('wteam_general'), live: false, rows: fromFile('general').map((k) => ({ key: k, name: (seen.get(k) || {}).name || k })) },
   ];
-  const save = async (patch) => { weightsDevice = { ...(weightsDevice || {}), tasks: { ...((weightsDevice || {}).tasks || {}), ...(patch.tasks || {}) }, activities: { ...((weightsDevice || {}).activities || {}), ...(patch.activities || {}) }, editors: { ...((weightsDevice || {}).editors || {}), ...(patch.editors || {}) } }; await store.putWeights(weightsDevice); renderWeights(); renderKpi(); };
+  const save = async (patch) => { weightsDevice = { ...(weightsDevice || {}), tasks: { ...((weightsDevice || {}).tasks || {}), ...(patch.tasks || {}) }, activities: { ...((weightsDevice || {}).activities || {}), ...(patch.activities || {}) }, editors: { ...((weightsDevice || {}).editors || {}) , ...(patch.editors || {}) } }; await store.putWeights(weightsDevice); renderWeights(); renderKpi(); renderMe(); };
   const stepSel = (cur, on, enabled) => el('select', { class: 'w-sel', ...(enabled ? {} : { disabled: '' }), onchange: (e) => on(Number(e.target.value)) }, WEIGHT_STEPS.map((w) => el('option', { value: String(w), selected: w === cur, text: String(w) })));
   const tierName = (tr) => (tr ? t(`tier_${tr}`) : t('tier_none'));
   const pretty = (k) => k.replace(/(^|\s)([a-z])/g, (m, sp, c) => sp + c.toUpperCase());
@@ -1006,17 +1041,56 @@ function renderWeights() {
           el('td', { class: 'num' }, stepSel(r.cur, (w) => save({ tasks: { [r.key]: { w, tier: r.x ? r.x.tier : null, team: r.x ? r.x.team : g.id } } }), mayEdit(r.key))),
           el('td', { class: 'num', text: String(r.n * r.cur) }), editorsCell(r.key))))))];
   };
-  const download = () => { const a = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify({ ...wt, reviewed: new Date().toISOString().slice(0, 10), proposedBy: uid || null }, null, 2)], { type: 'application/json' })), download: 'weights.json' }); document.body.append(a); a.click(); a.remove(); };
-  const upload = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const file = e.target.files[0]; if (!file) return; try { weightsDevice = parseWeights(JSON.parse(await file.text())); await store.putWeights(weightsDevice); toast(t('weights_loaded')); renderWeights(); renderKpi(); } catch { toast(t('err_json')); } e.target.value = ''; } });
+  const diff = weightPublishDiff(weightsRepo, weightsDevice);
+  const approvedJson = () => JSON.stringify(publishableWeights(weightsRepo, weightsDevice, ymd(new Date())), null, 2) + '\n';
+  const download = () => {
+    const data = approvedJson();
+    const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+    const a = el('a', { href: url, download: 'weights.json' });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const preparePublication = () => {
+    if (!admin || !weightsRepo || !diff.count) return;
+    const dlg = el('dialog', { class: 'help-dialog weight-publish-dialog' });
+    const prepared = approvedJson();
+    const input = el('textarea', { class: 'ltr weight-publish-json', rows: '10', readonly: '' });
+    input.value = prepared;
+    const copy = async () => {
+      try { await navigator.clipboard.writeText(prepared); toast(t('weights_json_copied')); }
+      catch { input.focus(); input.select(); toast(t('weights_json_copy_fail')); }
+    };
+    dlg.append(
+      el('h2', { text: t('weights_publish_title') }),
+      el('p', { class: 'hint', text: t('weights_publish_intro', { n: diff.count }) }),
+      el('ol', { class: 'weight-publish-steps' },
+        ...['weights_publish_1', 'weights_publish_2', 'weights_publish_3'].map((k) =>
+          el('li', { text: t(k) }))),
+      el('div', { class: 'row' },
+        el('button', { type: 'button', class: 'btn primary', text: t('weights_copy_json'), onclick: copy }),
+        el('a', { class: 'btn', href: 'https://github.com/mhmdsfwt371/Jed-Tech-portal/edit/main/weights.json',
+          target: '_blank', rel: 'noopener', text: t('weights_github_open') })),
+      input,
+      el('p', { class: 'note', text: t('weights_publish_manual') }),
+      el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() }));
+    dlg.addEventListener('close', () => dlg.remove());
+    document.body.append(dlg);
+    dlg.showModal();
+  };
+  const upload = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const file = e.target.files[0]; if (!file) return; try { weightsDevice = parseWeights(JSON.parse(await file.text())); await store.putWeights(weightsDevice); toast(t('weights_loaded')); renderWeights(); renderKpi(); renderMe(); } catch { toast(t('err_json')); } e.target.value = ''; } });
   const myRights = uid ? (admin ? t('w_you_admin') : (Object.keys(wt.tasks).filter(mayEdit).length ? t('w_you_some', { n: Object.keys(wt.tasks).filter(mayEdit).length }) : t('w_you_none'))) : t('w_you_unknown');
   set(body,
     el('div', { class: 'tiers' }, TIERS.map((tr) => el('div', { class: 'tier' }, el('b', { text: String((weightsRepo && weightsRepo.tiers && weightsRepo.tiers[tr]) || { admin: 1, customer: 2, integration: 3, multistage: 5 }[tr]) }), el('div', {}, el('strong', { text: t(`tier_${tr}`) }), el('p', { text: t(`tier_${tr}_why`) }))))),
     el('p', { class: 'note info', text: t('weights_rules') }),
     el('p', { class: 'note', text: myRights }),
+    admin ? el('p', { class: diff.count ? 'note' : 'hint',
+      text: diff.count ? t('weights_draft_notice', { n: diff.count }) : t('weights_official_notice') }) : null,
     el('div', { class: 'row', style: 'margin:12px 0' },
       el('button', { type: 'button', class: 'btn primary', text: t('weights_download'), onclick: download }),
+      admin ? el('button', { type: 'button', class: 'btn', disabled: !diff.count || !weightsRepo,
+        text: t('weights_publish_button'), onclick: preparePublication }) : null,
       admin ? el('button', { type: 'button', class: 'btn', text: t('weights_upload'), onclick: () => upload.click() }) : null, upload,
-      weightsDevice ? el('button', { type: 'button', class: 'btn quiet', text: t('weights_reset'), onclick: async () => { weightsDevice = null; await store.putWeights(null); renderWeights(); renderKpi(); } }) : null,
+      weightsDevice ? el('button', { type: 'button', class: 'btn quiet', text: t('weights_reset'), onclick: async () => { weightsDevice = null; await store.putWeights(null); renderWeights(); renderKpi(); renderMe(); } }) : null,
       el('span', { class: 'hint', text: wt.reviewed ? t('weights_reviewed', { d: wt.reviewed }) : '' })),
     groups.map(table),
     el('h2', {}, t('weights_acts_h'), helpQ('help_weights_acts')),
@@ -1308,7 +1382,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   monthCards = (await store.getCards()) || {};
   meet = (await store.getMeet()) || {};
   repairs = (await store.getRepairs()) || [];
-  try { const r = await fetch('./weights.json', { cache: 'no-store' }); weightsRepo = r.ok ? await r.json() : null; } catch { weightsRepo = null; }
+  await refreshOfficialWeights();
   applyLang();   // renders everything and routes
   loadRelease(); announceUpdate(); showInstall();
   setInterval(loadRelease, 15 * 60 * 1000);

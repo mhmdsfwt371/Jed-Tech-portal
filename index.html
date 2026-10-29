@@ -312,6 +312,26 @@
   .btn.tiny { min-height: 28px; padding: 0 10px; font-size: 12px; margin-inline-start: 6px; }
   td.editors { max-width: 260px; } .warn-text { color: var(--warn); }
   .grant-list { display: grid; gap: 8px; margin-top: 10px; } .grant-list label { display: flex; gap: 10px; align-items: center; }
+  /* Itemised points belong to the same monthly card; do not change frozen month totals. */
+  .points-details { margin-top:16px; padding:12px 14px; border:1px solid var(--line); border-radius:var(--radius);
+    background:var(--paper); }
+  .points-details > summary { cursor:pointer; color:var(--accent-dark); font-weight:700; min-height:38px;
+    display:list-item; padding:7px 4px; }
+  .points-details .hint { font-size:12px; margin:8px 0; line-height:1.7; }
+  .points-details .table-wrap { margin-block:12px; }
+  .points-table { min-width:420px; }
+  .points-table td:nth-child(n + 2), .points-table th:nth-child(n + 2) { text-align:end; font-variant-numeric:tabular-nums; }
+  .points-table td:first-child { white-space:normal; min-width:140px; }
+  .points-table .points-total td { font-weight:700; color:var(--title); background:var(--accent-wash); }
+  .points-unmapped { display:block; margin-top:4px; color:var(--warn); font-size:11px; line-height:1.5; }
+  .weight-publish-dialog { width:min(94vw,760px); max-width:760px; max-height:90dvh; overflow:auto; }
+  .weight-publish-steps { padding-inline-start:25px; line-height:1.8; margin:10px 0 16px; }
+  .weight-publish-steps li { padding-inline-start:4px; margin-bottom:7px; }
+  .weight-publish-dialog .row { flex-wrap:wrap; margin-bottom:14px; }
+  .weight-publish-json { width:100%; box-sizing:border-box; min-height:140px; max-height:30vh; overflow:auto;
+    font-family:var(--mono); font-size:12px; border:1px solid var(--line-strong); border-radius:var(--radius-sm);
+    background:var(--paper); color:var(--text); padding:10px; direction:ltr; text-align:left; }
+  .weight-publish-dialog .note { margin-block:12px; }
   .card-month { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; margin: 10px 0 16px; }
   .card-month.compact { padding: 14px 16px; margin: 0; }
   .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }

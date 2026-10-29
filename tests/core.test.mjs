@@ -9,11 +9,64 @@ import {
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, scopeIds, inScope,
   weeklyDigest, goalProgress, patternPath, coverageTotals, monthCard, closableMonths, repairCheck, parseRepairLines,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS, portalRoute, tourState, TOUR_DEVICES, tourDemoPlan,
+  taskPointBreakdown, weightPublishDiff, publishableWeights, portalWeights,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
 
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
+test('team weights cannot be overridden by a manager draft saved on the same browser origin', () => {
+  const repo = { default: 1, tasks: { 'wasl link': { w: 3, tier: 'integration', team: 'aftersales' } } };
+  const draft = { tasks: { 'wasl link': { w: 5, tier: 'integration', team: 'aftersales' } } };
+  assert.equal(portalWeights(repo, draft, true).tasks['wasl link'].w, 3);
+  assert.equal(portalWeights(repo, draft, false).tasks['wasl link'].w, 5);
+  assert.equal(portalWeights(repo, null, true).tasks['wasl link'].w, 3);
+});
+
+test('task point breakdown exactly matches completed weighted work and flags unmapped types', () => {
+  const wt = parseWeights({ default: 1, tasks: {
+    'wasl link': { w: 3, tier: 'integration' },
+    'client inquiry': { w: 2, tier: 'customer' },
+  } });
+  const done = [
+    { state: 'done', completedAt: '2026-10-29T09:00:00Z', type: 'WASL Link' },
+    { state: 'done', completedAt: '2026-10-29T10:00:00Z', type: 'WASL Link' },
+    { state: 'done', completedAt: '2026-10-29T11:00:00Z', type: 'Client Inquiry' },
+    { state: 'done', completedAt: '2026-10-29T12:00:00Z', type: 'Unlisted type' },
+    { state: 'open', completedAt: null, type: 'WASL Link' },
+    { state: 'cancelled', completedAt: '2026-10-29T12:00:00Z', type: 'WASL Link' },
+  ];
+  const b = taskPointBreakdown(done, wt);
+  assert.equal(b.count, 4);
+  assert.equal(b.points, 9);
+  assert.equal(b.unmapped, 1);
+  assert.equal(b.rows.reduce((sum, row) => sum + row.points, 0), 9);
+  assert.ok(b.rows.some(row => row.key === 'unlisted type' && row.unmapped && row.weight === 1));
+  assert.deepEqual(taskPointBreakdown([], wt), { rows: [], count: 0, points: 0, unmapped: 0 });
+});
+test('only proposed changes are counted and a publishable payload preserves tiers', () => {
+  const repo = { schema: 'afaqy-weights/v1', v: 1, default: 1,
+    reviewed: '2026-10-01', tiers: { admin: 1, customer: 2 },
+    tasks: { 'wasl link': { w: 3, tier: 'integration', team: 'aftersales' } },
+    activities: { support: 1 }, editors: { '70': ['*'] }, card: { minN: 5 } };
+  const draft = { tasks: { 'wasl link': { w: 5, tier: 'integration', team: 'aftersales' } },
+    activities: { support: 2 }, editors: { '91': ['wasl link'] } };
+  const diff = weightPublishDiff(repo, draft);
+  assert.equal(diff.count, 3);
+  assert.deepEqual(diff.tasks, ['wasl link']);
+  assert.deepEqual(diff.activities, ['support']);
+  assert.deepEqual(diff.editors, ['91']);
+  assert.equal(weightPublishDiff(repo, null).count, 0);
+  const merged = publishableWeights(repo, draft, '2026-10-30');
+  assert.deepEqual(merged.tiers, repo.tiers);
+  assert.equal(merged.reviewed, '2026-10-30');
+  assert.equal(merged.tasks['wasl link'].w, 5);
+  assert.equal(merged.activities.support, 2);
+  assert.deepEqual(merged.editors['70'], ['*']);
+  assert.deepEqual(merged.editors['91'], ['wasl link']);
+  assert.equal(weightPublishDiff(merged, draft).count, 0);
+});
+
 test('animated demo points to real browser actions for each screen and device', () => {
   for (const device of TOUR_DEVICES) for (let step = 0; step < 5; step++) {
     const plan = tourDemoPlan(step, device);

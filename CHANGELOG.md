@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.13 — 2026-10-30
+
+- أضيف تفصيل النقاط في بطاقة «مؤشراتي»: عدد المهام المنجزة لكل نوع × وزنه، وإجمالي النقاط، وتنبيه للأنواع التي تستخدم الوزن الافتراضي. بطاقات الشهور المقفولة القديمة تحتفظ بأرقامها دون تخمين تفاصيل مفقودة.
+- أوزان الموظفين تُقرأ من الملف المنشور رسميًا، بينما تعديلات المدير تبقى مسودة على جهازه. من صفحة الأوزان يمكن تجهيز ملف الاعتماد ونسخه وفتح محرر GitHub؛ النشر الفعلي يتطلب Commit هناك. ملف الأوزان المنشور يتحدث عند فتح البوابة أو إعادة السحب.
+
+<details><summary>English</summary>
+
+- My KPIs now displays task-point details: completed counts per task type, each type's weight, total points and warnings for unlisted types using the default weight. Older closed cards retain their original results without inventing missing breakdowns.
+- Team members use only officially published weights. Management edits remain local drafts until committed on GitHub. The Weights page can prepare and copy the approved file and open the GitHub editor; publication requires a GitHub commit. The published weights file refreshes when the portal opens or personal tasks are imported.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- میرے اشاریوں کے ماہانہ کارڈ میں اب کام کے پوائنٹس کی تفصیل ہے: ہر قسم کے مکمل کاموں کی تعداد، وزن، مجموعی پوائنٹس اور ایسی اقسام کی تنبیہ جن کے لیے طے شدہ عمومی وزن استعمال ہوا ہے۔ پہلے سے بند ماہانہ کارڈ اپنے اصل اعداد برقرار رکھتے ہیں اور غیر موجود تفصیل نہیں بناتے۔
+- ٹیم کے ارکان صرف مستودع میں منظور اور شائع شدہ اوزان استعمال کرتے ہیں۔ مینیجر کی مقامی تبدیلیاں GitHub پر Commit ہونے تک مسودہ رہتی ہیں۔ اوزان کے صفحے سے تیار فائل کاپی کی جا سکتی ہے اور GitHub ایڈیٹر کھولا جا سکتا ہے، لیکن اصل اشاعت کے لیے وہاں Commit کرنا ضروری ہے۔ پورٹل کھلنے یا ذاتی کام دوبارہ حاصل کرنے پر شائع شدہ وزن تازہ ہوتا ہے۔
+
+</div>
+</details>
+
+
 ## v8.12 — 2026-10-30
 
 - بقى دليل «مؤشراتي» يعرض نافذة متصفح تجريبية متحركة، وفيها ماوس أو مؤشر لمس يوضح مكان الضغط، والسحب إلى شريط الإشارات، ثم فتح ماي أفاقي وإظهار النتيجة.
