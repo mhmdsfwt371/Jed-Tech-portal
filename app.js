@@ -3,7 +3,7 @@ import { PRIMARY, SYSTEMS, MORE, PORTAL_VERSION, MODULE_ALLOW } from './config.j
 import {
   t as tr, L, LANGS, dirOf, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1,
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
-  buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths,
+  buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, REPORTS_SCHEMA, buildManagerBookmarklet,
 } from './core.js';
 
@@ -586,7 +586,11 @@ function route() {
   const views = ['tools', 'me', 'pro', 'data', 'kpi', 'guide'];
   let hash = location.hash.slice(1);
   if (hash.startsWith('me-')) {
-    if (hash === 'me-wait') { hash = 'me'; setTimeout(() => renderMe(true)); }
+    if (hash === 'me-wait') {
+      hash = 'me'; setTimeout(() => renderMe(true));
+      // if the bookmark never delivers (it failed, or the person closed myafaqy), the page does not wait forever
+      setTimeout(() => { if (location.hash === '#me-wait') { history.replaceState(null, '', '#me'); renderMe(); } }, 90000);
+    }
     else { const payload = hash.slice(3); hash = 'me'; receiveMe(payload); }
   }
   const mod = hash.startsWith('m-') ? hash.slice(2) : null;
@@ -648,7 +652,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   applyTheme();
   datasets = await store.get();
   reports = await store.getReports();
-  me = await store.getMe();
+  me = upgradeMe(await store.getMe());   // a profile saved by an older version is brought up to shape, never dropped
   applyLang();   // renders everything and routes
   loadRelease();
 })();

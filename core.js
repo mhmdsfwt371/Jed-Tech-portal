@@ -11,8 +11,7 @@ export const dirOf = (lang) => (lang === 'en' ? 'ltr' : 'rtl');
 
 export const STRINGS = {
   ar: {
-    brand: 'أفاقي', portal: 'بوابة الفريق التقني — جدة',
-    nav_tools: 'الأدوات', nav_data: 'البيانات', nav_kpi: 'المؤشرات',
+    brand: 'أفاقي', portal: 'بوابة الفريق التقني — جدة', nav_data: 'البيانات', nav_kpi: 'المؤشرات',
     tools_title: 'أدوات الفريق', tools_sub: 'كل أداة تعمل داخل البوابة، بحسابها المعتاد.',
     primary: 'الأدوات الأساسية', systems: 'أنظمة الشركة', more: 'أدوات أخرى', soon: 'قريبًا',
     open: 'فتح',
@@ -20,7 +19,6 @@ export const STRINGS = {
     step1: 'اختر الفترة', step2: 'انسخ الأمر إلى كلود كروم', step3: 'ارفع النتيجة',
     block_size: 'طول الفترة', blocks_back: 'عدد الفترات',
     m3: 'ربع سنة', m6: 'نصف سنة', m12: 'سنة',
-    branch: 'الفرع في ماي أفاقي',
     block_partial: 'جارية',
     copy_prompt: 'نسخ الأمر', copied: 'نُسخ الأمر — الصقه في كلود كروم وأنت فاتح ماي أفاقي',
     step2_hint: 'افتح ماي أفاقي في كروم وسجّل دخولك، ثم افتح كلود كروم والصق الأمر. أمر لكل فترة.',
@@ -73,13 +71,11 @@ export const STRINGS = {
     team_jeddah: 'فرق فرع جدة',
     team_all: 'الكل',
     team_hint: 'يُحدَّد تلقائيًّا من فرق ماي أفاقي المسجّلة على فرع جدة، ويمكن تعديله. يُحفظ على هذا الجهاز.',
-    back_tools: 'كل الأدوات',
     open_tab: 'فتح في نافذة مستقلة',
     module_loading: 'جارٍ فتح الأداة…',
     in_portal: 'تعمل داخل البوابة',
     systems_note: 'تفتح في نافذة جديدة — أنظمة الشركة لا تسمح بعرضها داخل صفحة أخرى.',
     side_modules: 'الوحدات',
-    side_portal: 'البوابة',
     menu: 'القائمة',
     nav_home: 'الرئيسية',
     kpi_board: 'لوحة المؤشرات',
@@ -101,7 +97,6 @@ export const STRINGS = {
     me_android: 'أندرويد (كروم): انسخ رمز الإشارة، واحفظ أي صفحة في الإشارات، ثم عدّلها: الاسم «مؤشراتي» والعنوان هو الرمز المنسوخ. بعدها من داخل ماي أفاقي اكتب «مؤشراتي» في شريط العنوان واختر الإشارة من الاقتراحات — الضغط عليها من قائمة الإشارات لا يشغّلها.',
     me_ios: 'آيفون (سفاري): انسخ رمز الإشارة، واحفظ أي صفحة في الإشارات، ثم عدّل عنوانها بلصق الرمز. بعدها من داخل ماي أفاقي افتح الإشارات واضغطها.',
     me_privacy: 'ما يُقرأ: مهامك أنت فقط — رقمها، ووقت إنشائها وإغلاقها، وحالتها، ونوعها. لا العناوين ولا العملاء ولا رمز دخولك. لا يُرسل شيء إلى أي خادم، ولا يرى مؤشراتك أحد غيرك.',
-    me_who: '{name} — آخر تحديث {date}',
     me_wait: 'في انتظار مهامك من ماي أفاقي…',
     me_loaded: 'وصلت مؤشراتك: {n} مهمة',
     me_q: 'الربع',
@@ -181,7 +176,6 @@ export const STRINGS = {
     me_open_h: 'شغلي المفتوح الآن ({n})',
     me_open_none: 'لا مهام مفتوحة عليك الآن.',
     me_untitled: 'مهمة بلا عنوان',
-    me_numbers_h: 'مؤشراتي بالأرقام',
     mgr_bm: 'سحب كل بيانات الفريق {from} ← {to}',
     mgr_bm_intro: 'للمدير: إشارة واحدة تسحب كل بيانات الفترة — المهام والتقارير معًا — من داخل ماي أفاقي بضغطة واحدة، وتحفظ ملفين ترفعهما أدناه. بديل عن نسخ الأمرين. اسحب الزر إلى شريط الإشارات مرة واحدة.',
     g_mgr_h: 'إشارة المدير — سحب كل شيء بضغطة',
@@ -202,8 +196,7 @@ export const STRINGS = {
     me_open_more: 'وعرض {n} مهمة أخرى',
   },
   en: {
-    brand: 'Afaqy', portal: 'Technical team portal — Jeddah',
-    nav_tools: 'Tools', nav_data: 'Data', nav_kpi: 'KPIs',
+    brand: 'Afaqy', portal: 'Technical team portal — Jeddah', nav_data: 'Data', nav_kpi: 'KPIs',
     tools_title: 'Team tools', tools_sub: 'Each tool works inside the portal, with its usual sign-in.',
     primary: 'Core tools', systems: 'Company systems', more: 'More tools', soon: 'Coming soon',
     open: 'Open',
@@ -211,7 +204,6 @@ export const STRINGS = {
     step1: 'Choose the period', step2: 'Copy the prompt to Claude in Chrome', step3: 'Upload the result',
     block_size: 'Period length', blocks_back: 'Number of periods',
     m3: 'Quarter', m6: 'Half year', m12: 'Year',
-    branch: 'Branch in myafaqy',
     block_partial: 'in progress',
     copy_prompt: 'Copy prompt', copied: 'Prompt copied — paste it into Claude in Chrome with myafaqy open',
     step2_hint: 'Open myafaqy in Chrome and sign in, then open Claude in Chrome and paste the prompt. One prompt per period.',
@@ -264,13 +256,11 @@ export const STRINGS = {
     team_jeddah: 'Jeddah branch teams',
     team_all: 'Everyone',
     team_hint: 'Set automatically from the myafaqy teams registered to the Jeddah branch, and can be changed. Kept on this device.',
-    back_tools: 'All tools',
     open_tab: 'Open in its own tab',
     module_loading: 'Opening the tool…',
     in_portal: 'Works inside the portal',
     systems_note: 'Open in a new tab — the company systems do not allow being shown inside another page.',
     side_modules: 'Modules',
-    side_portal: 'Portal',
     menu: 'Menu',
     nav_home: 'Home',
     kpi_board: 'KPI board',
@@ -292,7 +282,6 @@ export const STRINGS = {
     me_android: 'Android (Chrome): copy the bookmark code, bookmark any page, then edit it: name it “My KPIs” and paste the code as its address. Then, inside myafaqy, type “My KPIs” in the address bar and pick the bookmark from the suggestions — tapping it in the bookmarks list does not run it.',
     me_ios: 'iPhone (Safari): copy the bookmark code, bookmark any page, then edit its address by pasting the code. Then, inside myafaqy, open your bookmarks and tap it.',
     me_privacy: 'What is read: your own tasks only — their number, when each was created and closed, its state and its type. Not titles, not customers, not your sign-in. Nothing is sent to any server, and nobody but you sees your KPIs.',
-    me_who: '{name} — last refreshed {date}',
     me_wait: 'Waiting for your tasks from myafaqy…',
     me_loaded: 'Your KPIs arrived: {n} tasks',
     me_q: 'Quarter',
@@ -372,7 +361,6 @@ export const STRINGS = {
     me_open_h: 'My open work now ({n})',
     me_open_none: 'You have no open tasks right now.',
     me_untitled: 'Untitled task',
-    me_numbers_h: 'My KPIs in numbers',
     mgr_bm: 'Pull all team data {from} → {to}',
     mgr_bm_intro: 'For the manager: one bookmark pulls all of the period’s data — tasks and reports together — from inside myafaqy in one press, and saves two files to upload below. An alternative to copying the two prompts. Drag the button onto the bookmarks bar once.',
     g_mgr_h: 'The manager bookmark — everything in one press',
@@ -393,8 +381,7 @@ export const STRINGS = {
     me_open_more: 'Show {n} more tasks',
   },
   ur: {
-    brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ',
-    nav_tools: 'ٹولز', nav_data: 'ڈیٹا', nav_kpi: 'کارکردگی کے اشاریے',
+    brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ', nav_data: 'ڈیٹا', nav_kpi: 'کارکردگی کے اشاریے',
     tools_title: 'ٹیم کے ٹولز', tools_sub: 'ہر ٹول پورٹل کے اندر، اپنے معمول کے اکاؤنٹ سے چلتا ہے۔',
     primary: 'بنیادی ٹولز', systems: 'کمپنی کے سسٹمز', more: 'دیگر ٹولز', soon: 'جلد آ رہا ہے',
     open: 'کھولیں',
@@ -402,7 +389,6 @@ export const STRINGS = {
     step1: 'مدت منتخب کریں', step2: 'ہدایت کاپی کر کے کلاڈ کروم میں دیں', step3: 'نتیجہ اپ لوڈ کریں',
     block_size: 'مدت کی لمبائی', blocks_back: 'مدتوں کی تعداد',
     m3: 'سہ ماہی', m6: 'ششماہی', m12: 'سال',
-    branch: 'مائی آفاقی میں برانچ',
     block_partial: 'جاری ہے',
     copy_prompt: 'ہدایت کاپی کریں', copied: 'ہدایت کاپی ہو گئی — مائی آفاقی کھول کر اسے کلاڈ کروم میں پیسٹ کریں',
     step2_hint: 'کروم میں مائی آفاقی کھولیں اور لاگ اِن کریں، پھر کلاڈ کروم کھول کر ہدایت پیسٹ کریں۔ ہر مدت کے لیے الگ ہدایت ہے۔',
@@ -455,13 +441,11 @@ export const STRINGS = {
     team_jeddah: 'جدہ برانچ کی ٹیمیں',
     team_all: 'سب',
     team_hint: 'مائی آفاقی میں جدہ برانچ پر درج ٹیموں سے خود بخود منتخب ہوتی ہے، اور بدلی جا سکتی ہے۔ اسی ڈیوائس پر محفوظ رہتی ہے۔',
-    back_tools: 'تمام ٹولز',
     open_tab: 'الگ ٹیب میں کھولیں',
     module_loading: 'ٹول کھل رہا ہے…',
     in_portal: 'پورٹل کے اندر چلتا ہے',
     systems_note: 'نئی ٹیب میں کھلتے ہیں — کمپنی کے سسٹمز کسی دوسرے صفحے کے اندر دکھائے جانے کی اجازت نہیں دیتے۔',
     side_modules: 'ماڈیولز',
-    side_portal: 'پورٹل',
     menu: 'مینو',
     nav_home: 'ہوم',
     kpi_board: 'اشاریوں کا بورڈ',
@@ -483,7 +467,6 @@ export const STRINGS = {
     me_android: 'اینڈرائیڈ (کروم): بک مارک کا کوڈ کاپی کریں، کسی بھی صفحے کو بک مارک کریں، پھر اسے ایڈٹ کریں: نام «میرے اشاریے» اور پتے کی جگہ کاپی کیا ہوا کوڈ۔ پھر مائی آفاقی کے اندر ایڈریس بار میں «میرے اشاریے» لکھیں اور تجاویز میں سے بک مارک چنیں — بک مارکس کی فہرست سے دبانے پر یہ نہیں چلتا۔',
     me_ios: 'آئی فون (سفاری): بک مارک کا کوڈ کاپی کریں، کسی بھی صفحے کو بک مارک کریں، پھر اس کے پتے میں کوڈ پیسٹ کریں۔ پھر مائی آفاقی کے اندر بک مارکس کھولیں اور اسے دبائیں۔',
     me_privacy: 'کیا پڑھا جاتا ہے: صرف آپ کے اپنے ٹاسک — ان کا نمبر، ہر ایک کب بنا اور کب بند ہوا، اس کی حالت اور قسم۔ نہ عنوان، نہ کسٹمر، نہ آپ کا لاگ اِن۔ کچھ بھی کسی سرور کو نہیں بھیجا جاتا، اور آپ کے اشاریے آپ کے سوا کوئی نہیں دیکھتا۔',
-    me_who: '{name} — آخری بار تازہ {date}',
     me_wait: 'مائی آفاقی سے آپ کے ٹاسک کا انتظار…',
     me_loaded: 'آپ کے اشاریے آ گئے: {n} ٹاسک',
     me_q: 'سہ ماہی',
@@ -563,7 +546,6 @@ export const STRINGS = {
     me_open_h: 'میرا کھلا کام ابھی ({n})',
     me_open_none: 'اس وقت آپ پر کوئی کھلا ٹاسک نہیں۔',
     me_untitled: 'بے عنوان ٹاسک',
-    me_numbers_h: 'اعداد میں میرے اشاریے',
     mgr_bm: 'ٹیم کا سارا ڈیٹا کھینچیں {from} ← {to}',
     mgr_bm_intro: 'مینیجر کے لیے: ایک بک مارک مائی آفاقی کے اندر سے ایک دباؤ میں مدت کا سارا ڈیٹا — ٹاسک اور رپورٹس ایک ساتھ — کھینچتا ہے، اور دو فائلیں محفوظ کرتا ہے جو نیچے اپ لوڈ ہوتی ہیں۔ دونوں ہدایات کاپی کرنے کا متبادل۔ بٹن کو ایک بار بک مارکس بار پر کھینچیں۔',
     g_mgr_h: 'مینیجر بک مارک — ایک دباؤ میں سب کچھ',
@@ -1277,6 +1259,15 @@ export function parseMePayload(raw) {
     branchCode: p.branchCode == null ? null : String(p.branchCode), below: p.h === true && String(p.id) !== uid })) : [];
   if (!people.some((p) => p.id === uid)) people.push({ id: uid, nameEn: '', nameAr: '', teams: [], branchCode: null, below: false });
   return { me: { schema: raw.schema, user: { id: uid, name: String(raw.user.name || '') }, extractedAt: toIso(raw.extractedAt), since: toIso(raw.since), people, tasks } };
+}
+
+/** Bring a profile saved by an earlier version up to the current shape (a v6.9 device holds no people list). */
+export function upgradeMe(me) {
+  if (!me || !me.user || !Array.isArray(me.tasks)) return null;
+  const uid = String(me.user.id);
+  const people = Array.isArray(me.people) ? me.people : [];
+  if (!people.some((p) => p.id === uid)) people.push({ id: uid, nameEn: '', nameAr: '', teams: [], branchCode: null, below: false });
+  return { ...me, user: { id: uid, name: String(me.user.name || '') }, people, tasks: me.tasks.map((x) => ({ ...x, assigneeId: x.assigneeId || uid })) };
 }
 
 /** The open tasks a person has right now — their current work, newest first. Titles come through only for one's own tasks. */

@@ -4,7 +4,7 @@ import {
   STRINGS, LANGS, t, periodBlocks, buildPrompt, SCHEMA, extractJson, parseDataset, mergeDataset, completeness,
   factor1, creditOf, GROUP, formatHours, formatRate, sampleDataset, saudiToday, ymd,
   saudiBoundsZ, toIso, saudiDay, peopleOf, defaultTeam, nameOf, EMAIL_MODULE, SCHEMAS,
-  buildBookmarklet, parseMe, myProfile, ME_SCHEMA, parseMePayload, profileMonths, monthWindows, scopeOf, ME_SCHEMA_V2,
+  buildBookmarklet, parseMe, myProfile, ME_SCHEMA, parseMePayload, profileMonths, monthWindows, scopeOf, ME_SCHEMA_V2, upgradeMe,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
@@ -366,6 +366,16 @@ test('profile: month comparison, team average without names, and only the people
   const solo = parseMePayload(MEV2(tasks.filter((x) => x.a === '70'), [people[0]])).me;
   assert.equal(profileMonths(solo, now).average, null, 'seeing only oneself: no average');
   assert.equal(profileMonths(solo, now).below.length, 0);
+});
+
+test('a profile saved by v6.9 (no people) is upgraded on load and still draws a month comparison', () => {
+  const old = { schema: ME_SCHEMA, user: { id: 7001, name: 'eng' }, extractedAt: '2026-10-28T10:00:00Z', since: '2025-10-28T21:00:00Z',
+    tasks: [{ id: '1', state: 'done', createdAt: '2026-10-02T08:00:00.000Z', completedAt: '2026-10-02T12:00:00.000Z', assigneeId: '7001', moduleId: 179, own: false, bucket: 'done', fromEmail: false }] };
+  const me = upgradeMe(old);
+  assert.ok(me && me.people.length === 1 && me.people[0].id === '7001');
+  const pm = profileMonths(me, new Date('2026-10-29T10:00:00Z'));
+  assert.equal(pm.mine.this.done, 1); assert.equal(pm.average, null); assert.equal(pm.below.length, 0);
+  assert.equal(upgradeMe(null), null);
 });
 
 test('formatting', () => {

@@ -1,21 +1,24 @@
 {
-  "version": "7.0",
+  "version": "7.1",
   "date": "2026-10-29",
   "notes": {
     "ar": [
-      "«مؤشراتي» صارت ملفًّا كاملًا: بياناتك وفرقك، ثم «هذا الشهر مقابل الشهر الماضي» على الأيام نفسها بأسهم تقول أين تحسّنت وأين تراجعت، ثم شغلك المفتوح، ثم مقارنتك بمتوسط الفريق بلا أسماء، ثم تاريخك لاثني عشر شهرًا.",
-      "قائد الفريق والمدير: قسم «فريقي» بأرقام كل من يضعه ماي أفاقي تحتك في هيكله، ومقارنة كل واحد بشهره الماضي. البوابة تعرض لكل شخص بالضبط ما يعرضه له ماي أفاقي — لا جدول صلاحيات يتقادم.",
-      "البيانات تنتقل من ماي أفاقي إلى البوابة برسالة بين النافذتين بلا حدّ للحجم، مقصورة على عنوان البوابة. ولا تُنقل عناوين مهام غيرك ولا أسماء العملاء ولا رمز الدخول."
+      "مراجعة شاملة بعد يوم من أحد عشر إصدارًا: عُثر على عيب — ملف «مؤشراتي» المحفوظ من نسخة 6.9 كان يظهر فارغًا في 7.0 — وصُلح، وصار اختبارًا دائمًا حتى لا تُفقد بيانات أحد مع أي نسخة قادمة.",
+      "شعار القائمة لم يكن ضمن ما يُحفظ للعمل بلا إنترنت؛ أُضيف، وصار الحارس يتأكد أن كل ما تستعمله الصفحة محفوظ. وحُذفت سبع عبارات من تصميمات قديمة لم تعد تُستعمل.",
+      "فُحصت كل صفحة في اللغات الثلاث والوضعين الفاتح والداكن وعلى الحاسوب والهاتف — أربع وثمانون حالة بلا خطأ. وصفحة الانتظار لا تبقى معلّقة إن لم تصل البيانات.",
+      "الدليل والمستندات تصف الآن نظامًا واحدًا: الطريق الأسرع للمدير، وملف الموظف ومن يرى من."
     ],
     "en": [
-      "“My KPIs” is now a full profile: your details and teams, then “This month against last month” over the same days with arrows showing where you improved and where you slipped, then your open work, then your comparison with the team average without names, then your twelve-month history.",
-      "Team leaders and managers: a “My team” section with the figures of everyone myafaqy places below you in its hierarchy, each compared with their own last month. The portal shows each person exactly what myafaqy shows them — no permissions table to go stale.",
-      "Data moves from myafaqy to the portal by a message between the two windows, with no size limit, addressed to the portal alone. The titles of others’ tasks, customer names and the sign-in token are never carried."
+      "A full review after a day of eleven releases: one defect found — a “My KPIs” profile saved under 6.9 showed an empty page under 7.0 — fixed, and now a permanent test so no future version can lose anyone’s data.",
+      "The menu logo was not among what is kept for offline use; added, and the guard now checks that everything the page uses is kept. Seven leftover phrases from old layouts were removed.",
+      "Every page was checked in the three languages, both light and dark, on desktop and phone — eighty-four cases without an error. The waiting page no longer hangs if the data never arrives.",
+      "The guide and documents now describe one coherent system: the fastest path for the manager, and the employee profile with who sees whom."
     ],
     "ur": [
-      "«میرے اشاریے» اب ایک مکمل پروفائل ہے: آپ کی تفصیلات اور ٹیمیں، پھر انہی دنوں پر «یہ مہینہ بمقابلہ پچھلا مہینہ» تیروں کے ساتھ جو بتاتے ہیں کہاں بہتری آئی اور کہاں کمی، پھر آپ کا کھلا کام، پھر ناموں کے بغیر ٹیم کی اوسط سے آپ کا موازنہ، پھر بارہ مہینوں کی آپ کی تاریخ۔",
-      "ٹیم لیڈر اور مینیجر: «میری ٹیم» کا حصہ ان سب کے اعداد کے ساتھ جنہیں مائی آفاقی اپنے ڈھانچے میں آپ کے نیچے رکھتا ہے، ہر ایک کا اپنے پچھلے مہینے سے موازنہ۔ پورٹل ہر شخص کو بالکل وہی دکھاتا ہے جو مائی آفاقی اسے دکھاتا ہے — کوئی اجازتوں کی فہرست نہیں جو پرانی ہو۔",
-      "ڈیٹا مائی آفاقی سے پورٹل تک دونوں ونڈوز کے درمیان ایک پیغام کے ذریعے جاتا ہے، بغیر کسی حد کے، صرف پورٹل کے پتے پر۔ دوسروں کے ٹاسکس کے عنوان، گاہکوں کے نام اور لاگ اِن ٹوکن کبھی نہیں لائے جاتے۔"
+      "گیارہ اجراؤں کے ایک دن کے بعد مکمل جائزہ: ایک خرابی ملی — 6.9 میں محفوظ «میرے اشاریے» کا پروفائل 7.0 میں خالی صفحہ دکھاتا تھا — درست کر دی گئی، اور اب ایک مستقل ٹیسٹ ہے تاکہ کوئی آئندہ نسخہ کسی کا ڈیٹا ضائع نہ کرے۔",
+      "مینو کا لوگو آف لائن کے لیے محفوظ چیزوں میں نہیں تھا؛ شامل کر دیا گیا، اور گارڈ اب جانچتا ہے کہ صفحہ جو کچھ استعمال کرتا ہے وہ سب محفوظ ہے۔ پرانے ڈیزائنوں کے سات بچے ہوئے جملے ہٹا دیے گئے۔",
+      "ہر صفحہ تینوں زبانوں، روشن اور تاریک دونوں اندازوں میں، کمپیوٹر اور فون پر جانچا گیا — چوراسی صورتیں بغیر کسی خرابی کے۔ انتظار کا صفحہ اب معلق نہیں رہتا اگر ڈیٹا نہ پہنچے۔",
+      "رہنما اور دستاویزات اب ایک ہم آہنگ نظام بیان کرتی ہیں: مینیجر کے لیے تیز ترین راستہ، اور ملازم کا پروفائل اور کون کسے دیکھتا ہے۔"
     ]
   }
 }

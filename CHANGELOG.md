@@ -17,6 +17,35 @@
 
 <!-- releases -->
 
+## v7.1 — 2026-10-29
+
+- مراجعة شاملة بعد يوم من أحد عشر إصدارًا: عُثر على عيب — ملف «مؤشراتي» المحفوظ من نسخة 6.9 كان يظهر فارغًا في 7.0 — وصُلح، وصار اختبارًا دائمًا حتى لا تُفقد بيانات أحد مع أي نسخة قادمة.
+- شعار القائمة لم يكن ضمن ما يُحفظ للعمل بلا إنترنت؛ أُضيف، وصار الحارس يتأكد أن كل ما تستعمله الصفحة محفوظ. وحُذفت سبع عبارات من تصميمات قديمة لم تعد تُستعمل.
+- فُحصت كل صفحة في اللغات الثلاث والوضعين الفاتح والداكن وعلى الحاسوب والهاتف — أربع وثمانون حالة بلا خطأ. وصفحة الانتظار لا تبقى معلّقة إن لم تصل البيانات.
+- الدليل والمستندات تصف الآن نظامًا واحدًا: الطريق الأسرع للمدير، وملف الموظف ومن يرى من.
+
+<details><summary>English</summary>
+
+- A full review after a day of eleven releases: one defect found — a “My KPIs” profile saved under 6.9 showed an empty page under 7.0 — fixed, and now a permanent test so no future version can lose anyone’s data.
+- The menu logo was not among what is kept for offline use; added, and the guard now checks that everything the page uses is kept. Seven leftover phrases from old layouts were removed.
+- Every page was checked in the three languages, both light and dark, on desktop and phone — eighty-four cases without an error. The waiting page no longer hangs if the data never arrives.
+- The guide and documents now describe one coherent system: the fastest path for the manager, and the employee profile with who sees whom.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- گیارہ اجراؤں کے ایک دن کے بعد مکمل جائزہ: ایک خرابی ملی — 6.9 میں محفوظ «میرے اشاریے» کا پروفائل 7.0 میں خالی صفحہ دکھاتا تھا — درست کر دی گئی، اور اب ایک مستقل ٹیسٹ ہے تاکہ کوئی آئندہ نسخہ کسی کا ڈیٹا ضائع نہ کرے۔
+- مینو کا لوگو آف لائن کے لیے محفوظ چیزوں میں نہیں تھا؛ شامل کر دیا گیا، اور گارڈ اب جانچتا ہے کہ صفحہ جو کچھ استعمال کرتا ہے وہ سب محفوظ ہے۔ پرانے ڈیزائنوں کے سات بچے ہوئے جملے ہٹا دیے گئے۔
+- ہر صفحہ تینوں زبانوں، روشن اور تاریک دونوں اندازوں میں، کمپیوٹر اور فون پر جانچا گیا — چوراسی صورتیں بغیر کسی خرابی کے۔ انتظار کا صفحہ اب معلق نہیں رہتا اگر ڈیٹا نہ پہنچے۔
+- رہنما اور دستاویزات اب ایک ہم آہنگ نظام بیان کرتی ہیں: مینیجر کے لیے تیز ترین راستہ، اور ملازم کا پروفائل اور کون کسے دیکھتا ہے۔
+
+</div>
+</details>
+
+
 ## v7.0 — 2026-10-29
 
 - «مؤشراتي» صارت ملفًّا كاملًا: بياناتك وفرقك، ثم «هذا الشهر مقابل الشهر الماضي» على الأيام نفسها بأسهم تقول أين تحسّنت وأين تراجعت، ثم شغلك المفتوح، ثم مقارنتك بمتوسط الفريق بلا أسماء، ثم تاريخك لاثني عشر شهرًا.

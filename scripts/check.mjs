@@ -60,6 +60,13 @@ const manifest = JSON.parse(read('manifest.webmanifest'));
 if (manifest.scope !== './' || manifest.start_url !== './') note('manifest.webmanifest: scope and start_url must be "./"');
 for (const i of manifest.icons || []) if (!exists(i.src)) note(`manifest icon missing: ${i.src}`);
 
+// 5b. Offline: every local asset the page references is in the service worker's precache list.
+{
+  const pre = new Set([...sw.matchAll(/'(\.\/[^']+)'/g)].map((m) => m[1].replace(/^\.\//, '')));
+  const refs = [...html.matchAll(/(?:src|href)="((?!https?:)(?!#)(?!javascript:)[^"]+\.(?:png|svg|ico|woff2?|webmanifest|css|js))"/g)].map((m) => m[1].replace(/^\.\//, ''));
+  for (const r of new Set(refs)) if (!pre.has(r)) note(`sw.js: ${r} is used by the page but not precached — it would be missing offline`);
+}
+
 // 6. Wiring: every id the script asks for exists; every string key exists in all three languages.
 // …or that the script itself creates (el('…', { id: 'x' }))
 const madeByScript = new Set([...app.matchAll(/\bid: '([\w-]+)'/g)].map((m) => m[1]));
