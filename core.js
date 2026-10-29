@@ -262,6 +262,7 @@ export const STRINGS = {
     f4_outside: 'لم يسجّل فريقك أي نشاط مع العملاء في هذه الفترة. في الفترة {n} نشاط، كلها من خارج الفريق: {who}.',
     f4_zero: 'لا أنشطة مع العملاء مسجّلة في هذه الفترة لأي أحد.',
     kpi_strip_note: 'المنجزة: ما أُغلق داخل الفترة، حتى لو أُنشئ قبلها — لذلك قد تزيد على المسندة. المسندة: ما أُنشئ داخل الفترة. نسبة الإنجاز: من المسندة، كم أُغلق. المفتوح الآن: ما زال مفتوحًا لحظة السحب.',
+    team_by_myafaqy: 'فريق كما في ماي أفاقي:',
   },
   en: {
     brand: 'Afaqy', portal: 'Technical team portal — Jeddah', nav_data: 'Data', nav_kpi: 'KPIs',
@@ -515,6 +516,7 @@ export const STRINGS = {
     f4_outside: 'Your team logged no activity with customers in this period. The period has {n} activities, all from outside the team: {who}.',
     f4_zero: 'No activities with customers were logged in this period by anyone.',
     kpi_strip_note: 'Completed: closed inside the period, even if created before it — so it can exceed Assigned. Assigned: created inside the period. Completion rate: of the assigned, how many were closed. Open now: still open at the moment of the pull.',
+    team_by_myafaqy: 'A team as myafaqy lists it:',
   },
   ur: {
     brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ', nav_data: 'ڈیٹا', nav_kpi: 'کارکردگی کے اشاریے',
@@ -768,6 +770,7 @@ export const STRINGS = {
     f4_outside: 'آپ کی ٹیم نے اس مدت میں گاہکوں کے ساتھ کوئی سرگرمی درج نہیں کی۔ مدت میں {n} سرگرمیاں ہیں، سب ٹیم کے باہر سے: {who}۔',
     f4_zero: 'اس مدت میں کسی نے بھی گاہکوں کے ساتھ کوئی سرگرمی درج نہیں کی۔',
     kpi_strip_note: 'مکمل: مدت کے اندر بند ہوئے، چاہے پہلے بنے ہوں — اس لیے تفویض شدہ سے زیادہ ہو سکتے ہیں۔ تفویض شدہ: مدت کے اندر بنے۔ تکمیل کی شرح: تفویض شدہ میں سے کتنے بند ہوئے۔ ابھی کھلے: کھینچنے کے لمحے بھی کھلے۔',
+    team_by_myafaqy: 'مائی آفاقی کی ٹیم:',
   },
 };
 
@@ -1135,6 +1138,7 @@ export function factor1(tasks, { range = null, team = null } = {}) {
     if (name && (!r.name || r.name === r.id)) r.name = name;
     return r;
   };
+  if (keep) for (const id of keep) row(id, id);
   for (const x of tasks || []) {
     const c = creditOf(x);
     if (keep && c.id !== GROUP && !keep.has(c.id)) continue;
@@ -1176,7 +1180,7 @@ export function factor1(tasks, { range = null, team = null } = {}) {
       avgHours: mean(r.durations), medianHours: median(r.durations), timed: r.durations.length,
     };
   };
-  const people = [...rows.values()].filter((r) => r.id !== GROUP && (r.assigned > 0 || r.created > 0 || r.done > 0 || r.open > 0)).map(finish)
+  const people = [...rows.values()].filter((r) => r.id !== GROUP && (r.assigned > 0 || r.created > 0 || r.done > 0 || r.open > 0 || (keep && keep.has(r.id)))).map(finish)
     .sort((a, b) => b.done - a.done || b.assigned - a.assigned || String(a.name).localeCompare(String(b.name)));
   const group = rows.has(GROUP) ? finish(rows.get(GROUP)) : null;
   const all = { id: '__team__', name: '__team__', assigned: 0, done: 0, cohortDone: 0, open: 0, cancelled: 0, created: 0, fromEmail: 0, selfLogged: 0, rd: 0, durations: [] };
@@ -1386,7 +1390,7 @@ const U=await post('Security/GetAllHierarchyUsersDropDown',{pageSize:1000,pageNu
 const udata=(U.data&&(U.data.data||U.data))||[];const uname={};for(const p of udata)uname[String(p.id)]=p;
 const people=[];const teamsSeen={};
 for(let pg=0;;pg++){const T=await post('Teams/GetAllTeams',{isSearchFilter:false,searchKey:'',search:{},pageSize:50,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const arr=(T.data&&(T.data.data||T.data))||[];for(const t of arr)teamsSeen[String(t.id)]=t;const tot=(T.data&&T.data.totalPages)||1;if(pg+1>=tot||!arr.length)break;await wait(200)}
-const teamOf={};for(const id of Object.keys(teamsSeen)){const d=await get('Teams/GetTeamById/'+id);const td=(d&&d.data)||{};const bc=td.branchCode==null?null:String(td.branchCode);for(const g of td.groupUsersDto||[]){const uid=String(g.userId);(teamOf[uid]=teamOf[uid]||{teams:[],branchCode:null}).teams.push(td.nameEn||td.name||id);if(bc)teamOf[uid].branchCode=bc}await wait(150)}
+const teamOf={};for(const id of Object.keys(teamsSeen)){const d=await get('Teams/GetTeamById/'+id);const td=(d&&d.data)||{};const bc=td.branchCode==null?null:String(td.branchCode);const jed=bc==='${branch}'||/jeddah/i.test(String(td.nameEn||td.name||''));for(const g of td.groupUsersDto||[]){const uid=String(g.userId);(teamOf[uid]=teamOf[uid]||{teams:[],branchCode:null,jeddah:false}).teams.push(td.nameEn||td.name||id);if(bc)teamOf[uid].branchCode=bc;if(jed)teamOf[uid].jeddah=true;if(!uname[uid]&&(g.nameEn||g.nameAr))uname[uid]={nameEn:g.nameEn,nameAr:g.nameAr}}await wait(150)}
 const walk=async(grp,co,keepRd,buckets=['done','open','toDo'])=>{const out=[];const rd=[];say(M[2]+(keepRd?'R&D':'tasks'));for(const b of buckets){let size=500,pg=0,total=null;for(;;){const d=((await post('Task/GetMyTasksGrid',taskBody(b,pg,size,co,grp))).data||{})[b];if(!d)break;if(pg===0&&d.pageSize!==size)size=d.pageSize||20;total=d.listCount;for(const x of d.data||[]){if(keepRd){rd.push(String(x.id));continue;}out.push({i:String(x.id),title:x.title,taskType:x.taskType,taskSettingId:x.taskSettingId,statusId:x.statusId,isCancelled:x.isCancelled,createdOn:x.createdOn,closeDate:x.closeDate,createUserId:x.createUserId,assigneeId:x.assigneeId,moduleId:x.moduleId,customerTag:x.customerTag,bucket:b})}pg++;if(!d.data||!d.data.length||pg*size>=total)break;await wait(250)}}return{out,rd}};
 const main=await walk(100001,[FROM&&'${fromZ}'||'',TO&&'${toZ}'||''],false,['done']);let tasks=main.out;const doneTotal=tasks.length;
 const opn=await walk(100001,[],false,['open','toDo']);const seenO=new Set(tasks.map(t=>t.i));for(const t of opn.out)if(!seenO.has(t.i)){seenO.add(t.i);tasks.push(t)}const openTotal=opn.out.length;
@@ -1394,7 +1398,7 @@ ${later ? `const late=await walk(100001,['${toZ}','${nowZ}'],false,['done']);con
 const rdq=await walk(12,[FROM&&'${fromZ}'||'',TO&&'${toZ}'||''],true,['done']);const rdo=await walk(12,[],true,['open','toDo']);const rdIds=[...new Set([...rdq.rd,...rdo.rd])];
 const mapTask=x=>{const uid=String(x.assigneeId||'');const tt=teamOf[uid]||{teams:[],branchCode:null};return{id:String(x.i),title:String(x.title||''),typeId:x.taskSettingId??null,type:String(x.taskType||''),statusId:x.statusId,state:x.isCancelled?'cancelled':x.statusId===3?'done':'open',createdAt:x.createdOn?x.createdOn+'Z':null,createdById:x.createUserId==null?null:String(x.createUserId),assigneeId:uid,completedAt:x.statusId===3&&!x.isCancelled&&x.closeDate?x.closeDate+'Z':null,moduleId:x.moduleId,customer:x.customerTag||null,bucket:x.bucket}};
 const seenId=new Set();const taskRows=[];for(const x of tasks){if(seenId.has(x.i))continue;seenId.add(x.i);taskRows.push(mapTask(x))}
-const pids=new Set();taskRows.forEach(t=>{if(t.assigneeId)pids.add(t.assigneeId);if(t.createdById)pids.add(t.createdById)});
+const pids=new Set();taskRows.forEach(t=>{if(t.assigneeId)pids.add(t.assigneeId);if(t.createdById)pids.add(t.createdById)});for(const[uid,tt]of Object.entries(teamOf))if(tt.jeddah)pids.add(uid);
 for(const id of pids){const u=uname[id]||{};const tt=teamOf[id]||{teams:[],branchCode:null};people.push({id,nameEn:String(u.nameEn||''),nameAr:String(u.nameAr||''),teams:tt.teams,branchCode:tt.branchCode})}
 const tasksFile={schema:'${SCHEMA}',range:{from:FROM,to:TO},extractedAt:new Date().toISOString(),taskGroupId:100001,source:{endpoint:'POST https://crmbackend.afaqy.sa/Task/GetMyTasksGrid',doneInRangeTotal:doneTotal,openTotal:openTotal,pageSize:500},people,tasks:taskRows,rdTaskIds:rdIds,notes:['manager bookmark; times UTC with Z added']};
 say(M[2]+'reports');const techPoints=[];const MM=${JSON.stringify(months.map(m=>({month:m.key,yearId:m.yearId,quarterId:m.quarterId,monthId:m.monthId,rd:m.requestDate})))};

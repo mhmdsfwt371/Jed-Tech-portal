@@ -440,6 +440,14 @@ test('hierarchy: a manager sees every level below — and a loop in the file can
   assert.deepEqual(descendantsOf(loop, '1'), ['2']);
 });
 
+test('Factor 1: a team member with no tasks still gets a row of zeros — nothing logged is a finding, not a gap', () => {
+  const tasks = [{ id: '1', assigneeId: 'A', createdById: 'A', state: 'done', createdAt: '2026-10-02T08:00:00Z', completedAt: '2026-10-02T10:00:00Z' }];
+  const f = factor1(tasks, { range: { from: '2026-10-01', to: '2026-10-29' }, team: ['A', 'Z'] });
+  const z = f.people.find((r) => r.id === 'Z');
+  assert.ok(z, 'Z is listed'); assert.equal(z.done, 0); assert.equal(z.assigned, 0);
+  assert.equal(f.team.done, 1);
+});
+
 test('formatting', () => {
   assert.equal(formatHours(null, 'ar'), '—');
   assert.equal(formatHours(5.26, 'en'), '5.3 h');

@@ -1,21 +1,21 @@
 {
-  "version": "7.9",
+  "version": "8.0",
   "date": "2026-10-29",
   "notes": {
     "ar": [
-      "تصحيح مهم في إشارة المدير: كانت تسحب المنجز فقط وتُسقط المهام المفتوحة الآن، فظهرت نسبة الإنجاز ١٠٠٪ والمفتوح صفرًا للجميع. صارت تسحب المفتوح، وتحتفظ بما أُنجز بعد الفترة فقط إن أُنشئ فيها، وتقرأ مفتوح البحث والتطوير. اسحب الفترة من جديد.",
-      "لوحة التعيين تعرض فريق ما بعد البيع في جدة فقط كما في ماي أفاقي — مختارين مسبقًا، مع «إظهار كل المهندسين».",
-      "الشكل: مربع المنجزة والزر المختار مقروءان في الوضع الداكن، والدوائر أوسع بأسماء في سطر واحد، وسطر يشرح لماذا قد تزيد المنجزة على المسندة، وتُخفى الأعمدة التي هي صفر للفريق كله."
+      "أزرار الفرق في لوحة المؤشرات: «الفريق المحسوب» صار فيه زر لكل فريق في جدة كما في ماي أفاقي — ما بعد البيع، البحث والتطوير، الفيديو تيليماتكس… — ضغطة واحدة تحوّل اللوحة كلها لذلك الفريق.",
+      "كل عضو في الفريق المختار يظهر في الجدول حتى لو لم تكن له أي مهمة — بأصفار — لأن غياب التسجيل نتيجة لا فجوة.",
+      "إشارة المدير تضيف كل أعضاء فرق جدة إلى قائمة الأشخاص بأسمائهم من الفريق، حتى من لا مهام له."
     ],
     "en": [
-      "An important fix to the manager bookmark: it pulled completed tasks only and dropped the tasks open now, so every completion rate read 100% and open read zero. It now pulls the open tasks, keeps work completed after the period only if created inside it, and reads the open R&D tasks. Pull the period again.",
-      "The assignment panel shows Jeddah’s after-sales team only, as myafaqy lists it — already chosen, with “show every engineer”.",
-      "Design: the completed tile and the chosen button read clearly in dark mode, the donuts are wider with single-line names, a line explains why completed can exceed assigned, and columns that are zero for the whole team are hidden."
+      "Team buttons on the KPI board: “the team counted” now has a button for each Jeddah team as myafaqy lists it — after-sales, R&D, video telematics… — one press switches the whole board to that team.",
+      "Every member of the chosen team appears in the table even with no task at all — as zeros — because nothing logged is a finding, not a gap.",
+      "The manager bookmark adds every member of Jeddah’s teams to the people list, named from the team, even those with no tasks."
     ],
     "ur": [
-      "مینیجر بک مارک میں اہم درستی: یہ صرف مکمل ٹاسک لاتا اور ابھی کھلے ٹاسک چھوڑ دیتا تھا، اس لیے ہر ایک کی تکمیل کی شرح ۱۰۰٪ اور کھلے صفر دکھتے تھے۔ اب یہ کھلے ٹاسک لاتا ہے، مدت کے بعد مکمل ہونے والے صرف تب رکھتا ہے جب مدت میں بنے ہوں، اور تحقیق و ترقی کے کھلے ٹاسک بھی پڑھتا ہے۔ مدت دوبارہ کھینچیں۔",
-      "تفویض کا پینل صرف جدہ کی آفٹر سیلز ٹیم دکھاتا ہے جیسے مائی آفاقی میں ہے — پہلے سے منتخب، «تمام انجینئرز دکھائیں» کے ساتھ۔",
-      "ڈیزائن: مکمل کا خانہ اور منتخب بٹن ڈارک موڈ میں صاف پڑھے جاتے ہیں، دائرے چوڑے اور نام ایک سطر میں، ایک سطر بتاتی ہے کہ مکمل تفویض شدہ سے کیوں زیادہ ہو سکتے ہیں، اور پوری ٹیم کے لیے صفر والے کالم چھپ جاتے ہیں۔"
+      "اشاریوں کے بورڈ پر ٹیموں کے بٹن: «شامل ٹیم» میں اب جدہ کی ہر ٹیم کا بٹن ہے جیسے مائی آفاقی میں ہے — آفٹر سیلز، تحقیق و ترقی، ویڈیو ٹیلی میٹکس… — ایک دباؤ پورے بورڈ کو اس ٹیم پر لے آتا ہے۔",
+      "منتخب ٹیم کا ہر رکن جدول میں دکھائی دیتا ہے چاہے اس کا کوئی ٹاسک نہ ہو — صفر کے ساتھ — کیونکہ کچھ درج نہ ہونا نتیجہ ہے، خلا نہیں۔",
+      "مینیجر بک مارک جدہ کی ٹیموں کے تمام ارکان کو افراد کی فہرست میں ٹیم کے ناموں کے ساتھ شامل کرتا ہے، ان کو بھی جن کا کوئی ٹاسک نہیں۔"
     ]
   }
 }

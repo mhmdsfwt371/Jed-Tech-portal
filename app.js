@@ -483,6 +483,13 @@ function renderTeamPicker(people, team) {
     el('div', { class: 'row' },
       el('button', { type: 'button', class: 'btn', text: t('team_jeddah'), onclick: () => save(defaultTeam(people, allTasks())) }),
       el('button', { type: 'button', class: 'btn quiet', text: t('team_all'), onclick: () => save(people.map((p) => p.id)) })),
+    (() => {
+      const byTeam = new Map();
+      for (const p of people) for (const tm of p.teams || []) if (/jeddah/i.test(tm) && !/collection/i.test(tm) && !(/sales/i.test(tm) && !/after\s*sales|pre\s*sales/i.test(tm))) (byTeam.get(tm) || byTeam.set(tm, []).get(tm)).push(p.id);
+      const list = [...byTeam.entries()].sort((x, y) => y[1].length - x[1].length);
+      return list.length ? el('div', { class: 'row team-presets' }, el('span', { class: 'hint', text: t('team_by_myafaqy') }),
+        list.map(([tm, ids]) => el('button', { type: 'button', class: `pill-btn${ids.length === chosen.size && ids.every((i) => chosen.has(i)) ? ' on' : ''}`, text: `${tm} · ${ids.length}`, onclick: () => save(ids) }))) : null;
+    })(),
     el('div', { class: 'team-list' }, sorted.map((p) => el('label', { class: 'team-item' },
       el('input', { type: 'checkbox', checked: chosen.has(p.id), onchange: (e) => {
         const next = new Set(currentTeam(people, allTasks()));

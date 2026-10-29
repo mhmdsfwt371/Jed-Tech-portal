@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v8.0 — 2026-10-29
+
+- أزرار الفرق في لوحة المؤشرات: «الفريق المحسوب» صار فيه زر لكل فريق في جدة كما في ماي أفاقي — ما بعد البيع، البحث والتطوير، الفيديو تيليماتكس… — ضغطة واحدة تحوّل اللوحة كلها لذلك الفريق.
+- كل عضو في الفريق المختار يظهر في الجدول حتى لو لم تكن له أي مهمة — بأصفار — لأن غياب التسجيل نتيجة لا فجوة.
+- إشارة المدير تضيف كل أعضاء فرق جدة إلى قائمة الأشخاص بأسمائهم من الفريق، حتى من لا مهام له.
+
+<details><summary>English</summary>
+
+- Team buttons on the KPI board: “the team counted” now has a button for each Jeddah team as myafaqy lists it — after-sales, R&D, video telematics… — one press switches the whole board to that team.
+- Every member of the chosen team appears in the table even with no task at all — as zeros — because nothing logged is a finding, not a gap.
+- The manager bookmark adds every member of Jeddah’s teams to the people list, named from the team, even those with no tasks.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اشاریوں کے بورڈ پر ٹیموں کے بٹن: «شامل ٹیم» میں اب جدہ کی ہر ٹیم کا بٹن ہے جیسے مائی آفاقی میں ہے — آفٹر سیلز، تحقیق و ترقی، ویڈیو ٹیلی میٹکس… — ایک دباؤ پورے بورڈ کو اس ٹیم پر لے آتا ہے۔
+- منتخب ٹیم کا ہر رکن جدول میں دکھائی دیتا ہے چاہے اس کا کوئی ٹاسک نہ ہو — صفر کے ساتھ — کیونکہ کچھ درج نہ ہونا نتیجہ ہے، خلا نہیں۔
+- مینیجر بک مارک جدہ کی ٹیموں کے تمام ارکان کو افراد کی فہرست میں ٹیم کے ناموں کے ساتھ شامل کرتا ہے، ان کو بھی جن کا کوئی ٹاسک نہیں۔
+
+</div>
+</details>
+
+
 ## v7.9 — 2026-10-29
 
 - تصحيح مهم في إشارة المدير: كانت تسحب المنجز فقط وتُسقط المهام المفتوحة الآن، فظهرت نسبة الإنجاز ١٠٠٪ والمفتوح صفرًا للجميع. صارت تسحب المفتوح، وتحتفظ بما أُنجز بعد الفترة فقط إن أُنشئ فيها، وتقرأ مفتوح البحث والتطوير. اسحب الفترة من جديد.
