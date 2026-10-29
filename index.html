@@ -250,14 +250,17 @@
   .side-badge, .tool .badge { color: var(--accent-dark); background: var(--accent-wash); }
 
   .me-who { color: var(--slate); margin: 0 0 14px; }
-  .donuts { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 8px; }
+  .donuts { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px; margin: 14px 0 10px; }
+  @media (max-width: 520px) { .donuts { grid-template-columns: 1fr; } }
   .donut { display: flex; gap: 14px; align-items: center; padding: 14px 16px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
   .donut svg { flex: 0 0 auto; }
-  .donut-legend { display: grid; gap: 4px; font-size: 13px; min-width: 0; }
-  .donut-legend span { display: flex; align-items: center; gap: 8px; }
+  .donut-legend { display: grid; gap: 6px; font-size: 14px; min-width: 0; flex: 1 1 auto; }
+  .donut > div:last-child { min-width: 0; flex: 1 1 auto; }
+  .donut-legend > span { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+  .donut-legend > span > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
   .donut-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; }
-  .donut-legend b { margin-inline-start: auto; }
-  .donut-title { font-size: 13px; color: var(--slate); margin-bottom: 6px; }
+  .donut-legend b { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--title); }
+  .donut-title { font-size: 15px; font-weight: 700; color: var(--title); margin-bottom: 10px; }
   .me-pos { color: var(--accent-dark); font-weight: 600; margin: 2px 0 0; }
   .team-table table { table-layout: fixed; }
   .team-table th:nth-child(1), .team-table td:nth-child(1) { width: 32%; }
@@ -265,7 +268,7 @@
   .team-table input, .team-table select { font: inherit; width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }
   .pills { display: flex; gap: 6px; flex-wrap: wrap; }
   .pill-btn { font: inherit; font-size: 13px; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); cursor: pointer; }
-  .pill-btn.on { background: var(--ink); color: #FFFFFF; border-color: var(--ink); font-weight: 700; }
+  .pill-btn.on { background: var(--accent-wash); color: var(--accent-dark); border-color: var(--accent); font-weight: 700; }
   .bar-cell { display: flex; align-items: center; gap: 8px; min-width: 120px; }
   .bar-cell b { min-width: 28px; text-align: start; }
   .bar-cell i { flex: 1 1 auto; height: 8px; background: var(--paper); border-radius: 4px; overflow: hidden; }
@@ -275,8 +278,11 @@
   .alert.warn { background: var(--warn-wash); border-color: var(--warn); color: var(--text); }
   .alert.ok { background: var(--ok-wash); border-color: var(--ok); color: var(--text); }
   .strip.six { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-  .strip .lead { background: var(--ink); color: #FFFFFF; border-radius: var(--radius); }
-  .strip .lead b, .strip .lead span { color: #FFFFFF; }
+  .strip-note { font-size: 13px; color: var(--slate); margin: -4px 0 14px; line-height: 1.7; }
+  #kpi-body table { font-size: 14px; } #kpi-body td.num, #kpi-body th.num { font-variant-numeric: tabular-nums; }
+  #kpi-body td .hint { font-size: 12px; }
+  .strip .lead { background: var(--accent-wash); border-radius: var(--radius); box-shadow: inset 0 0 0 1px var(--accent); }
+  .strip .lead b { color: var(--accent-dark); } .strip .lead span { color: var(--text); }
   .columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; align-items: end; padding: 18px 20px 14px; margin-bottom: 10px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
   .column { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 13px; color: var(--slate); }
   .column i { display: block; width: 56px; background: var(--line-strong); border-radius: 6px 6px 0 0; }

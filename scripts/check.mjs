@@ -216,6 +216,14 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   const okPaths = new Set(["'Security/GetAllHierarchyUsersDropDown'", "'Teams/GetAllTeams'", "'Teams/GetTeamById/'", "'Task/GetMyTasksGrid'", "'TechnicianReport/GetTechnicianReportStatic'", "'AfterSalesBoardReport/GetAfterSalesAgentsGrid'", "'ActivityLog/GetTicketsGrid'"]);
   for (const x of mgPaths) if (!okPaths.has(x)) note(`manager bookmark: calls ${x} — only the seven read endpoints are allowed`);
   if (/description|customerName|salesMan/.test((mg.match(/acts\.push\(\{[^}]*\}/) || [''])[0])) note('manager bookmark: the activity log must not carry descriptions, customer names or sales fields');
+  // the three task reads the prompt has always had — done in the period, open NOW, R&D open — must all be in the bookmark
+  if (!mg.includes("walk(100001,[],false,['open','toDo'])")) note('manager bookmark: must read the tasks OPEN NOW (completedOn [] on the open and toDo buckets) — without it every rate reads 100% and open reads 0');
+  if (!mg.includes("walk(12,[],true,['open','toDo'])")) note('manager bookmark: must read the open R&D tasks too');
+  {
+    const { buildManagerBookmarklet: mb } = await import(new URL('core.js', root));
+    const past = decodeURIComponent(mb('2026-01-01', '2026-01-31').replace(/^javascript:/, ''));
+    if (!/c>='[^']+'&&c<'[^']+'\)tasks\.push/.test(past)) note('manager bookmark: tasks done after the period are kept only if created inside it');
+  }
   if (/\/(add|edit|delete|remove|save|assign|close|complete|approve|update|create|sync|send)\b/i.test(mg)) note('manager bookmark: a write-like path appeared');
   if (/location\.href=[^;]*(tk|token)|\.href='[^']*'\+tk/.test(mg) || /dl\([^)]*tk\b/.test(mg)) note('manager bookmark: the sign-in token must never leave the page');
   if (!/location\.hostname!=='myafaqy\.com'/.test(mg)) note('manager bookmark: must refuse to run anywhere but myafaqy.com');
@@ -263,9 +271,11 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   const hosts = [...ab.matchAll(/https:\/\/([a-z0-9.-]+)/g)].map((m) => m[1]).filter((h) => h !== 'crmbackend.afaqy.sa');
   if (hosts.length) note(`assignment panel: talks to ${[...new Set(hosts)].join(', ')} — only crmbackend.afaqy.sa`);
   const paths = [...ab.matchAll(/post\('([A-Za-z/]+)'/g)].map((m) => m[1]);
-  const okA = ['AfterSales/GetAllAfterSalesEngineers', 'AfterSales/GetAfterSalesRequestGrid', 'AfterSales/AssignAfterSales'];
+  const okA = ['AfterSales/GetAllAfterSalesEngineers', 'AfterSales/GetAfterSalesRequestGrid', 'Teams/GetAllTeams', 'AfterSales/AssignAfterSales'];
+  const gets = [...ab.matchAll(/get\('([A-Za-z/]+)'/g)].map((m) => m[1]);
+  for (const x of new Set(gets)) if (x !== 'Teams/GetTeamById/') note(`assignment panel: reads ${x} — only Teams/GetTeamById besides the allowed posts`);
   for (const x of new Set(paths)) if (!okA.includes(x)) note(`assignment panel: calls ${x} — only two reads and the one write are allowed`);
-  const writes = paths.filter((x) => !/\/Get/.test(x));
+  const writes = paths.filter((x) => !/\/Get/.test(x) && x !== 'Teams/GetAllTeams');
   if (writes.length !== 1 || writes[0] !== 'AfterSales/AssignAfterSales') note('assignment panel: exactly one write endpoint, AfterSales/AssignAfterSales');
   if (!/const union=r=>\[\.\.\.new Set\(\[\.\.\.r\.have,\.\.\.chosen\]\)\]\.filter\(x=>!removing\.has\(x\)\);/.test(ab)) note('assignment panel: the posted list must be (existing ∪ chosen) minus only the explicitly ticked removals');
   if (!/removing=new Set\(\)/.test(ab) || /removing=new Set\([^)]/.test(ab) || /localStorage\.setItem\('afaqy-assign-remove'/.test(ab)) note('assignment panel: the removal set must start empty on every open and never be remembered — removal is always a fresh, explicit tick');

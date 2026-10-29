@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v7.9 — 2026-10-29
+
+- تصحيح مهم في إشارة المدير: كانت تسحب المنجز فقط وتُسقط المهام المفتوحة الآن، فظهرت نسبة الإنجاز ١٠٠٪ والمفتوح صفرًا للجميع. صارت تسحب المفتوح، وتحتفظ بما أُنجز بعد الفترة فقط إن أُنشئ فيها، وتقرأ مفتوح البحث والتطوير. اسحب الفترة من جديد.
+- لوحة التعيين تعرض فريق ما بعد البيع في جدة فقط كما في ماي أفاقي — مختارين مسبقًا، مع «إظهار كل المهندسين».
+- الشكل: مربع المنجزة والزر المختار مقروءان في الوضع الداكن، والدوائر أوسع بأسماء في سطر واحد، وسطر يشرح لماذا قد تزيد المنجزة على المسندة، وتُخفى الأعمدة التي هي صفر للفريق كله.
+
+<details><summary>English</summary>
+
+- An important fix to the manager bookmark: it pulled completed tasks only and dropped the tasks open now, so every completion rate read 100% and open read zero. It now pulls the open tasks, keeps work completed after the period only if created inside it, and reads the open R&D tasks. Pull the period again.
+- The assignment panel shows Jeddah’s after-sales team only, as myafaqy lists it — already chosen, with “show every engineer”.
+- Design: the completed tile and the chosen button read clearly in dark mode, the donuts are wider with single-line names, a line explains why completed can exceed assigned, and columns that are zero for the whole team are hidden.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- مینیجر بک مارک میں اہم درستی: یہ صرف مکمل ٹاسک لاتا اور ابھی کھلے ٹاسک چھوڑ دیتا تھا، اس لیے ہر ایک کی تکمیل کی شرح ۱۰۰٪ اور کھلے صفر دکھتے تھے۔ اب یہ کھلے ٹاسک لاتا ہے، مدت کے بعد مکمل ہونے والے صرف تب رکھتا ہے جب مدت میں بنے ہوں، اور تحقیق و ترقی کے کھلے ٹاسک بھی پڑھتا ہے۔ مدت دوبارہ کھینچیں۔
+- تفویض کا پینل صرف جدہ کی آفٹر سیلز ٹیم دکھاتا ہے جیسے مائی آفاقی میں ہے — پہلے سے منتخب، «تمام انجینئرز دکھائیں» کے ساتھ۔
+- ڈیزائن: مکمل کا خانہ اور منتخب بٹن ڈارک موڈ میں صاف پڑھے جاتے ہیں، دائرے چوڑے اور نام ایک سطر میں، ایک سطر بتاتی ہے کہ مکمل تفویض شدہ سے کیوں زیادہ ہو سکتے ہیں، اور پوری ٹیم کے لیے صفر والے کالم چھپ جاتے ہیں۔
+
+</div>
+</details>
+
+
 ## v7.8 — 2026-10-29
 
 - سجل الأنشطة يقول الحقيقة بوضوح: إذا لم يسجّل فريقك أي نشاط مع العملاء في الفترة يقولها صراحةً، ويذكر عدد الأنشطة في الفترة ومن سجّلها من خارج الفريق — بدل «لا أنشطة في الملف».

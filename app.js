@@ -515,7 +515,8 @@ function renderKpi() {
     datasets.map((d) => el('option', { value: d.key, selected: d.key === kpiKey, text: `${d.range.from} → ${d.range.to}${d.sample ? ' *' : ''}` })));
   const rateCell = (r) => el('span', { class: 'rate' }, el('i', {}, el('b', { style: `width:${Math.round((r || 0) * 100)}%` })), formatRate(r));
   const name = (r) => (r.id === GROUP ? t('group_bucket') : (nameOf(peopleById.get(r.id), lang) || r.name));
-  const cols = ['col_person', 'col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_median', 'col_open', 'col_cancelled', 'col_email', 'col_self', ...(ds.rdKnown ? ['col_rd'] : []), 'col_created'];
+  const showCancel = f.team.cancelled > 0, showRd = ds.rdKnown && f.team.rd > 0;
+  const cols = ['col_person', 'col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_median', 'col_open', ...(showCancel ? ['col_cancelled'] : []), 'col_email', 'col_self', ...(showRd ? ['col_rd'] : []), 'col_created'];
   const maxDone = Math.max(1, ...f.people.map((r) => r.done));
   const ordered = [...f.people].sort((a, b) => kpiSort === 'median' ? ((b.medianHours ?? -1) - (a.medianHours ?? -1)) : kpiSort === 'open' ? (b.open - a.open) : (b.done - a.done));
   const line = (r, cls) => el('tr', { class: cls },
@@ -523,8 +524,8 @@ function renderKpi() {
     el('td', { class: 'num', text: r.assigned }), el('td', { class: 'num' }, cls ? String(r.done) : el('div', { class: 'bar-cell' }, el('b', { text: String(r.done) }), el('i', {}, el('span', { style: `width:${Math.round((r.done / maxDone) * 100)}%` })))),
     el('td', { class: 'num' }, rateCell(r.rate)),
     el('td', { class: 'num', text: formatHours(r.avgHours, lang) }), el('td', { class: 'num', text: formatHours(r.medianHours, lang) }),
-    el('td', { class: 'num', text: r.open }), el('td', { class: 'num', text: r.cancelled }),
-    el('td', { class: 'num', text: r.fromEmail }), el('td', { class: 'num', text: r.selfLogged }), ds.rdKnown ? el('td', { class: 'num', text: r.rd }) : null, el('td', { class: 'num', text: r.created }));
+    el('td', { class: 'num', text: r.open }), showCancel ? el('td', { class: 'num', text: r.cancelled }) : null,
+    el('td', { class: 'num', text: r.fromEmail }), el('td', { class: 'num', text: r.selfLogged }), showRd ? el('td', { class: 'num', text: r.rd }) : null, el('td', { class: 'num', text: r.created }));
   const table = el('div', { class: 'table-wrap' }, el('table', {},
     el('thead', {}, el('tr', {}, cols.map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
     el('tbody', {}, ordered.map((r) => line(r)), f.group ? line({ ...f.group, id: GROUP }, 'group') : null, line(f.team, 'total'))));
@@ -550,6 +551,7 @@ function renderKpi() {
       el('div', {}, el('b', { text: formatHours(f.team.medianHours, lang) }), el('span', { text: t('col_median') })),
       el('div', {}, el('b', { text: f.team.open }), el('span', { text: t('col_open') })),
       el('div', {}, el('b', { text: `${f.team.fromEmail} · ${f.team.selfLogged}` }), el('span', { text: `${t('col_email')} · ${t('col_self')}` }))),
+    el('p', { class: 'strip-note', text: t('kpi_strip_note') }),
     el('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin-bottom:8px' },
       el('p', { class: 'hint', style: 'margin:0', text: t('kpi_table_sub') }),
       el('div', { class: 'pills' }, [['done', 'kpi_sort_done'], ['median', 'kpi_sort_median'], ['open', 'kpi_sort_open']].map(([k, label]) =>
