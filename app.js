@@ -3,7 +3,7 @@ import { PRIMARY, SYSTEMS, MORE, PORTAL_VERSION, MODULE_ALLOW } from './config.j
 import {
   t as tr, L, LANGS, dirOf, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1,
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
-  buildBookmarklet, parseMe, myProfile, openTasks,
+  buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, REPORTS_SCHEMA, buildManagerBookmarklet,
 } from './core.js';
 
@@ -105,25 +105,59 @@ function renderMe(waiting = false) {
   if (waiting) { set(body, el('div', { class: 'empty', text: t('me_wait') })); return; }
   if (!me) { set(body, el('div', { class: 'step me-setup' }, el('span', { class: 'n', text: '١' }), el('div', {}, el('h3', { text: t('me_how_h') }), ...setup))); return; }
   const qs = myProfile(me);
-  const cur = qs[0] && qs[0].row;
-  const openNow = me.tasks.filter((x) => x.state === 'open').length;
+  const pm = profileMonths(me);
   const fmtDate = (iso) => (iso ? `\u2066${iso.slice(0, 10)}\u2069` : '');
   const mine = openTasks(me.tasks, me.user.id);
   const hrsAge = (h) => (h == null ? '' : h < 48 ? t('hours', { n: Math.round(h) }) : t('days', { n: Math.round(h / 24) }));
+  const self = me.people.find((p) => p.id === me.user.id) || {};
+  const who = nameOf(self, lang) || me.user.name || me.user.id;
+  const val = (k, r) => (r == null ? '—' : k === 'rate' ? formatRate(r.rate) : k === 'medianHours' ? (r.medianHours == null ? '—' : formatHours(r.medianHours, lang)) : String(Math.round((r[k] || 0) * 10) / 10));
+  // better is up for counts and rate, down for time; an arrow says which way it moved and whether that is good
+  const arrow = (k, now, before) => {
+    const a = now && now[k], b = before && before[k];
+    if (a == null || b == null || a === b) return el('span', { class: 'delta same', text: '=' });
+    const up = a > b, judged = ['done', 'rate', 'medianHours'].includes(k), good = k === 'medianHours' ? !up : up;
+    const diff = k === 'rate' ? `${Math.round(Math.abs(a - b) * 100)}%` : k === 'medianHours' ? formatHours(Math.abs(a - b), lang) : String(Math.round(Math.abs(a - b) * 10) / 10);
+    return el('span', { class: `delta ${judged ? (good ? 'good' : 'bad') : 'neutral'}`, text: `${up ? '▲' : '▼'} \u2068${diff}\u2069` });
+  };
+  const METRICS = [['done', 'col_done'], ['assigned', 'col_assigned'], ['rate', 'col_rate'], ['medianHours', 'col_median'], ['selfLogged', 'col_self'], ['fromEmail', 'col_email']];
+  const cards = (cmpA, cmpB, labelA, labelB) => el('div', { class: 'cmp-grid' }, METRICS.map(([k, label]) => el('div', { class: 'cmp' },
+    el('span', { class: 'cmp-k', text: t(label) }),
+    el('b', { class: 'cmp-v', text: `\u2068${val(k, cmpA)}\u2069` }),
+    el('span', { class: 'cmp-was', text: `${labelB}: \u2068${val(k, cmpB)}\u2069` }),
+    arrow(k, cmpA, cmpB))));
+  const nm = (id) => nameOf(me.people.find((p) => p.id === id) || {}, lang) || id;
+  const workCard = (x) => el('div', { class: `work${x.fromEmail ? ' email' : ''}` },
+    el('div', { class: 'work-main' }, el('span', { class: 'work-title', text: x.title || t('me_untitled') }),
+      x.customer ? el('span', { class: 'work-cust', text: x.customer }) : null),
+    el('div', { class: 'work-meta' }, el('span', { text: x.type || '' }), el('span', { class: 'work-age', text: hrsAge(x.ageHours) })));
   set(body,
-    el('p', { class: 'me-who', text: t('me_who', { name: me.user.name || me.user.id, date: fmtDate(me.extractedAt) }) }),
+    el('div', { class: 'me-card' },
+      el('div', {}, el('h2', { class: 'me-name', text: who }),
+        self.teams && self.teams.length ? el('p', { class: 'me-teams', text: self.teams.join(' · ') }) : null),
+      el('div', { class: 'me-facts' },
+        el('span', { text: t('me_updated', { date: fmtDate(me.extractedAt) }) }),
+        el('span', { text: t('me_scope', { n: pm.scope.visible.length }) }))),
+    el('h2', { text: t('me_month_h', { d: pm.windows.day }) }),
+    el('p', { class: 'hint', text: t('me_month_sub', { a: pm.windows.this.from, b: pm.windows.this.to, c: pm.windows.last.from, d: pm.windows.last.to }) }),
+    cards(pm.mine.this, pm.mine.last, '', t('me_last_month')),
     el('h2', { text: t('me_open_h', { n: mine.length }) }),
-    mine.length ? el('div', { class: 'worklist' }, mine.map((x) => el('div', { class: `work${x.fromEmail ? ' email' : ''}` },
-      el('div', { class: 'work-main' }, el('span', { class: 'work-title', text: x.title || t('me_untitled') }),
-        x.customer ? el('span', { class: 'work-cust', text: x.customer }) : null),
-      el('div', { class: 'work-meta' }, el('span', { text: x.type || '' }), el('span', { class: 'work-age', text: hrsAge(x.ageHours) })))))
+    mine.length ? [el('div', { class: 'worklist' }, mine.slice(0, 6).map(workCard)),
+      mine.length > 6 ? el('details', { class: 'more-work' }, el('summary', { text: t('me_open_more', { n: mine.length - 6 }) }), el('div', { class: 'worklist' }, mine.slice(6).map(workCard))) : null]
       : el('div', { class: 'empty', text: t('me_open_none') }),
-    el('h2', { text: t('me_numbers_h') }),
-    el('div', { class: 'strip' },
-      el('div', {}, el('b', { text: String(cur ? cur.assigned : 0) }), el('span', { text: `${t('col_assigned')} — ${qs[0] ? qs[0].label : ''}` })),
-      el('div', {}, el('b', { text: String(cur ? cur.done : 0) }), el('span', { text: t('col_done') })),
-      el('div', {}, el('b', { text: cur ? formatRate(cur.rate) : '—' }), el('span', { text: t('col_rate') })),
-      el('div', {}, el('b', { text: String(openNow) }), el('span', { text: t('col_open') }))),
+    el('h2', { text: t('me_avg_h') }),
+    pm.average ? [el('p', { class: 'hint', text: t('me_avg_sub', { n: pm.average.n }) }), cards(pm.mine.this, pm.average, '', t('me_avg_team'))]
+      : el('p', { class: 'note info', text: t('me_avg_none') }),
+    pm.below.length ? [
+      el('h2', { text: t('me_team_h', { n: pm.below.length }) }),
+      el('p', { class: 'hint', text: t('me_team_sub') }),
+      el('div', { class: 'table-wrap' }, el('table', {},
+        el('thead', {}, el('tr', {}, ...['col_person', 'col_assigned', 'col_done', 'me_vs_last', 'col_rate', 'col_median', 'col_open'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
+        el('tbody', {}, pm.below.map((r) => el('tr', {},
+          el('td', { text: nm(r.id) }), el('td', { class: 'num', text: String(r.this.assigned) }), el('td', { class: 'num', text: String(r.this.done) }),
+          el('td', { class: 'num' }, arrow('done', r.this, r.last)), el('td', { class: 'num', text: formatRate(r.this.rate) }),
+          el('td', { class: 'num', text: r.this.medianHours == null ? '—' : formatHours(r.this.medianHours, lang) }), el('td', { class: 'num', text: String(r.this.open) }))))))] : null,
+    el('h2', { text: t('me_history_h') }),
     el('div', { class: 'table-wrap' }, el('table', {},
       el('thead', {}, el('tr', {}, ...['me_q', 'col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_median', 'col_email', 'col_self', 'col_cancelled'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
       el('tbody', {}, qs.map((q) => {
@@ -147,6 +181,22 @@ async function receiveMe(fragment) {
   me = r.me; await store.putMe(me);
   toast(t('me_loaded', { n: me.tasks.length })); renderMe();
 }
+// The bookmark hands the data over by message (ADR-0014): accepted only from myafaqy itself and only in our shape.
+const MYAFAQY_ORIGIN = 'https://myafaqy.com';
+let meReceived = '';
+window.addEventListener('message', async (e) => {
+  if (e.origin !== MYAFAQY_ORIGIN) return;
+  if (!e.data || e.data.type !== 'afaqy-me' || !e.data.payload) return;
+  try { e.source && e.source.postMessage({ type: 'afaqy-me-ack' }, e.origin); } catch { /* the sender stops on its own after a while */ }
+  const stamp = String(e.data.payload.extractedAt || '');
+  if (stamp && stamp === meReceived) return;          // the bookmark repeats until acknowledged — keep the first
+  meReceived = stamp;
+  const r = parseMePayload(e.data.payload);
+  if (r.error) { toast(t(r.error, r.vars || {})); return; }
+  me = r.me; await store.putMe(me);
+  if (location.hash !== '#me') history.replaceState(null, '', '#me');
+  route(); toast(t('me_loaded', { n: me.tasks.length })); renderMe();
+});
 
 // ---------- AFAQY PRO inside the portal (ADR-0011) ----------
 // The integration API is the one AFAQY system that accepts the portal's address (checked in a real browser, 29 Oct 2026).

@@ -1,5 +1,5 @@
 // config.js — the only file to edit when a tool is added or moves.
-export const PORTAL_VERSION = '6.9';   // stamped by scripts/bump.mjs — never edit by hand
+export const PORTAL_VERSION = '7.0';   // stamped by scripts/bump.mjs — never edit by hand
 
 // MODULES open inside the portal (an embedded frame under the portal's header), stay alive while you switch between
 // them, and keep their own code in their own repository. A module must live on the portal's own address

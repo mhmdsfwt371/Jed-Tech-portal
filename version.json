@@ -1,21 +1,21 @@
 {
-  "version": "6.9",
+  "version": "7.0",
   "date": "2026-10-29",
   "notes": {
     "ar": [
-      "«مؤشراتي» صارت تبدأ بـ«شغلي المفتوح الآن»: مهامك المفتوحة بعناوينها ونوعها وعمرها، الأحدث أولًا — قائمة عملك الحالي من ضغطة واحدة على الإشارة في ماي أفاقي. عناوين المهام المنجزة وأسماء العملاء لا تُنقل كما كان.",
-      "إشارة للمدير في صفحة البيانات: ضغطة واحدة من داخل ماي أفاقي تسحب كل بيانات الربع — المهام، وطابور البحث والتطوير، ونقاط الفنيين، وتذاكر ما بعد البيع — وتحفظ الملفين اللذين يُرفعان في البوابة. بديل أسرع عن تشغيل الأمرين في كلود كروم.",
-      "الحارس صار يتأكد أن الإشارتين تعملان بعد ضغط أسطرهما، ولا يسمح إلا بالطلبات الستة للقراءة."
+      "«مؤشراتي» صارت ملفًّا كاملًا: بياناتك وفرقك، ثم «هذا الشهر مقابل الشهر الماضي» على الأيام نفسها بأسهم تقول أين تحسّنت وأين تراجعت، ثم شغلك المفتوح، ثم مقارنتك بمتوسط الفريق بلا أسماء، ثم تاريخك لاثني عشر شهرًا.",
+      "قائد الفريق والمدير: قسم «فريقي» بأرقام كل من يضعه ماي أفاقي تحتك في هيكله، ومقارنة كل واحد بشهره الماضي. البوابة تعرض لكل شخص بالضبط ما يعرضه له ماي أفاقي — لا جدول صلاحيات يتقادم.",
+      "البيانات تنتقل من ماي أفاقي إلى البوابة برسالة بين النافذتين بلا حدّ للحجم، مقصورة على عنوان البوابة. ولا تُنقل عناوين مهام غيرك ولا أسماء العملاء ولا رمز الدخول."
     ],
     "en": [
-      "“My KPIs” now opens with “My open work now”: your open tasks with their titles, type and age, newest first — your current work list from one press on the bookmark in myafaqy. Titles of completed tasks and customer names are still never carried.",
-      "A manager bookmark on the Data page: one press inside myafaqy pulls all of the quarter’s data — tasks, the R&D queue, technician points and after-sales tickets — and saves the two files uploaded in the portal. A faster alternative to running the two prompts in Claude in Chrome.",
-      "The guard now checks that both bookmarks run after their lines are joined, and allows only the six read requests."
+      "“My KPIs” is now a full profile: your details and teams, then “This month against last month” over the same days with arrows showing where you improved and where you slipped, then your open work, then your comparison with the team average without names, then your twelve-month history.",
+      "Team leaders and managers: a “My team” section with the figures of everyone myafaqy places below you in its hierarchy, each compared with their own last month. The portal shows each person exactly what myafaqy shows them — no permissions table to go stale.",
+      "Data moves from myafaqy to the portal by a message between the two windows, with no size limit, addressed to the portal alone. The titles of others’ tasks, customer names and the sign-in token are never carried."
     ],
     "ur": [
-      "«میرے اشاریے» اب «میرا کھلا کام ابھی» سے شروع ہوتا ہے: آپ کے کھلے ٹاسک ان کے عنوان، قسم اور عمر کے ساتھ، نئے پہلے — مائی آفاقی میں بک مارک کے ایک دباؤ سے آپ کے موجودہ کام کی فہرست۔ مکمل شدہ ٹاسکس کے عنوان اور گاہکوں کے نام پہلے کی طرح نہیں لائے جاتے۔",
-      "ڈیٹا کے صفحے پر مینیجر کا بک مارک: مائی آفاقی کے اندر ایک دباؤ سہ ماہی کا سارا ڈیٹا — ٹاسک، R&D قطار، ٹیکنیشن پوائنٹس اور آفٹر سیلز ٹکٹس — کھینچتا ہے اور پورٹل میں اپ لوڈ ہونے والی دونوں فائلیں محفوظ کرتا ہے۔ کلاڈ کروم میں دونوں ہدایات چلانے کا تیز تر متبادل۔",
-      "گارڈ اب جانچتا ہے کہ دونوں بک مارک اپنی سطریں جوڑنے کے بعد چلتے ہیں، اور صرف چھ پڑھنے والی درخواستوں کی اجازت دیتا ہے۔"
+      "«میرے اشاریے» اب ایک مکمل پروفائل ہے: آپ کی تفصیلات اور ٹیمیں، پھر انہی دنوں پر «یہ مہینہ بمقابلہ پچھلا مہینہ» تیروں کے ساتھ جو بتاتے ہیں کہاں بہتری آئی اور کہاں کمی، پھر آپ کا کھلا کام، پھر ناموں کے بغیر ٹیم کی اوسط سے آپ کا موازنہ، پھر بارہ مہینوں کی آپ کی تاریخ۔",
+      "ٹیم لیڈر اور مینیجر: «میری ٹیم» کا حصہ ان سب کے اعداد کے ساتھ جنہیں مائی آفاقی اپنے ڈھانچے میں آپ کے نیچے رکھتا ہے، ہر ایک کا اپنے پچھلے مہینے سے موازنہ۔ پورٹل ہر شخص کو بالکل وہی دکھاتا ہے جو مائی آفاقی اسے دکھاتا ہے — کوئی اجازتوں کی فہرست نہیں جو پرانی ہو۔",
+      "ڈیٹا مائی آفاقی سے پورٹل تک دونوں ونڈوز کے درمیان ایک پیغام کے ذریعے جاتا ہے، بغیر کسی حد کے، صرف پورٹل کے پتے پر۔ دوسروں کے ٹاسکس کے عنوان، گاہکوں کے نام اور لاگ اِن ٹوکن کبھی نہیں لائے جاتے۔"
     ]
   }
 }

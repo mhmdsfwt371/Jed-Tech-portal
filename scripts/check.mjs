@@ -170,18 +170,28 @@ if (!/<aside class="sidebar"/.test(html) || !/data-nav-group-toggle/.test(html))
 if (!/html\[dir="rtl"\] \.sidebar \{ transform: translateX\(100%\); \}/.test(html)) note('index.html: the phone menu no longer slides from the start side in Arabic and Urdu');
 if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fold one at a time');
 
-// 17. The my-KPIs bookmark (ADR-0010). It runs on myafaqy with the engineer's own sign-in, so it must stay narrow:
-//     read-only, one endpoint, «My Tasks» only, only on myafaqy, and the sign-in token must never leave the page.
+// 17. The my-KPIs bookmark (ADR-0010, widened by ADR-0014). It runs on myafaqy with the person's own sign-in. It may read
+//     «My Tasks» and «All Tasks» (myafaqy itself decides what each person sees) plus names and teams — nothing else —
+//     only on myafaqy, hand over only by message to the portal's own address, and never carry the sign-in token.
 {
   const { buildBookmarklet } = await import(new URL('core.js', root));
   const code = decodeURIComponent(buildBookmarklet('https://example.org/portal/').replace(/^javascript:/, ''));
-  const urls = [...code.matchAll(/https:\/\/[a-z0-9.-]+\/[A-Za-z0-9/_-]*/g)].map((m) => m[0]).filter((u) => !u.startsWith('https://example.org'));
-  if (urls.some((u) => u !== 'https://crmbackend.afaqy.sa/Task/GetMyTasksGrid')) note(`bookmark: calls something other than Task/GetMyTasksGrid — ${urls.join(', ')}`);
-  if (/taskGroupId:(?!100000\b)\d+/.test(code) || !/taskGroupId:100000\b/.test(code)) note('bookmark: must read «My Tasks» (taskGroupId 100000) and nothing else — that is what keeps colleagues out');
-  if ((code.match(/method:'POST'/g) || []).length !== 1 || /method:'(PUT|DELETE|PATCH)'/.test(code)) note('bookmark: must make exactly the one read request');
+  const hosts = [...code.matchAll(/https:\/\/([a-z0-9.-]+)/g)].map((m) => m[1]).filter((h) => !['example.org', 'crmbackend.afaqy.sa'].includes(h));
+  if (hosts.length) note(`bookmark: talks to ${[...new Set(hosts)].join(', ')} — only crmbackend.afaqy.sa`);
+  const paths = [...code.matchAll(/'(Security|Teams|Task)\/[A-Za-z/]*'/g)].map((m) => m[0]);
+  const okMe = new Set(["'Task/GetMyTasksGrid'", "'Security/GetAllHierarchyUsersDropDown'", "'Teams/GetAllTeams'", "'Teams/GetTeamById/'"]);
+  for (const x of paths) if (!okMe.has(x)) note(`bookmark: calls ${x} — only the four read endpoints are allowed`);
+  if (/\/(add|edit|delete|remove|save|assign|close|complete|approve|update|create|sync|send)\b/i.test(code) || /method:'(PUT|DELETE|PATCH)'/.test(code)) note('bookmark: a write-like request appeared');
+  const groups = [...code.matchAll(/taskGroupId:(\d+)/g)].map((m) => m[1]);
+  if (groups.length || !/for\(const g of\[100000,100001\]\)/.test(code)) note('bookmark: must read exactly «My Tasks» (100000) and «All Tasks» (100001) — what myafaqy itself shows the person');
   if (!/location\.hostname!=='myafaqy\.com'/.test(code)) note('bookmark: must refuse to run anywhere but myafaqy.com');
-  const pay = (code.match(/const pay=\{[\s\S]*?tasks:out\}/) || [''])[0];
+  const pay = (code.match(/const pay=\{[\s\S]*?tasks:\[\.\.\.rows\.values\(\)\]\}/) || [''])[0];
   if (!pay || /tk|token|Authorization|refresh/i.test(pay)) note('bookmark: the hand-over must not carry the sign-in token');
+  if (!/w\.postMessage\(\{type:'afaqy-me',payload:pay\},PO\)/.test(code) || !/PO=new URL\(P\)\.origin/.test(code) || /postMessage\([^)]*'\*'\)/.test(code))
+    note('bookmark: must hand over by message addressed to the portal’s own origin — never "*"');
+  if (!/if\(e\.origin !== MYAFAQY_ORIGIN\) return;/.test(app.replace(/\s+/g, ' ').replace(/e\.origin !== MYAFAQY_ORIGIN\) return;/, 'e.origin !== MYAFAQY_ORIGIN) return;')) && !/if \(e\.origin !== MYAFAQY_ORIGIN\) return;/.test(app))
+    note('portal: the message listener must ignore anything not sent from https://myafaqy.com');
+  if (!/const MYAFAQY_ORIGIN = 'https:\/\/myafaqy\.com';/.test(app)) note('portal: MYAFAQY_ORIGIN must be exactly https://myafaqy.com');
   // exactly these keys, and "o" may only be a yes/no comparison — never anyone's id
   // the manager bookmark: same six read endpoints as the two prompts, read-only, token never handed out, saves files locally
   const { buildManagerBookmarklet } = await import(new URL('core.js', root));
@@ -199,11 +209,11 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
     try { new Function(b); } catch (e) { note(`${nm}: does not compile once newlines are stripped (${e.message}) — a // line comment is the usual cause`); }
   }
 
-  const row = (code.match(/out\.push\(\{([\s\S]*?)\}\)/) || ['', ''])[1];
+  const row = (code.match(/rows\.set\(id,\{([\s\S]*?)\}\)/) || ['', ''])[1];
   const keys = [...row.matchAll(/(?:^|,)([a-z]+)(?=[:,]|$)/g)].map((m) => m[1]);
-  if (keys.join(',') !== 'i,c,d,s,m,o,b,t') note(`bookmark: hands over fields ${keys.join(',')} — only i,c,d,s,m,o,b,t are allowed`);
-  if (!/t:b==='done'\?undefined:/.test(row)) note('bookmark: a task title (t) must be carried only for open tasks, never for done ones');
-  if (!/o:String\(x\.createUserId\)===String\(u\.UserId\)/.test(row)) note('bookmark: "o" must be the yes/no "I opened it myself", not an id');
+  if (keys.join(',') !== 'i,c,d,s,m,o,b,a,t') note(`bookmark: hands over fields ${keys.join(',')} — only i,c,d,s,m,o,b,a,t are allowed`);
+  if (!/t:a===me&&b!=='done'\?/.test(row)) note('bookmark: a task title (t) may be carried only for the person’s own open tasks');
+  if (!/o:String\(x\.createUserId\)===a/.test(row)) note('bookmark: "o" must be the yes/no "the assignee opened it" — never an id');
 }
 
 // 19. The reports prompt (ADR-0012): two named read endpoints only, and no pay, phone or evaluation field ever carried.

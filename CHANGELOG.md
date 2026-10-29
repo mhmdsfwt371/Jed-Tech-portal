@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v7.0 — 2026-10-29
+
+- «مؤشراتي» صارت ملفًّا كاملًا: بياناتك وفرقك، ثم «هذا الشهر مقابل الشهر الماضي» على الأيام نفسها بأسهم تقول أين تحسّنت وأين تراجعت، ثم شغلك المفتوح، ثم مقارنتك بمتوسط الفريق بلا أسماء، ثم تاريخك لاثني عشر شهرًا.
+- قائد الفريق والمدير: قسم «فريقي» بأرقام كل من يضعه ماي أفاقي تحتك في هيكله، ومقارنة كل واحد بشهره الماضي. البوابة تعرض لكل شخص بالضبط ما يعرضه له ماي أفاقي — لا جدول صلاحيات يتقادم.
+- البيانات تنتقل من ماي أفاقي إلى البوابة برسالة بين النافذتين بلا حدّ للحجم، مقصورة على عنوان البوابة. ولا تُنقل عناوين مهام غيرك ولا أسماء العملاء ولا رمز الدخول.
+
+<details><summary>English</summary>
+
+- “My KPIs” is now a full profile: your details and teams, then “This month against last month” over the same days with arrows showing where you improved and where you slipped, then your open work, then your comparison with the team average without names, then your twelve-month history.
+- Team leaders and managers: a “My team” section with the figures of everyone myafaqy places below you in its hierarchy, each compared with their own last month. The portal shows each person exactly what myafaqy shows them — no permissions table to go stale.
+- Data moves from myafaqy to the portal by a message between the two windows, with no size limit, addressed to the portal alone. The titles of others’ tasks, customer names and the sign-in token are never carried.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «میرے اشاریے» اب ایک مکمل پروفائل ہے: آپ کی تفصیلات اور ٹیمیں، پھر انہی دنوں پر «یہ مہینہ بمقابلہ پچھلا مہینہ» تیروں کے ساتھ جو بتاتے ہیں کہاں بہتری آئی اور کہاں کمی، پھر آپ کا کھلا کام، پھر ناموں کے بغیر ٹیم کی اوسط سے آپ کا موازنہ، پھر بارہ مہینوں کی آپ کی تاریخ۔
+- ٹیم لیڈر اور مینیجر: «میری ٹیم» کا حصہ ان سب کے اعداد کے ساتھ جنہیں مائی آفاقی اپنے ڈھانچے میں آپ کے نیچے رکھتا ہے، ہر ایک کا اپنے پچھلے مہینے سے موازنہ۔ پورٹل ہر شخص کو بالکل وہی دکھاتا ہے جو مائی آفاقی اسے دکھاتا ہے — کوئی اجازتوں کی فہرست نہیں جو پرانی ہو۔
+- ڈیٹا مائی آفاقی سے پورٹل تک دونوں ونڈوز کے درمیان ایک پیغام کے ذریعے جاتا ہے، بغیر کسی حد کے، صرف پورٹل کے پتے پر۔ دوسروں کے ٹاسکس کے عنوان، گاہکوں کے نام اور لاگ اِن ٹوکن کبھی نہیں لائے جاتے۔
+
+</div>
+</details>
+
+
 ## v6.9 — 2026-10-29
 
 - «مؤشراتي» صارت تبدأ بـ«شغلي المفتوح الآن»: مهامك المفتوحة بعناوينها ونوعها وعمرها، الأحدث أولًا — قائمة عملك الحالي من ضغطة واحدة على الإشارة في ماي أفاقي. عناوين المهام المنجزة وأسماء العملاء لا تُنقل كما كان.

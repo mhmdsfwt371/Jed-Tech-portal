@@ -4,7 +4,7 @@ import {
   STRINGS, LANGS, t, periodBlocks, buildPrompt, SCHEMA, extractJson, parseDataset, mergeDataset, completeness,
   factor1, creditOf, GROUP, formatHours, formatRate, sampleDataset, saudiToday, ymd,
   saudiBoundsZ, toIso, saudiDay, peopleOf, defaultTeam, nameOf, EMAIL_MODULE, SCHEMAS,
-  buildBookmarklet, parseMe, myProfile, ME_SCHEMA,
+  buildBookmarklet, parseMe, myProfile, ME_SCHEMA, parseMePayload, profileMonths, monthWindows, scopeOf, ME_SCHEMA_V2,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
@@ -256,12 +256,14 @@ test('my KPIs: the profile is Factor 1 for this person, per quarter, over the tw
   assert.ok(q[4].partial);
 });
 
-test('my KPIs: the bookmark reads My Tasks only, on myafaqy only, and hands over no token', () => {
-  const code = decodeURIComponent(buildBookmarklet('https://mhmdsfwt371.github.io/afaqy-portal/').slice('javascript:'.length));
-  assert.ok(code.includes('taskGroupId:100000') && !/taskGroupId:(?!100000)\d/.test(code));
+test('my KPIs: the bookmark reads My Tasks and All Tasks on myafaqy only, hands over by message to the portal, no token', () => {
+  const code = decodeURIComponent(buildBookmarklet('https://mhmdsfwt371.github.io/Jed-Tech-portal/').slice('javascript:'.length));
+  assert.ok(code.includes('for(const g of[100000,100001])') && !/taskGroupId:\d/.test(code), 'exactly My Tasks and All Tasks');
   assert.ok(code.includes("location.hostname!=='myafaqy.com'"));
   assert.ok(!/const pay=\{[^}]*tk/.test(code));
-  assert.ok(code.includes("P+'#me-'"), 'it hands over in the address fragment, which no server receives');
+  assert.ok(code.includes("w.postMessage({type:'afaqy-me',payload:pay},PO)") && code.includes('PO=new URL(P).origin'), 'by message, to the portal origin only');
+  assert.ok(code.includes("P+'#me-'"), 'the address fragment stays as a fallback when windows are blocked');
+  assert.doesNotThrow(() => new Function(code), 'it compiles once its lines are joined');
 });
 
 test('self-logged: tasks the assignee opened for himself, not from e-mail (WhatsApp and calls)', async () => {
@@ -322,6 +324,48 @@ test('R&D: tasks in the R&D queue are counted among the completed', () => {
   const row = factor1(d.tasks, { range: { from: '2026-10-01', to: '2026-10-31' }, team: ['70'] }).people[0];
   assert.equal(row.rd, 1, 'only task 2 is both R&D and completed in the period');
   assert.equal(parseDataset(V2([R('1')])).dataset.rdKnown, false, 'older files carry no R&D list');
+});
+
+const MEV2 = (tasks, people) => ({ schema: ME_SCHEMA_V2, user: { id: '70', name: 'lead' }, extractedAt: '2026-10-29T09:00:00Z', since: '2025-10-28T21:00:00Z', months: 12, people, tasks });
+const T2 = (i, a, s, c, d, extra = {}) => ({ i, a, s, c, d, m: 179, o: false, b: s === 'done' ? 'done' : 'open', ...extra });
+
+test('profile v2: titles kept only on the person’s own open tasks; people sanitised; old v1 still read', () => {
+  const r = parseMePayload(MEV2([T2('1', '70', 'open', '2026-10-20T08:00:00', null, { t: 'MY OPEN' }), T2('2', '70', 'done', '2026-10-02T08:00:00', '2026-10-02T12:00:00', { t: 'MY DONE' }),
+    T2('3', '124', 'open', '2026-10-21T08:00:00', null, { t: 'COLLEAGUE OPEN' })],
+    [{ id: '70', nameEn: 'Lead', nameAr: 'القائد', teams: ['Jeddah After sales Team'], branchCode: '2', h: false }, { id: '124', nameEn: 'Eng', nameAr: 'المهندس', teams: ['Jeddah After sales Team'], branchCode: '2', h: true, phone: '05x' }]));
+  assert.ok(r.me);
+  const titles = Object.fromEntries(r.me.tasks.map((x) => [x.id, x.title]));
+  assert.deepEqual(titles, { 1: 'MY OPEN', 2: '', 3: '' }, 'done titles and colleagues’ titles never survive');
+  assert.ok(!JSON.stringify(r.me).includes('05x'), 'unknown fields on people are dropped');
+  assert.deepEqual(r.me.people.find((p) => p.id === '124').below, true);
+  assert.equal(parseMePayload({ schema: ME_SCHEMA, user: { id: '9' }, tasks: [{ i: 1, c: '2026-10-01T08:00:00', s: 'open', b: 'open' }] }).me.tasks[0].assigneeId, '9', 'v1 hand-overs still read');
+});
+
+test('profile: this month so far against the same days last month', () => {
+  assert.deepEqual(monthWindows(new Date('2026-10-29T10:00:00Z')), { day: 29, this: { from: '2026-10-01', to: '2026-10-29' }, last: { from: '2026-09-01', to: '2026-09-29' } });
+  assert.deepEqual(monthWindows(new Date('2026-03-31T10:00:00Z')).last, { from: '2026-02-01', to: '2026-02-28' }, 'clamped to the shorter month');
+  assert.deepEqual(monthWindows(new Date('2026-01-15T10:00:00Z')).last, { from: '2025-12-01', to: '2025-12-15' }, 'across the year');
+});
+
+test('profile: month comparison, team average without names, and only the people below in “my team”', () => {
+  const now = new Date('2026-10-29T10:00:00Z');
+  const tasks = [
+    T2('1', '70', 'done', '2026-10-03T08:00:00', '2026-10-03T10:00:00'), T2('2', '70', 'done', '2026-10-05T08:00:00', '2026-10-05T12:00:00'),
+    T2('3', '70', 'done', '2026-09-03T08:00:00', '2026-09-03T09:00:00'),
+    T2('4', '124', 'done', '2026-10-04T08:00:00', '2026-10-04T08:30:00'), T2('5', '124', 'done', '2026-10-06T08:00:00', '2026-10-06T09:00:00'), T2('6', '124', 'done', '2026-10-07T08:00:00', '2026-10-07T09:00:00'),
+    T2('7', '125', 'open', '2026-10-10T08:00:00', null),
+    T2('8', '999', 'done', '2026-10-08T08:00:00', '2026-10-08T09:00:00')];
+  const people = [{ id: '70', teams: ['Jeddah After sales Team'], branchCode: '2', h: false }, { id: '124', teams: ['Jeddah After sales Team'], branchCode: '2', h: true },
+    { id: '125', teams: ['Jeddah After sales Team'], branchCode: '2', h: true }, { id: '999', teams: ['Riyadh Pre sales'], branchCode: '1', h: false }];
+  const me = parseMePayload(MEV2(tasks, people)).me;
+  const pm = profileMonths(me, now);
+  assert.equal(pm.mine.this.done, 2); assert.equal(pm.mine.last.done, 1);
+  assert.deepEqual(pm.scope.team.sort(), ['124', '125', '70'], 'the team is Jeddah; Riyadh stays out of the average');
+  assert.ok(pm.average && pm.average.n === 3 && Math.abs(pm.average.done - 5 / 3) < 1e-9, 'average over people with work this month');
+  assert.deepEqual(pm.below.map((r) => r.id), ['124', '125'], 'only the people myafaqy places below, busiest first');
+  const solo = parseMePayload(MEV2(tasks.filter((x) => x.a === '70'), [people[0]])).me;
+  assert.equal(profileMonths(solo, now).average, null, 'seeing only oneself: no average');
+  assert.equal(profileMonths(solo, now).below.length, 0);
 });
 
 test('formatting', () => {

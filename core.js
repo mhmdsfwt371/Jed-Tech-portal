@@ -88,7 +88,7 @@ export const STRINGS = {
     theme_light: 'الوضع الفاتح',
     nav_me: 'مؤشراتي',
     me_title: 'مؤشراتي',
-    me_sub: 'مؤشرات عملك أنت وحدك، من «مهامي» في ماي أفاقي وبدخولك أنت. لا يراها غيرك، وتبقى على جهازك.',
+    me_sub: 'ملفّك: شغلك وأرقامك ومقارنتها، وفريقك إن كان ماي أفاقي يضع أحدًا تحتك. من ماي أفاقي وبدخولك أنت، ويبقى على جهازك.',
     me_how_h: 'الإعداد مرة واحدة',
     me_bm: 'مؤشراتي من ماي أفاقي',
     me_step1: 'على الكمبيوتر: اسحب هذا الزر إلى شريط الإشارات في المتصفح.',
@@ -110,7 +110,7 @@ export const STRINGS = {
     me_refresh: 'للتحديث: افتح ماي أفاقي واضغط الإشارة مرة أخرى.',
     me_forget: 'حذف مؤشراتي من هذا الجهاز',
     g_me_h: 'مؤشراتي',
-    g_me_b: 'صفحة «مؤشراتي» لكل موظف عن نفسه فقط. مرة واحدة: اسحب زر «مؤشراتي» إلى شريط الإشارات في المتصفح. ثم كلما أردت: افتح ماي أفاقي بحسابك واضغط الإشارة — تقرأ «مهامي» وتفتح البوابة عليها. تجد أولًا «شغلي المفتوح الآن»: مهامك المفتوحة بعناوينها ونوعها وعمرها، الأحدث أولًا — قائمة عملك الحالي. وتحتها مؤشراتك بالأرقام لكل ربع في آخر اثني عشر شهرًا. تبقى على جهازك وحدك؛ لا يُنقل رمز الدخول ولا أسماء العملاء ولا عناوين المهام المنجزة، وزر «حذف مؤشراتي» يمحوها من الجهاز.',
+    g_me_b: 'صفحة «مؤشراتي» ملفّك أنت. مرة واحدة: اسحب زر «مؤشراتي» إلى شريط الإشارات في المتصفح. ثم كلما أردت: افتح ماي أفاقي بحسابك واضغط الإشارة — تقرأ شغلك وتفتح البوابة عليه. تجد بياناتك وفرقك، ثم «شغلي المفتوح الآن» بعناوين مهامك وعمرها، ثم «هذا الشهر مقابل الشهر الماضي» على الأيام نفسها بأسهم تقول أين تحسّنت وأين تراجعت، ثم مقارنتك بمتوسط الفريق بلا أسماء، ثم تاريخك لآخر اثني عشر شهرًا. وإن كان ماي أفاقي يضع أشخاصًا تحتك في هيكله — قائد فريق أو مدير — يظهر قسم «فريقي» بأرقام كل واحد منهم. البوابة تعرض لك بالضبط ما يعرضه لك ماي أفاقي ولا شيء زائدًا. كل شيء يبقى على جهازك؛ لا يُنقل رمز الدخول ولا أسماء العملاء ولا عناوين مهام غيرك ولا عناوين المنجزة، وزر «حذف مؤشراتي» يمحوه من الجهاز.',
     col_self: 'سجّلها لنفسه',
     def_6: '«سجّلها لنفسه» من المسندة: مهام فتحها الموظف وأسندها لنفسه، لا من البريد — وهي عند الفريق الطلبات التي تصل بالواتساب أو بالمكالمات. ماي أفاقي يسجّل منشئ المهمة لا قناتها، فلا يُفصل الواتساب عن المكالمة. تُقرأ مع بقية الأعمدة: تُظهر من أين جاء الحمل، لا جودة العمل.',
     nav_pro: 'أفاقي برو',
@@ -186,6 +186,20 @@ export const STRINGS = {
     mgr_bm_intro: 'للمدير: إشارة واحدة تسحب كل بيانات الفترة — المهام والتقارير معًا — من داخل ماي أفاقي بضغطة واحدة، وتحفظ ملفين ترفعهما أدناه. بديل عن نسخ الأمرين. اسحب الزر إلى شريط الإشارات مرة واحدة.',
     g_mgr_h: 'إشارة المدير — سحب كل شيء بضغطة',
     g_mgr_b: 'في صفحة البيانات، إشارة واحدة للمدير تقرأ من داخل ماي أفاقي كل ما يقرأه الأمران: مهام الفترة كلها، وطابور البحث والتطوير، ونقاط الفنيين، وتذاكر ما بعد البيع — وتحفظها ملفين (مهام وتقارير) تُرفعان في البوابة. تعمل بدخول المدير نفسه، للقراءة فقط، بالطلبات الستة المسموحة نفسها، ولا يغادر رمز الدخول صفحة ماي أفاقي. هي بديل أسرع عن نسخ الأمرين وتشغيلهما في كلود كروم؛ وتبقى طريقة كلود كروم متاحة لمن يفضّلها.',
+    me_updated: 'آخر تحديث {date}',
+    me_scope: 'ماي أفاقي يعرض لك شغل {n} شخص',
+    me_month_h: 'هذا الشهر مقابل الشهر الماضي — حتى يوم {d}',
+    me_month_sub: 'من {a} إلى {b}، مقابل الأيام نفسها من الشهر الماضي ({c} إلى {d}) — مقارنة عادلة.',
+    me_last_month: 'الشهر الماضي',
+    me_avg_h: 'مقارنة بمتوسط الفريق',
+    me_avg_sub: 'متوسط {n} شخص لهم شغل هذا الشهر، بلا أسماء.',
+    me_avg_team: 'متوسط الفريق',
+    me_avg_none: 'ماي أفاقي يعرض لك شغلك وحدك، فلا يُحسب هنا متوسط للفريق.',
+    me_team_h: 'فريقي — {n} شخص',
+    me_team_sub: 'من ماي أفاقي يضعهم تحتك في هيكله، بأرقام هذا الشهر حتى اليوم.',
+    me_vs_last: 'المنجزة مقابل الشهر الماضي',
+    me_history_h: 'تاريخي — آخر اثني عشر شهرًا بالربع',
+    me_open_more: 'وعرض {n} مهمة أخرى',
   },
   en: {
     brand: 'Afaqy', portal: 'Technical team portal — Jeddah',
@@ -265,7 +279,7 @@ export const STRINGS = {
     theme_light: 'Light mode',
     nav_me: 'My KPIs',
     me_title: 'My KPIs',
-    me_sub: 'Your own work KPIs, from “My Tasks” in myafaqy, with your own sign-in. Nobody else sees them, and they stay on your device.',
+    me_sub: 'Your profile: your work, your figures and how they compare, and your team if myafaqy places anyone below you. From myafaqy with your own sign-in; it stays on your device.',
     me_how_h: 'One-time setup',
     me_bm: 'My KPIs from myafaqy',
     me_step1: 'On a computer: drag this button onto the browser’s bookmarks bar.',
@@ -287,7 +301,7 @@ export const STRINGS = {
     me_refresh: 'To refresh: open myafaqy and press the bookmark again.',
     me_forget: 'Remove my KPIs from this device',
     g_me_h: 'My KPIs',
-    g_me_b: 'The “My KPIs” page is each employee’s own. Once: drag the “My KPIs” button onto the browser’s bookmarks bar. Then whenever you want: open myafaqy with your account and press the bookmark — it reads “My Tasks” and opens the portal on them. First comes “My open work now”: your open tasks with their titles, type and age, newest first — your current work list. Below it, your KPIs in numbers per quarter over the last twelve months. It stays on your device only; the sign-in token, customer names and the titles of completed tasks are never carried, and “Remove my KPIs” erases it from the device.',
+    g_me_b: 'The “My KPIs” page is your own profile. Once: drag the “My KPIs” button onto the browser’s bookmarks bar. Then whenever you want: open myafaqy with your account and press the bookmark — it reads your work and opens the portal on it. You find your details and teams, then “My open work now” with your tasks’ titles and age, then “This month against last month” over the same days with arrows showing where you improved and where you slipped, then your comparison with the team average without names, then your history over the last twelve months. If myafaqy places people below you in its hierarchy — a team leader or a manager — a “My team” section shows each of them with their figures. The portal shows you exactly what myafaqy shows you, nothing more. Everything stays on your device; the sign-in token, customer names, the titles of others’ tasks and of completed tasks are never carried, and “Remove my KPIs” erases it from the device.',
     col_self: 'Self-logged',
     def_6: '“Self-logged”, among the assigned: tasks the employee opened and assigned to himself, not from email — in this team, the requests that arrive by WhatsApp or by phone. myafaqy records who created a task, not its channel, so WhatsApp and calls cannot be separated. Read it with the other columns: it shows where the load came from, not the quality of the work.',
     nav_pro: 'Afaqy PRO',
@@ -363,6 +377,20 @@ export const STRINGS = {
     mgr_bm_intro: 'For the manager: one bookmark pulls all of the period’s data — tasks and reports together — from inside myafaqy in one press, and saves two files to upload below. An alternative to copying the two prompts. Drag the button onto the bookmarks bar once.',
     g_mgr_h: 'The manager bookmark — everything in one press',
     g_mgr_b: 'On the Data page, one manager bookmark reads from inside myafaqy everything the two prompts read: all of the period’s tasks, the R&D queue, technician points and after-sales tickets — and saves them as two files (tasks and reports) to upload in the portal. It runs with the manager’s own sign-in, read-only, through the same six allowed requests, and the sign-in token never leaves the myafaqy page. It is a faster alternative to copying the two prompts and running them in Claude in Chrome; the Claude in Chrome way stays available for whoever prefers it.',
+    me_updated: 'Last updated {date}',
+    me_scope: 'myafaqy shows you the work of {n} people',
+    me_month_h: 'This month against last month — up to day {d}',
+    me_month_sub: 'From {a} to {b}, against the same days of last month ({c} to {d}) — a fair comparison.',
+    me_last_month: 'Last month',
+    me_avg_h: 'Against the team average',
+    me_avg_sub: 'The average of {n} people with work this month, without names.',
+    me_avg_team: 'Team average',
+    me_avg_none: 'myafaqy shows you only your own work, so no team average is computed here.',
+    me_team_h: 'My team — {n} people',
+    me_team_sub: 'The people myafaqy places below you in its hierarchy, with this month’s figures so far.',
+    me_vs_last: 'Done against last month',
+    me_history_h: 'My history — the last twelve months by quarter',
+    me_open_more: 'Show {n} more tasks',
   },
   ur: {
     brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ',
@@ -442,7 +470,7 @@ export const STRINGS = {
     theme_light: 'روشن انداز',
     nav_me: 'میرے اشاریے',
     me_title: 'میرے اشاریے',
-    me_sub: 'آپ کے اپنے کام کے اشاریے، مائی آفاقی کے «میرے ٹاسک» سے، آپ ہی کے لاگ اِن سے۔ انہیں آپ کے سوا کوئی نہیں دیکھتا، اور یہ آپ کی ڈیوائس پر رہتے ہیں۔',
+    me_sub: 'آپ کا پروفائل: آپ کا کام، آپ کے اعداد اور ان کا موازنہ، اور آپ کی ٹیم اگر مائی آفاقی کسی کو آپ کے نیچے رکھتا ہے۔ مائی آفاقی سے آپ کے اپنے لاگ اِن کے ساتھ؛ یہ آپ کے آلے پر رہتا ہے۔',
     me_how_h: 'ایک بار کی ترتیب',
     me_bm: 'مائی آفاقی سے میرے اشاریے',
     me_step1: 'کمپیوٹر پر: یہ بٹن کھینچ کر براؤزر کی بک مارکس بار پر چھوڑ دیں۔',
@@ -464,7 +492,7 @@ export const STRINGS = {
     me_refresh: 'تازہ کرنے کے لیے: مائی آفاقی کھولیں اور بک مارک دوبارہ دبائیں۔',
     me_forget: 'میرے اشاریے اس ڈیوائس سے ہٹائیں',
     g_me_h: 'میرے اشاریے',
-    g_me_b: '«میرے اشاریے» کا صفحہ ہر ملازم کا اپنا ہے۔ ایک بار: «میرے اشاریے» کا بٹن براؤزر کی بک مارکس بار پر کھینچیں۔ پھر جب چاہیں: اپنے اکاؤنٹ سے مائی آفاقی کھولیں اور بک مارک دبائیں — یہ «میرے ٹاسک» پڑھتا ہے اور پورٹل انہی پر کھولتا ہے۔ پہلے «میرا کھلا کام ابھی» آتا ہے: آپ کے کھلے ٹاسک ان کے عنوان، قسم اور عمر کے ساتھ، نئے پہلے — آپ کے موجودہ کام کی فہرست۔ اس کے نیچے پچھلے بارہ مہینوں کے ہر سہ ماہی کے اعداد میں آپ کے اشاریے۔ یہ صرف آپ کے آلے پر رہتا ہے؛ لاگ اِن ٹوکن، گاہکوں کے نام اور مکمل شدہ ٹاسکس کے عنوان کبھی نہیں لائے جاتے، اور «میرے اشاریے حذف کریں» اسے آلے سے مٹا دیتا ہے۔',
+    g_me_b: '«میرے اشاریے» کا صفحہ آپ کا اپنا پروفائل ہے۔ ایک بار: «میرے اشاریے» کا بٹن براؤزر کی بک مارکس بار پر کھینچیں۔ پھر جب چاہیں: اپنے اکاؤنٹ سے مائی آفاقی کھولیں اور بک مارک دبائیں — یہ آپ کا کام پڑھتا ہے اور پورٹل اسی پر کھولتا ہے۔ آپ کو اپنی تفصیلات اور ٹیمیں ملتی ہیں، پھر «میرا کھلا کام ابھی» آپ کے ٹاسکس کے عنوان اور عمر کے ساتھ، پھر انہی دنوں پر «یہ مہینہ بمقابلہ پچھلا مہینہ» تیروں کے ساتھ جو بتاتے ہیں کہاں بہتری آئی اور کہاں کمی، پھر ناموں کے بغیر ٹیم کی اوسط سے آپ کا موازنہ، پھر پچھلے بارہ مہینوں کی آپ کی تاریخ۔ اگر مائی آفاقی اپنے ڈھانچے میں کچھ افراد کو آپ کے نیچے رکھتا ہے — ٹیم لیڈر یا مینیجر — تو «میری ٹیم» کا حصہ ان میں سے ہر ایک کو ان کے اعداد کے ساتھ دکھاتا ہے۔ پورٹل آپ کو بالکل وہی دکھاتا ہے جو مائی آفاقی دکھاتا ہے، اس سے زیادہ کچھ نہیں۔ سب کچھ آپ کے آلے پر رہتا ہے؛ لاگ اِن ٹوکن، گاہکوں کے نام، دوسروں کے ٹاسکس کے عنوان اور مکمل شدہ ٹاسکس کے عنوان کبھی نہیں لائے جاتے، اور «میرے اشاریے حذف کریں» اسے آلے سے مٹا دیتا ہے۔',
     col_self: 'خود درج کیے',
     def_6: '«خود درج کیے»، تفویض شدہ میں سے: وہ ٹاسک جو ملازم نے خود کھولے اور خود کو تفویض کیے، ای میل سے نہیں — اس ٹیم میں وہ درخواستیں جو واٹس ایپ یا کال سے آتی ہیں۔ مائی آفاقی ٹاسک بنانے والے کو درج کرتا ہے، اس کا ذریعہ نہیں، اس لیے واٹس ایپ اور کال کو الگ نہیں کیا جا سکتا۔ اسے باقی کالموں کے ساتھ پڑھیں: یہ بتاتا ہے کہ کام کا بوجھ کہاں سے آیا، کام کا معیار نہیں۔',
     nav_pro: 'آفاقی پرو',
@@ -540,6 +568,20 @@ export const STRINGS = {
     mgr_bm_intro: 'مینیجر کے لیے: ایک بک مارک مائی آفاقی کے اندر سے ایک دباؤ میں مدت کا سارا ڈیٹا — ٹاسک اور رپورٹس ایک ساتھ — کھینچتا ہے، اور دو فائلیں محفوظ کرتا ہے جو نیچے اپ لوڈ ہوتی ہیں۔ دونوں ہدایات کاپی کرنے کا متبادل۔ بٹن کو ایک بار بک مارکس بار پر کھینچیں۔',
     g_mgr_h: 'مینیجر بک مارک — ایک دباؤ میں سب کچھ',
     g_mgr_b: 'ڈیٹا کے صفحے پر، ایک مینیجر بک مارک مائی آفاقی کے اندر سے وہ سب پڑھتا ہے جو دونوں ہدایات پڑھتی ہیں: مدت کے تمام ٹاسک، R&D قطار، ٹیکنیشن پوائنٹس اور آفٹر سیلز ٹکٹس — اور انہیں دو فائلوں (ٹاسک اور رپورٹس) کے طور پر محفوظ کرتا ہے جو پورٹل میں اپ لوڈ ہوتی ہیں۔ یہ مینیجر کے اپنے لاگ اِن سے چلتا ہے، صرف پڑھنے کے لیے، انہی چھ اجازت شدہ درخواستوں کے ذریعے، اور لاگ اِن ٹوکن مائی آفاقی کے صفحے سے باہر نہیں جاتا۔ یہ دونوں ہدایات کاپی کر کے کلاڈ کروم میں چلانے کا تیز تر متبادل ہے؛ کلاڈ کروم والا طریقہ بھی دستیاب رہتا ہے۔',
+    me_updated: 'آخری تازہ کاری {date}',
+    me_scope: 'مائی آفاقی آپ کو {n} افراد کا کام دکھاتا ہے',
+    me_month_h: 'یہ مہینہ بمقابلہ پچھلا مہینہ — دن {d} تک',
+    me_month_sub: '{a} سے {b} تک، پچھلے مہینے کے انہی دنوں ({c} سے {d}) کے مقابلے میں — منصفانہ موازنہ۔',
+    me_last_month: 'پچھلا مہینہ',
+    me_avg_h: 'ٹیم کی اوسط کے مقابلے میں',
+    me_avg_sub: 'اس مہینے کام والے {n} افراد کی اوسط، ناموں کے بغیر۔',
+    me_avg_team: 'ٹیم کی اوسط',
+    me_avg_none: 'مائی آفاقی آپ کو صرف آپ کا اپنا کام دکھاتا ہے، اس لیے یہاں ٹیم کی اوسط نہیں نکالی جاتی۔',
+    me_team_h: 'میری ٹیم — {n} افراد',
+    me_team_sub: 'وہ افراد جنہیں مائی آفاقی اپنے ڈھانچے میں آپ کے نیچے رکھتا ہے، اس مہینے کے اب تک کے اعداد کے ساتھ۔',
+    me_vs_last: 'مکمل بمقابلہ پچھلا مہینہ',
+    me_history_h: 'میری تاریخ — پچھلے بارہ مہینے سہ ماہی کے حساب سے',
+    me_open_more: 'مزید {n} ٹاسک دکھائیں',
   },
 };
 
@@ -1092,6 +1134,7 @@ export function afterSalesTotals(reports) {
 // enforced by myafaqy itself) with the engineer's own sign-in, and hands the portal ONLY these fields, through the
 // address fragment (never sent to any server). The sign-in token never leaves myafaqy's page.
 export const ME_SCHEMA = 'afaqy-me/v1';
+export const ME_SCHEMA_V2 = 'afaqy-me/v2';   // v6.10: the person plus whatever myafaqy shows them (ADR-0014)
 export const ME_MONTHS = 12;
 
 /** The bookmark, as a javascript: address. portalUrl is where the portal lives (…/afaqy-portal/). */
@@ -1151,60 +1194,89 @@ box.style.background='#0A5F67';say(M[4]+' ('+taskRows.length+' / '+techPoints.re
 
 export function buildBookmarklet(portalUrl, lang = 'ar') {
   const msg = {
-    ar: ['افتح ماي أفاقي أولًا ثم اضغط الإشارة من هناك', 'سجّل دخولك في ماي أفاقي أولًا', 'جارٍ قراءة مهامك…', 'تعذّرت القراءة: '],
-    en: ['Open myafaqy first, then press the bookmark there', 'Sign in to myafaqy first', 'Reading your tasks…', 'Could not read: '],
-    ur: ['پہلے مائی آفاقی کھولیں، پھر وہاں بک مارک دبائیں', 'پہلے مائی آفاقی میں لاگ اِن کریں', 'آپ کے ٹاسک پڑھے جا رہے ہیں…', 'پڑھا نہیں جا سکا: '],
+    ar: ['افتح ماي أفاقي أولًا ثم اضغط الإشارة من هناك', 'سجّل دخولك في ماي أفاقي أولًا', 'جارٍ قراءة شغلك…', 'تعذّرت القراءة: ', 'اسمح لماي أفاقي بفتح النوافذ ثم اضغط الإشارة مرة أخرى'],
+    en: ['Open myafaqy first, then press the bookmark there', 'Sign in to myafaqy first', 'Reading your work…', 'Could not read: ', 'Allow myafaqy to open windows, then press the bookmark again'],
+    ur: ['پہلے مائی آفاقی کھولیں، پھر وہاں بک مارک دبائیں', 'پہلے مائی آفاقی میں لاگ اِن کریں', 'آپ کا کام پڑھا جا رہا ہے…', 'پڑھا نہیں جا سکا: ', 'مائی آفاقی کو ونڈوز کھولنے کی اجازت دیں، پھر بک مارک دوبارہ دبائیں'],
   }[lang] || [];
-  const code = `(async()=>{const M=${JSON.stringify(msg)},P=${JSON.stringify(portalUrl)};
+  const code = `(async()=>{const M=${JSON.stringify(msg)},P=${JSON.stringify(portalUrl)},PO=new URL(P).origin;
 if(location.hostname!=='myafaqy.com'){alert(M[0]);return}
 const tk=localStorage.getItem('token');if(!tk){alert(M[1]);return}
 let w=window.open(P+'#me-wait','afaqy-portal');
 const box=document.createElement('div');box.style.cssText='position:fixed;inset:auto 16px 16px auto;z-index:2147483647;background:#0F2231;color:#fff;padding:12px 16px;border-radius:10px;font:14px system-ui';box.textContent=M[2];document.body.append(box);
-try{const u=JSON.parse(decodeURIComponent(escape(atob(tk.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))));
+try{const u=JSON.parse(decodeURIComponent(escape(atob(tk.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))));const me=String(u.UserId);
 const H={'Authorization':'Bearer '+tk,'Content-Type':'application/json','X-Timezone-Offset':'-180','X-Client-Id':localStorage.getItem('browser_client_id')||'','lang':'en'};
 const day=86400000,now=Date.now(),sa=d=>new Date(Date.parse(new Date(d+3*3600000).toISOString().slice(0,10)+'T00:00:00+03:00')).toISOString();
 const since=sa(now-${ME_MONTHS}*30.5*day),end=sa(now+day);
-const base=(c,b,n,s)=>({donePageNumber:b==='done'?n:0,donePageSize:b==='done'?s:1,openPageNumber:b==='open'?n:0,openPageSize:b==='open'?s:1,toDoPageNumber:b==='toDo'?n:0,toDoPageSize:b==='toDo'?s:1,orderBy:1,taskGroupId:100000,searchKey:'',tasksGridStatusId:1,assignedBy:[],createdBy:[],agent:[],statusIds:[],type:[],priority:[],assignedOn:[],completedOn:c});
-const ask=async b=>{const r=await fetch('https://crmbackend.afaqy.sa/Task/GetMyTasksGrid',{method:'POST',headers:H,body:JSON.stringify(b)});if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();if(!j.success&&j.success!==undefined)throw new Error(j.message||'refused');return j.data};
-const out=[];let n=0;
-for(const[b,c]of[['done',[since,end]],['open',[]],['toDo',[]]]){let size=500,pg=0,total=null;
-for(;;){const d=(await ask(base(c,b,pg,size)))[b];if(pg===0&&d.pageSize!==size)size=d.pageSize||20;total=d.listCount;
-for(const x of d.data||[])out.push({i:String(x.id),c:x.createdOn,d:x.statusId===3&&!x.isCancelled?x.closeDate:null,s:x.isCancelled?'cancelled':x.statusId===3?'done':'open',m:x.moduleId,o:String(x.createUserId)===String(u.UserId),b,t:b==='done'?undefined:String(x.title||x.taskType||'').slice(0,80)});
-n+=(d.data||[]).length;box.textContent=M[2]+' '+n;pg++;if(!d.data||!d.data.length||pg*size>=total)break;await new Promise(r=>setTimeout(r,250))}}
-const doneTotal=out.filter(x=>x.b==='done').length;
-const pay={schema:'${ME_SCHEMA}',user:{id:String(u.UserId),name:String(u.UserName||'')},extractedAt:new Date().toISOString(),since,months:${ME_MONTHS},tasks:out};
+const post=async(path,body)=>{const r=await fetch('https://crmbackend.afaqy.sa/'+path,{method:'POST',headers:H,body:JSON.stringify(body)});if(!r.ok)throw new Error(path+' HTTP '+r.status);const j=await r.json();if(j&&j.success===false)throw new Error(j.message||'refused');return j};
+const get=async(path)=>{const r=await fetch('https://crmbackend.afaqy.sa/'+path,{headers:H});if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()};
+const soft=async f=>{try{return await f()}catch(e){return null}};
+const base=(g,c,b,n,s)=>({donePageNumber:b==='done'?n:0,donePageSize:b==='done'?s:1,openPageNumber:b==='open'?n:0,openPageSize:b==='open'?s:1,toDoPageNumber:b==='toDo'?n:0,toDoPageSize:b==='toDo'?s:1,orderBy:1,taskGroupId:g,searchKey:'',tasksGridStatusId:1,assignedBy:[],createdBy:[],agent:[],statusIds:[],type:[],priority:[],assignedOn:[],completedOn:c});
+const rows=new Map();let n=0;
+for(const g of[100000,100001]){for(const[b,c]of[['done',[since,end]],['open',[]],['toDo',[]]]){let size=500,pg=0,total=null;
+for(;;){const d=((await post('Task/GetMyTasksGrid',base(g,c,b,pg,size))).data||{})[b];if(!d)break;if(pg===0&&d.pageSize!==size)size=d.pageSize||20;total=d.listCount;
+for(const x of d.data||[]){const id=String(x.id);if(rows.has(id))continue;const a=String(x.assigneeId==null?(g===100000?me:''):x.assigneeId);
+rows.set(id,{i:id,c:x.createdOn,d:x.statusId===3&&!x.isCancelled?x.closeDate:null,s:x.isCancelled?'cancelled':x.statusId===3?'done':'open',m:x.moduleId,o:String(x.createUserId)===a,b,a,t:a===me&&b!=='done'?String(x.title||x.taskType||'').slice(0,80):undefined})}
+n+=(d.data||[]).length;box.textContent=M[2]+' '+n;pg++;if(!d.data||!d.data.length||pg*size>=total)break;await new Promise(r=>setTimeout(r,250))}}}
+const U=await soft(()=>post('Security/GetAllHierarchyUsersDropDown',{pageSize:1000,pageNumber:0,searchCriteria:'',selectedId:[]}));
+const ud=(U&&U.data&&(U.data.data||U.data))||[];const nm={};for(const p of(Array.isArray(ud)?ud:[]))nm[String(p.id)]=p;
+const tm={};await soft(async()=>{for(let pg=0;pg<20;pg++){const R=await post('Teams/GetAllTeams',{isSearchFilter:false,searchKey:'',search:{},pageSize:50,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const arr=(R.data&&(R.data.data||R.data))||[];
+for(const t of arr){const D=await soft(()=>get('Teams/GetTeamById/'+t.id));const td=(D&&D.data)||{};const bc=td.branchCode==null?null:String(td.branchCode);for(const x of td.groupUsersDto||[]){const k=String(x.userId);(tm[k]=tm[k]||{teams:[],branchCode:null}).teams.push(String(td.nameEn||t.nameEn||''));if(bc)tm[k].branchCode=bc}}
+if(pg+1>=((R.data&&R.data.totalPages)||1)||!arr.length)break}});
+const ids=new Set([me]);for(const r of rows.values())if(r.a)ids.add(r.a);
+const people=[...ids].map(id=>{const p=nm[id]||{},q=tm[id]||{teams:[],branchCode:null};return{id,nameEn:String(p.nameEn||''),nameAr:String(p.nameAr||''),teams:q.teams,branchCode:q.branchCode,h:id!==me&&!!nm[id]}});
+const pay={schema:'${ME_SCHEMA_V2}',user:{id:me,name:String(u.UserName||'')},extractedAt:new Date().toISOString(),since,months:${ME_MONTHS},people,tasks:[...rows.values()]};
+let ok=false;const ack=e=>{if(e.origin===PO&&e.data&&e.data.type==='afaqy-me-ack')ok=true};window.addEventListener('message',ack);
+if(w&&!w.closed){for(let k=0;k<60&&!ok;k++){try{w.postMessage({type:'afaqy-me',payload:pay},PO)}catch(e){}await new Promise(r=>setTimeout(r,500))}}
+window.removeEventListener('message',ack);
+if(ok){box.remove();return}
 let data=JSON.stringify(pay),enc='j';
 if(window.CompressionStream){const cs=new Blob([data]).stream().pipeThrough(new CompressionStream('gzip'));const buf=new Uint8Array(await new Response(cs).arrayBuffer());let bin='';for(const c of buf)bin+=String.fromCharCode(c);data=btoa(bin);enc='z'}else{data=btoa(unescape(encodeURIComponent(data)))}
-const url=P+'#me-'+enc+'.'+data.replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');
-if(w&&!w.closed)w.location.href=url;else location.href=url;box.remove()}catch(e){box.textContent=M[3]+e.message;setTimeout(()=>box.remove(),8000)}})();`;
+const url=P+'#me-'+enc+'.'+data.replace(/\\\\+/g,'-').replace(/\\\\//g,'_').replace(/=+$/,'');
+if(url.length>1800000){box.textContent=M[4];setTimeout(()=>box.remove(),10000);return}
+location.href=url;box.remove()}catch(e){box.textContent=M[3]+e.message;setTimeout(()=>box.remove(),8000)}})();`;
   return 'javascript:' + encodeURIComponent(code.replace(/\n/g, ''));
 }
 
-/** Read what the bookmark handed over (the part of the address after #me-). Returns { me } or { error }. */
-export async function parseMe(fragment) {
-  const m = String(fragment || '').match(/^([zj])\.([A-Za-z0-9_-]+)$/);
-  if (!m) return { error: 'err_json' };
-  try {
-    const b64 = m[2].replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((m[2].length + 3) % 4);
-    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-    let text;
-    if (m[1] === 'z') {
-      const ds = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-      text = await new Response(ds).text();
-    } else text = new TextDecoder().decode(bytes);
-    const raw = JSON.parse(text);
-    if (raw.schema !== ME_SCHEMA || !raw.user || raw.user.id == null || !Array.isArray(raw.tasks)) return { error: 'err_schema', vars: { schema: ME_SCHEMA } };
-    const uid = String(raw.user.id);
-    const tasks = raw.tasks.filter((x) => x && x.i != null && toIso(x.c)).map((x) => {
-      const state = ['open', 'done', 'cancelled'].includes(x.s) ? x.s : 'open';
-      const moduleId = Number.isFinite(+x.m) && x.m !== null ? +x.m : null;
-      return { id: String(x.i), state, createdAt: toIso(x.c), completedAt: state === 'done' ? toIso(x.d) : null,
-        title: state === 'done' ? '' : String(x.t || ''), typeId: null, type: '',
-        assigneeId: uid, assigneeName: '', createdById: null, createdByName: '', assignedToGroup: false,
-        fromEmail: moduleId === EMAIL_MODULE, own: x.o === true, moduleId, bucket: x.b || null };
-    });
-    return { me: { schema: ME_SCHEMA, user: { id: uid, name: String(raw.user.name || '') }, extractedAt: toIso(raw.extractedAt), since: toIso(raw.since), tasks } };
-  } catch { return { error: 'err_json' }; }
+/** Read what the bookmark handed over — an object (by message) or the part of the address after #me- (fallback). */
+export async function parseMe(fragmentOrObject) {
+  let raw = fragmentOrObject;
+  if (typeof raw === 'string') {
+    const m = raw.match(/^([zj])\.([A-Za-z0-9_-]+)$/);
+    if (!m) return { error: 'err_json' };
+    try {
+      const b64 = m[2].replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((m[2].length + 3) % 4);
+      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      let text;
+      if (m[1] === 'z') text = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+      else text = new TextDecoder().decode(bytes);
+      raw = JSON.parse(text);
+    } catch { return { error: 'err_json' }; }
+  }
+  return parseMePayload(raw);
+}
+
+/** Validate and normalise a hand-over. Titles survive only on the person's own open tasks, whatever the payload says. */
+export function parseMePayload(raw) {
+  if (!raw || typeof raw !== 'object' || ![ME_SCHEMA, ME_SCHEMA_V2].includes(raw.schema) || !raw.user || raw.user.id == null || !Array.isArray(raw.tasks))
+    return { error: 'err_schema', vars: { schema: ME_SCHEMA_V2 } };
+  const uid = String(raw.user.id);
+  const v2 = raw.schema === ME_SCHEMA_V2;
+  const tasks = raw.tasks.filter((x) => x && x.i != null && toIso(x.c)).map((x) => {
+    const state = ['open', 'done', 'cancelled'].includes(x.s) ? x.s : 'open';
+    const moduleId = Number.isFinite(+x.m) && x.m !== null ? +x.m : null;
+    const assigneeId = v2 ? String(x.a || '') : uid;
+    const mine = assigneeId === uid;
+    return { id: String(x.i), state, createdAt: toIso(x.c), completedAt: state === 'done' ? toIso(x.d) : null,
+      title: mine && state !== 'done' ? String(x.t || '').slice(0, 80) : '', typeId: null, type: '',
+      assigneeId, assigneeName: '', createdById: null, createdByName: '', assignedToGroup: !assigneeId,
+      fromEmail: moduleId === EMAIL_MODULE, own: x.o === true, moduleId, bucket: x.b || null };
+  });
+  const people = v2 && Array.isArray(raw.people) ? raw.people.filter((p) => p && p.id != null).map((p) => ({
+    id: String(p.id), nameEn: String(p.nameEn || '').slice(0, 80), nameAr: String(p.nameAr || '').slice(0, 80),
+    teams: Array.isArray(p.teams) ? p.teams.map((t) => String(t).slice(0, 80)).slice(0, 12) : [],
+    branchCode: p.branchCode == null ? null : String(p.branchCode), below: p.h === true && String(p.id) !== uid })) : [];
+  if (!people.some((p) => p.id === uid)) people.push({ id: uid, nameEn: '', nameAr: '', teams: [], branchCode: null, below: false });
+  return { me: { schema: raw.schema, user: { id: uid, name: String(raw.user.name || '') }, extractedAt: toIso(raw.extractedAt), since: toIso(raw.since), people, tasks } };
 }
 
 /** The open tasks a person has right now — their current work, newest first. Titles come through only for one's own tasks. */
@@ -1214,6 +1286,49 @@ export function openTasks(tasks, assigneeId = null) {
       customer: x.customer || null, fromEmail: x.fromEmail === true, ageHours: x.createdAt ? Math.max(0, (Date.now() - Date.parse(x.createdAt)) / 3600000) : null,
       bucket: x.bucket }))
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+}
+
+/** This month so far, and the same days of last month — a fair comparison (whole months would not be). */
+export function monthWindows(now = new Date()) {
+  const today = ymd(saudiToday(now));
+  const [y, m, d] = today.split('-').map(Number);
+  const py = m === 1 ? y - 1 : y, pm = m === 1 ? 12 : m - 1;
+  const lastDay = new Date(Date.UTC(py, pm, 0)).getUTCDate();
+  return { day: d, this: { from: `${y}-${pad(m)}-01`, to: today }, last: { from: `${py}-${pad(pm)}-01`, to: `${py}-${pad(pm)}-${pad(Math.min(d, lastDay))}` } };
+}
+
+/** Who the hand-over lets this person see: assignees in the data, the default team, and the people below them. */
+export function scopeOf(me) {
+  const visible = [...new Set(me.tasks.filter((x) => x.assigneeId).map((x) => x.assigneeId))];
+  const others = visible.filter((id) => id !== me.user.id);
+  const def = defaultTeam(me.people, me.tasks).filter((id) => visible.includes(id));
+  const team = def.length > 1 ? def : visible;
+  const below = me.people.filter((p) => p.below && visible.includes(p.id)).map((p) => p.id);
+  return { visible, others, team, below };
+}
+
+/** The person's month against last month, the team average (no names) and the rows of the people below them. */
+export function profileMonths(me, now = new Date()) {
+  const w = monthWindows(now);
+  const zero = { assigned: 0, done: 0, rate: null, medianHours: null, open: 0, selfLogged: 0, fromEmail: 0 };
+  const row = (range, id) => factor1(me.tasks, { range, team: [id] }).people[0] || { ...zero, id };
+  const sc = scopeOf(me);
+  const mine = { this: row(w.this, me.user.id), last: row(w.last, me.user.id) };
+  let average = null;
+  if (sc.team.filter((id) => id !== me.user.id).length) {
+    const rows = factor1(me.tasks, { range: w.this, team: sc.team }).people.filter((r) => r.assigned || r.done);
+    if (rows.length > 1) {
+      const mean = (k) => rows.reduce((s, r) => s + (r[k] || 0), 0) / rows.length;
+      const rates = rows.map((r) => r.rate).filter((v) => v != null);
+      const meds = rows.map((r) => r.medianHours).filter((v) => v != null).sort((a, b) => a - b);
+      average = { n: rows.length, assigned: mean('assigned'), done: mean('done'), selfLogged: mean('selfLogged'), fromEmail: mean('fromEmail'),
+        rate: rates.length ? rates.reduce((s, v) => s + v, 0) / rates.length : null,
+        medianHours: meds.length ? (meds.length % 2 ? meds[(meds.length - 1) / 2] : (meds[meds.length / 2 - 1] + meds[meds.length / 2]) / 2) : null };
+    }
+  }
+  const below = sc.below.map((id) => ({ id, this: row(w.this, id), last: row(w.last, id) }))
+    .sort((a, b) => b.this.done - a.this.done || b.this.assigned - a.this.assigned);
+  return { windows: w, scope: sc, mine, average, below };
 }
 
 /** The profile: Factor 1 for this one person, per quarter, newest first, over what the bookmark read. */
