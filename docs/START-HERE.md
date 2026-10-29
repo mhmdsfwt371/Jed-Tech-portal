@@ -29,6 +29,7 @@
 | `docs/decisions/0010-my-kpis-through-myafaqy.md` | «مؤشراتي» وضماناته واختبار قبوله |
 | `docs/decisions/0011-afaqy-pro-in-the-portal.md` | صفحة أفاقي برو وحدودها وضماناتها |
 | `docs/decisions/0012-reports-factors-2-and-3.md` | المؤشران الثاني والثالث وما أُغلق بالدليل |
+| `docs/decisions/0013-work-list-and-manager-bookmark.md` | قائمة الشغل في «مؤشراتي» وإشارة المدير |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

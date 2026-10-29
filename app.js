@@ -3,8 +3,8 @@ import { PRIMARY, SYSTEMS, MORE, PORTAL_VERSION, MODULE_ALLOW } from './config.j
 import {
   t as tr, L, LANGS, dirOf, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1,
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
-  buildBookmarklet, parseMe, myProfile,
-  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, REPORTS_SCHEMA,
+  buildBookmarklet, parseMe, myProfile, openTasks,
+  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, REPORTS_SCHEMA, buildManagerBookmarklet,
 } from './core.js';
 
 const $ = (id) => document.getElementById(id);
@@ -108,8 +108,17 @@ function renderMe(waiting = false) {
   const cur = qs[0] && qs[0].row;
   const openNow = me.tasks.filter((x) => x.state === 'open').length;
   const fmtDate = (iso) => (iso ? `\u2066${iso.slice(0, 10)}\u2069` : '');
+  const mine = openTasks(me.tasks, me.user.id);
+  const hrsAge = (h) => (h == null ? '' : h < 48 ? t('hours', { n: Math.round(h) }) : t('days', { n: Math.round(h / 24) }));
   set(body,
     el('p', { class: 'me-who', text: t('me_who', { name: me.user.name || me.user.id, date: fmtDate(me.extractedAt) }) }),
+    el('h2', { text: t('me_open_h', { n: mine.length }) }),
+    mine.length ? el('div', { class: 'worklist' }, mine.map((x) => el('div', { class: `work${x.fromEmail ? ' email' : ''}` },
+      el('div', { class: 'work-main' }, el('span', { class: 'work-title', text: x.title || t('me_untitled') }),
+        x.customer ? el('span', { class: 'work-cust', text: x.customer }) : null),
+      el('div', { class: 'work-meta' }, el('span', { text: x.type || '' }), el('span', { class: 'work-age', text: hrsAge(x.ageHours) })))))
+      : el('div', { class: 'empty', text: t('me_open_none') }),
+    el('h2', { text: t('me_numbers_h') }),
     el('div', { class: 'strip' },
       el('div', {}, el('b', { text: String(cur ? cur.assigned : 0) }), el('span', { text: `${t('col_assigned')} — ${qs[0] ? qs[0].label : ''}` })),
       el('div', {}, el('b', { text: String(cur ? cur.done : 0) }), el('span', { text: t('col_done') })),
@@ -385,6 +394,14 @@ function renderTeamPicker(people, team) {
       p.teams && p.teams.length ? el('span', { class: 'muted', text: p.teams.join('، ') }) : null))));
 }
 const allTasks = () => datasets.flatMap((d) => d.tasks);
+// the manager bookmark for the current quarter — one press inside myafaqy saves both files
+function renderMgr() {
+  const row = $('mgr-row'); if (!row) return;
+  const q = currentBlocks()[0];
+  const bm = buildManagerBookmarklet(q.from, q.to, undefined, lang);
+  set(row, el('a', { class: 'btn primary bm', href: bm, draggable: 'true', text: `⬇ ${t('mgr_bm', { from: q.from, to: q.to })}`, onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } }),
+    el('button', { type: 'button', class: 'btn', text: t('me_copy'), onclick: async () => { try { await navigator.clipboard.writeText(decodeURIComponent(bm)); toast(t('me_copied')); } catch { toast(t('me_copy_fail')); } } }));
+}
 function renderKpi() {
   const body = $('kpi-body');
   if (!datasets.length) { set(body, el('div', { class: 'empty', text: t('no_data') })); return; }
@@ -504,7 +521,7 @@ function applyLang() {
   $('menu-btn').setAttribute('aria-label', t('menu'));
   paintThemeButton();
   document.title = `${t('brand')} — ${t('portal')}`;
-  renderSide(); renderTools(); renderBlocks(); renderDatasets(); renderKpi(); renderGuide(); renderMe(); renderPro();
+  renderSide(); renderTools(); renderBlocks(); renderDatasets(); renderKpi(); renderGuide(); renderMe(); renderPro(); renderMgr();
   for (const [id, f] of frames) f.title = L((MODULES.find((m) => m.id === id) || {}).name, lang);
   route();
 }
@@ -552,7 +569,7 @@ $('lang-select').addEventListener('change', (e) => { if (LANGS.includes(e.target
 $('theme-btn').addEventListener('click', () => {
   pref('theme', isDark() ? 'light' : 'dark'); applyTheme();
 });
-['block-size', 'block-count'].forEach((id) => $(id).addEventListener('input', renderBlocks));
+['block-size', 'block-count'].forEach((id) => $(id).addEventListener('input', () => { renderBlocks(); renderMgr(); }));
 $('read-text').addEventListener('click', async () => { if (await ingest($('paste').value)) $('paste').value = ''; });
 $('file-in').addEventListener('change', async (e) => { for (const f of e.target.files) await ingest(await f.text()); e.target.value = ''; });
 $('export-btn').addEventListener('click', () => download(`afaqy-kpi-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ backup: 'afaqy-portal/v1', datasets }, null, 1)));

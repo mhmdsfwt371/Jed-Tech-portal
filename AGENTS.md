@@ -76,6 +76,7 @@
 | الفريق والأسماء | `peopleOf()`، `defaultTeam()`، `nameOf()` |
 | «مؤشراتي» | `buildBookmarklet()`، `parseMe()`، `myProfile()` |
 | المؤشران ٢ و٣ | `buildReportsPrompt()`، `parseReports()`، `techTotals()`، `afterSalesTotals()` |
+| قائمة الشغل وإشارة المدير | `openTasks()`، `buildManagerBookmarklet()` |
 | الوقت والفترات بتوقيت السعودية | `toIso()`، `saudiDay()`، `saudiBoundsZ()` |
 | الدليل ودليل المستخدم | `GUIDE` و`DEFINITIONS` ونصوص `g_*` في `core.js`، و`scripts/build-manual.mjs` |
 | ما الجديد وتنبيه النسخة الأحدث | `loadRelease()`، `openNews()` |

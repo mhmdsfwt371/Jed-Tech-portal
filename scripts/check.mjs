@@ -44,7 +44,7 @@ if (!/^\d{4}-\d{2}-\d{2}$/.test(vj.date || '')) note('version.json: date must be
 // The Claude prompt and the my-KPIs bookmark both run on myafaqy's page, not in the portal; they have their own rules (9, 17).
 // The Afaqy PRO page is the one exception in the portal itself (ADR-0011) — it has its own rule (18); everything else holds.
 const appWithoutPro = app.replace(/\/\/ ---------- AFAQY PRO inside the portal[\s\S]*?\/\/ ---------- the side menu ----------/, '');
-const coreWithoutPrompt = core.replace(/export function buildPrompt[\s\S]*?\n}\n/, '').replace(/export function buildBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildReportsPrompt[\s\S]*?\n}\n/, '');
+const coreWithoutPrompt = core.replace(/export function buildPrompt[\s\S]*?\n}\n/, '').replace(/export function buildBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildReportsPrompt[\s\S]*?\n}\n/, '').replace(/export function buildManagerBookmarklet[\s\S]*?\n}\n/, '');
 for (const [name, src] of [['index.html', html], ['app.js', appWithoutPro], ['core.js', coreWithoutPrompt], ['config.js', cfg]]) {
   if (/firebase/i.test(src)) note(`${name}: Firebase is referenced — the portal runs without it`);
   if (/afaqy\.sa|afaqy\.pro\/|crmbackend/.test(src.replace(/https:\/\/afaqy\.pro\/'/g, ''))) note(`${name}: an Afaqy API address appeared — the portal never calls an Afaqy API`);
@@ -73,7 +73,7 @@ for (const [, f] of html.matchAll(/(?:src|href)="(assets\/[^"]+|manifest\.webman
 const views = [...html.matchAll(/<section id="view-(\w+)"/g)].map((m) => m[1]).filter((v) => v !== 'guide');
 const guideKeys = (core.match(/export const GUIDE = (\[[\s\S]*?\]);/) || [])[1] || '';
 // the module view is where a tool opens from the Tools page; the Tools section explains it
-const covers = { tools: 'g_tools_h', module: 'g_tools_h', me: 'g_me_h', pro: 'g_pro_h', data: 'g_data_h', kpi: 'g_kpi_h' };
+const covers = { tools: 'g_tools_h', module: 'g_tools_h', me: 'g_me_h', pro: 'g_pro_h', data: 'g_data_h', kpi: 'g_kpi_h' };  // g_mgr_* lives on the data page
 for (const v of views) if (!covers[v] || !guideKeys.includes(covers[v])) note(`the guide has no section for the "${v}" page — add one before releasing it`);
 
 // 8. The three core tools stay first and point somewhere real.
@@ -183,9 +183,26 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   const pay = (code.match(/const pay=\{[\s\S]*?tasks:out\}/) || [''])[0];
   if (!pay || /tk|token|Authorization|refresh/i.test(pay)) note('bookmark: the hand-over must not carry the sign-in token');
   // exactly these keys, and "o" may only be a yes/no comparison — never anyone's id
+  // the manager bookmark: same six read endpoints as the two prompts, read-only, token never handed out, saves files locally
+  const { buildManagerBookmarklet } = await import(new URL('core.js', root));
+  const mg = decodeURIComponent(buildManagerBookmarklet('2026-10-01', '2026-10-29').replace(/^javascript:/, ''));
+  const mgHosts = [...mg.matchAll(/https:\/\/([a-z0-9.-]+)/g)].map((m) => m[1]).filter((h) => h !== 'crmbackend.afaqy.sa');
+  if (mgHosts.length) note(`manager bookmark: talks to ${[...new Set(mgHosts)].join(', ')} — only crmbackend.afaqy.sa`);
+  const mgPaths = [...mg.matchAll(/'(Security|Teams|Task|TechnicianReport|AfterSalesBoardReport)[A-Za-z/]*'/g)].map((m) => m[1] === 'Teams' ? m[0].replace(/\/$/, "'") : m[0]);
+  const okPaths = new Set(["'Security/GetAllHierarchyUsersDropDown'", "'Teams/GetAllTeams'", "'Teams/GetTeamById/'", "'Task/GetMyTasksGrid'", "'TechnicianReport/GetTechnicianReportStatic'", "'AfterSalesBoardReport/GetAfterSalesAgentsGrid'"]);
+  for (const x of mgPaths) if (!okPaths.has(x)) note(`manager bookmark: calls ${x} — only the six read endpoints are allowed`);
+  if (/\/(add|edit|delete|remove|save|assign|close|complete|approve|update|create|sync|send)\b/i.test(mg)) note('manager bookmark: a write-like path appeared');
+  if (/location\.href=[^;]*(tk|token)|\.href='[^']*'\+tk/.test(mg) || /dl\([^)]*tk\b/.test(mg)) note('manager bookmark: the sign-in token must never leave the page');
+  if (!/location\.hostname!=='myafaqy\.com'/.test(mg)) note('manager bookmark: must refuse to run anywhere but myafaqy.com');
+  // both bookmarks strip newlines before running; a // comment would then swallow the rest of the code
+  for (const [nm, b] of [['manager bookmark', mg], ['my-KPIs bookmark', code]]) {
+    try { new Function(b); } catch (e) { note(`${nm}: does not compile once newlines are stripped (${e.message}) — a // line comment is the usual cause`); }
+  }
+
   const row = (code.match(/out\.push\(\{([\s\S]*?)\}\)/) || ['', ''])[1];
   const keys = [...row.matchAll(/(?:^|,)([a-z]+)(?=[:,]|$)/g)].map((m) => m[1]);
-  if (keys.join(',') !== 'i,c,d,s,m,o,b') note(`bookmark: hands over fields ${keys.join(',')} — only i,c,d,s,m,o,b are allowed`);
+  if (keys.join(',') !== 'i,c,d,s,m,o,b,t') note(`bookmark: hands over fields ${keys.join(',')} — only i,c,d,s,m,o,b,t are allowed`);
+  if (!/t:b==='done'\?undefined:/.test(row)) note('bookmark: a task title (t) must be carried only for open tasks, never for done ones');
   if (!/o:String\(x\.createUserId\)===String\(u\.UserId\)/.test(row)) note('bookmark: "o" must be the yes/no "I opened it myself", not an id');
 }
 

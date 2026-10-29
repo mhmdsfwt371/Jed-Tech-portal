@@ -110,7 +110,7 @@ export const STRINGS = {
     me_refresh: 'للتحديث: افتح ماي أفاقي واضغط الإشارة مرة أخرى.',
     me_forget: 'حذف مؤشراتي من هذا الجهاز',
     g_me_h: 'مؤشراتي',
-    g_me_b: 'كل موظف يرى مؤشراته هو فقط، بلا حساب جديد ولا كلمة مرور: إشارة في المتصفح تعمل داخل ماي أفاقي بدخوله هو، تقرأ «مهامي» لآخر اثني عشر شهرًا — وماي أفاقي نفسه لا يعطي فيها إلا مهام صاحب الدخول — ثم تفتح هذه الصفحة بالأرقام. تُقرأ أرقام المهام وأوقاتها وحالاتها فقط، بلا عناوين ولا عملاء ولا رمز الدخول، ولا يُرسل شيء لأي خادم. الإعداد مرة واحدة من صفحة «مؤشراتي»: سحب الزر إلى شريط الإشارات على الكمبيوتر، أو حفظه يدويًّا على الجوال.',
+    g_me_b: 'صفحة «مؤشراتي» لكل موظف عن نفسه فقط. مرة واحدة: اسحب زر «مؤشراتي» إلى شريط الإشارات في المتصفح. ثم كلما أردت: افتح ماي أفاقي بحسابك واضغط الإشارة — تقرأ «مهامي» وتفتح البوابة عليها. تجد أولًا «شغلي المفتوح الآن»: مهامك المفتوحة بعناوينها ونوعها وعمرها، الأحدث أولًا — قائمة عملك الحالي. وتحتها مؤشراتك بالأرقام لكل ربع في آخر اثني عشر شهرًا. تبقى على جهازك وحدك؛ لا يُنقل رمز الدخول ولا أسماء العملاء ولا عناوين المهام المنجزة، وزر «حذف مؤشراتي» يمحوها من الجهاز.',
     col_self: 'سجّلها لنفسه',
     def_6: '«سجّلها لنفسه» من المسندة: مهام فتحها الموظف وأسندها لنفسه، لا من البريد — وهي عند الفريق الطلبات التي تصل بالواتساب أو بالمكالمات. ماي أفاقي يسجّل منشئ المهمة لا قناتها، فلا يُفصل الواتساب عن المكالمة. تُقرأ مع بقية الأعمدة: تُظهر من أين جاء الحمل، لا جودة العمل.',
     nav_pro: 'أفاقي برو',
@@ -178,6 +178,14 @@ export const STRINGS = {
     def_7: '«بحث وتطوير»: من المنجزة في الفترة، ما كان في طابور «مهام البحث والتطوير» في ماي أفاقي. يظهر حين يحمل ملف الفترة قائمة هذا الطابور.',
     def_8: 'المؤشر الثاني ينقل تقرير «نقاط الفنيين» كما يحسبه ماي أفاقي شهرًا شهرًا لفرع جدة، ويجمع أشهر الفترة لكل فني. لا تُنقل منه قيم المكافآت ولا أرقام الهواتف ولا التقييمات.',
     def_9: 'المؤشر الثالث ينقل لوحة «ما بعد البيع» لفرع جدة كما هي: لكل موظف تذاكره المفتوحة والمعلّقة والمنجزة، من التذاكر التي أُنشئت في الفترة.',
+    me_open_h: 'شغلي المفتوح الآن ({n})',
+    me_open_none: 'لا مهام مفتوحة عليك الآن.',
+    me_untitled: 'مهمة بلا عنوان',
+    me_numbers_h: 'مؤشراتي بالأرقام',
+    mgr_bm: 'سحب كل بيانات الفريق {from} ← {to}',
+    mgr_bm_intro: 'للمدير: إشارة واحدة تسحب كل بيانات الفترة — المهام والتقارير معًا — من داخل ماي أفاقي بضغطة واحدة، وتحفظ ملفين ترفعهما أدناه. بديل عن نسخ الأمرين. اسحب الزر إلى شريط الإشارات مرة واحدة.',
+    g_mgr_h: 'إشارة المدير — سحب كل شيء بضغطة',
+    g_mgr_b: 'في صفحة البيانات، إشارة واحدة للمدير تقرأ من داخل ماي أفاقي كل ما يقرأه الأمران: مهام الفترة كلها، وطابور البحث والتطوير، ونقاط الفنيين، وتذاكر ما بعد البيع — وتحفظها ملفين (مهام وتقارير) تُرفعان في البوابة. تعمل بدخول المدير نفسه، للقراءة فقط، بالطلبات الستة المسموحة نفسها، ولا يغادر رمز الدخول صفحة ماي أفاقي. هي بديل أسرع عن نسخ الأمرين وتشغيلهما في كلود كروم؛ وتبقى طريقة كلود كروم متاحة لمن يفضّلها.',
   },
   en: {
     brand: 'Afaqy', portal: 'Technical team portal — Jeddah',
@@ -279,7 +287,7 @@ export const STRINGS = {
     me_refresh: 'To refresh: open myafaqy and press the bookmark again.',
     me_forget: 'Remove my KPIs from this device',
     g_me_h: 'My KPIs',
-    g_me_b: 'Each employee sees only their own KPIs, with no new account or password: a browser bookmark runs inside myafaqy with their own sign-in, reads “My Tasks” for the last twelve months — where myafaqy itself returns only the signed-in person’s tasks — and opens this page with the figures. Only task numbers, times and states are read: no titles, no customers, no sign-in token, and nothing is sent to any server. Setup is once, from the “My KPIs” page: drag the button onto the bookmarks bar on a computer, or save it by hand on a phone.',
+    g_me_b: 'The “My KPIs” page is each employee’s own. Once: drag the “My KPIs” button onto the browser’s bookmarks bar. Then whenever you want: open myafaqy with your account and press the bookmark — it reads “My Tasks” and opens the portal on them. First comes “My open work now”: your open tasks with their titles, type and age, newest first — your current work list. Below it, your KPIs in numbers per quarter over the last twelve months. It stays on your device only; the sign-in token, customer names and the titles of completed tasks are never carried, and “Remove my KPIs” erases it from the device.',
     col_self: 'Self-logged',
     def_6: '“Self-logged”, among the assigned: tasks the employee opened and assigned to himself, not from email — in this team, the requests that arrive by WhatsApp or by phone. myafaqy records who created a task, not its channel, so WhatsApp and calls cannot be separated. Read it with the other columns: it shows where the load came from, not the quality of the work.',
     nav_pro: 'Afaqy PRO',
@@ -347,6 +355,14 @@ export const STRINGS = {
     def_7: '“R&D”: of the tasks completed in the period, those in myafaqy’s “R&D Tasks” queue. It shows when the period’s file carries that queue’s list.',
     def_8: 'Factor 2 carries myafaqy’s “Technicians Points” report as myafaqy computes it, month by month for the Jeddah branch, and sums the period’s months per technician. Bonus values, phone numbers and evaluations are not carried.',
     def_9: 'Factor 3 carries the Jeddah branch’s “After Sales Board” as it is: per employee, their open, pending and done tickets, among tickets created in the period.',
+    me_open_h: 'My open work now ({n})',
+    me_open_none: 'You have no open tasks right now.',
+    me_untitled: 'Untitled task',
+    me_numbers_h: 'My KPIs in numbers',
+    mgr_bm: 'Pull all team data {from} → {to}',
+    mgr_bm_intro: 'For the manager: one bookmark pulls all of the period’s data — tasks and reports together — from inside myafaqy in one press, and saves two files to upload below. An alternative to copying the two prompts. Drag the button onto the bookmarks bar once.',
+    g_mgr_h: 'The manager bookmark — everything in one press',
+    g_mgr_b: 'On the Data page, one manager bookmark reads from inside myafaqy everything the two prompts read: all of the period’s tasks, the R&D queue, technician points and after-sales tickets — and saves them as two files (tasks and reports) to upload in the portal. It runs with the manager’s own sign-in, read-only, through the same six allowed requests, and the sign-in token never leaves the myafaqy page. It is a faster alternative to copying the two prompts and running them in Claude in Chrome; the Claude in Chrome way stays available for whoever prefers it.',
   },
   ur: {
     brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ',
@@ -448,7 +464,7 @@ export const STRINGS = {
     me_refresh: 'تازہ کرنے کے لیے: مائی آفاقی کھولیں اور بک مارک دوبارہ دبائیں۔',
     me_forget: 'میرے اشاریے اس ڈیوائس سے ہٹائیں',
     g_me_h: 'میرے اشاریے',
-    g_me_b: 'ہر ملازم صرف اپنے اشاریے دیکھتا ہے، بغیر کسی نئے اکاؤنٹ یا پاس ورڈ کے: براؤزر کا ایک بک مارک مائی آفاقی کے اندر اسی کے لاگ اِن سے چلتا ہے، پچھلے بارہ مہینوں کے «میرے ٹاسک» پڑھتا ہے — جہاں مائی آفاقی خود صرف لاگ اِن والے شخص کے ٹاسک دیتا ہے — اور یہ صفحہ اعداد کے ساتھ کھولتا ہے۔ صرف ٹاسک کے نمبر، اوقات اور حالتیں پڑھی جاتی ہیں: نہ عنوان، نہ کسٹمر، نہ لاگ اِن ٹوکن، اور کچھ بھی کسی سرور کو نہیں بھیجا جاتا۔ ترتیب ایک بار ہوتی ہے، «میرے اشاریے» کے صفحے سے: کمپیوٹر پر بٹن کو بک مارکس بار پر کھینچیں، یا موبائل پر اسے ہاتھ سے محفوظ کریں۔',
+    g_me_b: '«میرے اشاریے» کا صفحہ ہر ملازم کا اپنا ہے۔ ایک بار: «میرے اشاریے» کا بٹن براؤزر کی بک مارکس بار پر کھینچیں۔ پھر جب چاہیں: اپنے اکاؤنٹ سے مائی آفاقی کھولیں اور بک مارک دبائیں — یہ «میرے ٹاسک» پڑھتا ہے اور پورٹل انہی پر کھولتا ہے۔ پہلے «میرا کھلا کام ابھی» آتا ہے: آپ کے کھلے ٹاسک ان کے عنوان، قسم اور عمر کے ساتھ، نئے پہلے — آپ کے موجودہ کام کی فہرست۔ اس کے نیچے پچھلے بارہ مہینوں کے ہر سہ ماہی کے اعداد میں آپ کے اشاریے۔ یہ صرف آپ کے آلے پر رہتا ہے؛ لاگ اِن ٹوکن، گاہکوں کے نام اور مکمل شدہ ٹاسکس کے عنوان کبھی نہیں لائے جاتے، اور «میرے اشاریے حذف کریں» اسے آلے سے مٹا دیتا ہے۔',
     col_self: 'خود درج کیے',
     def_6: '«خود درج کیے»، تفویض شدہ میں سے: وہ ٹاسک جو ملازم نے خود کھولے اور خود کو تفویض کیے، ای میل سے نہیں — اس ٹیم میں وہ درخواستیں جو واٹس ایپ یا کال سے آتی ہیں۔ مائی آفاقی ٹاسک بنانے والے کو درج کرتا ہے، اس کا ذریعہ نہیں، اس لیے واٹس ایپ اور کال کو الگ نہیں کیا جا سکتا۔ اسے باقی کالموں کے ساتھ پڑھیں: یہ بتاتا ہے کہ کام کا بوجھ کہاں سے آیا، کام کا معیار نہیں۔',
     nav_pro: 'آفاقی پرو',
@@ -516,11 +532,19 @@ export const STRINGS = {
     def_7: '«تحقیق و ترقی»: اس مدت میں مکمل ہونے والے ٹاسکس میں سے وہ جو مائی آفاقی کی «R&D Tasks» قطار میں تھے۔ یہ تب دکھائی دیتا ہے جب مدت کی فائل میں اس قطار کی فہرست ہو۔',
     def_8: 'دوسرا اشاریہ مائی آفاقی کی «ٹیکنیشن پوائنٹس» رپورٹ کو ویسے ہی لاتا ہے جیسے مائی آفاقی اسے جدہ برانچ کے لیے مہینہ بہ مہینہ حساب کرتا ہے، اور ہر ٹیکنیشن کے لیے مدت کے مہینے جمع کرتا ہے۔ بونس کی رقمیں، فون نمبر اور تشخیصات نہیں لائی جاتیں۔',
     def_9: 'تیسرا اشاریہ جدہ برانچ کا «آفٹر سیلز بورڈ» جیسا ہے ویسا لاتا ہے: ہر ملازم کے کھلے، زیر التوا اور مکمل ٹکٹ، اس مدت میں بنے ٹکٹس میں سے۔',
+    me_open_h: 'میرا کھلا کام ابھی ({n})',
+    me_open_none: 'اس وقت آپ پر کوئی کھلا ٹاسک نہیں۔',
+    me_untitled: 'بے عنوان ٹاسک',
+    me_numbers_h: 'اعداد میں میرے اشاریے',
+    mgr_bm: 'ٹیم کا سارا ڈیٹا کھینچیں {from} ← {to}',
+    mgr_bm_intro: 'مینیجر کے لیے: ایک بک مارک مائی آفاقی کے اندر سے ایک دباؤ میں مدت کا سارا ڈیٹا — ٹاسک اور رپورٹس ایک ساتھ — کھینچتا ہے، اور دو فائلیں محفوظ کرتا ہے جو نیچے اپ لوڈ ہوتی ہیں۔ دونوں ہدایات کاپی کرنے کا متبادل۔ بٹن کو ایک بار بک مارکس بار پر کھینچیں۔',
+    g_mgr_h: 'مینیجر بک مارک — ایک دباؤ میں سب کچھ',
+    g_mgr_b: 'ڈیٹا کے صفحے پر، ایک مینیجر بک مارک مائی آفاقی کے اندر سے وہ سب پڑھتا ہے جو دونوں ہدایات پڑھتی ہیں: مدت کے تمام ٹاسک، R&D قطار، ٹیکنیشن پوائنٹس اور آفٹر سیلز ٹکٹس — اور انہیں دو فائلوں (ٹاسک اور رپورٹس) کے طور پر محفوظ کرتا ہے جو پورٹل میں اپ لوڈ ہوتی ہیں۔ یہ مینیجر کے اپنے لاگ اِن سے چلتا ہے، صرف پڑھنے کے لیے، انہی چھ اجازت شدہ درخواستوں کے ذریعے، اور لاگ اِن ٹوکن مائی آفاقی کے صفحے سے باہر نہیں جاتا۔ یہ دونوں ہدایات کاپی کر کے کلاڈ کروم میں چلانے کا تیز تر متبادل ہے؛ کلاڈ کروم والا طریقہ بھی دستیاب رہتا ہے۔',
   },
 };
 
 // The user guide: one list, read by the page (Guide tab) and by scripts/build-manual.mjs, so they can never differ.
-export const GUIDE = [['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
+export const GUIDE = [['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
 export const DEFINITIONS = ['def_1', 'def_2', 'def_3', 'def_4', 'def_5', 'def_6', 'def_7', 'def_8', 'def_9'];
 
 export function t(lang, key, vars = {}) {
@@ -1071,6 +1095,60 @@ export const ME_SCHEMA = 'afaqy-me/v1';
 export const ME_MONTHS = 12;
 
 /** The bookmark, as a javascript: address. portalUrl is where the portal lives (…/afaqy-portal/). */
+/**
+ * The manager bookmark. Runs on myafaqy with the manager's own sign-in and reads, for a period, everything the two
+ * prompts read — all tasks, the R&D queue, technician points, after-sales tickets — then saves two files to download
+ * (tasks + reports), the same files the Data page takes. Read-only; the token never leaves the page.
+ */
+export function buildManagerBookmarklet(from, to, branch = JEDDAH_BRANCH, lang = 'ar') {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) throw new Error('invalid range');
+  const [fromZ, toZ] = saudiBoundsZ(from, to);
+  const nowYmd = ymd(saudiToday());
+  const [, nowZ] = saudiBoundsZ(nowYmd, nowYmd);
+  const later = to < nowYmd;
+  const months = monthsOf(from, to);
+  const msg = {
+    ar: ['افتح ماي أفاقي أولًا ثم اضغط الإشارة من هناك', 'سجّل دخولك في ماي أفاقي أولًا', 'جارٍ تحميل بيانات الفريق… ', 'تعذّر التحميل: ', 'تم — نزّل الملفين وارفعهما في البوابة'],
+    en: ['Open myafaqy first, then press the bookmark there', 'Sign in to myafaqy first', 'Loading the team data… ', 'Could not load: ', 'Done — download both files and upload them in the portal'],
+    ur: ['پہلے مائی آفاقی کھولیں، پھر وہاں بک مارک دبائیں', 'پہلے مائی آفاقی میں لاگ اِن کریں', 'ٹیم کا ڈیٹا لوڈ ہو رہا ہے… ', 'لوڈ نہیں ہو سکا: ', 'ہو گیا — دونوں فائلیں ڈاؤن لوڈ کر کے پورٹل میں اپ لوڈ کریں'],
+  }[lang] || [];
+  const code = `(async()=>{const M=${JSON.stringify(msg)},FROM=${JSON.stringify(from)},TO=${JSON.stringify(to)},BR=${JSON.stringify(String(branch))};
+if(location.hostname!=='myafaqy.com'){alert(M[0]);return}
+const tk=localStorage.getItem('token');if(!tk){alert(M[1]);return}
+const box=document.createElement('div');box.style.cssText='position:fixed;inset:auto 16px 16px auto;z-index:2147483647;background:#0F2231;color:#fff;padding:12px 16px;border-radius:10px;font:14px system-ui;max-width:320px';box.textContent=M[2];document.body.append(box);
+const H={'Authorization':'Bearer '+tk,'Content-Type':'application/json','X-Timezone-Offset':'-180','X-Client-Id':localStorage.getItem('browser_client_id')||'','lang':'en'};
+const say=t=>{box.textContent=t};const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const post=async(path,body)=>{const r=await fetch('https://crmbackend.afaqy.sa/'+path,{method:'POST',headers:H,body:JSON.stringify(body)});if(!r.ok)throw new Error(path+' HTTP '+r.status);const j=await r.json();if(j&&j.success===false)throw new Error(j.message||path+' refused');return j};
+const get=async(path)=>{const r=await fetch('https://crmbackend.afaqy.sa/'+path,{headers:H});if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()};
+const dl=(name,obj)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(obj)],{type:'application/json'}));a.download=name;document.body.append(a);a.click();a.remove()};
+const taskBody=(b,n,size,co,grp)=>({donePageNumber:b==='done'?n:0,donePageSize:b==='done'?size:1,openPageNumber:b==='open'?n:0,openPageSize:b==='open'?size:1,toDoPageNumber:b==='toDo'?n:0,toDoPageSize:b==='toDo'?size:1,orderBy:1,taskGroupId:grp,searchKey:'',tasksGridStatusId:1,assignedBy:[],createdBy:[],agent:[],statusIds:[],type:[],priority:[],assignedOn:[],completedOn:co});
+try{
+const U=await post('Security/GetAllHierarchyUsersDropDown',{pageSize:1000,pageNumber:0,searchCriteria:'',selectedId:[]});
+const udata=(U.data&&(U.data.data||U.data))||[];const uname={};for(const p of udata)uname[String(p.id)]=p;
+const people=[];const teamsSeen={};
+for(let pg=0;;pg++){const T=await post('Teams/GetAllTeams',{isSearchFilter:false,searchKey:'',search:{},pageSize:50,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const arr=(T.data&&(T.data.data||T.data))||[];for(const t of arr)teamsSeen[String(t.id)]=t;const tot=(T.data&&T.data.totalPages)||1;if(pg+1>=tot||!arr.length)break;await wait(200)}
+const teamOf={};for(const id of Object.keys(teamsSeen)){const d=await get('Teams/GetTeamById/'+id);const td=(d&&d.data)||{};const bc=td.branchCode==null?null:String(td.branchCode);for(const g of td.groupUsersDto||[]){const uid=String(g.userId);(teamOf[uid]=teamOf[uid]||{teams:[],branchCode:null}).teams.push(td.nameEn||td.name||id);if(bc)teamOf[uid].branchCode=bc}await wait(150)}
+const walk=async(grp,co,keepRd)=>{const out=[];const rd=[];say(M[2]+(keepRd?'R&D':'tasks'));for(const b of['done','open','toDo']){let size=500,pg=0,total=null;for(;;){const d=((await post('Task/GetMyTasksGrid',taskBody(b,pg,size,co,grp))).data||{})[b];if(!d)break;if(pg===0&&d.pageSize!==size)size=d.pageSize||20;total=d.listCount;for(const x of d.data||[]){if(keepRd){rd.push(String(x.id));continue;}out.push({i:String(x.id),title:x.title,taskType:x.taskType,taskSettingId:x.taskSettingId,statusId:x.statusId,isCancelled:x.isCancelled,createdOn:x.createdOn,closeDate:x.closeDate,createUserId:x.createUserId,assigneeId:x.assigneeId,moduleId:x.moduleId,customerTag:x.customerTag,bucket:b})}pg++;if(!d.data||!d.data.length||pg*size>=total)break;await wait(250)}}return{out,rd}};
+const main=await walk(100001,[FROM&&'${fromZ}'||'',TO&&'${toZ}'||''],false);let tasks=main.out;const doneTotal=tasks.filter(t=>t.bucket==='done').length;const openTotal=tasks.filter(t=>t.bucket!=='done').length;
+${later ? `const late=await walk(100001,['${toZ}','${nowZ}'],false);const seen=new Set(tasks.map(t=>t.i));for(const t of late.out)if(t.bucket==='done'&&!seen.has(t.i))tasks.push(t);` : ''}
+const rdq=await walk(12,[FROM&&'${fromZ}'||'',TO&&'${toZ}'||''],true);const rdIds=[...new Set(rdq.rd)];
+const mapTask=x=>{const uid=String(x.assigneeId||'');const tt=teamOf[uid]||{teams:[],branchCode:null};return{id:String(x.i),title:String(x.title||''),typeId:x.taskSettingId??null,type:String(x.taskType||''),statusId:x.statusId,state:x.isCancelled?'cancelled':x.statusId===3?'done':'open',createdAt:x.createdOn?x.createdOn+'Z':null,createdById:x.createUserId==null?null:String(x.createUserId),assigneeId:uid,completedAt:x.statusId===3&&!x.isCancelled&&x.closeDate?x.closeDate+'Z':null,moduleId:x.moduleId,customer:x.customerTag||null,bucket:x.bucket}};
+const seenId=new Set();const taskRows=[];for(const x of tasks){if(seenId.has(x.i))continue;seenId.add(x.i);taskRows.push(mapTask(x))}
+const pids=new Set();taskRows.forEach(t=>{if(t.assigneeId)pids.add(t.assigneeId);if(t.createdById)pids.add(t.createdById)});
+for(const id of pids){const u=uname[id]||{};const tt=teamOf[id]||{teams:[],branchCode:null};people.push({id,nameEn:String(u.nameEn||''),nameAr:String(u.nameAr||''),teams:tt.teams,branchCode:tt.branchCode})}
+const tasksFile={schema:'${SCHEMA}',range:{from:FROM,to:TO},extractedAt:new Date().toISOString(),taskGroupId:100001,source:{endpoint:'POST https://crmbackend.afaqy.sa/Task/GetMyTasksGrid',doneInRangeTotal:doneTotal,openTotal:openTotal,pageSize:500},people,tasks:taskRows,rdTaskIds:rdIds,notes:['manager bookmark; times UTC with Z added']};
+say(M[2]+'reports');const techPoints=[];const MM=${JSON.stringify(months.map(m=>({month:m.key,yearId:m.yearId,quarterId:m.quarterId,monthId:m.monthId,rd:m.requestDate})))};
+const KEEP=${JSON.stringify(TECH_FIELDS)};
+for(const mo of MM){const rows=[];for(let pg=1;;pg++){const R=await post('TechnicianReport/GetTechnicianReportStatic',{pageNumber:pg,pageSize:100,searchKey:'',isSearchFilter:true,search:{yearId:mo.yearId,quarterId:mo.quarterId,monthId:mo.monthId,branchIds:BR,userIds:[],requestDate:mo.rd}});const g=(R.data&&R.data.gridResult)||{};const arr=g.data||[];for(const r of arr){const o={technicianId:r.technicianId,employeeId:r.employeeId,nameEn:r.nameEn,nameAr:r.nameAr};for(const f of KEEP)o[f]=r[f]||0;rows.push(o)}const tot=g.totalPages||1;if(pg>=tot||!arr.length)break;await wait(200)}techPoints.push({month:mo.month,listCount:rows.length,rows})}
+const AS=await post('AfterSalesBoardReport/GetAfterSalesAgentsGrid',{categoryId:null,createDate:['${fromZ}','${toZ}'],branch:BR,afterSalesId:null});
+const asArr=(AS.data&&(AS.data.data||AS.data))||[];const afterSales={rows:asArr.map(r=>({id:r.id,name:r.afterSalesName,open:r.openTickets||0,pending:r.pendingTickets||0,done:r.doneTickets||0,total:r.totalTickets||0}))};
+const repFile={schema:'${REPORTS_SCHEMA}',range:{from:FROM,to:TO},branch:BR,extractedAt:new Date().toISOString(),techPoints,afterSales,notes:['manager bookmark']};
+dl('afaqy-tasks-'+FROM+'_'+TO+'.json',tasksFile);await wait(400);dl('afaqy-reports-'+FROM+'_'+TO+'.json',repFile);
+box.style.background='#0A5F67';say(M[4]+' ('+taskRows.length+' / '+techPoints.reduce((s,m)=>s+m.rows.length,0)+' / '+afterSales.rows.length+')');setTimeout(()=>box.remove(),12000);
+}catch(e){box.style.background='#7a1f1f';say(M[3]+e.message);setTimeout(()=>box.remove(),12000)}})();`;
+  return 'javascript:' + encodeURIComponent(code.replace(/\n/g, ''));
+}
+
 export function buildBookmarklet(portalUrl, lang = 'ar') {
   const msg = {
     ar: ['افتح ماي أفاقي أولًا ثم اضغط الإشارة من هناك', 'سجّل دخولك في ماي أفاقي أولًا', 'جارٍ قراءة مهامك…', 'تعذّرت القراءة: '],
@@ -1091,7 +1169,7 @@ const ask=async b=>{const r=await fetch('https://crmbackend.afaqy.sa/Task/GetMyT
 const out=[];let n=0;
 for(const[b,c]of[['done',[since,end]],['open',[]],['toDo',[]]]){let size=500,pg=0,total=null;
 for(;;){const d=(await ask(base(c,b,pg,size)))[b];if(pg===0&&d.pageSize!==size)size=d.pageSize||20;total=d.listCount;
-for(const x of d.data||[])out.push({i:String(x.id),c:x.createdOn,d:x.statusId===3&&!x.isCancelled?x.closeDate:null,s:x.isCancelled?'cancelled':x.statusId===3?'done':'open',m:x.moduleId,o:String(x.createUserId)===String(u.UserId),b});
+for(const x of d.data||[])out.push({i:String(x.id),c:x.createdOn,d:x.statusId===3&&!x.isCancelled?x.closeDate:null,s:x.isCancelled?'cancelled':x.statusId===3?'done':'open',m:x.moduleId,o:String(x.createUserId)===String(u.UserId),b,t:b==='done'?undefined:String(x.title||x.taskType||'').slice(0,80)});
 n+=(d.data||[]).length;box.textContent=M[2]+' '+n;pg++;if(!d.data||!d.data.length||pg*size>=total)break;await new Promise(r=>setTimeout(r,250))}}
 const doneTotal=out.filter(x=>x.b==='done').length;
 const pay={schema:'${ME_SCHEMA}',user:{id:String(u.UserId),name:String(u.UserName||'')},extractedAt:new Date().toISOString(),since,months:${ME_MONTHS},tasks:out};
@@ -1121,11 +1199,21 @@ export async function parseMe(fragment) {
       const state = ['open', 'done', 'cancelled'].includes(x.s) ? x.s : 'open';
       const moduleId = Number.isFinite(+x.m) && x.m !== null ? +x.m : null;
       return { id: String(x.i), state, createdAt: toIso(x.c), completedAt: state === 'done' ? toIso(x.d) : null,
+        title: state === 'done' ? '' : String(x.t || ''), typeId: null, type: '',
         assigneeId: uid, assigneeName: '', createdById: null, createdByName: '', assignedToGroup: false,
         fromEmail: moduleId === EMAIL_MODULE, own: x.o === true, moduleId, bucket: x.b || null };
     });
     return { me: { schema: ME_SCHEMA, user: { id: uid, name: String(raw.user.name || '') }, extractedAt: toIso(raw.extractedAt), since: toIso(raw.since), tasks } };
   } catch { return { error: 'err_json' }; }
+}
+
+/** The open tasks a person has right now — their current work, newest first. Titles come through only for one's own tasks. */
+export function openTasks(tasks, assigneeId = null) {
+  return (tasks || []).filter((x) => x.state === 'open' && (!assigneeId || x.assigneeId === assigneeId))
+    .map((x) => ({ id: x.id, title: x.title || '', type: x.type || '', typeId: x.typeId, createdAt: x.createdAt,
+      customer: x.customer || null, fromEmail: x.fromEmail === true, ageHours: x.createdAt ? Math.max(0, (Date.now() - Date.parse(x.createdAt)) / 3600000) : null,
+      bucket: x.bucket }))
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
 /** The profile: Factor 1 for this one person, per quarter, newest first, over what the bookmark read. */

@@ -250,6 +250,14 @@
   .side-badge, .tool .badge { color: var(--accent-dark); background: var(--accent-wash); }
 
   .me-who { color: var(--slate); margin: 0 0 14px; }
+  .worklist { display: grid; gap: 8px; margin-bottom: 22px; }
+  .work { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; padding: 12px 14px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); border-inline-start: 3px solid var(--accent); }
+  .work.email { border-inline-start-color: var(--note); }
+  .work-title { font-weight: 600; color: var(--title); }
+  .work-cust { display: block; color: var(--slate); font-size: 13px; margin-top: 2px; }
+  .work-meta { text-align: end; color: var(--slate); font-size: 13px; white-space: nowrap; }
+  .work-meta span { display: block; }
+  .work-age { color: var(--accent-dark); font-weight: 600; }
   .pro-login label { display: grid; gap: 4px; margin: 0 0 10px; max-width: 340px; font-size: 13px; color: var(--slate); }
   .pro-login input { font: inherit; padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }
   .pro-bar { margin-bottom: 14px; }
@@ -370,6 +378,8 @@
   <section id="view-data" hidden>
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="data_title">بيانات المؤشرات</h1>
     <p class="sub" data-t="data_sub"></p></div>
+    <p class="note info" data-t="mgr_bm_intro" style="margin:0 0 14px"></p>
+    <div class="row" id="mgr-row" style="margin-bottom:22px"></div>
     <div class="steps">
       <div class="step"><span class="n">١</span><div>
         <h3 data-t="step1">اختر الفترة</h3>

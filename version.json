@@ -1,24 +1,21 @@
 {
-  "version": "6.8",
+  "version": "6.9",
   "date": "2026-10-29",
   "notes": {
     "ar": [
-      "المؤشر الثاني — نقاط الفنيين: لكل فني في جدة التركيبات والصيانة والإصلاح وإعادة الخدمة والإيقاف والتركيب الجماعي والأعمال الإضافية والمخالفات والنقاط، من تقرير «نقاط الفنيين» في ماي أفاقي نفسه، مجموعة لأشهر الفترة.",
-      "المؤشر الثالث — تذاكر ما بعد البيع: لكل موظف المفتوحة والمعلّقة والمنجزة، من لوحة «ما بعد البيع» في ماي أفاقي لفرع جدة.",
-      "لكل فترة في صفحة البيانات أمر ثانٍ «نسخ أمر التقارير» يسحب المؤشرين بطلبين مسموحين فقط، ويحفظ ملفًّا يُرفع في الصندوق نفسه. ولا تُنقل قيم المكافآت ولا الهواتف ولا التقييمات أبدًا.",
-      "عمود «بحث وتطوير» في المؤشر الأول: المنجز من طابور مهام البحث والتطوير. والسحب صار أسرع خمس مرات."
+      "«مؤشراتي» صارت تبدأ بـ«شغلي المفتوح الآن»: مهامك المفتوحة بعناوينها ونوعها وعمرها، الأحدث أولًا — قائمة عملك الحالي من ضغطة واحدة على الإشارة في ماي أفاقي. عناوين المهام المنجزة وأسماء العملاء لا تُنقل كما كان.",
+      "إشارة للمدير في صفحة البيانات: ضغطة واحدة من داخل ماي أفاقي تسحب كل بيانات الربع — المهام، وطابور البحث والتطوير، ونقاط الفنيين، وتذاكر ما بعد البيع — وتحفظ الملفين اللذين يُرفعان في البوابة. بديل أسرع عن تشغيل الأمرين في كلود كروم.",
+      "الحارس صار يتأكد أن الإشارتين تعملان بعد ضغط أسطرهما، ولا يسمح إلا بالطلبات الستة للقراءة."
     ],
     "en": [
-      "Factor 2 — technician points: for every Jeddah technician, installations, maintenance, repairs, re-service, stop service, group installs, additional work, violations and points, from myafaqy’s own “Technicians Points” report, summed over the period’s months.",
-      "Factor 3 — after-sales tickets: per employee, open, pending and done, from myafaqy’s “After Sales Board” for the Jeddah branch.",
-      "Each period on the Data page has a second prompt, “Copy the reports prompt”, which pulls both factors with two allowed requests only and saves a file uploaded in the same box. Bonus values, phone numbers and evaluations are never carried.",
-      "An “R&D” column in Factor 1: the completed tasks from the R&D queue. And pulling is five times faster."
+      "“My KPIs” now opens with “My open work now”: your open tasks with their titles, type and age, newest first — your current work list from one press on the bookmark in myafaqy. Titles of completed tasks and customer names are still never carried.",
+      "A manager bookmark on the Data page: one press inside myafaqy pulls all of the quarter’s data — tasks, the R&D queue, technician points and after-sales tickets — and saves the two files uploaded in the portal. A faster alternative to running the two prompts in Claude in Chrome.",
+      "The guard now checks that both bookmarks run after their lines are joined, and allows only the six read requests."
     ],
     "ur": [
-      "دوسرا اشاریہ — ٹیکنیشن پوائنٹس: جدہ کے ہر ٹیکنیشن کی تنصیبات، مرمت، درستی، دوبارہ سروس، بندش، اجتماعی تنصیب، اضافی کام، خلاف ورزیاں اور پوائنٹس، مائی آفاقی کی اپنی «ٹیکنیشن پوائنٹس» رپورٹ سے، مدت کے مہینوں کا مجموعہ۔",
-      "تیسرا اشاریہ — آفٹر سیلز ٹکٹس: ہر ملازم کے کھلے، زیر التوا اور مکمل، جدہ برانچ کے لیے مائی آفاقی کے «آفٹر سیلز بورڈ» سے۔",
-      "ڈیٹا کے صفحے پر ہر مدت کی دوسری ہدایت «رپورٹس کی ہدایت کاپی کریں» صرف دو اجازت شدہ درخواستوں سے دونوں اشاریے لاتی ہے اور فائل محفوظ کرتی ہے جو اسی خانے میں اپ لوڈ ہوتی ہے۔ بونس کی رقمیں، فون نمبر اور تشخیصات کبھی نہیں لائی جاتیں۔",
-      "پہلے اشاریے میں «تحقیق و ترقی» کا کالم: R&D قطار کے مکمل شدہ ٹاسک۔ اور ڈیٹا لانا پانچ گنا تیز ہو گیا۔"
+      "«میرے اشاریے» اب «میرا کھلا کام ابھی» سے شروع ہوتا ہے: آپ کے کھلے ٹاسک ان کے عنوان، قسم اور عمر کے ساتھ، نئے پہلے — مائی آفاقی میں بک مارک کے ایک دباؤ سے آپ کے موجودہ کام کی فہرست۔ مکمل شدہ ٹاسکس کے عنوان اور گاہکوں کے نام پہلے کی طرح نہیں لائے جاتے۔",
+      "ڈیٹا کے صفحے پر مینیجر کا بک مارک: مائی آفاقی کے اندر ایک دباؤ سہ ماہی کا سارا ڈیٹا — ٹاسک، R&D قطار، ٹیکنیشن پوائنٹس اور آفٹر سیلز ٹکٹس — کھینچتا ہے اور پورٹل میں اپ لوڈ ہونے والی دونوں فائلیں محفوظ کرتا ہے۔ کلاڈ کروم میں دونوں ہدایات چلانے کا تیز تر متبادل۔",
+      "گارڈ اب جانچتا ہے کہ دونوں بک مارک اپنی سطریں جوڑنے کے بعد چلتے ہیں، اور صرف چھ پڑھنے والی درخواستوں کی اجازت دیتا ہے۔"
     ]
   }
 }

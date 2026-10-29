@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v6.9 — 2026-10-29
+
+- «مؤشراتي» صارت تبدأ بـ«شغلي المفتوح الآن»: مهامك المفتوحة بعناوينها ونوعها وعمرها، الأحدث أولًا — قائمة عملك الحالي من ضغطة واحدة على الإشارة في ماي أفاقي. عناوين المهام المنجزة وأسماء العملاء لا تُنقل كما كان.
+- إشارة للمدير في صفحة البيانات: ضغطة واحدة من داخل ماي أفاقي تسحب كل بيانات الربع — المهام، وطابور البحث والتطوير، ونقاط الفنيين، وتذاكر ما بعد البيع — وتحفظ الملفين اللذين يُرفعان في البوابة. بديل أسرع عن تشغيل الأمرين في كلود كروم.
+- الحارس صار يتأكد أن الإشارتين تعملان بعد ضغط أسطرهما، ولا يسمح إلا بالطلبات الستة للقراءة.
+
+<details><summary>English</summary>
+
+- “My KPIs” now opens with “My open work now”: your open tasks with their titles, type and age, newest first — your current work list from one press on the bookmark in myafaqy. Titles of completed tasks and customer names are still never carried.
+- A manager bookmark on the Data page: one press inside myafaqy pulls all of the quarter’s data — tasks, the R&D queue, technician points and after-sales tickets — and saves the two files uploaded in the portal. A faster alternative to running the two prompts in Claude in Chrome.
+- The guard now checks that both bookmarks run after their lines are joined, and allows only the six read requests.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «میرے اشاریے» اب «میرا کھلا کام ابھی» سے شروع ہوتا ہے: آپ کے کھلے ٹاسک ان کے عنوان، قسم اور عمر کے ساتھ، نئے پہلے — مائی آفاقی میں بک مارک کے ایک دباؤ سے آپ کے موجودہ کام کی فہرست۔ مکمل شدہ ٹاسکس کے عنوان اور گاہکوں کے نام پہلے کی طرح نہیں لائے جاتے۔
+- ڈیٹا کے صفحے پر مینیجر کا بک مارک: مائی آفاقی کے اندر ایک دباؤ سہ ماہی کا سارا ڈیٹا — ٹاسک، R&D قطار، ٹیکنیشن پوائنٹس اور آفٹر سیلز ٹکٹس — کھینچتا ہے اور پورٹل میں اپ لوڈ ہونے والی دونوں فائلیں محفوظ کرتا ہے۔ کلاڈ کروم میں دونوں ہدایات چلانے کا تیز تر متبادل۔
+- گارڈ اب جانچتا ہے کہ دونوں بک مارک اپنی سطریں جوڑنے کے بعد چلتے ہیں، اور صرف چھ پڑھنے والی درخواستوں کی اجازت دیتا ہے۔
+
+</div>
+</details>
+
+
 ## v6.8 — 2026-10-29
 
 - المؤشر الثاني — نقاط الفنيين: لكل فني في جدة التركيبات والصيانة والإصلاح وإعادة الخدمة والإيقاف والتركيب الجماعي والأعمال الإضافية والمخالفات والنقاط، من تقرير «نقاط الفنيين» في ماي أفاقي نفسه، مجموعة لأشهر الفترة.
