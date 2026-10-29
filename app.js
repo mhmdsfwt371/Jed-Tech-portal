@@ -259,6 +259,33 @@ function renderRepairs() {
       el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: t('repair_csv'), onclick: csv }), el('button', { type: 'button', class: 'btn quiet', text: t('pro_refresh'), onclick: () => proLoad() }))]
       : el('p', { class: 'hint', text: t('repair_empty') }));
 }
+// ---------- the signatures the certificates tool prints (stored where the tool reads them: same origin, key afqFactory.sign) ----------
+const SIGN_KEY = 'afqFactory.sign';
+const SIGN_MAKERS = [['TZ', 'TZONE — TAG07B'], ['TF', 'TOPFLY — TSTH1-B']];
+const signRead = () => { try { return JSON.parse(localStorage.getItem(SIGN_KEY) || '{}') || {}; } catch { return {}; } };
+const signWrite = (all) => { try { localStorage.setItem(SIGN_KEY, JSON.stringify(all)); return true; } catch { return false; } };
+function shrinkSignature(dataUrl) {
+  return new Promise((res) => { const im = new Image(); im.onload = () => { const w = Math.min(600, im.width), h = Math.round(im.height * (w / im.width)); const cv = document.createElement('canvas'); cv.width = w; cv.height = h; cv.getContext('2d').drawImage(im, 0, 0, w, h); const png = /png/i.test(dataUrl.slice(0, 30)); res({ img: cv.toDataURL(png ? 'image/png' : 'image/jpeg', 0.9), fmt: png ? 'PNG' : 'JPEG' }); }; im.onerror = () => res({ img: dataUrl, fmt: 'PNG' }); im.src = dataUrl; });
+}
+function renderSignatures() {
+  const all = signRead();
+  const card = ([m, label]) => { const st = all[m] || {};
+    const file = el('input', { type: 'file', accept: 'image/png,image/jpeg', hidden: true, onchange: (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = async () => { const sh = await shrinkSignature(r.result); const next = signRead(); next[m] = { ...(next[m] || {}), ...sh }; if (signWrite(next)) { toast(t('sign_saved')); renderTeam(); } else toast(t('sign_fail')); }; r.readAsDataURL(f); e.target.value = ''; } });
+    return el('div', { class: 'sign-card' },
+      el('b', { text: label }),
+      st.img ? el('img', { src: st.img, alt: '', class: 'sign-img' }) : el('div', { class: 'sign-empty', text: t('sign_none') }),
+      el('input', { type: 'text', class: 'sign-name', placeholder: t('sign_name_ph'), value: st.name || '', onchange: (e) => { const next = signRead(); next[m] = { ...(next[m] || {}), name: e.target.value.trim() }; signWrite(next); } }),
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: st.img ? t('sign_replace') : t('sign_upload'), onclick: () => file.click() }), file,
+        st.img ? el('button', { type: 'button', class: 'btn quiet', text: t('sign_remove'), onclick: () => { const next = signRead(); delete next[m]; signWrite(next); renderTeam(); } }) : null)); };
+  const exp = () => { const a2 = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify({ schema: 'afaqy-signatures/v1', exportedAt: new Date().toISOString(), signatures: signRead() }, null, 2)], { type: 'application/json' })), download: `afaqy-signatures-${ymd(new Date())}.json` }); document.body.append(a2); a2.click(); a2.remove(); };
+  const imp = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); if (j.schema !== 'afaqy-signatures/v1' || typeof j.signatures !== 'object') throw 0; const next = signRead(); for (const [m, v] of Object.entries(j.signatures)) if (['TZ', 'TF'].includes(m) && v && typeof v === 'object') next[m] = { ...(next[m] || {}), ...v }; signWrite(next); toast(t('sign_imported')); renderTeam(); } catch { toast(t('err_json')); } e.target.value = ''; } });
+  return el('section', { class: 'signs' },
+    el('h2', {}, t('sign_h'), helpQ('help_sign')),
+    el('p', { class: 'hint', text: t('sign_sub') }),
+    el('div', { class: 'sign-grid' }, SIGN_MAKERS.map(card)),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn quiet', text: t('sign_export'), onclick: exp }), el('button', { type: 'button', class: 'btn quiet', text: t('sign_import'), onclick: () => imp.click() }), imp),
+    el('p', { class: 'note', text: t('sign_private') }));
+}
 // ---------- install on Android, iPhone and Windows ----------
 let installPrompt = null;
 const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -957,6 +984,7 @@ function renderTeam() {
         el('a', { class: 'btn primary bm', href: ab, draggable: 'true', text: `⚙ ${t('assign_bm')}`, onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } }),
         el('button', { type: 'button', class: 'btn', text: t('me_copy'), onclick: async () => { try { await navigator.clipboard.writeText(decodeURIComponent(ab)); toast(t('me_copied')); } catch { toast(t('me_copy_fail')); } } })),
       el('p', { class: 'note', text: t('assign_warn') })),
+    renderSignatures(),
     el('h2', {}, t('team_roster_h'), helpQ('help_roster')),
     el('p', { class: 'note info', text: t('team_note') }),
     el('div', { class: 'row', style: 'margin-bottom:14px' },

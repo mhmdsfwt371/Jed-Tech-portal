@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.7 — 2026-10-30
+
+- أداة شهادات المعايرة صارت وحدة حقيقية داخل البوابة — من «الوحدات» — بدل «قريبًا».
+- توقيعات شهادات المعايرة في صفحة «الفريق»: صورة توقيع فني تي زون وفني توب فلاي واسمه، تُحفظ مرة واحدة وتطبع على كل شهادة — سواء فُتحت الأداة من البوابة أو مباشرة. تبقى على الجهاز ولا تدخل المستودع العام، وتُنقل لجهاز زميل بالتصدير والاستيراد.
+
+<details><summary>English</summary>
+
+- The calibration certificates tool is now a real module inside the portal — under “Modules” — instead of “coming soon”.
+- Signatures for calibration certificates on the “Team” page: the TZONE and TOPFLY technician’s signature image and name, saved once and printed on every certificate — whether the tool is opened from the portal or directly. They stay on the device, never enter the public repository, and move to a colleague’s device by export and import.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- کیلیبریشن سرٹیفکیٹس کا ٹول اب پورٹل کے اندر حقیقی ماڈیول ہے — «ماڈیولز» میں — «جلد» کے بجائے۔
+- «ٹیم» کے صفحے پر کیلیبریشن سرٹیفکیٹس کے دستخط: ٹی زون اور ٹاپ فلائی ٹیکنیشن کے دستخط کی تصویر اور نام، ایک بار محفوظ اور ہر سرٹیفکیٹ پر چھپتے ہیں — ٹول پورٹل سے کھلے یا براہِ راست۔ آلے پر رہتے ہیں، عوامی ریپوزٹری میں کبھی نہیں، اور برآمد و درآمد سے ساتھی کے آلے پر جاتے ہیں۔
+
+</div>
+</details>
+
+
 ## v8.6 — 2026-10-30
 
 - جودة الإصلاح في صفحة برو: «التحقق بعد الإصلاح» — ضع الأجهزة التي أُصلحت برقمها ووقت الإصلاح والمهندس، فتقول البوابة من برو لكل جهاز: عاد للإرسال، أو في المهلة (٤٨ ساعة)، أو لم يعد، أو غير موجود — ونسبة «عاد للإرسال» لكل مهندس، وتنزيل النتائج.
