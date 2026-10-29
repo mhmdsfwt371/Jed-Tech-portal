@@ -4,6 +4,7 @@ import {
   t as tr, L, LANGS, dirOf, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1,
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
+  parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, REPORTS_SCHEMA, buildManagerBookmarklet,
 } from './core.js';
 
@@ -35,7 +36,7 @@ function toast(msg) {
 
 // ---------- storage: IndexedDB, with an in-memory fallback where it is unavailable ----------
 const store = (() => {
-  let mem = []; let memMe = null; let memRep = [];
+  let mem = []; let memMe = null; let memRep = []; let memRoster = null;
   const open = () => new Promise((res, rej) => {
     if (!('indexedDB' in window)) return rej(new Error('no idb'));
     const r = indexedDB.open('afaqy-portal', 1);
@@ -49,6 +50,8 @@ const store = (() => {
     // "my KPIs" — an engineer's own profile, kept apart from the manager's datasets
     async getReports() { try { return (await run('readonly', (s) => s.get('reports'))) || []; } catch { return memRep; } },
     async putReports(v) { try { await run('readwrite', (s) => s.put(v, 'reports')); } catch { memRep = v; } },
+    async getRoster() { try { return (await run('readonly', (s) => s.get('roster'))) || null; } catch { return memRoster; } },
+    async putRoster(v) { try { await run('readwrite', (s) => (v ? s.put(v, 'roster') : s.delete('roster'))); } catch { memRoster = v; } },
     async getMe() { try { return (await run('readonly', (s) => s.get('me'))) || null; } catch { return memMe; } },
     async putMe(v) { try { await run('readwrite', (s) => (v ? s.put(v, 'me') : s.delete('me'))); } catch { memMe = v; } },
   };
@@ -89,6 +92,32 @@ function renderTools() {
 
 // ---------- my KPIs (ADR-0010) ----------
 let me = null;
+let rosterRepo = null;      // team.json from the repository (ids, positions, leaders — never names)
+let rosterDevice = null;    // this device's own entries, which win
+const roster = () => mergeRoster(rosterRepo, rosterDevice);
+// a donut: parts of a whole, drawn with circles — colours from the identity palette
+const SVG = 'http://www.w3.org/2000/svg';
+const DONUT_COLORS = ['var(--accent)', 'var(--signal)', 'var(--note)', 'var(--ok)', 'var(--warn)', 'var(--accent-dark)', 'var(--ink-soft)', 'var(--slate)'];
+function donut(title, parts, { size = 120, fmt = (v) => String(v) } = {}) {
+  const r = 40, d = donutParts(parts, r);
+  const svg = document.createElementNS(SVG, 'svg');
+  svg.setAttribute('viewBox', '0 0 100 100'); svg.setAttribute('width', size); svg.setAttribute('height', size); svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', title);
+  const base = document.createElementNS(SVG, 'circle');
+  for (const [k, v] of Object.entries({ cx: 50, cy: 50, r, fill: 'none', stroke: 'var(--paper)', 'stroke-width': 14 })) base.setAttribute(k, v);
+  svg.append(base);
+  d.parts.forEach((p, i) => {
+    const c = document.createElementNS(SVG, 'circle');
+    for (const [k, v] of Object.entries({ cx: 50, cy: 50, r, fill: 'none', stroke: p.color || DONUT_COLORS[i % DONUT_COLORS.length], 'stroke-width': 14,
+      'stroke-dasharray': p.dasharray, 'stroke-dashoffset': p.dashoffset, transform: 'rotate(-90 50 50)' })) c.setAttribute(k, v);
+    svg.append(c);
+  });
+  const mid = document.createElementNS(SVG, 'text');
+  for (const [k, v] of Object.entries({ x: 50, y: 55, 'text-anchor': 'middle', 'font-size': 16, 'font-weight': 700, fill: 'var(--title)' })) mid.setAttribute(k, v);
+  mid.textContent = fmt(d.total); svg.append(mid);
+  return el('div', { class: 'donut' }, svg, el('div', {}, el('div', { class: 'donut-title', text: title }),
+    el('div', { class: 'donut-legend' }, d.parts.map((p, i) => el('span', {}, el('i', { style: `background:${p.color || DONUT_COLORS[i % DONUT_COLORS.length]}` }),
+      el('span', { text: p.label }), el('b', { text: `${fmt(p.value)} · ${Math.round(p.share * 100)}%` }))))));
+}
 const portalHome = () => location.origin + location.pathname.replace(/[^/]*$/, '');
 function renderMe(waiting = false) {
   const body = $('me-body');
@@ -105,7 +134,7 @@ function renderMe(waiting = false) {
   if (waiting) { set(body, el('div', { class: 'empty', text: t('me_wait') })); return; }
   if (!me) { set(body, el('div', { class: 'step me-setup' }, el('span', { class: 'n', text: '١' }), el('div', {}, el('h3', { text: t('me_how_h') }), ...setup))); return; }
   const qs = myProfile(me);
-  const pm = profileMonths(me);
+  const pm = profileMonths(me, new Date(), roster());
   const fmtDate = (iso) => (iso ? `\u2066${iso.slice(0, 10)}\u2069` : '');
   const mine = openTasks(me.tasks, me.user.id);
   const hrsAge = (h) => (h == null ? '' : h < 48 ? t('hours', { n: Math.round(h) }) : t('days', { n: Math.round(h / 24) }));
@@ -134,13 +163,17 @@ function renderMe(waiting = false) {
   set(body,
     el('div', { class: 'me-card' },
       el('div', {}, el('h2', { class: 'me-name', text: who }),
-        self.teams && self.teams.length ? el('p', { class: 'me-teams', text: self.teams.join(' · ') }) : null),
+        positionOf(roster(), me.user.id, lang) ? el('p', { class: 'me-pos', text: positionOf(roster(), me.user.id, lang) }) : null,
+        self.teams && self.teams.length ? el('p', { class: 'me-teams', text: self.teams.join(' · ') }) : null,
+        leaderOf(roster(), me.user.id) ? el('p', { class: 'me-teams', text: t('me_leader', { name: nm(leaderOf(roster(), me.user.id)) }) }) : null),
       el('div', { class: 'me-facts' },
         el('span', { text: t('me_updated', { date: fmtDate(me.extractedAt) }) }),
         el('span', { text: t('me_scope', { n: pm.scope.visible.length }) }))),
     el('h2', { text: t('me_month_h', { d: pm.windows.day }) }),
     el('p', { class: 'hint', text: t('me_month_sub', { a: pm.windows.this.from, b: pm.windows.this.to, c: pm.windows.last.from, d: pm.windows.last.to }) }),
     cards(pm.mine.this, pm.mine.last, '', t('me_last_month')),
+    (pm.sources.email + pm.sources.self + pm.sources.other) ? el('div', { class: 'donuts' },
+      donut(t('me_sources_h'), [{ label: t('src_other'), value: pm.sources.other }, { label: t('src_email'), value: pm.sources.email }, { label: t('src_self'), value: pm.sources.self }])) : null,
     el('h2', { text: t('me_open_h', { n: mine.length }) }),
     mine.length ? [el('div', { class: 'worklist' }, mine.slice(0, 6).map(workCard)),
       mine.length > 6 ? el('details', { class: 'more-work' }, el('summary', { text: t('me_open_more', { n: mine.length - 6 }) }), el('div', { class: 'worklist' }, mine.slice(6).map(workCard))) : null]
@@ -154,7 +187,7 @@ function renderMe(waiting = false) {
       el('div', { class: 'table-wrap' }, el('table', {},
         el('thead', {}, el('tr', {}, ...['col_person', 'col_assigned', 'col_done', 'me_vs_last', 'col_rate', 'col_median', 'col_open'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
         el('tbody', {}, pm.below.map((r) => el('tr', {},
-          el('td', { text: nm(r.id) }), el('td', { class: 'num', text: String(r.this.assigned) }), el('td', { class: 'num', text: String(r.this.done) }),
+          el('td', {}, el('div', { text: nm(r.id) }), positionOf(roster(), r.id, lang) ? el('div', { class: 'hint', text: positionOf(roster(), r.id, lang) }) : null), el('td', { class: 'num', text: String(r.this.assigned) }), el('td', { class: 'num', text: String(r.this.done) }),
           el('td', { class: 'num' }, arrow('done', r.this, r.last)), el('td', { class: 'num', text: formatRate(r.this.rate) }),
           el('td', { class: 'num', text: r.this.medianHours == null ? '—' : formatHours(r.this.medianHours, lang) }), el('td', { class: 'num', text: String(r.this.open) }))))))] : null,
     el('h2', { text: t('me_history_h') }),
@@ -468,7 +501,7 @@ function renderKpi() {
   const name = (r) => (r.id === GROUP ? t('group_bucket') : (nameOf(peopleById.get(r.id), lang) || r.name));
   const cols = ['col_person', 'col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_median', 'col_open', 'col_cancelled', 'col_email', 'col_self', ...(ds.rdKnown ? ['col_rd'] : []), 'col_created'];
   const line = (r, cls) => el('tr', { class: cls },
-    el('td', { text: cls === 'total' ? t('team') : name(r) }),
+    el('td', {}, el('div', { text: cls === 'total' ? t('team') : name(r) }), cls || !positionOf(roster(), r.id, lang) ? null : el('div', { class: 'hint', text: positionOf(roster(), r.id, lang) })),
     el('td', { class: 'num', text: r.assigned }), el('td', { class: 'num', text: r.done }),
     el('td', { class: 'num' }, rateCell(r.rate)),
     el('td', { class: 'num', text: formatHours(r.avgHours, lang) }), el('td', { class: 'num', text: formatHours(r.medianHours, lang) }),
@@ -498,10 +531,75 @@ function renderKpi() {
       el('div', {}, el('b', { text: formatRate(f.team.rate) }), el('span', { text: t('col_rate') })),
       el('div', {}, el('b', { text: formatHours(f.team.medianHours, lang) }), el('span', { text: t('col_median') }))),
     table,
+    renderKpiDonuts(ds, f, team),
     datasets.length > 1 ? [el('h2', { text: t('trend') }), trendTable] : null,
     renderReports(ds.key),
     el('h2', { text: t('definitions') }),
     el('ul', { class: 'defs' }, DEFINITIONS.map((k) => el('li', { text: t(k) }))));
+}
+
+// ---------- the board's donuts: who did the work, where it came from, and the tickets' state ----------
+function renderKpiDonuts(ds, f, team) {
+  const peopleById = new Map(peopleOf(datasets).map((p) => [p.id, p]));
+  const name = (id) => nameOf(peopleById.get(id), lang) || id;
+  const byPerson = [...f.people].filter((r) => r.done > 0).sort((a, b) => b.done - a.done);
+  const top = byPerson.slice(0, 6).map((r) => ({ label: name(r.id), value: r.done }));
+  const rest = byPerson.slice(6).reduce((s, r) => s + r.done, 0);
+  if (rest) top.push({ label: t('others'), value: rest, color: 'var(--line-strong)' });
+  const inRange = (x) => x.state === 'done' && x.completedAt && saudiDay(x.completedAt) >= ds.range.from && saudiDay(x.completedAt) <= ds.range.to && team.includes(x.assigneeId);
+  const done = ds.tasks.filter(inRange);
+  const isSelf = (x) => x.own === true || (x.createdById && x.createdById === x.assigneeId);
+  const email = done.filter((x) => x.fromEmail).length, self = done.filter((x) => !x.fromEmail && isSelf(x)).length;
+  const rep = reports.find((r) => r.key === ds.key);
+  const tk = rep ? afterSalesTotals(rep).total : null;
+  return el('div', { class: 'donuts' },
+    top.length ? donut(t('kpi_dist_h'), top) : null,
+    done.length ? donut(t('kpi_src_h'), [{ label: t('src_other'), value: done.length - email - self }, { label: t('src_email'), value: email }, { label: t('src_self'), value: self }]) : null,
+    tk && tk.total ? donut(t('kpi_tickets_h'), [{ label: t('f3_done'), value: tk.done, color: 'var(--ok)' }, { label: t('f3_pending'), value: tk.pending, color: 'var(--signal)' }, { label: t('f3_open'), value: tk.open, color: 'var(--note)' }]) : null);
+}
+
+// ---------- the Team page: positions and leaders by myafaqy id, kept on this device and exportable as team.json ----------
+function renderTeam() {
+  const body = $('team-body'); if (!body) return;
+  const known = new Map();
+  for (const p of peopleOf(datasets)) known.set(p.id, p);
+  if (me) for (const p of me.people) if (!known.has(p.id)) known.set(p.id, p);
+  for (const id of Object.keys(roster().people)) if (!known.has(id)) known.set(id, { id, nameEn: '', nameAr: '', teams: [] });
+  const people = [...known.values()].sort((a, b) => (nameOf(a, lang) || a.id).localeCompare(nameOf(b, lang) || b.id, lang));
+  const ro = roster();
+  const save = async (id, patch) => {
+    rosterDevice = parseRoster(rosterDevice);
+    rosterDevice.people[id] = { ...(ro.people[id] || {}), ...(rosterDevice.people[id] || {}), ...patch };
+    if (!rosterDevice.people[id].position && !rosterDevice.people[id].leaderId) delete rosterDevice.people[id];
+    await store.putRoster(rosterDevice); renderTeam(); renderMe(); renderKpi();
+  };
+  const download = () => {
+    const a = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify(roster(), null, 2)], { type: 'application/json' })), download: 'team.json' });
+    document.body.append(a); a.click(); a.remove();
+  };
+  const upload = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    try { rosterDevice = parseRoster(JSON.parse(await file.text())); await store.putRoster(rosterDevice); toast(t('team_loaded', { n: Object.keys(rosterDevice.people).length })); renderTeam(); renderMe(); renderKpi(); }
+    catch { toast(t('err_json')); }
+    e.target.value = '';
+  } });
+  const leaderSelect = (id) => el('select', { onchange: (e) => save(id, { leaderId: e.target.value || null }) },
+    el('option', { value: '', text: t('team_no_leader'), selected: !leaderOf(ro, id) }),
+    people.filter((p) => p.id !== id).map((p) => el('option', { value: p.id, text: nameOf(p, lang) || p.id, selected: leaderOf(ro, id) === p.id })));
+  set(body,
+    el('p', { class: 'note info', text: t('team_note') }),
+    el('div', { class: 'row', style: 'margin-bottom:14px' },
+      el('button', { type: 'button', class: 'btn primary', text: t('team_download'), onclick: download }),
+      el('button', { type: 'button', class: 'btn', text: t('team_upload'), onclick: () => upload.click() }), upload,
+      el('span', { class: 'hint', text: t('team_filled', { n: Object.keys(ro.people).length, m: people.length }) })),
+    people.length ? el('div', { class: 'table-wrap team-table' }, el('table', {},
+      el('thead', {}, el('tr', {}, ['team_col_name', 'team_col_id', 'team_col_pos', 'team_col_leader'].map((k) => el('th', { text: t(k) })))),
+      el('tbody', {}, people.map((p) => el('tr', {},
+        el('td', {}, el('div', { text: nameOf(p, lang) || '—' }), p.teams && p.teams.length ? el('div', { class: 'hint', text: p.teams.join(' · ') }) : null),
+        el('td', { class: 'ltr', text: p.id }),
+        el('td', {}, el('input', { type: 'text', value: positionOf(ro, p.id), placeholder: t('team_pos_ph'), onchange: (e) => save(p.id, { position: e.target.value.trim() }) })),
+        el('td', {}, leaderSelect(p.id)))))))
+      : el('div', { class: 'empty', text: t('team_none') }));
 }
 
 // ---------- Factor 2 (technician points) and Factor 3 (after-sales tickets), from the reports file of the same period ----------
@@ -571,7 +669,7 @@ function applyLang() {
   $('menu-btn').setAttribute('aria-label', t('menu'));
   paintThemeButton();
   document.title = `${t('brand')} — ${t('portal')}`;
-  renderSide(); renderTools(); renderBlocks(); renderDatasets(); renderKpi(); renderGuide(); renderMe(); renderPro(); renderMgr();
+  renderSide(); renderTools(); renderBlocks(); renderDatasets(); renderKpi(); renderGuide(); renderMe(); renderPro(); renderMgr(); renderTeam();
   for (const [id, f] of frames) f.title = L((MODULES.find((m) => m.id === id) || {}).name, lang);
   route();
 }
@@ -583,7 +681,7 @@ function applyTheme() {
   paintThemeButton();
 }
 function route() {
-  const views = ['tools', 'me', 'pro', 'data', 'kpi', 'guide'];
+  const views = ['tools', 'me', 'pro', 'data', 'kpi', 'team', 'guide'];
   let hash = location.hash.slice(1);
   if (hash.startsWith('me-')) {
     if (hash === 'me-wait') {
@@ -598,7 +696,7 @@ function route() {
   for (const id of [...views, 'module']) $(`view-${id}`).hidden = id !== v;
   document.body.classList.toggle('in-module', v === 'module');
   if (mod) openModule(mod);
-  else { document.title = `${t('brand')} — ${t('portal')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', guide: 'nav_guide' }[v]); currentModule = null; }
+  else { document.title = `${t('brand')} — ${t('portal')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', guide: 'nav_guide' }[v]); currentModule = null; }
   $('module-open').hidden = v !== 'module';
   // one item in the menu is current — the open module, or the page — and its group is the open one
   let current = null;
@@ -613,6 +711,7 @@ function route() {
   setMenu(false);
   if (v === 'kpi') renderKpi();
   if (v === 'pro' && proToken.get() && !proUnits && !proBusy) proLoad();
+  if (v === 'team') renderTeam();
 }
 
 // ---------- wiring ----------
@@ -653,6 +752,8 @@ $('update-btn').addEventListener('click', () => location.reload());
   datasets = await store.get();
   reports = await store.getReports();
   me = upgradeMe(await store.getMe());   // a profile saved by an older version is brought up to shape, never dropped
+  rosterDevice = parseRoster(await store.getRoster());
+  try { const r = await fetch('./team.json', { cache: 'no-store' }); rosterRepo = r.ok ? parseRoster(await r.json()) : null; } catch { rosterRepo = null; }
   applyLang();   // renders everything and routes
   loadRelease();
 })();

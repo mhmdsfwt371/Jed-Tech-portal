@@ -5,6 +5,7 @@ import {
   factor1, creditOf, GROUP, formatHours, formatRate, sampleDataset, saudiToday, ymd,
   saudiBoundsZ, toIso, saudiDay, peopleOf, defaultTeam, nameOf, EMAIL_MODULE, SCHEMAS,
   buildBookmarklet, parseMe, myProfile, ME_SCHEMA, parseMePayload, profileMonths, monthWindows, scopeOf, ME_SCHEMA_V2, upgradeMe,
+  parseRoster, mergeRoster, positionOf, leaderOf, reportsOf, donutParts,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
@@ -376,6 +377,28 @@ test('a profile saved by v6.9 (no people) is upgraded on load and still draws a 
   const pm = profileMonths(me, new Date('2026-10-29T10:00:00Z'));
   assert.equal(pm.mine.this.done, 1); assert.equal(pm.average, null); assert.equal(pm.below.length, 0);
   assert.equal(upgradeMe(null), null);
+});
+
+test('team file: ids, positions and leaders only; unknown fields dropped; the device wins; a roster leader sees their people', () => {
+  const repo = { people: { 70: { position: 'مدير', name: 'LEAKED', phone: '05x' }, 124: { position: 'مهندس', leaderId: '70' }, 125: { leaderId: '70' } } };
+  const r = parseRoster(repo);
+  assert.ok(!JSON.stringify(r).includes('LEAKED') && !JSON.stringify(r).includes('05x'), 'names and phones never survive');
+  assert.deepEqual(reportsOf(r, '70').sort(), ['124', '125']);
+  const m = mergeRoster(repo, { people: { 124: { position: 'قائد فريق', leaderId: '70' } } });
+  assert.equal(positionOf(m, '124'), 'قائد فريق'); assert.equal(leaderOf(m, '125'), '70');
+  const tasks = [T2('1', '70', 'done', '2026-10-03T08:00:00', '2026-10-03T10:00:00'), T2('4', '124', 'done', '2026-10-04T08:00:00', '2026-10-04T08:30:00'), T2('7', '125', 'open', '2026-10-10T08:00:00', null)];
+  const me = parseMePayload(MEV2(tasks, [{ id: '70', teams: ['Jeddah After sales Team'], branchCode: '2', h: false }, { id: '124', teams: ['Jeddah After sales Team'], branchCode: '2', h: false }, { id: '125', teams: [], branchCode: null, h: false }])).me;
+  assert.deepEqual(profileMonths(me, new Date('2026-10-29T10:00:00Z')).below, [], 'myafaqy places nobody below');
+  assert.deepEqual(profileMonths(me, new Date('2026-10-29T10:00:00Z'), m).below.map((x) => x.id).sort(), ['124', '125'], 'the team file does');
+});
+
+test('donuts: shares sum to one, dashes sum to the circumference, zero parts dropped', () => {
+  const d = donutParts([{ label: 'a', value: 3 }, { label: 'b', value: 1 }, { label: 'c', value: 0 }], 40);
+  assert.equal(d.total, 4); assert.equal(d.parts.length, 2);
+  assert.ok(Math.abs(d.parts.reduce((s, p) => s + p.share, 0) - 1) < 1e-9);
+  const C = 2 * Math.PI * 40;
+  assert.ok(Math.abs(d.parts.reduce((s, p) => s + parseFloat(p.dasharray.split(' ')[0]), 0) - C) < 0.05);
+  assert.equal(donutParts([], 40).total, 0);
 });
 
 test('formatting', () => {

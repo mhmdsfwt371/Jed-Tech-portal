@@ -250,6 +250,19 @@
   .side-badge, .tool .badge { color: var(--accent-dark); background: var(--accent-wash); }
 
   .me-who { color: var(--slate); margin: 0 0 14px; }
+  .donuts { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 8px; }
+  .donut { display: flex; gap: 14px; align-items: center; padding: 14px 16px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+  .donut svg { flex: 0 0 auto; }
+  .donut-legend { display: grid; gap: 4px; font-size: 13px; min-width: 0; }
+  .donut-legend span { display: flex; align-items: center; gap: 8px; }
+  .donut-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; }
+  .donut-legend b { margin-inline-start: auto; }
+  .donut-title { font-size: 13px; color: var(--slate); margin-bottom: 6px; }
+  .me-pos { color: var(--accent-dark); font-weight: 600; margin: 2px 0 0; }
+  .team-table table { table-layout: fixed; }
+  .team-table th:nth-child(1), .team-table td:nth-child(1) { width: 32%; }
+  .team-table th:nth-child(2), .team-table td:nth-child(2) { width: 14%; }
+  .team-table input, .team-table select { font: inherit; width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }
   .me-card { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; align-items: flex-end; padding: 18px 20px; margin-bottom: 8px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); border-inline-start: 4px solid var(--signal); }
   .me-name { margin: 0; }
   .me-teams { margin: 4px 0 0; color: var(--slate); }
@@ -334,6 +347,7 @@
       <div class="nav-group-panel" id="nav-kpi">
         <a href="#data" class="sub" data-view="data" data-t="nav_data">البيانات</a>
         <a href="#kpi" class="sub" data-view="kpi" data-t="kpi_board">لوحة المؤشرات</a>
+        <a href="#team" class="sub" data-view="team" data-t="nav_team">الفريق</a>
       </div>
     </div>
     <div class="nav-section" data-nav-section="systems">
@@ -379,6 +393,12 @@
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="me_title">مؤشراتي</h1>
     <p class="sub" data-t="me_sub"></p></div>
     <div id="me-body"></div>
+  </section>
+
+  <section id="view-team" hidden>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="nav_team">الفريق</h1>
+    <p class="sub" data-t="team_sub"></p></div>
+    <div id="team-body"></div>
   </section>
 
   <section id="view-pro" hidden>

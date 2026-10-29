@@ -47,6 +47,12 @@
 - **الاكتمال** = المنجزة داخل الفترة ≥ `doneInRangeTotal`، والمفتوحة ≥ `openTotal`.
 - **البيانات التجريبية** تحمل `"sample": true` ومفتاحها يبدأ بـ `sample:`.
 
+## `team.json` — `afaqy-team/v1` (من v7.2) — القرار 0015
+```json
+{ "v": 1, "schema": "afaqy-team/v1", "people": { "<رقم ماي أفاقي>": { "position": "مهندس ما بعد البيع", "positionEn": "After-sales engineer", "leaderId": "<رقم القائد>" } } }
+```
+أرقام ومناصب وقادة فقط. أي حقل آخر — اسم، هاتف — يرفضه الحارس ويُسقطه القارئ.
+
 ## `afaqy-me/v2` (من v7.0) — القرار 0014
 ```json
 { "schema": "afaqy-me/v2", "user": { "id": "…", "name": "…" }, "extractedAt": "…", "since": "…", "months": 12,

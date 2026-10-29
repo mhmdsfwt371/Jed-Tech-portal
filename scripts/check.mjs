@@ -17,7 +17,7 @@ for (const f of ['core.js', 'app.js', 'config.js', 'sw.js', 'scripts/bump.mjs', 
 }
 
 // 2. The files every repository of ours carries.
-for (const f of ['README.md', 'CHANGELOG.md', 'AGENTS.md', 'CLAUDE.md', 'SECURITY.md', 'version.json', 'sw.js', 'manifest.webmanifest',
+for (const f of ['README.md', 'CHANGELOG.md', 'AGENTS.md', 'CLAUDE.md', 'SECURITY.md', 'version.json', 'team.json', 'sw.js', 'manifest.webmanifest',
   '.nojekyll', 'docs/START-HERE.md', 'docs/data-format.md', 'docs/kpi-factors.md', 'docs/decisions/0000-template.md', 'release/next.json',
   'scripts/build-manual.mjs', 'docs/manual/README.md', 'docs/crm-api.md', 'scripts/check-links.mjs']) {
   if (!exists(f)) note(`missing ${f}`);
@@ -49,7 +49,7 @@ for (const [name, src] of [['index.html', html], ['app.js', appWithoutPro], ['co
   if (/firebase/i.test(src)) note(`${name}: Firebase is referenced — the portal runs without it`);
   if (/afaqy\.sa|afaqy\.pro\/|crmbackend/.test(src.replace(/https:\/\/afaqy\.pro\/'/g, ''))) note(`${name}: an Afaqy API address appeared — the portal never calls an Afaqy API`);
   const calls = [...src.matchAll(/fetch\(\s*([^,)]+)/g)].map((m) => m[1].trim());
-  for (const c of calls) if (c !== "'./version.json'") note(`${name}: network call to ${c} — the only allowed read is './version.json'`);
+  for (const c of calls) if (!["'./version.json'", "'./team.json'"].includes(c)) note(`${name}: network call to ${c} — the only allowed reads are './version.json' and './team.json'`);
 }
 
 // 5. The service worker stays inside this folder, so the other tools on the same domain are never taken over.
@@ -74,13 +74,20 @@ for (const [, id] of app.matchAll(/\$\('([\w-]+)'\)/g)) if (!html.includes(`id="
 const { STRINGS, LANGS } = await import(new URL('core.js', root));
 for (const [, k] of [...html.matchAll(/data-tp?="(\w+)"/g), ...app.matchAll(/\bt\('(\w+)'/g)]) if (!(k in STRINGS.ar)) note(`string "${k}" is not defined`);
 for (const lang of LANGS) for (const k of Object.keys(STRINGS.ar)) if (!(k in STRINGS[lang])) note(`${lang}: missing string ${k}`);
+// a key written twice in one language block silently overrides the first — refuse it
+for (const lang of LANGS) {
+  const block = core.slice(core.indexOf(`  ${lang}: {`), core.indexOf('\n  },', core.indexOf(`  ${lang}: {`)));
+  const seen = new Map();
+  for (const [, k] of block.matchAll(/^\s{4}(\w+): '/gm)) seen.set(k, (seen.get(k) || 0) + 1);
+  for (const [k, n] of seen) if (n > 1) note(`${lang}: string "${k}" is defined ${n} times — the last silently wins`);
+}
 for (const [, f] of html.matchAll(/(?:src|href)="(assets\/[^"]+|manifest\.webmanifest)"/g)) if (!exists(f)) note(`missing ${f}`);
 
 // 7. The guide covers every page. A feature that is not in the guide does not exist for the team.
 const views = [...html.matchAll(/<section id="view-(\w+)"/g)].map((m) => m[1]).filter((v) => v !== 'guide');
 const guideKeys = (core.match(/export const GUIDE = (\[[\s\S]*?\]);/) || [])[1] || '';
 // the module view is where a tool opens from the Tools page; the Tools section explains it
-const covers = { tools: 'g_tools_h', module: 'g_tools_h', me: 'g_me_h', pro: 'g_pro_h', data: 'g_data_h', kpi: 'g_kpi_h' };  // g_mgr_* lives on the data page
+const covers = { tools: 'g_tools_h', module: 'g_tools_h', me: 'g_me_h', pro: 'g_pro_h', data: 'g_data_h', kpi: 'g_kpi_h', team: 'g_team_h' };  // g_mgr_* lives on the data page
 for (const v of views) if (!covers[v] || !guideKeys.includes(covers[v])) note(`the guide has no section for the "${v}" page — add one before releasing it`);
 
 // 8. The three core tools stay first and point somewhere real.
@@ -234,6 +241,16 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   const banned = ['bonusValue', 'fridayWorkDaysBonus', 'saturdayWorkDaysPoints', 'phoneNumber', 'evaluation', 'leadEvaluation', 'branchPercentage'];
   if (TECH_FIELDS.some((f) => banned.includes(f))) note('reports: a pay, phone or evaluation field is kept — never carry those');
   if (!banned.every((f) => rp.includes(f))) note('reports prompt: must tell Claude in Chrome not to keep pay, phone and evaluation fields');
+}
+
+// 20. team.json (ADR-0015): ids, positions and leaders only — never a name field, never a phone.
+{
+  const tj = JSON.parse(read('team.json'));
+  if (!tj || typeof tj.people !== 'object') note('team.json: must be {"v":1,"people":{…}}');
+  else for (const [id, p] of Object.entries(tj.people)) {
+    if (!/^\d+$/.test(id)) note(`team.json: key ${id} is not a myafaqy id`);
+    for (const k of Object.keys(p || {})) if (!['position', 'positionEn', 'leaderId'].includes(k)) note(`team.json: field "${k}" on ${id} is not allowed — only position, positionEn, leaderId`);
+  }
 }
 
 // 18. The Afaqy PRO page (ADR-0011): one address, two read requests, and the password never kept.

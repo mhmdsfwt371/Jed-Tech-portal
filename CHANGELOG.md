@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v7.2 — 2026-10-29
+
+- صفحة «الفريق»: المدير يكتب منصب كل شخص ومن يتبع له أمام اسمه كما يأتي من ماي أفاقي. يُحفظ بأرقام ماي أفاقي لا بالأسماء، ويُنزَّل «team.json» ليوضع في المستودع فيراه الفريق كله — بلا اسم واحد في الملف.
+- المنصب يظهر في بطاقة «مؤشراتي» وجداول الفريق ولوحة المؤشرات، و«يتبع لـ» يجعل القائد يرى من تحته في «فريقي».
+- دوائر بالهوية نفسها: مصادر شغل الشهر في «مؤشراتي»، وفي اللوحة توزيع المنجزة على الفريق ومصادر المهام وحالة تذاكر ما بعد البيع.
+
+<details><summary>English</summary>
+
+- A “Team” page: the manager writes each person’s position and who they report to, next to the name as it comes from myafaqy. It is saved by myafaqy ids, not names, and “team.json” is downloaded for the repository so the whole team sees it — with not one name in the file.
+- The position shows on the “My KPIs” card, team tables and the KPI board, and “reports to” lets a leader see their people in “My team”.
+- Donuts in the same identity: this month’s work sources on “My KPIs”; on the board, completed work across the team, task sources, and the state of after-sales tickets.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «ٹیم» کا صفحہ: مینیجر ہر فرد کا عہدہ اور سربراہ اس نام کے سامنے لکھتا ہے جو مائی آفاقی سے آتا ہے۔ یہ ناموں سے نہیں، مائی آفاقی کی شناختوں سے محفوظ ہوتا ہے، اور «team.json» ریپوزٹری کے لیے ڈاؤن لوڈ ہوتا ہے تاکہ پوری ٹیم دیکھے — فائل میں ایک نام بھی نہیں۔
+- عہدہ «میرے اشاریے» کے کارڈ، ٹیم کے جدولوں اور اشاریوں کے بورڈ پر دکھائی دیتا ہے، اور «ماتحت» سربراہ کو «میری ٹیم» میں اس کے لوگ دکھاتا ہے۔
+- اسی شناخت میں دائرے: «میرے اشاریے» پر اس مہینے کے کام کے ذرائع؛ بورڈ پر ٹیم میں مکمل کام کی تقسیم، ٹاسکس کے ذرائع، اور آفٹر سیلز ٹکٹس کی حالت۔
+
+</div>
+</details>
+
+
 ## v7.1 — 2026-10-29
 
 - مراجعة شاملة بعد يوم من أحد عشر إصدارًا: عُثر على عيب — ملف «مؤشراتي» المحفوظ من نسخة 6.9 كان يظهر فارغًا في 7.0 — وصُلح، وصار اختبارًا دائمًا حتى لا تُفقد بيانات أحد مع أي نسخة قادمة.

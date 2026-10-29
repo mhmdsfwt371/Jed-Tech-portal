@@ -31,6 +31,7 @@
 | `docs/decisions/0012-reports-factors-2-and-3.md` | المؤشران الثاني والثالث وما أُغلق بالدليل |
 | `docs/decisions/0013-work-list-and-manager-bookmark.md` | قائمة الشغل في «مؤشراتي» وإشارة المدير |
 | `docs/decisions/0014-profile-scoped-by-myafaqy.md` | ملف الموظف وقائد الفريق والمدير، ومن يرى من |
+| `docs/decisions/0015-team-file-and-donuts.md` | ملف الفريق بالأرقام والدوائر |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

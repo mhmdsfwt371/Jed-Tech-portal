@@ -1,24 +1,21 @@
 {
-  "version": "7.1",
+  "version": "7.2",
   "date": "2026-10-29",
   "notes": {
     "ar": [
-      "مراجعة شاملة بعد يوم من أحد عشر إصدارًا: عُثر على عيب — ملف «مؤشراتي» المحفوظ من نسخة 6.9 كان يظهر فارغًا في 7.0 — وصُلح، وصار اختبارًا دائمًا حتى لا تُفقد بيانات أحد مع أي نسخة قادمة.",
-      "شعار القائمة لم يكن ضمن ما يُحفظ للعمل بلا إنترنت؛ أُضيف، وصار الحارس يتأكد أن كل ما تستعمله الصفحة محفوظ. وحُذفت سبع عبارات من تصميمات قديمة لم تعد تُستعمل.",
-      "فُحصت كل صفحة في اللغات الثلاث والوضعين الفاتح والداكن وعلى الحاسوب والهاتف — أربع وثمانون حالة بلا خطأ. وصفحة الانتظار لا تبقى معلّقة إن لم تصل البيانات.",
-      "الدليل والمستندات تصف الآن نظامًا واحدًا: الطريق الأسرع للمدير، وملف الموظف ومن يرى من."
+      "صفحة «الفريق»: المدير يكتب منصب كل شخص ومن يتبع له أمام اسمه كما يأتي من ماي أفاقي. يُحفظ بأرقام ماي أفاقي لا بالأسماء، ويُنزَّل «team.json» ليوضع في المستودع فيراه الفريق كله — بلا اسم واحد في الملف.",
+      "المنصب يظهر في بطاقة «مؤشراتي» وجداول الفريق ولوحة المؤشرات، و«يتبع لـ» يجعل القائد يرى من تحته في «فريقي».",
+      "دوائر بالهوية نفسها: مصادر شغل الشهر في «مؤشراتي»، وفي اللوحة توزيع المنجزة على الفريق ومصادر المهام وحالة تذاكر ما بعد البيع."
     ],
     "en": [
-      "A full review after a day of eleven releases: one defect found — a “My KPIs” profile saved under 6.9 showed an empty page under 7.0 — fixed, and now a permanent test so no future version can lose anyone’s data.",
-      "The menu logo was not among what is kept for offline use; added, and the guard now checks that everything the page uses is kept. Seven leftover phrases from old layouts were removed.",
-      "Every page was checked in the three languages, both light and dark, on desktop and phone — eighty-four cases without an error. The waiting page no longer hangs if the data never arrives.",
-      "The guide and documents now describe one coherent system: the fastest path for the manager, and the employee profile with who sees whom."
+      "A “Team” page: the manager writes each person’s position and who they report to, next to the name as it comes from myafaqy. It is saved by myafaqy ids, not names, and “team.json” is downloaded for the repository so the whole team sees it — with not one name in the file.",
+      "The position shows on the “My KPIs” card, team tables and the KPI board, and “reports to” lets a leader see their people in “My team”.",
+      "Donuts in the same identity: this month’s work sources on “My KPIs”; on the board, completed work across the team, task sources, and the state of after-sales tickets."
     ],
     "ur": [
-      "گیارہ اجراؤں کے ایک دن کے بعد مکمل جائزہ: ایک خرابی ملی — 6.9 میں محفوظ «میرے اشاریے» کا پروفائل 7.0 میں خالی صفحہ دکھاتا تھا — درست کر دی گئی، اور اب ایک مستقل ٹیسٹ ہے تاکہ کوئی آئندہ نسخہ کسی کا ڈیٹا ضائع نہ کرے۔",
-      "مینو کا لوگو آف لائن کے لیے محفوظ چیزوں میں نہیں تھا؛ شامل کر دیا گیا، اور گارڈ اب جانچتا ہے کہ صفحہ جو کچھ استعمال کرتا ہے وہ سب محفوظ ہے۔ پرانے ڈیزائنوں کے سات بچے ہوئے جملے ہٹا دیے گئے۔",
-      "ہر صفحہ تینوں زبانوں، روشن اور تاریک دونوں اندازوں میں، کمپیوٹر اور فون پر جانچا گیا — چوراسی صورتیں بغیر کسی خرابی کے۔ انتظار کا صفحہ اب معلق نہیں رہتا اگر ڈیٹا نہ پہنچے۔",
-      "رہنما اور دستاویزات اب ایک ہم آہنگ نظام بیان کرتی ہیں: مینیجر کے لیے تیز ترین راستہ، اور ملازم کا پروفائل اور کون کسے دیکھتا ہے۔"
+      "«ٹیم» کا صفحہ: مینیجر ہر فرد کا عہدہ اور سربراہ اس نام کے سامنے لکھتا ہے جو مائی آفاقی سے آتا ہے۔ یہ ناموں سے نہیں، مائی آفاقی کی شناختوں سے محفوظ ہوتا ہے، اور «team.json» ریپوزٹری کے لیے ڈاؤن لوڈ ہوتا ہے تاکہ پوری ٹیم دیکھے — فائل میں ایک نام بھی نہیں۔",
+      "عہدہ «میرے اشاریے» کے کارڈ، ٹیم کے جدولوں اور اشاریوں کے بورڈ پر دکھائی دیتا ہے، اور «ماتحت» سربراہ کو «میری ٹیم» میں اس کے لوگ دکھاتا ہے۔",
+      "اسی شناخت میں دائرے: «میرے اشاریے» پر اس مہینے کے کام کے ذرائع؛ بورڈ پر ٹیم میں مکمل کام کی تقسیم، ٹاسکس کے ذرائع، اور آفٹر سیلز ٹکٹس کی حالت۔"
     ]
   }
 }

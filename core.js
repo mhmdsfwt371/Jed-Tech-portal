@@ -194,6 +194,31 @@ export const STRINGS = {
     me_vs_last: 'المنجزة مقابل الشهر الماضي',
     me_history_h: 'تاريخي — آخر اثني عشر شهرًا بالربع',
     me_open_more: 'وعرض {n} مهمة أخرى',
+    nav_team: 'الفريق',
+    team_sub: 'من هنا تُكتب مناصب الفريق ومن يتبع من — بأرقام ماي أفاقي، فلا أسماء في الملف. الأسماء تأتي من ماي أفاقي مع الإشارة.',
+    team_note: 'ما تكتبه هنا يبقى على هذا الجهاز. لكي يراه الفريق كله، نزّل الملف «team.json» وضعه في المستودع — فيه أرقام ومناصب فقط، لا أسماء.',
+    team_download: 'تنزيل team.json',
+    team_upload: 'رفع team.json',
+    team_loaded: 'وصل ملف الفريق: {n} شخصًا',
+    team_filled: '{n} من {m} لهم منصب أو قائد',
+    team_col_name: 'الاسم — من ماي أفاقي',
+    team_col_id: 'الرقم في ماي أفاقي',
+    team_col_pos: 'المنصب',
+    team_col_leader: 'يتبع لـ',
+    team_no_leader: '— بلا قائد —',
+    team_pos_ph: 'مثال: مهندس ما بعد البيع',
+    team_none: 'لا أشخاص بعد — ارفع بيانات من صفحة البيانات أو اضغط إشارة «مؤشراتي».',
+    me_leader: 'يتبع لـ {name}',
+    me_sources_h: 'مصادر شغلي هذا الشهر',
+    src_email: 'من البريد',
+    src_self: 'سجّلها لنفسه',
+    src_other: 'أسندها آخرون',
+    kpi_dist_h: 'توزيع المنجزة على الفريق',
+    kpi_src_h: 'مصادر المهام المنجزة',
+    kpi_tickets_h: 'تذاكر ما بعد البيع',
+    others: 'الباقون',
+    g_team_h: 'الفريق — المناصب ومن يتبع من',
+    g_team_b: 'في صفحة «الفريق» يكتب المدير منصب كل شخص ومن يتبع له، أمام اسمه كما يأتي من ماي أفاقي. يُحفظ ذلك بأرقام ماي أفاقي لا بالأسماء، فلا تظهر أسماء في أي ملف. المكتوب يبقى على الجهاز، ولكي يراه الفريق كله يُنزَّل الملف «team.json» ويوضع في المستودع. المنصب يظهر في بطاقة «مؤشراتي» وفي جداول الفريق ولوحة المؤشرات، و«يتبع لـ» يجعل من يُكتب قائدًا يرى من تحته في قسم «فريقي» — إلى جانب من يضعهم ماي أفاقي تحته. والدوائر في «مؤشراتي» ولوحة المؤشرات تُظهر مصادر الشغل وتوزيعه وحالة التذاكر.',
   },
   en: {
     brand: 'Afaqy', portal: 'Technical team portal — Jeddah', nav_data: 'Data', nav_kpi: 'KPIs',
@@ -379,6 +404,31 @@ export const STRINGS = {
     me_vs_last: 'Done against last month',
     me_history_h: 'My history — the last twelve months by quarter',
     me_open_more: 'Show {n} more tasks',
+    nav_team: 'Team',
+    team_sub: 'Here the team’s positions and who reports to whom are set — by myafaqy ids, so no names in the file. Names arrive from myafaqy with the bookmark.',
+    team_note: 'What you write here stays on this device. For the whole team to see it, download “team.json” and put it in the repository — it holds ids and positions only, no names.',
+    team_download: 'Download team.json',
+    team_upload: 'Upload team.json',
+    team_loaded: 'The team file arrived: {n} people',
+    team_filled: '{n} of {m} have a position or a leader',
+    team_col_name: 'Name — from myafaqy',
+    team_col_id: 'myafaqy id',
+    team_col_pos: 'Position',
+    team_col_leader: 'Reports to',
+    team_no_leader: '— no leader —',
+    team_pos_ph: 'e.g. After-sales engineer',
+    team_none: 'No people yet — upload data from the Data page or press the “My KPIs” bookmark.',
+    me_leader: 'Reports to {name}',
+    me_sources_h: 'Where this month’s work came from',
+    src_email: 'From e-mail',
+    src_self: 'Self-logged',
+    src_other: 'Assigned by others',
+    kpi_dist_h: 'Completed work across the team',
+    kpi_src_h: 'Sources of completed tasks',
+    kpi_tickets_h: 'After-sales tickets',
+    others: 'Others',
+    g_team_h: 'Team — positions and who reports to whom',
+    g_team_b: 'On the “Team” page the manager writes each person’s position and who they report to, next to the name as it comes from myafaqy. It is saved by myafaqy ids, not names, so no names appear in any file. What is written stays on the device; for the whole team to see it, the “team.json” file is downloaded and placed in the repository. The position shows on the “My KPIs” card, in team tables and on the KPI board, and “reports to” lets whoever is named a leader see their people in “My team” — alongside those myafaqy places below them. The donuts on “My KPIs” and the KPI board show where work came from, how it is spread, and the tickets’ state.',
   },
   ur: {
     brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ', nav_data: 'ڈیٹا', nav_kpi: 'کارکردگی کے اشاریے',
@@ -564,11 +614,36 @@ export const STRINGS = {
     me_vs_last: 'مکمل بمقابلہ پچھلا مہینہ',
     me_history_h: 'میری تاریخ — پچھلے بارہ مہینے سہ ماہی کے حساب سے',
     me_open_more: 'مزید {n} ٹاسک دکھائیں',
+    nav_team: 'ٹیم',
+    team_sub: 'یہاں ٹیم کے عہدے اور کون کس کے ماتحت ہے لکھا جاتا ہے — مائی آفاقی کی شناختوں سے، اس لیے فائل میں نام نہیں۔ نام بک مارک کے ساتھ مائی آفاقی سے آتے ہیں۔',
+    team_note: 'آپ جو یہاں لکھتے ہیں وہ اسی آلے پر رہتا ہے۔ پوری ٹیم کو دکھانے کے لیے «team.json» ڈاؤن لوڈ کر کے ریپوزٹری میں رکھیں — اس میں صرف شناختیں اور عہدے ہیں، نام نہیں۔',
+    team_download: 'team.json ڈاؤن لوڈ کریں',
+    team_upload: 'team.json اپ لوڈ کریں',
+    team_loaded: 'ٹیم کی فائل آ گئی: {n} افراد',
+    team_filled: '{m} میں سے {n} کا عہدہ یا سربراہ ہے',
+    team_col_name: 'نام — مائی آفاقی سے',
+    team_col_id: 'مائی آفاقی شناخت',
+    team_col_pos: 'عہدہ',
+    team_col_leader: 'ماتحت',
+    team_no_leader: '— کوئی سربراہ نہیں —',
+    team_pos_ph: 'مثلاً: آفٹر سیلز انجینئر',
+    team_none: 'ابھی کوئی فرد نہیں — ڈیٹا کے صفحے سے ڈیٹا اپ لوڈ کریں یا «میرے اشاریے» بک مارک دبائیں۔',
+    me_leader: '{name} کے ماتحت',
+    me_sources_h: 'اس مہینے کا کام کہاں سے آیا',
+    src_email: 'ای میل سے',
+    src_self: 'خود درج کیا',
+    src_other: 'دوسروں نے تفویض کیا',
+    kpi_dist_h: 'ٹیم میں مکمل کام کی تقسیم',
+    kpi_src_h: 'مکمل ٹاسکس کے ذرائع',
+    kpi_tickets_h: 'آفٹر سیلز ٹکٹس',
+    others: 'باقی',
+    g_team_h: 'ٹیم — عہدے اور کون کس کے ماتحت',
+    g_team_b: '«ٹیم» کے صفحے پر مینیجر ہر فرد کا عہدہ اور اس کا سربراہ لکھتا ہے، اس نام کے سامنے جو مائی آفاقی سے آتا ہے۔ یہ ناموں سے نہیں بلکہ مائی آفاقی کی شناختوں سے محفوظ ہوتا ہے، اس لیے کسی فائل میں نام نہیں آتے۔ لکھا ہوا آلے پر رہتا ہے؛ پوری ٹیم کو دکھانے کے لیے «team.json» فائل ڈاؤن لوڈ کر کے ریپوزٹری میں رکھی جاتی ہے۔ عہدہ «میرے اشاریے» کے کارڈ، ٹیم کے جدولوں اور اشاریوں کے بورڈ پر دکھائی دیتا ہے، اور «ماتحت» جسے سربراہ لکھا جائے اسے «میری ٹیم» میں اس کے لوگ دکھاتا ہے — ان کے ساتھ جنہیں مائی آفاقی اس کے نیچے رکھتا ہے۔ «میرے اشاریے» اور اشاریوں کے بورڈ پر دائرے دکھاتے ہیں کہ کام کہاں سے آیا، کیسے تقسیم ہوا، اور ٹکٹس کی حالت۔',
   },
 };
 
 // The user guide: one list, read by the page (Guide tab) and by scripts/build-manual.mjs, so they can never differ.
-export const GUIDE = [['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
+export const GUIDE = [['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_team_h', 'g_team_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
 export const DEFINITIONS = ['def_1', 'def_2', 'def_3', 'def_4', 'def_5', 'def_6', 'def_7', 'def_8', 'def_9'];
 
 export function t(lang, key, vars = {}) {
@@ -1279,6 +1354,42 @@ export function openTasks(tasks, assigneeId = null) {
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
+// ===================== the team file: positions and leaders, by myafaqy id, never by name (ADR-0015) =====================
+// team.json lives in the repository (public), so it holds ids, positions and who reports to whom — the names arrive from
+// myafaqy with the bookmark. The manager fills it on the Team page; each device may also hold its own copy.
+export const ROSTER_SCHEMA = 'afaqy-team/v1';
+export function parseRoster(raw) {
+  if (!raw || typeof raw !== 'object' || !raw.people || typeof raw.people !== 'object') return { v: 1, schema: ROSTER_SCHEMA, people: {} };
+  const people = {};
+  for (const [id, p] of Object.entries(raw.people)) {
+    if (!p || typeof p !== 'object') continue;
+    const o = { position: String(p.position || '').slice(0, 80), leaderId: p.leaderId == null || p.leaderId === '' ? null : String(p.leaderId) };
+    if (p.positionEn) o.positionEn = String(p.positionEn).slice(0, 80);
+    if (o.position || o.leaderId || o.positionEn) people[String(id)] = o;
+  }
+  return { v: 1, schema: ROSTER_SCHEMA, people };
+}
+/** The device's own entries win over the repository's. */
+export function mergeRoster(repo, device) {
+  const a = parseRoster(repo), b = parseRoster(device);
+  return { v: 1, schema: ROSTER_SCHEMA, people: { ...a.people, ...b.people } };
+}
+export const positionOf = (roster, id, lang = 'ar') => { const p = roster && roster.people && roster.people[String(id)]; return p ? ((lang === 'en' && p.positionEn) || p.position || '') : ''; };
+export const leaderOf = (roster, id) => { const p = roster && roster.people && roster.people[String(id)]; return p && p.leaderId ? p.leaderId : null; };
+export const reportsOf = (roster, leaderId) => Object.entries((roster && roster.people) || {}).filter(([, p]) => p.leaderId === String(leaderId)).map(([id]) => id);
+
+/** Parts of a whole as donut segments: each gets its share, and the SVG dash pair for a circle of radius r. */
+export function donutParts(parts, r = 40) {
+  const C = 2 * Math.PI * r;
+  const total = parts.reduce((s, p) => s + Math.max(0, p.value || 0), 0);
+  let offset = 0;
+  return { total, parts: parts.filter((p) => p.value > 0).map((p) => {
+    const share = total ? p.value / total : 0, len = share * C;
+    const seg = { ...p, share, dasharray: `${len.toFixed(2)} ${(C - len).toFixed(2)}`, dashoffset: (-offset).toFixed(2) };
+    offset += len; return seg;
+  }) };
+}
+
 /** This month so far, and the same days of last month — a fair comparison (whole months would not be). */
 export function monthWindows(now = new Date()) {
   const today = ymd(saudiToday(now));
@@ -1289,21 +1400,23 @@ export function monthWindows(now = new Date()) {
 }
 
 /** Who the hand-over lets this person see: assignees in the data, the default team, and the people below them. */
-export function scopeOf(me) {
+export function scopeOf(me, roster = null) {
   const visible = [...new Set(me.tasks.filter((x) => x.assigneeId).map((x) => x.assigneeId))];
   const others = visible.filter((id) => id !== me.user.id);
   const def = defaultTeam(me.people, me.tasks).filter((id) => visible.includes(id));
   const team = def.length > 1 ? def : visible;
-  const below = me.people.filter((p) => p.below && visible.includes(p.id)).map((p) => p.id);
+  const byMyafaqy = me.people.filter((p) => p.below && visible.includes(p.id)).map((p) => p.id);
+  const byRoster = reportsOf(roster, me.user.id).filter((id) => visible.includes(id) && id !== me.user.id);
+  const below = [...new Set([...byMyafaqy, ...byRoster])];
   return { visible, others, team, below };
 }
 
 /** The person's month against last month, the team average (no names) and the rows of the people below them. */
-export function profileMonths(me, now = new Date()) {
+export function profileMonths(me, now = new Date(), roster = null) {
   const w = monthWindows(now);
   const zero = { assigned: 0, done: 0, rate: null, medianHours: null, open: 0, selfLogged: 0, fromEmail: 0 };
   const row = (range, id) => factor1(me.tasks, { range, team: [id] }).people[0] || { ...zero, id };
-  const sc = scopeOf(me);
+  const sc = scopeOf(me, roster);
   const mine = { this: row(w.this, me.user.id), last: row(w.last, me.user.id) };
   let average = null;
   if (sc.team.filter((id) => id !== me.user.id).length) {
@@ -1319,7 +1432,10 @@ export function profileMonths(me, now = new Date()) {
   }
   const below = sc.below.map((id) => ({ id, this: row(w.this, id), last: row(w.last, id) }))
     .sort((a, b) => b.this.done - a.this.done || b.this.assigned - a.this.assigned);
-  return { windows: w, scope: sc, mine, average, below };
+  const doneThis = me.tasks.filter((x) => x.assigneeId === me.user.id && x.state === 'done' && x.completedAt && saudiDay(x.completedAt) >= w.this.from && saudiDay(x.completedAt) <= w.this.to);
+  const sources = { email: doneThis.filter((x) => x.fromEmail).length, self: doneThis.filter((x) => !x.fromEmail && x.own === true).length };
+  sources.other = doneThis.length - sources.email - sources.self;
+  return { windows: w, scope: sc, mine, average, below, sources };
 }
 
 /** The profile: Factor 1 for this one person, per quarter, newest first, over what the bookmark read. */
