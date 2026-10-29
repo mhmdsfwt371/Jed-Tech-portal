@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.6 — 2026-10-30
+
+- جودة الإصلاح في صفحة برو: «التحقق بعد الإصلاح» — ضع الأجهزة التي أُصلحت برقمها ووقت الإصلاح والمهندس، فتقول البوابة من برو لكل جهاز: عاد للإرسال، أو في المهلة (٤٨ ساعة)، أو لم يعد، أو غير موجود — ونسبة «عاد للإرسال» لكل مهندس، وتنزيل النتائج.
+- يُحفظ ما كتبته فقط — الرقم والمهندس والوقت — ولا شيء مما يأتي من برو يبقى بعد الجلسة.
+
+<details><summary>English</summary>
+
+- Repair quality on the PRO page: “After the repair” — enter the repaired devices by number, repair time and engineer, and the portal says from PRO for each device: came back, within 48 hours, not back, or not in PRO — with each engineer’s “came back” rate and a download of the results.
+- Only what you typed is kept — the number, the engineer and the time — and nothing from PRO stays past the session.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- برو کے صفحے پر مرمت کا معیار: «مرمت کے بعد جانچ» — مرمت شدہ آلات نمبر، مرمت کے وقت اور انجینئر کے ساتھ درج کریں، اور پورٹل برو سے ہر آلے کے لیے بتاتا ہے: واپس آیا، ۴۸ گھنٹوں کے اندر، نہیں آیا، یا برو میں نہیں — ہر انجینئر کی «واپس آیا» شرح اور نتائج کی ڈاؤن لوڈ کے ساتھ۔
+- صرف وہی محفوظ ہوتا ہے جو آپ نے لکھا — نمبر، انجینئر اور وقت — اور برو کی کوئی چیز سیشن کے بعد نہیں رہتی۔
+
+</div>
+</details>
+
+
 ## v8.5 — 2026-10-29
 
 - الأسبوع في لمحة على لوحة المؤشرات: آخر سبعة أيام مقابل السبعة قبلها — الأكثر تقدمًا، والنزول الحاد، والمفتوح القديم — ومن في إجازة لا يُعدّ نزولًا. وزر «مشاركة» يرسل الملخص لواتساب أو تيمز.

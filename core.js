@@ -427,6 +427,25 @@ export const STRINGS = {
     path_h: 'مسار النمط عبر الأشهر',
     path_soon: 'يظهر المسار من الشهر المقفول الثاني — كل شهر ينتهي يُضاف وحده.',
     help_path: 'لكل شهر مقفول: النمط والنقاط والربع. يُظهر كيف يتحرك عمل كل شخص — من «محرّك الحجم» إلى «المنفّذ الميداني» مثلًا — وهو ما يُقال في التقييم السنوي.',
+    repair_h: 'التحقق بعد الإصلاح — جودة الإصلاح',
+    repair_sub: 'ضع الأجهزة التي أُصلحت — رقم IMEI أو التسلسلي أو اسم الوحدة، سطرًا لكل جهاز، ومعه وقت الإصلاح إن شئت — واختر المهندس. تقول البوابة من برو: هل عاد الجهاز للإرسال بعد الإصلاح.',
+    repair_ph: '866123456789012, 2026-10-20 14:00\n866123456789013',
+    repair_who: 'المهندس الذي أصلح',
+    repair_add: 'إضافة للتحقق',
+    repair_none_in: 'لم أجد أرقامًا في الخانة.',
+    repair_rate: 'عاد للإرسال',
+    repair_ok: 'عاد للإرسال',
+    repair_waiting: 'في المهلة (٤٨ ساعة)',
+    repair_failed: 'لم يعد بعد المهلة',
+    repair_unknown: 'غير موجود في برو',
+    repair_col_ref: 'الجهاز',
+    repair_col_unit: 'الوحدة في برو',
+    repair_col_at: 'وقت الإصلاح',
+    repair_col_last: 'آخر إرسال',
+    repair_col_status: 'النتيجة',
+    repair_csv: 'تنزيل النتائج (CSV)',
+    repair_empty: 'لا أجهزة بعد. أضف ما أُصلح، وحدّث برو لاحقًا لترى من عاد للإرسال.',
+    help_repair: 'الجهاز «عاد للإرسال» إذا كان آخر إرسال له في برو بعد وقت الإصلاح. داخل ٤٨ ساعة من الإصلاح وبلا إرسال: «في المهلة». بعدها: «لم يعد». النسبة لكل مهندس من المحسوم فقط. القائمة على هذا الجهاز، وأرقام الأجهزة لا تغادره. الربط التلقائي من تذاكر ماي أفاقي يأتي بعد معرفة أين يُسجَّل الجهاز في التذكرة.',
   },
   en: {
     brand: 'Afaqy', portal: 'Technical team portal — Jeddah', nav_data: 'Data', nav_kpi: 'KPIs',
@@ -845,6 +864,25 @@ export const STRINGS = {
     path_h: 'The pattern’s path over the months',
     path_soon: 'The path appears from the second closed month — each month that ends is added by itself.',
     help_path: 'For each closed month: the pattern, the points and the quarter. It shows how each person’s work moves — from “volume engine” to “field executor”, say — which is what an annual review is about.',
+    repair_h: 'After the repair — repair quality',
+    repair_sub: 'Put in the devices that were repaired — IMEI, serial or unit name, one per line, with the repair time if you wish — and choose the engineer. The portal says from PRO whether each device reported again after the repair.',
+    repair_ph: '866123456789012, 2026-10-20 14:00\n866123456789013',
+    repair_who: 'The engineer who repaired',
+    repair_add: 'Add for checking',
+    repair_none_in: 'No numbers found in the box.',
+    repair_rate: 'Came back',
+    repair_ok: 'Came back',
+    repair_waiting: 'Within 48 hours',
+    repair_failed: 'Not back after 48 hours',
+    repair_unknown: 'Not in PRO',
+    repair_col_ref: 'Device',
+    repair_col_unit: 'Unit in PRO',
+    repair_col_at: 'Repaired at',
+    repair_col_last: 'Last report',
+    repair_col_status: 'Result',
+    repair_csv: 'Download results (CSV)',
+    repair_empty: 'No devices yet. Add what was repaired, and refresh PRO later to see which came back.',
+    help_repair: 'A device “came back” if its last report in PRO is after the repair time. Within 48 hours of the repair with no report: “within 48 hours”. After that: “not back”. Each engineer’s rate counts only the decided ones. The list stays on this device and the device numbers never leave it. Linking automatically from myafaqy tickets comes once we know where a ticket records its device.',
   },
   ur: {
     brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ', nav_data: 'ڈیٹا', nav_kpi: 'کارکردگی کے اشاریے',
@@ -1263,6 +1301,25 @@ export const STRINGS = {
     path_h: 'مہینوں میں انداز کا سفر',
     path_soon: 'سفر دوسرے بند مہینے سے دکھتا ہے — ہر ختم ہونے والا مہینہ خود شامل ہوتا ہے۔',
     help_path: 'ہر بند مہینے کے لیے: انداز، پوائنٹس اور چوتھائی۔ یہ دکھاتا ہے ہر فرد کا کام کیسے بدلتا ہے — مثلاً «حجم کا انجن» سے «فیلڈ ایگزیکیوٹر» تک — جو سالانہ جائزے کا موضوع ہے۔',
+    repair_h: 'مرمت کے بعد جانچ — مرمت کا معیار',
+    repair_sub: 'مرمت شدہ آلات درج کریں — IMEI، سیریل یا یونٹ کا نام، ہر سطر میں ایک، چاہیں تو مرمت کے وقت کے ساتھ — اور انجینئر چنیں۔ پورٹل برو سے بتاتا ہے کہ ہر آلہ مرمت کے بعد دوبارہ بھیجنے لگا یا نہیں۔',
+    repair_ph: '866123456789012, 2026-10-20 14:00\n866123456789013',
+    repair_who: 'مرمت کرنے والا انجینئر',
+    repair_add: 'جانچ کے لیے شامل کریں',
+    repair_none_in: 'خانے میں کوئی نمبر نہیں ملا۔',
+    repair_rate: 'واپس آیا',
+    repair_ok: 'واپس آیا',
+    repair_waiting: '۴۸ گھنٹوں کے اندر',
+    repair_failed: '۴۸ گھنٹے بعد بھی نہیں',
+    repair_unknown: 'برو میں نہیں',
+    repair_col_ref: 'آلہ',
+    repair_col_unit: 'برو میں یونٹ',
+    repair_col_at: 'مرمت کا وقت',
+    repair_col_last: 'آخری ارسال',
+    repair_col_status: 'نتیجہ',
+    repair_csv: 'نتائج ڈاؤن لوڈ کریں (CSV)',
+    repair_empty: 'ابھی کوئی آلہ نہیں۔ مرمت شدہ شامل کریں، اور بعد میں برو تازہ کریں تاکہ دیکھیں کون واپس آیا۔',
+    help_repair: 'آلہ «واپس آیا» اگر برو میں اس کا آخری ارسال مرمت کے وقت کے بعد ہو۔ مرمت کے ۴۸ گھنٹوں کے اندر بغیر ارسال: «۴۸ گھنٹوں کے اندر»۔ اس کے بعد: «نہیں آیا»۔ ہر انجینئر کی شرح صرف طے شدہ پر۔ فہرست اسی آلے پر رہتی ہے اور آلات کے نمبر اسے نہیں چھوڑتے۔ مائی آفاقی کے ٹکٹس سے خودکار ربط تب آئے گا جب معلوم ہو کہ ٹکٹ آلہ کہاں درج کرتا ہے۔',
   },
 };
 
@@ -2306,6 +2363,38 @@ export function goalProgress(tasks, wt, personId, ym, goals) {
 /** The pattern's path: closed months in order, for one person — archetype, points, quartile. */
 export function patternPath(closed, personId) {
   return Object.keys(closed || {}).sort().map((ym) => closed[ym][personId] ? { month: ym, archetype: closed[ym][personId].archetype, points: closed[ym][personId].points, quartile: closed[ym][personId].quartile } : null).filter(Boolean);
+}
+
+// ===================== repair quality from PRO (ADR-0022): did the device report again after the repair? =====================
+/**
+ * items: [{ ref, engineerId, at }] — ref is an IMEI, serial or unit name; at the repair time (ISO).
+ * units: PRO units with imei / device_serial / name / last_update. A device "came back" if it reported after the repair;
+ * "waiting" while inside the grace window; "failed" past it with no report; "unknown" when PRO has no such unit.
+ */
+export function repairCheck(units, items, now = new Date(), graceHours = 48) {
+  const key = (v) => String(v || '').trim().toLowerCase();
+  const idx = new Map();
+  for (const u of units || []) for (const v of [u.imei, u.device_serial, u.name, u._id]) if (v) idx.set(key(v), u);
+  const ts = (u) => { const lu = (u && u.last_update) || {}; const t = lu.dtt || lu.dts; if (!t) return 0; const n = +t; return Number.isFinite(n) ? (n < 1e12 ? n * 1000 : n) : (Date.parse(t) || 0); };
+  const nowMs = now.getTime();
+  const rows = (items || []).map((it) => {
+    const u = idx.get(key(it.ref)); const at = Date.parse(it.at || '') || 0; const last = u ? ts(u) : 0;
+    const status = !u ? 'unknown' : last > at ? 'ok' : nowMs - at <= graceHours * 3600000 ? 'waiting' : 'failed';
+    return { ...it, unit: u ? String(u.name || u.imei || '') : null, last: last ? new Date(last).toISOString() : null, hoursToReport: u && last > at ? (last - at) / 3600000 : null, status };
+  });
+  const by = new Map();
+  for (const r of rows) { if (!r.engineerId) continue; const x = by.get(r.engineerId) || { id: r.engineerId, ok: 0, failed: 0, waiting: 0, unknown: 0 }; x[r.status]++; by.set(r.engineerId, x); }
+  const people = [...by.values()].map((x) => ({ ...x, decided: x.ok + x.failed, rate: x.ok + x.failed ? x.ok / (x.ok + x.failed) : null })).sort((a, b) => (b.rate ?? -1) - (a.rate ?? -1));
+  const decided = rows.filter((r) => r.status === 'ok' || r.status === 'failed');
+  return { rows, people, rate: decided.length ? decided.filter((r) => r.status === 'ok').length / decided.length : null };
+}
+/** Lines pasted by a person: "IMEI", "IMEI, 2026-10-20 14:00" or "IMEI<TAB>date" — the date defaults to now. */
+export function parseRepairLines(text, now = new Date()) {
+  return String(text || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, 500).map((l) => {
+    const [ref, ...rest] = l.split(/[,\t;]+/).map((x) => x.trim());
+    const d = rest.join(' ').trim(); const at = d ? Date.parse(d.replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(d) ? '' : '+03:00')) : NaN;
+    return { ref, at: new Date(Number.isFinite(at) ? at : now.getTime()).toISOString() };
+  }).filter((x) => x.ref && x.ref.length >= 4);
 }
 
 /** Parts of a whole as donut segments: each gets its share, and the SVG dash pair for a circle of radius r. */

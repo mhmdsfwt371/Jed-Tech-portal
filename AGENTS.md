@@ -85,6 +85,7 @@
 | نوافذ الفترة والتنبيهات (القرار 0016) | `periodWindows()`، `teamAlerts()` |
 | سجل الأنشطة (القرار 0017) | `activityTotals()` |
 | لوحة التعيين (القرار 0018) | `buildAssignBookmarklet()` |
+| جودة الإصلاح (القرار 0022) | `repairCheck()`، `parseRepairLines()` |
 | الأسبوع والأهداف والمسار والتغطية (القرار 0021) | `weeklyDigest()`، `goalProgress()`، `patternPath()`، `coverageTotals()` |
 | بطاقة الشهر (القرار 0020) | `monthCard()`، `teamMonth()`، `closableMonths()` |
 | الأوزان (القرار 0019) | `typeKey()`، `parseWeights()`، `weightedPoints()` — والملف `weights.json` |

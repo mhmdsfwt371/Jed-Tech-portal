@@ -7,7 +7,7 @@ import {
   buildBookmarklet, parseMe, myProfile, ME_SCHEMA, parseMePayload, profileMonths, monthWindows, scopeOf, ME_SCHEMA_V2, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, reportsOf, donutParts, periodWindows, teamAlerts, activityTotals, descendantsOf,
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, scopeIds, inScope,
-  weeklyDigest, goalProgress, patternPath, coverageTotals, monthCard, closableMonths,
+  weeklyDigest, goalProgress, patternPath, coverageTotals, monthCard, closableMonths, repairCheck, parseRepairLines,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
@@ -522,6 +522,17 @@ test('the month card: “too little to judge” under ten points; quartile and r
   assert.equal(a.points, 30); assert.equal(a.rank, 1); assert.equal(b.archetype, 'early', '3 points is too little to judge');
   assert.ok(a.strengths.every((s) => s.kind !== 'spec' || s.mine >= 5));
   assert.deepEqual(closableMonths([{ from: '2026-09-01', to: '2026-10-29' }], new Date('2026-10-29T10:00:00Z')), ['2026-09']);
+});
+
+test('repair check: came back after the repair, waiting inside 48 hours, failed after, unknown when PRO has no unit; per engineer from decided only', () => {
+  const now = new Date('2026-10-29T12:00:00Z');
+  const units = [{ imei: '111', name: 'Bus 1', last_update: { dtt: Date.parse('2026-10-28T10:00:00Z') / 1000 } }, { device_serial: 'S22', last_update: { dtt: '2026-10-20T08:00:00Z' } }, { imei: '333', last_update: {} }];
+  const items = [{ ref: '111', engineerId: 'A', at: '2026-10-27T10:00:00Z' }, { ref: 's22', engineerId: 'A', at: '2026-10-25T10:00:00Z' }, { ref: '333', engineerId: 'B', at: '2026-10-29T06:00:00Z' }, { ref: '999', engineerId: 'B', at: '2026-10-20T06:00:00Z' }];
+  const r = repairCheck(units, items, now);
+  assert.deepEqual(r.rows.map((x) => x.status), ['ok', 'failed', 'waiting', 'unknown']);
+  const A = r.people.find((p) => p.id === 'A'); assert.equal(A.rate, 0.5); assert.equal(r.people.find((p) => p.id === 'B').rate, null, 'nothing decided yet');
+  const lines = parseRepairLines('866123456789012, 2026-10-20 14:00\n866123456789013\n12', now);
+  assert.equal(lines.length, 2, 'too-short refs dropped'); assert.equal(lines[0].at, '2026-10-20T11:00:00.000Z', 'Saudi time read as UTC+3'); assert.equal(lines[1].at, now.toISOString());
 });
 
 test('formatting', () => {

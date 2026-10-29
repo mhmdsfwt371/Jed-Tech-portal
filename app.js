@@ -7,7 +7,7 @@ import {
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
-  weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS,
+  weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, repairCheck, parseRepairLines,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet,
 } from './core.js';
 
@@ -39,7 +39,7 @@ function toast(msg) {
 
 // ---------- storage: IndexedDB, with an in-memory fallback where it is unavailable ----------
 const store = (() => {
-  let mem = []; let memMe = null; let memRep = []; let memRoster = null; let memWeights = null; let memCards = {}; let memMeet = {};
+  let mem = []; let memMe = null; let memRep = []; let memRoster = null; let memWeights = null; let memCards = {}; let memMeet = {}; let memRepairs = [];
   const open = () => new Promise((res, rej) => {
     if (!('indexedDB' in window)) return rej(new Error('no idb'));
     const r = indexedDB.open('afaqy-portal', 1);
@@ -53,6 +53,8 @@ const store = (() => {
     // "my KPIs" — an engineer's own profile, kept apart from the manager's datasets
     async getReports() { try { return (await run('readonly', (s) => s.get('reports'))) || []; } catch { return memRep; } },
     async putReports(v) { try { await run('readwrite', (s) => s.put(v, 'reports')); } catch { memRep = v; } },
+    async getRepairs() { try { return (await run('readonly', (s) => s.get('repairs'))) || []; } catch { return memRepairs; } },
+    async putRepairs(v) { try { await run('readwrite', (s) => s.put(v, 'repairs')); } catch { memRepairs = v; } },
     async getMeet() { try { return (await run('readonly', (s) => s.get('oneonone'))) || {}; } catch { return memMeet; } },
     async putMeet(v) { try { await run('readwrite', (s) => s.put(v, 'oneonone')); } catch { memMeet = v; } },
     async getCards() { try { return (await run('readonly', (s) => s.get('cards'))) || {}; } catch { return memCards; } },
@@ -222,6 +224,40 @@ function meetBlock(ym, id, tasks, editable, name, typeChoices) {
       editable ? el('label', { class: 'done-tick' }, el('input', { type: 'checkbox', ...(prev.done ? { checked: '' } : {}), onchange: async (e) => { await saveMeet(prevMonth(ym), id, { ...prev, done: e.target.checked }); renderMe(); } }), t('meet_done')) : el('span', { class: 'hint', text: prev.done ? ` · ${t('meet_done')}` : '' })) : null,
     prog.length ? el('div', { class: 'goals' }, el('b', { text: t('meet_goals') }), prog.map((g) => el('div', { class: 'goal' }, el('span', { text: label(g) }), el('i', {}, el('span', { style: `width:${g.pct}%`, class: g.met ? 'met' : '' })), el('b', { class: 'ltr', text: `\u2066${g.got} / ${g.target}\u2069` })))) : null,
     editable ? el('button', { type: 'button', class: 'btn tiny', text: m ? t('meet_edit') : t('meet_open'), onclick: () => openMeet(ym, id, name, typeChoices) }) : null);
+}
+// ---------- after a repair: did the device report again? (the list stays on this device) ----------
+let repairs = [];
+function renderRepairs() {
+  const scopePeople = scoped(peopleOf(datasets)).concat(me ? me.people.filter((p) => inScope(roster(), p.id) && !peopleOf(datasets).some((q) => q.id === p.id)) : []);
+  const nmR = (id) => { const p = scopePeople.find((q) => q.id === id); return (p && nameOf(p, lang)) || id || '—'; };
+  const rc = repairCheck(proUnits || [], repairs, new Date());
+  const ta = el('textarea', { rows: '4', dir: 'ltr', class: 'repair-in', placeholder: t('repair_ph') });
+  const eng = el('select', { class: 'w-sel' }, el('option', { value: '', text: t('repair_who') }), scopePeople.map((p) => el('option', { value: p.id, text: nameOf(p, lang) || p.id })));
+  const add = async () => { const lines = parseRepairLines(ta.value, new Date()); if (!lines.length) { toast(t('repair_none_in')); return; }
+    repairs = [...repairs, ...lines.map((x) => ({ ...x, engineerId: eng.value || null, added: new Date().toISOString() }))].slice(-2000); await store.putRepairs(repairs); ta.value = ''; renderPro(); };
+  const csv = () => { const lines = ['ref,engineer,repairedAt,status,lastReport,hoursToReport', ...rc.rows.map((r) => [r.ref, nmR(r.engineerId), r.at, r.status, r.last || '', r.hoursToReport == null ? '' : r.hoursToReport.toFixed(1)].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))];
+    const a2 = el('a', { href: URL.createObjectURL(new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv' })), download: `afaqy-repair-check-${ymd(new Date())}.csv` }); document.body.append(a2); a2.click(); a2.remove(); };
+  const badge = (st) => el('span', { class: `rstat ${st}`, text: t(`repair_${st}`) });
+  return el('section', { class: 'repairs' },
+    el('h2', {}, t('repair_h'), helpQ('help_repair')),
+    el('p', { class: 'hint', text: t('repair_sub') }),
+    el('div', { class: 'repair-add' }, ta, el('div', { class: 'row' }, eng, el('button', { type: 'button', class: 'btn primary', text: t('repair_add'), onclick: add }))),
+    repairs.length ? [
+      el('div', { class: 'strip' },
+        el('div', { class: 'lead' }, el('b', { text: rc.rate == null ? '—' : `${Math.round(rc.rate * 100)}%` }), el('span', { text: t('repair_rate') })),
+        ...['ok', 'waiting', 'failed', 'unknown'].map((k) => el('div', {}, el('b', { text: String(rc.rows.filter((r) => r.status === k).length) }), el('span', { text: t(`repair_${k}`) })))),
+      rc.people.length ? el('div', { class: 'table-wrap' }, el('table', {},
+        el('thead', {}, el('tr', {}, ['col_person', 'repair_ok', 'repair_failed', 'repair_waiting', 'repair_rate'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+        el('tbody', {}, rc.people.map((p) => el('tr', {}, el('td', { text: nmR(p.id) }), el('td', { class: 'num', text: String(p.ok) }), el('td', { class: 'num', text: String(p.failed) }), el('td', { class: 'num', text: String(p.waiting) }), el('td', { class: 'num', text: p.rate == null ? '—' : `${Math.round(p.rate * 100)}%` })))))) : null,
+      el('div', { class: 'table-wrap' }, el('table', {},
+        el('thead', {}, el('tr', {}, ['repair_col_ref', 'repair_col_unit', 'col_person', 'repair_col_at', 'repair_col_last', 'repair_col_status', ''].map((k) => el('th', { text: k ? t(k) : '' })))),
+        el('tbody', {}, [...rc.rows].reverse().slice(0, 300).map((r) => el('tr', {},
+          el('td', { class: 'ltr', text: r.ref }), el('td', { text: r.unit || '—' }), el('td', { text: nmR(r.engineerId) }),
+          el('td', { class: 'ltr', text: `\u2066${r.at.slice(0, 16).replace('T', ' ')}\u2069` }), el('td', { class: 'ltr', text: r.last ? `\u2066${new Date(Date.parse(r.last) + 3 * 3600000).toISOString().slice(0, 16).replace('T', ' ')}\u2069` : '—' }),
+          el('td', {}, badge(r.status)),
+          el('td', {}, el('button', { type: 'button', class: 'btn quiet tiny', text: '✕', onclick: async () => { repairs = repairs.filter((x) => !(x.ref === r.ref && x.at === r.at)); await store.putRepairs(repairs); renderPro(); } }))))))),
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: t('repair_csv'), onclick: csv }), el('button', { type: 'button', class: 'btn quiet', text: t('pro_refresh'), onclick: () => proLoad() }))]
+      : el('p', { class: 'hint', text: t('repair_empty') }));
 }
 // ---------- install on Android, iPhone and Windows ----------
 let installPrompt = null;
@@ -513,7 +549,8 @@ function renderPro() {
             ? el('a', { href: `https://www.google.com/maps?q=${lat},${lng}`, target: '_blank', rel: 'noopener', text: t('pro_map'), onclick: (e) => e.stopPropagation() }) : '—'));
         return proOpen === key ? [tr, el('tr', { class: 'pro-detail' }, el('td', { colspan: '5' }, el('pre', { class: 'ltr', text: JSON.stringify(u, null, 1) })))] : [tr];
       }) : [el('tr', {}, el('td', { colspan: '5', text: t('pro_none') }))]))),
-    rows.length > shown.length ? el('p', { class: 'hint', text: t('pro_more', { n: rows.length - shown.length }) }) : null);
+    rows.length > shown.length ? el('p', { class: 'hint', text: t('pro_more', { n: rows.length - shown.length }) }) : null,
+    renderRepairs());
 }
 
 // ---------- the side menu ----------
@@ -1155,6 +1192,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   weightsDevice = await store.getWeights();
   monthCards = (await store.getCards()) || {};
   meet = (await store.getMeet()) || {};
+  repairs = (await store.getRepairs()) || [];
   try { const r = await fetch('./weights.json', { cache: 'no-store' }); weightsRepo = r.ok ? await r.json() : null; } catch { weightsRepo = null; }
   applyLang();   // renders everything and routes
   loadRelease(); announceUpdate(); showInstall();

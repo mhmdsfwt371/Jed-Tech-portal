@@ -328,6 +328,12 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
     if (paths.some((x) => !['/auth/login', '/units/lists'].includes(x))) note(`PRO page: calls ${paths.join(', ')} — only /auth/login and /units/lists (read) are allowed`);
     if ((pro.match(/fetch\(/g) || []).length !== 1) note('PRO page: all requests must go through proPost');
     if (/localStorage|indexedDB|store\.|pref\(/.test(pro)) note('PRO page: nothing from Afaqy PRO may be stored beyond the tab session');
+    // the repair check (ADR-0022) keeps only what the person typed — device ref, engineer, time — never a PRO field
+    const rp = app.slice(app.indexOf('function renderRepairs()'), app.indexOf('\n}\n', app.indexOf('function renderRepairs()')));
+    const sA = rp.indexOf('repairs = [...repairs, ...lines.map((x) => ({'), sB = sA < 0 ? -1 : rp.indexOf('}))]', sA);
+    const saved = sA < 0 || sB < 0 ? '' : rp.slice(sA, sB);
+    if (!saved) note('repair check: the saved list must be built only from the typed lines');
+    else if (/\blast\b|unit|imei|\bname\b|lat|lng|dtt/i.test(saved.replace(/lines|repairs/g, ''))) note('repair check: nothing read from PRO may be saved — only ref, engineer and time');
     if (/sessionStorage\.setItem\([^)]*(pass|pw|user)/i.test(pro) || /PRO_KEY,\s*(pass|pw|user)/i.test(pro)) note('PRO page: the password or username must never be stored');
     if (!/p\.value = ''/.test(pro)) note('PRO page: the password box must be cleared as soon as it is read');
   }

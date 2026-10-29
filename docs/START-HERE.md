@@ -39,6 +39,7 @@
 | `docs/kpi-weights-study.md` | دراسة الأوزان — المنهج والخريطة والحوكمة |
 | `docs/decisions/0020-monthly-card.md` | بطاقة الشهر: النمط والتميّز والتطوير والاقتراحات، وقفل الشهر |
 | `docs/decisions/0021-week-coverage-one-to-one.md` | الأسبوع، تغطية الحسابات، اللقاء الشهري والأهداف، مسار النمط |
+| `docs/decisions/0022-repair-quality-from-pro.md` | جودة الإصلاح من برو — عاد للإرسال؟ |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |
