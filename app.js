@@ -118,14 +118,21 @@ function renderMeTour() {
   $('tour-progress').setAttribute('aria-valuenow', String(state.progress));
   $('tour-progress').setAttribute('aria-valuetext', count);
   $('tour-progress-bar').style.width = state.progress + '%';
-  $('tour-title').textContent = t('tour_' + state.step + '_title');
-  const descKey = state.step === 1 || state.step === 3
-    ? 'tour_' + state.step + '_' + state.device
-    : state.step === 0 ? 'tour_0_desc' : 'tour_' + state.step + '_desc';
-  $('tour-desc').textContent = t(descKey);
+  const titles = ['tour_0_title', 'tour_1_title', 'tour_2_title', 'tour_3_title', 'tour_4_title'];
+  const descs = [
+    'tour_0_desc',
+    { desktop: 'tour_1_desktop', android: 'tour_1_android', ios: 'tour_1_ios' },
+    'tour_2_desc',
+    { desktop: 'tour_3_desktop', android: 'tour_3_android', ios: 'tour_3_ios' },
+    'tour_4_desc',
+  ];
+  const deviceLabels = { desktop: 'tour_desktop', android: 'tour_android', ios: 'tour_ios' };
+  $('tour-title').textContent = t(titles[state.step]);
+  const description = descs[state.step];
+  $('tour-desc').textContent = t(typeof description === 'string' ? description : description[state.device]);
   const options = state.step === 0 ? TOUR_DEVICES.map((device) =>
     el('button', { type: 'button', class: 'tour-device' + (device === tourDevice ? ' picked' : ''),
-      'aria-pressed': String(device === tourDevice), text: t('tour_' + device),
+      'aria-pressed': String(device === tourDevice), text: t(deviceLabels[device]),
       onclick: () => { tourDevice = device; renderMeTour(); } })) : [];
   set($('tour-options'), options);
   const action = [];

@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.11 — 2026-10-30
+
+- إصلاح طريقة تحديد نصوص الخطوات المترجمة في الإرشاد التفاعلي لضمان عمله بشكل صحيح على رابط الفريق والإدارة.
+
+<details><summary>English</summary>
+
+- Fixed how the interactive walkthrough selects its translated step labels, so it works correctly in both the team and admin portals.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- تفاعلی رہنمائی کے ہر مرحلے کا ترجمہ منتخب کرنے کا طریقہ درست کیا گیا ہے، تاکہ یہ ٹیم اور انتظامی پورٹل دونوں میں صحیح کام کرے۔
+
+</div>
+</details>
+
+
 ## v8.10 — 2026-10-30
 
 - أُضيف زر «إرشادي خطوة بخطوة» يظل ظاهرًا في صفحة «مؤشراتي» في كل مرة، سواء كانت بيانات المهندس موجودة أو لم تُسحب بعد.
