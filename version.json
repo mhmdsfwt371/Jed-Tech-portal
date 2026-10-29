@@ -1,18 +1,15 @@
 {
-  "version": "8.7",
+  "version": "8.8",
   "date": "2026-10-30",
   "notes": {
     "ar": [
-      "أداة شهادات المعايرة صارت وحدة حقيقية داخل البوابة — من «الوحدات» — بدل «قريبًا».",
-      "توقيعات شهادات المعايرة في صفحة «الفريق»: صورة توقيع فني تي زون وفني توب فلاي واسمه، تُحفظ مرة واحدة وتطبع على كل شهادة — سواء فُتحت الأداة من البوابة أو مباشرة. تبقى على الجهاز ولا تدخل المستودع العام، وتُنقل لجهاز زميل بالتصدير والاستيراد."
+      "أُضيف «أفاقي هنت — محرك الاستهداف» إلى «أدوات أخرى» في الصفحة الرئيسية. يفتح في نافذة جديدة لأنه على عنوان لوفابل لا على عنوان البوابة."
     ],
     "en": [
-      "The calibration certificates tool is now a real module inside the portal — under “Modules” — instead of “coming soon”.",
-      "Signatures for calibration certificates on the “Team” page: the TZONE and TOPFLY technician’s signature image and name, saved once and printed on every certificate — whether the tool is opened from the portal or directly. They stay on the device, never enter the public repository, and move to a colleague’s device by export and import."
+      "“AFAQY Hunt — prospecting engine” is added to “Other tools” on the home page. It opens in a new window because it lives on Lovable’s address, not the portal’s."
     ],
     "ur": [
-      "کیلیبریشن سرٹیفکیٹس کا ٹول اب پورٹل کے اندر حقیقی ماڈیول ہے — «ماڈیولز» میں — «جلد» کے بجائے۔",
-      "«ٹیم» کے صفحے پر کیلیبریشن سرٹیفکیٹس کے دستخط: ٹی زون اور ٹاپ فلائی ٹیکنیشن کے دستخط کی تصویر اور نام، ایک بار محفوظ اور ہر سرٹیفکیٹ پر چھپتے ہیں — ٹول پورٹل سے کھلے یا براہِ راست۔ آلے پر رہتے ہیں، عوامی ریپوزٹری میں کبھی نہیں، اور برآمد و درآمد سے ساتھی کے آلے پر جاتے ہیں۔"
+      "«آفاقی ہنٹ — پراسپیکٹنگ انجن» ہوم پیج پر «دیگر ٹولز» میں شامل کیا گیا۔ یہ نئی ونڈو میں کھلتا ہے کیونکہ یہ لوویبل کے پتے پر ہے، پورٹل کے پتے پر نہیں۔"
     ]
   }
 }

@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.8 — 2026-10-30
+
+- أُضيف «أفاقي هنت — محرك الاستهداف» إلى «أدوات أخرى» في الصفحة الرئيسية. يفتح في نافذة جديدة لأنه على عنوان لوفابل لا على عنوان البوابة.
+
+<details><summary>English</summary>
+
+- “AFAQY Hunt — prospecting engine” is added to “Other tools” on the home page. It opens in a new window because it lives on Lovable’s address, not the portal’s.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «آفاقی ہنٹ — پراسپیکٹنگ انجن» ہوم پیج پر «دیگر ٹولز» میں شامل کیا گیا۔ یہ نئی ونڈو میں کھلتا ہے کیونکہ یہ لوویبل کے پتے پر ہے، پورٹل کے پتے پر نہیں۔
+
+</div>
+</details>
+
+
 ## v8.7 — 2026-10-30
 
 - أداة شهادات المعايرة صارت وحدة حقيقية داخل البوابة — من «الوحدات» — بدل «قريبًا».

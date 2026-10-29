@@ -1,5 +1,5 @@
 // config.js — the only file to edit when a tool is added or moves.
-export const PORTAL_VERSION = '8.7';   // stamped by scripts/bump.mjs — never edit by hand
+export const PORTAL_VERSION = '8.8';   // stamped by scripts/bump.mjs — never edit by hand
 
 // MODULES open inside the portal (an embedded frame under the portal's header), stay alive while you switch between
 // them, and keep their own code in their own repository. A module must live on the portal's own address
@@ -34,6 +34,8 @@ export const MORE = [
   { id: 'nusuk', status: 'live', module: true, url: 'https://mhmdsfwt371.github.io/Project-survey/',
     name: { ar: 'قارئات أفاقي — المسح الميداني', en: 'Afaqy readers — field survey', ur: 'آفاقی ریڈرز — فیلڈ سروے' } },   // the tool's own name
   { id: 'calibration', status: 'live', module: true, url: 'https://mhmdsfwt371.github.io/sensor-displacment-tool/certificates.html',
-    name: { ar: 'شهادات المعايرة', en: 'Calibration certificates', ur: 'کیلیبریشن سرٹیفکیٹس' } },
+    name: { ar: 'شهادات المعايرة', en: 'Calibration certificates', ur: 'کیلیبریشن سرٹیفکیٹس' } },  // on Lovable, not on the portal's address — so it opens in a new tab (decision 0007: modules come from MODULE_ORIGIN only)
+  { id: 'hunt', status: 'live', url: 'https://afaqy-hunt.lovable.app/',
+    name: { ar: 'أفاقي هنت — محرك الاستهداف', en: 'AFAQY Hunt — prospecting engine', ur: 'آفاقی ہنٹ — پراسپیکٹنگ انجن' } },
 ];
 
