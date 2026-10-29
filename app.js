@@ -8,10 +8,13 @@ import {
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, repairCheck, parseRepairLines,
-  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet,
+  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, portalRoute,
 } from './core.js';
 
 const $ = (id) => document.getElementById(id);
+// Same application, two presentation links. The existing URL stays the full admin portal.
+// Team mode removes management navigation, but is deliberately NOT an authentication boundary.
+const isTeamPortal = new URLSearchParams(location.search).get('portal') === 'team';
 const KEY = 'afaqy-portal:';
 const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem(KEY + k); localStorage.setItem(KEY + k, v); } catch { return null; } return v; };
 
@@ -328,7 +331,7 @@ function donut(title, parts, { size = 120, fmt = (v) => String(v) } = {}) {
     el('div', { class: 'donut-legend' }, d.parts.map((p, i) => el('span', {}, el('i', { style: `background:${p.color || DONUT_COLORS[i % DONUT_COLORS.length]}` }),
       el('span', { text: p.label }), el('b', { text: `${fmt(p.value)} · ${Math.round(p.share * 100)}%` }))))));
 }
-const portalHome = () => location.origin + location.pathname.replace(/[^/]*$/, '');
+const portalHome = () => location.origin + location.pathname.replace(/[^/]*$/, '') + (isTeamPortal ? '?portal=team' : '');
 function renderMe(waiting = false) {
   const body = $('me-body');
   const bm = buildBookmarklet(portalHome(), lang);
@@ -584,6 +587,7 @@ function renderPro() {
 const iconOf = (x) => ({ sensor: 'heatmap', apihelper: 'api', canval: 'can', nusuk: 'survey' }[x.id] || x.icon || 'system');
 const svg = (name) => { const s = el('span', { 'aria-hidden': 'true', style: 'display:contents' }); s.innerHTML = ICONS[name] || ''; return s; };
 function renderSide() {
+  if (isTeamPortal) $('nav-kpi').closest('[data-nav-section]').hidden = true;
   set($('nav-modules'), MODULES.map((m) => el('a', { href: `#m-${m.id}`, class: 'sub', 'data-module': m.id, text: L(m.name, lang) })));
   set($('nav-systems'), SYSTEMS.map((x) => (x.id === 'pro' ? el('a', { href: '#pro', class: 'sub', 'data-view': 'pro', text: L(x.name, lang) }) : el('a', { href: x.url, class: 'sub', target: '_blank', rel: 'noopener' },
     el('span', { text: L(x.name, lang) }), el('span', { class: 'ext', 'aria-hidden': 'true', text: '↗' })))));
@@ -1144,7 +1148,9 @@ function applyTheme() {
 }
 function route() {
   const views = ['tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'guide'];
-  let hash = location.hash.slice(1);
+  const requested = location.hash.slice(1);
+  let hash = portalRoute(requested, isTeamPortal);
+  if (requested !== hash) history.replaceState(null, '', '#' + hash);
   if (hash.startsWith('me-')) {
     if (hash === 'me-wait') {
       hash = 'me'; setTimeout(() => renderMe(true));
