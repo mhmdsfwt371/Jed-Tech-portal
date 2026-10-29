@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v7.6 — 2026-10-29
+
+- هيكل الفريق مسجّل: فريق ما بعد البيع في جدة — ثمانية مهندسين يتبعون قائد الفريق، والقائد يتبع مديره، والمدير يتبع المدير التقني للمنطقة الغربية. يُحفظ بأرقام ماي أفاقي في «team.json»، بلا أسماء.
+- «فريقي» صار يرى كل المستويات تحتك: المدير التقني يرى عشرة، ومدير القائد يرى تسعة، والقائد يرى ثمانية.
+- لوحة التعيين تفتح والفريق مختار مسبقًا بالاسم — تراجع وتضغط.
+
+<details><summary>English</summary>
+
+- The team structure is recorded: Jeddah’s after-sales team — eight engineers reporting to the team leader, the leader to his manager, and that manager to the Western Technical Manager. Saved by myafaqy ids in “team.json”, without names.
+- “My team” now sees every level below you: the technical manager sees ten, the leader’s manager nine, and the leader eight.
+- The assignment panel opens with the team already chosen by name — review and press.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹیم کا ڈھانچہ درج ہو گیا: جدہ کی آفٹر سیلز ٹیم — آٹھ انجینئر ٹیم لیڈر کے ماتحت، لیڈر اپنے مینیجر کے، اور وہ مینیجر مغربی علاقے کے تکنیکی مینیجر کے۔ «team.json» میں مائی آفاقی کی شناختوں سے محفوظ، ناموں کے بغیر۔
+- «میری ٹیم» اب آپ کے نیچے ہر سطح دیکھتی ہے: تکنیکی مینیجر دس، لیڈر کا مینیجر نو، اور لیڈر آٹھ۔
+- تفویض کا پینل ٹیم کو نام سے پہلے سے منتخب کر کے کھلتا ہے — دیکھیں اور دبائیں۔
+
+</div>
+</details>
+
+
 ## v7.5 — 2026-10-29
 
 - لوحة تعيين ما بعد البيع على حسابات جدة — من صفحة «الفريق»: إشارة تُفتح داخل ماي أفاقي بدخولك، تختار المهندسين وترى التغطية، وتجرّب على عشرة بجدول قبل/بعد، ثم تطبّق على الباقي وتنزّل السجل. بإضافة فقط — لا يُحذف أحد موجود — وعلى فرع جدة فقط.

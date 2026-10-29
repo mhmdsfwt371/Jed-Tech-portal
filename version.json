@@ -1,18 +1,21 @@
 {
-  "version": "7.5",
+  "version": "7.6",
   "date": "2026-10-29",
   "notes": {
     "ar": [
-      "لوحة تعيين ما بعد البيع على حسابات جدة — من صفحة «الفريق»: إشارة تُفتح داخل ماي أفاقي بدخولك، تختار المهندسين وترى التغطية، وتجرّب على عشرة بجدول قبل/بعد، ثم تطبّق على الباقي وتنزّل السجل. بإضافة فقط — لا يُحذف أحد موجود — وعلى فرع جدة فقط.",
-      "هذه هي الكتابة الوحيدة في البوابة كلها، بقاعدة حارس خاصة: طلب واحد بالاسم، الاتحاد نصًّا، الفرع نصًّا، وخلف الزرين فقط. أُثبت أن الحارس يرفض الاستبدال وتسريب الفرع وأي طلب كتابة آخر."
+      "هيكل الفريق مسجّل: فريق ما بعد البيع في جدة — ثمانية مهندسين يتبعون قائد الفريق، والقائد يتبع مديره، والمدير يتبع المدير التقني للمنطقة الغربية. يُحفظ بأرقام ماي أفاقي في «team.json»، بلا أسماء.",
+      "«فريقي» صار يرى كل المستويات تحتك: المدير التقني يرى عشرة، ومدير القائد يرى تسعة، والقائد يرى ثمانية.",
+      "لوحة التعيين تفتح والفريق مختار مسبقًا بالاسم — تراجع وتضغط."
     ],
     "en": [
-      "An after-sales assignment panel for Jeddah accounts — from the “Team” page: a bookmark opens it inside myafaqy with your sign-in; choose the engineers, see the coverage, pilot on ten with a before/after table, then apply to the rest and download the log. Add only — nobody already there is removed — and Jeddah branch only.",
-      "This is the one write in the whole portal, under its own guard rule: one named request, the union verbatim, the branch verbatim, and only behind the two buttons. The guard was proven to refuse replace mode, a branch leak and any other write."
+      "The team structure is recorded: Jeddah’s after-sales team — eight engineers reporting to the team leader, the leader to his manager, and that manager to the Western Technical Manager. Saved by myafaqy ids in “team.json”, without names.",
+      "“My team” now sees every level below you: the technical manager sees ten, the leader’s manager nine, and the leader eight.",
+      "The assignment panel opens with the team already chosen by name — review and press."
     ],
     "ur": [
-      "جدہ کے اکاؤنٹس پر آفٹر سیلز تفویض کا پینل — «ٹیم» کے صفحے سے: ایک بک مارک اسے آپ کے لاگ اِن سے مائی آفاقی کے اندر کھولتا ہے؛ انجینئرز چنیں، کوریج دیکھیں، پہلے/بعد کے جدول کے ساتھ دس پر آزمائیں، پھر باقی پر لاگو کریں اور لاگ ڈاؤن لوڈ کریں۔ صرف اضافہ — جو موجود ہے ہٹایا نہیں جاتا — اور صرف جدہ برانچ۔",
-      "یہ پورے پورٹل میں واحد لکھائی ہے، اپنے گارڈ اصول کے تحت: ایک نامزد درخواست، یونین بعینہ، برانچ بعینہ، اور صرف دو بٹنوں کے پیچھے۔ ثابت ہوا کہ گارڈ بدلنے کے انداز، برانچ کے رساؤ اور کسی بھی دوسری لکھائی کو مسترد کرتا ہے۔"
+      "ٹیم کا ڈھانچہ درج ہو گیا: جدہ کی آفٹر سیلز ٹیم — آٹھ انجینئر ٹیم لیڈر کے ماتحت، لیڈر اپنے مینیجر کے، اور وہ مینیجر مغربی علاقے کے تکنیکی مینیجر کے۔ «team.json» میں مائی آفاقی کی شناختوں سے محفوظ، ناموں کے بغیر۔",
+      "«میری ٹیم» اب آپ کے نیچے ہر سطح دیکھتی ہے: تکنیکی مینیجر دس، لیڈر کا مینیجر نو، اور لیڈر آٹھ۔",
+      "تفویض کا پینل ٹیم کو نام سے پہلے سے منتخب کر کے کھلتا ہے — دیکھیں اور دبائیں۔"
     ]
   }
 }

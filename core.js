@@ -1402,7 +1402,7 @@ box.style.background='#0A5F67';say(M[4]+' ('+taskRows.length+' / '+techPoints.re
  * after-sales engineers, see the Jeddah coverage, pilot on ten accounts, then apply to the rest. The only write in the
  * whole portal: POST AfterSales/AssignAfterSales, ADD mode (existing ∪ chosen), branchCode "2" only, by a button press.
  */
-export function buildAssignBookmarklet(lang = 'ar') {
+export function buildAssignBookmarklet(lang = 'ar', defaultNames = []) {
   const M = {
     ar: { only: 'افتح ماي أفاقي أولًا ثم اضغط الإشارة من هناك', login: 'سجّل دخولك في ماي أفاقي أولًا', title: 'تعيين ما بعد البيع على حسابات جدة', pick: 'اختر المهندسين الذين يكونون على كل حساب', loading: 'جارٍ قراءة الحسابات…',
       total: 'حسابات جدة', complete: 'مكتملة بالمختارين', toUpdate: 'ستُحدَّث', cover: 'التغطية الحالية لكل مهندس', pilot: 'تجربة على ١٠', rest: 'تطبيق على الباقي', refresh: 'إعادة القراءة', close: 'إغلاق',
@@ -1423,10 +1423,10 @@ const el=(t,a,...k)=>{const n=document.createElement(t);for(const[x,v]of Object.
 const btn=(text,fn,primary)=>el('button',{type:'button',style:'font:inherit;padding:8px 14px;border-radius:8px;cursor:pointer;border:1px solid '+(primary?'#0E7C86':'#C3CED7')+';background:'+(primary?'#0E7C86':'#FFFFFF')+';color:'+(primary?'#FFFFFF':'#0F2231'),onclick:fn,text});
 const status=el('div',{style:'margin:8px 0;color:#5A6B78'});const body=el('div');
 box.append(el('div',{style:'display:flex;justify-content:space-between;align-items:center;gap:10px'},el('b',{style:'font-size:16px',text:M.title}),btn(M.close,()=>box.remove())),el('div',{style:'font-size:12px;color:#B45309;margin:4px 0 8px',text:M.mode}),status,body);document.body.append(box);
-let engineers=[],rows=[],chosen=new Set(JSON.parse(localStorage.getItem('afaqy-assign-chosen')||'[]'));
+let engineers=[],rows=[],chosen=new Set(JSON.parse(localStorage.getItem('afaqy-assign-chosen')||'[]'));const DEF=${JSON.stringify(defaultNames.map((n) => String(n).trim().toLowerCase()))};
 const say=t=>{status.textContent=t};
 const readAll=async()=>{say(M.loading);engineers=((await post('AfterSales/GetAllAfterSalesEngineers')).data||[]).map(e=>({id:String(e.id),name:e.nameEn||e.nameAr||String(e.id)}));
-rows=[];let size=500;for(let pg=0;pg<100;pg++){const R=await post('AfterSales/GetAfterSalesRequestGrid',{isSearchFilter:false,searchKey:'',search:{},pageSize:size,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const d=R.data||{};const arr=d.data||[];if(pg===0&&d.pageSize&&d.pageSize<size)size=d.pageSize;for(const r of arr)if(String(r.branchCode)==='2')rows.push({id:String(r.customerId??r.id),have:(r.afterSalesManIds||[]).map(String),devices:+r.connectedDevices||0});if(!arr.length||(pg+1)*size>=(d.listCount||0))break;await wait(200)}say('')};
+if(!chosen.size&&DEF.length)for(const e of engineers)if(DEF.includes(String(e.name).trim().toLowerCase()))chosen.add(e.id);rows=[];let size=500;for(let pg=0;pg<100;pg++){const R=await post('AfterSales/GetAfterSalesRequestGrid',{isSearchFilter:false,searchKey:'',search:{},pageSize:size,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const d=R.data||{};const arr=d.data||[];if(pg===0&&d.pageSize&&d.pageSize<size)size=d.pageSize;for(const r of arr)if(String(r.branchCode)==='2')rows.push({id:String(r.customerId??r.id),have:(r.afterSalesManIds||[]).map(String),devices:+r.connectedDevices||0});if(!arr.length||(pg+1)*size>=(d.listCount||0))break;await wait(200)}say('')};
 const need=()=>{const want=[...chosen];return rows.filter(r=>want.some(w=>!r.have.includes(w)))};
 const union=r=>[...new Set([...r.have,...chosen])];
 let logRows=[];
@@ -1568,6 +1568,11 @@ export function mergeRoster(repo, device) {
 }
 export const positionOf = (roster, id, lang = 'ar') => { const p = roster && roster.people && roster.people[String(id)]; return p ? ((lang === 'en' && p.positionEn) || p.position || '') : ''; };
 export const leaderOf = (roster, id) => { const p = roster && roster.people && roster.people[String(id)]; return p && p.leaderId ? p.leaderId : null; };
+export function descendantsOf(roster, rootId) {
+  const out = new Set(), queue = [String(rootId)];
+  while (queue.length) { const id = queue.shift(); for (const k of reportsOf(roster, id)) if (!out.has(k) && k !== String(rootId)) { out.add(k); queue.push(k); } }
+  return [...out];
+}
 export const reportsOf = (roster, leaderId) => Object.entries((roster && roster.people) || {}).filter(([, p]) => p.leaderId === String(leaderId)).map(([id]) => id);
 
 /** Parts of a whole as donut segments: each gets its share, and the SVG dash pair for a circle of radius r. */
@@ -1641,7 +1646,7 @@ export function scopeOf(me, roster = null) {
   const def = defaultTeam(me.people, me.tasks).filter((id) => visible.includes(id));
   const team = def.length > 1 ? def : visible;
   const byMyafaqy = me.people.filter((p) => p.below && visible.includes(p.id)).map((p) => p.id);
-  const byRoster = reportsOf(roster, me.user.id).filter((id) => visible.includes(id) && id !== me.user.id);
+  const byRoster = descendantsOf(roster, me.user.id).filter((id) => visible.includes(id) && id !== me.user.id);
   const below = [...new Set([...byMyafaqy, ...byRoster])];
   return { visible, others, team, below };
 }

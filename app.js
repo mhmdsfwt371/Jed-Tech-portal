@@ -613,7 +613,9 @@ function renderTeam() {
   const leaderSelect = (id) => el('select', { onchange: (e) => save(id, { leaderId: e.target.value || null }) },
     el('option', { value: '', text: t('team_no_leader'), selected: !leaderOf(ro, id) }),
     people.filter((p) => p.id !== id).map((p) => el('option', { value: p.id, text: nameOf(p, lang) || p.id, selected: leaderOf(ro, id) === p.id })));
-  const ab = buildAssignBookmarklet(lang);
+  // preselect the team's after-sales people by name (names stay on this device; the panel matches them in myafaqy's own list)
+  const afterSalesNames = Object.entries(ro.people).filter(([, x]) => /after-sales/i.test(x.positionEn || '')).map(([id]) => (known.get(id) || {}).nameEn).filter(Boolean);
+  const ab = buildAssignBookmarklet(lang, afterSalesNames);
   set(body,
     el('section', { class: 'assign-box' },
       el('h2', { text: t('assign_h') }),

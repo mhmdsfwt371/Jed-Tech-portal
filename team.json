@@ -1,1 +1,58 @@
-{ "v": 1, "schema": "afaqy-team/v1", "people": {} }
+{
+  "v": 1,
+  "schema": "afaqy-team/v1",
+  "people": {
+    "70": {
+      "position": "المدير التقني — المنطقة الغربية",
+      "positionEn": "Western Technical Manager"
+    },
+    "91": {
+      "leaderId": "70"
+    },
+    "124": {
+      "position": "قائد فريق ما بعد البيع",
+      "positionEn": "After-sales team leader",
+      "leaderId": "91"
+    },
+    "343": {
+      "position": "مهندس ما بعد البيع",
+      "positionEn": "After-sales engineer",
+      "leaderId": "124"
+    },
+    "344": {
+      "position": "مهندس ما بعد البيع",
+      "positionEn": "After-sales engineer",
+      "leaderId": "124"
+    },
+    "350": {
+      "position": "مهندس ما بعد البيع",
+      "positionEn": "After-sales engineer",
+      "leaderId": "124"
+    },
+    "387": {
+      "position": "مهندس ما بعد البيع",
+      "positionEn": "After-sales engineer",
+      "leaderId": "124"
+    },
+    "599": {
+      "position": "مهندس ما بعد البيع",
+      "positionEn": "After-sales engineer",
+      "leaderId": "124"
+    },
+    "676": {
+      "position": "مهندس ما بعد البيع",
+      "positionEn": "After-sales engineer",
+      "leaderId": "124"
+    },
+    "706": {
+      "position": "مهندس ما بعد البيع",
+      "positionEn": "After-sales engineer",
+      "leaderId": "124"
+    },
+    "707": {
+      "position": "مهندس ما بعد البيع",
+      "positionEn": "After-sales engineer",
+      "leaderId": "124"
+    }
+  }
+}

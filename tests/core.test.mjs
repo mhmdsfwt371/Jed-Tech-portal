@@ -5,7 +5,7 @@ import {
   factor1, creditOf, GROUP, formatHours, formatRate, sampleDataset, saudiToday, ymd,
   saudiBoundsZ, toIso, saudiDay, peopleOf, defaultTeam, nameOf, EMAIL_MODULE, SCHEMAS,
   buildBookmarklet, parseMe, myProfile, ME_SCHEMA, parseMePayload, profileMonths, monthWindows, scopeOf, ME_SCHEMA_V2, upgradeMe,
-  parseRoster, mergeRoster, positionOf, leaderOf, reportsOf, donutParts, periodWindows, teamAlerts, activityTotals,
+  parseRoster, mergeRoster, positionOf, leaderOf, reportsOf, donutParts, periodWindows, teamAlerts, activityTotals, descendantsOf,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
@@ -429,6 +429,15 @@ test('activity log: per person within the period and team; descriptions and name
   assert.deepEqual(ac.people.map((p) => [p.id, p.activities, p.customers, p.withTask]), [['70', 2, 2, 1], ['124', 1, 1, 0]], 'the outsider 999 and the December row (outside the range) are left out');
   assert.deepEqual(ac.total.byStatus, { Done: 2, Open: 1 }); assert.deepEqual(ac.statuses.sort(), ['Done', 'Open']);
   assert.equal(activityTotals(r).people.length, 3, 'no team: everyone');
+});
+
+test('hierarchy: a manager sees every level below — and a loop in the file cannot hang it', () => {
+  const r = parseRoster({ people: { 91: { leaderId: '70' }, 124: { leaderId: '91' }, 343: { leaderId: '124' }, 344: { leaderId: '124' } } });
+  assert.deepEqual(descendantsOf(r, '70').sort(), ['124', '343', '344', '91']);
+  assert.deepEqual(descendantsOf(r, '124').sort(), ['343', '344']);
+  assert.deepEqual(descendantsOf(r, '343'), []);
+  const loop = parseRoster({ people: { 1: { leaderId: '2' }, 2: { leaderId: '1' } } });
+  assert.deepEqual(descendantsOf(loop, '1'), ['2']);
 });
 
 test('formatting', () => {
