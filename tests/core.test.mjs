@@ -6,6 +6,7 @@ import {
   saudiBoundsZ, toIso, saudiDay, peopleOf, defaultTeam, nameOf, EMAIL_MODULE, SCHEMAS,
   buildBookmarklet, parseMe, myProfile, ME_SCHEMA, parseMePayload, profileMonths, monthWindows, scopeOf, ME_SCHEMA_V2, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, reportsOf, donutParts, periodWindows, teamAlerts, activityTotals, descendantsOf,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
@@ -446,6 +447,25 @@ test('Factor 1: a team member with no tasks still gets a row of zeros — nothin
   const z = f.people.find((r) => r.id === 'Z');
   assert.ok(z, 'Z is listed'); assert.equal(z.done, 0); assert.equal(z.assigned, 0);
   assert.equal(f.team.done, 1);
+});
+
+test('weights: the type key is the English part; points = done × type weight + Done activities × category weight', () => {
+  assert.equal(typeKey('WASL Link | الربط مع وصل'), 'wasl link');
+  assert.equal(typeKey('التشييك على كونفجريشن الاجهزة | check for devices config.'), 'check for devices config.');
+  assert.equal(typeKey('Manual Task'), 'manual task');
+  const wt = parseWeights({ default: 1, tasks: { 'WASL Link': { w: 3, tier: 'integration', team: 'aftersales' }, 'Manual Task': { w: 1 }, bad: { w: 99 } }, activities: { 'API Issues': 3 } });
+  assert.equal(wt.tasks.bad, undefined, 'out-of-range weights are dropped');
+  assert.equal(taskWeight(wt, 'Unknown Type'), 1, 'unknown types take the default');
+  const T = (id, a, type, state, done) => ({ id, assigneeId: a, type, state, createdAt: '2026-10-02T08:00:00Z', completedAt: done });
+  const tasks = [T('1', 'A', 'WASL Link | الربط مع وصل', 'done', '2026-10-05T08:00:00Z'), T('2', 'A', 'Manual Task', 'done', '2026-10-06T08:00:00Z'),
+    T('3', 'A', 'WASL Link', 'open', null), T('4', 'A', 'WASL Link', 'done', '2026-11-05T08:00:00Z'), T('5', 'B', 'Manual Task', 'cancelled', null)];
+  const acts = [{ createdById: 'A', category: 'API Issues', status: 'Done', createdAt: '2026-10-07T08:00:00Z' }, { createdById: 'A', category: 'API Issues', status: 'Open', createdAt: '2026-10-07T08:00:00Z' }];
+  const r = weightedPoints(tasks, acts, wt, { range: { from: '2026-10-01', to: '2026-10-29' }, team: ['A', 'B'] });
+  const a = r.byId.get('A');
+  assert.equal(a.taskPoints, 4, 'WASL 3 + manual 1; open and out-of-range excluded'); assert.equal(a.activityPoints, 3, 'only the Done activity');
+  assert.equal(r.byId.get('B').total, 0, 'a cancelled task earns nothing'); assert.equal(r.total, 7);
+  const m = mergeWeights({ tasks: { 'Manual Task': { w: 1 } } }, { tasks: { 'Manual Task': { w: 2 } } });
+  assert.equal(taskWeight(m, 'Manual Task'), 2, 'the device wins');
 });
 
 test('formatting', () => {

@@ -263,6 +263,54 @@ export const STRINGS = {
     f4_zero: 'لا أنشطة مع العملاء مسجّلة في هذه الفترة لأي أحد.',
     kpi_strip_note: 'المنجزة: ما أُغلق داخل الفترة، حتى لو أُنشئ قبلها — لذلك قد تزيد على المسندة. المسندة: ما أُنشئ داخل الفترة. نسبة الإنجاز: من المسندة، كم أُغلق. المفتوح الآن: ما زال مفتوحًا لحظة السحب.',
     team_by_myafaqy: 'فريق كما في ماي أفاقي:',
+    nav_weights: 'الأوزان',
+    weights_sub: 'نقاط كل نوع مهمة وكل نشاط مع العملاء — بمعايير معلنة، ويمكن تعديلها.',
+    g_weights_h: 'الأوزان — نقاط كل نوع من العمل',
+    g_weights_b: 'لكل نوع مهمة في ماي أفاقي وزن، ولكل تصنيف نشاط مع العملاء وزن. المهمة المنجزة في الفترة تُحسب لصاحبها بوزن نوعها، والنشاط يُحسب بوزن تصنيفه حين يصير «Done». الأوزان أربع فئات معلنة: ١ إجراء إداري سريع، ٢ تعامل مع العميل أو تشخيص، ٣ ربط بجهة خارجية أو تنسيق ميداني، ٥ عمل متعدد المراحل. النقاط تظهر بجانب عدد المنجزة في لوحة المؤشرات ولا تحل محله. يمكن تغيير وزن أي نوع من القائمة؛ التغيير يبقى على هذا الجهاز، ولكي يعتمده الجميع يُنزَّل «weights.json» ويوضع في المستودع. الأوزان تُراجع كل ربع بالبيانات.',
+    tier_admin: 'إجراء إداري سريع',
+    tier_admin_why: 'بلا تشخيص ولا طرف خارجي: إظهار مركبات، تفعيل، بيانات دخول، مهمة يدوية.',
+    tier_customer: 'تعامل مع العميل أو تشخيص',
+    tier_customer_why: 'رد على العميل، بلاغ صيانة، فحص كاميرات، مشكلة في التطبيق، استعلام ربط.',
+    tier_integration: 'ربط بجهة خارجية أو تنسيق ميداني',
+    tier_integration_why: 'وصل، مدينتي، رافد، نقابة، إيقاف بزيارة فني، فحص كونفيجريشن الأجهزة، قراءات CAN.',
+    tier_multistage: 'عمل متعدد المراحل',
+    tier_multistage_why: 'تدريب عميل، نقل أجهزة بين مركبات — تحضير وتنسيق وتنفيذ ومتابعة.',
+    tier_none: 'بلا فئة — الوزن الافتراضي',
+    wteam_aftersales: 'ما بعد البيع',
+    wteam_rd: 'البحث والتطوير',
+    wteam_both: 'الفريقان',
+    wteam_other: 'فرق أخرى',
+    weights_rules: 'قواعد: النقاط بجانب العدد لا بدله · الفئة والسبب معلنان لكل نوع · المهام المسجّلة للنفس تبقى ظاهرة · مراجعة كل ربع بالبيانات · أي تعديل يُعتمد بملف «weights.json» في المستودع.',
+    weights_download: 'تنزيل weights.json',
+    weights_upload: 'رفع weights.json',
+    weights_reset: 'العودة لأوزان المستودع',
+    weights_reviewed: 'آخر مراجعة: {d}',
+    weights_loaded: 'وصل ملف الأوزان.',
+    weights_tasks_h: 'أوزان أنواع المهام',
+    weights_acts_h: 'أوزان أنشطة العملاء',
+    w_col_type: 'نوع المهمة',
+    w_col_team: 'الفريق',
+    w_col_tier: 'الفئة',
+    w_col_n: 'عدد آخر فترة',
+    w_col_weight: 'الوزن',
+    w_col_points: 'النقاط',
+    w_col_category: 'تصنيف النشاط',
+    weights_seen_note: 'الأعداد من أحدث فترة مرفوعة ({range}). نوع بلا وزن تظهر بجانبه نقطة ويأخذ الوزن الافتراضي.',
+    col_points: 'النقاط الموزونة',
+    kpi_sort_points: 'بالنقاط',
+    help_weights_tasks: 'كل صف نوع مهمة كما يسمّيه ماي أفاقي، وفريقه، وفئته، وكم مرة جاء في آخر فترة، ووزنه، ونقاطه. غيّر الوزن من القائمة فتتغير النقاط في اللوحة فورًا. التغيير على هذا الجهاز حتى يُرفع ملف الأوزان للمستودع.',
+    help_weights_acts: 'أنشطة العملاء تُسجَّل في ماي أفاقي من «حسابات ما بعد البيع ← Add Ticket». النشاط يُحسب بوزن تصنيفه حين تصير حالته «Done» فقط.',
+    help_points: 'النقاط الموزونة = مجموع (المهام المنجزة في الفترة × وزن نوعها) + (الأنشطة المنجزة مع العملاء × وزن تصنيفها). الأوزان وسببها في صفحة «الأوزان».',
+    help_f3: 'من لوحة «ما بعد البيع» في ماي أفاقي لفرع جدة: لكل موظف تذاكره المفتوحة والمعلّقة والمنجزة للفترة. يأتي مع ملف التقارير — إشارة المدير تسحبه تلقائيًّا.',
+    help_f4: 'ما يسجّله كل مهندس مع العميل حين لا يأتي العمل كمهمة: عدد الأنشطة، والعملاء المختلفون، وكم صار مهمة، وتوزيعها بالحالة والتصنيف. إن لم يسجّل الفريق شيئًا يقولها صراحةً.',
+    help_assign: 'لوحة تُفتح داخل ماي أفاقي بدخولك: تختار مهندسي ما بعد البيع في جدة فيُضافون على كل حسابات جدة، وتعلّم على من غادر فيُزال. تجربة على عشرة أولًا بجدول قبل/بعد، ثم الباقي، ثم سجل. لا يُحذف أحد إلا من تعلّم عليه بنفسك.',
+    help_roster: 'اكتب منصب كل شخص واختر من يتبع له. يُحفظ بأرقام ماي أفاقي لا بالأسماء. يظهر المنصب في البطاقات والجداول، ومن يُكتب قائدًا يرى من تحته — بكل المستويات — في «فريقي».',
+    install_app: 'تثبيت التطبيق',
+    install_done: 'ثُبّت التطبيق — تجده على الشاشة الرئيسية.',
+    install_ios: 'على الآيفون والآيباد من سفاري: اضغط زر المشاركة (المربع والسهم) أسفل الشاشة، ثم «إضافة إلى الشاشة الرئيسية»، ثم «إضافة». تفتح البوابة بعدها كتطبيق مستقل وتتحدّث وحدها.',
+    install_android: 'على أندرويد من كروم: افتح القائمة (النقاط الثلاث أعلى الشاشة) واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية». تفتح البوابة بعدها كتطبيق مستقل وتتحدّث وحدها.',
+    install_desktop: 'على ويندوز من كروم أو إيدج: اضغط أيقونة التثبيت في شريط العنوان (شاشة بسهم)، أو من القائمة «تثبيت بوابة أفاقي». تظهر في قائمة ابدأ وتفتح كنافذة مستقلة وتتحدّث وحدها.',
+    updated_to: 'تحدّثت البوابة إلى v{v} — اضغط رقم النسخة أسفل القائمة لترى الجديد.',
   },
   en: {
     brand: 'Afaqy', portal: 'Technical team portal — Jeddah', nav_data: 'Data', nav_kpi: 'KPIs',
@@ -517,6 +565,54 @@ export const STRINGS = {
     f4_zero: 'No activities with customers were logged in this period by anyone.',
     kpi_strip_note: 'Completed: closed inside the period, even if created before it — so it can exceed Assigned. Assigned: created inside the period. Completion rate: of the assigned, how many were closed. Open now: still open at the moment of the pull.',
     team_by_myafaqy: 'A team as myafaqy lists it:',
+    nav_weights: 'Weights',
+    weights_sub: 'Points for each task type and each activity with customers — by stated criteria, and adjustable.',
+    g_weights_h: 'Weights — points for each kind of work',
+    g_weights_b: 'Each task type in myafaqy has a weight, and so does each category of activity with customers. A task completed in the period counts for its assignee at its type’s weight; an activity counts at its category’s weight once it is “Done”. The weights fall into four stated tiers: 1 a quick administrative action, 2 dealing with the customer or diagnosing, 3 integration with an outside party or field coordination, 5 multi-stage work. The points show beside the completed count on the KPI board and never replace it. Any type’s weight can be changed from the list; the change stays on this device, and for everyone to use it, “weights.json” is downloaded and placed in the repository. The weights are reviewed every quarter against the data.',
+    tier_admin: 'Quick administrative action',
+    tier_admin_why: 'No diagnosis and no outside party: showing units, activation, sign-in details, a manual task.',
+    tier_customer: 'Dealing with the customer or diagnosing',
+    tier_customer_why: 'Replying to the customer, a maintenance report, checking cameras, an app issue, an integration inquiry.',
+    tier_integration: 'Integration with an outside party or field coordination',
+    tier_integration_why: 'WASL, Madinty, Rafed, Naqaba, a stop with a technician visit, checking device configuration, CAN readings.',
+    tier_multistage: 'Multi-stage work',
+    tier_multistage_why: 'Customer training, moving devices between vehicles — preparation, coordination, delivery and follow-up.',
+    tier_none: 'No tier — the default weight',
+    wteam_aftersales: 'After-sales',
+    wteam_rd: 'R&D',
+    wteam_both: 'Both teams',
+    wteam_other: 'Other teams',
+    weights_rules: 'Rules: points beside the count, never instead of it · each type’s tier and reason are stated · self-logged tasks stay visible · a review every quarter against the data · any change is adopted through “weights.json” in the repository.',
+    weights_download: 'Download weights.json',
+    weights_upload: 'Upload weights.json',
+    weights_reset: 'Back to the repository’s weights',
+    weights_reviewed: 'Last reviewed: {d}',
+    weights_loaded: 'The weights file arrived.',
+    weights_tasks_h: 'Weights of task types',
+    weights_acts_h: 'Weights of customer activities',
+    w_col_type: 'Task type',
+    w_col_team: 'Team',
+    w_col_tier: 'Tier',
+    w_col_n: 'Count, latest period',
+    w_col_weight: 'Weight',
+    w_col_points: 'Points',
+    w_col_category: 'Activity category',
+    weights_seen_note: 'Counts are from the latest uploaded period ({range}). A type without a weight shows a dot and takes the default weight.',
+    col_points: 'Weighted points',
+    kpi_sort_points: 'By points',
+    help_weights_tasks: 'Each row is a task type as myafaqy names it, its team, its tier, how often it came in the latest period, its weight and its points. Change the weight from the list and the board’s points change at once. The change stays on this device until the weights file goes into the repository.',
+    help_weights_acts: 'Customer activities are logged in myafaqy from “After Sales Accounts → Add Ticket”. An activity counts at its category’s weight only once its status is “Done”.',
+    help_points: 'Weighted points = the sum of (tasks completed in the period × their type’s weight) + (activities with customers done × their category’s weight). The weights and their reasons are on the “Weights” page.',
+    help_f3: 'From myafaqy’s “After Sales Board” for the Jeddah branch: each employee’s open, pending and done tickets for the period. It comes with the reports file — the manager bookmark pulls it automatically.',
+    help_f4: 'What each engineer logs with a customer when the work does not come as a task: the number of activities, the distinct customers, how many became tasks, and their spread by status and category. If the team logged nothing, it says so plainly.',
+    help_assign: 'A panel that opens inside myafaqy with your sign-in: choose Jeddah’s after-sales engineers and they are added to every Jeddah account; tick whoever left and they are removed. A pilot on ten first with a before/after table, then the rest, then a log. Nobody is removed unless you tick them yourself.',
+    help_roster: 'Write each person’s position and choose who they report to. It is saved by myafaqy ids, not names. The position shows on cards and tables, and whoever is named a leader sees everyone below them — at every level — in “My team”.',
+    install_app: 'Install the app',
+    install_done: 'The app is installed — you will find it on your home screen.',
+    install_ios: 'On iPhone and iPad, from Safari: press the Share button (the square with the arrow) at the bottom, then “Add to Home Screen”, then “Add”. The portal then opens as its own app and updates itself.',
+    install_android: 'On Android, from Chrome: open the menu (the three dots at the top) and choose “Install app” or “Add to Home screen”. The portal then opens as its own app and updates itself.',
+    install_desktop: 'On Windows, from Chrome or Edge: press the install icon in the address bar (a screen with an arrow), or from the menu “Install the Afaqy portal”. It appears in the Start menu, opens in its own window and updates itself.',
+    updated_to: 'The portal updated itself to v{v} — press the version number at the bottom of the menu to see what is new.',
   },
   ur: {
     brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ', nav_data: 'ڈیٹا', nav_kpi: 'کارکردگی کے اشاریے',
@@ -771,11 +867,59 @@ export const STRINGS = {
     f4_zero: 'اس مدت میں کسی نے بھی گاہکوں کے ساتھ کوئی سرگرمی درج نہیں کی۔',
     kpi_strip_note: 'مکمل: مدت کے اندر بند ہوئے، چاہے پہلے بنے ہوں — اس لیے تفویض شدہ سے زیادہ ہو سکتے ہیں۔ تفویض شدہ: مدت کے اندر بنے۔ تکمیل کی شرح: تفویض شدہ میں سے کتنے بند ہوئے۔ ابھی کھلے: کھینچنے کے لمحے بھی کھلے۔',
     team_by_myafaqy: 'مائی آفاقی کی ٹیم:',
+    nav_weights: 'اوزان',
+    weights_sub: 'ہر ٹاسک کی قسم اور گاہکوں کے ساتھ ہر سرگرمی کے پوائنٹس — واضح معیارات پر، اور قابلِ ترمیم۔',
+    g_weights_h: 'اوزان — ہر قسم کے کام کے پوائنٹس',
+    g_weights_b: 'مائی آفاقی میں ہر ٹاسک کی قسم کا ایک وزن ہے، اور گاہکوں کے ساتھ سرگرمی کے ہر زمرے کا بھی۔ مدت میں مکمل ہونے والا ٹاسک اپنے ذمہ دار کے لیے اپنی قسم کے وزن پر گنا جاتا ہے؛ سرگرمی «Done» ہونے پر اپنے زمرے کے وزن پر گنی جاتی ہے۔ اوزان چار واضح درجوں میں ہیں: ۱ تیز انتظامی کام، ۲ گاہک سے معاملہ یا تشخیص، ۳ بیرونی فریق سے ربط یا فیلڈ کوآرڈینیشن، ۵ کثیر مرحلہ کام۔ پوائنٹس اشاریوں کے بورڈ پر مکمل کی تعداد کے ساتھ دکھتے ہیں اور اس کی جگہ نہیں لیتے۔ کسی بھی قسم کا وزن فہرست سے بدلا جا سکتا ہے؛ تبدیلی اسی آلے پر رہتی ہے، اور سب کے لیے «weights.json» ڈاؤن لوڈ کر کے ریپوزٹری میں رکھا جاتا ہے۔ اوزان ہر سہ ماہی ڈیٹا کے ساتھ دیکھے جاتے ہیں۔',
+    tier_admin: 'تیز انتظامی کام',
+    tier_admin_why: 'نہ تشخیص نہ بیرونی فریق: گاڑیاں دکھانا، فعال کرنا، لاگ اِن کی معلومات، دستی ٹاسک۔',
+    tier_customer: 'گاہک سے معاملہ یا تشخیص',
+    tier_customer_why: 'گاہک کو جواب، مرمت کی شکایت، کیمروں کی جانچ، ایپ کا مسئلہ، ربط کی معلومات۔',
+    tier_integration: 'بیرونی فریق سے ربط یا فیلڈ کوآرڈینیشن',
+    tier_integration_why: 'وصل، مدینتی، رافد، نقابہ، ٹیکنیشن کے دورے کے ساتھ بندش، آلات کی کنفیگریشن کی جانچ، CAN ریڈنگز۔',
+    tier_multistage: 'کثیر مرحلہ کام',
+    tier_multistage_why: 'گاہک کی تربیت، گاڑیوں کے درمیان آلات کی منتقلی — تیاری، کوآرڈینیشن، تکمیل اور پیروی۔',
+    tier_none: 'کوئی درجہ نہیں — طے شدہ وزن',
+    wteam_aftersales: 'آفٹر سیلز',
+    wteam_rd: 'تحقیق و ترقی',
+    wteam_both: 'دونوں ٹیمیں',
+    wteam_other: 'دوسری ٹیمیں',
+    weights_rules: 'اصول: پوائنٹس تعداد کے ساتھ، اس کی جگہ نہیں · ہر قسم کا درجہ اور وجہ واضح · خود درج ٹاسک نظر آتے رہتے ہیں · ہر سہ ماہی ڈیٹا کے ساتھ جائزہ · کوئی بھی تبدیلی ریپوزٹری میں «weights.json» سے منظور ہوتی ہے۔',
+    weights_download: 'weights.json ڈاؤن لوڈ کریں',
+    weights_upload: 'weights.json اپ لوڈ کریں',
+    weights_reset: 'ریپوزٹری کے اوزان پر واپس',
+    weights_reviewed: 'آخری جائزہ: {d}',
+    weights_loaded: 'اوزان کی فائل آ گئی۔',
+    weights_tasks_h: 'ٹاسک کی اقسام کے اوزان',
+    weights_acts_h: 'گاہکوں کی سرگرمیوں کے اوزان',
+    w_col_type: 'ٹاسک کی قسم',
+    w_col_team: 'ٹیم',
+    w_col_tier: 'درجہ',
+    w_col_n: 'آخری مدت کی تعداد',
+    w_col_weight: 'وزن',
+    w_col_points: 'پوائنٹس',
+    w_col_category: 'سرگرمی کا زمرہ',
+    weights_seen_note: 'تعداد آخری اپ لوڈ شدہ مدت ({range}) سے ہے۔ جس قسم کا وزن نہ ہو اس کے ساتھ نقطہ دکھتا ہے اور طے شدہ وزن لگتا ہے۔',
+    col_points: 'وزنی پوائنٹس',
+    kpi_sort_points: 'پوائنٹس کے مطابق',
+    help_weights_tasks: 'ہر قطار مائی آفاقی کے نام سے ایک ٹاسک کی قسم ہے، اس کی ٹیم، اس کا درجہ، آخری مدت میں کتنی بار آئی، اس کا وزن اور پوائنٹس۔ فہرست سے وزن بدلیں تو بورڈ کے پوائنٹس فوراً بدل جاتے ہیں۔ تبدیلی اسی آلے پر رہتی ہے جب تک اوزان کی فائل ریپوزٹری میں نہ جائے۔',
+    help_weights_acts: 'گاہکوں کی سرگرمیاں مائی آفاقی میں «After Sales Accounts ← Add Ticket» سے درج ہوتی ہیں۔ سرگرمی اپنے زمرے کے وزن پر صرف تب گنی جاتی ہے جب اس کی حالت «Done» ہو۔',
+    help_points: 'وزنی پوائنٹس = (مدت میں مکمل ٹاسک × ان کی قسم کا وزن) + (گاہکوں کے ساتھ مکمل سرگرمیاں × ان کے زمرے کا وزن) کا مجموعہ۔ اوزان اور ان کی وجہ «اوزان» کے صفحے پر ہیں۔',
+    help_f3: 'جدہ برانچ کے لیے مائی آفاقی کے «After Sales Board» سے: مدت کے لیے ہر ملازم کے کھلے، زیرِ التوا اور مکمل ٹکٹ۔ یہ رپورٹس فائل کے ساتھ آتا ہے — مینیجر بک مارک اسے خود کھینچتا ہے۔',
+    help_f4: 'جو ہر انجینئر گاہک کے ساتھ درج کرتا ہے جب کام ٹاسک کے طور پر نہ آئے: سرگرمیوں کی تعداد، مختلف گاہک، کتنی ٹاسک بنیں، اور حالت اور زمرے کی تقسیم۔ اگر ٹیم نے کچھ درج نہ کیا ہو تو یہ صاف کہتا ہے۔',
+    help_assign: 'ایک پینل جو آپ کے لاگ اِن سے مائی آفاقی کے اندر کھلتا ہے: جدہ کے آفٹر سیلز انجینئرز چنیں تو وہ جدہ کے ہر اکاؤنٹ میں شامل ہو جاتے ہیں؛ جو چلا گیا اسے نشان لگائیں تو ہٹ جاتا ہے۔ پہلے دس پر آزمائش پہلے/بعد کے جدول کے ساتھ، پھر باقی، پھر لاگ۔ کوئی نہیں ہٹتا جب تک آپ خود نشان نہ لگائیں۔',
+    help_roster: 'ہر فرد کا عہدہ لکھیں اور چنیں کہ وہ کس کے ماتحت ہے۔ یہ ناموں سے نہیں، مائی آفاقی کی شناختوں سے محفوظ ہوتا ہے۔ عہدہ کارڈز اور جدولوں میں دکھتا ہے، اور جسے سربراہ لکھا جائے وہ «میری ٹیم» میں اپنے نیچے سب کو — ہر سطح پر — دیکھتا ہے۔',
+    install_app: 'ایپ انسٹال کریں',
+    install_done: 'ایپ انسٹال ہو گئی — آپ اسے ہوم اسکرین پر پائیں گے۔',
+    install_ios: 'آئی فون اور آئی پیڈ پر، سفاری سے: نیچے شیئر بٹن (تیر والا مربع) دبائیں، پھر «Add to Home Screen»، پھر «Add»۔ اس کے بعد پورٹل الگ ایپ کی طرح کھلتا ہے اور خود تازہ ہوتا ہے۔',
+    install_android: 'اینڈرائیڈ پر، کروم سے: مینو (اوپر تین نقطے) کھولیں اور «Install app» یا «Add to Home screen» چنیں۔ اس کے بعد پورٹل الگ ایپ کی طرح کھلتا ہے اور خود تازہ ہوتا ہے۔',
+    install_desktop: 'ونڈوز پر، کروم یا ایج سے: ایڈریس بار میں انسٹال کا آئیکن (تیر والی اسکرین) دبائیں، یا مینو سے «Install». یہ اسٹارٹ مینو میں آتا ہے، الگ ونڈو میں کھلتا ہے اور خود تازہ ہوتا ہے۔',
+    updated_to: 'پورٹل خود v{v} پر تازہ ہو گیا — نیا دیکھنے کے لیے مینو کے نیچے ورژن نمبر دبائیں۔',
   },
 };
 
 // The user guide: one list, read by the page (Guide tab) and by scripts/build-manual.mjs, so they can never differ.
-export const GUIDE = [['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_team_h', 'g_team_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
+export const GUIDE = [['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_team_h', 'g_team_b'], ['g_weights_h', 'g_weights_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
 export const DEFINITIONS = ['def_1', 'def_2', 'def_3', 'def_4', 'def_5', 'def_6', 'def_7', 'def_8', 'def_9', 'def_10'];
 
 export function t(lang, key, vars = {}) {
@@ -1595,6 +1739,59 @@ export function descendantsOf(roster, rootId) {
   return [...out];
 }
 export const reportsOf = (roster, leaderId) => Object.entries((roster && roster.people) || {}).filter(([, p]) => p.leaderId === String(leaderId)).map(([id]) => id);
+
+// ===================== weights: points per task type and per activity category (ADR-0019) =====================
+export const WEIGHTS_SCHEMA = 'afaqy-weights/v1';
+export const WEIGHT_STEPS = [0, 1, 2, 3, 5, 8];
+export const TIERS = ['admin', 'customer', 'integration', 'multistage'];
+/** A task type's key: its English part, lowercased — "WASL Link | الربط مع وصل" and "التشييك … | check for devices config." both work. */
+export function typeKey(name) {
+  const parts = String(name || '').split('|').map((x) => x.trim()).filter(Boolean);
+  const latin = parts.find((x) => /[a-z]/i.test(x)) || parts[0] || '';
+  return latin.toLowerCase().replace(/\s+/g, ' ').trim();
+}
+export function parseWeights(raw) {
+  const out = { v: 1, schema: WEIGHTS_SCHEMA, reviewed: '', default: 1, tasks: {}, activities: {} };
+  if (!raw || typeof raw !== 'object') return out;
+  const num = (w) => { const n = Number(w); return Number.isFinite(n) && n >= 0 && n <= 20 ? n : null; };
+  out.reviewed = String(raw.reviewed || '').slice(0, 10);
+  if (num(raw.default) != null) out.default = num(raw.default);
+  for (const [k, x] of Object.entries(raw.tasks || {})) {
+    const w = num(x && typeof x === 'object' ? x.w : x); if (w == null) continue;
+    out.tasks[typeKey(k)] = { w, tier: TIERS.includes(x && x.tier) ? x.tier : null, team: ['aftersales', 'rd', 'both'].includes(x && x.team) ? x.team : null };
+  }
+  for (const [k, x] of Object.entries(raw.activities || {})) { const w = num(x); if (w != null) out.activities[String(k).toLowerCase().trim()] = w; }
+  return out;
+}
+/** The device's own entries win over the repository's, type by type. */
+export function mergeWeights(repo, device) {
+  const a = parseWeights(repo), b = parseWeights(device);
+  return { ...a, default: device && device.default != null ? b.default : a.default, tasks: { ...a.tasks, ...b.tasks }, activities: { ...a.activities, ...b.activities }, reviewed: b.reviewed || a.reviewed };
+}
+export const taskWeight = (wt, typeName) => { const x = wt && wt.tasks[typeKey(typeName)]; return x ? x.w : (wt ? wt.default : 1); };
+export const activityWeight = (wt, category) => { const x = wt && wt.activities[String(category || '').toLowerCase().trim()]; return x != null ? x : (wt ? wt.default : 1); };
+/**
+ * Weighted points per person in a period: completed tasks (closed in the period, credited to the assignee, cancelled
+ * left out) × their type's weight, plus activities with customers marked Done in the period × their category's weight.
+ * The raw counts stay beside the points — points never replace them.
+ */
+export function weightedPoints(tasks, activities, wt, { range, team = null } = {}) {
+  const keep = team ? new Set(team) : null, by = new Map();
+  const row = (id) => { if (!by.has(id)) by.set(id, { id, taskPoints: 0, activityPoints: 0, tasks: 0, activities: 0, byType: {} }); return by.get(id); };
+  if (keep) for (const id of keep) row(id);
+  const inR = (iso) => { const d = saudiDay(iso); return d && (!range || (d >= range.from && d <= range.to)); };
+  for (const x of tasks || []) {
+    if (x.state !== 'done' || !x.assigneeId || !inR(x.completedAt) || (keep && !keep.has(x.assigneeId))) continue;
+    const w = taskWeight(wt, x.type), r = row(x.assigneeId), k = typeKey(x.type) || '—';
+    r.taskPoints += w; r.tasks++; (r.byType[k] = r.byType[k] || { n: 0, points: 0 }); r.byType[k].n++; r.byType[k].points += w;
+  }
+  for (const a of activities || []) {
+    if (!/^done$/i.test(a.status || '') || !a.createdById || !inR(a.createdAt) || (keep && !keep.has(a.createdById))) continue;
+    const r = row(a.createdById); r.activityPoints += activityWeight(wt, a.category); r.activities++;
+  }
+  const people = [...by.values()].map((r) => ({ ...r, total: r.taskPoints + r.activityPoints })).sort((a, b) => b.total - a.total);
+  return { people, total: people.reduce((s, r) => s + r.total, 0), byId: new Map(people.map((r) => [r.id, r])) };
+}
 
 /** Parts of a whole as donut segments: each gets its share, and the SVG dash pair for a circle of radius r. */
 export function donutParts(parts, r = 40) {

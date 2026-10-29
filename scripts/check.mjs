@@ -17,7 +17,7 @@ for (const f of ['core.js', 'app.js', 'config.js', 'sw.js', 'scripts/bump.mjs', 
 }
 
 // 2. The files every repository of ours carries.
-for (const f of ['README.md', 'CHANGELOG.md', 'AGENTS.md', 'CLAUDE.md', 'SECURITY.md', 'version.json', 'team.json', 'sw.js', 'manifest.webmanifest',
+for (const f of ['README.md', 'CHANGELOG.md', 'AGENTS.md', 'CLAUDE.md', 'SECURITY.md', 'version.json', 'team.json', 'weights.json', 'sw.js', 'manifest.webmanifest',
   '.nojekyll', 'docs/START-HERE.md', 'docs/data-format.md', 'docs/kpi-factors.md', 'docs/decisions/0000-template.md', 'release/next.json',
   'scripts/build-manual.mjs', 'docs/manual/README.md', 'docs/crm-api.md', 'scripts/check-links.mjs']) {
   if (!exists(f)) note(`missing ${f}`);
@@ -49,7 +49,7 @@ for (const [name, src] of [['index.html', html], ['app.js', appWithoutPro], ['co
   if (/firebase/i.test(src)) note(`${name}: Firebase is referenced — the portal runs without it`);
   if (/afaqy\.sa|afaqy\.pro\/|crmbackend/.test(src.replace(/https:\/\/afaqy\.pro\/'/g, ''))) note(`${name}: an Afaqy API address appeared — the portal never calls an Afaqy API`);
   const calls = [...src.matchAll(/fetch\(\s*([^,)]+)/g)].map((m) => m[1].trim());
-  for (const c of calls) if (!["'./version.json'", "'./team.json'"].includes(c)) note(`${name}: network call to ${c} — the only allowed reads are './version.json' and './team.json'`);
+  for (const c of calls) if (!["'./version.json'", "'./team.json'", "'./weights.json'"].includes(c)) note(`${name}: network call to ${c} — the only allowed reads are the site's own version.json, team.json and weights.json`);
 }
 
 // 5. The service worker stays inside this folder, so the other tools on the same domain are never taken over.
@@ -87,7 +87,7 @@ for (const [, f] of html.matchAll(/(?:src|href)="(assets\/[^"]+|manifest\.webman
 const views = [...html.matchAll(/<section id="view-(\w+)"/g)].map((m) => m[1]).filter((v) => v !== 'guide');
 const guideKeys = (core.match(/export const GUIDE = (\[[\s\S]*?\]);/) || [])[1] || '';
 // the module view is where a tool opens from the Tools page; the Tools section explains it
-const covers = { tools: 'g_tools_h', module: 'g_tools_h', me: 'g_me_h', pro: 'g_pro_h', data: 'g_data_h', kpi: 'g_kpi_h', team: 'g_team_h' };  // g_mgr_* lives on the data page
+const covers = { tools: 'g_tools_h', module: 'g_tools_h', me: 'g_me_h', pro: 'g_pro_h', data: 'g_data_h', kpi: 'g_kpi_h', team: 'g_team_h', weights: 'g_weights_h' };  // g_mgr_* lives on the data page
 for (const v of views) if (!covers[v] || !guideKeys.includes(covers[v])) note(`the guide has no section for the "${v}" page — add one before releasing it`);
 
 // 8. The three core tools stay first and point somewhere real.
@@ -289,6 +289,26 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   if (!/location\.hostname!=='myafaqy\.com'/.test(ab)) note('assignment panel: must refuse to run anywhere but myafaqy.com');
   if (!/btn\(M\.pilot,async\(\)=>/.test(ab) || !/btn\(M\.rest,async\(\)=>/.test(ab)) note('assignment panel: writes only happen behind the pilot and apply buttons');
   if (/location\.href=[^;]*tk|dl\([^)]*tk/.test(ab)) note('assignment panel: the token must never leave the page');
+}
+
+// 22. weights.json (ADR-0019): numbers 0–20 by task-type key and activity category; no names; every tier known.
+{
+  const wj = JSON.parse(read('weights.json'));
+  if (wj.schema !== 'afaqy-weights/v1') note('weights.json: schema must be afaqy-weights/v1');
+  for (const [k, x] of Object.entries(wj.tasks || {})) {
+    if (!(x && typeof x.w === 'number' && x.w >= 0 && x.w <= 20)) note(`weights.json: task "${k}" needs a weight 0–20`);
+    if (x && x.tier && !['admin', 'customer', 'integration', 'multistage'].includes(x.tier)) note(`weights.json: task "${k}" has an unknown tier`);
+    for (const f of Object.keys(x || {})) if (!['w', 'tier', 'team'].includes(f)) note(`weights.json: task "${k}" has field "${f}" — only w, tier, team`);
+  }
+  for (const [k, w] of Object.entries(wj.activities || {})) if (!(typeof w === 'number' && w >= 0 && w <= 20)) note(`weights.json: activity "${k}" needs a weight 0–20`);
+}
+// 23. Every "?" opens a defined explanation, and every page title carries one.
+{
+  const html = read('index.html'), app = read('app.js');
+  const keys = [...html.matchAll(/data-help="([a-z0-9_]+)"/g), ...app.matchAll(/helpQ\('([a-z0-9_]+)'/g)].map((m) => m[1]);
+  for (const k of new Set(keys)) for (const lang of LANGS) if (!STRINGS[lang][k]) note(`help "?": ${lang} has no text for ${k}`);
+  const heads = (html.match(/<div class="page-head">[\s\S]*?<\/div>/g) || []).filter((h) => !/g_title/.test(h));
+  for (const h of heads) if (!/class="help-q"/.test(h)) note(`help "?": a page title has no "?" — ${(h.match(/data-t="([a-z_]+)"[^>]*>[^<]*<\/h1>/) || [])[1] || 'unknown'}`);
 }
 
 // 18. The Afaqy PRO page (ADR-0011): one address, two read requests, and the password never kept.

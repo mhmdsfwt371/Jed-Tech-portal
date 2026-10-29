@@ -84,6 +84,7 @@
 | نوافذ الفترة والتنبيهات (القرار 0016) | `periodWindows()`، `teamAlerts()` |
 | سجل الأنشطة (القرار 0017) | `activityTotals()` |
 | لوحة التعيين (القرار 0018) | `buildAssignBookmarklet()` |
+| الأوزان (القرار 0019) | `typeKey()`، `parseWeights()`، `weightedPoints()` — والملف `weights.json` |
 | الوقت والفترات بتوقيت السعودية | `toIso()`، `saudiDay()`، `saudiBoundsZ()` |
 | الدليل ودليل المستخدم | `GUIDE` و`DEFINITIONS` ونصوص `g_*` في `core.js`، و`scripts/build-manual.mjs` |
 | ما الجديد وتنبيه النسخة الأحدث | `loadRelease()`، `openNews()` |

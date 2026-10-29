@@ -35,6 +35,7 @@
 | `docs/decisions/0016-profile-and-board-as-designed.md` | تنفيذ التصميم المعتمد: الأزرار والأشرطة والتنبيهات والأعمدة |
 | `docs/decisions/0017-activity-log-factor-4.md` | المؤشر الرابع — سجل الأنشطة، وطيّ نقاط الفنيين |
 | `docs/decisions/0018-assignment-panel-the-one-write.md` | لوحة التعيين — الكتابة الوحيدة، داخل ماي أفاقي |
+| `docs/decisions/0019-weights-install-auto-update-help.md` | الأوزان، التثبيت، التحديث التلقائي، علامات «؟» |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

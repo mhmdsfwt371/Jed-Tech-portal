@@ -17,6 +17,35 @@
 
 <!-- releases -->
 
+## v8.1 — 2026-10-29
+
+- الأوزان: لكل نوع مهمة ولكل تصنيف نشاط مع العملاء وزن بأربع فئات معلنة — ١ إداري سريع، ٢ تعامل مع العميل أو تشخيص، ٣ ربط بجهة خارجية أو تنسيق ميداني، ٥ عمل متعدد المراحل. «النقاط الموزونة» في لوحة المؤشرات بجانب العدد، والترتيب بها. صفحة «الأوزان» لتعديل أي وزن واعتماده بملف «weights.json».
+- تثبيت التطبيق على أندرويد وآيفون وويندوز من زر «تثبيت التطبيق» أسفل القائمة.
+- تحديث تلقائي: كل نسخة جديدة تصل وحدها وتعيد تحميل البوابة مرة واحدة — إلا إن كنت تكتب، فيظهر زر التحديث.
+- علامة «؟» بجانب كل صفحة وكل قسم رئيسي تشرح ما هو وكيف يُستخدم، بلغتك.
+
+<details><summary>English</summary>
+
+- Weights: every task type and every category of activity with customers has a weight in four stated tiers — 1 quick administrative, 2 dealing with the customer or diagnosing, 3 outside integration or field coordination, 5 multi-stage work. “Weighted points” on the KPI board beside the count, and ordering by them. A “Weights” page to change any weight and adopt it through “weights.json”.
+- Install the app on Android, iPhone and Windows from the “Install the app” button at the bottom of the menu.
+- Automatic updates: every new version arrives by itself and reloads the portal once — unless you are typing, in which case the update button appears.
+- A “?” beside every page and every main section explains what it is and how to use it, in your language.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اوزان: ہر ٹاسک کی قسم اور گاہکوں کے ساتھ سرگرمی کے ہر زمرے کا وزن چار واضح درجوں میں — ۱ تیز انتظامی، ۲ گاہک سے معاملہ یا تشخیص، ۳ بیرونی ربط یا فیلڈ کوآرڈینیشن، ۵ کثیر مرحلہ کام۔ اشاریوں کے بورڈ پر تعداد کے ساتھ «وزنی پوائنٹس»، اور ان کے مطابق ترتیب۔ «اوزان» کا صفحہ کسی بھی وزن کو بدلنے اور «weights.json» سے منظور کرنے کے لیے۔
+- مینو کے نیچے «ایپ انسٹال کریں» بٹن سے اینڈرائیڈ، آئی فون اور ونڈوز پر ایپ انسٹال کریں۔
+- خودکار تازہ کاری: ہر نیا ورژن خود آتا ہے اور پورٹل کو ایک بار دوبارہ لوڈ کرتا ہے — سوائے اس کے کہ آپ لکھ رہے ہوں، تب تازہ کاری کا بٹن آتا ہے۔
+- ہر صفحے اور ہر اہم حصے کے ساتھ «؟» بتاتا ہے کہ یہ کیا ہے اور کیسے استعمال ہوتا ہے، آپ کی زبان میں۔
+
+</div>
+</details>
+
+
 ## v8.0 — 2026-10-29
 
 - أزرار الفرق في لوحة المؤشرات: «الفريق المحسوب» صار فيه زر لكل فريق في جدة كما في ماي أفاقي — ما بعد البيع، البحث والتطوير، الفيديو تيليماتكس… — ضغطة واحدة تحوّل اللوحة كلها لذلك الفريق.

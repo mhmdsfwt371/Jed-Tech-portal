@@ -1,0 +1,150 @@
+{
+  "v": 1,
+  "schema": "afaqy-weights/v1",
+  "reviewed": "2026-10-29",
+  "default": 1,
+  "tiers": {
+    "admin": 1,
+    "customer": 2,
+    "integration": 3,
+    "multistage": 5
+  },
+  "tasks": {
+    "email customer activity": {
+      "w": 2,
+      "tier": "customer",
+      "team": "aftersales"
+    },
+    "manual task": {
+      "w": 1,
+      "tier": "admin",
+      "team": "aftersales"
+    },
+    "manual task - after sales": {
+      "w": 1,
+      "tier": "admin",
+      "team": "aftersales"
+    },
+    "account credentials": {
+      "w": 1,
+      "tier": "admin",
+      "team": "aftersales"
+    },
+    "view units": {
+      "w": 1,
+      "tier": "admin",
+      "team": "aftersales"
+    },
+    "client units list": {
+      "w": 1,
+      "tier": "admin",
+      "team": "aftersales"
+    },
+    "active": {
+      "w": 1,
+      "tier": "admin",
+      "team": "aftersales"
+    },
+    "inactive": {
+      "w": 1,
+      "tier": "admin",
+      "team": "aftersales"
+    },
+    "st without tech visit": {
+      "w": 1,
+      "tier": "admin",
+      "team": "aftersales"
+    },
+    "others": {
+      "w": 1,
+      "tier": "admin",
+      "team": "both"
+    },
+    "client inquiry": {
+      "w": 2,
+      "tier": "customer",
+      "team": "aftersales"
+    },
+    "mt request": {
+      "w": 2,
+      "tier": "customer",
+      "team": "aftersales"
+    },
+    "cameras checking": {
+      "w": 2,
+      "tier": "customer",
+      "team": "aftersales"
+    },
+    "mobile app issue": {
+      "w": 2,
+      "tier": "customer",
+      "team": "aftersales"
+    },
+    "wasl inquiry": {
+      "w": 2,
+      "tier": "customer",
+      "team": "aftersales"
+    },
+    "vss account creation": {
+      "w": 2,
+      "tier": "customer",
+      "team": "aftersales"
+    },
+    "wasl link": {
+      "w": 3,
+      "tier": "integration",
+      "team": "aftersales"
+    },
+    "madinty link": {
+      "w": 3,
+      "tier": "integration",
+      "team": "aftersales"
+    },
+    "rafed link": {
+      "w": 3,
+      "tier": "integration",
+      "team": "aftersales"
+    },
+    "naqaba link": {
+      "w": 3,
+      "tier": "integration",
+      "team": "aftersales"
+    },
+    "st with tech visit": {
+      "w": 3,
+      "tier": "integration",
+      "team": "aftersales"
+    },
+    "pre sales inquiry": {
+      "w": 3,
+      "tier": "integration",
+      "team": "aftersales"
+    },
+    "check for devices config.": {
+      "w": 3,
+      "tier": "integration",
+      "team": "rd"
+    },
+    "problem in can readings": {
+      "w": 3,
+      "tier": "integration",
+      "team": "rd"
+    },
+    "training request": {
+      "w": 5,
+      "tier": "multistage",
+      "team": "aftersales"
+    },
+    "tsu request": {
+      "w": 5,
+      "tier": "multistage",
+      "team": "aftersales"
+    }
+  },
+  "activities": {
+    "customer support": 1,
+    "software issues": 2,
+    "api issues": 3,
+    "gov. integration": 3
+  }
+}

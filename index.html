@@ -293,6 +293,22 @@
   .assign-box { padding: 18px 20px; margin-bottom: 22px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); border-inline-start: 4px solid var(--warn); }
   .assign-box h2 { margin-top: 0; } .assign-steps { margin: 8px 0 12px; padding-inline-start: 20px; color: var(--slate); }
   .team-presets { margin: 8px 0 12px; align-items: center; }
+  .title-row { display: flex; align-items: center; gap: 10px; }
+  .title-row h1 { margin: 0; }
+  .help-q { width: 26px; height: 26px; min-width: 26px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--card); color: var(--accent-dark); font: 700 14px/1 var(--sans); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; margin-inline-start: 8px; }
+  .help-q:hover, .help-q:focus-visible { background: var(--accent-wash); border-color: var(--accent); }
+  h2 .help-q { width: 22px; height: 22px; min-width: 22px; font-size: 12px; }
+  .help-dialog { max-width: min(560px, 92vw); border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--text); padding: 20px 22px; }
+  .help-dialog h2 { margin-top: 0; } .help-dialog p, .help-dialog li { line-height: 1.8; }
+  .help-dialog::backdrop { background: rgba(15,34,49,.45); }
+  .foot-btn.install { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .tier { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+  .tier > b { font-size: 26px; line-height: 1; color: var(--accent-dark); min-width: 24px; text-align: center; }
+  .tier strong { display: block; color: var(--title); margin-bottom: 4px; } .tier p { margin: 0; font-size: 13px; color: var(--slate); line-height: 1.7; }
+  .w-sel { font: inherit; padding: 4px 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }
+  tr.unweighted td:first-child::after { content: " •"; color: var(--warn); }
+  #kpi-body td.pts { font-weight: 700; color: var(--accent-dark); }
   .tucked { margin: 18px 0; } .tucked > summary { cursor: pointer; color: var(--slate); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
   .me-card { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; align-items: flex-end; padding: 18px 20px; margin-bottom: 8px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); border-inline-start: 4px solid var(--signal); }
   .me-name { margin: 0; }
@@ -379,6 +395,7 @@
         <a href="#data" class="sub" data-view="data" data-t="nav_data">البيانات</a>
         <a href="#kpi" class="sub" data-view="kpi" data-t="kpi_board">لوحة المؤشرات</a>
         <a href="#team" class="sub" data-view="team" data-t="nav_team">الفريق</a>
+        <a href="#weights" class="sub" data-view="weights" data-t="nav_weights">الأوزان</a>
       </div>
     </div>
     <div class="nav-section" data-nav-section="systems">
@@ -394,6 +411,7 @@
     <select id="lang-select"><option value="ar">العربية</option><option value="en">English</option><option value="ur">اردو</option></select>
     <div class="foot-row">
       <button type="button" id="theme-btn" class="foot-btn"></button>
+      <button type="button" id="install-btn" class="foot-btn install" data-t="install_app" hidden>تثبيت التطبيق</button>
       <button type="button" id="version" class="ver-tag"></button>
     </div>
   </div>
@@ -410,7 +428,7 @@
   </header>
 <main class="content">
   <section id="view-tools">
-    <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="tools_title">أدوات الفريق</h1>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="tools_title">أدوات الفريق</h1><button type="button" class="help-q" data-help="g_tools_b" data-help-title="tools_title" aria-label="?">?</button></div>
     <p class="sub" data-t="tools_sub"></p></div>
     <div class="primary" id="primary"></div>
     <h2 data-t="systems">أنظمة الشركة</h2>
@@ -421,25 +439,31 @@
   </section>
 
   <section id="view-me" hidden>
-    <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="me_title">مؤشراتي</h1>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="me_title">مؤشراتي</h1><button type="button" class="help-q" data-help="g_me_b" data-help-title="me_title" aria-label="?">?</button></div>
     <p class="sub" data-t="me_sub"></p></div>
     <div id="me-body"></div>
   </section>
 
   <section id="view-team" hidden>
-    <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="nav_team">الفريق</h1>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_team">الفريق</h1><button type="button" class="help-q" data-help="g_team_b" data-help-title="nav_team" aria-label="?">?</button></div>
     <p class="sub" data-t="team_sub"></p></div>
     <div id="team-body"></div>
   </section>
 
+  <section id="view-weights" hidden>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_weights">الأوزان</h1><button type="button" class="help-q" data-help="g_weights_b" data-help-title="nav_weights" aria-label="?">?</button></div>
+    <p class="sub" data-t="weights_sub"></p></div>
+    <div id="weights-body"></div>
+  </section>
+
   <section id="view-pro" hidden>
-    <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="nav_pro">أفاقي برو</h1>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_pro">أفاقي برو</h1><button type="button" class="help-q" data-help="g_pro_b" data-help-title="nav_pro" aria-label="?">?</button></div>
     <p class="sub" data-t="pro_sub"></p></div>
     <div id="pro-body"></div>
   </section>
 
   <section id="view-data" hidden>
-    <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="data_title">بيانات المؤشرات</h1>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="data_title">بيانات المؤشرات</h1><button type="button" class="help-q" data-help="g_data_b" data-help-title="data_title" aria-label="?">?</button></div>
     <p class="sub" data-t="data_sub"></p></div>
     <p class="note info" data-t="mgr_bm_intro" style="margin:0 0 14px"></p>
     <div class="row" id="mgr-row" style="margin-bottom:22px"></div>
@@ -489,7 +513,7 @@
   </section>
 
   <section id="view-kpi" hidden>
-    <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="kpi_title">المؤشرات</h1>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="kpi_title">المؤشرات</h1><button type="button" class="help-q" data-help="g_kpi_b" data-help-title="kpi_title" aria-label="?">?</button></div>
     <p class="sub" data-t="kpi_sub"></p></div>
     <div id="kpi-body"></div>
   </section>
@@ -497,6 +521,8 @@
 </div>
 </div>
 <div id="update-bar" class="update-bar" hidden><button type="button" id="update-btn" data-t="update_ready"></button></div>
+<dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title"><h2 id="help-title"></h2><p id="help-text"></p><form method="dialog"><button class="btn" data-t="close">إغلاق</button></form></dialog>
+<dialog id="install-dialog" class="help-dialog" aria-labelledby="install-title"><h2 id="install-title" data-t="install_app">تثبيت التطبيق</h2><div id="install-steps"></div><form method="dialog"><button class="btn" data-t="close">إغلاق</button></form></dialog>
 <dialog id="news-dialog" aria-labelledby="news-title">
   <h2 id="news-title" data-t="whats_new">ما الجديد في هذه النسخة</h2>
   <p class="ver-date" id="news-date"></p>

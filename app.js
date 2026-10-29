@@ -5,6 +5,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, WEIGHT_STEPS, TIERS,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet,
 } from './core.js';
 
@@ -36,7 +37,7 @@ function toast(msg) {
 
 // ---------- storage: IndexedDB, with an in-memory fallback where it is unavailable ----------
 const store = (() => {
-  let mem = []; let memMe = null; let memRep = []; let memRoster = null;
+  let mem = []; let memMe = null; let memRep = []; let memRoster = null; let memWeights = null;
   const open = () => new Promise((res, rej) => {
     if (!('indexedDB' in window)) return rej(new Error('no idb'));
     const r = indexedDB.open('afaqy-portal', 1);
@@ -50,6 +51,8 @@ const store = (() => {
     // "my KPIs" — an engineer's own profile, kept apart from the manager's datasets
     async getReports() { try { return (await run('readonly', (s) => s.get('reports'))) || []; } catch { return memRep; } },
     async putReports(v) { try { await run('readwrite', (s) => s.put(v, 'reports')); } catch { memRep = v; } },
+    async getWeights() { try { return (await run('readonly', (s) => s.get('weights'))) || null; } catch { return memWeights; } },
+    async putWeights(v) { try { await run('readwrite', (s) => (v ? s.put(v, 'weights') : s.delete('weights'))); } catch { memWeights = v; } },
     async getRoster() { try { return (await run('readonly', (s) => s.get('roster'))) || null; } catch { return memRoster; } },
     async putRoster(v) { try { await run('readwrite', (s) => (v ? s.put(v, 'roster') : s.delete('roster'))); } catch { memRoster = v; } },
     async getMe() { try { return (await run('readonly', (s) => s.get('me'))) || null; } catch { return memMe; } },
@@ -92,11 +95,38 @@ function renderTools() {
 
 // ---------- my KPIs (ADR-0010) ----------
 let me = null;
+// a "?" beside a heading: what it is and how to use it, in the reader's language
+const helpQ = (key, titleKey) => el('button', { type: 'button', class: 'help-q', 'data-help': key, 'data-help-title': titleKey || '', 'aria-label': '?', text: '?' });
+function openHelp(key, titleKey, fallbackTitle) {
+  $('help-title').textContent = titleKey ? t(titleKey) : (fallbackTitle || '?');
+  $('help-text').textContent = t(key);
+  $('help-dialog').showModal();
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('.help-q'); if (!b) return;
+  e.preventDefault(); e.stopPropagation();
+  const h = b.closest('h1, h2, h3, summary'); const title = h ? h.textContent.replace(/\?\s*$/, '').trim() : '';
+  openHelp(b.dataset.help, b.dataset.helpTitle, title);
+});
+// ---------- install on Android, iPhone and Windows ----------
+let installPrompt = null;
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; showInstall(); });
+window.addEventListener('appinstalled', () => { installPrompt = null; showInstall(); toast(t('install_done')); });
+function showInstall() { const b = $('install-btn'); if (b) b.hidden = standalone(); }
+async function doInstall() {
+  if (installPrompt) { installPrompt.prompt(); try { await installPrompt.userChoice; } catch { /* closed */ } installPrompt = null; showInstall(); return; }
+  set($('install-steps'), el('p', { text: t(isIOS() ? 'install_ios' : /android/i.test(navigator.userAgent) ? 'install_android' : 'install_desktop') }));
+  $('install-dialog').showModal();
+}
 let meKind = 'month';      // the profile's comparison window: month | quarter | half
 let kpiSort = 'done';      // the board's order: done | median | open
 let rosterRepo = null;      // team.json from the repository (ids, positions, leaders — never names)
 let rosterDevice = null;    // this device's own entries, which win
 const roster = () => mergeRoster(rosterRepo, rosterDevice);
+let weightsRepo = null, weightsDevice = null;
+const weights = () => mergeWeights(weightsRepo, weightsDevice);
 // a donut: parts of a whole, drawn with circles — colours from the identity palette
 const SVG = 'http://www.w3.org/2000/svg';
 const DONUT_COLORS = ['var(--accent)', 'var(--signal)', 'var(--note)', 'var(--ok)', 'var(--warn)', 'var(--accent-dark)', 'var(--ink-soft)', 'var(--slate)'];
@@ -523,12 +553,16 @@ function renderKpi() {
   const rateCell = (r) => el('span', { class: 'rate' }, el('i', {}, el('b', { style: `width:${Math.round((r || 0) * 100)}%` })), formatRate(r));
   const name = (r) => (r.id === GROUP ? t('group_bucket') : (nameOf(peopleById.get(r.id), lang) || r.name));
   const showCancel = f.team.cancelled > 0, showRd = ds.rdKnown && f.team.rd > 0;
-  const cols = ['col_person', 'col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_median', 'col_open', ...(showCancel ? ['col_cancelled'] : []), 'col_email', 'col_self', ...(showRd ? ['col_rd'] : []), 'col_created'];
+  const cols = ['col_person', 'col_assigned', 'col_done', 'col_points', 'col_rate', 'col_avg', 'col_median', 'col_open', ...(showCancel ? ['col_cancelled'] : []), 'col_email', 'col_self', ...(showRd ? ['col_rd'] : []), 'col_created'];
+  const repK = reports.find((r) => r.key === ds.key);
+  const wp = weightedPoints(ds.tasks, repK ? repK.activities : [], weights(), { range: ds.range, team });
+  const pts = (id) => (wp.byId.get(id) || { total: 0 }).total;
   const maxDone = Math.max(1, ...f.people.map((r) => r.done));
-  const ordered = [...f.people].sort((a, b) => kpiSort === 'median' ? ((b.medianHours ?? -1) - (a.medianHours ?? -1)) : kpiSort === 'open' ? (b.open - a.open) : (b.done - a.done));
+  const ordered = [...f.people].sort((a, b) => kpiSort === 'points' ? (pts(b.id) - pts(a.id)) : kpiSort === 'median' ? ((b.medianHours ?? -1) - (a.medianHours ?? -1)) : kpiSort === 'open' ? (b.open - a.open) : (b.done - a.done));
   const line = (r, cls) => el('tr', { class: cls },
     el('td', {}, el('div', { text: cls === 'total' ? t('team') : name(r) }), cls || !positionOf(roster(), r.id, lang) ? null : el('div', { class: 'hint', text: positionOf(roster(), r.id, lang) })),
     el('td', { class: 'num', text: r.assigned }), el('td', { class: 'num' }, cls ? String(r.done) : el('div', { class: 'bar-cell' }, el('b', { text: String(r.done) }), el('i', {}, el('span', { style: `width:${Math.round((r.done / maxDone) * 100)}%` })))),
+    el('td', { class: 'num pts', text: cls === 'total' ? String(wp.total) : cls ? '' : String(pts(r.id)) }),
     el('td', { class: 'num' }, rateCell(r.rate)),
     el('td', { class: 'num', text: formatHours(r.avgHours, lang) }), el('td', { class: 'num', text: formatHours(r.medianHours, lang) }),
     el('td', { class: 'num', text: r.open }), showCancel ? el('td', { class: 'num', text: r.cancelled }) : null,
@@ -553,15 +587,16 @@ function renderKpi() {
     c.known && !c.complete ? el('p', { class: 'note', text: `${t('data_incomplete_warn')} (${t('incomplete', { got: c.got, want: c.want })})` }) : null,
     el('div', { class: 'strip six' },
       el('div', { class: 'lead' }, el('b', { text: f.team.done }), el('span', { text: t('col_done') })),
+      el('div', {}, el('b', { text: String(wp.total) }), el('span', { text: t('col_points') })),
       el('div', {}, el('b', { text: f.team.assigned }), el('span', { text: t('col_assigned') })),
       el('div', {}, el('b', { text: formatRate(f.team.rate) }), el('span', { text: t('col_rate') })),
       el('div', {}, el('b', { text: formatHours(f.team.medianHours, lang) }), el('span', { text: t('col_median') })),
       el('div', {}, el('b', { text: f.team.open }), el('span', { text: t('col_open') })),
       el('div', {}, el('b', { text: `${f.team.fromEmail} · ${f.team.selfLogged}` }), el('span', { text: `${t('col_email')} · ${t('col_self')}` }))),
-    el('p', { class: 'strip-note', text: t('kpi_strip_note') }),
+    el('p', { class: 'strip-note' }, t('kpi_strip_note'), helpQ('help_points')),
     el('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin-bottom:8px' },
       el('p', { class: 'hint', style: 'margin:0', text: t('kpi_table_sub') }),
-      el('div', { class: 'pills' }, [['done', 'kpi_sort_done'], ['median', 'kpi_sort_median'], ['open', 'kpi_sort_open']].map(([k, label]) =>
+      el('div', { class: 'pills' }, [['done', 'kpi_sort_done'], ['points', 'kpi_sort_points'], ['median', 'kpi_sort_median'], ['open', 'kpi_sort_open']].map(([k, label]) =>
         el('button', { type: 'button', class: `pill-btn${kpiSort === k ? ' on' : ''}`, text: t(label), onclick: () => { kpiSort = k; renderKpi(); } })))),
     table,
     renderKpiDonuts(ds, f, team),
@@ -593,6 +628,45 @@ function renderKpiDonuts(ds, f, team) {
     top.length ? donut(t('kpi_dist_h'), top) : null,
     done.length ? donut(t('kpi_src_h'), [{ label: t('src_other'), value: done.length - email - self }, { label: t('src_email'), value: email }, { label: t('src_self'), value: self }]) : null,
     tk && tk.total ? donut(t('kpi_tickets_h'), [{ label: t('f3_done'), value: tk.done, color: 'var(--ok)' }, { label: t('f3_pending'), value: tk.pending, color: 'var(--signal)' }, { label: t('f3_open'), value: tk.open, color: 'var(--note)' }]) : null);
+}
+
+// ---------- the Weights page: points per task type and per activity category, with their tier and reason ----------
+function renderWeights() {
+  const body = $('weights-body'); if (!body) return;
+  const wt = weights();
+  const seen = new Map();
+  const ds = datasets[0];
+  if (ds) for (const x of ds.tasks) { const k = typeKey(x.type); if (!k) continue; const v = seen.get(k) || { name: x.type, n: 0 }; v.n++; seen.set(k, v); }
+  const keys = [...new Set([...Object.keys(wt.tasks), ...seen.keys()])]
+    .filter((k) => wt.tasks[k] || (seen.get(k) && seen.get(k).n));
+  const teamOrder = { aftersales: 0, both: 1, rd: 2 };
+  keys.sort((a, b) => (teamOrder[(wt.tasks[a] || {}).team] ?? 3) - (teamOrder[(wt.tasks[b] || {}).team] ?? 3) || ((wt.tasks[b] || {}).w || 0) - ((wt.tasks[a] || {}).w || 0) || a.localeCompare(b));
+  const save = async (patch) => { weightsDevice = { ...(weightsDevice || {}), tasks: { ...((weightsDevice || {}).tasks || {}), ...(patch.tasks || {}) }, activities: { ...((weightsDevice || {}).activities || {}), ...(patch.activities || {}) } }; await store.putWeights(weightsDevice); renderWeights(); renderKpi(); };
+  const stepSel = (cur, on) => el('select', { class: 'w-sel', onchange: (e) => on(Number(e.target.value)) }, WEIGHT_STEPS.map((w) => el('option', { value: String(w), selected: w === cur, text: String(w) })));
+  const tierName = (tr) => (tr ? t(`tier_${tr}`) : t('tier_none'));
+  const teamName = (tm) => (tm ? t(`wteam_${tm}`) : t('wteam_other'));
+  const download = () => { const a = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify({ ...wt, reviewed: new Date().toISOString().slice(0, 10) }, null, 2)], { type: 'application/json' })), download: 'weights.json' }); document.body.append(a); a.click(); a.remove(); };
+  const upload = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const file = e.target.files[0]; if (!file) return; try { weightsDevice = parseWeights(JSON.parse(await file.text())); await store.putWeights(weightsDevice); toast(t('weights_loaded')); renderWeights(); renderKpi(); } catch { toast(t('err_json')); } e.target.value = ''; } });
+  set(body,
+    el('div', { class: 'tiers' }, TIERS.map((tr) => el('div', { class: 'tier' }, el('b', { text: String((weightsRepo && weightsRepo.tiers && weightsRepo.tiers[tr]) || { admin: 1, customer: 2, integration: 3, multistage: 5 }[tr]) }), el('div', {}, el('strong', { text: t(`tier_${tr}`) }), el('p', { text: t(`tier_${tr}_why`) }))))),
+    el('p', { class: 'note info', text: t('weights_rules') }),
+    el('div', { class: 'row', style: 'margin:12px 0' },
+      el('button', { type: 'button', class: 'btn primary', text: t('weights_download'), onclick: download }),
+      el('button', { type: 'button', class: 'btn', text: t('weights_upload'), onclick: () => upload.click() }), upload,
+      weightsDevice ? el('button', { type: 'button', class: 'btn quiet', text: t('weights_reset'), onclick: async () => { weightsDevice = null; await store.putWeights(null); renderWeights(); renderKpi(); } }) : null,
+      el('span', { class: 'hint', text: wt.reviewed ? t('weights_reviewed', { d: wt.reviewed }) : '' })),
+    el('h2', {}, t('weights_tasks_h'), helpQ('help_weights_tasks')),
+    el('div', { class: 'table-wrap' }, el('table', {},
+      el('thead', {}, el('tr', {}, ['w_col_type', 'w_col_team', 'w_col_tier', 'w_col_n', 'w_col_weight', 'w_col_points'].map((k, i) => el('th', { class: i >= 3 ? 'num' : null, text: t(k) })))),
+      el('tbody', {}, keys.map((k) => { const x = wt.tasks[k]; const cur = x ? x.w : wt.default; const n = (seen.get(k) || {}).n || 0; return el('tr', { class: x ? null : 'unweighted' },
+        el('td', { text: (seen.get(k) || {}).name || k.replace(/(^|\s)([a-z])/g, (m, s, c) => s + c.toUpperCase()) }), el('td', { text: teamName(x && x.team) }), el('td', { text: tierName(x && x.tier) }),
+        el('td', { class: 'num', text: String(n) }), el('td', { class: 'num' }, stepSel(cur, (w) => save({ tasks: { [k]: { w, tier: x ? x.tier : null, team: x ? x.team : null } } }))),
+        el('td', { class: 'num', text: String(n * cur) })); })))),
+    el('h2', {}, t('weights_acts_h'), helpQ('help_weights_acts')),
+    el('div', { class: 'table-wrap' }, el('table', {},
+      el('thead', {}, el('tr', {}, ['w_col_category', 'w_col_weight'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+      el('tbody', {}, Object.entries(wt.activities).map(([k, w]) => el('tr', {}, el('td', { text: k.replace(/\b\w/g, (c) => c.toUpperCase()) }), el('td', { class: 'num' }, stepSel(w, (nw) => save({ activities: { [k]: nw } })))))))),
+    el('p', { class: 'hint', text: t('weights_seen_note', { range: ds ? `${ds.range.from} → ${ds.range.to}` : '—' }) }));
 }
 
 // ---------- the Team page: positions and leaders by myafaqy id, kept on this device and exportable as team.json ----------
@@ -628,14 +702,14 @@ function renderTeam() {
   const ab = buildAssignBookmarklet(lang, afterSalesNames);
   set(body,
     el('section', { class: 'assign-box' },
-      el('h2', { text: t('assign_h') }),
+      el('h2', {}, t('assign_h'), helpQ('help_assign')),
       el('p', { class: 'hint', text: t('assign_sub') }),
       el('ol', { class: 'assign-steps' }, ['assign_s1', 'assign_s2', 'assign_s3', 'assign_s4'].map((k) => el('li', { text: t(k) }))),
       el('div', { class: 'row' },
         el('a', { class: 'btn primary bm', href: ab, draggable: 'true', text: `⚙ ${t('assign_bm')}`, onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } }),
         el('button', { type: 'button', class: 'btn', text: t('me_copy'), onclick: async () => { try { await navigator.clipboard.writeText(decodeURIComponent(ab)); toast(t('me_copied')); } catch { toast(t('me_copy_fail')); } } })),
       el('p', { class: 'note', text: t('assign_warn') })),
-    el('h2', { text: t('team_roster_h') }),
+    el('h2', {}, t('team_roster_h'), helpQ('help_roster')),
     el('p', { class: 'note info', text: t('team_note') }),
     el('div', { class: 'row', style: 'margin-bottom:14px' },
       el('button', { type: 'button', class: 'btn primary', text: t('team_download'), onclick: download }),
@@ -665,13 +739,13 @@ function renderReports(key, team = null) {
   const tline = (r, cls, label) => el('tr', { class: cls }, el('td', { text: label || ((lang === 'en' ? r.nameEn || r.nameAr : r.nameAr || r.nameEn) || r.technicianId) }), ...tcols.slice(1).map(([, f]) => el('td', { class: 'num', text: r[f] })));
   const maxAct = Math.max(1, ...ac.people.map((r) => r.activities));
   return [
-    el('h2', { text: t('f3_title') }),
+    el('h2', {}, t('f3_title'), helpQ('help_f3')),
     el('p', { class: 'hint', text: t('f3_sub') }),
     at.rows.length ? el('div', { class: 'table-wrap' }, el('table', {},
       el('thead', {}, el('tr', {}, ['f3_name', 'f3_open', 'f3_pending', 'f3_done', 'f3_total'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
       el('tbody', {}, at.rows.map((r) => el('tr', {}, el('td', { text: r.name }), ...[r.open, r.pending, r.done, r.total].map((v) => el('td', { class: 'num', text: v })))),
         el('tr', { class: 'total' }, el('td', { text: t('team') }), ...[at.total.open, at.total.pending, at.total.done, at.total.total].map((v) => el('td', { class: 'num', text: v })))))) : el('div', { class: 'empty', text: t('f3_none') }),
-    el('h2', { text: t('f4_title') }),
+    el('h2', {}, t('f4_title'), helpQ('help_f4')),
     el('p', { class: 'hint', text: t('f4_sub') }),
     ac.people.length ? [
       el('div', { class: 'table-wrap' }, el('table', {},
@@ -721,8 +795,30 @@ async function loadRelease() {
     if (!res.ok) return;
     release = await res.json();
     renderGuide();
-    if (release && release.version && release.version !== PORTAL_VERSION) $('update-bar').hidden = false;
+    if (release && release.version && release.version !== PORTAL_VERSION) autoUpdate();
   } catch { /* offline: the notes simply are not shown */ }
+}
+function busyTyping() { const a = document.activeElement; return !!(a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !['checkbox', 'radio', 'file', 'button'].includes(a.type))) && a.value); }
+let updating = false;
+async function autoUpdate() {
+  if (updating) return; updating = true;
+  try { const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); if (reg) await reg.update(); } catch { /* offline */ }
+  const target = release.version;
+  let tried = null; try { tried = sessionStorage.getItem('afaqy-reload-for'); } catch { /* private */ }
+  const go = () => {
+    // one automatic reload per published version — if the page is still old after it, the button takes over (never a loop)
+    if (busyTyping() || tried === target) { $('update-bar').hidden = false; return; }
+    try { sessionStorage.setItem('afaqy-reload-for', target); sessionStorage.setItem('afaqy-updated-from', PORTAL_VERSION); } catch { $('update-bar').hidden = false; return; }
+    location.reload();
+  };
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.addEventListener('controllerchange', go, { once: true });
+    setTimeout(() => { if (!document.hidden) go(); }, 8000);
+  } else go();
+}
+function announceUpdate() {
+  let from = null; try { from = sessionStorage.getItem('afaqy-updated-from'); sessionStorage.removeItem('afaqy-updated-from'); } catch { /* private */ }
+  if (from && from !== PORTAL_VERSION) toast(t('updated_to', { v: PORTAL_VERSION }));
 }
 function openNews() {
   const notes = (release && release.notes && (release.notes[lang] || release.notes.ar)) || [];
@@ -741,7 +837,7 @@ function applyLang() {
   $('menu-btn').setAttribute('aria-label', t('menu'));
   paintThemeButton();
   document.title = `${t('brand')} — ${t('portal')}`;
-  renderSide(); renderTools(); renderBlocks(); renderDatasets(); renderKpi(); renderGuide(); renderMe(); renderPro(); renderMgr(); renderTeam();
+  renderSide(); renderTools(); renderBlocks(); renderDatasets(); renderKpi(); renderGuide(); renderMe(); renderPro(); renderMgr(); renderTeam(); renderWeights();
   for (const [id, f] of frames) f.title = L((MODULES.find((m) => m.id === id) || {}).name, lang);
   route();
 }
@@ -753,7 +849,7 @@ function applyTheme() {
   paintThemeButton();
 }
 function route() {
-  const views = ['tools', 'me', 'pro', 'data', 'kpi', 'team', 'guide'];
+  const views = ['tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'guide'];
   let hash = location.hash.slice(1);
   if (hash.startsWith('me-')) {
     if (hash === 'me-wait') {
@@ -768,7 +864,7 @@ function route() {
   for (const id of [...views, 'module']) $(`view-${id}`).hidden = id !== v;
   document.body.classList.toggle('in-module', v === 'module');
   if (mod) openModule(mod);
-  else { document.title = `${t('brand')} — ${t('portal')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', guide: 'nav_guide' }[v]); currentModule = null; }
+  else { document.title = `${t('brand')} — ${t('portal')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', guide: 'nav_guide' }[v]); currentModule = null; }
   $('module-open').hidden = v !== 'module';
   // one item in the menu is current — the open module, or the page — and its group is the open one
   let current = null;
@@ -784,6 +880,7 @@ function route() {
   if (v === 'kpi') renderKpi();
   if (v === 'pro' && proToken.get() && !proUnits && !proBusy) proLoad();
   if (v === 'team') renderTeam();
+  if (v === 'weights') renderWeights();
 }
 
 // ---------- wiring ----------
@@ -826,6 +923,11 @@ $('update-btn').addEventListener('click', () => location.reload());
   me = upgradeMe(await store.getMe());   // a profile saved by an older version is brought up to shape, never dropped
   rosterDevice = parseRoster(await store.getRoster());
   try { const r = await fetch('./team.json', { cache: 'no-store' }); rosterRepo = r.ok ? parseRoster(await r.json()) : null; } catch { rosterRepo = null; }
+  weightsDevice = await store.getWeights();
+  try { const r = await fetch('./weights.json', { cache: 'no-store' }); weightsRepo = r.ok ? await r.json() : null; } catch { weightsRepo = null; }
   applyLang();   // renders everything and routes
-  loadRelease();
+  loadRelease(); announceUpdate(); showInstall();
+  setInterval(loadRelease, 15 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) loadRelease(); });
+  $('install-btn').addEventListener('click', doInstall);
 })();
