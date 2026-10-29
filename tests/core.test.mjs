@@ -8,7 +8,7 @@ import {
   parseRoster, mergeRoster, positionOf, leaderOf, reportsOf, donutParts, periodWindows, teamAlerts, activityTotals, descendantsOf,
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, scopeIds, inScope,
   weeklyDigest, goalProgress, patternPath, coverageTotals, monthCard, closableMonths, repairCheck, parseRepairLines,
-  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS,
+  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS, portalRoute,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
 
@@ -549,6 +549,12 @@ test('sample data parses through the same door and is marked', () => {
   assert.ok(d.tasks.length >= 60);
   assert.equal(completeness(d).complete, true);
   assert.ok(d.tasks.every((x) => x.createdAt >= '2026-06-30T21:00:00.000Z' && x.createdAt <= '2026-09-30T20:59:00.000Z'));
+});
+
+test('two presentation links: admin is unchanged and team routes only to non-management pages', () => {
+  for (const v of ['tools', 'me', 'pro', 'guide', 'm-sensor', 'me-wait']) assert.equal(portalRoute(v, true), v);
+  for (const v of ['', 'data', 'kpi', 'team', 'weights', 'unknown']) assert.equal(portalRoute(v, true), 'me');
+  for (const v of ['', 'data', 'kpi', 'team', 'weights', 'tools']) assert.equal(portalRoute(v, false), v);
 });
 
 let failed = 0;
