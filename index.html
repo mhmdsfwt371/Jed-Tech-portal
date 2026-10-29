@@ -332,6 +332,18 @@
   table.heatmap td.heat { background: color-mix(in srgb, var(--accent) calc(var(--heat, 0) * 85%), var(--card)); color: var(--text); font-weight: 600; }
   @media (max-width: 520px) { .card-grid { grid-template-columns: 1fr; } .cards-grid { grid-template-columns: 1fr; } }
   @media print { .side, .topbar, .update-bar, .btn, .help-q, select, .foot, #view-me > :not(.card-month):not(.page-head) { display: none !important; } .card-month { break-inside: avoid; border: 1px solid #999; } body { background: #fff; color: #000; } }
+  .week { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin: 14px 0; }
+  .week-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 10px; }
+  .week-tile b { display: block; font-size: 30px; color: var(--title); } .week-tile span { color: var(--slate); font-size: 13px; }
+  .week-list { padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--paper); font-size: 13px; line-height: 1.8; }
+  .week-list.good { border-color: var(--ok); } .week-list.grow { border-color: var(--warn); } .week-list.plan { border-color: var(--note); } .week-list h4 { margin: 0 0 4px; font-size: 13px; }
+  .meet-block { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line-strong); display: grid; gap: 8px; font-size: 13px; }
+  .meet-block .agreed .done-tick { margin-inline-start: 10px; display: inline-flex; gap: 4px; align-items: center; }
+  .goal { display: grid; grid-template-columns: minmax(0, 1fr) 120px auto; gap: 8px; align-items: center; margin-top: 4px; }
+  .goal i { display: block; height: 8px; background: var(--paper); border-radius: 4px; overflow: hidden; } .goal i span { display: block; height: 8px; background: var(--accent); } .goal i span.met { background: var(--ok); }
+  .meet-dialog textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }
+  .meet-l { display: block; font-weight: 700; margin: 10px 0 4px; } .goal-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; } .goal-n { width: 80px; font: inherit; padding: 4px 6px; }
+  table.path td { vertical-align: top; }
   .tucked { margin: 18px 0; } .tucked > summary { cursor: pointer; color: var(--slate); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
   .me-card { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; align-items: flex-end; padding: 18px 20px; margin-bottom: 8px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); border-inline-start: 4px solid var(--signal); }
   .me-name { margin: 0; }

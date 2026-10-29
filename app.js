@@ -7,6 +7,7 @@ import {
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
+  weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet,
 } from './core.js';
 
@@ -38,7 +39,7 @@ function toast(msg) {
 
 // ---------- storage: IndexedDB, with an in-memory fallback where it is unavailable ----------
 const store = (() => {
-  let mem = []; let memMe = null; let memRep = []; let memRoster = null; let memWeights = null; let memCards = {};
+  let mem = []; let memMe = null; let memRep = []; let memRoster = null; let memWeights = null; let memCards = {}; let memMeet = {};
   const open = () => new Promise((res, rej) => {
     if (!('indexedDB' in window)) return rej(new Error('no idb'));
     const r = indexedDB.open('afaqy-portal', 1);
@@ -52,6 +53,8 @@ const store = (() => {
     // "my KPIs" — an engineer's own profile, kept apart from the manager's datasets
     async getReports() { try { return (await run('readonly', (s) => s.get('reports'))) || []; } catch { return memRep; } },
     async putReports(v) { try { await run('readwrite', (s) => s.put(v, 'reports')); } catch { memRep = v; } },
+    async getMeet() { try { return (await run('readonly', (s) => s.get('oneonone'))) || {}; } catch { return memMeet; } },
+    async putMeet(v) { try { await run('readwrite', (s) => s.put(v, 'oneonone')); } catch { memMeet = v; } },
     async getCards() { try { return (await run('readonly', (s) => s.get('cards'))) || {}; } catch { return memCards; } },
     async putCards(v) { try { await run('readwrite', (s) => s.put(v, 'cards')); } catch { memCards = v; } },
     async getWeights() { try { return (await run('readonly', (s) => s.get('weights'))) || null; } catch { return memWeights; } },
@@ -178,6 +181,47 @@ async function closeMonths() {
     added.push(ym);
   }
   if (added.length) { await store.putCards(monthCards); toast(t('card_closed', { m: added.map(monthLabel).join('، ') })); }
+}
+// ---------- the monthly one-to-one: notes, what was agreed, and goals — kept on the leader's device, never in the repository ----------
+let meet = {};   // { 'YYYY-MM': { personId: { note, agreed, done: bool, goals: [{ key, target }] } } }
+const meetOf = (ym, id) => (meet[ym] && meet[ym][id]) || null;
+async function saveMeet(ym, id, v) { meet = { ...meet, [ym]: { ...(meet[ym] || {}), [id]: v } }; await store.putMeet(meet); }
+function openMeet(ym, id, name, typeChoices) {
+  const cur = meetOf(ym, id) || { note: '', agreed: '', done: false, goals: [] };
+  const goals = cur.goals.map((g) => ({ ...g }));
+  const dlg = el('dialog', { class: 'help-dialog meet-dialog' });
+  const goalRows = el('div', { class: 'goal-rows' });
+  const paintGoals = () => set(goalRows, goals.map((g, i) => el('div', { class: 'goal-row' },
+    el('select', { class: 'w-sel', onchange: (e) => { g.key = e.target.value; } }, [['__points__', t('goal_points')], ...typeChoices].map(([k, n]) => el('option', { value: k, selected: k === g.key, text: n }))),
+    el('input', { type: 'number', min: '1', max: '999', value: String(g.target || ''), class: 'goal-n', oninput: (e) => { g.target = Math.max(0, Number(e.target.value) || 0); } }),
+    el('button', { type: 'button', class: 'btn quiet tiny', text: '✕', onclick: () => { goals.splice(i, 1); paintGoals(); } }))));
+  paintGoals();
+  const note = el('textarea', { rows: '3', placeholder: t('meet_note_ph') }); note.value = cur.note || '';
+  const agreed = el('textarea', { rows: '2', placeholder: t('meet_agreed_ph') }); agreed.value = cur.agreed || '';
+  dlg.append(el('h2', { text: t('meet_title', { name, m: monthLabel(ym) }) }),
+    el('p', { class: 'hint', text: t('meet_private') }),
+    el('label', { class: 'meet-l', text: t('meet_note') }), note,
+    el('label', { class: 'meet-l', text: t('meet_agreed') }), agreed,
+    el('label', { class: 'meet-l', text: t('meet_goals') }), goalRows,
+    el('button', { type: 'button', class: 'btn tiny', text: t('meet_add_goal'), onclick: () => { goals.push({ key: '__points__', target: 0 }); paintGoals(); } }),
+    el('div', { class: 'row', style: 'margin-top:14px' },
+      el('button', { type: 'button', class: 'btn primary', text: t('meet_save'), onclick: async () => { await saveMeet(ym, id, { note: note.value.slice(0, 2000), agreed: agreed.value.slice(0, 1000), done: !!cur.done, goals: goals.filter((g) => g.target > 0).slice(0, 8) }); dlg.close(); dlg.remove(); toast(t('meet_saved')); renderMe(); } }),
+      el('button', { type: 'button', class: 'btn', text: t('close'), onclick: () => { dlg.close(); dlg.remove(); } })));
+  document.body.append(dlg); dlg.showModal();
+}
+function exportMeet() { const a = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify({ schema: 'afaqy-oneonone/v1', exportedAt: new Date().toISOString(), meet }, null, 2)], { type: 'application/json' })), download: `afaqy-one-to-one-${ymd(new Date())}.json` }); document.body.append(a); a.click(); a.remove(); }
+async function importMeet(file) { try { const j = JSON.parse(await file.text()); if (j.schema !== 'afaqy-oneonone/v1' || typeof j.meet !== 'object') throw 0; for (const [ym, people] of Object.entries(j.meet)) for (const [id, v] of Object.entries(people || {})) meet[ym] = { ...(meet[ym] || {}), [id]: { ...(meet[ym] || {})[id], ...v } }; await store.putMeet(meet); toast(t('meet_imported')); renderMe(); } catch { toast(t('err_json')); } }
+// the goals and last month's agreement, shown inside a card
+function meetBlock(ym, id, tasks, editable, name, typeChoices) {
+  const m = meetOf(ym, id), prev = meetOf(prevMonth(ym), id);
+  const prog = m && m.goals && m.goals.length ? goalProgress(tasks, weights(), id, ym, m.goals) : [];
+  const label = (g) => (g.key === '__points__' ? t('goal_points') : (typeChoices.find(([k]) => k === g.key) || [g.key, g.key])[1]);
+  if (!prog.length && !(prev && prev.agreed) && !editable) return null;
+  return el('div', { class: 'meet-block' },
+    prev && prev.agreed ? el('div', { class: 'agreed' }, el('b', { text: t('meet_prev_agreed') }), el('span', { text: ` ${prev.agreed}` }),
+      editable ? el('label', { class: 'done-tick' }, el('input', { type: 'checkbox', ...(prev.done ? { checked: '' } : {}), onchange: async (e) => { await saveMeet(prevMonth(ym), id, { ...prev, done: e.target.checked }); renderMe(); } }), t('meet_done')) : el('span', { class: 'hint', text: prev.done ? ` · ${t('meet_done')}` : '' })) : null,
+    prog.length ? el('div', { class: 'goals' }, el('b', { text: t('meet_goals') }), prog.map((g) => el('div', { class: 'goal' }, el('span', { text: label(g) }), el('i', {}, el('span', { style: `width:${g.pct}%`, class: g.met ? 'met' : '' })), el('b', { class: 'ltr', text: `\u2066${g.got} / ${g.target}\u2069` })))) : null,
+    editable ? el('button', { type: 'button', class: 'btn tiny', text: m ? t('meet_edit') : t('meet_open'), onclick: () => openMeet(ym, id, name, typeChoices) }) : null);
 }
 // ---------- install on Android, iPhone and Windows ----------
 let installPrompt = null;
@@ -314,10 +358,21 @@ function renderMe(waiting = false) {
     (() => { const ymNow = cardMonth; const team = pm.scope.team; const ctx = cardCtxFromMe(team);
       const own = (monthCards[ymNow] && monthCards[ymNow][me.user.id]) || monthCard(ctx, me.user.id, ymNow);
       const below = pm.below.map((r) => r.id);
-      return [renderCard(own, who, { showRank: false, showSuggestions: false }),
+      const typeChoices = Object.entries(weights().tasks).filter(([, x]) => x.team !== 'general').map(([k]) => [k, k.replace(/(^|\s)([a-z])/g, (mm, sp, ch) => sp + ch.toUpperCase())]);
+      const withMeet = (cardEl, id, name, editable) => { if (cardEl) { const b = meetBlock(ymNow, id, me.tasks, editable, name, typeChoices); if (b) cardEl.append(b); } return cardEl; };
+      const imp = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: (e) => { if (e.target.files[0]) importMeet(e.target.files[0]); e.target.value = ''; } });
+      const path = (id) => patternPath(monthCards, id);
+      const pathTable = (ids) => { const months = [...new Set(ids.flatMap((id) => path(id).map((p) => p.month)))].sort(); if (months.length < 2) return el('p', { class: 'hint', text: t('path_soon') });
+        const cellOf = (id, m) => { const p = path(id).find((x) => x.month === m); return el('td', {}, p ? [el('div', { text: t(`arch_${p.archetype}`) }), el('div', { class: 'hint', text: `${p.points} · ${t(`quartile_${p.quartile}`)}` })] : '—'); };
+        const head = el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), months.map((m) => el('th', { text: monthLabel(m) }))));
+        const bodyRows = el('tbody', {}, ids.map((id) => el('tr', {}, el('td', { text: id === me.user.id ? who : nm(id) }), months.map((m) => cellOf(id, m)))));
+        return el('div', { class: 'table-wrap' }, el('table', { class: 'path' }, head, bodyRows)); };
+      return [withMeet(renderCard(own, who, { showRank: false, showSuggestions: false }), me.user.id, who, false),
         below.length ? [el('h3', { class: 'card-team-h', text: t('card_team_h', { n: below.length }) }),
-          el('div', { class: 'cards-grid' }, below.map((id) => renderCard((monthCards[ymNow] && monthCards[ymNow][id]) || monthCard(ctx, id, ymNow), nm(id), { showRank: true, showSuggestions: true, compact: true })))] : null,
-        el('div', { class: 'row', style: 'margin-top:8px' }, el('button', { type: 'button', class: 'btn', text: t('card_print'), onclick: () => window.print() }))]; })(),
+          el('div', { class: 'cards-grid' }, below.map((id) => withMeet(renderCard((monthCards[ymNow] && monthCards[ymNow][id]) || monthCard(ctx, id, ymNow), nm(id), { showRank: true, showSuggestions: true, compact: true }), id, nm(id), true)))] : null,
+        el('div', { class: 'row', style: 'margin-top:8px' }, el('button', { type: 'button', class: 'btn', text: t('card_print'), onclick: () => window.print() }),
+          below.length ? [el('button', { type: 'button', class: 'btn quiet', text: t('meet_export'), onclick: exportMeet }), el('button', { type: 'button', class: 'btn quiet', text: t('meet_import'), onclick: () => imp.click() }), imp] : null),
+        el('h2', {}, t('path_h'), helpQ('help_path')), pathTable([me.user.id, ...below])]; })(),
     el('h2', { text: t('me_history_h') }),
     el('div', { class: 'table-wrap' }, el('table', {},
       el('thead', {}, el('tr', {}, ...['me_q', 'col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_median', 'col_email', 'col_self', 'col_cancelled'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
@@ -688,6 +743,22 @@ function renderKpi() {
       el('div', { class: 'pills' }, [['done', 'kpi_sort_done'], ['points', 'kpi_sort_points'], ['median', 'kpi_sort_median'], ['open', 'kpi_sort_open']].map(([k, label]) =>
         el('button', { type: 'button', class: `pill-btn${kpiSort === k ? ' on' : ''}`, text: t(label), onclick: () => { kpiSort = k; renderKpi(); } })))),
     table,
+    (() => { const wd = weeklyDigest(allTasks(), weights(), team, new Date(), { ...CARD_DEFAULTS, ...(weights().card || {}) });
+      const leave = (id) => !!(roster().people[id] && roster().people[id].onLeave);
+      const nmW = (id) => (nameOf(peopleById.get(id), lang) || id);
+      const drops = wd.drops.filter((r) => !leave(r.id)), away = wd.drops.filter((r) => leave(r.id));
+      const text = [t('week_h'), `${t('week_total', { p: wd.total, q: wd.prevTotal })}`,
+        wd.movers.length ? `${t('week_movers')}: ${wd.movers.map((r) => `${nmW(r.id)} +${r.delta}`).join('، ')}` : null,
+        drops.length ? `${t('week_drops')}: ${drops.map((r) => `${nmW(r.id)} ${r.prev}→${r.points}`).join('، ')}` : null,
+        wd.aging.length ? `${t('week_aging')}: ${wd.aging.map((r) => `${nmW(r.id)} ${r.aging}`).join('، ')}` : null].filter(Boolean).join('\n');
+      const share = async () => { try { if (navigator.share) await navigator.share({ title: t('week_h'), text }); else { await navigator.clipboard.writeText(text); toast(t('me_copied')); } } catch { /* closed */ } };
+      return el('section', { class: 'week' },
+        el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, el('h2', { style: 'margin:0' }, t('week_h'), helpQ('help_week')), el('button', { type: 'button', class: 'btn tiny', text: t('week_share'), onclick: share })),
+        el('div', { class: 'week-grid' },
+          el('div', { class: 'week-tile' }, el('b', { text: String(wd.total) }), el('span', { text: t('week_total_l', { q: wd.prevTotal, d: (wd.total - wd.prevTotal >= 0 ? '+' : '−') + Math.abs(wd.total - wd.prevTotal) }) })),
+          el('div', { class: 'week-list good' }, el('h4', { text: t('week_movers') }), wd.movers.length ? wd.movers.map((r) => el('div', { text: `${nmW(r.id)} · +${r.delta}` })) : el('div', { class: 'hint', text: '—' })),
+          el('div', { class: 'week-list grow' }, el('h4', { text: t('week_drops') }), drops.length ? drops.map((r) => el('div', {}, `${nmW(r.id)} · `, el('span', { class: 'ltr', text: `\u2066${r.prev} → ${r.points}\u2069` }))) : el('div', { class: 'hint', text: '—' }), away.length ? el('div', { class: 'hint', text: t('week_on_leave', { who: away.map((r) => nmW(r.id)).join('، ') }) }) : null),
+          el('div', { class: 'week-list plan' }, el('h4', { text: t('week_aging') }), wd.aging.length ? wd.aging.map((r) => el('div', { text: `${nmW(r.id)} · ${r.aging}` })) : el('div', { class: 'hint', text: '—' })))); })(),
     renderKpiDonuts(ds, f, team),
     (() => { const ym = ds.range.to.slice(0, 7); const tm = teamMonth(cardCtxFromDatasets(team), ym); const nmB = (id) => (nameOf(peopleById.get(id), lang) || id);
       const max = Math.max(1, ...tm.heat.flatMap((h) => TIERS.map((k) => h[k])));
@@ -915,6 +986,15 @@ function renderReports(key, team = null) {
         if (!all.total.activities) return el('div', { class: 'empty', text: (rep.activities || []).length || rep.activities ? t('f4_zero') : t('f4_none') });
         return el('p', { class: 'note', text: t('f4_outside_n', { n: all.total.activities }) });
       })(),
+    (() => { const cv = coverageTotals(rep, team); if (!cv.people.length && !cv.total.accounts) return null;
+      const maxA = Math.max(1, ...cv.people.map((r) => r.accounts));
+      return [el('h2', {}, t('f5_title'), helpQ('help_f5')), el('p', { class: 'hint', text: t('f5_sub', { n: cv.total.accounts, d: cv.total.devices, u: cv.total.uncovered, z: cv.total.zeroDevices }) }),
+        cv.people.length ? el('div', { class: 'table-wrap' }, el('table', {},
+          el('thead', {}, el('tr', {}, ['col_person', 'f5_accounts', 'f5_devices', 'f5_solo', 'f5_touched'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+          el('tbody', {}, cv.people.map((r) => el('tr', {}, el('td', { text: nm(r.id) }),
+            el('td', { class: 'num' }, el('div', { class: 'bar-cell' }, el('b', { text: String(r.accounts) }), el('i', {}, el('span', { style: `width:${Math.round((r.accounts / maxA) * 100)}%` })))),
+            el('td', { class: 'num', text: String(r.devices) }), el('td', { class: 'num', text: String(r.solo) }),
+            el('td', { class: 'num', text: r.accounts ? `${r.touched} · ${Math.round((r.touched / r.accounts) * 100)}%` : '—' })))))) : el('div', { class: 'empty', text: t('f5_none') })]; })(),
     el('details', { class: 'tucked' }, el('summary', { text: t('f2_show') }),
       el('p', { class: 'hint', text: t('f2_sub', { months }) }),
       tt.rows.length ? el('div', { class: 'table-wrap' }, el('table', {},
@@ -1074,6 +1154,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   try { const r = await fetch('./team.json', { cache: 'no-store' }); rosterRepo = r.ok ? parseRoster(await r.json()) : null; } catch { rosterRepo = null; }
   weightsDevice = await store.getWeights();
   monthCards = (await store.getCards()) || {};
+  meet = (await store.getMeet()) || {};
   try { const r = await fetch('./weights.json', { cache: 'no-store' }); weightsRepo = r.ok ? await r.json() : null; } catch { weightsRepo = null; }
   applyLang();   // renders everything and routes
   loadRelease(); announceUpdate(); showInstall();

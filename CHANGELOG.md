@@ -17,6 +17,35 @@
 
 <!-- releases -->
 
+## v8.5 — 2026-10-29
+
+- الأسبوع في لمحة على لوحة المؤشرات: آخر سبعة أيام مقابل السبعة قبلها — الأكثر تقدمًا، والنزول الحاد، والمفتوح القديم — ومن في إجازة لا يُعدّ نزولًا. وزر «مشاركة» يرسل الملخص لواتساب أو تيمز.
+- المؤشر الخامس — تغطية الحسابات: لكل مهندس حساباته في جدة وأجهزتها وما هو وحده عليه وما لمسه في الفترة، وعدد الحسابات بلا أحد من الفريق. تسحبه إشارة المدير بأرقام فقط.
+- اللقاء الشهري على بطاقة كل من تحتك: ملاحظات، وما اتفقتما عليه، وأهداف بنوع المهمة أو بالنقاط يُقاس تقدّمها من عمل الشهر — ويظهر الاتفاق الشهر التالي مع «نُفّذ». يبقى على جهازك فقط وتنقله بملف.
+- مسار النمط عبر الأشهر: النمط والنقاط والربع لكل شهر مقفول — للتقييم السنوي.
+
+<details><summary>English</summary>
+
+- The week at a glance on the KPI board: the last seven days against the seven before — biggest gains, sharp drops and work left open too long — and anyone on leave is not counted as a drop. A “Share” button sends the summary to WhatsApp or Teams.
+- Factor 5 — account coverage: for each engineer, their Jeddah accounts, the devices on them, where they are alone, and what they touched in the period, plus how many accounts have nobody from the team. The manager bookmark pulls it as numbers only.
+- The monthly one-to-one on each of your people’s cards: notes, what you agreed, and goals by task type or by points whose progress is measured from the month’s work — and the agreement shows the next month with “done”. It stays on your device only and moves by file.
+- The pattern’s path over the months: pattern, points and quarter for every closed month — for the annual review.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اشاریوں کے بورڈ پر ہفتہ ایک نظر میں: پچھلے سات دن بمقابلہ ان سے پہلے کے سات — سب سے زیادہ بہتری، تیز کمی اور بہت دیر سے کھلا کام — اور چھٹی والا کمی شمار نہیں ہوتا۔ «شیئر» بٹن خلاصہ واٹس ایپ یا ٹیمز کو بھیجتا ہے۔
+- پانچواں اشاریہ — اکاؤنٹس کی کوریج: ہر انجینئر کے لیے جدہ میں اس کے اکاؤنٹس، ان کے آلات، جہاں وہ اکیلا ہے، اور مدت میں کس سے رابطہ کیا، اور کتنے اکاؤنٹس پر ٹیم کا کوئی نہیں۔ مینیجر بک مارک اسے صرف اعداد کے طور پر کھینچتا ہے۔
+- آپ کے ہر فرد کے کارڈ پر ماہانہ ملاقات: نوٹس، جو طے ہوا، اور ٹاسک کی قسم یا پوائنٹس کے اہداف جن کی پیش رفت مہینے کے کام سے ناپی جاتی ہے — اور اگلے مہینے طے شدہ بات «ہو گیا» کے ساتھ دکھتی ہے۔ صرف آپ کے آلے پر رہتی ہے اور فائل سے منتقل ہوتی ہے۔
+- مہینوں میں انداز کا سفر: ہر بند مہینے کا انداز، پوائنٹس اور چوتھائی — سالانہ جائزے کے لیے۔
+
+</div>
+</details>
+
+
 ## v8.4 — 2026-10-29
 
 - بطاقة الشهر في «مؤشراتي»: نمط عملك من الأرقام — حجمك مقابل وسيط الفريق وربعك، وبصمتك على الفئات الأربع برسمة عنكبوتية ولقب للنمط، وأكثر ما تميّزت به (تخصص، سرعة، مبادرة)، وما يستحق التطوير — كل جملة معها رقمها. والشهر المنتهي يُقفل تلقائيًّا ولا تتغير بطاقته.

@@ -7,6 +7,7 @@ import {
   buildBookmarklet, parseMe, myProfile, ME_SCHEMA, parseMePayload, profileMonths, monthWindows, scopeOf, ME_SCHEMA_V2, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, reportsOf, donutParts, periodWindows, teamAlerts, activityTotals, descendantsOf,
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, scopeIds, inScope,
+  weeklyDigest, goalProgress, patternPath, coverageTotals, monthCard, closableMonths,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
@@ -479,6 +480,48 @@ test('scope: with a team file, only its people count — the profile’s team av
   assert.deepEqual(sc.below, ['124'], 'myafaqy puts 999 below me, but 999 is out of scope; 124 reports to me by the file');
   const strangers = parseMePayload(MEV2([T2('9', '555', 'done', '2026-10-03T08:00:00', '2026-10-03T10:00:00')], [{ id: '555', teams: ['X'], branchCode: '2', h: false }])).me;
   assert.deepEqual(scopeOf(strangers, r).team, ['555'], 'a file with nobody from the scope shows its people rather than nobody');
+});
+
+test('week: last 7 days vs the 7 before; movers, sharp drops from ten points, and aging opens', () => {
+  const wt = parseWeights({ default: 1, tasks: { 'WASL Link': { w: 3 } } });
+  const D = (id, a, day, type = 'WASL Link') => ({ id, assigneeId: a, type, state: 'done', createdAt: `2026-10-${day}T08:00:00Z`, completedAt: `2026-10-${day}T09:00:00Z` });
+  const tasks = [...[16, 17, 18, 19].map((d, i) => D('a' + i, 'A', d)), ...[25, 26].map((d, i) => D('b' + i, 'A', d)),
+    ...[24, 25, 26, 27, 28].map((d, i) => D('c' + i, 'B', d)), { id: 'o', assigneeId: 'B', state: 'open', createdAt: '2026-10-10T08:00:00Z' }];
+  const w = weeklyDigest(tasks, wt, ['A', 'B'], new Date('2026-10-29T10:00:00Z'));
+  const a = w.rows.find((r) => r.id === 'A'), b = w.rows.find((r) => r.id === 'B');
+  assert.equal(a.points, 6); assert.equal(a.prev, 12); assert.equal(b.points, 15);
+  assert.deepEqual(w.movers.map((r) => r.id), ['B']); assert.deepEqual(w.drops.map((r) => r.id), ['A'], '12 → 6 is a 50% drop from ten or more');
+  assert.deepEqual(w.aging.map((r) => r.id), ['B']);
+});
+
+test('goals and the path: progress from that month’s completed work; the path lists closed months only', () => {
+  const wt = parseWeights({ tasks: { 'WASL Link': { w: 3 } } });
+  const tasks = [1, 2, 3].map((i) => ({ id: String(i), assigneeId: 'A', type: 'WASL Link | الربط مع وصل', state: 'done', completedAt: `2026-10-0${i}T08:00:00Z` }));
+  const g = goalProgress(tasks, wt, 'A', '2026-10', [{ key: 'wasl link', target: 5 }, { key: '__points__', target: 9 }]);
+  assert.deepEqual(g.map((x) => [x.got, x.pct, x.met]), [[3, 60, false], [9, 100, true]]);
+  const closed = { '2026-09': { A: { archetype: 'volume', points: 50, quartile: 2 } }, '2026-10': { A: { archetype: 'field', points: 80, quartile: 1 } } };
+  assert.deepEqual(patternPath(closed, 'A').map((p) => p.archetype), ['volume', 'field']);
+  assert.deepEqual(patternPath(closed, 'Z'), []);
+});
+
+test('coverage: accounts, devices, sole engineer, touched by an activity in the period; unmatched engineers stay out of the scope', () => {
+  const rep = { range: { from: '2026-10-01', to: '2026-10-29' }, accounts: [{ c: '1', a: ['A', 'B'], d: 3 }, { c: '2', a: ['A'], d: 0 }, { c: '3', a: ['e999'], d: 5 }],
+    activities: [{ createdById: 'A', customerId: '2', createdAt: '2026-10-05T08:00:00Z' }, { createdById: 'A', customerId: '1', createdAt: '2026-11-05T08:00:00Z' }] };
+  const cv = coverageTotals(rep, ['A', 'B']);
+  const A = cv.people.find((p) => p.id === 'A');
+  assert.deepEqual([A.accounts, A.devices, A.solo, A.touched], [2, 3, 1, 1]);
+  assert.equal(cv.total.uncovered, 1, 'account 3 has only an unmatched engineer'); assert.equal(cv.total.zeroDevices, 1);
+});
+
+test('the month card: “too little to judge” under ten points; quartile and rank; nothing claimed without five tasks', () => {
+  const wt = parseWeights({ default: 1, tasks: { 'Training Request': { w: 5, tier: 'multistage' }, 'View Units': { w: 1, tier: 'admin' } } });
+  const D = (id, a, type, day) => ({ id, assigneeId: a, type, state: 'done', createdAt: `2026-10-${day}T08:00:00Z`, completedAt: `2026-10-${day}T10:00:00Z` });
+  const tasks = [...[1, 2, 3, 4, 5, 6].map((d) => D('t' + d, 'A', 'Training Request', `0${d}`)), ...[1, 2, 3].map((d) => D('v' + d, 'B', 'View Units', `0${d}`))];
+  const ctx = { tasks, activities: [], weights: wt, team: ['A', 'B'], now: new Date('2026-10-29T10:00:00Z') };
+  const a = monthCard(ctx, 'A', '2026-10'), b = monthCard(ctx, 'B', '2026-10');
+  assert.equal(a.points, 30); assert.equal(a.rank, 1); assert.equal(b.archetype, 'early', '3 points is too little to judge');
+  assert.ok(a.strengths.every((s) => s.kind !== 'spec' || s.mine >= 5));
+  assert.deepEqual(closableMonths([{ from: '2026-09-01', to: '2026-10-29' }], new Date('2026-10-29T10:00:00Z')), ['2026-09']);
 });
 
 test('formatting', () => {

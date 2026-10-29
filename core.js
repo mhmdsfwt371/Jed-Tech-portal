@@ -389,6 +389,44 @@ export const STRINGS = {
     help_heat: 'كل صف شخص وكل عمود فئة؛ الرقم نقاطه الموزونة فيها والخلفية بقدرها. نظرة واحدة تقول أين يتركز الفريق وأين الفجوات.',
     help_plan: 'ثلاث قواعد تُولّد الاقتراحات: تمدّد (نوع من فئة أعلى يعمله الفريق)، استثمار (النوع الذي هو أسرع الفريق فيه)، توازن (تحت الوسيط: مهام سريعة؛ في الربع الأعلى: عمل متعدد المراحل). كل اقتراح معه سببه.',
     card_team_legend: 'الفريق',
+    week_h: 'الأسبوع في لمحة',
+    week_total: 'النقاط الموزونة: {p} هذا الأسبوع مقابل {q} الأسبوع الماضي',
+    week_total_l: 'نقطة في آخر ٧ أيام · {q} في السبعة قبلها ({d})',
+    week_movers: 'الأكثر تقدمًا',
+    week_drops: 'نزول حاد',
+    week_aging: 'مفتوح قديم',
+    week_on_leave: 'في إجازة — لا يُحسب نزولًا: {who}',
+    week_share: 'مشاركة',
+    help_week: 'آخر سبعة أيام مقابل السبعة قبلها لمن في النطاق: من تقدّم أكثر، ومن نزل ٤٠٪ فأكثر (من عشر نقاط فأكثر)، ومن عنده مهام مفتوحة أقدم من سبعة أيام. من في إجازة لا يُعدّ نزولًا. «مشاركة» ترسل الملخص نصًّا عبر واتساب أو تيمز أو تنسخه.',
+    f5_title: 'المؤشر الخامس — تغطية الحسابات',
+    f5_sub: 'حسابات جدة: {n} حسابًا و{d} جهازًا · {u} حسابًا بلا أحد من النطاق · {z} حسابًا بلا أجهزة متصلة.',
+    f5_accounts: 'الحسابات',
+    f5_devices: 'الأجهزة',
+    f5_solo: 'وحده عليها',
+    f5_touched: 'لمسها في الفترة',
+    f5_none: 'لا حسابات في ملف هذه الفترة — اسحب بإشارة المدير من v8.5.',
+    help_f5: 'من شاشة «حسابات ما بعد البيع» في ماي أفاقي لفرع جدة: لكل مهندس كم حسابًا عليه، وكم جهازًا، وفي كم حساب هو وحده، وكم حسابًا لمسه في الفترة بنشاط مسجّل. يُحسب بأرقام الحسابات فقط، بلا أسماء العملاء.',
+    meet_open: '📝 اللقاء الشهري',
+    meet_edit: '📝 تعديل اللقاء',
+    meet_title: 'لقاء {name} — {m}',
+    meet_private: 'يُحفظ على هذا الجهاز فقط، ولا يدخل المستودع أبدًا. انقله لجهاز آخر بـ«تصدير اللقاءات».',
+    meet_note: 'ملاحظات اللقاء',
+    meet_note_ph: 'ما دار في اللقاء، وما لاحظته في البطاقة…',
+    meet_agreed: 'ما اتفقنا عليه للشهر القادم',
+    meet_agreed_ph: 'مثال: يأخذ ربط وصل أكثر، ويغلق المفتوح القديم.',
+    meet_goals: 'أهداف الشهر',
+    meet_add_goal: '+ هدف',
+    meet_save: 'حفظ',
+    meet_saved: 'حُفظ اللقاء.',
+    meet_prev_agreed: 'اتفقنا الشهر الماضي:',
+    meet_done: 'نُفّذ',
+    meet_export: 'تصدير اللقاءات',
+    meet_import: 'استيراد اللقاءات',
+    meet_imported: 'وصلت اللقاءات.',
+    goal_points: 'النقاط الموزونة',
+    path_h: 'مسار النمط عبر الأشهر',
+    path_soon: 'يظهر المسار من الشهر المقفول الثاني — كل شهر ينتهي يُضاف وحده.',
+    help_path: 'لكل شهر مقفول: النمط والنقاط والربع. يُظهر كيف يتحرك عمل كل شخص — من «محرّك الحجم» إلى «المنفّذ الميداني» مثلًا — وهو ما يُقال في التقييم السنوي.',
   },
   en: {
     brand: 'Afaqy', portal: 'Technical team portal — Jeddah', nav_data: 'Data', nav_kpi: 'KPIs',
@@ -769,6 +807,44 @@ export const STRINGS = {
     help_heat: 'Each row is a person and each column a tier; the number is their weighted points there and the shade its size. One look says where the team concentrates and where the gaps are.',
     help_plan: 'Three rules generate the suggestions: stretch (a type from a higher tier the team works), invest (the type this person is fastest at), balance (below median: quick tasks; top quarter: multi-stage work). Each suggestion carries its reason.',
     card_team_legend: 'team',
+    week_h: 'The week at a glance',
+    week_total: 'Weighted points: {p} this week against {q} last week',
+    week_total_l: 'points in the last 7 days · {q} in the 7 before ({d})',
+    week_movers: 'Biggest gains',
+    week_drops: 'Sharp drops',
+    week_aging: 'Work left open too long',
+    week_on_leave: 'On leave — not counted as a drop: {who}',
+    week_share: 'Share',
+    help_week: 'The last seven days against the seven before, for the scope: who gained most, who dropped 40% or more (from ten points or more), and who has tasks open longer than seven days. Anyone on leave is not counted as a drop. “Share” sends the summary as text via WhatsApp or Teams, or copies it.',
+    f5_title: 'Factor 5 — account coverage',
+    f5_sub: 'Jeddah accounts: {n} accounts and {d} devices · {u} accounts with nobody from the scope · {z} accounts with no connected device.',
+    f5_accounts: 'Accounts',
+    f5_devices: 'Devices',
+    f5_solo: 'Sole engineer',
+    f5_touched: 'Touched in the period',
+    f5_none: 'No accounts in this period’s file — pull with the manager bookmark from v8.5.',
+    help_f5: 'From myafaqy’s “After Sales Accounts” screen for the Jeddah branch: for each engineer, how many accounts carry them, how many devices, on how many they are alone, and how many they touched in the period with a logged activity. Counted by account ids only, without customer names.',
+    meet_open: '📝 Monthly one-to-one',
+    meet_edit: '📝 Edit the one-to-one',
+    meet_title: 'One-to-one with {name} — {m}',
+    meet_private: 'Saved on this device only, never in the repository. Move it to another device with “Export one-to-ones”.',
+    meet_note: 'Notes from the meeting',
+    meet_note_ph: 'What was discussed, and what the card showed…',
+    meet_agreed: 'What we agreed for next month',
+    meet_agreed_ph: 'e.g. take more WASL links, and close the old open tasks.',
+    meet_goals: 'The month’s goals',
+    meet_add_goal: '+ goal',
+    meet_save: 'Save',
+    meet_saved: 'The one-to-one is saved.',
+    meet_prev_agreed: 'Agreed last month:',
+    meet_done: 'done',
+    meet_export: 'Export one-to-ones',
+    meet_import: 'Import one-to-ones',
+    meet_imported: 'The one-to-ones arrived.',
+    goal_points: 'Weighted points',
+    path_h: 'The pattern’s path over the months',
+    path_soon: 'The path appears from the second closed month — each month that ends is added by itself.',
+    help_path: 'For each closed month: the pattern, the points and the quarter. It shows how each person’s work moves — from “volume engine” to “field executor”, say — which is what an annual review is about.',
   },
   ur: {
     brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ', nav_data: 'ڈیٹا', nav_kpi: 'کارکردگی کے اشاریے',
@@ -1149,6 +1225,44 @@ export const STRINGS = {
     help_heat: 'ہر قطار ایک فرد اور ہر کالم ایک درجہ؛ عدد وہاں اس کے وزنی پوائنٹس اور رنگ اس کی مقدار۔ ایک نظر بتاتی ہے ٹیم کہاں مرکوز ہے اور خلا کہاں۔',
     help_plan: 'تین اصول تجاویز بناتے ہیں: توسیع (اونچے درجے کی قسم جو ٹیم کرتی ہے)، سرمایہ کاری (وہ قسم جس میں یہ فرد سب سے تیز ہے)، توازن (وسط سے نیچے: تیز ٹاسک؛ اوپری چوتھائی: کثیر مرحلہ کام)۔ ہر تجویز اپنی وجہ کے ساتھ۔',
     card_team_legend: 'ٹیم',
+    week_h: 'ہفتہ ایک نظر میں',
+    week_total: 'وزنی پوائنٹس: اس ہفتے {p} بمقابلہ پچھلے ہفتے {q}',
+    week_total_l: 'پوائنٹس پچھلے ۷ دنوں میں · اس سے پہلے کے ۷ میں {q} ({d})',
+    week_movers: 'سب سے زیادہ بہتری',
+    week_drops: 'تیز کمی',
+    week_aging: 'بہت دیر سے کھلا کام',
+    week_on_leave: 'چھٹی پر — کمی شمار نہیں: {who}',
+    week_share: 'شیئر کریں',
+    help_week: 'دائرہ کار کے لیے پچھلے سات دن بمقابلہ ان سے پہلے کے سات: کس نے سب سے زیادہ بہتری کی، کون ۴۰٪ یا زیادہ گرا (دس یا زیادہ پوائنٹس سے)، اور کس کے ٹاسک سات دن سے زیادہ کھلے ہیں۔ چھٹی والا کمی شمار نہیں ہوتا۔ «شیئر» خلاصہ متن کے طور پر واٹس ایپ یا ٹیمز سے بھیجتا یا کاپی کرتا ہے۔',
+    f5_title: 'پانچواں اشاریہ — اکاؤنٹس کی کوریج',
+    f5_sub: 'جدہ کے اکاؤنٹس: {n} اکاؤنٹس اور {d} آلات · {u} اکاؤنٹس جن پر دائرہ کار کا کوئی نہیں · {z} اکاؤنٹس بغیر جڑے آلے کے۔',
+    f5_accounts: 'اکاؤنٹس',
+    f5_devices: 'آلات',
+    f5_solo: 'اکیلا انجینئر',
+    f5_touched: 'مدت میں رابطہ',
+    f5_none: 'اس مدت کی فائل میں اکاؤنٹس نہیں — v8.5 سے مینیجر بک مارک سے کھینچیں۔',
+    help_f5: 'جدہ برانچ کے لیے مائی آفاقی کی «After Sales Accounts» اسکرین سے: ہر انجینئر پر کتنے اکاؤنٹس، کتنے آلات، کتنوں پر وہ اکیلا ہے، اور مدت میں درج سرگرمی سے کتنوں سے رابطہ کیا۔ صرف اکاؤنٹ شناختوں سے، گاہکوں کے ناموں کے بغیر۔',
+    meet_open: '📝 ماہانہ ملاقات',
+    meet_edit: '📝 ملاقات میں ترمیم',
+    meet_title: '{name} سے ملاقات — {m}',
+    meet_private: 'صرف اسی آلے پر محفوظ، کبھی ریپوزٹری میں نہیں۔ دوسرے آلے پر «ملاقاتیں برآمد کریں» سے منتقل کریں۔',
+    meet_note: 'ملاقات کے نوٹس',
+    meet_note_ph: 'ملاقات میں کیا بات ہوئی، اور کارڈ نے کیا دکھایا…',
+    meet_agreed: 'اگلے مہینے کے لیے کیا طے ہوا',
+    meet_agreed_ph: 'مثلاً: زیادہ وصل ربط لے، اور پرانے کھلے ٹاسک بند کرے۔',
+    meet_goals: 'مہینے کے اہداف',
+    meet_add_goal: '+ ہدف',
+    meet_save: 'محفوظ کریں',
+    meet_saved: 'ملاقات محفوظ ہو گئی۔',
+    meet_prev_agreed: 'پچھلے مہینے طے ہوا:',
+    meet_done: 'ہو گیا',
+    meet_export: 'ملاقاتیں برآمد کریں',
+    meet_import: 'ملاقاتیں درآمد کریں',
+    meet_imported: 'ملاقاتیں آ گئیں۔',
+    goal_points: 'وزنی پوائنٹس',
+    path_h: 'مہینوں میں انداز کا سفر',
+    path_soon: 'سفر دوسرے بند مہینے سے دکھتا ہے — ہر ختم ہونے والا مہینہ خود شامل ہوتا ہے۔',
+    help_path: 'ہر بند مہینے کے لیے: انداز، پوائنٹس اور چوتھائی۔ یہ دکھاتا ہے ہر فرد کا کام کیسے بدلتا ہے — مثلاً «حجم کا انجن» سے «فیلڈ ایگزیکیوٹر» تک — جو سالانہ جائزے کا موضوع ہے۔',
   },
 };
 
@@ -1684,8 +1798,10 @@ export function parseReports(text) {
     ticketId: String(r.ticketId), taskId: r.taskId == null ? null : String(r.taskId), customerId: r.customerId == null ? null : String(r.customerId),
     categoryId: r.categoryId == null ? null : String(r.categoryId), category: String(r.category || '').slice(0, 60), caseId: r.caseId == null ? null : String(r.caseId), caseName: String(r.case || r.caseName || '').slice(0, 60),
     statusId: r.statusId == null ? null : String(r.statusId), status: String(r.status || '').slice(0, 40), createdById: r.createdById == null ? null : String(r.createdById), createdAt: toIso(r.createDate) }));
+  const accounts = (raw.accounts && Array.isArray(raw.accounts.rows) ? raw.accounts.rows : []).filter((r) => r && r.c != null).slice(0, 20000)
+    .map((r) => ({ c: String(r.c), a: (Array.isArray(r.a) ? r.a : []).map(String).slice(0, 40), d: Number(r.d) || 0, s: r.s == null ? null : String(r.s) }));
   return { reports: { key: rangeKey({ from, to }), schema: REPORTS_SCHEMA, range: { from, to }, branch: String(raw.branch || ''),
-    extractedAt: toIso(raw.extractedAt), techPoints, afterSales: rows, activities, notes: Array.isArray(raw.notes) ? raw.notes.map(String).slice(0, 30) : [] } };
+    extractedAt: toIso(raw.extractedAt), techPoints, afterSales: rows, activities, accounts, notes: Array.isArray(raw.notes) ? raw.notes.map(String).slice(0, 30) : [] } };
 }
 
 /** Factor 2: technician points over the period — the months summed per technician; people with no field work left out. */
@@ -1722,6 +1838,22 @@ export function activityTotals(reports, team = null) {
   const total = { activities: rows.length, customers: new Set(rows.map((a) => a.customerId).filter(Boolean)).size, withTask: rows.filter((a) => a.taskId).length,
     byStatus: Object.fromEntries(statuses.map((st) => [st, rows.filter((a) => a.status === st).length])), byCategory: Object.fromEntries(categories.map((c) => [c, rows.filter((a) => a.category === c).length])) };
   return { people, total, statuses, categories };
+}
+
+/** Factor 5: account coverage. For each engineer: accounts carried, devices on them, and how many were touched in the period. */
+export function coverageTotals(reports, team = null, tasks = []) {
+  const acc = reports.accounts || []; if (!acc.length) return { people: [], total: { accounts: 0, devices: 0, uncovered: 0 } };
+  const { from, to } = reports.range;
+  const inR = (iso) => { const d = saudiDay(iso); return d && d >= from && d <= to; };
+  const touched = new Map();
+  for (const a of reports.activities || []) if (a.createdById && a.customerId && inR(a.createdAt)) (touched.get(a.createdById) || touched.set(a.createdById, new Set()).get(a.createdById)).add(String(a.customerId));
+  const ids = team ? new Set(team) : new Set(acc.flatMap((r) => r.a).filter((x) => !x.startsWith('e')));
+  const people = [...ids].map((id) => {
+    const mine = acc.filter((r) => r.a.includes(id)); const tch = touched.get(id) || new Set();
+    return { id, accounts: mine.length, devices: mine.reduce((s, r) => s + r.d, 0), touched: mine.filter((r) => tch.has(r.c)).length, solo: mine.filter((r) => r.a.length === 1).length };
+  }).filter((p) => p.accounts > 0).sort((a, b) => b.accounts - a.accounts);
+  const uncovered = acc.filter((r) => !r.a.some((x) => ids.has(x))).length;
+  return { people, total: { accounts: acc.length, devices: acc.reduce((s, r) => s + r.d, 0), uncovered, zeroDevices: acc.filter((r) => !r.d).length } };
 }
 
 export function afterSalesTotals(reports) {
@@ -1787,11 +1919,12 @@ say(M[2]+'reports');const techPoints=[];const MM=${JSON.stringify(months.map(m=>
 const KEEP=${JSON.stringify(TECH_FIELDS)};
 for(const mo of MM){const rows=[];for(let pg=1;;pg++){const R=await post('TechnicianReport/GetTechnicianReportStatic',{pageNumber:pg,pageSize:100,searchKey:'',isSearchFilter:true,search:{yearId:mo.yearId,quarterId:mo.quarterId,monthId:mo.monthId,branchIds:BR,userIds:[],requestDate:mo.rd}});const g=(R.data&&R.data.gridResult)||{};const arr=g.data||[];for(const r of arr){const o={technicianId:r.technicianId,employeeId:r.employeeId,nameEn:r.nameEn,nameAr:r.nameAr};for(const f of KEEP)o[f]=r[f]||0;rows.push(o)}const tot=g.totalPages||1;if(pg>=tot||!arr.length)break;await wait(200)}techPoints.push({month:mo.month,listCount:rows.length,rows})}
 say(M[2]+'activity log');const acts=[];for(let pg=0;pg<200;pg++){const R=await post('ActivityLog/GetTicketsGrid',{isSearchFilter:false,searchKey:'',search:{},pageSize:500,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const arr=(R.data&&(R.data.data||R.data))||[];if(!arr.length)break;let older=0;for(const r of arr){const d=String(r.createDate||'').slice(0,10);if(d<FROM){older++;continue}if(d>TO)continue;acts.push({ticketId:r.ticketId,taskId:r.taskId??null,customerId:r.customerId??null,categoryId:r.categoryId??null,category:r.category||'',caseId:r.caseId??null,case:r.case||'',statusId:r.statusId??null,status:r.status||'',createdById:r.createdById??null,createDate:r.createDate?r.createDate+'Z':null})}if(older===arr.length||(R.data&&R.data.totalPages&&pg+1>=R.data.totalPages))break;await wait(250)}
+say(M[2]+'accounts');const ENG=((await post('AfterSales/GetAllAfterSalesEngineers')).data||[]);const byName={};for(const[uid,u]of Object.entries(uname)){const n=String((u&&u.nameEn)||'').trim().toLowerCase();if(n)byName[n]=uid}const emp2uid={};for(const e of ENG){const u=byName[String(e.nameEn||'').trim().toLowerCase()];if(u)emp2uid[String(e.id)]=u}const accts=[];let asz=500;for(let pg=0;pg<60;pg++){const R=await post('AfterSales/GetAfterSalesRequestGrid',{isSearchFilter:false,searchKey:'',search:{},pageSize:asz,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const d=R.data||{};const arr=d.data||[];if(pg===0&&d.pageSize&&d.pageSize<asz)asz=d.pageSize;for(const r of arr)if(String(r.branchCode)===BR)accts.push({c:String(r.customerId??r.id),a:(r.afterSalesManIds||[]).map(String).map(x=>emp2uid[x]||('e'+x)),d:+r.connectedDevices||0,s:r.segmentId??null});if(!arr.length||(pg+1)*asz>=(d.listCount||0))break;await wait(200)}
 const AS=await post('AfterSalesBoardReport/GetAfterSalesAgentsGrid',{categoryId:null,createDate:['${fromZ}','${toZ}'],branch:BR,afterSalesId:null});
 const asArr=(AS.data&&(AS.data.data||AS.data))||[];const afterSales={rows:asArr.map(r=>({id:r.id,name:r.afterSalesName,open:r.openTickets||0,pending:r.pendingTickets||0,done:r.doneTickets||0,total:r.totalTickets||0}))};
-const repFile={schema:'${REPORTS_SCHEMA}',range:{from:FROM,to:TO},branch:BR,extractedAt:new Date().toISOString(),techPoints,afterSales,activities:{rows:acts},notes:['manager bookmark']};
+const repFile={schema:'${REPORTS_SCHEMA}',range:{from:FROM,to:TO},branch:BR,extractedAt:new Date().toISOString(),techPoints,afterSales,activities:{rows:acts},accounts:{rows:accts,unmatched:ENG.filter(e=>!emp2uid[String(e.id)]).length},notes:['manager bookmark']};
 dl('afaqy-tasks-'+FROM+'_'+TO+'.json',tasksFile);await wait(400);dl('afaqy-reports-'+FROM+'_'+TO+'.json',repFile);
-box.style.background='#0A5F67';say(M[4]+' ('+taskRows.length+' / '+techPoints.reduce((s,m)=>s+m.rows.length,0)+' / '+afterSales.rows.length+' / '+acts.length+')');setTimeout(()=>box.remove(),12000);
+box.style.background='#0A5F67';say(M[4]+' ('+taskRows.length+' / '+techPoints.reduce((s,m)=>s+m.rows.length,0)+' / '+afterSales.rows.length+' / '+acts.length+' / '+accts.length+')');setTimeout(()=>box.remove(),12000);
 }catch(e){box.style.background='#7a1f1f';say(M[3]+e.message);setTimeout(()=>box.remove(),12000)}})();`;
   return 'javascript:' + encodeURIComponent(code.replace(/\n/g, ''));
 }
@@ -2142,6 +2275,37 @@ export function closableMonths(ranges, now = new Date()) {
   const today = ymd(saudiToday(now)); const out = new Set();
   for (const r of ranges || []) { let ym = r.from.slice(0, 7); while (ym <= r.to.slice(0, 7)) { const m = monthRange(ym); if (m.from >= r.from && m.to <= r.to && m.to < today) out.add(ym); ym = ym === r.to.slice(0, 7) ? '9999-99' : (([y, mm]) => (mm === 12 ? `${y + 1}-01` : `${y}-${pad(mm + 1)}`))(ym.split('-').map(Number)); } }
   return [...out].sort();
+}
+
+// ===================== the week, goals and the pattern's path (ADR-0021) =====================
+/** The last 7 days against the 7 before, per person in scope: points, the movers, sharp drops, and work left open too long. */
+export function weeklyDigest(tasks, wt, team, now = new Date(), T = CARD_DEFAULTS) {
+  const end = Date.parse(now.toISOString()), d7 = 7 * 86400000;
+  const win = (x, a, b) => { const t0 = x.completedAt ? Date.parse(x.completedAt) : NaN; return t0 > a && t0 <= b; };
+  const rows = (team || []).map((id) => {
+    const mine = (tasks || []).filter((x) => x.assigneeId === id && x.state === 'done');
+    const thisW = mine.filter((x) => win(x, end - d7, end)), lastW = mine.filter((x) => win(x, end - 2 * d7, end - d7));
+    const p = thisW.reduce((s, x) => s + taskWeight(wt, x.type), 0), q = lastW.reduce((s, x) => s + taskWeight(wt, x.type), 0);
+    const aging = (tasks || []).filter((x) => x.assigneeId === id && x.state === 'open' && x.createdAt && end - Date.parse(x.createdAt) > (T.agingDays || 7) * 86400000).length;
+    return { id, points: p, prev: q, delta: p - q, done: thisW.length, aging };
+  });
+  const drops = rows.filter((r) => r.prev >= 10 && r.points <= r.prev * 0.6).sort((a, b) => a.delta - b.delta);
+  const movers = [...rows].filter((r) => r.delta > 0).sort((a, b) => b.delta - a.delta).slice(0, 3);
+  const aging = rows.filter((r) => r.aging > 0).sort((a, b) => b.aging - a.aging);
+  return { rows, drops, movers, aging, total: rows.reduce((s, r) => s + r.points, 0), prevTotal: rows.reduce((s, r) => s + r.prev, 0), from: new Date(end - d7).toISOString(), to: now.toISOString() };
+}
+/** A month's goals for one person: each goal is a task type with a target count, or a points target; progress from that month's completed work. */
+export function goalProgress(tasks, wt, personId, ym, goals) {
+  const r = monthRange(ym);
+  const mine = (tasks || []).filter((x) => x.assigneeId === personId && x.state === 'done' && x.completedAt && saudiDay(x.completedAt) >= r.from && saudiDay(x.completedAt) <= r.to);
+  return (goals || []).map((g) => {
+    const got = g.key === '__points__' ? mine.reduce((s, x) => s + taskWeight(wt, x.type), 0) : mine.filter((x) => typeKey(x.type) === g.key).length;
+    return { ...g, got, pct: g.target > 0 ? Math.min(100, Math.round((got / g.target) * 100)) : 0, met: got >= g.target };
+  });
+}
+/** The pattern's path: closed months in order, for one person — archetype, points, quartile. */
+export function patternPath(closed, personId) {
+  return Object.keys(closed || {}).sort().map((ym) => closed[ym][personId] ? { month: ym, archetype: closed[ym][personId].archetype, points: closed[ym][personId].points, quartile: closed[ym][personId].quartile } : null).filter(Boolean);
 }
 
 /** Parts of a whole as donut segments: each gets its share, and the SVG dash pair for a circle of radius r. */
