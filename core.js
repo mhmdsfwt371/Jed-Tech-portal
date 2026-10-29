@@ -250,13 +250,13 @@ export const STRINGS = {
     f2_show: 'نقاط الفنيين — عرض',
     def_10: 'المؤشر الرابع يعدّ لكل مهندس تذاكره في الفترة — كل تذكرة نشاط سجّله مع عميل — وعدد العملاء المختلفين، وكم منها صار مهمة، وتوزيعها بالحالة والتصنيف كما في ماي أفاقي. لا تُنقل أوصاف التذاكر ولا أسماء العملاء.',
     assign_h: 'تعيين ما بعد البيع على حسابات جدة',
-    assign_sub: 'لوحة تُفتح داخل ماي أفاقي بدخولك: تختار المهندسين، وترى التغطية، وتجرّب على عشرة، ثم تطبّق على الباقي — بإضافة فقط، ولا يُحذف أحد موجود.',
+    assign_sub: 'لوحة تُفتح داخل ماي أفاقي بدخولك: تختار المهندسين، وتزيل من غادر، وترى التغطية، وتجرّب على عشرة، ثم تطبّق على الباقي. لا يُزال أحد إلا من تعلّم عليه بنفسك، ولا يُترك حساب بلا أحد.',
     assign_s1: 'مرة واحدة: اسحب الزر إلى شريط الإشارات.',
     assign_s2: 'افتح ماي أفاقي واضغط الإشارة — تظهر اللوحة فوق الصفحة.',
-    assign_s3: 'اختر المهندسين، ثم «تجربة على ١٠» وراجع الجدول قبل/بعد.',
+    assign_s3: 'علّم على المهندسين، ومن غادر علّم عليه في «إزالة من كل الحسابات»، ثم «تجربة على ١٠» وراجع الجدول قبل/بعد.',
     assign_s4: '«تطبيق على الباقي» ثم نزّل السجل. وبعدها صدّر شيت الحسابات لتتأكد.',
     assign_bm: 'لوحة التعيين',
-    assign_warn: 'هذه هي الكتابة الوحيدة في البوابة كلها: طلب واحد — تعيين ما بعد البيع — على فرع جدة فقط، ولا يُرسل إلا بضغطتك. الحارس يرفض أي نسخة تتجاوز ذلك.',
+    assign_warn: 'هذه هي الكتابة الوحيدة في البوابة كلها: طلب واحد — تعيين ما بعد البيع — على فرع جدة فقط، ولا يُرسل إلا بضغطتك. الإزالة لمن تعلّم عليه فقط، وتبدأ فارغة في كل فتح. الحارس يرفض أي نسخة تتجاوز ذلك.',
     team_roster_h: 'المناصب ومن يتبع من',
   },
   en: {
@@ -499,13 +499,13 @@ export const STRINGS = {
     f2_show: 'Technician points — show',
     def_10: 'Factor 4 counts, per engineer, their tickets in the period — each an activity logged with a customer — the distinct customers, how many became tasks, and their spread by status and category as in myafaqy. Ticket descriptions and customer names are not carried.',
     assign_h: 'Assign after-sales to Jeddah accounts',
-    assign_sub: 'A panel that opens inside myafaqy with your sign-in: choose the engineers, see the coverage, pilot on ten, then apply to the rest — add only; nobody already there is removed.',
+    assign_sub: 'A panel that opens inside myafaqy with your sign-in: choose the engineers, remove whoever left, see the coverage, pilot on ten, then apply to the rest. Nobody is removed unless you tick them yourself, and no account is left with nobody.',
     assign_s1: 'Once: drag the button onto the bookmarks bar.',
     assign_s2: 'Open myafaqy and press the bookmark — the panel appears over the page.',
-    assign_s3: 'Choose the engineers, then “Pilot on 10” and review the before/after table.',
+    assign_s3: 'Tick the engineers, tick whoever left under “Remove from every account”, then “Pilot on 10” and review the before/after table.',
     assign_s4: '“Apply to the rest”, then download the log. Then export the accounts sheet to confirm.',
     assign_bm: 'Assignment panel',
-    assign_warn: 'This is the one write in the whole portal: a single request — assign after-sales — on the Jeddah branch only, sent only by your press. The guard refuses any version that goes beyond it.',
+    assign_warn: 'This is the one write in the whole portal: a single request — assign after-sales — on the Jeddah branch only, sent only by your press. Removal is only for whoever you tick, and starts empty on every open. The guard refuses any version that goes beyond it.',
     team_roster_h: 'Positions and who reports to whom',
   },
   ur: {
@@ -748,13 +748,13 @@ export const STRINGS = {
     f2_show: 'ٹیکنیشن پوائنٹس — دکھائیں',
     def_10: 'چوتھا اشاریہ ہر انجینئر کے لیے مدت میں اس کے ٹکٹ گنتا ہے — ہر ایک گاہک کے ساتھ درج کی گئی سرگرمی — مختلف گاہک، کتنے ٹاسک بنے، اور مائی آفاقی کے مطابق حالت اور زمرے کی تقسیم۔ ٹکٹ کی تفصیل اور گاہکوں کے نام نہیں لائے جاتے۔',
     assign_h: 'جدہ کے اکاؤنٹس پر آفٹر سیلز کی تفویض',
-    assign_sub: 'ایک پینل جو آپ کے لاگ اِن سے مائی آفاقی کے اندر کھلتا ہے: انجینئرز چنیں، کوریج دیکھیں، دس پر آزمائیں، پھر باقی پر لاگو کریں — صرف اضافہ؛ جو پہلے سے موجود ہے اسے ہٹایا نہیں جاتا۔',
+    assign_sub: 'ایک پینل جو آپ کے لاگ اِن سے مائی آفاقی کے اندر کھلتا ہے: انجینئرز چنیں، جو چھوڑ گئے انہیں ہٹائیں، کوریج دیکھیں، دس پر آزمائیں، پھر باقی پر لاگو کریں۔ جسے آپ خود نشان نہ لگائیں وہ نہیں ہٹایا جاتا، اور کوئی اکاؤنٹ کسی کے بغیر نہیں چھوڑا جاتا۔',
     assign_s1: 'ایک بار: بٹن کو بک مارکس بار پر کھینچیں۔',
     assign_s2: 'مائی آفاقی کھولیں اور بک مارک دبائیں — پینل صفحے کے اوپر آ جاتا ہے۔',
-    assign_s3: 'انجینئرز چنیں، پھر «دس پر آزمائیں» اور پہلے/بعد کا جدول دیکھیں۔',
+    assign_s3: 'انجینئرز پر نشان لگائیں، جو چھوڑ گئے انہیں «ہر اکاؤنٹ سے ہٹائیں» میں نشان لگائیں، پھر «دس پر آزمائیں» اور پہلے/بعد کا جدول دیکھیں۔',
     assign_s4: '«باقی پر لاگو کریں»، پھر لاگ ڈاؤن لوڈ کریں۔ پھر تصدیق کے لیے اکاؤنٹس کی شیٹ برآمد کریں۔',
     assign_bm: 'تفویض پینل',
-    assign_warn: 'یہ پورے پورٹل میں واحد لکھائی ہے: ایک درخواست — آفٹر سیلز کی تفویض — صرف جدہ برانچ پر، اور صرف آپ کے دبانے سے بھیجی جاتی ہے۔ گارڈ اس سے آگے جانے والے کسی نسخے کو مسترد کرتا ہے۔',
+    assign_warn: 'یہ پورے پورٹل میں واحد لکھائی ہے: ایک درخواست — آفٹر سیلز کی تفویض — صرف جدہ برانچ پر، اور صرف آپ کے دبانے سے بھیجی جاتی ہے۔ ہٹانا صرف اسی کا جسے آپ نشان لگائیں، اور ہر بار خالی شروع ہوتا ہے۔ گارڈ اس سے آگے جانے والے کسی نسخے کو مسترد کرتا ہے۔',
     team_roster_h: 'عہدے اور کون کس کے ماتحت',
   },
 };
@@ -1406,10 +1406,10 @@ export function buildAssignBookmarklet(lang = 'ar', defaultNames = []) {
   const M = {
     ar: { only: 'افتح ماي أفاقي أولًا ثم اضغط الإشارة من هناك', login: 'سجّل دخولك في ماي أفاقي أولًا', title: 'تعيين ما بعد البيع على حسابات جدة', pick: 'اختر المهندسين الذين يكونون على كل حساب', loading: 'جارٍ قراءة الحسابات…',
       total: 'حسابات جدة', complete: 'مكتملة بالمختارين', toUpdate: 'ستُحدَّث', cover: 'التغطية الحالية لكل مهندس', pilot: 'تجربة على ١٠', rest: 'تطبيق على الباقي', refresh: 'إعادة القراءة', close: 'إغلاق',
-      before: 'قبل', after: 'بعد', ok: 'تمام', bad: 'لم يُطبَّق', progress: 'جارٍ التطبيق', done: 'انتهى — مكتملة الآن', failed: 'لم تنجح', log: 'تنزيل السجل', mode: 'إضافة فقط — لا يُحذف أحد موجود', none: 'اختر مهندسًا واحدًا على الأقل' },
+      before: 'قبل', after: 'بعد', ok: 'تمام', bad: 'لم يُطبَّق', progress: 'جارٍ التطبيق', done: 'انتهى — مكتملة الآن', failed: 'لم تنجح', log: 'تنزيل السجل', mode: 'إضافة لمن تختارهم، وإزالة لمن تعلّم عليه في قسم الإزالة فقط', none: 'اختر مهندسًا واحدًا على الأقل أو علّم على من تزيله', removeH: 'إزالة من كل الحسابات — لمن غادر', removeHint: 'لا يُزال أحد إلا من تعلّم عليه هنا بنفسك. الرقم بجانب كل اسم = عدد حسابات جدة التي عليه.', unknown: 'ليس في قائمة المهندسين', toRemove: 'ستُزال منها' },
     en: { only: 'Open myafaqy first, then press the bookmark there', login: 'Sign in to myafaqy first', title: 'Assign after-sales to Jeddah accounts', pick: 'Choose the engineers who should be on every account', loading: 'Reading accounts…',
       total: 'Jeddah accounts', complete: 'complete with the chosen', toUpdate: 'to update', cover: 'Current coverage per engineer', pilot: 'Pilot on 10', rest: 'Apply to the rest', refresh: 'Re-read', close: 'Close',
-      before: 'before', after: 'after', ok: 'ok', bad: 'not applied', progress: 'Applying', done: 'Done — complete now', failed: 'failed', log: 'Download the log', mode: 'ADD only — nobody already there is removed', none: 'Choose at least one engineer' },
+      before: 'before', after: 'after', ok: 'ok', bad: 'not applied', progress: 'Applying', done: 'Done — complete now', failed: 'failed', log: 'Download the log', mode: 'Adds whoever you choose; removes only whoever you tick in the removal section', none: 'Choose at least one engineer or tick someone to remove', removeH: 'Remove from every account — for those who left', removeHint: 'Nobody is removed unless you tick them here yourself. The number beside each name is how many Jeddah accounts carry them.', unknown: 'not in the engineers list', toRemove: 'to remove from' },
   }[lang] || {};
   const code = `(async()=>{const M=${JSON.stringify(M)},RTL=${lang === 'en' ? 'false' : 'true'};
 if(location.hostname!=='myafaqy.com'){alert(M.only);return}
@@ -1423,20 +1423,22 @@ const el=(t,a,...k)=>{const n=document.createElement(t);for(const[x,v]of Object.
 const btn=(text,fn,primary)=>el('button',{type:'button',style:'font:inherit;padding:8px 14px;border-radius:8px;cursor:pointer;border:1px solid '+(primary?'#0E7C86':'#C3CED7')+';background:'+(primary?'#0E7C86':'#FFFFFF')+';color:'+(primary?'#FFFFFF':'#0F2231'),onclick:fn,text});
 const status=el('div',{style:'margin:8px 0;color:#5A6B78'});const body=el('div');
 box.append(el('div',{style:'display:flex;justify-content:space-between;align-items:center;gap:10px'},el('b',{style:'font-size:16px',text:M.title}),btn(M.close,()=>box.remove())),el('div',{style:'font-size:12px;color:#B45309;margin:4px 0 8px',text:M.mode}),status,body);document.body.append(box);
-let engineers=[],rows=[],chosen=new Set(JSON.parse(localStorage.getItem('afaqy-assign-chosen')||'[]'));const DEF=${JSON.stringify(defaultNames.map((n) => String(n).trim().toLowerCase()))};
+let engineers=[],rows=[],chosen=new Set(JSON.parse(localStorage.getItem('afaqy-assign-chosen')||'[]')),removing=new Set();const DEF=${JSON.stringify(defaultNames.map((n) => String(n).trim().toLowerCase()))};
 const say=t=>{status.textContent=t};
 const readAll=async()=>{say(M.loading);engineers=((await post('AfterSales/GetAllAfterSalesEngineers')).data||[]).map(e=>({id:String(e.id),name:e.nameEn||e.nameAr||String(e.id)}));
 if(!chosen.size&&DEF.length)for(const e of engineers)if(DEF.includes(String(e.name).trim().toLowerCase()))chosen.add(e.id);rows=[];let size=500;for(let pg=0;pg<100;pg++){const R=await post('AfterSales/GetAfterSalesRequestGrid',{isSearchFilter:false,searchKey:'',search:{},pageSize:size,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const d=R.data||{};const arr=d.data||[];if(pg===0&&d.pageSize&&d.pageSize<size)size=d.pageSize;for(const r of arr)if(String(r.branchCode)==='2')rows.push({id:String(r.customerId??r.id),have:(r.afterSalesManIds||[]).map(String),devices:+r.connectedDevices||0});if(!arr.length||(pg+1)*size>=(d.listCount||0))break;await wait(200)}say('')};
-const need=()=>{const want=[...chosen];return rows.filter(r=>want.some(w=>!r.have.includes(w)))};
-const union=r=>[...new Set([...r.have,...chosen])];
+const present=()=>{const c=new Map();for(const r of rows)for(const h of r.have)c.set(h,(c.get(h)||0)+1);return[...c.entries()].sort((a,b)=>b[1]-a[1])};
+const need=()=>{const want=[...chosen];return rows.filter(r=>want.some(w=>!r.have.includes(w))||r.have.some(h=>removing.has(h)))};
+const union=r=>[...new Set([...r.have,...chosen])].filter(x=>!removing.has(x));
 let logRows=[];
-const apply=async(list,label)=>{let n=0,bad=[];for(const r of list){say(M.progress+' '+(++n)+'/'+list.length);const before=r.have.slice();const next=union(r);try{await post('AfterSales/AssignAfterSales',{customerId:+r.id,afterSalesIds:next.map(Number)});logRows.push([r.id,before.join('|'),next.join('|'),'sent'])}catch(e){bad.push(r.id);logRows.push([r.id,before.join('|'),next.join('|'),'error:'+e.message])}await wait(300)}return bad};
-const verify=async(ids)=>{await readAll();const set=new Set(ids);return rows.filter(r=>set.has(r.id)).map(r=>({id:r.id,ok:[...chosen].every(w=>r.have.includes(w)),have:r.have}))};
+const apply=async(list,label)=>{let n=0,bad=[];for(const r of list){say(M.progress+' '+(++n)+'/'+list.length);const before=r.have.slice();const next=union(r);if(!next.length){logRows.push([r.id,before.join('|'),'','skipped: would leave nobody']);continue}try{await post('AfterSales/AssignAfterSales',{customerId:+r.id,afterSalesIds:next.map(Number)});logRows.push([r.id,before.join('|'),next.join('|'),'sent'])}catch(e){bad.push(r.id);logRows.push([r.id,before.join('|'),next.join('|'),'error:'+e.message])}await wait(300)}return bad};
+const verify=async(ids)=>{await readAll();const set=new Set(ids);return rows.filter(r=>set.has(r.id)).map(r=>({id:r.id,ok:[...chosen].every(w=>r.have.includes(w))&&!r.have.some(h=>removing.has(h)),have:r.have}))};
 const dl=()=>{const csv=['customerId,before,after,result',...logRows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(','))].join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='afaqy-assign-log-'+new Date().toISOString().slice(0,10)+'.csv';document.body.append(a);a.click();a.remove()};
 const render=(extra)=>{const todo=need();const cov=engineers.map(e=>({e,n:rows.filter(r=>r.have.includes(e.id)).length})).sort((a,b)=>b.n-a.n);
-body.replaceChildren(el('div',{style:'font-weight:700;margin:6px 0',text:M.pick}),el('div',{style:'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;margin-bottom:10px'},engineers.map(e=>el('label',{style:'display:flex;gap:8px;align-items:center;padding:6px 8px;border:1px solid #DBE2E8;border-radius:8px'},el('input',{type:'checkbox',...(chosen.has(e.id)?{checked:''}:{}),onchange:ev=>{ev.target.checked?chosen.add(e.id):chosen.delete(e.id);localStorage.setItem('afaqy-assign-chosen',JSON.stringify([...chosen]));render()}}),el('span',{text:e.name}),el('span',{style:'margin-inline-start:auto;color:#5A6B78;font-size:12px',text:String(rows.filter(r=>r.have.includes(e.id)).length)})))),
-el('div',{style:'display:flex;gap:16px;flex-wrap:wrap;margin:8px 0;padding:10px 12px;background:#EEF1F4;border-radius:8px'},el('span',{},el('b',{text:String(rows.length)}),' '+M.total),el('span',{},el('b',{text:String(rows.length-todo.length)}),' '+M.complete),el('span',{style:'color:#B45309'},el('b',{text:String(todo.length)}),' '+M.toUpdate)),
-el('div',{style:'display:flex;gap:8px;flex-wrap:wrap'},btn(M.pilot,async()=>{if(!chosen.size){say(M.none);return}const list=need().slice(0,10);const bad=await apply(list,'pilot');const v=await verify(list.map(r=>r.id));render(el('table',{style:'width:100%;border-collapse:collapse;margin-top:10px;font-size:13px'},el('tr',{},['customerId',M.before,M.after,''].map(h=>el('th',{style:'text-align:start;border-bottom:1px solid #DBE2E8;padding:4px',text:h}))),v.map(x=>{const lg=logRows.find(l=>l[0]===x.id)||[];return el('tr',{},el('td',{style:'padding:4px',text:x.id}),el('td',{style:'padding:4px;color:#5A6B78',text:lg[1]||''}),el('td',{style:'padding:4px',text:x.have.join('|')}),el('td',{style:'padding:4px;font-weight:700;color:'+(x.ok?'#15803D':'#B42318'),text:x.ok?M.ok:M.bad}))})))},true),btn(M.rest,async()=>{if(!chosen.size){say(M.none);return}const list=need();const bad=await apply(list,'rest');await readAll();const left=need().length;render(el('div',{style:'margin-top:10px;padding:10px 12px;border-radius:8px;background:'+(left?'#FDF1E1':'#E6F4EA')},el('b',{text:M.done+': '+(rows.length-left)+'/'+rows.length}),bad.length?el('div',{text:M.failed+': '+bad.join(', ')}):null))},true),btn(M.refresh,async()=>{await readAll();render()}),logRows.length?btn(M.log,dl):null),...(extra?[extra]:[]))};
+body.replaceChildren(el('div',{style:'font-weight:700;margin:6px 0',text:M.pick}),el('div',{style:'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;margin-bottom:10px'},engineers.map(e=>el('label',{style:'display:flex;gap:8px;align-items:center;padding:6px 8px;border:1px solid #DBE2E8;border-radius:8px'},el('input',{type:'checkbox',...(chosen.has(e.id)?{checked:''}:{}),onchange:ev=>{if(ev.target.checked){chosen.add(e.id);removing.delete(e.id)}else chosen.delete(e.id);localStorage.setItem('afaqy-assign-chosen',JSON.stringify([...chosen]));render()}}),el('span',{text:e.name}),el('span',{style:'margin-inline-start:auto;color:#5A6B78;font-size:12px',text:String(rows.filter(r=>r.have.includes(e.id)).length)})))),
+el('details',{style:'margin:6px 0 10px;padding:8px 10px;border:1px solid #F0C9C5;border-radius:8px;background:#FFF8F7',...(removing.size?{open:''}:{})},el('summary',{style:'cursor:pointer;font-weight:700;color:#B42318',text:M.removeH+(removing.size?' ('+removing.size+')':'')}),el('div',{style:'font-size:12px;color:#5A6B78;margin:4px 0 8px',text:M.removeHint}),el('div',{style:'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px'},present().map(([id,n])=>{const e=engineers.find(x=>x.id===id);return el('label',{style:'display:flex;gap:8px;align-items:center;padding:6px 8px;border:1px solid #F0C9C5;border-radius:8px;background:#FFFFFF'},el('input',{type:'checkbox',...(removing.has(id)?{checked:''}:{}),onchange:ev=>{if(ev.target.checked){removing.add(id);chosen.delete(id);localStorage.setItem('afaqy-assign-chosen',JSON.stringify([...chosen]))}else removing.delete(id);render()}}),el('span',{text:e?e.name:('#'+id+' — '+M.unknown)}),el('span',{style:'margin-inline-start:auto;color:#5A6B78;font-size:12px',text:String(n)}))}))),
+el('div',{style:'display:flex;gap:16px;flex-wrap:wrap;margin:8px 0;padding:10px 12px;background:#EEF1F4;border-radius:8px'},el('span',{},el('b',{text:String(rows.length)}),' '+M.total),el('span',{},el('b',{text:String(rows.length-todo.length)}),' '+M.complete),el('span',{style:'color:#B45309'},el('b',{text:String(todo.length)}),' '+M.toUpdate),removing.size?el('span',{style:'color:#B42318'},el('b',{text:String(rows.filter(r=>r.have.some(h=>removing.has(h))).length)}),' '+M.toRemove):null),
+el('div',{style:'display:flex;gap:8px;flex-wrap:wrap'},btn(M.pilot,async()=>{if(!chosen.size&&!removing.size){say(M.none);return}const list=need().slice(0,10);const bad=await apply(list,'pilot');const v=await verify(list.map(r=>r.id));render(el('table',{style:'width:100%;border-collapse:collapse;margin-top:10px;font-size:13px'},el('tr',{},['customerId',M.before,M.after,''].map(h=>el('th',{style:'text-align:start;border-bottom:1px solid #DBE2E8;padding:4px',text:h}))),v.map(x=>{const lg=logRows.find(l=>l[0]===x.id)||[];return el('tr',{},el('td',{style:'padding:4px',text:x.id}),el('td',{style:'padding:4px;color:#5A6B78',text:lg[1]||''}),el('td',{style:'padding:4px',text:x.have.join('|')}),el('td',{style:'padding:4px;font-weight:700;color:'+(x.ok?'#15803D':'#B42318'),text:x.ok?M.ok:M.bad}))})))},true),btn(M.rest,async()=>{if(!chosen.size&&!removing.size){say(M.none);return}const list=need();const bad=await apply(list,'rest');await readAll();const left=need().length;render(el('div',{style:'margin-top:10px;padding:10px 12px;border-radius:8px;background:'+(left?'#FDF1E1':'#E6F4EA')},el('b',{text:M.done+': '+(rows.length-left)+'/'+rows.length}),bad.length?el('div',{text:M.failed+': '+bad.join(', ')}):null))},true),btn(M.refresh,async()=>{await readAll();render()}),logRows.length?btn(M.log,dl):null),...(extra?[extra]:[]))};
 try{await readAll();render()}catch(e){say(e.message)}})();`;
   return 'javascript:' + encodeURIComponent(code.replace(/\n/g, ''));
 }

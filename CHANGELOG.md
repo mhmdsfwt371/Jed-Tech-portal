@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v7.7 — 2026-10-29
+
+- لوحة التعيين: قسم جديد «إزالة من كل الحسابات — لمن غادر». يعرض كل من على حسابات جدة وعدد حساباته — بالاسم، أو بالرقم إن لم يعد في قائمة المهندسين — ولا يُزال إلا من تعلّم عليه بيدك.
+- القائمة تبدأ فارغة في كل فتح ولا تُحفظ، ولا يُترك حساب بلا أحد أبدًا. الحارس يفرض الثلاثة.
+
+<details><summary>English</summary>
+
+- Assignment panel: a new “Remove from every account — for those who left” section. It lists everyone on Jeddah accounts and how many accounts each carries — by name, or by id if no longer in the engineers list — and removes only whoever you tick.
+- The list starts empty on every open and is never remembered, and no account is ever left with nobody. The guard enforces all three.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- تفویض پینل: نیا حصہ «ہر اکاؤنٹ سے ہٹائیں — جو چھوڑ گئے»۔ یہ جدہ کے اکاؤنٹس پر موجود ہر فرد اور اس کے اکاؤنٹس کی تعداد دکھاتا ہے — نام سے، یا شناخت سے اگر وہ انجینئرز کی فہرست میں نہ رہا ہو — اور صرف اسے ہٹاتا ہے جسے آپ نشان لگائیں۔
+- فہرست ہر بار خالی شروع ہوتی ہے اور کبھی محفوظ نہیں ہوتی، اور کوئی اکاؤنٹ کبھی کسی کے بغیر نہیں چھوڑا جاتا۔ گارڈ تینوں کو نافذ کرتا ہے۔
+
+</div>
+</details>
+
+
 ## v7.6 — 2026-10-29
 
 - هيكل الفريق مسجّل: فريق ما بعد البيع في جدة — ثمانية مهندسين يتبعون قائد الفريق، والقائد يتبع مديره، والمدير يتبع المدير التقني للمنطقة الغربية. يُحفظ بأرقام ماي أفاقي في «team.json»، بلا أسماء.

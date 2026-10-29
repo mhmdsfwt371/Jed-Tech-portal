@@ -1,21 +1,18 @@
 {
-  "version": "7.6",
+  "version": "7.7",
   "date": "2026-10-29",
   "notes": {
     "ar": [
-      "هيكل الفريق مسجّل: فريق ما بعد البيع في جدة — ثمانية مهندسين يتبعون قائد الفريق، والقائد يتبع مديره، والمدير يتبع المدير التقني للمنطقة الغربية. يُحفظ بأرقام ماي أفاقي في «team.json»، بلا أسماء.",
-      "«فريقي» صار يرى كل المستويات تحتك: المدير التقني يرى عشرة، ومدير القائد يرى تسعة، والقائد يرى ثمانية.",
-      "لوحة التعيين تفتح والفريق مختار مسبقًا بالاسم — تراجع وتضغط."
+      "لوحة التعيين: قسم جديد «إزالة من كل الحسابات — لمن غادر». يعرض كل من على حسابات جدة وعدد حساباته — بالاسم، أو بالرقم إن لم يعد في قائمة المهندسين — ولا يُزال إلا من تعلّم عليه بيدك.",
+      "القائمة تبدأ فارغة في كل فتح ولا تُحفظ، ولا يُترك حساب بلا أحد أبدًا. الحارس يفرض الثلاثة."
     ],
     "en": [
-      "The team structure is recorded: Jeddah’s after-sales team — eight engineers reporting to the team leader, the leader to his manager, and that manager to the Western Technical Manager. Saved by myafaqy ids in “team.json”, without names.",
-      "“My team” now sees every level below you: the technical manager sees ten, the leader’s manager nine, and the leader eight.",
-      "The assignment panel opens with the team already chosen by name — review and press."
+      "Assignment panel: a new “Remove from every account — for those who left” section. It lists everyone on Jeddah accounts and how many accounts each carries — by name, or by id if no longer in the engineers list — and removes only whoever you tick.",
+      "The list starts empty on every open and is never remembered, and no account is ever left with nobody. The guard enforces all three."
     ],
     "ur": [
-      "ٹیم کا ڈھانچہ درج ہو گیا: جدہ کی آفٹر سیلز ٹیم — آٹھ انجینئر ٹیم لیڈر کے ماتحت، لیڈر اپنے مینیجر کے، اور وہ مینیجر مغربی علاقے کے تکنیکی مینیجر کے۔ «team.json» میں مائی آفاقی کی شناختوں سے محفوظ، ناموں کے بغیر۔",
-      "«میری ٹیم» اب آپ کے نیچے ہر سطح دیکھتی ہے: تکنیکی مینیجر دس، لیڈر کا مینیجر نو، اور لیڈر آٹھ۔",
-      "تفویض کا پینل ٹیم کو نام سے پہلے سے منتخب کر کے کھلتا ہے — دیکھیں اور دبائیں۔"
+      "تفویض پینل: نیا حصہ «ہر اکاؤنٹ سے ہٹائیں — جو چھوڑ گئے»۔ یہ جدہ کے اکاؤنٹس پر موجود ہر فرد اور اس کے اکاؤنٹس کی تعداد دکھاتا ہے — نام سے، یا شناخت سے اگر وہ انجینئرز کی فہرست میں نہ رہا ہو — اور صرف اسے ہٹاتا ہے جسے آپ نشان لگائیں۔",
+      "فہرست ہر بار خالی شروع ہوتی ہے اور کبھی محفوظ نہیں ہوتی، اور کوئی اکاؤنٹ کبھی کسی کے بغیر نہیں چھوڑا جاتا۔ گارڈ تینوں کو نافذ کرتا ہے۔"
     ]
   }
 }

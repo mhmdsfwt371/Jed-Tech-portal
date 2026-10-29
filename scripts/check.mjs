@@ -267,7 +267,10 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   for (const x of new Set(paths)) if (!okA.includes(x)) note(`assignment panel: calls ${x} — only two reads and the one write are allowed`);
   const writes = paths.filter((x) => !/\/Get/.test(x));
   if (writes.length !== 1 || writes[0] !== 'AfterSales/AssignAfterSales') note('assignment panel: exactly one write endpoint, AfterSales/AssignAfterSales');
-  if (!/const union=r=>\[\.\.\.new Set\(\[\.\.\.r\.have,\.\.\.chosen\]\)\]/.test(ab)) note('assignment panel: ADD mode — the posted list must be the existing ids ∪ the chosen ids');
+  if (!/const union=r=>\[\.\.\.new Set\(\[\.\.\.r\.have,\.\.\.chosen\]\)\]\.filter\(x=>!removing\.has\(x\)\);/.test(ab)) note('assignment panel: the posted list must be (existing ∪ chosen) minus only the explicitly ticked removals');
+  if (!/removing=new Set\(\)/.test(ab) || /removing=new Set\([^)]/.test(ab) || /localStorage\.setItem\('afaqy-assign-remove'/.test(ab)) note('assignment panel: the removal set must start empty on every open and never be remembered — removal is always a fresh, explicit tick');
+  if ((ab.match(/removing\.add\(/g) || []).length !== 1 || !/onchange:ev=>\{if\(ev\.target\.checked\)\{removing\.add\(id\)/.test(ab)) note('assignment panel: someone may be added to the removal set only by ticking their box');
+  if (!/if\(!next\.length\)\{logRows\.push/.test(ab)) note('assignment panel: an account must never be left with nobody');
   if (!/afterSalesIds:next\.map\(Number\)/.test(ab) || !/const next=union\(r\)/.test(ab)) note('assignment panel: the write must post exactly the union');
   if (!/String\(r\.branchCode\)==='2'/.test(ab)) note('assignment panel: must keep only branchCode "2" rows — Jeddah');
   if (!/location\.hostname!=='myafaqy\.com'/.test(ab)) note('assignment panel: must refuse to run anywhere but myafaqy.com');
