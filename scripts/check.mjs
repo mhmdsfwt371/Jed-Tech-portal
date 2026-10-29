@@ -1,6 +1,6 @@
 // scripts/check.mjs — the guard. Runs before every push (.githooks/pre-push) and on GitHub (.github/workflows/verify.yml).
 // Each rule below exists because breaking it would break something the team relies on.
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 
@@ -143,8 +143,11 @@ if (exists('docs/manual/README.md') && !read('docs/manual/README.md').includes(`
 // fingerprints of them (the first 16 hex of SHA-256 of each lowercased word), never the names — the list itself is public.
 const CAPTURED = new Set(["8dde8eb09b4f8ade","8f7dfb13f1d1e5d1","4322323b706af66d","8ad9672dfc2ee48a","6ea5f03f8197a4c6","8a4bd12b0ef7909a","87d57964ebda55a8","46de21c135a6c283","8afec982b4ea3c9d","a91e1695e9ab35c8","b189867634e3b00b","639e0252e8f41839","0be1e8491d132360","81bdbb4f05b08f4a","93ab256d195b2c84"]);
 const fingerprint = (w) => createHash('sha256').update(w).digest('hex').slice(0, 16);
-for (const f of ['index.html', 'app.js', 'core.js', 'config.js', 'tests/core.test.mjs', 'README.md', 'AGENTS.md', 'CHANGELOG.md',
-  'docs/crm-api.md', 'docs/data-format.md', 'docs/kpi-factors.md', 'docs/START-HERE.md']) {
+// the Jeddah team itself (29 Oct 2026) — fingerprints only, as above
+for (const f of ["0be1e8491d132360", "0eee3231330958bc", "10f75987b734bd50", "15192f4a24c77aa8", "1d3a99e2f4f2bba3", "25ae3bf574575f62", "27715c6a5a183018", "2923b4f60d35fbce", "322e49b795fda0df", "3551ac5dc0815434", "39c27c48136dbf68", "402a947784d58cb8", "45185f3bc39e55da", "469a9455918ed408", "4c74d2323d34b34e", "4d3dd758e3262a8d", "5db688aff74ef50b", "5ed1fd4daa460667", "60409199a6cca757", "639e0252e8f41839", "694c271dc2318c00", "6df95ad0a252c668", "6ea5f03f8197a4c6", "6f64a360bca18d0a", "705301a7ca4c57fd", "7b0f0922a3700a15", "7d256b20141fb0fc", "8ad9672dfc2ee48a", "8afec982b4ea3c9d", "8c4e0bb679d74ee4", "8f7dfb13f1d1e5d1", "9108f01cc21bbb71", "9314a107617edf4c", "93ab256d195b2c84", "973d74ebb73735b9", "9bd9270a3dc6b3bf", "a7c73022b1cd9ace", "b42c3b92efe01065", "c3fb34ee2a7d9cd7", "d0892c3743fbdeef", "d7c12ba5fca0106f", "de13dbdcec62c9ec", "e01b5c571b8dce68", "e10f81efc499efd6", "ea3b62f4435c1e77", "f01e98bd4e393b0f", "f6274038b0611ac7", "fb41e979ac815b4e"]) CAPTURED.add(f);
+const walkMd = (dir) => { const out = []; for (const e of readdirSync(new URL(dir, root), { withFileTypes: true })) { const p = `${dir}${e.name}`; if (e.isDirectory()) out.push(...walkMd(`${p}/`)); else if (/\.(md|json)$/.test(e.name)) out.push(p); } return out; };
+for (const f of ['index.html', 'app.js', 'core.js', 'config.js', 'tests/core.test.mjs', 'README.md', 'AGENTS.md', 'CHANGELOG.md', 'CLAUDE.md', 'SECURITY.md',
+  'version.json', 'team.json', 'release/next.json', ...walkMd('docs/')]) {
   if (!exists(f)) continue;
   const words = read(f).toLowerCase().match(/[a-z]{4,}|[\u0600-\u06ff]{3,}/g) || [];
   if (words.some((w) => CAPTURED.has(fingerprint(w)))) note(`${f}: contains a name from the CRM capture — the repository is public`);
