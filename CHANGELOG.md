@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.12 — 2026-10-30
+
+- بقى دليل «مؤشراتي» يعرض نافذة متصفح تجريبية متحركة، وفيها ماوس أو مؤشر لمس يوضح مكان الضغط، والسحب إلى شريط الإشارات، ثم فتح ماي أفاقي وإظهار النتيجة.
+- زر «إعادة حركة الماوس» متاح في كل خطوة، مع شرح مختلف للكمبيوتر وأندرويد وآيفون. المحاكاة للشرح فقط ولا تتحكم في موقع ماي أفاقي الحقيقي.
+
+<details><summary>English</summary>
+
+- The My KPIs walkthrough now shows an animated sample browser with a moving mouse or touch indicator that demonstrates where to click, drag the bookmark onto the bookmarks bar, open myafaqy and view the result.
+- Replay mouse movement is available at every step, with separate demonstrations for desktop, Android and iPhone. The animation is instructional only and cannot control the real myafaqy site.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- میرے اشاریوں کی رہنمائی میں اب ایک متحرک فرضی براؤزر ہے۔ اس میں ماؤس یا لمس کا نشان دکھاتا ہے کہ کہاں کلک کرنا ہے، بک مارک کو پٹی پر کیسے لے جانا ہے، مائی آفاقی کیسے کھولنا ہے اور نتیجہ کہاں ظاہر ہوتا ہے۔
+- ہر مرحلے میں ماؤس کی حرکت دوبارہ دکھانے کا بٹن ہے، اور کمپیوٹر، اینڈرائیڈ اور آئی فون کے لیے علیحدہ طریقہ دکھایا جاتا ہے۔ یہ حرکت صرف سمجھانے کے لیے ہے اور اصل مائی آفاقی ویب سائٹ کو کنٹرول نہیں کرتی۔
+
+</div>
+</details>
+
+
 ## v8.11 — 2026-10-30
 
 - إصلاح طريقة تحديد نصوص الخطوات المترجمة في الإرشاد التفاعلي لضمان عمله بشكل صحيح على رابط الفريق والإدارة.

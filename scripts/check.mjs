@@ -11,7 +11,7 @@ const read = (f) => readFileSync(new URL(f, root), 'utf8');
 const exists = (f) => existsSync(new URL(f, root));
 
 // 1. Syntax of every script that ships.
-for (const f of ['core.js', 'app.js', 'config.js', 'sw.js', 'scripts/bump.mjs', 'scripts/check-commit-title.mjs', 'scripts/check-links.mjs']) {
+for (const f of ['core.js', 'app.js', 'tour-demo.js', 'config.js', 'sw.js', 'scripts/bump.mjs', 'scripts/check-commit-title.mjs', 'scripts/check-links.mjs']) {
   try { execFileSync(process.execPath, ['--check', new URL(f, root).pathname], { stdio: 'pipe' }); }
   catch (e) { note(`${f}: syntax error\n${e.stderr}`); }
 }

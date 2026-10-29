@@ -1,7 +1,8 @@
 // app.js — everything on the page. Data stays in this browser (IndexedDB); nothing is sent anywhere.
 import { PRIMARY, SYSTEMS, MORE, PORTAL_VERSION, MODULE_ALLOW } from './config.js';
+import { mountTourDemo, replayTourDemo } from './tour-demo.js';
 import {
-  t as tr, L, LANGS, dirOf, tourState, TOUR_DEVICES, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1,
+  t as tr, L, LANGS, dirOf, tourState, TOUR_DEVICES, tourDemoPlan, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1,
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
@@ -157,6 +158,10 @@ function renderMeTour() {
   $('tour-status').textContent = state.step === 4 ? t(me ? 'tour_4_present' : 'tour_4_pending') : '';
   $('tour-privacy').hidden = state.step !== 4;
   $('tour-privacy').textContent = t('tour_privacy_note');
+  mountTourDemo($('tour-demo-stage'), tourDemoPlan(tourStep, tourDevice), t, location.origin + location.pathname);
+  $('tour-demo-caption').textContent = t('tour_demo_hint');
+  $('tour-demo-replay').textContent = t('tour_demo_replay');
+  $('tour-demo-replay').setAttribute('aria-label', t('tour_demo_replay_aria'));
   $('tour-back').disabled = state.step === 0;
   $('tour-back').textContent = t('tour_back');
   $('tour-next').textContent = t(state.step === 4 ? 'tour_finish' : 'tour_next');
@@ -171,6 +176,7 @@ function openMeTour() {
   $('me-tour').showModal();
   renderMeTour();
 }
+$('tour-demo-replay').addEventListener('click', () => replayTourDemo($('tour-demo-stage')));
 $('me-tour-open').addEventListener('click', openMeTour);
 $('me-tour-close').addEventListener('click', () => $('me-tour').close());
 $('tour-back').addEventListener('click', () => { tourStep--; renderMeTour(); });

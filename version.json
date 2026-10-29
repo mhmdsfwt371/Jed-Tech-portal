@@ -1,15 +1,18 @@
 {
-  "version": "8.11",
+  "version": "8.12",
   "date": "2026-10-30",
   "notes": {
     "ar": [
-      "إصلاح طريقة تحديد نصوص الخطوات المترجمة في الإرشاد التفاعلي لضمان عمله بشكل صحيح على رابط الفريق والإدارة."
+      "بقى دليل «مؤشراتي» يعرض نافذة متصفح تجريبية متحركة، وفيها ماوس أو مؤشر لمس يوضح مكان الضغط، والسحب إلى شريط الإشارات، ثم فتح ماي أفاقي وإظهار النتيجة.",
+      "زر «إعادة حركة الماوس» متاح في كل خطوة، مع شرح مختلف للكمبيوتر وأندرويد وآيفون. المحاكاة للشرح فقط ولا تتحكم في موقع ماي أفاقي الحقيقي."
     ],
     "en": [
-      "Fixed how the interactive walkthrough selects its translated step labels, so it works correctly in both the team and admin portals."
+      "The My KPIs walkthrough now shows an animated sample browser with a moving mouse or touch indicator that demonstrates where to click, drag the bookmark onto the bookmarks bar, open myafaqy and view the result.",
+      "Replay mouse movement is available at every step, with separate demonstrations for desktop, Android and iPhone. The animation is instructional only and cannot control the real myafaqy site."
     ],
     "ur": [
-      "تفاعلی رہنمائی کے ہر مرحلے کا ترجمہ منتخب کرنے کا طریقہ درست کیا گیا ہے، تاکہ یہ ٹیم اور انتظامی پورٹل دونوں میں صحیح کام کرے۔"
+      "میرے اشاریوں کی رہنمائی میں اب ایک متحرک فرضی براؤزر ہے۔ اس میں ماؤس یا لمس کا نشان دکھاتا ہے کہ کہاں کلک کرنا ہے، بک مارک کو پٹی پر کیسے لے جانا ہے، مائی آفاقی کیسے کھولنا ہے اور نتیجہ کہاں ظاہر ہوتا ہے۔",
+      "ہر مرحلے میں ماؤس کی حرکت دوبارہ دکھانے کا بٹن ہے، اور کمپیوٹر، اینڈرائیڈ اور آئی فون کے لیے علیحدہ طریقہ دکھایا جاتا ہے۔ یہ حرکت صرف سمجھانے کے لیے ہے اور اصل مائی آفاقی ویب سائٹ کو کنٹرول نہیں کرتی۔"
     ]
   }
 }

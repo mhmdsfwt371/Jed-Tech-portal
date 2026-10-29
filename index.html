@@ -384,6 +384,106 @@
   .pill.pro-live { color: var(--ok); border-color: var(--ok); background: var(--ok-wash); }
   .pill.pro-day { color: var(--note); border-color: var(--note); background: var(--note-wash); }
   .pill.pro-stale, .pill.pro-never { color: var(--warn); border-color: var(--warn); background: var(--warn-wash); }
+
+  /* Animated browser scene: visible simulation, never remote control over MyAFAQY. */
+  .tour-demo { margin: 14px 0 16px; }
+  .tour-demo-heading { display:flex; align-items:center; gap:8px; justify-content:space-between; flex-wrap:wrap; margin-bottom:10px; }
+  .tour-demo-heading strong { font-size:.88rem; }
+  .tour-demo-heading .btn { font-size:.78rem; min-height:38px; }
+  .tour-demo > .hint { margin:9px 0 3px; font-size:.78rem; line-height:1.6; }
+  .tour-demo-window { position:relative; width:100%; height:278px; border:1px solid var(--line-strong);
+    border-radius:var(--radius); background:var(--card); box-shadow:var(--shadow); overflow:hidden; direction:ltr; }
+  .tour-demo-window.is-mobile { width:min(100%,270px); height:342px; border:5px solid var(--ink-soft); border-radius:22px; margin-inline:auto; }
+  .tour-demo-browserbar { height:32px; display:flex; align-items:center; gap:14px; padding:0 13px;
+    background:var(--paper); border-bottom:1px solid var(--line); }
+  .tour-demo-dots { letter-spacing:-2px; font-size:12px; color:var(--slate-light); }
+  .tour-demo-tab-label { font-size:11px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--slate); }
+  .tour-demo-address { height:28px; margin:5px 13px; border:1px solid var(--line); border-radius:5px;
+    background:var(--card); color:var(--slate); font:11px/26px var(--mono); padding:0 12px; direction:ltr;
+    position:relative; overflow:hidden; text-overflow:ellipsis; }
+  .tour-demo-url-before, .tour-demo-url-after { position:absolute; inset:0 12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tour-demo-url-after { opacity:0; }
+  .tour-demo-bookmarks { height:27px; padding:0 14px; border-bottom:1px solid var(--line); color:var(--slate); background:var(--paper);
+    display:flex; align-items:center; gap:10px; font-size:11px; overflow:hidden; white-space:nowrap; }
+  .tour-demo-bookmark-before { color:var(--slate); }
+  .tour-demo-bookmark-after { opacity:0; color:var(--accent-dark); font-weight:700; }
+  .tour-demo-window.is-mobile .tour-demo-browserbar { height:28px; }
+  .tour-demo-window.is-mobile .tour-demo-address { margin:5px 8px; height:31px; line-height:29px; }
+  .tour-demo-content { position:absolute; top:92px; bottom:0; width:100%; background:var(--card); }
+  .tour-demo-window.is-mobile .tour-demo-content { top:73px; bottom:34px; }
+  .tour-demo-before, .tour-demo-after { position:absolute; inset:0; display:grid; place-items:center; padding:12px; }
+  .tour-demo-after { opacity:0; pointer-events:none; }
+  .tour-demo-scene { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    text-align:center; width:100%; height:100%; font-size:13px; }
+  .tour-demo-scene b { font-size:14px; color:var(--text); }
+  .tour-demo-scene p { margin:0; font-size:11px; line-height:1.5; color:var(--slate); }
+  .tour-demo-device-chip { border:1px solid var(--line); background:var(--paper); border-radius:8px; padding:9px 12px; }
+  .tour-demo-device-chip.selected { border-color:var(--accent); color:var(--accent-dark); background:var(--accent-wash); }
+  .tour-demo-devices { display:flex; flex-wrap:wrap; justify-content:center; gap:7px; max-width:100%; }
+  .tour-demo-fake-button { display:inline-block; max-width:95%; padding:8px 16px; background:var(--accent);
+    border-radius:7px; color:var(--on-accent); font-size:11px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tour-demo-action-icon { font-size:27px; line-height:1; }
+  .tour-demo-login { padding:5px 18px; }
+  .tour-demo-input { width:min(72%,190px); height:23px; border-radius:5px; border:1px solid var(--line); background:var(--paper); }
+  .tour-demo-input.short { width:min(56%,150px); }
+  .tour-demo-rows { display:flex; flex-direction:column; gap:8px; width:min(72%,220px); }
+  .tour-demo-row { height:13px; border-radius:5px; background:var(--paper); border:1px solid var(--line); }
+  .tour-demo-row.short { width:65%; }
+  .tour-demo-profile { display:flex; flex-direction:column; align-items:center; gap:8px; border:1px solid var(--line);
+    border-inline-start:3px solid var(--accent); border-radius:var(--radius); padding:12px; background:var(--card); width:min(96%,290px); }
+  .tour-demo-metrics { display:flex; width:100%; gap:8px; }
+  .tour-demo-metric { flex:1; border:1px solid var(--line); border-radius:6px; background:var(--paper);
+    display:flex; flex-direction:column; align-items:center; padding:7px; gap:3px; }
+  .tour-demo-metric span { font-size:10px; color:var(--slate); }
+  .tour-demo-metric b { font-size:17px; }
+  .tour-demo-mobilebar { position:absolute; bottom:0; width:100%; height:32px; background:var(--paper);
+    border-top:1px solid var(--line); display:flex; align-items:center; justify-content:center;
+    font-size:17px; letter-spacing:5px; color:var(--slate); white-space:pre; }
+  .tour-demo-demo-tag { position:absolute; right:7px; bottom:5px; font-size:9px; padding:3px 5px;
+    border-radius:4px; color:var(--slate); background:var(--paper); opacity:.85; }
+  .tour-demo-aim { position:absolute; left:var(--demo-to-x); top:var(--demo-to-y); z-index:6;
+    width:25px; height:25px; border:2px solid var(--accent); background:var(--accent-wash);
+    border-radius:50%; transform:translate(-50%,-50%); opacity:0; pointer-events:none; }
+  .tour-demo-pointer { position:absolute; left:var(--demo-from-x); top:var(--demo-from-y);
+    z-index:8; display:block; pointer-events:none; color:var(--ink); transform:translate(-1px,-1px);
+    filter:drop-shadow(0 2px 2px var(--line-strong)); }
+  .tour-demo-pointer.is-mouse { width:29px; height:35px; }
+  .tour-demo-pointer.is-mouse svg { width:100%; height:100%; fill:currentColor; stroke:var(--card); stroke-width:2px; stroke-linejoin:round; }
+  .tour-demo-pointer.is-touch { width:28px; height:28px; border:3px solid var(--accent); background:var(--accent-wash);
+    border-radius:50%; transform:translate(-50%,-50%); box-shadow:0 0 0 3px var(--card); }
+  .tour-demo-drag-copy { position:absolute; left:var(--demo-from-x); top:var(--demo-from-y); z-index:7; font-size:19px;
+    transform:translate(-50%,-50%); opacity:0; pointer-events:none; }
+  .tour-demo-playing .tour-demo-pointer { animation:tour-demo-move 4.8s ease-in-out infinite; }
+  .tour-demo-playing .tour-demo-aim { animation:tour-demo-tap 4.8s ease-out infinite; }
+  .tour-demo-playing .tour-demo-before { animation:tour-demo-hide-before 4.8s ease-in-out infinite; }
+  .tour-demo-playing .tour-demo-after { animation:tour-demo-show-after 4.8s ease-in-out infinite; }
+  .tour-demo-playing .tour-demo-url-before, .tour-demo-playing .tour-demo-bookmark-before { animation:tour-demo-hide-before 4.8s ease-in-out infinite; }
+  .tour-demo-playing .tour-demo-url-after, .tour-demo-playing .tour-demo-bookmark-after { animation:tour-demo-show-after 4.8s ease-in-out infinite; }
+  .tour-demo-playing .tour-demo-drag-copy { animation:tour-demo-drag 4.8s ease-in-out infinite; }
+  @keyframes tour-demo-move {
+    0%,8% { left:var(--demo-from-x); top:var(--demo-from-y); }
+    37%,80% { left:var(--demo-to-x); top:var(--demo-to-y); }
+    94%,100% { left:var(--demo-from-x); top:var(--demo-from-y); }
+  }
+  @keyframes tour-demo-tap {
+    0%,30% { opacity:0; transform:translate(-50%,-50%) scale(.45); }
+    40%,47% { opacity:.95; transform:translate(-50%,-50%) scale(1.3); }
+    53%,100% { opacity:0; transform:translate(-50%,-50%) scale(2); }
+  }
+  @keyframes tour-demo-hide-before { 0%,43% { opacity:1; } 55%,90% { opacity:0; } 100% { opacity:1; } }
+  @keyframes tour-demo-show-after { 0%,43% { opacity:0; } 55%,90% { opacity:1; } 100% { opacity:0; } }
+  @keyframes tour-demo-drag {
+    0%,7% { left:var(--demo-from-x); top:var(--demo-from-y); opacity:0; }
+    14% { left:var(--demo-from-x); top:var(--demo-from-y); opacity:1; }
+    37% { left:var(--demo-to-x); top:var(--demo-to-y); opacity:1; }
+    48%,100% { left:var(--demo-to-x); top:var(--demo-to-y); opacity:0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tour-demo-playing .tour-demo-pointer { animation:none!important; left:var(--demo-to-x); top:var(--demo-to-y); }
+    .tour-demo-playing .tour-demo-before,.tour-demo-playing .tour-demo-url-before,.tour-demo-playing .tour-demo-bookmark-before { animation:none!important; opacity:0; }
+    .tour-demo-playing .tour-demo-after,.tour-demo-playing .tour-demo-url-after,.tour-demo-playing .tour-demo-bookmark-after { animation:none!important; opacity:1; }
+    .tour-demo-playing .tour-demo-aim,.tour-demo-playing .tour-demo-drag-copy { animation:none!important; opacity:0; }
+  }
   /* Reopenable My KPIs walkthrough: compact on phones, no new layout or storage. */
   .me-tour-open { margin-inline-start: auto; white-space: normal; }
   .tour-dialog { width: min(95vw, 550px); max-height: min(90vh, 760px); max-height: min(90dvh, 760px); overflow-y: auto;
@@ -593,7 +693,16 @@
   <div class="tour-top"><p id="tour-count"></p><button type="button" class="btn quiet" id="me-tour-close" data-t="tour_close">إغلاق الشرح</button></div>
   <div id="tour-progress" class="tour-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="20"><span id="tour-progress-bar"></span></div>
   <div id="tour-slide" class="tour-slide">
-    <h2 id="tour-title"></h2><p id="tour-desc"></p>
+    <h2 id="tour-title"></h2>
+    <div id="tour-demo" class="tour-demo">
+      <div class="tour-demo-heading">
+        <strong data-t="tour_demo_label">عرض عملي متحرك</strong>
+        <button type="button" class="btn quiet" id="tour-demo-replay" data-t="tour_demo_replay">إعادة حركة الماوس</button>
+      </div>
+      <div id="tour-demo-stage"></div>
+      <p id="tour-demo-caption" class="hint"></p>
+    </div>
+    <p id="tour-desc"></p>
     <div id="tour-options" class="tour-options"></div>
     <div id="tour-actions" class="tour-actions"></div>
     <p id="tour-status" class="tour-status" role="status" aria-live="polite"></p>

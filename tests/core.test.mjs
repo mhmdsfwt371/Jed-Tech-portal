@@ -8,12 +8,28 @@ import {
   parseRoster, mergeRoster, positionOf, leaderOf, reportsOf, donutParts, periodWindows, teamAlerts, activityTotals, descendantsOf,
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, scopeIds, inScope,
   weeklyDigest, goalProgress, patternPath, coverageTotals, monthCard, closableMonths, repairCheck, parseRepairLines,
-  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS, portalRoute, tourState, TOUR_DEVICES,
+  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS, portalRoute, tourState, TOUR_DEVICES, tourDemoPlan,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
 
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
+test('animated demo points to real browser actions for each screen and device', () => {
+  for (const device of TOUR_DEVICES) for (let step = 0; step < 5; step++) {
+    const plan = tourDemoPlan(step, device);
+    assert.equal(plan.step, step);
+    assert.equal(plan.device, device);
+    assert.equal(plan.gesture, device === 'desktop' && step === 1 ? 'drag' : 'click');
+    for (const point of [plan.start, plan.target]) {
+      assert.ok(point.x >= 0 && point.x <= 100);
+      assert.ok(point.y >= 0 && point.y <= 100);
+    }
+    assert.notDeepEqual(plan.start, plan.target);
+  }
+  assert.equal(tourDemoPlan(1, 'unknown').device, 'desktop');
+  assert.deepEqual(tourDemoPlan(-5, 'ios').target, tourDemoPlan(0, 'ios').target);
+});
+
 test('reopenable KPI walkthrough keeps all five steps in bounds for every device', () => {
   assert.deepEqual(TOUR_DEVICES, ['desktop', 'android', 'ios']);
   for (const device of TOUR_DEVICES) {
