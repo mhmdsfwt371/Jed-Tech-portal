@@ -1,0 +1,14 @@
+{
+  "name": "afaqy-portal",
+  "private": true,
+  "type": "module",
+  "description": "Afaqy Jeddah technical team portal \u2014 tools launcher and KPI dashboard. The version lives in version.json.",
+  "scripts": {
+    "test": "node tests/core.test.mjs",
+    "check": "node scripts/check.mjs",
+    "verify": "node tests/core.test.mjs && node scripts/check.mjs",
+    "bump": "node scripts/bump.mjs",
+    "preview": "python3 scripts/build-preview.py",
+    "links": "node scripts/check-links.mjs"
+  }
+}

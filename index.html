@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
+<title>أفاقي — بوابة الفريق التقني</title>
+<link rel="icon" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0F2231">
+<style>
+  @font-face { font-family: 'Noto Sans Arabic'; src: url('assets/fonts/NotoSansArabic-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+  @font-face { font-family: 'Noto Sans Arabic'; src: url('assets/fonts/NotoSansArabic-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+  /* The design system of the Service Management / R&D Portal app, copied as it is (docs/design.md): instrument-panel
+     ink menu, paper grey page, white cards, one teal action colour, a thin amber marker on the current item, and its
+     status colours. Its own font stack. Dark mode is derived from the same colours — the reference has none. */
+  :root {
+    color-scheme: light;
+    --menu: #0F2231; --ink: #0F2231; --ink-soft: #1B3547; --ink-line: #27455B; --side-ink: #CFDAE2; --side-icon: #DCE6EC;
+    --slate: #5A6B78; --slate-light: #8797A3;
+    --paper: #EEF1F4; --card: #FFFFFF; --line: #DBE2E8; --line-strong: #C3CED7;
+    --accent: #0E7C86; --accent-dark: #0A5F67; --accent-wash: #E4F2F3; --signal: #E0A32E;
+    --ok: #15803D; --ok-wash: #E6F4EA; --note: #0369A1; --note-wash: #E2F0F9; --warn: #B45309; --warn-wash: #FDF1E1; --fail: #B42318; --fail-wash: #FDECEB;
+    --text: var(--ink); --title: #0F2231; --topbar: rgba(255,255,255,.96); --card-head: #FFFFFF;
+    --radius: 10px; --radius-sm: 6px;
+    --shadow: 0 1px 2px rgba(15,34,49,.06), 0 4px 14px rgba(15,34,49,.05);
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, "Noto Sans Arabic", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sidebar-w: 244px; --topbar-h: 64px;
+    /* names the portal's components use */
+    --bg: var(--paper); --surface: var(--card); --surface-2: var(--paper); --ink-2: var(--slate);
+    --accent-strong: var(--accent-dark); --accent-soft: var(--accent-wash); --on-accent: #FFFFFF;
+    --notice: var(--warn); --notice-soft: var(--warn-wash); --alert: var(--fail); --focus: var(--signal);
+    --navy: var(--menu); --blue: var(--accent);
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --menu: #08131C; --ink: #E3EAF0; --ink-soft: #14293A; --ink-line: #223A4D;
+      --slate: #8FA0AC; --slate-light: #8797A3;
+      --paper: #0B1824; --card: #11222F; --line: #24394A; --line-strong: #2F4A5E;
+      --accent: #2CA6B0; --accent-dark: #6CC7CF; --accent-wash: #0E3438;
+      --ok: #4CB782; --ok-wash: #12301F; --note: #5AB0E0; --note-wash: #10283A; --warn: #E0A32E; --warn-wash: #3A2A10; --fail: #F07167; --fail-wash: #3B1714;
+      --text: var(--ink); --title: #F1F5F8; --topbar: rgba(17,34,47,.96); --card-head: #11222F; --on-accent: #08131C;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --menu: #08131C; --ink: #E3EAF0; --ink-soft: #14293A; --ink-line: #223A4D;
+    --slate: #8FA0AC; --slate-light: #8797A3;
+    --paper: #0B1824; --card: #11222F; --line: #24394A; --line-strong: #2F4A5E;
+    --accent: #2CA6B0; --accent-dark: #6CC7CF; --accent-wash: #0E3438;
+    --ok: #4CB782; --ok-wash: #12301F; --note: #5AB0E0; --note-wash: #10283A; --warn: #E0A32E; --warn-wash: #3A2A10; --fail: #F07167; --fail-wash: #3B1714;
+    --text: var(--ink); --title: #F1F5F8; --topbar: rgba(17,34,47,.96); --card-head: #11222F; --on-accent: #08131C;
+  }
+  * , *::before, *::after { box-sizing: inherit; }
+  html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--topbar-h) + env(safe-area-inset-top, 0px)); }
+  body { margin: 0; font-family: var(--sans); font-size: 15px; line-height: 1.5; color: var(--text); background: var(--paper); }
+  a { color: var(--accent-dark); }
+  h1, h2, h3 { margin: 0; font-weight: 650; color: var(--title); }
+  h1 { font-size: 1.4rem; } h2 { font-size: 1.05rem; margin: 28px 0 12px; } h3 { font-size: .92rem; }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  [hidden] { display: none !important; }
+  .ltr { direction: ltr; unicode-bidi: isolate; }
+  :focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+  /* ---------------------------------------------------------------- layout (as in the reference) */
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar { width: var(--sidebar-w); flex: 0 0 var(--sidebar-w); background: var(--menu); color: var(--side-ink); display: flex; flex-direction: column;
+             position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .brand { padding: 20px 18px 16px; border-bottom: 1px solid var(--ink-line); }
+  .brand-logo-plate { display: flex; align-items: center; justify-content: center; width: 100%; max-width: 190px; background: #FFFFFF; border-radius: var(--radius-sm); padding: 9px 11px; }
+  .brand-logo-plate img { display: block; width: 100%; height: auto; }
+  .brand-name { display: block; color: #FFFFFF; font-weight: 650; font-size: 1.02rem; margin-block-start: 8px; }
+  .nav { padding: 14px 10px; flex: 1; }
+  .nav-section { margin-top: 8px; }
+  .nav-group-label { display: inline-flex; align-items: center; gap: 9px; }
+  .nav-item-icon { display: inline-grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; border-radius: 7px;
+                   background: rgba(255,255,255,.08); color: var(--side-icon); font-size: .9rem; line-height: 1; }
+  .nav-item-icon svg { width: 15px; height: 15px; }
+  .nav a.active .nav-item-icon, .nav-section[data-active="true"] .nav-group-toggle .nav-item-icon { background: var(--accent); color: #FFFFFF; }
+  .nav-group-toggle { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; border: 0; border-radius: 6px; background: transparent;
+                      font: inherit; font-size: .78rem; font-weight: 700; color: var(--slate-light); padding: 10px; text-align: start; cursor: pointer; }
+  /* the reference sets group names in spaced capitals; spacing would break Arabic joining, so it applies to English only */
+  html[dir="ltr"] .nav-group-toggle { font-family: var(--mono); font-size: .64rem; font-weight: 400; letter-spacing: .16em; text-transform: uppercase; }
+  .nav-group-toggle:hover { background: var(--ink-soft); color: #FFFFFF; }
+  .nav-section[data-active="true"] .nav-group-toggle { color: #FFFFFF; }
+  .nav-chevron { width: 8px; height: 8px; margin-inline-end: 3px; border-inline-end: 2px solid currentColor; border-block-end: 2px solid currentColor;
+                 transform: rotate(45deg); transition: transform .18s ease; }
+  .nav-group-toggle[aria-expanded="false"] .nav-chevron { transform: rotate(-45deg); }
+  html[dir="rtl"] .nav-chevron { transform: rotate(-45deg); }
+  html[dir="rtl"] .nav-group-toggle[aria-expanded="false"] .nav-chevron { transform: rotate(45deg); }
+  .nav a { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; margin-bottom: 2px; border: 0; border-inline-start: 3px solid transparent;
+           border-start-end-radius: var(--radius-sm); border-end-end-radius: var(--radius-sm); background: none; color: var(--side-ink); font-size: .9rem; text-decoration: none; }
+  .nav a:hover { background: var(--ink-soft); color: #FFFFFF; }
+  .nav a.active { background: var(--ink-soft); color: #FFFFFF; border-inline-start-color: var(--signal); font-weight: 600; }
+  .nav a.sub { padding-inline-start: 26px; font-size: .87rem; }
+  .nav a .ext { margin-inline-start: auto; color: var(--slate-light); font-size: .8rem; }
+  .sidebar-foot { border-top: 1px solid var(--ink-line); padding: 12px 14px 18px; font-size: .82rem; }
+  .sidebar-foot label { display: block; margin-block-end: 5px; color: var(--slate-light); font-size: .76rem; font-weight: 600; }
+  .sidebar-foot select { width: 100%; min-height: 38px; padding: 6px 8px; font: inherit; font-size: .8rem; color: var(--text); background: var(--card);
+                         border: 1px solid var(--line-strong); border-radius: var(--radius-sm); }
+  .foot-row { display: flex; gap: 6px; margin-top: 10px; align-items: center; }
+  .foot-btn { flex: 1; padding: 9px; border-radius: var(--radius-sm); border: 1px solid var(--ink-line); background: transparent; color: var(--side-ink); font: inherit; font-size: .85rem; cursor: pointer; }
+  .foot-btn:hover { background: var(--ink-soft); color: #FFFFFF; }
+  .ver-tag { font: inherit; font-family: var(--mono); font-size: .76rem; color: var(--slate-light); background: none; border: 0; padding: 4px 2px; cursor: pointer; text-decoration: underline dotted; }
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: var(--topbar-h); padding: 10px 28px; background: var(--topbar);
+            color: var(--text); border-bottom: 1px solid var(--line); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 30; }
+  .topbar-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .topbar-home { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 11px; border-radius: 9px; background: var(--paper);
+                 border: 1px solid var(--line); color: var(--text); text-decoration: none; font-size: .82rem; font-weight: 700; }
+  .topbar-home svg { width: 17px; height: 17px; fill: currentColor; flex: 0 0 auto; }
+  .topbar-home:hover { background: var(--accent-wash); border-color: var(--accent); color: var(--accent-dark); }
+  .topbar-title strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .burger { display: none; width: 40px; height: 40px; place-items: center; border: 1px solid var(--ink-line); border-radius: var(--radius-sm); background: none; color: #FFFFFF; cursor: pointer; }
+  .burger span, .burger span::before, .burger span::after { content: ""; display: block; width: 18px; height: 2px; background: currentColor; position: relative; }
+  .burger span::before { position: absolute; top: -6px; } .burger span::after { position: absolute; top: 6px; }
+  .content { padding: 26px 28px 92px; max-width: 1240px; width: 100%; }
+  .scrim { display: none; }
+  .page-head { margin-bottom: 20px; }
+  .page-head .eyebrow { margin: 0 0 4px; font-family: var(--mono); font-size: .66rem; letter-spacing: .16em; text-transform: uppercase; color: var(--slate); }
+  html[dir="rtl"] .page-head .eyebrow { font-family: var(--sans); font-size: .76rem; letter-spacing: 0; font-weight: 700; }
+  .sub { margin: 6px 0 20px; color: var(--slate); font-size: .9rem; max-width: 62ch; }
+
+  /* ----------------------------------------------------------- the portal's components in the reference's terms */
+  /* tools: the three core tools are the memorable thing — tall, quiet, one accent line */
+  .primary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .tool { position: relative; display: flex; flex-direction: column; gap: 10px; min-height: 210px; padding: 22px 22px 18px; background: var(--surface);
+          border: 1px solid var(--line); border-radius: 14px; text-decoration: none; color: var(--ink); }
+  .tool::before { content: ''; position: absolute; inset-inline-start: 0; top: 22px; bottom: 22px; width: 4px; border-radius: 0 4px 4px 0; background: var(--accent); }
+  [dir="ltr"] .tool::before { border-radius: 4px 0 0 4px; }
+  .tool:hover { border-color: var(--accent); }
+  .tool svg { width: 42px; height: 42px; color: var(--accent); }
+  .tool .name { font-size: 20px; font-weight: 700; line-height: 1.3; }
+  .tool .desc { color: var(--ink-2); font-size: 14px; flex: 1; }
+  .tool .go { font-weight: 700; color: var(--accent); font-size: 14px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+          text-decoration: none; font-weight: 700; color: var(--ink); }
+  .chip:hover { border-color: var(--accent); }
+  .chip.soon { color: var(--ink-2); font-weight: 400; cursor: default; }
+  .chip .tag { font-size: 12px; font-weight: 400; color: var(--ink-2); }
+
+  /* data page: a real sequence, so the steps are numbered */
+  .steps { display: grid; gap: 14px; }
+  .step { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 14px; }
+  .step .n { width: 30px; height: 30px; border-radius: 50%; background: var(--blue); color: #fff; display: grid; place-items: center; font-weight: 700; }
+  :root[data-theme="dark"] .step .n { background: var(--accent-strong); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .step .n { background: var(--accent-strong); } }
+  .step h3 { margin: 2px 0 10px; font-size: 16px; }
+  .hint { color: var(--ink-2); font-size: 14px; margin: 0 0 10px; }
+  .fields { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+  label { display: grid; gap: 4px; font-size: 13px; color: var(--ink-2); }
+  select, input[type="text"], input[type="number"], textarea { font: inherit; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  textarea { width: 100%; min-height: 120px; resize: vertical; font-size: 13px; }
+  .btn { font: inherit; font-weight: 700; font-size: 14px; border-radius: 8px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--btn); border-color: var(--btn); color: var(--btn-ink); }
+  .btn.quiet { border-color: transparent; background: transparent; color: var(--ink-2); font-weight: 400; }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .blocks { display: grid; gap: 8px; margin-top: 12px; }
+  .block { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 12px; background: var(--surface-2); border-radius: 10px; }
+  .block .lbl { font-weight: 700; min-width: 80px; }
+  .block .rng { color: var(--ink-2); font-size: 14px; flex: 1; }
+  .block .have { font-size: 13px; color: var(--accent); }
+  .pill { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); }
+  .pill.ok { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  .pill.warn { color: var(--notice); border-color: var(--notice); background: var(--notice-soft); }
+  .msg { margin: 8px 0 0; font-size: 14px; }
+  .msg.err { color: var(--alert); font-weight: 700; }
+  .msg.err::before { content: '✕ '; color: var(--notice); }
+  .datasets { display: grid; gap: 8px; }
+  .ds { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  .ds .k { font-weight: 700; }
+  .ds .meta { color: var(--ink-2); font-size: 13px; flex: 1; }
+
+  /* KPIs */
+  .bar { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 16px; }
+  .strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 18px; }
+  .strip div { background: var(--surface); padding: 14px 16px; }
+  .strip b { display: block; font-size: 24px; line-height: 1.2; }
+  .strip span { color: var(--ink-2); font-size: 13px; }
+  .note { padding: 10px 14px; border-radius: 10px; background: var(--notice-soft); color: var(--ink); border-inline-start: 4px solid var(--notice); margin: 0 0 14px; font-size: 14px; }
+  .note::before { content: '⚠ '; color: var(--notice); }
+  .note.sample { background: var(--surface-2); color: var(--ink-2); border: 1px dashed var(--line); }
+  .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { padding: 10px 12px; text-align: start; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { font-size: 12px; color: var(--ink-2); font-weight: 700; background: var(--surface-2); }
+  td.num, th.num { text-align: end; font-variant-numeric: tabular-nums; }
+  tr.total td { font-weight: 700; background: var(--surface-2); }
+  tr.group td { color: var(--ink-2); }
+  tr:last-child td { border-bottom: 0; }
+  .rate { display: inline-flex; align-items: center; gap: 8px; }
+  .rate i { display: inline-block; width: 60px; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+  .rate i b { display: block; height: 100%; background: var(--accent); }
+  .defs { color: var(--ink-2); font-size: 14px; padding-inline-start: 20px; max-width: 80ch; }
+  .team { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; }
+  .team summary { cursor: pointer; font-weight: 700; }
+  .team .hint { margin: 8px 0; }
+  .team-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; margin-top: 10px; max-height: 320px; overflow-y: auto; }
+  .team-item { display: flex; gap: 8px; align-items: baseline; color: var(--ink); font-size: 14px; }
+  .team-item .muted { color: var(--ink-2); font-size: 12px; }
+  .empty { padding: 28px; text-align: center; color: var(--ink-2); background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; }
+
+  #toast { position: fixed; inset-inline: 0; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; width: max-content; max-width: 90vw; background: var(--navy);
+           color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 14px; opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; pointer-events: none; }
+  #toast.on { opacity: 1; transform: none; }
+  dialog { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); max-width: min(560px, 92vw); padding: 20px 22px; }
+  dialog::backdrop { background: rgba(10,12,30,.45); }
+  dialog h2 { margin: 0 0 4px; font-size: 18px; }
+  .ver-date { color: var(--ink-2); font-size: 13px; margin: 0 0 10px; }
+  dialog ul { padding-inline-start: 20px; margin: 0 0 14px; }
+  dialog li { margin-bottom: 8px; }
+  .update-bar { position: fixed; inset-inline: 0; top: env(safe-area-inset-top, 0px); display: flex; justify-content: center; padding: 8px; z-index: 5; }
+  .update-bar button { font: inherit; font-weight: 700; background: var(--accent-strong); color: #fff; border: 0; border-radius: 999px; padding: 8px 18px; cursor: pointer; }
+  .guide { display: grid; gap: 14px; max-width: 80ch; }
+  .guide section { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .guide h3 { margin: 0 0 6px; font-size: 16px; }
+  .guide p { margin: 0; color: var(--ink-2); }
+  .guide-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .guide-ver { color: var(--ink-2); font-size: 14px; }
+  .tool .badge { font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 10px; align-self: flex-start; }
+
+
+  /* cards, buttons and states as the reference draws them */
+  .tool, .step, .ds, .table-wrap, .strip, .team, .guide section, .empty { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .empty { box-shadow: none; border-style: dashed; }
+  .tool::before { background: var(--accent); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 8px 16px; border-radius: var(--radius-sm);
+         border: 1px solid transparent; font: inherit; font-weight: 600; font-size: .88rem; cursor: pointer; text-decoration: none; background: var(--card); color: var(--text); border-color: var(--line-strong); }
+  .btn:hover { background: var(--paper); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #FFFFFF; }
+  .btn.primary:hover { background: var(--accent-dark); }
+  .btn.quiet { background: none; border-color: transparent; color: var(--accent-dark); min-height: 36px; padding: 6px 10px; font-weight: 600; }
+  .btn.quiet:hover { background: var(--accent-wash); }
+  th { background: var(--paper); }
+  .pill.ok { color: var(--ok); border-color: var(--ok); background: var(--ok-wash); }
+  .pill.warn { color: var(--warn); border-color: var(--warn); background: var(--warn-wash); }
+  .note { background: var(--warn-wash); color: var(--text); border-inline-start: 4px solid var(--warn); }
+  .note::before { content: '⚠ '; color: var(--warn); }
+  .msg.err { color: var(--fail); } .msg.err::before { content: '✕ '; color: var(--fail); }
+  .step .n { background: var(--menu); color: #FFFFFF; }
+  .side-badge, .tool .badge { color: var(--accent-dark); background: var(--accent-wash); }
+
+  .me-who { color: var(--slate); margin: 0 0 14px; }
+  .me-setup .row { margin: 6px 0 12px; }
+  .bm { cursor: grab; }
+  .me-phones summary { cursor: pointer; font-weight: 600; color: var(--accent-dark); margin: 6px 0; }
+  .note.info { background: var(--note-wash); border-inline-start-color: var(--note); }
+  .note.info::before { content: '🔒 '; color: var(--note); }
+  /* modules: the tool fills the space under the top bar and keeps its state while hidden */
+  body.in-module .content { max-width: none; padding: 0; }
+  .module-view { height: calc(100vh - var(--topbar-h)); height: calc(100dvh - var(--topbar-h) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+  .module-stage { position: relative; height: 100%; background: var(--paper); }
+  .module-stage iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #FFFFFF; }
+  .module-wait { position: absolute; inset: 0; display: grid; place-items: center; color: var(--slate); margin: 0; }
+
+  /* ------------------------------------------------------------ responsive (as in the reference) */
+  @media (max-width: 820px) {
+    .topbar { padding: 9px 14px; background: var(--menu); color: #FFFFFF; }
+    .topbar-home { display: none; }
+    .topbar-title strong { color: #FFFFFF; }
+    .burger { display: grid; }
+    .content { padding: 18px 16px 72px; }
+    #module-open { border-color: var(--ink-line); color: #FFFFFF; background: transparent; }
+    .sidebar { position: fixed; inset-block: 0; inset-inline-start: 0; z-index: 60; transform: translateX(-100%); transition: transform .22s ease; box-shadow: 0 0 40px rgba(0,0,0,.4); }
+    html[dir="rtl"] .sidebar { transform: translateX(100%); }
+    body.nav-open .sidebar { transform: translateX(0); }
+    body.nav-open .scrim { display: block; position: fixed; inset: 0; z-index: 50; background: rgba(10,20,28,.5); }
+    .primary { grid-template-columns: 1fr; } .tool { min-height: 0; } .strip { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 520px) { .step { grid-template-columns: 1fr; } .step .n { display: none; } #module-open { display: none; } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  @media print { .sidebar, .topbar, .scrim, #toast, .update-bar, .no-print { display: none !important; } .content { padding: 0; }
+    .content > section:not(#view-guide) { display: none !important; } #view-guide { display: block !important; } .guide section { box-shadow: none; border: 0; } }
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <span class="brand-logo-plate"><img src="assets/afaqy-logo.png" alt="أفاقي"></span>
+    <span class="brand-name" data-t="portal">بوابة الفريق التقني — جدة</span>
+  </div>
+  <nav class="nav" aria-label="primary">
+    <a href="#tools" data-view="tools"><span class="nav-item-icon" aria-hidden="true">⌂</span><span data-t="nav_home">الرئيسية</span></a>
+    <a href="#me" data-view="me"><span class="nav-item-icon" aria-hidden="true">★</span><span data-t="nav_me">مؤشراتي</span></a>
+    <div class="nav-section" data-nav-section="modules">
+      <button type="button" class="nav-group-toggle" data-nav-group-toggle aria-expanded="true" aria-controls="nav-modules">
+        <span class="nav-group-label"><span class="nav-item-icon" aria-hidden="true">▦</span><span data-t="side_modules">الوحدات</span></span><span class="nav-chevron" aria-hidden="true"></span>
+      </button>
+      <div class="nav-group-panel" id="nav-modules"></div>
+    </div>
+    <div class="nav-section" data-nav-section="kpi">
+      <button type="button" class="nav-group-toggle" data-nav-group-toggle aria-expanded="false" aria-controls="nav-kpi">
+        <span class="nav-group-label"><span class="nav-item-icon" aria-hidden="true">▣</span><span data-t="nav_kpi">المؤشرات</span></span><span class="nav-chevron" aria-hidden="true"></span>
+      </button>
+      <div class="nav-group-panel" id="nav-kpi">
+        <a href="#data" class="sub" data-view="data" data-t="nav_data">البيانات</a>
+        <a href="#kpi" class="sub" data-view="kpi" data-t="kpi_board">لوحة المؤشرات</a>
+      </div>
+    </div>
+    <div class="nav-section" data-nav-section="systems">
+      <button type="button" class="nav-group-toggle" data-nav-group-toggle aria-expanded="false" aria-controls="nav-systems">
+        <span class="nav-group-label"><span class="nav-item-icon" aria-hidden="true">↗</span><span data-t="systems">أنظمة الشركة</span></span><span class="nav-chevron" aria-hidden="true"></span>
+      </button>
+      <div class="nav-group-panel" id="nav-systems"></div>
+    </div>
+    <a href="#guide" data-view="guide"><span class="nav-item-icon" aria-hidden="true">?</span><span data-t="nav_guide">الدليل</span></a>
+  </nav>
+  <div class="sidebar-foot">
+    <label for="lang-select" data-t="lang_label">اللغة</label>
+    <select id="lang-select"><option value="ar">العربية</option><option value="en">English</option><option value="ur">اردو</option></select>
+    <div class="foot-row">
+      <button type="button" id="theme-btn" class="foot-btn"></button>
+      <button type="button" id="version" class="ver-tag"></button>
+    </div>
+  </div>
+</aside>
+<div class="scrim" id="scrim"></div>
+<div class="main">
+  <header class="topbar">
+    <button type="button" class="burger" id="menu-btn" data-nav-toggle aria-controls="sidebar" aria-expanded="false"><span></span></button>
+    <div class="topbar-title">
+      <a class="topbar-home" href="#tools"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.8 12 3l9 7.8v9.7a.5.5 0 0 1-.5.5H15v-6H9v6H3.5a.5.5 0 0 1-.5-.5z"/></svg><span data-t="nav_home">الرئيسية</span></a>
+      <strong id="page-title"></strong>
+    </div>
+    <a id="module-open" class="btn" target="_blank" rel="noopener" hidden data-t="open_tab">فتح في نافذة مستقلة</a>
+  </header>
+<main class="content">
+  <section id="view-tools">
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="tools_title">أدوات الفريق</h1>
+    <p class="sub" data-t="tools_sub"></p></div>
+    <div class="primary" id="primary"></div>
+    <h2 data-t="systems">أنظمة الشركة</h2>
+    <p class="hint" data-t="systems_note"></p>
+    <div class="row" id="systems"></div>
+    <h2 data-t="more">أدوات أخرى</h2>
+    <div class="row" id="more"></div>
+  </section>
+
+  <section id="view-me" hidden>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="me_title">مؤشراتي</h1>
+    <p class="sub" data-t="me_sub"></p></div>
+    <div id="me-body"></div>
+  </section>
+
+  <section id="view-data" hidden>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="data_title">بيانات المؤشرات</h1>
+    <p class="sub" data-t="data_sub"></p></div>
+    <div class="steps">
+      <div class="step"><span class="n">١</span><div>
+        <h3 data-t="step1">اختر الفترة</h3>
+        <div class="fields">
+          <label><span data-t="block_size">طول الفترة</span>
+            <select id="block-size"><option value="3" data-t="m3">ربع سنة</option><option value="6" data-t="m6">نصف سنة</option><option value="12" data-t="m12">سنة</option></select></label>
+          <label><span data-t="blocks_back">عدد الفترات</span><input type="number" id="block-count" min="1" max="8" value="4" style="width:80px"></label>
+        </div>
+      </div></div>
+      <div class="step"><span class="n">٢</span><div>
+        <h3 data-t="step2">انسخ الأمر إلى كلود كروم</h3>
+        <p class="hint" data-t="step2_hint"></p>
+        <div class="blocks" id="blocks"></div>
+      </div></div>
+      <div class="step"><span class="n">٣</span><div>
+        <h3 data-t="step3">ارفع النتيجة</h3>
+        <p class="hint" data-t="step3_hint"></p>
+        <textarea id="paste" dir="ltr" spellcheck="false" data-tp="paste_here"></textarea>
+        <div class="row" style="margin-top:10px">
+          <button type="button" class="btn primary" id="read-text" data-t="load_text">قراءة النص</button>
+          <label class="btn" style="display:inline-flex" for="file-in"><span data-t="choose_file">اختيار ملف</span></label>
+          <input type="file" id="file-in" accept=".json,.txt,.md,application/json,text/plain" multiple hidden>
+        </div>
+        <p class="msg" id="read-msg" role="status"></p>
+      </div></div>
+    </div>
+    <h2 data-t="datasets">البيانات المرفوعة</h2>
+    <div class="datasets" id="datasets"></div>
+    <div class="row no-print" style="margin-top:12px">
+      <button type="button" class="btn" id="export-btn" data-t="export_all">تصدير نسخة احتياطية</button>
+      <label class="btn" style="display:inline-flex" for="import-in"><span data-t="import_all">استعادة نسخة</span></label>
+      <input type="file" id="import-in" accept=".json,application/json" hidden>
+      <button type="button" class="btn quiet" id="sample-btn" data-t="sample">تحميل بيانات تجريبية</button>
+    </div>
+  </section>
+
+  <section id="view-module" class="module-view" hidden>
+    <div class="module-stage" id="module-stage"><p class="module-wait" id="module-wait" data-t="module_loading"></p></div>
+  </section>
+
+  <section id="view-guide" hidden>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="g_title">دليل الاستخدام</h1></div>
+    <div id="guide-body" class="guide"></div>
+  </section>
+
+  <section id="view-kpi" hidden>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="kpi_title">المؤشرات</h1>
+    <p class="sub" data-t="kpi_sub"></p></div>
+    <div id="kpi-body"></div>
+  </section>
+</main>
+</div>
+</div>
+<div id="update-bar" class="update-bar" hidden><button type="button" id="update-btn" data-t="update_ready"></button></div>
+<dialog id="news-dialog" aria-labelledby="news-title">
+  <h2 id="news-title" data-t="whats_new">ما الجديد في هذه النسخة</h2>
+  <p class="ver-date" id="news-date"></p>
+  <ul id="news-list"></ul>
+  <div class="row" style="justify-content:flex-end"><button type="button" class="btn" id="news-close" data-t="close">إغلاق</button></div>
+</dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
