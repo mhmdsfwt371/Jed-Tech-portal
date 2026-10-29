@@ -424,6 +424,7 @@ async function copyPrompt(b, build = buildPrompt) {
 // ---------- data: upload ----------
 async function ingest(text) {
   const msg = $('read-msg');
+  if (!String(text || '').trim()) { msg.className = 'msg err'; msg.textContent = t('paste_empty'); return false; }
   if (String(text).includes(REPORTS_SCHEMA)) {
     const r = parseReports(text);
     if (r.error) { msg.className = 'msg err'; msg.textContent = t(r.error, r.vars); return false; }
@@ -677,7 +678,11 @@ function renderReports(key, team = null) {
       el('div', { class: 'donuts' },
         ac.categories.length ? donut(t('f4_by_category'), ac.categories.map((c) => ({ label: c, value: ac.total.byCategory[c] }))) : null,
         ac.statuses.length ? donut(t('f4_by_status'), ac.statuses.map((st) => ({ label: st, value: ac.total.byStatus[st] }))) : null)]
-      : el('div', { class: 'empty', text: t('f4_none') }),
+      : (() => {
+        const all = activityTotals(rep);
+        if (!all.total.activities) return el('div', { class: 'empty', text: (rep.activities || []).length || rep.activities ? t('f4_zero') : t('f4_none') });
+        return el('p', { class: 'note', text: t('f4_outside', { n: all.total.activities, who: all.people.map((r) => `${nm(r.id)} (${r.activities})`).join('، ') }) });
+      })(),
     el('details', { class: 'tucked' }, el('summary', { text: t('f2_show') }),
       el('p', { class: 'hint', text: t('f2_sub', { months }) }),
       tt.rows.length ? el('div', { class: 'table-wrap' }, el('table', {},

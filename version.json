@@ -1,18 +1,18 @@
 {
-  "version": "7.7",
+  "version": "7.8",
   "date": "2026-10-29",
   "notes": {
     "ar": [
-      "لوحة التعيين: قسم جديد «إزالة من كل الحسابات — لمن غادر». يعرض كل من على حسابات جدة وعدد حساباته — بالاسم، أو بالرقم إن لم يعد في قائمة المهندسين — ولا يُزال إلا من تعلّم عليه بيدك.",
-      "القائمة تبدأ فارغة في كل فتح ولا تُحفظ، ولا يُترك حساب بلا أحد أبدًا. الحارس يفرض الثلاثة."
+      "سجل الأنشطة يقول الحقيقة بوضوح: إذا لم يسجّل فريقك أي نشاط مع العملاء في الفترة يقولها صراحةً، ويذكر عدد الأنشطة في الفترة ومن سجّلها من خارج الفريق — بدل «لا أنشطة في الملف».",
+      "زر «قراءة النص» على خانة فارغة يشرح أن إشارة المدير لا تحتاج لصقًا، وأن الملفين يُرفعان بزر «اختيار ملف»."
     ],
     "en": [
-      "Assignment panel: a new “Remove from every account — for those who left” section. It lists everyone on Jeddah accounts and how many accounts each carries — by name, or by id if no longer in the engineers list — and removes only whoever you tick.",
-      "The list starts empty on every open and is never remembered, and no account is ever left with nobody. The guard enforces all three."
+      "The activity log says the truth plainly: when your team logged no activity with customers in the period it says so, with how many activities the period has and who outside the team logged them — instead of “no activities in the file”.",
+      "“Read text” on an empty box explains that the manager bookmark needs no pasting and that its two files are uploaded with “Choose file”."
     ],
     "ur": [
-      "تفویض پینل: نیا حصہ «ہر اکاؤنٹ سے ہٹائیں — جو چھوڑ گئے»۔ یہ جدہ کے اکاؤنٹس پر موجود ہر فرد اور اس کے اکاؤنٹس کی تعداد دکھاتا ہے — نام سے، یا شناخت سے اگر وہ انجینئرز کی فہرست میں نہ رہا ہو — اور صرف اسے ہٹاتا ہے جسے آپ نشان لگائیں۔",
-      "فہرست ہر بار خالی شروع ہوتی ہے اور کبھی محفوظ نہیں ہوتی، اور کوئی اکاؤنٹ کبھی کسی کے بغیر نہیں چھوڑا جاتا۔ گارڈ تینوں کو نافذ کرتا ہے۔"
+      "سرگرمیوں کا ریکارڈ صاف سچ بتاتا ہے: جب آپ کی ٹیم نے مدت میں گاہکوں کے ساتھ کوئی سرگرمی درج نہ کی ہو تو یہ صاف کہتا ہے، مدت کی سرگرمیوں کی تعداد اور ٹیم کے باہر کس نے درج کیں — «فائل میں کوئی سرگرمی نہیں» کے بجائے۔",
+      "خالی خانے پر «متن پڑھیں» بتاتا ہے کہ مینیجر بک مارک کو چسپاں کرنے کی ضرورت نہیں اور اس کی دونوں فائلیں «فائل منتخب کریں» سے اپ لوڈ ہوتی ہیں۔"
     ]
   }
 }

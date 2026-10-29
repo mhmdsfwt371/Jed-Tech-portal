@@ -258,6 +258,9 @@ export const STRINGS = {
     assign_bm: 'لوحة التعيين',
     assign_warn: 'هذه هي الكتابة الوحيدة في البوابة كلها: طلب واحد — تعيين ما بعد البيع — على فرع جدة فقط، ولا يُرسل إلا بضغطتك. الإزالة لمن تعلّم عليه فقط، وتبدأ فارغة في كل فتح. الحارس يرفض أي نسخة تتجاوز ذلك.',
     team_roster_h: 'المناصب ومن يتبع من',
+    paste_empty: 'الخانة فارغة. مع إشارة المدير لا تحتاج للصق — اختر الملفين اللذين حفظتهما بزر «اختيار ملف».',
+    f4_outside: 'لم يسجّل فريقك أي نشاط مع العملاء في هذه الفترة. في الفترة {n} نشاط، كلها من خارج الفريق: {who}.',
+    f4_zero: 'لا أنشطة مع العملاء مسجّلة في هذه الفترة لأي أحد.',
   },
   en: {
     brand: 'Afaqy', portal: 'Technical team portal — Jeddah', nav_data: 'Data', nav_kpi: 'KPIs',
@@ -507,6 +510,9 @@ export const STRINGS = {
     assign_bm: 'Assignment panel',
     assign_warn: 'This is the one write in the whole portal: a single request — assign after-sales — on the Jeddah branch only, sent only by your press. Removal is only for whoever you tick, and starts empty on every open. The guard refuses any version that goes beyond it.',
     team_roster_h: 'Positions and who reports to whom',
+    paste_empty: 'The box is empty. With the manager bookmark there is nothing to paste — choose the two files it saved with “Choose file”.',
+    f4_outside: 'Your team logged no activity with customers in this period. The period has {n} activities, all from outside the team: {who}.',
+    f4_zero: 'No activities with customers were logged in this period by anyone.',
   },
   ur: {
     brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ', nav_data: 'ڈیٹا', nav_kpi: 'کارکردگی کے اشاریے',
@@ -756,6 +762,9 @@ export const STRINGS = {
     assign_bm: 'تفویض پینل',
     assign_warn: 'یہ پورے پورٹل میں واحد لکھائی ہے: ایک درخواست — آفٹر سیلز کی تفویض — صرف جدہ برانچ پر، اور صرف آپ کے دبانے سے بھیجی جاتی ہے۔ ہٹانا صرف اسی کا جسے آپ نشان لگائیں، اور ہر بار خالی شروع ہوتا ہے۔ گارڈ اس سے آگے جانے والے کسی نسخے کو مسترد کرتا ہے۔',
     team_roster_h: 'عہدے اور کون کس کے ماتحت',
+    paste_empty: 'خانہ خالی ہے۔ مینیجر بک مارک کے ساتھ کچھ چسپاں کرنے کی ضرورت نہیں — اس کی محفوظ کردہ دونوں فائلیں «فائل منتخب کریں» سے چنیں۔',
+    f4_outside: 'آپ کی ٹیم نے اس مدت میں گاہکوں کے ساتھ کوئی سرگرمی درج نہیں کی۔ مدت میں {n} سرگرمیاں ہیں، سب ٹیم کے باہر سے: {who}۔',
+    f4_zero: 'اس مدت میں کسی نے بھی گاہکوں کے ساتھ کوئی سرگرمی درج نہیں کی۔',
   },
 };
 

@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v7.8 — 2026-10-29
+
+- سجل الأنشطة يقول الحقيقة بوضوح: إذا لم يسجّل فريقك أي نشاط مع العملاء في الفترة يقولها صراحةً، ويذكر عدد الأنشطة في الفترة ومن سجّلها من خارج الفريق — بدل «لا أنشطة في الملف».
+- زر «قراءة النص» على خانة فارغة يشرح أن إشارة المدير لا تحتاج لصقًا، وأن الملفين يُرفعان بزر «اختيار ملف».
+
+<details><summary>English</summary>
+
+- The activity log says the truth plainly: when your team logged no activity with customers in the period it says so, with how many activities the period has and who outside the team logged them — instead of “no activities in the file”.
+- “Read text” on an empty box explains that the manager bookmark needs no pasting and that its two files are uploaded with “Choose file”.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- سرگرمیوں کا ریکارڈ صاف سچ بتاتا ہے: جب آپ کی ٹیم نے مدت میں گاہکوں کے ساتھ کوئی سرگرمی درج نہ کی ہو تو یہ صاف کہتا ہے، مدت کی سرگرمیوں کی تعداد اور ٹیم کے باہر کس نے درج کیں — «فائل میں کوئی سرگرمی نہیں» کے بجائے۔
+- خالی خانے پر «متن پڑھیں» بتاتا ہے کہ مینیجر بک مارک کو چسپاں کرنے کی ضرورت نہیں اور اس کی دونوں فائلیں «فائل منتخب کریں» سے اپ لوڈ ہوتی ہیں۔
+
+</div>
+</details>
+
+
 ## v7.7 — 2026-10-29
 
 - لوحة التعيين: قسم جديد «إزالة من كل الحسابات — لمن غادر». يعرض كل من على حسابات جدة وعدد حساباته — بالاسم، أو بالرقم إن لم يعد في قائمة المهندسين — ولا يُزال إلا من تعلّم عليه بيدك.
