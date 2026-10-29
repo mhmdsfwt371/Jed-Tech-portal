@@ -1,0 +1,13 @@
+# Runs the unit tests and the guard on every push and pull request. GitHub Pages deploys regardless;
+# a red mark here means something the team relies on changed — fix it before telling anyone.
+name: verify
+on: [push, pull_request]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm run verify
+      - run: npm run links        # every tool link still opens the right tool

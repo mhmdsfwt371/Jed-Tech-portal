@@ -1,0 +1,5 @@
+#!/bin/sh
+# بوابة الدفع: ما يوصلش لجيتهب حاجة ما عدّتش على اللي بتعدّي عليه السحابة.
+# تتفعّل مرة واحدة: git config core.hooksPath .githooks
+cd "$(git rev-parse --show-toplevel)" || exit 1
+npm run verify || { echo "✗ الحارس أحمر — اتلغى الدفع"; exit 1; }
