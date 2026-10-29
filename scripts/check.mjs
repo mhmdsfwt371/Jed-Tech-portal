@@ -212,9 +212,10 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   const mg = decodeURIComponent(buildManagerBookmarklet('2026-10-01', '2026-10-29').replace(/^javascript:/, ''));
   const mgHosts = [...mg.matchAll(/https:\/\/([a-z0-9.-]+)/g)].map((m) => m[1]).filter((h) => h !== 'crmbackend.afaqy.sa');
   if (mgHosts.length) note(`manager bookmark: talks to ${[...new Set(mgHosts)].join(', ')} — only crmbackend.afaqy.sa`);
-  const mgPaths = [...mg.matchAll(/'(Security|Teams|Task|TechnicianReport|AfterSalesBoardReport)[A-Za-z/]*'/g)].map((m) => m[1] === 'Teams' ? m[0].replace(/\/$/, "'") : m[0]);
-  const okPaths = new Set(["'Security/GetAllHierarchyUsersDropDown'", "'Teams/GetAllTeams'", "'Teams/GetTeamById/'", "'Task/GetMyTasksGrid'", "'TechnicianReport/GetTechnicianReportStatic'", "'AfterSalesBoardReport/GetAfterSalesAgentsGrid'"]);
-  for (const x of mgPaths) if (!okPaths.has(x)) note(`manager bookmark: calls ${x} — only the six read endpoints are allowed`);
+  const mgPaths = [...mg.matchAll(/'(Security|Teams|Task|TechnicianReport|AfterSalesBoardReport|ActivityLog)[A-Za-z/]*'/g)].map((m) => m[1] === 'Teams' ? m[0].replace(/\/$/, "'") : m[0]);
+  const okPaths = new Set(["'Security/GetAllHierarchyUsersDropDown'", "'Teams/GetAllTeams'", "'Teams/GetTeamById/'", "'Task/GetMyTasksGrid'", "'TechnicianReport/GetTechnicianReportStatic'", "'AfterSalesBoardReport/GetAfterSalesAgentsGrid'", "'ActivityLog/GetTicketsGrid'"]);
+  for (const x of mgPaths) if (!okPaths.has(x)) note(`manager bookmark: calls ${x} — only the seven read endpoints are allowed`);
+  if (/description|customerName|salesMan/.test((mg.match(/acts\.push\(\{[^}]*\}/) || [''])[0])) note('manager bookmark: the activity log must not carry descriptions, customer names or sales fields');
   if (/\/(add|edit|delete|remove|save|assign|close|complete|approve|update|create|sync|send)\b/i.test(mg)) note('manager bookmark: a write-like path appeared');
   if (/location\.href=[^;]*(tk|token)|\.href='[^']*'\+tk/.test(mg) || /dl\([^)]*tk\b/.test(mg)) note('manager bookmark: the sign-in token must never leave the page');
   if (!/location\.hostname!=='myafaqy\.com'/.test(mg)) note('manager bookmark: must refuse to run anywhere but myafaqy.com');
@@ -234,10 +235,11 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
 {
   const { buildReportsPrompt, TECH_FIELDS } = await import(new URL('core.js', root));
   const rp = buildReportsPrompt({ from: '2026-10-01', to: '2026-12-31' });
-  if (!rp.includes('TechnicianReport/GetTechnicianReportStatic · AfterSalesBoardReport/GetAfterSalesAgentsGrid') || !rp.includes('ABSOLUTE RULE — NOTHING MAY CHANGE IN MYAFAQY') || !rp.includes('STOP and ask me'))
+  if (!rp.includes('TechnicianReport/GetTechnicianReportStatic · AfterSalesBoardReport/GetAfterSalesAgentsGrid · ActivityLog/GetTicketsGrid') || !rp.includes('ABSOLUTE RULE — NOTHING MAY CHANGE IN MYAFAQY') || !rp.includes('STOP and ask me'))
     note('reports prompt: lost its allowlist of the two read endpoints');
   const urls = [...rp.matchAll(/https:\/\/crmbackend\.afaqy\.sa\/([A-Za-z/]+)/g)].map((m) => m[1]);
-  if (urls.some((u) => !['TechnicianReport/GetTechnicianReportStatic', 'AfterSalesBoardReport/GetAfterSalesAgentsGrid'].includes(u))) note(`reports prompt: calls ${[...new Set(urls)].join(', ')} — only the two reports are allowed`);
+  if (urls.some((u) => !['TechnicianReport/GetTechnicianReportStatic', 'AfterSalesBoardReport/GetAfterSalesAgentsGrid', 'ActivityLog/GetTicketsGrid'].includes(u))) note(`reports prompt: calls ${[...new Set(urls)].join(', ')} — only the three reads are allowed`);
+  if (!/Do NOT keep customerNameAr, customerNameEn, createdBy, description, salesMan or isVIP/.test(rp)) note('reports prompt: the activity log must drop customer names, the logger’s name, descriptions and sales fields');
   const banned = ['bonusValue', 'fridayWorkDaysBonus', 'saturdayWorkDaysPoints', 'phoneNumber', 'evaluation', 'leadEvaluation', 'branchPercentage'];
   if (TECH_FIELDS.some((f) => banned.includes(f))) note('reports: a pay, phone or evaluation field is kept — never carry those');
   if (!banned.every((f) => rp.includes(f))) note('reports prompt: must tell Claude in Chrome not to keep pay, phone and evaluation fields');

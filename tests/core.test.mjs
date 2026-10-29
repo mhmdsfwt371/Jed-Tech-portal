@@ -5,7 +5,7 @@ import {
   factor1, creditOf, GROUP, formatHours, formatRate, sampleDataset, saudiToday, ymd,
   saudiBoundsZ, toIso, saudiDay, peopleOf, defaultTeam, nameOf, EMAIL_MODULE, SCHEMAS,
   buildBookmarklet, parseMe, myProfile, ME_SCHEMA, parseMePayload, profileMonths, monthWindows, scopeOf, ME_SCHEMA_V2, upgradeMe,
-  parseRoster, mergeRoster, positionOf, leaderOf, reportsOf, donutParts, periodWindows, teamAlerts,
+  parseRoster, mergeRoster, positionOf, leaderOf, reportsOf, donutParts, periodWindows, teamAlerts, activityTotals,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
@@ -418,6 +418,17 @@ test('team alerts: the person to look at (with reasons) and the clearest improve
   assert.deepEqual(al.attention.why.map((w) => w.k).sort(), ['median', 'open', 'rate']);
   assert.deepEqual(al.improved, { id: 'a', delta: 6 });
   assert.deepEqual(teamAlerts([{ id: 'x', this: { assigned: 2, done: 1, rate: 0.5, medianHours: 50, open: 1 }, last: { done: 0 } }]), { attention: null, improved: null }, 'fewer than five tasks: no verdict');
+});
+
+test('activity log: per person within the period and team; descriptions and names never kept; statuses and categories as they come', () => {
+  const A = (id, by, cust, st, cat, d, task = null) => ({ ticketId: id, taskId: task, customerId: cust, categoryId: 1, category: cat, caseId: 2, case: 'Follow Up', statusId: 3, status: st, createdById: by, createDate: d, description: 'SECRET TEXT', customerNameEn: 'ACME' });
+  const r = parseReports(REP({ activities: { rows: [A(1, 70, 'c1', 'Done', 'Customer Support', '2026-10-05T08:00:00Z', 900), A(2, 70, 'c2', 'Open', 'API Issues', '2026-10-06T08:00:00Z'),
+    A(3, 124, 'c1', 'Done', 'Customer Support', '2026-11-02T08:00:00Z'), A(4, 999, 'c9', 'Done', 'Customer Support', '2026-10-07T08:00:00Z'), A(5, 70, 'c3', 'Done', 'Customer Support', '2026-12-05T08:00:00Z')] } })).reports;
+  assert.ok(!JSON.stringify(r).includes('SECRET TEXT') && !JSON.stringify(r).includes('ACME'));
+  const ac = activityTotals(r, ['70', '124']);
+  assert.deepEqual(ac.people.map((p) => [p.id, p.activities, p.customers, p.withTask]), [['70', 2, 2, 1], ['124', 1, 1, 0]], 'the outsider 999 and the December row (outside the range) are left out');
+  assert.deepEqual(ac.total.byStatus, { Done: 2, Open: 1 }); assert.deepEqual(ac.statuses.sort(), ['Done', 'Open']);
+  assert.equal(activityTotals(r).people.length, 3, 'no team: everyone');
 });
 
 test('formatting', () => {

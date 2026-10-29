@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v7.4 — 2026-10-29
+
+- المؤشر الرابع — سجل الأنشطة مع العملاء: لكل مهندس ما سجّله مع العملاء في الفترة (التذاكر)، وعدد العملاء المختلفين، وكم صار مهمة، وتوزيعها بالحالة والتصنيف — بجدول بأشرطة ودائرتين. تقرؤه إشارة المدير وأمر التقارير تلقائيًّا، بلا أوصاف ولا أسماء عملاء.
+- نقاط الفنيين طُويت خلف «عرض» في اللوحة — الفريق مهندسون لا فنيون — وتبقى لمن يحتاجها.
+
+<details><summary>English</summary>
+
+- Factor 4 — the activity log with customers: per engineer, what they logged with customers in the period (tickets), the distinct customers, how many became tasks, and the spread by status and category — a table with bars and two donuts. The manager bookmark and the reports prompt read it automatically, without descriptions or customer names.
+- Technician points are tucked behind “show” on the board — the team is engineers, not technicians — and stay there for whoever needs them.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- چوتھا اشاریہ — گاہکوں کے ساتھ سرگرمیوں کا ریکارڈ: ہر انجینئر کے لیے مدت میں گاہکوں کے ساتھ درج کی گئی سرگرمیاں (ٹکٹ)، مختلف گاہک، کتنے ٹاسک بنے، اور حالت اور زمرے کی تقسیم — بار والا جدول اور دو دائرے۔ مینیجر بک مارک اور رپورٹس کی ہدایت اسے خود بخود پڑھتی ہیں، بغیر تفصیل یا گاہکوں کے ناموں کے۔
+- ٹیکنیشن پوائنٹس بورڈ پر «دکھائیں» کے پیچھے سمٹ گئے — ٹیم انجینئرز کی ہے، ٹیکنیشنز کی نہیں — اور جسے ضرورت ہو اس کے لیے وہیں رہتے ہیں۔
+
+</div>
+</details>
+
+
 ## v7.3 — 2026-10-29
 
 - «مؤشراتي» كما في التصميم المعتمد: زر «تحديث من ماي أفاقي» فوق البطاقة، وأزرار الفترة — هذا الشهر، هذا الربع، آخر ستة أشهر — تقلب المقارنة كلها على الأيام نفسها من الفترة السابقة.

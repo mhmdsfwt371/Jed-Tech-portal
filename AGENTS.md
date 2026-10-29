@@ -81,6 +81,7 @@
 | ملف الموظف (القرار 0014) | `parseMePayload()`، `monthWindows()`، `scopeOf()`، `profileMonths()` |
 | ملف الفريق والدوائر (القرار 0015) | `parseRoster()`، `mergeRoster()`، `reportsOf()`، `donutParts()` |
 | نوافذ الفترة والتنبيهات (القرار 0016) | `periodWindows()`، `teamAlerts()` |
+| سجل الأنشطة (القرار 0017) | `activityTotals()` |
 | الوقت والفترات بتوقيت السعودية | `toIso()`، `saudiDay()`، `saudiBoundsZ()` |
 | الدليل ودليل المستخدم | `GUIDE` و`DEFINITIONS` ونصوص `g_*` في `core.js`، و`scripts/build-manual.mjs` |
 | ما الجديد وتنبيه النسخة الأحدث | `loadRelease()`، `openNews()` |

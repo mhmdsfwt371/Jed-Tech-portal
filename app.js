@@ -5,7 +5,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts,
-  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, REPORTS_SCHEMA, buildManagerBookmarklet,
+  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet,
 } from './core.js';
 
 const $ = (id) => document.getElementById(id);
@@ -24,10 +24,10 @@ function el(tag, attrs = {}, ...kids) {
     else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
     else n.setAttribute(k, v === true ? '' : v);
   }
-  for (const k of kids.flat()) if (k != null && k !== false) n.append(k.nodeType ? k : document.createTextNode(String(k)));
+  for (const k of kids.flat(Infinity)) if (k != null && k !== false) n.append(k.nodeType ? k : document.createTextNode(String(k)));
   return n;
 }
-const set = (node, ...kids) => { node.replaceChildren(...kids.flat().filter((k) => k != null && k !== false)); };
+const set = (node, ...kids) => { node.replaceChildren(...kids.flat(Infinity).filter((k) => k != null && k !== false)); };
 
 function toast(msg) {
   const n = $('toast'); n.textContent = msg; n.classList.add('on');
@@ -560,7 +560,7 @@ function renderKpi() {
         el('b', { text: String(x.done) }), el('i', { style: `height:${Math.max(6, Math.round((x.done / Math.max(1, ...trend.map((q) => q.f.done))) * 140))}px` }),
         el('span', { class: 'ltr', text: `${d.range.from.slice(0, 7)} → ${d.range.to.slice(0, 7)}` }), el('small', { text: `${formatRate(x.rate)} · ${formatHours(x.medianHours, lang)}` })))),
       trendTable] : null,
-    renderReports(ds.key),
+    renderReports(ds.key, team),
     el('h2', { text: t('definitions') }),
     el('ul', { class: 'defs' }, DEFINITIONS.map((k) => el('li', { text: t(k) }))));
 }
@@ -630,28 +630,47 @@ function renderTeam() {
 }
 
 // ---------- Factor 2 (technician points) and Factor 3 (after-sales tickets), from the reports file of the same period ----------
-function renderReports(key) {
+function renderReports(key, team = null) {
   const rep = reports.find((r) => r.key === key);
-  const head = [el('h2', { text: t('f2_title') })];
-  if (!rep) return [...head, el('p', { class: 'note info', text: t('reports_none') })];
-  const nm = (r) => (lang === 'en' ? r.nameEn || r.nameAr : r.nameAr || r.nameEn) || r.technicianId;
-  const tt = techTotals(rep), at = afterSalesTotals(rep);
+  if (!rep) return [el('h2', { text: t('f3_title') }), el('p', { class: 'note info', text: t('reports_none') })];
+  const peopleById = new Map(peopleOf(datasets).map((p) => [p.id, p]));
+  const nm = (id) => nameOf(peopleById.get(id), lang) || id;
+  const tt = techTotals(rep), at = afterSalesTotals(rep), ac = activityTotals(rep, team);
   const months = rep.techPoints.map((m) => m.month).join('، ');
   const tcols = [['f2_name', null], ['f2_installed', 'installedDeviceCount'], ['f2_maint', 'maintainedDeviceCount'], ['f2_fix', 'maintainedFixDeviceCount'],
     ['f2_reservice', 'reServiceDeviceCount'], ['f2_stop', 'stopServiceDeviceCount'], ['f2_group', 'groupInstallationCount'],
     ['f2_extra', 'additionalWorkCount'], ['f2_viol', 'violationCount'], ['f2_points', 'totalPoint']];
-  const line = (r, cls, label) => el('tr', { class: cls }, el('td', { text: label || nm(r) }), ...tcols.slice(1).map(([, f]) => el('td', { class: 'num', text: r[f] })));
-  return [...head,
-    el('p', { class: 'hint', text: t('f2_sub', { months }) }),
-    tt.rows.length ? el('div', { class: 'table-wrap' }, el('table', {},
-      el('thead', {}, el('tr', {}, tcols.map(([k], i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
-      el('tbody', {}, tt.rows.map((r) => line(r)), line(tt.total, 'total', t('team'))))) : el('div', { class: 'empty', text: t('f2_none') }),
+  const tline = (r, cls, label) => el('tr', { class: cls }, el('td', { text: label || ((lang === 'en' ? r.nameEn || r.nameAr : r.nameAr || r.nameEn) || r.technicianId) }), ...tcols.slice(1).map(([, f]) => el('td', { class: 'num', text: r[f] })));
+  const maxAct = Math.max(1, ...ac.people.map((r) => r.activities));
+  return [
     el('h2', { text: t('f3_title') }),
     el('p', { class: 'hint', text: t('f3_sub') }),
     at.rows.length ? el('div', { class: 'table-wrap' }, el('table', {},
       el('thead', {}, el('tr', {}, ['f3_name', 'f3_open', 'f3_pending', 'f3_done', 'f3_total'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
       el('tbody', {}, at.rows.map((r) => el('tr', {}, el('td', { text: r.name }), ...[r.open, r.pending, r.done, r.total].map((v) => el('td', { class: 'num', text: v })))),
-        el('tr', { class: 'total' }, el('td', { text: t('team') }), ...[at.total.open, at.total.pending, at.total.done, at.total.total].map((v) => el('td', { class: 'num', text: v })))))) : el('div', { class: 'empty', text: t('f3_none') })];
+        el('tr', { class: 'total' }, el('td', { text: t('team') }), ...[at.total.open, at.total.pending, at.total.done, at.total.total].map((v) => el('td', { class: 'num', text: v })))))) : el('div', { class: 'empty', text: t('f3_none') }),
+    el('h2', { text: t('f4_title') }),
+    el('p', { class: 'hint', text: t('f4_sub') }),
+    ac.people.length ? [
+      el('div', { class: 'table-wrap' }, el('table', {},
+        el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), el('th', { class: 'num', text: t('f4_activities') }), el('th', { class: 'num', text: t('f4_customers') }),
+          el('th', { class: 'num', text: t('f4_with_task') }), ...ac.statuses.map((st) => el('th', { class: 'num', text: st })))),
+        el('tbody', {}, ac.people.map((r) => el('tr', {},
+          el('td', {}, el('div', { text: nm(r.id) }), positionOf(roster(), r.id, lang) ? el('div', { class: 'hint', text: positionOf(roster(), r.id, lang) }) : null),
+          el('td', { class: 'num' }, el('div', { class: 'bar-cell' }, el('b', { text: String(r.activities) }), el('i', {}, el('span', { style: `width:${Math.round((r.activities / maxAct) * 100)}%` })))),
+          el('td', { class: 'num', text: String(r.customers) }), el('td', { class: 'num', text: String(r.withTask) }),
+          ...ac.statuses.map((st) => el('td', { class: 'num', text: String(r.byStatus[st] || 0) })))),
+          el('tr', { class: 'total' }, el('td', { text: t('team') }), el('td', { class: 'num', text: String(ac.total.activities) }), el('td', { class: 'num', text: String(ac.total.customers) }),
+            el('td', { class: 'num', text: String(ac.total.withTask) }), ...ac.statuses.map((st) => el('td', { class: 'num', text: String(ac.total.byStatus[st] || 0) })))))),
+      el('div', { class: 'donuts' },
+        ac.categories.length ? donut(t('f4_by_category'), ac.categories.map((c) => ({ label: c, value: ac.total.byCategory[c] }))) : null,
+        ac.statuses.length ? donut(t('f4_by_status'), ac.statuses.map((st) => ({ label: st, value: ac.total.byStatus[st] }))) : null)]
+      : el('div', { class: 'empty', text: t('f4_none') }),
+    el('details', { class: 'tucked' }, el('summary', { text: t('f2_show') }),
+      el('p', { class: 'hint', text: t('f2_sub', { months }) }),
+      tt.rows.length ? el('div', { class: 'table-wrap' }, el('table', {},
+        el('thead', {}, el('tr', {}, tcols.map(([k], i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+        el('tbody', {}, tt.rows.map((r) => tline(r)), tline(tt.total, 'total', t('team'))))) : el('div', { class: 'empty', text: t('f2_none') }))];
 }
 
 // ---------- guide: every feature is written here — a feature missing from the guide does not exist for the team ----------

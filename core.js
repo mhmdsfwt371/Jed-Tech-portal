@@ -62,7 +62,7 @@ export const STRINGS = {
     g_parts_h: 'الرد الطويل والفترة الناقصة',
     g_parts_b: 'إذا قسّم كلود كروم الرد إلى أجزاء، ارفعها كلها؛ تُدمج بحسب رقم المهمة. تبقى الفترة «ناقصة» حتى يساوي عدد المهام العدد الذي أعلنه ماي أفاقي نفسه، وتظهر فوق أرقامها علامة تحذير.',
     g_kpi_h: 'المؤشرات',
-    g_kpi_b: 'اختر الفترة من القائمة. المؤشر الأول يعرض لكل موظف ما أُسند إليه وما أنجزه ونسبة الإنجاز ومدة الإنجاز وما هو مفتوح الآن، ثم إجمالي الفريق. تحته المؤشر الثاني — نقاط الفنيين: التركيبات والصيانة وإعادة الخدمة والإيقاف والمخالفات والنقاط لكل فني — والمؤشر الثالث — تذاكر ما بعد البيع لكل موظف — حين يُرفع ملف التقارير للفترة نفسها. الفريق المحسوب يُحدَّد تلقائيًّا من الفرق الفنية في جدة، ويمكن تعديله من «الفريق المحسوب في المؤشرات». وإذا رُفعت أكثر من فترة تظهر المقارنة بينها. طريقة حساب كل رقم مكتوبة أسفل الصفحة.',
+    g_kpi_b: 'اختر الفترة من القائمة. المؤشر الأول يعرض لكل موظف ما أُسند إليه وما أنجزه ونسبة الإنجاز ومدة الإنجاز وما هو مفتوح الآن، بأشرطة وترتيب بالمنجزة أو الوسيط أو المفتوحة، ثم إجمالي الفريق والدوائر. تحته تذاكر ما بعد البيع لكل موظف، ثم المؤشر الرابع — سجل الأنشطة: ما سجّله كل مهندس مع العملاء في الفترة، وعدد العملاء، وكم صار مهمة، وتوزيع الحالات والتصنيفات — حين يُرفع ملف التقارير للفترة نفسها. نقاط الفنيين مطوية أسفل الصفحة لمن يحتاجها. الفريق المحسوب يُحدَّد تلقائيًّا من الفرق الفنية في جدة ويمكن تعديله، وإذا رُفعت أكثر من فترة تظهر المقارنة أعمدةً. طريقة حساب كل رقم مكتوبة أسفل الصفحة.',
     g_privacy_h: 'أين تُحفظ البيانات',
     g_privacy_b: 'على هذا الجهاز وفي هذا المتصفح فقط، ولا يُرسل منها شيء لأي جهة. لنقلها إلى جهاز آخر أو الاحتفاظ بنسخة استخدم «تصدير نسخة احتياطية» ثم «استعادة نسخة». مسح بيانات المتصفح يمسحها.',
     def_5: '«المفتوحة الآن» صورة لحظة السحب، أيًّا كان تاريخ إنشاء المهمة.',
@@ -239,6 +239,16 @@ export const STRINGS = {
     kpi_sort_median: 'بالوسيط',
     kpi_sort_open: 'بالمفتوحة',
     trend_sub: 'إجمالي الفريق لكل فترة مرفوعة. العمود = المنجزة، وتحته نسبة الإنجاز والوسيط.',
+    f4_title: 'المؤشر الرابع — سجل الأنشطة مع العملاء',
+    f4_sub: 'ما يسجّله كل مهندس مع العميل في ماي أفاقي («تذكرة») حين لا يأتي العمل كمهمة. من شاشة التذاكر، للفترة، لفريقك.',
+    f4_activities: 'الأنشطة',
+    f4_customers: 'عملاء مختلفون',
+    f4_with_task: 'صارت مهمة',
+    f4_by_category: 'الأنشطة حسب التصنيف',
+    f4_by_status: 'الأنشطة حسب الحالة',
+    f4_none: 'لا أنشطة في ملف هذه الفترة — ملف تقارير أقدم من v7.4، أو لا أنشطة لفريقك فيها.',
+    f2_show: 'نقاط الفنيين — عرض',
+    def_10: 'المؤشر الرابع يعدّ لكل مهندس تذاكره في الفترة — كل تذكرة نشاط سجّله مع عميل — وعدد العملاء المختلفين، وكم منها صار مهمة، وتوزيعها بالحالة والتصنيف كما في ماي أفاقي. لا تُنقل أوصاف التذاكر ولا أسماء العملاء.',
   },
   en: {
     brand: 'Afaqy', portal: 'Technical team portal — Jeddah', nav_data: 'Data', nav_kpi: 'KPIs',
@@ -292,7 +302,7 @@ export const STRINGS = {
     g_parts_h: 'Long replies and incomplete periods',
     g_parts_b: 'If Claude in Chrome splits its reply into parts, upload them all; they merge by task id. A period stays “incomplete” until its task count equals the total myafaqy itself reported, and its figures carry a warning.',
     g_kpi_h: 'KPIs',
-    g_kpi_b: 'Choose the period from the list. Factor 1 shows, per employee, what was assigned, what was completed, the completion rate, the time to complete and what is open now, then the team total. Below it come Factor 2 — technician points: installations, maintenance, re-service, stop service, violations and points per technician — and Factor 3 — after-sales tickets per employee — once the reports file for the same period is uploaded. The team counted is set automatically from Jeddah’s technical teams and can be changed under “The team counted in the KPIs”. With more than one period uploaded, a comparison appears. How each figure is calculated is written at the bottom.',
+    g_kpi_b: 'Choose the period from the list. Factor 1 shows, per employee, what was assigned, what was completed, the completion rate, the time to complete and what is open now, with bars and ordering by completed, median or open, then the team total and the donuts. Below it come after-sales tickets per employee, then Factor 4 — the activity log: what each engineer logged with customers in the period, the distinct customers, how many became tasks, and the spread by status and category — once the reports file for the same period is uploaded. Technician points are tucked at the bottom for whoever needs them. The team counted is set automatically from Jeddah’s technical teams and can be changed, and with more than one period uploaded the comparison appears as columns. How each figure is calculated is written at the bottom.',
     g_privacy_h: 'Where the data is kept',
     g_privacy_b: 'On this device and in this browser only; nothing is sent anywhere. To move it to another device or keep a copy, use “Export a backup” then “Restore a backup”. Clearing the browser’s data clears it.',
     def_5: '“Open now” is a snapshot at the moment of extraction, whatever the task’s creation date.',
@@ -469,6 +479,16 @@ export const STRINGS = {
     kpi_sort_median: 'By median',
     kpi_sort_open: 'By open',
     trend_sub: 'The team total per uploaded period. The column is completed work; below it, the completion rate and the median.',
+    f4_title: 'Factor 4 — the activity log with customers',
+    f4_sub: 'What each engineer logs with a customer in myafaqy (a “ticket”) when the work does not arrive as a task. From the Tickets screen, for the period, for your team.',
+    f4_activities: 'Activities',
+    f4_customers: 'Distinct customers',
+    f4_with_task: 'Became a task',
+    f4_by_category: 'Activities by category',
+    f4_by_status: 'Activities by status',
+    f4_none: 'No activities in this period’s file — a reports file older than v7.4, or none by your team.',
+    f2_show: 'Technician points — show',
+    def_10: 'Factor 4 counts, per engineer, their tickets in the period — each an activity logged with a customer — the distinct customers, how many became tasks, and their spread by status and category as in myafaqy. Ticket descriptions and customer names are not carried.',
   },
   ur: {
     brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ', nav_data: 'ڈیٹا', nav_kpi: 'کارکردگی کے اشاریے',
@@ -522,7 +542,7 @@ export const STRINGS = {
     g_parts_h: 'لمبے جوابات اور نامکمل مدتیں',
     g_parts_b: 'اگر کلاڈ کروم اپنا جواب کئی حصوں میں تقسیم کرے تو تمام حصے اپ لوڈ کریں؛ یہ ٹاسک نمبر کے حساب سے آپس میں جڑ جاتے ہیں۔ کوئی مدت اس وقت تک «نامکمل» رہتی ہے جب تک اس کے ٹاسکس کی تعداد مائی آفاقی کی بتائی ہوئی کل تعداد کے برابر نہ ہو جائے، اور اس کے اعداد پر انتباہ دکھائی دیتا ہے۔',
     g_kpi_h: 'کارکردگی کے اشاریے',
-    g_kpi_b: 'فہرست سے مدت منتخب کریں۔ پہلا اشاریہ ہر ملازم کے لیے دکھاتا ہے کہ اسے کیا تفویض ہوا، اس نے کیا مکمل کیا، تکمیل کی شرح، تکمیل کا وقت اور اس وقت کیا کھلا ہے؛ پھر ٹیم کا مجموعہ۔ اس کے نیچے دوسرا اشاریہ — ٹیکنیشن پوائنٹس: ہر ٹیکنیشن کی تنصیبات، مرمت، دوبارہ سروس، بندش، خلاف ورزیاں اور پوائنٹس — اور تیسرا اشاریہ — ہر ملازم کے آفٹر سیلز ٹکٹس — دکھائی دیتے ہیں جب اسی مدت کی رپورٹس فائل اپ لوڈ ہو۔ شامل ٹیم جدہ کی تکنیکی ٹیموں سے خود بخود منتخب ہوتی ہے اور «اشاریوں میں شامل ٹیم» سے بدلی جا سکتی ہے۔ ایک سے زیادہ مدتیں اپ لوڈ ہوں تو ان کا موازنہ ظاہر ہوتا ہے۔ ہر عدد کا حساب کیسے ہوتا ہے، یہ صفحے کے نیچے لکھا ہے۔',
+    g_kpi_b: 'فہرست سے مدت منتخب کریں۔ پہلا اشاریہ ہر ملازم کے لیے دکھاتا ہے کہ اسے کیا تفویض ہوا، اس نے کیا مکمل کیا، تکمیل کی شرح، تکمیل کا وقت اور اس وقت کیا کھلا ہے، بار کے ساتھ اور مکمل، وسط یا کھلے کے مطابق ترتیب، پھر ٹیم کا مجموعہ اور دائرے۔ اس کے نیچے ہر ملازم کے آفٹر سیلز ٹکٹ، پھر چوتھا اشاریہ — سرگرمیوں کا ریکارڈ: ہر انجینئر نے مدت میں گاہکوں کے ساتھ کیا درج کیا، مختلف گاہک، کتنے ٹاسک بنے، اور حالت اور زمرے کی تقسیم — جب اسی مدت کی رپورٹس فائل اپ لوڈ ہو۔ ٹیکنیشن پوائنٹس صفحے کے نیچے سمٹے ہوئے ہیں جسے ضرورت ہو۔ شامل ٹیم جدہ کی تکنیکی ٹیموں سے خود بخود منتخب ہوتی ہے اور بدلی جا سکتی ہے، اور ایک سے زیادہ مدتیں اپ لوڈ ہوں تو موازنہ کالموں کی صورت میں ظاہر ہوتا ہے۔ ہر عدد کا حساب کیسے ہوتا ہے، یہ صفحے کے نیچے لکھا ہے۔',
     g_privacy_h: 'ڈیٹا کہاں محفوظ رہتا ہے',
     g_privacy_b: 'صرف اسی ڈیوائس اور اسی براؤزر میں؛ کہیں بھی کچھ نہیں بھیجا جاتا۔ کسی دوسری ڈیوائس پر منتقل کرنے یا نقل رکھنے کے لیے «بیک اپ برآمد کریں» اور پھر «بیک اپ بحال کریں» استعمال کریں۔ براؤزر کا ڈیٹا صاف کرنے سے یہ بھی مٹ جاتا ہے۔',
     def_5: '«اس وقت کھلے» ڈیٹا نکالنے کے لمحے کی تصویر ہے، ٹاسک کسی بھی تاریخ کو بنا ہو۔',
@@ -699,12 +719,22 @@ export const STRINGS = {
     kpi_sort_median: 'وسط کے مطابق',
     kpi_sort_open: 'کھلے کے مطابق',
     trend_sub: 'ہر اپ لوڈ شدہ مدت کا ٹیم مجموعہ۔ کالم = مکمل کام؛ نیچے تکمیل کی شرح اور وسط۔',
+    f4_title: 'چوتھا اشاریہ — گاہکوں کے ساتھ سرگرمیوں کا ریکارڈ',
+    f4_sub: 'جو ہر انجینئر مائی آفاقی میں گاہک کے ساتھ درج کرتا ہے («ٹکٹ») جب کام ٹاسک کے طور پر نہ آئے۔ ٹکٹس کی اسکرین سے، اس مدت کے لیے، آپ کی ٹیم کے لیے۔',
+    f4_activities: 'سرگرمیاں',
+    f4_customers: 'مختلف گاہک',
+    f4_with_task: 'ٹاسک بن گئیں',
+    f4_by_category: 'زمرے کے مطابق سرگرمیاں',
+    f4_by_status: 'حالت کے مطابق سرگرمیاں',
+    f4_none: 'اس مدت کی فائل میں کوئی سرگرمی نہیں — v7.4 سے پرانی رپورٹس فائل، یا آپ کی ٹیم کی کوئی نہیں۔',
+    f2_show: 'ٹیکنیشن پوائنٹس — دکھائیں',
+    def_10: 'چوتھا اشاریہ ہر انجینئر کے لیے مدت میں اس کے ٹکٹ گنتا ہے — ہر ایک گاہک کے ساتھ درج کی گئی سرگرمی — مختلف گاہک، کتنے ٹاسک بنے، اور مائی آفاقی کے مطابق حالت اور زمرے کی تقسیم۔ ٹکٹ کی تفصیل اور گاہکوں کے نام نہیں لائے جاتے۔',
   },
 };
 
 // The user guide: one list, read by the page (Guide tab) and by scripts/build-manual.mjs, so they can never differ.
 export const GUIDE = [['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_team_h', 'g_team_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
-export const DEFINITIONS = ['def_1', 'def_2', 'def_3', 'def_4', 'def_5', 'def_6', 'def_7', 'def_8', 'def_9'];
+export const DEFINITIONS = ['def_1', 'def_2', 'def_3', 'def_4', 'def_5', 'def_6', 'def_7', 'def_8', 'def_9', 'def_10'];
 
 export function t(lang, key, vars = {}) {
   const s = (STRINGS[lang] && STRINGS[lang][key]) ?? STRINGS.ar[key] ?? key;
@@ -1158,8 +1188,8 @@ export function buildReportsPrompt({ from, to, branch = JEDDAH_BRANCH }) {
   return `You are reading two per-employee reports from the myafaqy CRM (https://myafaqy.com, API at https://crmbackend.afaqy.sa) for a read-only KPI dashboard. I am signed in with my own manager account in this tab.
 
 ABSOLUTE RULE — NOTHING MAY CHANGE IN MYAFAQY
-- You may call ONLY these two endpoints, exactly as named:
-    TechnicianReport/GetTechnicianReportStatic · AfterSalesBoardReport/GetAfterSalesAgentsGrid
+- You may call ONLY these three endpoints, exactly as named:
+    TechnicianReport/GetTechnicianReportStatic · AfterSalesBoardReport/GetAfterSalesAgentsGrid · ActivityLog/GetTicketsGrid
 - Never call anything else. Never call any endpoint whose name contains Add, Create, Insert, Edit, Update, Delete, Remove, Save, Assign, Reassign, Close, Complete, Approve, Reject, Sync, Send, Upload, Import, Change, Set, Mark, Read, Seen, Logout.
 - Never press any button in the page. Never change any filter, sort, column or setting on screen.
 - myafaqy uses POST to READ these reports; that is expected. The two names above are reads.
@@ -1182,6 +1212,12 @@ STEP 2 — AFTER-SALES TICKETS, one call. POST https://crmbackend.afaqy.sa/After
   {"categoryId":null,"createDate":["${fromZ}","${toZ}"],"branch":"${branch}","afterSalesId":null}
    Keep every row: id, afterSalesName, openTickets, pendingTickets, doneTickets, totalTickets.
 
+STEP 3 — ACTIVITY LOG (the Tickets screen: every activity an engineer logs with a customer). POST https://crmbackend.afaqy.sa/ActivityLog/GetTicketsGrid with:
+  {"isSearchFilter":false,"searchKey":"","search":{},"pageSize":500,"pageNumber":0,"searchCriteria":"","dateRangeIntialDaysCount":0}
+   Rows come newest first. Page with pageNumber (0, 1, 2 …) and STOP as soon as a whole page is older than ${from}. If "pageSize" comes back smaller than 500, use what it returns.
+   Keep ONLY the rows whose createDate falls between ${from} and ${to} (Saudi days), and from each row ONLY: ticketId, taskId, customerId, categoryId, category, caseId, case, statusId, status, createdById, createDate.
+   Do NOT keep customerNameAr, customerNameEn, createdBy, description, salesMan or isVIP.
+
 THE RESULT — ONE FILE ON MY COMPUTER, NOT IN CHAT
 Save this JSON as ONE file with a download (a Blob and an <a download> link) named afaqy-reports-${from}_${to}.json:
 
@@ -1192,10 +1228,11 @@ Save this JSON as ONE file with a download (a Blob and an <a download> link) nam
   "extractedAt": "<ISO date-time now>",
   "techPoints": [ { "month": "<YYYY-MM>", "listCount": <n>, "rows": [ { "technicianId": <n>, "employeeId": <n>, "nameEn": "<…>", "nameAr": "<…>", ${TECH_FIELDS.map((f) => `"${f}": <n>`).join(', ')} } ] } ],
   "afterSales": { "rows": [ { "id": <n>, "name": "<afterSalesName>", "open": <n>, "pending": <n>, "done": <n>, "total": <n> } ] },
+  "activities": { "rows": [ { "ticketId": <n>, "taskId": <n or null>, "customerId": <n>, "categoryId": <n>, "category": "<…>", "caseId": <n>, "case": "<…>", "statusId": <n>, "status": "<…>", "createdById": <n>, "createDate": "<as returned, with Z added>" } ] },
   "notes": ["<anything the app sends differently>"]
 }
 
-Then reply with only four lines: the file name, the number of technician rows per month, the number of after-sales rows, and "No write endpoint was called."`;
+Then reply with only five lines: the file name, the number of technician rows per month, the number of after-sales rows, the number of activity rows, and "No write endpoint was called."`;
 }
 
 /** Read a reports file. Returns { reports } or { error, vars }. Pay fields are dropped even if present. */
@@ -1218,8 +1255,12 @@ export function parseReports(text) {
   const rows = (raw.afterSales && Array.isArray(raw.afterSales.rows) ? raw.afterSales.rows : []).filter((r) => r && r.id != null).map((r) => ({
     id: String(r.id), name: String(r.name || r.afterSalesName || ''), open: n(r.open ?? r.openTickets), pending: n(r.pending ?? r.pendingTickets),
     done: n(r.done ?? r.doneTickets), total: n(r.total ?? r.totalTickets) }));
+  const activities = (raw.activities && Array.isArray(raw.activities.rows) ? raw.activities.rows : []).filter((r) => r && r.ticketId != null && toIso(r.createDate)).map((r) => ({
+    ticketId: String(r.ticketId), taskId: r.taskId == null ? null : String(r.taskId), customerId: r.customerId == null ? null : String(r.customerId),
+    categoryId: r.categoryId == null ? null : String(r.categoryId), category: String(r.category || '').slice(0, 60), caseId: r.caseId == null ? null : String(r.caseId), caseName: String(r.case || r.caseName || '').slice(0, 60),
+    statusId: r.statusId == null ? null : String(r.statusId), status: String(r.status || '').slice(0, 40), createdById: r.createdById == null ? null : String(r.createdById), createdAt: toIso(r.createDate) }));
   return { reports: { key: rangeKey({ from, to }), schema: REPORTS_SCHEMA, range: { from, to }, branch: String(raw.branch || ''),
-    extractedAt: toIso(raw.extractedAt), techPoints, afterSales: rows, notes: Array.isArray(raw.notes) ? raw.notes.map(String).slice(0, 30) : [] } };
+    extractedAt: toIso(raw.extractedAt), techPoints, afterSales: rows, activities, notes: Array.isArray(raw.notes) ? raw.notes.map(String).slice(0, 30) : [] } };
 }
 
 /** Factor 2: technician points over the period — the months summed per technician; people with no field work left out. */
@@ -1239,6 +1280,25 @@ export function techTotals(reports) {
 }
 
 /** Factor 3: after-sales tickets per person, busiest first; people with no tickets left out. */
+/** Factor 4: the activity log per person — activities, distinct customers, by status and by category; busiest first. */
+export function activityTotals(reports, team = null) {
+  const { from, to } = reports.range;
+  const rows = (reports.activities || []).filter((a) => a.createdById && saudiDay(a.createdAt) >= from && saudiDay(a.createdAt) <= to && (!team || team.includes(a.createdById)));
+  const statuses = [...new Set(rows.map((a) => a.status).filter(Boolean))];
+  const categories = [...new Set(rows.map((a) => a.category).filter(Boolean))];
+  const by = new Map();
+  for (const a of rows) {
+    if (!by.has(a.createdById)) by.set(a.createdById, { id: a.createdById, activities: 0, customers: new Set(), withTask: 0, byStatus: {}, byCategory: {} });
+    const r = by.get(a.createdById); r.activities++; if (a.customerId) r.customers.add(a.customerId); if (a.taskId) r.withTask++;
+    if (a.status) r.byStatus[a.status] = (r.byStatus[a.status] || 0) + 1;
+    if (a.category) r.byCategory[a.category] = (r.byCategory[a.category] || 0) + 1;
+  }
+  const people = [...by.values()].map((r) => ({ ...r, customers: r.customers.size })).sort((a, b) => b.activities - a.activities || b.customers - a.customers);
+  const total = { activities: rows.length, customers: new Set(rows.map((a) => a.customerId).filter(Boolean)).size, withTask: rows.filter((a) => a.taskId).length,
+    byStatus: Object.fromEntries(statuses.map((st) => [st, rows.filter((a) => a.status === st).length])), byCategory: Object.fromEntries(categories.map((c) => [c, rows.filter((a) => a.category === c).length])) };
+  return { people, total, statuses, categories };
+}
+
 export function afterSalesTotals(reports) {
   const rows = (reports.afterSales || []).filter((r) => r.total > 0 || r.open > 0 || r.pending > 0 || r.done > 0)
     .sort((a, b) => b.total - a.total || b.done - a.done);
@@ -1300,11 +1360,12 @@ const tasksFile={schema:'${SCHEMA}',range:{from:FROM,to:TO},extractedAt:new Date
 say(M[2]+'reports');const techPoints=[];const MM=${JSON.stringify(months.map(m=>({month:m.key,yearId:m.yearId,quarterId:m.quarterId,monthId:m.monthId,rd:m.requestDate})))};
 const KEEP=${JSON.stringify(TECH_FIELDS)};
 for(const mo of MM){const rows=[];for(let pg=1;;pg++){const R=await post('TechnicianReport/GetTechnicianReportStatic',{pageNumber:pg,pageSize:100,searchKey:'',isSearchFilter:true,search:{yearId:mo.yearId,quarterId:mo.quarterId,monthId:mo.monthId,branchIds:BR,userIds:[],requestDate:mo.rd}});const g=(R.data&&R.data.gridResult)||{};const arr=g.data||[];for(const r of arr){const o={technicianId:r.technicianId,employeeId:r.employeeId,nameEn:r.nameEn,nameAr:r.nameAr};for(const f of KEEP)o[f]=r[f]||0;rows.push(o)}const tot=g.totalPages||1;if(pg>=tot||!arr.length)break;await wait(200)}techPoints.push({month:mo.month,listCount:rows.length,rows})}
+say(M[2]+'activity log');const acts=[];for(let pg=0;pg<200;pg++){const R=await post('ActivityLog/GetTicketsGrid',{isSearchFilter:false,searchKey:'',search:{},pageSize:500,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const arr=(R.data&&(R.data.data||R.data))||[];if(!arr.length)break;let older=0;for(const r of arr){const d=String(r.createDate||'').slice(0,10);if(d<FROM){older++;continue}if(d>TO)continue;acts.push({ticketId:r.ticketId,taskId:r.taskId??null,customerId:r.customerId??null,categoryId:r.categoryId??null,category:r.category||'',caseId:r.caseId??null,case:r.case||'',statusId:r.statusId??null,status:r.status||'',createdById:r.createdById??null,createDate:r.createDate?r.createDate+'Z':null})}if(older===arr.length||(R.data&&R.data.totalPages&&pg+1>=R.data.totalPages))break;await wait(250)}
 const AS=await post('AfterSalesBoardReport/GetAfterSalesAgentsGrid',{categoryId:null,createDate:['${fromZ}','${toZ}'],branch:BR,afterSalesId:null});
 const asArr=(AS.data&&(AS.data.data||AS.data))||[];const afterSales={rows:asArr.map(r=>({id:r.id,name:r.afterSalesName,open:r.openTickets||0,pending:r.pendingTickets||0,done:r.doneTickets||0,total:r.totalTickets||0}))};
-const repFile={schema:'${REPORTS_SCHEMA}',range:{from:FROM,to:TO},branch:BR,extractedAt:new Date().toISOString(),techPoints,afterSales,notes:['manager bookmark']};
+const repFile={schema:'${REPORTS_SCHEMA}',range:{from:FROM,to:TO},branch:BR,extractedAt:new Date().toISOString(),techPoints,afterSales,activities:{rows:acts},notes:['manager bookmark']};
 dl('afaqy-tasks-'+FROM+'_'+TO+'.json',tasksFile);await wait(400);dl('afaqy-reports-'+FROM+'_'+TO+'.json',repFile);
-box.style.background='#0A5F67';say(M[4]+' ('+taskRows.length+' / '+techPoints.reduce((s,m)=>s+m.rows.length,0)+' / '+afterSales.rows.length+')');setTimeout(()=>box.remove(),12000);
+box.style.background='#0A5F67';say(M[4]+' ('+taskRows.length+' / '+techPoints.reduce((s,m)=>s+m.rows.length,0)+' / '+afterSales.rows.length+' / '+acts.length+')');setTimeout(()=>box.remove(),12000);
 }catch(e){box.style.background='#7a1f1f';say(M[3]+e.message);setTimeout(()=>box.remove(),12000)}})();`;
   return 'javascript:' + encodeURIComponent(code.replace(/\n/g, ''));
 }
