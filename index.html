@@ -250,6 +250,15 @@
   .side-badge, .tool .badge { color: var(--accent-dark); background: var(--accent-wash); }
 
   .me-who { color: var(--slate); margin: 0 0 14px; }
+  .pro-login label { display: grid; gap: 4px; margin: 0 0 10px; max-width: 340px; font-size: 13px; color: var(--slate); }
+  .pro-login input { font: inherit; padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }
+  .pro-bar { margin-bottom: 14px; }
+  .pro-search { flex: 1; min-width: 200px; font: inherit; padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }
+  .pro-row { cursor: pointer; } .pro-row:hover td { background: var(--accent-wash); }
+  .pro-detail pre { margin: 0; max-height: 320px; overflow: auto; font: 12px/1.45 var(--mono); background: var(--paper); padding: 10px; border-radius: var(--radius-sm); }
+  .pill.pro-live { color: var(--ok); border-color: var(--ok); background: var(--ok-wash); }
+  .pill.pro-day { color: var(--note); border-color: var(--note); background: var(--note-wash); }
+  .pill.pro-stale, .pill.pro-never { color: var(--warn); border-color: var(--warn); background: var(--warn-wash); }
   .me-setup .row { margin: 6px 0 12px; }
   .bm { cursor: grab; }
   .me-phones summary { cursor: pointer; font-weight: 600; color: var(--accent-dark); margin: 6px 0; }
@@ -350,6 +359,12 @@
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="me_title">مؤشراتي</h1>
     <p class="sub" data-t="me_sub"></p></div>
     <div id="me-body"></div>
+  </section>
+
+  <section id="view-pro" hidden>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><h1 data-t="nav_pro">أفاقي برو</h1>
+    <p class="sub" data-t="pro_sub"></p></div>
+    <div id="pro-body"></div>
   </section>
 
   <section id="view-data" hidden>

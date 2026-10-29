@@ -135,13 +135,114 @@ async function receiveMe(fragment) {
   toast(t('me_loaded', { n: me.tasks.length })); renderMe();
 }
 
+// ---------- AFAQY PRO inside the portal (ADR-0011) ----------
+// The integration API is the one AFAQY system that accepts the portal's address (checked in a real browser, 29 Oct 2026).
+// Read-only: two requests only. The password is used once to obtain a session key and never stored; the key lives in this
+// tab's sessionStorage and dies with the tab. Units are shown, never stored.
+const PRO_API = 'https://api.afaqy.sa';
+const PRO_KEY = 'afaqy-portal:pro-session';
+let proUnits = null, proBusy = false, proQuery = '', proOpen = null;
+const proToken = { get: () => { try { return sessionStorage.getItem(PRO_KEY); } catch { return null; } },
+  set: (v) => { try { if (v) sessionStorage.setItem(PRO_KEY, v); else sessionStorage.removeItem(PRO_KEY); } catch { /* the tab keeps nothing */ } } };
+async function proPost(path, data, token) {
+  const res = await fetch(PRO_API + path + (token ? `?token=${encodeURIComponent(token)}` : ''), {
+    method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify({ data }) });
+  return res.json().catch(() => ({}));
+}
+const proRefused = (j) => j && (j.status_code === 401 || j.status_code === 403);
+const proTime = (t) => { if (!t) return 0; const n = +t; if (Number.isFinite(n)) return n < 1e12 ? n * 1000 : n; const d = Date.parse(t); return Number.isFinite(d) ? d : 0; };
+function proState(u) {
+  const t = proTime((u.last_update || {}).dtt || (u.last_update || {}).dts);
+  if (!t) return 'never';
+  const age = Date.now() - t;
+  return age <= 3600000 ? 'live' : age <= 86400000 ? 'day' : 'stale';
+}
+async function proLoad() {
+  const token = proToken.get(); if (!token) { proUnits = null; renderPro(); return; }
+  proBusy = true; renderPro();
+  try {
+    const all = []; let total = null;
+    for (let offset = 0; offset < 100000; offset += 1000) {
+      const j = await proPost('/units/lists', { offset, limit: 1000, simplify: 0, projection: ['basic', 'last_update'] }, token);
+      if (proRefused(j)) { proToken.set(null); proUnits = null; toast(t('pro_expired')); return; }
+      const arr = (j && j.data && (Array.isArray(j.data) ? j.data : j.data.data)) || [];
+      const pg = j && (j.pagination || (j.data && j.data.pagination));
+      if (pg && pg.allCount != null) total = +pg.allCount;
+      all.push(...arr); proProgress(all.length, total);
+      if (arr.length < 1000 || (total != null && all.length >= total)) break;
+    }
+    proUnits = all;
+  } catch { toast(t('pro_net')); } finally { proBusy = false; renderPro(); }
+}
+const proProgress = (n, total) => { const w = $('pro-wait'); if (w) w.textContent = t('pro_loading', { n, total: total ?? '…' }); };
+async function proSignIn(user, pass) {
+  const msg = $('pro-msg'); msg.className = 'msg'; msg.textContent = t('pro_signing');
+  try {
+    const j = await proPost('/auth/login', { username: user, password: pass });
+    if (j && j.data && j.data.is_2fa) { msg.className = 'msg err'; msg.textContent = t('pro_2fa'); return; }
+    const token = (j && j.data && (j.data.token || j.data.access_token)) || (j && j.token) || '';
+    if (!token) { msg.className = 'msg err'; msg.textContent = j && j.message === 'invalid_credentials' ? t('pro_bad') : t('pro_refused', { why: String((j && (j.message || j.status_code)) || '') }); return; }
+    proToken.set(token); msg.textContent = '';
+    await proLoad();
+  } catch { msg.className = 'msg err'; msg.textContent = t('pro_net'); }
+}
+function renderPro() {
+  const body = $('pro-body'); if (!body) return;
+  const site = el('a', { class: 'btn quiet', href: 'https://afaqy.pro/', target: '_blank', rel: 'noopener', text: `${t('pro_site')} ↗` });
+  if (!proToken.get()) {
+    const u = el('input', { type: 'text', id: 'pro-user', autocomplete: 'username', dir: 'ltr', required: true });
+    const p = el('input', { type: 'password', id: 'pro-pass', autocomplete: 'current-password', dir: 'ltr', required: true });
+    const go = () => { if (u.value.trim() && p.value) { const pw = p.value; p.value = ''; proSignIn(u.value.trim(), pw); } };
+    p.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+    set(body, el('div', { class: 'step pro-login' }, el('span', { class: 'n', text: '١' }), el('div', {},
+      el('h3', { text: t('pro_signin_h') }),
+      el('label', {}, el('span', { text: t('pro_user') }), u), el('label', {}, el('span', { text: t('pro_pass') }), p),
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: t('pro_signin'), onclick: go }), site),
+      el('p', { class: 'msg', id: 'pro-msg' }),
+      el('p', { class: 'note info', text: t('pro_privacy') }))));
+    return;
+  }
+  if (proBusy || !proUnits) { set(body, el('div', { class: 'empty', id: 'pro-wait', text: t('pro_loading', { n: 0, total: '…' }) })); return; }
+  const count = { live: 0, day: 0, stale: 0, never: 0 };
+  proUnits.forEach((u) => { count[proState(u)]++; });
+  const q = proQuery.trim().toLowerCase();
+  const rows = proUnits.filter((u) => !q || [u.name, u.imei, u.device_serial, u._id].some((v) => String(v || '').toLowerCase().includes(q)));
+  const shown = rows.slice(0, 500);
+  const search = el('input', { type: 'search', class: 'pro-search', placeholder: t('pro_search'), value: proQuery,
+    oninput: (e) => { proQuery = e.target.value; const pos = e.target.selectionStart; renderPro(); const s = document.querySelector('.pro-search'); if (s) { s.focus(); s.setSelectionRange(pos, pos); } } });
+  const iso = (x) => `\u2066${x}\u2069`;
+  set(body,
+    el('div', { class: 'row pro-bar' }, search,
+      el('button', { type: 'button', class: 'btn', text: t('pro_refresh'), onclick: () => proLoad() }), site,
+      el('button', { type: 'button', class: 'btn quiet', text: t('pro_out'), onclick: () => { proToken.set(null); proUnits = null; renderPro(); } })),
+    el('div', { class: 'strip' },
+      el('div', {}, el('b', { text: String(proUnits.length) }), el('span', { text: t('pro_total') })),
+      el('div', {}, el('b', { text: String(count.live) }), el('span', { text: t('pro_live') })),
+      el('div', {}, el('b', { text: String(count.day) }), el('span', { text: t('pro_day') })),
+      el('div', {}, el('b', { text: String(count.stale + count.never) }), el('span', { text: t('pro_stale') }))),
+    el('div', { class: 'table-wrap' }, el('table', {},
+      el('thead', {}, el('tr', {}, ...['pro_col_name', 'pro_col_id', 'pro_col_last', 'pro_col_state', 'pro_col_where'].map((k) => el('th', { text: t(k) })))),
+      el('tbody', {}, shown.length ? shown.flatMap((u) => {
+        const lu = u.last_update || {}, ts = proTime(lu.dtt || lu.dts), st = proState(u), key = String(u._id || u.imei || u.name);
+        const lat = +lu.lat, lng = +lu.lng;
+        const tr = el('tr', { class: 'pro-row', onclick: () => { proOpen = proOpen === key ? null : key; renderPro(); } },
+          el('td', { text: String(u.name || '—') }), el('td', { class: 'ltr', text: String(u.imei || u.device_serial || '—') }),
+          el('td', { text: ts ? iso(new Date(ts + 3 * 3600000).toISOString().slice(0, 16).replace('T', ' ')) : '—' }),
+          el('td', {}, el('span', { class: `pill pro-${st}`, text: t(`pro_st_${st}`) })),
+          el('td', {}, Number.isFinite(lat) && Number.isFinite(lng) && (lat || lng)
+            ? el('a', { href: `https://www.google.com/maps?q=${lat},${lng}`, target: '_blank', rel: 'noopener', text: t('pro_map'), onclick: (e) => e.stopPropagation() }) : '—'));
+        return proOpen === key ? [tr, el('tr', { class: 'pro-detail' }, el('td', { colspan: '5' }, el('pre', { class: 'ltr', text: JSON.stringify(u, null, 1) })))] : [tr];
+      }) : [el('tr', {}, el('td', { colspan: '5', text: t('pro_none') }))]))),
+    rows.length > shown.length ? el('p', { class: 'hint', text: t('pro_more', { n: rows.length - shown.length }) }) : null);
+}
+
 // ---------- the side menu ----------
 const iconOf = (x) => ({ sensor: 'heatmap', apihelper: 'api', canval: 'can', nusuk: 'survey' }[x.id] || x.icon || 'system');
 const svg = (name) => { const s = el('span', { 'aria-hidden': 'true', style: 'display:contents' }); s.innerHTML = ICONS[name] || ''; return s; };
 function renderSide() {
   set($('nav-modules'), MODULES.map((m) => el('a', { href: `#m-${m.id}`, class: 'sub', 'data-module': m.id, text: L(m.name, lang) })));
-  set($('nav-systems'), SYSTEMS.map((x) => el('a', { href: x.url, class: 'sub', target: '_blank', rel: 'noopener' },
-    el('span', { text: L(x.name, lang) }), el('span', { class: 'ext', 'aria-hidden': 'true', text: '↗' }))));
+  set($('nav-systems'), SYSTEMS.map((x) => (x.id === 'pro' ? el('a', { href: '#pro', class: 'sub', 'data-view': 'pro', text: L(x.name, lang) }) : el('a', { href: x.url, class: 'sub', target: '_blank', rel: 'noopener' },
+    el('span', { text: L(x.name, lang) }), el('span', { class: 'ext', 'aria-hidden': 'true', text: '↗' })))));
 }
 const setMenu = (open) => { document.body.classList.toggle('nav-open', open); $('menu-btn').setAttribute('aria-expanded', String(open)); };
 // The groups fold as in the reference: one open at a time; the group holding the current page opens by itself.
@@ -356,7 +457,7 @@ function applyLang() {
   $('menu-btn').setAttribute('aria-label', t('menu'));
   paintThemeButton();
   document.title = `${t('brand')} — ${t('portal')}`;
-  renderSide(); renderTools(); renderBlocks(); renderDatasets(); renderKpi(); renderGuide(); renderMe();
+  renderSide(); renderTools(); renderBlocks(); renderDatasets(); renderKpi(); renderGuide(); renderMe(); renderPro();
   for (const [id, f] of frames) f.title = L((MODULES.find((m) => m.id === id) || {}).name, lang);
   route();
 }
@@ -368,7 +469,7 @@ function applyTheme() {
   paintThemeButton();
 }
 function route() {
-  const views = ['tools', 'me', 'data', 'kpi', 'guide'];
+  const views = ['tools', 'me', 'pro', 'data', 'kpi', 'guide'];
   let hash = location.hash.slice(1);
   if (hash.startsWith('me-')) {
     if (hash === 'me-wait') { hash = 'me'; setTimeout(() => renderMe(true)); }
@@ -379,7 +480,7 @@ function route() {
   for (const id of [...views, 'module']) $(`view-${id}`).hidden = id !== v;
   document.body.classList.toggle('in-module', v === 'module');
   if (mod) openModule(mod);
-  else { document.title = `${t('brand')} — ${t('portal')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', data: 'nav_data', kpi: 'kpi_board', guide: 'nav_guide' }[v]); currentModule = null; }
+  else { document.title = `${t('brand')} — ${t('portal')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', guide: 'nav_guide' }[v]); currentModule = null; }
   $('module-open').hidden = v !== 'module';
   // one item in the menu is current — the open module, or the page — and its group is the open one
   let current = null;
@@ -393,6 +494,7 @@ function route() {
   if (holder) setGroup(holder, true);
   setMenu(false);
   if (v === 'kpi') renderKpi();
+  if (v === 'pro' && proToken.get() && !proUnits && !proBusy) proLoad();
 }
 
 // ---------- wiring ----------

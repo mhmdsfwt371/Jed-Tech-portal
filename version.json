@@ -1,18 +1,21 @@
 {
-  "version": "6.4",
+  "version": "6.5",
   "date": "2026-10-29",
   "notes": {
     "ar": [
-      "عمود جديد «سجّلها لنفسه»: المهام التي فتحها الموظف وأسندها لنفسه، لا من البريد — أي الطلبات التي تصله بالواتساب أو بالمكالمات. يظهر في لوحة المؤشرات وفي «مؤشراتي»، فيتضح من أين جاء حمل كل موظف.",
-      "هذه المهام كانت تُحسب له من قبل ضمن المسند والمنجز؛ الجديد أنها صارت مرئية كمصدر مستقل. ماي أفاقي لا يسجّل القناة، فلا يُفصل الواتساب عن المكالمة."
+      "صفحة «أفاقي برو» داخل البوابة: الدخول باسم المستخدم وكلمة المرور، ثم وحدات الحساب كلها — آخر إرسال بتوقيت السعودية، والحالة، والموقع على الخريطة، والبحث بالاسم أو IMEI، وكل بيانات الوحدة بضغطة — دون مغادرة البوابة. للقراءة فقط.",
+      "كلمة المرور لا تُحفظ في أي مكان، والجلسة تنتهي بإغلاق التبويب. الحسابات التي تستخدم رمز تحقق تفتح موقع أفاقي برو نفسه، لأنه يمنع إكمال الدخول بالرمز من خارجه.",
+      "ماي أفاقي وموقع أفاقي برو لا يمكن عرضهما داخل البوابة — الشركة تمنع ذلك في خوادمها — فيفتحان في نافذة جديدة."
     ],
     "en": [
-      "A new “Self-logged” column: tasks the employee opened and assigned to himself, not from email — the requests that reach him by WhatsApp or by phone. It appears on the KPI board and in “My KPIs”, so it is clear where each person’s load came from.",
-      "These tasks already counted for him among assigned and completed; what is new is that they are visible as their own source. myafaqy does not record the channel, so WhatsApp and calls cannot be separated."
+      "An “Afaqy PRO” page inside the portal: sign in with your username and password, then see all the account’s units — last report in Saudi time, state, location on the map, search by name or IMEI, and all of a unit’s data with one press — without leaving the portal. Read only.",
+      "The password is not saved anywhere, and the session ends when the tab closes. Accounts that use a verification code open the Afaqy PRO site itself, because it forbids completing a code sign-in from outside.",
+      "myafaqy and the Afaqy PRO site cannot be shown inside the portal — the company forbids it on its servers — so they open in a new tab."
     ],
     "ur": [
-      "نیا کالم «خود درج کیے»: وہ ٹاسک جو ملازم نے خود کھولے اور خود کو تفویض کیے، ای میل سے نہیں — یعنی وہ درخواستیں جو اسے واٹس ایپ یا کال سے پہنچتی ہیں۔ یہ اشاریوں کے بورڈ اور «میرے اشاریے» میں دکھائی دیتا ہے، تاکہ واضح ہو کہ ہر شخص کا کام کہاں سے آیا۔",
-      "یہ ٹاسک پہلے بھی اس کے تفویض شدہ اور مکمل شدہ میں شمار ہوتے تھے؛ نیا یہ ہے کہ اب یہ الگ ذریعے کے طور پر نظر آتے ہیں۔ مائی آفاقی ذریعہ درج نہیں کرتا، اس لیے واٹس ایپ اور کال کو الگ نہیں کیا جا سکتا۔"
+      "پورٹل کے اندر «آفاقی پرو» کا صفحہ: صارف نام اور پاس ورڈ سے لاگ اِن کریں، پھر اکاؤنٹ کے تمام یونٹس دیکھیں — سعودی وقت میں آخری رپورٹ، حالت، نقشے پر مقام، نام یا IMEI سے تلاش، اور ایک دباؤ سے یونٹ کا سارا ڈیٹا — پورٹل چھوڑے بغیر۔ صرف پڑھنے کے لیے۔",
+      "پاس ورڈ کہیں محفوظ نہیں ہوتا، اور ٹیب بند ہونے پر سیشن ختم ہو جاتا ہے۔ تصدیقی کوڈ والے اکاؤنٹ آفاقی پرو کی سائٹ ہی کھولتے ہیں، کیونکہ وہ باہر سے کوڈ والا لاگ اِن مکمل کرنے کی اجازت نہیں دیتی۔",
+      "مائی آفاقی اور آفاقی پرو کی سائٹ پورٹل کے اندر نہیں دکھائی جا سکتیں — کمپنی اپنے سرورز پر اس سے منع کرتی ہے — اس لیے یہ نئی ٹیب میں کھلتی ہیں۔"
     ]
   }
 }

@@ -27,6 +27,7 @@
 | `scripts/build-manual.mjs` | دليل المستخدم من نصوص الدليل — يُشغَّل وحده بعد تعديل نص |
 | `docs/manual/` | دليل كل نسخة وفهرسها |
 | `docs/decisions/0010-my-kpis-through-myafaqy.md` | «مؤشراتي» وضماناته واختبار قبوله |
+| `docs/decisions/0011-afaqy-pro-in-the-portal.md` | صفحة أفاقي برو وحدودها وضماناتها |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |
@@ -38,7 +39,7 @@
 
 ## في عشر دقائق: ابنِ وافحص
 ```bash
-git clone https://github.com/mhmdsfwt371/afaqy-portal && cd afaqy-portal
+git clone https://github.com/mhmdsfwt371/Jed-Tech-portal && cd Jed-Tech-portal
 git config core.hooksPath .githooks
 npm run verify
 python3 -m http.server 8000      # ثم افتح http://localhost:8000

@@ -3,7 +3,8 @@
 كل نسخة لها دليلها، يُولَّد من نصوص تبويب «الدليل» نفسها عند ختم النسخة، ولا يُعدَّل بعد صدوره.
 Every version has its own manual, generated from the Guide tab strings when the version is stamped, and never edited after release.
 
-- [v6.4](user-manual-v6.4.md) — الحالية · current
+- [v6.5](user-manual-v6.5.md) — الحالية · current
+- [v6.4](user-manual-v6.4.md)
 - [v6.3](user-manual-v6.3.md)
 - [v6.2](user-manual-v6.2.md)
 - [v6.1](user-manual-v6.1.md)

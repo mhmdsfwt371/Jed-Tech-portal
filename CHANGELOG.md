@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v6.5 — 2026-10-29
+
+- صفحة «أفاقي برو» داخل البوابة: الدخول باسم المستخدم وكلمة المرور، ثم وحدات الحساب كلها — آخر إرسال بتوقيت السعودية، والحالة، والموقع على الخريطة، والبحث بالاسم أو IMEI، وكل بيانات الوحدة بضغطة — دون مغادرة البوابة. للقراءة فقط.
+- كلمة المرور لا تُحفظ في أي مكان، والجلسة تنتهي بإغلاق التبويب. الحسابات التي تستخدم رمز تحقق تفتح موقع أفاقي برو نفسه، لأنه يمنع إكمال الدخول بالرمز من خارجه.
+- ماي أفاقي وموقع أفاقي برو لا يمكن عرضهما داخل البوابة — الشركة تمنع ذلك في خوادمها — فيفتحان في نافذة جديدة.
+
+<details><summary>English</summary>
+
+- An “Afaqy PRO” page inside the portal: sign in with your username and password, then see all the account’s units — last report in Saudi time, state, location on the map, search by name or IMEI, and all of a unit’s data with one press — without leaving the portal. Read only.
+- The password is not saved anywhere, and the session ends when the tab closes. Accounts that use a verification code open the Afaqy PRO site itself, because it forbids completing a code sign-in from outside.
+- myafaqy and the Afaqy PRO site cannot be shown inside the portal — the company forbids it on its servers — so they open in a new tab.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- پورٹل کے اندر «آفاقی پرو» کا صفحہ: صارف نام اور پاس ورڈ سے لاگ اِن کریں، پھر اکاؤنٹ کے تمام یونٹس دیکھیں — سعودی وقت میں آخری رپورٹ، حالت، نقشے پر مقام، نام یا IMEI سے تلاش، اور ایک دباؤ سے یونٹ کا سارا ڈیٹا — پورٹل چھوڑے بغیر۔ صرف پڑھنے کے لیے۔
+- پاس ورڈ کہیں محفوظ نہیں ہوتا، اور ٹیب بند ہونے پر سیشن ختم ہو جاتا ہے۔ تصدیقی کوڈ والے اکاؤنٹ آفاقی پرو کی سائٹ ہی کھولتے ہیں، کیونکہ وہ باہر سے کوڈ والا لاگ اِن مکمل کرنے کی اجازت نہیں دیتی۔
+- مائی آفاقی اور آفاقی پرو کی سائٹ پورٹل کے اندر نہیں دکھائی جا سکتیں — کمپنی اپنے سرورز پر اس سے منع کرتی ہے — اس لیے یہ نئی ٹیب میں کھلتی ہیں۔
+
+</div>
+</details>
+
+
 ## v6.4 — 2026-10-29
 
 - عمود جديد «سجّلها لنفسه»: المهام التي فتحها الموظف وأسندها لنفسه، لا من البريد — أي الطلبات التي تصله بالواتساب أو بالمكالمات. يظهر في لوحة المؤشرات وفي «مؤشراتي»، فيتضح من أين جاء حمل كل موظف.

@@ -42,8 +42,10 @@ if (!/^\d{4}-\d{2}-\d{2}$/.test(vj.date || '')) note('version.json: date must be
 
 // 4. No Firebase, and no network except this site's own version.json. CRM data only ever arrives as an uploaded file.
 // The Claude prompt and the my-KPIs bookmark both run on myafaqy's page, not in the portal; they have their own rules (9, 17).
+// The Afaqy PRO page is the one exception in the portal itself (ADR-0011) — it has its own rule (18); everything else holds.
+const appWithoutPro = app.replace(/\/\/ ---------- AFAQY PRO inside the portal[\s\S]*?\/\/ ---------- the side menu ----------/, '');
 const coreWithoutPrompt = core.replace(/export function buildPrompt[\s\S]*?\n}\n/, '').replace(/export function buildBookmarklet[\s\S]*?\n}\n/, '');
-for (const [name, src] of [['index.html', html], ['app.js', app], ['core.js', coreWithoutPrompt], ['config.js', cfg]]) {
+for (const [name, src] of [['index.html', html], ['app.js', appWithoutPro], ['core.js', coreWithoutPrompt], ['config.js', cfg]]) {
   if (/firebase/i.test(src)) note(`${name}: Firebase is referenced — the portal runs without it`);
   if (/afaqy\.sa|afaqy\.pro\/|crmbackend/.test(src.replace(/https:\/\/afaqy\.pro\/'/g, ''))) note(`${name}: an Afaqy API address appeared — the portal never calls an Afaqy API`);
   const calls = [...src.matchAll(/fetch\(\s*([^,)]+)/g)].map((m) => m[1].trim());
@@ -59,7 +61,9 @@ if (manifest.scope !== './' || manifest.start_url !== './') note('manifest.webma
 for (const i of manifest.icons || []) if (!exists(i.src)) note(`manifest icon missing: ${i.src}`);
 
 // 6. Wiring: every id the script asks for exists; every string key exists in all three languages.
-for (const [, id] of app.matchAll(/\$\('([\w-]+)'\)/g)) if (!html.includes(`id="${id}"`)) note(`app.js asks for #${id}, missing in index.html`);
+// …or that the script itself creates (el('…', { id: 'x' }))
+const madeByScript = new Set([...app.matchAll(/\bid: '([\w-]+)'/g)].map((m) => m[1]));
+for (const [, id] of app.matchAll(/\$\('([\w-]+)'\)/g)) if (!html.includes(`id="${id}"`) && !madeByScript.has(id)) note(`app.js asks for #${id}, missing in index.html and never created`);
 const { STRINGS, LANGS } = await import(new URL('core.js', root));
 for (const [, k] of [...html.matchAll(/data-tp?="(\w+)"/g), ...app.matchAll(/\bt\('(\w+)'/g)]) if (!(k in STRINGS.ar)) note(`string "${k}" is not defined`);
 for (const lang of LANGS) for (const k of Object.keys(STRINGS.ar)) if (!(k in STRINGS[lang])) note(`${lang}: missing string ${k}`);
@@ -69,7 +73,7 @@ for (const [, f] of html.matchAll(/(?:src|href)="(assets\/[^"]+|manifest\.webman
 const views = [...html.matchAll(/<section id="view-(\w+)"/g)].map((m) => m[1]).filter((v) => v !== 'guide');
 const guideKeys = (core.match(/export const GUIDE = (\[[\s\S]*?\]);/) || [])[1] || '';
 // the module view is where a tool opens from the Tools page; the Tools section explains it
-const covers = { tools: 'g_tools_h', module: 'g_tools_h', me: 'g_me_h', data: 'g_data_h', kpi: 'g_kpi_h' };
+const covers = { tools: 'g_tools_h', module: 'g_tools_h', me: 'g_me_h', pro: 'g_pro_h', data: 'g_data_h', kpi: 'g_kpi_h' };
 for (const v of views) if (!covers[v] || !guideKeys.includes(covers[v])) note(`the guide has no section for the "${v}" page — add one before releasing it`);
 
 // 8. The three core tools stay first and point somewhere real.
@@ -182,6 +186,23 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   const keys = [...row.matchAll(/(?:^|,)([a-z]+)(?=[:,]|$)/g)].map((m) => m[1]);
   if (keys.join(',') !== 'i,c,d,s,m,o,b') note(`bookmark: hands over fields ${keys.join(',')} — only i,c,d,s,m,o,b are allowed`);
   if (!/o:String\(x\.createUserId\)===String\(u\.UserId\)/.test(row)) note('bookmark: "o" must be the yes/no "I opened it myself", not an id');
+}
+
+// 18. The Afaqy PRO page (ADR-0011): one address, two read requests, and the password never kept.
+{
+  const pro = (app.match(/\/\/ ---------- AFAQY PRO inside the portal[\s\S]*?\/\/ ---------- the side menu ----------/) || [''])[0];
+  if (!pro) note('app.js: the Afaqy PRO section is missing or renamed');
+  else {
+    if (!/const PRO_API = 'https:\/\/api\.afaqy\.sa';/.test(pro)) note('PRO page: the only address allowed is https://api.afaqy.sa');
+    const hosts = [...pro.matchAll(/https:\/\/([a-z0-9.-]+)/g)].map((m) => m[1]).filter((h) => !['api.afaqy.sa', 'afaqy.pro', 'www.google.com'].includes(h));
+    if (hosts.length) note(`PRO page: talks to ${hosts.join(', ')} — only api.afaqy.sa is allowed`);
+    const paths = [...pro.matchAll(/proPost\('([^']+)'/g)].map((m) => m[1]);
+    if (paths.some((x) => !['/auth/login', '/units/lists'].includes(x))) note(`PRO page: calls ${paths.join(', ')} — only /auth/login and /units/lists (read) are allowed`);
+    if ((pro.match(/fetch\(/g) || []).length !== 1) note('PRO page: all requests must go through proPost');
+    if (/localStorage|indexedDB|store\.|pref\(/.test(pro)) note('PRO page: nothing from Afaqy PRO may be stored beyond the tab session');
+    if (/sessionStorage\.setItem\([^)]*(pass|pw|user)/i.test(pro) || /PRO_KEY,\s*(pass|pw|user)/i.test(pro)) note('PRO page: the password or username must never be stored');
+    if (!/p\.value = ''/.test(pro)) note('PRO page: the password box must be cleared as soon as it is read');
+  }
 }
 
 if (problems.length) { console.error(`check.mjs: ${problems.length} problem(s)\n- ${problems.join('\n- ')}`); process.exit(1); }
