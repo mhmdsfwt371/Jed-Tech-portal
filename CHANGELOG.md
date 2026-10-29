@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v6.6 — 2026-10-29
+
+- تفاصيل كل وحدة في «أفاقي برو» صارت تعرض أيضًا أمر العمل والمجموعات والعدادات — الأقسام الموثقة رسميًّا في أفاقي برو — لنرى إن كان أمر العمل يحمل من ركّب الجهاز ومتى.
+- طوبقت صفحة أفاقي برو مع التوثيق الرسمي للربط: الدخول وطلب الوحدات كما هما بالحرف.
+
+<details><summary>English</summary>
+
+- Each unit’s detail in “Afaqy PRO” now also shows its job order, groups and counters — sections officially documented in Afaqy PRO — to see whether the job order records who installed the device and when.
+- The Afaqy PRO page was checked against the official integration documentation: the sign-in and the units request match it exactly.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «آفاقی پرو» میں ہر یونٹ کی تفصیل اب اس کا ورک آرڈر، گروپس اور کاؤنٹرز بھی دکھاتی ہے — آفاقی پرو میں سرکاری طور پر دستاویزی حصے — تاکہ دیکھا جا سکے کہ ورک آرڈر میں ڈیوائس لگانے والے اور وقت کا اندراج ہے یا نہیں۔
+- آفاقی پرو کے صفحے کو انٹیگریشن کی سرکاری دستاویزات سے ملایا گیا: لاگ اِن اور یونٹس کی درخواست بالکل ویسی ہی ہیں۔
+
+</div>
+</details>
+
+
 ## v6.5 — 2026-10-29
 
 - صفحة «أفاقي برو» داخل البوابة: الدخول باسم المستخدم وكلمة المرور، ثم وحدات الحساب كلها — آخر إرسال بتوقيت السعودية، والحالة، والموقع على الخريطة، والبحث بالاسم أو IMEI، وكل بيانات الوحدة بضغطة — دون مغادرة البوابة. للقراءة فقط.

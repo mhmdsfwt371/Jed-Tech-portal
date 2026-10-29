@@ -163,7 +163,8 @@ async function proLoad() {
   try {
     const all = []; let total = null;
     for (let offset = 0; offset < 100000; offset += 1000) {
-      const j = await proPost('/units/lists', { offset, limit: 1000, simplify: 0, projection: ['basic', 'last_update'] }, token);
+      // sections named in the official AVL Integration collection; job_order may say who installed a unit — shown in its detail
+      const j = await proPost('/units/lists', { offset, limit: 1000, simplify: 0, projection: ['basic', 'last_update', 'groups', 'counters', 'job_order'] }, token);
       if (proRefused(j)) { proToken.set(null); proUnits = null; toast(t('pro_expired')); return; }
       const arr = (j && j.data && (Array.isArray(j.data) ? j.data : j.data.data)) || [];
       const pg = j && (j.pagination || (j.data && j.data.pagination));

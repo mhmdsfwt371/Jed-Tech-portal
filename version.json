@@ -1,21 +1,18 @@
 {
-  "version": "6.5",
+  "version": "6.6",
   "date": "2026-10-29",
   "notes": {
     "ar": [
-      "صفحة «أفاقي برو» داخل البوابة: الدخول باسم المستخدم وكلمة المرور، ثم وحدات الحساب كلها — آخر إرسال بتوقيت السعودية، والحالة، والموقع على الخريطة، والبحث بالاسم أو IMEI، وكل بيانات الوحدة بضغطة — دون مغادرة البوابة. للقراءة فقط.",
-      "كلمة المرور لا تُحفظ في أي مكان، والجلسة تنتهي بإغلاق التبويب. الحسابات التي تستخدم رمز تحقق تفتح موقع أفاقي برو نفسه، لأنه يمنع إكمال الدخول بالرمز من خارجه.",
-      "ماي أفاقي وموقع أفاقي برو لا يمكن عرضهما داخل البوابة — الشركة تمنع ذلك في خوادمها — فيفتحان في نافذة جديدة."
+      "تفاصيل كل وحدة في «أفاقي برو» صارت تعرض أيضًا أمر العمل والمجموعات والعدادات — الأقسام الموثقة رسميًّا في أفاقي برو — لنرى إن كان أمر العمل يحمل من ركّب الجهاز ومتى.",
+      "طوبقت صفحة أفاقي برو مع التوثيق الرسمي للربط: الدخول وطلب الوحدات كما هما بالحرف."
     ],
     "en": [
-      "An “Afaqy PRO” page inside the portal: sign in with your username and password, then see all the account’s units — last report in Saudi time, state, location on the map, search by name or IMEI, and all of a unit’s data with one press — without leaving the portal. Read only.",
-      "The password is not saved anywhere, and the session ends when the tab closes. Accounts that use a verification code open the Afaqy PRO site itself, because it forbids completing a code sign-in from outside.",
-      "myafaqy and the Afaqy PRO site cannot be shown inside the portal — the company forbids it on its servers — so they open in a new tab."
+      "Each unit’s detail in “Afaqy PRO” now also shows its job order, groups and counters — sections officially documented in Afaqy PRO — to see whether the job order records who installed the device and when.",
+      "The Afaqy PRO page was checked against the official integration documentation: the sign-in and the units request match it exactly."
     ],
     "ur": [
-      "پورٹل کے اندر «آفاقی پرو» کا صفحہ: صارف نام اور پاس ورڈ سے لاگ اِن کریں، پھر اکاؤنٹ کے تمام یونٹس دیکھیں — سعودی وقت میں آخری رپورٹ، حالت، نقشے پر مقام، نام یا IMEI سے تلاش، اور ایک دباؤ سے یونٹ کا سارا ڈیٹا — پورٹل چھوڑے بغیر۔ صرف پڑھنے کے لیے۔",
-      "پاس ورڈ کہیں محفوظ نہیں ہوتا، اور ٹیب بند ہونے پر سیشن ختم ہو جاتا ہے۔ تصدیقی کوڈ والے اکاؤنٹ آفاقی پرو کی سائٹ ہی کھولتے ہیں، کیونکہ وہ باہر سے کوڈ والا لاگ اِن مکمل کرنے کی اجازت نہیں دیتی۔",
-      "مائی آفاقی اور آفاقی پرو کی سائٹ پورٹل کے اندر نہیں دکھائی جا سکتیں — کمپنی اپنے سرورز پر اس سے منع کرتی ہے — اس لیے یہ نئی ٹیب میں کھلتی ہیں۔"
+      "«آفاقی پرو» میں ہر یونٹ کی تفصیل اب اس کا ورک آرڈر، گروپس اور کاؤنٹرز بھی دکھاتی ہے — آفاقی پرو میں سرکاری طور پر دستاویزی حصے — تاکہ دیکھا جا سکے کہ ورک آرڈر میں ڈیوائس لگانے والے اور وقت کا اندراج ہے یا نہیں۔",
+      "آفاقی پرو کے صفحے کو انٹیگریشن کی سرکاری دستاویزات سے ملایا گیا: لاگ اِن اور یونٹس کی درخواست بالکل ویسی ہی ہیں۔"
     ]
   }
 }
