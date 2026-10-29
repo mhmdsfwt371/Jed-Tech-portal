@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v8.3 — 2026-10-29
+
+- الأوزان مربوطة بماي أفاقي: إشارة المدير تجلب مع المهام أنواع المهام المربوطة بكل فريق كما يعرّفها ماي أفاقي، فأي نوع جديد يظهر في صفحة «الأوزان» وحده معلَّمًا «بلا وزن» حتى يُحدَّد.
+- الدراسة أُعيدت على الأنواع المربوطة بالفريقين فقط — ٢١ لما بعد البيع و٧ للبحث والتطوير — مع نوعين عامين يحملان ٦٠٪ من عمل ما بعد البيع. الدراسة كاملة في docs/kpi-weights-study.md.
+- صلاحيات التعديل: المدير يعدّل كل الأوزان ويمنح أي شخص صلاحية على أنواع بعينها من عمود «من يعدّل»؛ من لا صلاحية له يرى الأوزان للقراءة. الصلاحيات برقم ماي أفاقي، وتُعتمد بملف weights.json.
+
+<details><summary>English</summary>
+
+- Weights linked to myafaqy: the manager bookmark brings, with the tasks, each team’s linked task types as myafaqy defines them, so any new type appears on the “Weights” page by itself, marked “no weight” until one is set.
+- The study was redone on the two teams’ linked types only — 21 after-sales and 7 R&D — plus two general types carrying 60% of after-sales work. The full study is in docs/kpi-weights-study.md.
+- Editing rights: the admin edits every weight and grants anyone rights on specific types from the “Who may edit” column; without rights the weights are read-only. Rights go by myafaqy id and are adopted through weights.json.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اوزان مائی آفاقی سے منسلک: مینیجر بک مارک ٹاسکس کے ساتھ ہر ٹیم کی منسلک ٹاسک اقسام لاتا ہے جیسے مائی آفاقی انہیں بیان کرتا ہے، اس لیے کوئی بھی نئی قسم «اوزان» کے صفحے پر خود ظاہر ہوتی ہے، «بغیر وزن» کے نشان کے ساتھ جب تک طے نہ ہو۔
+- مطالعہ صرف دونوں ٹیموں کی منسلک اقسام پر دوبارہ کیا گیا — آفٹر سیلز کی ۲۱ اور تحقیق و ترقی کی ۷ — دو عام اقسام کے ساتھ جو آفٹر سیلز کے ۶۰٪ کام کی حامل ہیں۔ مکمل مطالعہ docs/kpi-weights-study.md میں ہے۔
+- ترمیم کے حقوق: ایڈمن ہر وزن بدلتا ہے اور «کون بدل سکتا ہے» کے کالم سے کسی کو بھی مخصوص اقسام پر حق دیتا ہے؛ حق کے بغیر اوزان صرف پڑھنے کے لیے ہیں۔ حقوق مائی آفاقی شناخت سے ہیں اور weights.json سے منظور ہوتے ہیں۔
+
+</div>
+</details>
+
+
 ## v8.2 — 2026-10-29
 
 - النطاق: ملف الفريق صار يحدد من يظهر — فريق ما بعد البيع وفريق البحث والتطوير في جدة فقط. لا مبيعات ولا تحصيل ولا فروع أخرى في أي صفحة: اللوحة والأزرار والمتوسطات والجداول والدوائر. صفحة «الفريق» تعرض النطاق، ومن ظهر في البيانات من خارجه مطويًّا لإضافته فقط.

@@ -301,6 +301,9 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
     for (const f of Object.keys(x || {})) if (!['w', 'tier', 'team'].includes(f)) note(`weights.json: task "${k}" has field "${f}" — only w, tier, team`);
   }
   for (const [k, w] of Object.entries(wj.activities || {})) if (!(typeof w === 'number' && w >= 0 && w <= 20)) note(`weights.json: activity "${k}" needs a weight 0–20`);
+  for (const [uid, list] of Object.entries(wj.editors || {})) { if (!/^\d+$/.test(uid)) note(`weights.json: editor "${uid}" is not a myafaqy id`); if (!Array.isArray(list) || !list.every((x) => typeof x === 'string')) note(`weights.json: editor ${uid} needs a list of type keys or "*"`); }
+  if (!Object.values(wj.editors || {}).some((l) => Array.isArray(l) && l.includes('*'))) note('weights.json: at least one admin ("*") must be able to edit');
+  if (Object.values(wj.tasks || {}).some((x) => x && !['aftersales', 'rd', 'both', 'general'].includes(x.team))) note('weights.json: every task type carries its team — aftersales, rd, both or general');
 }
 // 23. Every "?" opens a defined explanation, and every page title carries one.
 {

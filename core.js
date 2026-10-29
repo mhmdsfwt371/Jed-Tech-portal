@@ -315,6 +315,20 @@ export const STRINGS = {
     team_others: 'آخرون ظهروا في البيانات وليسوا في النطاق ({n}) — لإضافة أحدهم فقط',
     team_others_hint: 'لا يظهر أحد من هؤلاء في أي صفحة. اكتب منصبًا أو اختر قائدًا لمن تريد ضمّه إلى النطاق.',
     f4_outside_n: 'لم يسجّل فريقك أي نشاط مع العملاء في هذه الفترة. في الفترة {n} نشاط، كلها من خارج النطاق.',
+    wteam_general: 'أنواع عامة في ماي أفاقي — غير مربوطة بفريق',
+    w_types_n: '{n} نوعًا',
+    w_from_myafaqy: 'القائمة من ماي أفاقي كما في آخر سحب',
+    w_new_type: 'نوع جديد من ماي أفاقي بلا وزن بعد — يأخذ الوزن الافتراضي حتى يُحدَّد',
+    w_col_editors: 'من يعدّل',
+    w_admin_only: 'المدير فقط',
+    w_grant: 'منح',
+    w_grant_title: 'من يعدّل وزن «{type}»؟',
+    w_grant_hint: 'علّم على من يستطيع تعديل هذا النوع. التعديل يبقى على جهازه حتى يرسل لك ملف الأوزان وتعتمده في المستودع.',
+    w_is_admin: 'مدير — كل الأنواع',
+    w_you_admin: 'أنت مدير الأوزان: تعدّل كل الأنواع وتمنح غيرك صلاحية على أنواع بعينها من عمود «من يعدّل».',
+    w_you_some: 'لديك صلاحية تعديل {n} نوعًا — الباقي للقراءة. نزّل ملف الأوزان بعد تعديلك وأرسله للمدير ليعتمده.',
+    w_you_none: 'الأوزان للقراءة فقط لك. من يملك صلاحية التعديل يُحدَّد في ملف الأوزان.',
+    w_you_unknown: 'للتعديل اضغط إشارة «مؤشراتي» أولًا حتى تعرف البوابة من أنت — الصلاحيات برقم ماي أفاقي.',
   },
   en: {
     brand: 'Afaqy', portal: 'Technical team portal — Jeddah', nav_data: 'Data', nav_kpi: 'KPIs',
@@ -621,6 +635,20 @@ export const STRINGS = {
     team_others: 'Others seen in the data and not in scope ({n}) — only to add someone',
     team_others_hint: 'None of these appears on any page. Write a position or choose a leader for whoever you want to bring into scope.',
     f4_outside_n: 'Your team logged no activity with customers in this period. The period has {n} activities, all from outside the scope.',
+    wteam_general: 'General myafaqy types — not linked to a team',
+    w_types_n: '{n} types',
+    w_from_myafaqy: 'the list from myafaqy as of the latest pull',
+    w_new_type: 'A new type from myafaqy with no weight yet — it takes the default until one is set',
+    w_col_editors: 'Who may edit',
+    w_admin_only: 'The admin only',
+    w_grant: 'Grant',
+    w_grant_title: 'Who may edit the weight of “{type}”?',
+    w_grant_hint: 'Tick whoever may edit this type. Their change stays on their device until they send you the weights file and you adopt it in the repository.',
+    w_is_admin: 'admin — every type',
+    w_you_admin: 'You are the weights admin: you edit every type and grant others rights on specific types from the “Who may edit” column.',
+    w_you_some: 'You may edit {n} types — the rest are read-only. Download the weights file after your change and send it to the manager to adopt.',
+    w_you_none: 'The weights are read-only for you. Who may edit is set in the weights file.',
+    w_you_unknown: 'To edit, press the “My KPIs” bookmark first so the portal knows who you are — rights go by myafaqy id.',
   },
   ur: {
     brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ', nav_data: 'ڈیٹا', nav_kpi: 'کارکردگی کے اشاریے',
@@ -927,6 +955,20 @@ export const STRINGS = {
     team_others: 'ڈیٹا میں نظر آنے والے دیگر جو دائرہ کار میں نہیں ({n}) — صرف کسی کو شامل کرنے کے لیے',
     team_others_hint: 'ان میں سے کوئی کسی صفحے پر نہیں دکھتا۔ جسے دائرہ کار میں لانا ہو اس کا عہدہ لکھیں یا سربراہ چنیں۔',
     f4_outside_n: 'آپ کی ٹیم نے اس مدت میں گاہکوں کے ساتھ کوئی سرگرمی درج نہیں کی۔ مدت میں {n} سرگرمیاں ہیں، سب دائرہ کار کے باہر سے۔',
+    wteam_general: 'مائی آفاقی کی عام اقسام — کسی ٹیم سے منسلک نہیں',
+    w_types_n: '{n} اقسام',
+    w_from_myafaqy: 'فہرست مائی آفاقی سے آخری کھینچ کے مطابق',
+    w_new_type: 'مائی آفاقی سے نئی قسم جس کا ابھی وزن نہیں — جب تک طے نہ ہو طے شدہ وزن لیتی ہے',
+    w_col_editors: 'کون بدل سکتا ہے',
+    w_admin_only: 'صرف ایڈمن',
+    w_grant: 'دیں',
+    w_grant_title: '«{type}» کا وزن کون بدل سکتا ہے؟',
+    w_grant_hint: 'نشان لگائیں کون اس قسم کو بدل سکتا ہے۔ اس کی تبدیلی اس کے آلے پر رہتی ہے جب تک وہ آپ کو اوزان کی فائل بھیجے اور آپ اسے ریپوزٹری میں منظور کریں۔',
+    w_is_admin: 'ایڈمن — تمام اقسام',
+    w_you_admin: 'آپ اوزان کے ایڈمن ہیں: ہر قسم بدلتے ہیں اور «کون بدل سکتا ہے» کے کالم سے دوسروں کو مخصوص اقسام پر حق دیتے ہیں۔',
+    w_you_some: 'آپ {n} اقسام بدل سکتے ہیں — باقی صرف پڑھنے کے لیے۔ تبدیلی کے بعد اوزان کی فائل ڈاؤن لوڈ کر کے منظوری کے لیے مینیجر کو بھیجیں۔',
+    w_you_none: 'اوزان آپ کے لیے صرف پڑھنے کے لیے ہیں۔ کون بدل سکتا ہے، یہ اوزان کی فائل میں طے ہے۔',
+    w_you_unknown: 'بدلنے کے لیے پہلے «میرے اشاریے» بک مارک دبائیں تاکہ پورٹل جانے کہ آپ کون ہیں — حقوق مائی آفاقی شناخت سے ہیں۔',
   },
 };
 
@@ -1164,6 +1206,8 @@ export function parseDataset(text) {
       part: typeof raw.part === 'string' ? raw.part : null, sample: raw.sample === true,
       people, tasks: markRd(tasks, raw.rdTaskIds),
       rdKnown: Array.isArray(raw.rdTaskIds),
+      teamTypes: Object.fromEntries(Object.entries(raw.teamTypes && typeof raw.teamTypes === 'object' ? raw.teamTypes : {}).slice(0, 40)
+        .map(([tm, arr]) => [String(tm).slice(0, 80), (Array.isArray(arr) ? arr : []).slice(0, 200).filter((x) => x && (x.nameEn || x.nameAr)).map((x) => ({ id: x.id == null ? null : String(x.id), nameEn: String(x.nameEn || '').slice(0, 80), nameAr: String(x.nameAr || '').slice(0, 80) }))])),
     },
     skipped,
   };
@@ -1194,6 +1238,8 @@ export function mergeDataset(list, incoming) {
       parts: [...new Set([...(out[i].parts || []), ...(incoming.part ? [incoming.part] : [])])],
       extractedAt: incoming.extractedAt || out[i].extractedAt,
       sample: out[i].sample && incoming.sample,
+      teamTypes: incoming.teamTypes && Object.keys(incoming.teamTypes).length ? incoming.teamTypes : out[i].teamTypes,
+      rdKnown: out[i].rdKnown || incoming.rdKnown,
     };
   }
   return out.sort((a, b) => (a.range.from < b.range.from ? 1 : -1));
@@ -1546,7 +1592,7 @@ const U=await post('Security/GetAllHierarchyUsersDropDown',{pageSize:1000,pageNu
 const udata=(U.data&&(U.data.data||U.data))||[];const uname={};for(const p of udata)uname[String(p.id)]=p;
 const people=[];const teamsSeen={};
 for(let pg=0;;pg++){const T=await post('Teams/GetAllTeams',{isSearchFilter:false,searchKey:'',search:{},pageSize:50,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const arr=(T.data&&(T.data.data||T.data))||[];for(const t of arr)teamsSeen[String(t.id)]=t;const tot=(T.data&&T.data.totalPages)||1;if(pg+1>=tot||!arr.length)break;await wait(200)}
-const teamOf={};for(const id of Object.keys(teamsSeen)){const d=await get('Teams/GetTeamById/'+id);const td=(d&&d.data)||{};const bc=td.branchCode==null?null:String(td.branchCode);const jed=bc==='${branch}'||/jeddah/i.test(String(td.nameEn||td.name||''));for(const g of td.groupUsersDto||[]){const uid=String(g.userId);(teamOf[uid]=teamOf[uid]||{teams:[],branchCode:null,jeddah:false}).teams.push(td.nameEn||td.name||id);if(bc)teamOf[uid].branchCode=bc;if(jed)teamOf[uid].jeddah=true;if(!uname[uid]&&(g.nameEn||g.nameAr))uname[uid]={nameEn:g.nameEn,nameAr:g.nameAr}}await wait(150)}
+const teamOf={};const teamTypes={};for(const id of Object.keys(teamsSeen)){const d=await get('Teams/GetTeamById/'+id);const td=(d&&d.data)||{};const bc=td.branchCode==null?null:String(td.branchCode);const jed=bc==='${branch}'||/jeddah/i.test(String(td.nameEn||td.name||''));if(jed){const tn=td.nameEn||td.name||id;for(const[k,v]of Object.entries(td))if(k!=='groupUsersDto'&&Array.isArray(v)&&v.length&&v.every(x=>x&&typeof x==='object'&&(x.nameEn||x.name)&&x.userId==null)){teamTypes[tn]=v.map(x=>({id:x.id??x.taskSettingId??null,nameEn:String(x.nameEn||x.name||''),nameAr:String(x.nameAr||'')}))}}for(const g of td.groupUsersDto||[]){const uid=String(g.userId);(teamOf[uid]=teamOf[uid]||{teams:[],branchCode:null,jeddah:false}).teams.push(td.nameEn||td.name||id);if(bc)teamOf[uid].branchCode=bc;if(jed)teamOf[uid].jeddah=true;if(!uname[uid]&&(g.nameEn||g.nameAr))uname[uid]={nameEn:g.nameEn,nameAr:g.nameAr}}await wait(150)}
 const walk=async(grp,co,keepRd,buckets=['done','open','toDo'])=>{const out=[];const rd=[];say(M[2]+(keepRd?'R&D':'tasks'));for(const b of buckets){let size=500,pg=0,total=null;for(;;){const d=((await post('Task/GetMyTasksGrid',taskBody(b,pg,size,co,grp))).data||{})[b];if(!d)break;if(pg===0&&d.pageSize!==size)size=d.pageSize||20;total=d.listCount;for(const x of d.data||[]){if(keepRd){rd.push(String(x.id));continue;}out.push({i:String(x.id),title:x.title,taskType:x.taskType,taskSettingId:x.taskSettingId,statusId:x.statusId,isCancelled:x.isCancelled,createdOn:x.createdOn,closeDate:x.closeDate,createUserId:x.createUserId,assigneeId:x.assigneeId,moduleId:x.moduleId,customerTag:x.customerTag,bucket:b})}pg++;if(!d.data||!d.data.length||pg*size>=total)break;await wait(250)}}return{out,rd}};
 const main=await walk(100001,[FROM&&'${fromZ}'||'',TO&&'${toZ}'||''],false,['done']);let tasks=main.out;const doneTotal=tasks.length;
 const opn=await walk(100001,[],false,['open','toDo']);const seenO=new Set(tasks.map(t=>t.i));for(const t of opn.out)if(!seenO.has(t.i)){seenO.add(t.i);tasks.push(t)}const openTotal=opn.out.length;
@@ -1556,7 +1602,7 @@ const mapTask=x=>{const uid=String(x.assigneeId||'');const tt=teamOf[uid]||{team
 const seenId=new Set();const taskRows=[];for(const x of tasks){if(seenId.has(x.i))continue;seenId.add(x.i);taskRows.push(mapTask(x))}
 const pids=new Set();taskRows.forEach(t=>{if(t.assigneeId)pids.add(t.assigneeId);if(t.createdById)pids.add(t.createdById)});for(const[uid,tt]of Object.entries(teamOf))if(tt.jeddah)pids.add(uid);
 for(const id of pids){const u=uname[id]||{};const tt=teamOf[id]||{teams:[],branchCode:null};people.push({id,nameEn:String(u.nameEn||''),nameAr:String(u.nameAr||''),teams:tt.teams,branchCode:tt.branchCode})}
-const tasksFile={schema:'${SCHEMA}',range:{from:FROM,to:TO},extractedAt:new Date().toISOString(),taskGroupId:100001,source:{endpoint:'POST https://crmbackend.afaqy.sa/Task/GetMyTasksGrid',doneInRangeTotal:doneTotal,openTotal:openTotal,pageSize:500},people,tasks:taskRows,rdTaskIds:rdIds,notes:['manager bookmark; times UTC with Z added']};
+const tasksFile={schema:'${SCHEMA}',range:{from:FROM,to:TO},extractedAt:new Date().toISOString(),taskGroupId:100001,source:{endpoint:'POST https://crmbackend.afaqy.sa/Task/GetMyTasksGrid',doneInRangeTotal:doneTotal,openTotal:openTotal,pageSize:500},people,tasks:taskRows,rdTaskIds:rdIds,teamTypes,notes:['manager bookmark; times UTC with Z added']};
 say(M[2]+'reports');const techPoints=[];const MM=${JSON.stringify(months.map(m=>({month:m.key,yearId:m.yearId,quarterId:m.quarterId,monthId:m.monthId,rd:m.requestDate})))};
 const KEEP=${JSON.stringify(TECH_FIELDS)};
 for(const mo of MM){const rows=[];for(let pg=1;;pg++){const R=await post('TechnicianReport/GetTechnicianReportStatic',{pageNumber:pg,pageSize:100,searchKey:'',isSearchFilter:true,search:{yearId:mo.yearId,quarterId:mo.quarterId,monthId:mo.monthId,branchIds:BR,userIds:[],requestDate:mo.rd}});const g=(R.data&&R.data.gridResult)||{};const arr=g.data||[];for(const r of arr){const o={technicianId:r.technicianId,employeeId:r.employeeId,nameEn:r.nameEn,nameAr:r.nameAr};for(const f of KEEP)o[f]=r[f]||0;rows.push(o)}const tot=g.totalPages||1;if(pg>=tot||!arr.length)break;await wait(200)}techPoints.push({month:mo.month,listCount:rows.length,rows})}
@@ -1768,23 +1814,28 @@ export function typeKey(name) {
   return latin.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 export function parseWeights(raw) {
-  const out = { v: 1, schema: WEIGHTS_SCHEMA, reviewed: '', default: 1, tasks: {}, activities: {} };
+  const out = { v: 1, schema: WEIGHTS_SCHEMA, reviewed: '', default: 1, tasks: {}, activities: {}, editors: {} };
   if (!raw || typeof raw !== 'object') return out;
   const num = (w) => { const n = Number(w); return Number.isFinite(n) && n >= 0 && n <= 20 ? n : null; };
   out.reviewed = String(raw.reviewed || '').slice(0, 10);
   if (num(raw.default) != null) out.default = num(raw.default);
   for (const [k, x] of Object.entries(raw.tasks || {})) {
     const w = num(x && typeof x === 'object' ? x.w : x); if (w == null) continue;
-    out.tasks[typeKey(k)] = { w, tier: TIERS.includes(x && x.tier) ? x.tier : null, team: ['aftersales', 'rd', 'both'].includes(x && x.team) ? x.team : null };
+    out.tasks[typeKey(k)] = { w, tier: TIERS.includes(x && x.tier) ? x.tier : null, team: ['aftersales', 'rd', 'both', 'general'].includes(x && x.team) ? x.team : null };
   }
   for (const [k, x] of Object.entries(raw.activities || {})) { const w = num(x); if (w != null) out.activities[String(k).toLowerCase().trim()] = w; }
+  out.editors = {};
+  for (const [uid, list] of Object.entries(raw.editors || {})) if (/^\d+$/.test(uid) && Array.isArray(list)) out.editors[uid] = list.map((k) => (k === '*' ? '*' : typeKey(k))).filter(Boolean).slice(0, 100);
   return out;
 }
 /** The device's own entries win over the repository's, type by type. */
 export function mergeWeights(repo, device) {
   const a = parseWeights(repo), b = parseWeights(device);
-  return { ...a, default: device && device.default != null ? b.default : a.default, tasks: { ...a.tasks, ...b.tasks }, activities: { ...a.activities, ...b.activities }, reviewed: b.reviewed || a.reviewed };
+  return { ...a, default: device && device.default != null ? b.default : a.default, tasks: { ...a.tasks, ...b.tasks }, activities: { ...a.activities, ...b.activities }, editors: { ...a.editors, ...b.editors }, reviewed: b.reviewed || a.reviewed };
 }
+/** Editing rights: editors[userId] = ['*'] or a list of type keys; nobody else may change a weight on the page. */
+export const canEditWeight = (wt, userId, key) => { const e = wt && wt.editors && wt.editors[String(userId)]; return !!(e && (e.includes('*') || e.includes(typeKey(key)) || e.includes(String(key).toLowerCase()))); };
+export const isWeightsAdmin = (wt, userId) => { const e = wt && wt.editors && wt.editors[String(userId)]; return !!(e && e.includes('*')); };
 export const taskWeight = (wt, typeName) => { const x = wt && wt.tasks[typeKey(typeName)]; return x ? x.w : (wt ? wt.default : 1); };
 export const activityWeight = (wt, category) => { const x = wt && wt.activities[String(category || '').toLowerCase().trim()]; return x != null ? x : (wt ? wt.default : 1); };
 /**

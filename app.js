@@ -5,7 +5,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet,
 } from './core.js';
 
@@ -639,38 +639,77 @@ function renderKpiDonuts(ds, f, team) {
 function renderWeights() {
   const body = $('weights-body'); if (!body) return;
   const wt = weights();
-  const seen = new Map();
   const ds = datasets[0];
+  const seen = new Map();
   if (ds) for (const x of ds.tasks) { const k = typeKey(x.type); if (!k) continue; const v = seen.get(k) || { name: x.type, n: 0 }; v.n++; seen.set(k, v); }
-  const keys = [...new Set([...Object.keys(wt.tasks), ...seen.keys()])]
-    .filter((k) => wt.tasks[k] || (seen.get(k) && seen.get(k).n));
-  const teamOrder = { aftersales: 0, both: 1, rd: 2 };
-  keys.sort((a, b) => (teamOrder[(wt.tasks[a] || {}).team] ?? 3) - (teamOrder[(wt.tasks[b] || {}).team] ?? 3) || ((wt.tasks[b] || {}).w || 0) - ((wt.tasks[a] || {}).w || 0) || a.localeCompare(b));
-  const save = async (patch) => { weightsDevice = { ...(weightsDevice || {}), tasks: { ...((weightsDevice || {}).tasks || {}), ...(patch.tasks || {}) }, activities: { ...((weightsDevice || {}).activities || {}), ...(patch.activities || {}) } }; await store.putWeights(weightsDevice); renderWeights(); renderKpi(); };
-  const stepSel = (cur, on) => el('select', { class: 'w-sel', onchange: (e) => on(Number(e.target.value)) }, WEIGHT_STEPS.map((w) => el('option', { value: String(w), selected: w === cur, text: String(w) })));
+  // who is looking: the person whose profile is on this device; rights come from the weights file
+  const uid = me && me.user ? me.user.id : null;
+  const admin = isWeightsAdmin(wt, uid);
+  const mayEdit = (k) => canEditWeight(wt, uid, k);
+  // the groups: linked types as myafaqy lists them per team (from the latest file), else the weights file's own tags
+  const tt = (ds && ds.teamTypes) || {};
+  const findTeam = (re) => Object.entries(tt).find(([n]) => re.test(n));
+  const asTeam = findTeam(/jeddah.*after\s*-?\s*sales/i), rdTeam = findTeam(/jeddah.*r\s*&\s*d/i);
+  const fromFile = (team) => Object.entries(wt.tasks).filter(([, x]) => x.team === team || (team === 'aftersales' && x.team === 'both') || (team === 'rd' && x.team === 'both')).map(([k]) => k);
+  const linked = (teamEntry, team) => (teamEntry ? teamEntry[1].map((x) => ({ key: typeKey(x.nameEn || x.nameAr), name: x.nameEn && x.nameAr ? `${x.nameEn} | ${x.nameAr}` : (x.nameEn || x.nameAr) })) : fromFile(team).map((k) => ({ key: k, name: (seen.get(k) || {}).name || k })));
+  const groups = [
+    { id: 'aftersales', title: t('wteam_aftersales'), live: !!asTeam, rows: linked(asTeam, 'aftersales') },
+    { id: 'rd', title: t('wteam_rd'), live: !!rdTeam, rows: linked(rdTeam, 'rd') },
+    { id: 'general', title: t('wteam_general'), live: false, rows: fromFile('general').map((k) => ({ key: k, name: (seen.get(k) || {}).name || k })) },
+  ];
+  const save = async (patch) => { weightsDevice = { ...(weightsDevice || {}), tasks: { ...((weightsDevice || {}).tasks || {}), ...(patch.tasks || {}) }, activities: { ...((weightsDevice || {}).activities || {}), ...(patch.activities || {}) }, editors: { ...((weightsDevice || {}).editors || {}), ...(patch.editors || {}) } }; await store.putWeights(weightsDevice); renderWeights(); renderKpi(); };
+  const stepSel = (cur, on, enabled) => el('select', { class: 'w-sel', ...(enabled ? {} : { disabled: '' }), onchange: (e) => on(Number(e.target.value)) }, WEIGHT_STEPS.map((w) => el('option', { value: String(w), selected: w === cur, text: String(w) })));
   const tierName = (tr) => (tr ? t(`tier_${tr}`) : t('tier_none'));
-  const teamName = (tm) => (tm ? t(`wteam_${tm}`) : t('wteam_other'));
-  const download = () => { const a = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify({ ...wt, reviewed: new Date().toISOString().slice(0, 10) }, null, 2)], { type: 'application/json' })), download: 'weights.json' }); document.body.append(a); a.click(); a.remove(); };
+  const pretty = (k) => k.replace(/(^|\s)([a-z])/g, (m, sp, c) => sp + c.toUpperCase());
+  // the scope's people, for the admin to hand out editing rights
+  const scopePeople = scoped(peopleOf(datasets)).concat(me ? me.people.filter((p) => inScope(roster(), p.id) && !peopleOf(datasets).some((q) => q.id === p.id)) : []);
+  const nameById = (id) => { const p = scopePeople.find((q) => q.id === id) || (me && me.people.find((q) => q.id === id)); return (p && nameOf(p, lang)) || id; };
+  const editorsOf = (k) => Object.entries(wt.editors).filter(([id, list]) => id !== String(uid) && (list.includes('*') || list.includes(k))).map(([id]) => id);
+  const editorsCell = (k) => el('td', { class: 'editors' },
+    el('span', { class: 'hint', text: editorsOf(k).length ? editorsOf(k).map(nameById).join('، ') : t('w_admin_only') }),
+    admin ? el('button', { type: 'button', class: 'btn quiet tiny', text: t('w_grant'), onclick: () => grantDialog(k) }) : null);
+  const grantDialog = (k) => {
+    const dlg = $('help-dialog');
+    $('help-title').textContent = t('w_grant_title', { type: pretty(k) });
+    const list = el('div', { class: 'grant-list' }, scopePeople.filter((p) => p.id !== String(uid)).map((p) => {
+      const cur = wt.editors[p.id] || []; const on = cur.includes('*') || cur.includes(k);
+      return el('label', {}, el('input', { type: 'checkbox', ...(on ? { checked: '' } : {}), ...(cur.includes('*') ? { disabled: '' } : {}), onchange: async (e) => {
+        const next = new Set(cur); if (e.target.checked) next.add(k); else next.delete(k);
+        await save({ editors: { [p.id]: [...next] } }); dlg.close(); grantDialog(k);
+      } }), el('span', { text: nameOf(p, lang) || p.id }), cur.includes('*') ? el('span', { class: 'hint', text: t('w_is_admin') }) : null);
+    }));
+    set($('help-text'), el('p', { class: 'hint', text: t('w_grant_hint') }), list);
+    dlg.showModal();
+  };
+  const table = (g) => {
+    const rows = g.rows.map((r) => { const x = wt.tasks[r.key]; const n = (seen.get(r.key) || {}).n || 0; const cur = x ? x.w : wt.default; return { ...r, x, n, cur }; })
+      .sort((p, q) => (q.x ? q.x.w : -1) - (p.x ? p.x.w : -1) || q.n - p.n || p.key.localeCompare(q.key));
+    return [el('h2', {}, g.title, el('span', { class: 'hint', text: ` — ${t('w_types_n', { n: rows.length })}${g.live ? ` · ${t('w_from_myafaqy')}` : ''}` })),
+      el('div', { class: 'table-wrap' }, el('table', {},
+        el('thead', {}, el('tr', {}, ['w_col_type', 'w_col_tier', 'w_col_n', 'w_col_weight', 'w_col_points', 'w_col_editors'].map((k, i) => el('th', { class: i >= 2 && i <= 4 ? 'num' : null, text: t(k) })))),
+        el('tbody', {}, rows.map((r) => el('tr', { class: r.x ? null : 'unweighted' },
+          el('td', {}, el('div', { text: r.name || pretty(r.key) }), r.x ? null : el('div', { class: 'hint warn-text', text: t('w_new_type') })),
+          el('td', { text: tierName(r.x && r.x.tier) }), el('td', { class: 'num', text: String(r.n) }),
+          el('td', { class: 'num' }, stepSel(r.cur, (w) => save({ tasks: { [r.key]: { w, tier: r.x ? r.x.tier : null, team: r.x ? r.x.team : g.id } } }), mayEdit(r.key))),
+          el('td', { class: 'num', text: String(r.n * r.cur) }), editorsCell(r.key))))))];
+  };
+  const download = () => { const a = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify({ ...wt, reviewed: new Date().toISOString().slice(0, 10), proposedBy: uid || null }, null, 2)], { type: 'application/json' })), download: 'weights.json' }); document.body.append(a); a.click(); a.remove(); };
   const upload = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const file = e.target.files[0]; if (!file) return; try { weightsDevice = parseWeights(JSON.parse(await file.text())); await store.putWeights(weightsDevice); toast(t('weights_loaded')); renderWeights(); renderKpi(); } catch { toast(t('err_json')); } e.target.value = ''; } });
+  const myRights = uid ? (admin ? t('w_you_admin') : (Object.keys(wt.tasks).filter(mayEdit).length ? t('w_you_some', { n: Object.keys(wt.tasks).filter(mayEdit).length }) : t('w_you_none'))) : t('w_you_unknown');
   set(body,
     el('div', { class: 'tiers' }, TIERS.map((tr) => el('div', { class: 'tier' }, el('b', { text: String((weightsRepo && weightsRepo.tiers && weightsRepo.tiers[tr]) || { admin: 1, customer: 2, integration: 3, multistage: 5 }[tr]) }), el('div', {}, el('strong', { text: t(`tier_${tr}`) }), el('p', { text: t(`tier_${tr}_why`) }))))),
     el('p', { class: 'note info', text: t('weights_rules') }),
+    el('p', { class: 'note', text: myRights }),
     el('div', { class: 'row', style: 'margin:12px 0' },
       el('button', { type: 'button', class: 'btn primary', text: t('weights_download'), onclick: download }),
-      el('button', { type: 'button', class: 'btn', text: t('weights_upload'), onclick: () => upload.click() }), upload,
+      admin ? el('button', { type: 'button', class: 'btn', text: t('weights_upload'), onclick: () => upload.click() }) : null, upload,
       weightsDevice ? el('button', { type: 'button', class: 'btn quiet', text: t('weights_reset'), onclick: async () => { weightsDevice = null; await store.putWeights(null); renderWeights(); renderKpi(); } }) : null,
       el('span', { class: 'hint', text: wt.reviewed ? t('weights_reviewed', { d: wt.reviewed }) : '' })),
-    el('h2', {}, t('weights_tasks_h'), helpQ('help_weights_tasks')),
-    el('div', { class: 'table-wrap' }, el('table', {},
-      el('thead', {}, el('tr', {}, ['w_col_type', 'w_col_team', 'w_col_tier', 'w_col_n', 'w_col_weight', 'w_col_points'].map((k, i) => el('th', { class: i >= 3 ? 'num' : null, text: t(k) })))),
-      el('tbody', {}, keys.map((k) => { const x = wt.tasks[k]; const cur = x ? x.w : wt.default; const n = (seen.get(k) || {}).n || 0; return el('tr', { class: x ? null : 'unweighted' },
-        el('td', { text: (seen.get(k) || {}).name || k.replace(/(^|\s)([a-z])/g, (m, s, c) => s + c.toUpperCase()) }), el('td', { text: teamName(x && x.team) }), el('td', { text: tierName(x && x.tier) }),
-        el('td', { class: 'num', text: String(n) }), el('td', { class: 'num' }, stepSel(cur, (w) => save({ tasks: { [k]: { w, tier: x ? x.tier : null, team: x ? x.team : null } } }))),
-        el('td', { class: 'num', text: String(n * cur) })); })))),
+    groups.map(table),
     el('h2', {}, t('weights_acts_h'), helpQ('help_weights_acts')),
     el('div', { class: 'table-wrap' }, el('table', {},
       el('thead', {}, el('tr', {}, ['w_col_category', 'w_col_weight'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
-      el('tbody', {}, Object.entries(wt.activities).map(([k, w]) => el('tr', {}, el('td', { text: k.replace(/\b\w/g, (c) => c.toUpperCase()) }), el('td', { class: 'num' }, stepSel(w, (nw) => save({ activities: { [k]: nw } })))))))),
+      el('tbody', {}, Object.entries(wt.activities).map(([k, w]) => el('tr', {}, el('td', { text: pretty(k) }), el('td', { class: 'num' }, stepSel(w, (nw) => save({ activities: { [k]: nw } }), admin || mayEdit(k)))))))),
     el('p', { class: 'hint', text: t('weights_seen_note', { range: ds ? `${ds.range.from} → ${ds.range.to}` : '—' }) }));
 }
 
