@@ -7,6 +7,8 @@
       "positionEn": "Western Technical Manager"
     },
     "91": {
+      "position": "مدير ما بعد البيع",
+      "positionEn": "After-sales manager",
       "leaderId": "70"
     },
     "124": {
@@ -53,6 +55,21 @@
       "position": "مهندس ما بعد البيع",
       "positionEn": "After-sales engineer",
       "leaderId": "124"
+    },
+    "204": {
+      "position": "قائد فريق البحث والتطوير",
+      "positionEn": "R&D team leader",
+      "leaderId": "70"
+    },
+    "362": {
+      "position": "مهندس ما قبل البيع",
+      "positionEn": "Presales engineer",
+      "leaderId": "204"
+    },
+    "621": {
+      "position": "مهندس بحث وتطوير",
+      "positionEn": "R&D engineer",
+      "leaderId": "204"
     }
   }
 }

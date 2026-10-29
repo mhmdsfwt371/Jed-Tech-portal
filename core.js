@@ -311,6 +311,10 @@ export const STRINGS = {
     install_android: 'على أندرويد من كروم: افتح القائمة (النقاط الثلاث أعلى الشاشة) واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية». تفتح البوابة بعدها كتطبيق مستقل وتتحدّث وحدها.',
     install_desktop: 'على ويندوز من كروم أو إيدج: اضغط أيقونة التثبيت في شريط العنوان (شاشة بسهم)، أو من القائمة «تثبيت بوابة أفاقي». تظهر في قائمة ابدأ وتفتح كنافذة مستقلة وتتحدّث وحدها.',
     updated_to: 'تحدّثت البوابة إلى v{v} — اضغط رقم النسخة أسفل القائمة لترى الجديد.',
+    team_scope_n: '{n} في النطاق — هم من يظهرون في اللوحة والمؤشرات',
+    team_others: 'آخرون ظهروا في البيانات وليسوا في النطاق ({n}) — لإضافة أحدهم فقط',
+    team_others_hint: 'لا يظهر أحد من هؤلاء في أي صفحة. اكتب منصبًا أو اختر قائدًا لمن تريد ضمّه إلى النطاق.',
+    f4_outside_n: 'لم يسجّل فريقك أي نشاط مع العملاء في هذه الفترة. في الفترة {n} نشاط، كلها من خارج النطاق.',
   },
   en: {
     brand: 'Afaqy', portal: 'Technical team portal — Jeddah', nav_data: 'Data', nav_kpi: 'KPIs',
@@ -613,6 +617,10 @@ export const STRINGS = {
     install_android: 'On Android, from Chrome: open the menu (the three dots at the top) and choose “Install app” or “Add to Home screen”. The portal then opens as its own app and updates itself.',
     install_desktop: 'On Windows, from Chrome or Edge: press the install icon in the address bar (a screen with an arrow), or from the menu “Install the Afaqy portal”. It appears in the Start menu, opens in its own window and updates itself.',
     updated_to: 'The portal updated itself to v{v} — press the version number at the bottom of the menu to see what is new.',
+    team_scope_n: '{n} in scope — the only people shown on the board and the KPIs',
+    team_others: 'Others seen in the data and not in scope ({n}) — only to add someone',
+    team_others_hint: 'None of these appears on any page. Write a position or choose a leader for whoever you want to bring into scope.',
+    f4_outside_n: 'Your team logged no activity with customers in this period. The period has {n} activities, all from outside the scope.',
   },
   ur: {
     brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ', nav_data: 'ڈیٹا', nav_kpi: 'کارکردگی کے اشاریے',
@@ -915,6 +923,10 @@ export const STRINGS = {
     install_android: 'اینڈرائیڈ پر، کروم سے: مینو (اوپر تین نقطے) کھولیں اور «Install app» یا «Add to Home screen» چنیں۔ اس کے بعد پورٹل الگ ایپ کی طرح کھلتا ہے اور خود تازہ ہوتا ہے۔',
     install_desktop: 'ونڈوز پر، کروم یا ایج سے: ایڈریس بار میں انسٹال کا آئیکن (تیر والی اسکرین) دبائیں، یا مینو سے «Install». یہ اسٹارٹ مینو میں آتا ہے، الگ ونڈو میں کھلتا ہے اور خود تازہ ہوتا ہے۔',
     updated_to: 'پورٹل خود v{v} پر تازہ ہو گیا — نیا دیکھنے کے لیے مینو کے نیچے ورژن نمبر دبائیں۔',
+    team_scope_n: '{n} دائرہ کار میں — صرف یہی بورڈ اور اشاریوں میں دکھتے ہیں',
+    team_others: 'ڈیٹا میں نظر آنے والے دیگر جو دائرہ کار میں نہیں ({n}) — صرف کسی کو شامل کرنے کے لیے',
+    team_others_hint: 'ان میں سے کوئی کسی صفحے پر نہیں دکھتا۔ جسے دائرہ کار میں لانا ہو اس کا عہدہ لکھیں یا سربراہ چنیں۔',
+    f4_outside_n: 'آپ کی ٹیم نے اس مدت میں گاہکوں کے ساتھ کوئی سرگرمی درج نہیں کی۔ مدت میں {n} سرگرمیاں ہیں، سب دائرہ کار کے باہر سے۔',
   },
 };
 
@@ -1731,6 +1743,11 @@ export function mergeRoster(repo, device) {
   const a = parseRoster(repo), b = parseRoster(device);
   return { v: 1, schema: ROSTER_SCHEMA, people: { ...a.people, ...b.people } };
 }
+/** The scope: everyone in the team file. When the file has people, nobody else is counted or shown anywhere. */
+export const scopeIds = (roster) => Object.keys((roster && roster.people) || {});
+export const inScope = (roster, id) => { const ids = scopeIds(roster); return ids.length === 0 || ids.includes(String(id)); };
+/** The scope applies to a set of people only when at least one of them is in it — a file of strangers shows everyone rather than nobody. */
+export const scopeApplies = (roster, ids) => scopeIds(roster).length > 0 && (ids || []).some((id) => inScope(roster, id));
 export const positionOf = (roster, id, lang = 'ar') => { const p = roster && roster.people && roster.people[String(id)]; return p ? ((lang === 'en' && p.positionEn) || p.position || '') : ''; };
 export const leaderOf = (roster, id) => { const p = roster && roster.people && roster.people[String(id)]; return p && p.leaderId ? p.leaderId : null; };
 export function descendantsOf(roster, rootId) {
@@ -1861,11 +1878,12 @@ export function teamAlerts(below) {
 export function scopeOf(me, roster = null) {
   const visible = [...new Set(me.tasks.filter((x) => x.assigneeId).map((x) => x.assigneeId))];
   const others = visible.filter((id) => id !== me.user.id);
-  const def = defaultTeam(me.people, me.tasks).filter((id) => visible.includes(id));
-  const team = def.length > 1 ? def : visible;
+  const applies = scopeApplies(roster, visible);
+  const def = (applies ? scopeIds(roster) : defaultTeam(me.people, me.tasks)).filter((id) => visible.includes(id));
+  const team = def.length > 1 ? def : (applies ? visible.filter((id) => inScope(roster, id)) : visible);
   const byMyafaqy = me.people.filter((p) => p.below && visible.includes(p.id)).map((p) => p.id);
   const byRoster = descendantsOf(roster, me.user.id).filter((id) => visible.includes(id) && id !== me.user.id);
-  const below = [...new Set([...byMyafaqy, ...byRoster])];
+  const below = [...new Set([...byMyafaqy, ...byRoster])].filter((id) => !applies || inScope(roster, id));
   return { visible, others, team, below };
 }
 

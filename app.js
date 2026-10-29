@@ -5,7 +5,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, WEIGHT_STEPS, TIERS,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet,
 } from './core.js';
 
@@ -499,9 +499,14 @@ function download(name, text) {
 // ---------- KPIs ----------
 let kpiKey = null;
 // The team counted: chosen once and kept on this device. Until chosen, the Jeddah-branch teams from myafaqy.
+// people the portal shows: the team file's people when it has any, else everyone in the data
+const scopeOn = (people) => scopeApplies(roster(), people.map((p) => p.id));
+const scoped = (people) => (scopeOn(people) ? people.filter((p) => inScope(roster(), p.id)) : people);
 function currentTeam(people, tasks) {
-  try { const saved = JSON.parse(pref('team') || 'null'); if (Array.isArray(saved)) return saved; } catch { /* fall through */ }
-  return defaultTeam(people, tasks);
+  const allowed = new Set(scoped(people).map((p) => p.id));
+  try { const saved = JSON.parse(pref('team') || 'null'); if (Array.isArray(saved)) { const kept = saved.filter((id) => allowed.has(id)); if (kept.length) return kept; } } catch { /* fall through */ }
+  const def = scopeOn(people) ? [...allowed] : defaultTeam(people, tasks);
+  return def;
 }
 function renderTeamPicker(people, team) {
   const chosen = new Set(team);
@@ -511,7 +516,7 @@ function renderTeamPicker(people, team) {
     el('summary', {}, `${t('team_title')} — ${t('team_count', { n: chosen.size, total: people.length })}`),
     el('p', { class: 'hint', text: t('team_hint') }),
     el('div', { class: 'row' },
-      el('button', { type: 'button', class: 'btn', text: t('team_jeddah'), onclick: () => save(defaultTeam(people, allTasks())) }),
+      el('button', { type: 'button', class: 'btn', text: t('team_jeddah'), onclick: () => save(scopeOn(people) ? people.map((p) => p.id) : defaultTeam(people, allTasks())) }),
       el('button', { type: 'button', class: 'btn quiet', text: t('team_all'), onclick: () => save(people.map((p) => p.id)) })),
     (() => {
       const byTeam = new Map();
@@ -543,8 +548,8 @@ function renderKpi() {
   if (!datasets.length) { set(body, el('div', { class: 'empty', text: t('no_data') })); return; }
   if (!datasets.some((d) => d.key === kpiKey)) kpiKey = datasets[0].key;
   const ds = datasets.find((d) => d.key === kpiKey);
-  const people = peopleOf(datasets);
-  const peopleById = new Map(people.map((p) => [p.id, p]));
+  const people = scoped(peopleOf(datasets));
+  const peopleById = new Map(peopleOf(datasets).map((p) => [p.id, p]));
   const team = currentTeam(people, allTasks());
   const f = factor1(ds.tasks, { range: ds.range, team });
   const c = completeness(ds);
@@ -676,8 +681,11 @@ function renderTeam() {
   for (const p of peopleOf(datasets)) known.set(p.id, p);
   if (me) for (const p of me.people) if (!known.has(p.id)) known.set(p.id, p);
   for (const id of Object.keys(roster().people)) if (!known.has(id)) known.set(id, { id, nameEn: '', nameAr: '', teams: [] });
-  const people = [...known.values()].sort((a, b) => (nameOf(a, lang) || a.id).localeCompare(nameOf(b, lang) || b.id, lang));
   const ro = roster();
+  const everyone = [...known.values()].sort((a, b) => (nameOf(a, lang) || a.id).localeCompare(nameOf(b, lang) || b.id, lang));
+  const on = scopeApplies(ro, everyone.map((p) => p.id));
+  const people = on ? everyone.filter((p) => inScope(ro, p.id)) : everyone;
+  const others = on ? everyone.filter((p) => !inScope(ro, p.id)) : [];
   const save = async (id, patch) => {
     rosterDevice = parseRoster(rosterDevice);
     rosterDevice.people[id] = { ...(ro.people[id] || {}), ...(rosterDevice.people[id] || {}), ...patch };
@@ -696,7 +704,7 @@ function renderTeam() {
   } });
   const leaderSelect = (id) => el('select', { onchange: (e) => save(id, { leaderId: e.target.value || null }) },
     el('option', { value: '', text: t('team_no_leader'), selected: !leaderOf(ro, id) }),
-    people.filter((p) => p.id !== id).map((p) => el('option', { value: p.id, text: nameOf(p, lang) || p.id, selected: leaderOf(ro, id) === p.id })));
+    everyone.filter((p) => p.id !== id && (inScope(ro, p.id) || leaderOf(ro, id) === p.id)).map((p) => el('option', { value: p.id, text: nameOf(p, lang) || p.id, selected: leaderOf(ro, id) === p.id })));
   // preselect the team's after-sales people by name (names stay on this device; the panel matches them in myafaqy's own list)
   const afterSalesNames = Object.entries(ro.people).filter(([, x]) => /after-sales/i.test(x.positionEn || '')).map(([id]) => (known.get(id) || {}).nameEn).filter(Boolean);
   const ab = buildAssignBookmarklet(lang, afterSalesNames);
@@ -714,7 +722,7 @@ function renderTeam() {
     el('div', { class: 'row', style: 'margin-bottom:14px' },
       el('button', { type: 'button', class: 'btn primary', text: t('team_download'), onclick: download }),
       el('button', { type: 'button', class: 'btn', text: t('team_upload'), onclick: () => upload.click() }), upload,
-      el('span', { class: 'hint', text: t('team_filled', { n: Object.keys(ro.people).length, m: people.length }) })),
+      el('span', { class: 'hint', text: on ? t('team_scope_n', { n: people.length }) : t('team_filled', { n: Object.keys(ro.people).length, m: people.length }) })),
     people.length ? el('div', { class: 'table-wrap team-table' }, el('table', {},
       el('thead', {}, el('tr', {}, ['team_col_name', 'team_col_id', 'team_col_pos', 'team_col_leader'].map((k) => el('th', { text: t(k) })))),
       el('tbody', {}, people.map((p) => el('tr', {},
@@ -722,7 +730,15 @@ function renderTeam() {
         el('td', { class: 'ltr', text: p.id }),
         el('td', {}, el('input', { type: 'text', value: positionOf(ro, p.id), placeholder: t('team_pos_ph'), onchange: (e) => save(p.id, { position: e.target.value.trim() }) })),
         el('td', {}, leaderSelect(p.id)))))))
-      : el('div', { class: 'empty', text: t('team_none') }));
+      : el('div', { class: 'empty', text: t('team_none') }),
+    others.length ? el('details', { class: 'tucked' }, el('summary', { text: t('team_others', { n: others.length }) }), el('p', { class: 'hint', text: t('team_others_hint') }),
+      el('div', { class: 'table-wrap team-table' }, el('table', {},
+        el('thead', {}, el('tr', {}, ['team_col_name', 'team_col_id', 'team_col_pos', 'team_col_leader'].map((k) => el('th', { text: t(k) })))),
+        el('tbody', {}, others.map((p) => el('tr', {},
+          el('td', {}, el('div', { text: nameOf(p, lang) || '—' }), p.teams && p.teams.length ? el('div', { class: 'hint', text: p.teams.join(' · ') }) : null),
+          el('td', { class: 'ltr', text: p.id }),
+          el('td', {}, el('input', { type: 'text', value: '', placeholder: t('team_pos_ph'), onchange: (e) => save(p.id, { position: e.target.value.trim() }) })),
+          el('td', {}, leaderSelect(p.id)))))))) : null);
 }
 
 // ---------- Factor 2 (technician points) and Factor 3 (after-sales tickets), from the reports file of the same period ----------
@@ -731,7 +747,8 @@ function renderReports(key, team = null) {
   if (!rep) return [el('h2', { text: t('f3_title') }), el('p', { class: 'note info', text: t('reports_none') })];
   const peopleById = new Map(peopleOf(datasets).map((p) => [p.id, p]));
   const nm = (id) => nameOf(peopleById.get(id), lang) || id;
-  const tt = techTotals(rep), at = afterSalesTotals(rep), ac = activityTotals(rep, team);
+  const tt = techTotals(rep), at0 = afterSalesTotals(rep), ac = activityTotals(rep, team);
+  const at = scopeOn(peopleOf(datasets)) ? { ...at0, rows: at0.rows.filter((r) => inScope(roster(), String(r.id))) } : at0;
   const months = rep.techPoints.map((m) => m.month).join('، ');
   const tcols = [['f2_name', null], ['f2_installed', 'installedDeviceCount'], ['f2_maint', 'maintainedDeviceCount'], ['f2_fix', 'maintainedFixDeviceCount'],
     ['f2_reservice', 'reServiceDeviceCount'], ['f2_stop', 'stopServiceDeviceCount'], ['f2_group', 'groupInstallationCount'],
@@ -764,7 +781,7 @@ function renderReports(key, team = null) {
       : (() => {
         const all = activityTotals(rep);
         if (!all.total.activities) return el('div', { class: 'empty', text: (rep.activities || []).length || rep.activities ? t('f4_zero') : t('f4_none') });
-        return el('p', { class: 'note', text: t('f4_outside', { n: all.total.activities, who: all.people.map((r) => `${nm(r.id)} (${r.activities})`).join('، ') }) });
+        return el('p', { class: 'note', text: t('f4_outside_n', { n: all.total.activities }) });
       })(),
     el('details', { class: 'tucked' }, el('summary', { text: t('f2_show') }),
       el('p', { class: 'hint', text: t('f2_sub', { months }) }),

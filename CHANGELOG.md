@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v8.2 — 2026-10-29
+
+- النطاق: ملف الفريق صار يحدد من يظهر — فريق ما بعد البيع وفريق البحث والتطوير في جدة فقط. لا مبيعات ولا تحصيل ولا فروع أخرى في أي صفحة: اللوحة والأزرار والمتوسطات والجداول والدوائر. صفحة «الفريق» تعرض النطاق، ومن ظهر في البيانات من خارجه مطويًّا لإضافته فقط.
+- ملف الفريق مكتمل من تصديرَي ماي أفاقي: مدير ما بعد البيع وقائدها ومهندسوها، وقائد البحث والتطوير ومهندساه — بالمناصب ومن يتبع من.
+- أوزان أنواع مهام فريق البحث والتطوير السبعة كما في ماي أفاقي.
+
+<details><summary>English</summary>
+
+- Scope: the team file now decides who appears — Jeddah’s after-sales and R&D teams only. No sales, collection or other branches on any page: the board, its buttons, the averages, the tables and the donuts. The “Team” page shows the scope, with anyone seen in the data from outside it folded away, only to add them.
+- The team file is complete from myafaqy’s two exports: the after-sales manager, leader and engineers, and the R&D leader and his two engineers — with positions and who reports to whom.
+- Weights for the R&D team’s seven task types as myafaqy lists them.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- دائرہ کار: ٹیم کی فائل اب طے کرتی ہے کہ کون دکھے — صرف جدہ کی آفٹر سیلز اور تحقیق و ترقی کی ٹیمیں۔ کسی صفحے پر سیلز، کلیکشن یا دوسری برانچیں نہیں: بورڈ، اس کے بٹن، اوسط، جدول اور دائرے۔ «ٹیم» کا صفحہ دائرہ کار دکھاتا ہے، اور ڈیٹا میں نظر آنے والے باہر کے لوگ صرف شامل کرنے کے لیے سمٹے ہوئے۔
+- ٹیم کی فائل مائی آفاقی کی دو برآمدات سے مکمل: آفٹر سیلز کا مینیجر، لیڈر اور انجینئرز، اور تحقیق و ترقی کا لیڈر اور اس کے دو انجینئر — عہدوں اور ماتحتی کے ساتھ۔
+- تحقیق و ترقی کی ٹیم کی سات ٹاسک اقسام کے اوزان جیسے مائی آفاقی میں درج ہیں۔
+
+</div>
+</details>
+
+
 ## v8.1 — 2026-10-29
 
 - الأوزان: لكل نوع مهمة ولكل تصنيف نشاط مع العملاء وزن بأربع فئات معلنة — ١ إداري سريع، ٢ تعامل مع العميل أو تشخيص، ٣ ربط بجهة خارجية أو تنسيق ميداني، ٥ عمل متعدد المراحل. «النقاط الموزونة» في لوحة المؤشرات بجانب العدد، والترتيب بها. صفحة «الأوزان» لتعديل أي وزن واعتماده بملف «weights.json».

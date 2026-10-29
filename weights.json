@@ -139,6 +139,26 @@
       "w": 5,
       "tier": "multistage",
       "team": "aftersales"
+    },
+    "wrong reading sensor": {
+      "w": 3,
+      "tier": "integration",
+      "team": "rd"
+    },
+    "check for device signals": {
+      "w": 2,
+      "tier": "customer",
+      "team": "rd"
+    },
+    "bulk requests": {
+      "w": 5,
+      "tier": "multistage",
+      "team": "rd"
+    },
+    "send ips": {
+      "w": 1,
+      "tier": "admin",
+      "team": "rd"
     }
   },
   "activities": {

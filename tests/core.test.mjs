@@ -6,7 +6,7 @@ import {
   saudiBoundsZ, toIso, saudiDay, peopleOf, defaultTeam, nameOf, EMAIL_MODULE, SCHEMAS,
   buildBookmarklet, parseMe, myProfile, ME_SCHEMA, parseMePayload, profileMonths, monthWindows, scopeOf, ME_SCHEMA_V2, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, reportsOf, donutParts, periodWindows, teamAlerts, activityTotals, descendantsOf,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, scopeIds, inScope,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
@@ -466,6 +466,19 @@ test('weights: the type key is the English part; points = done × type weight + 
   assert.equal(r.byId.get('B').total, 0, 'a cancelled task earns nothing'); assert.equal(r.total, 7);
   const m = mergeWeights({ tasks: { 'Manual Task': { w: 1 } } }, { tasks: { 'Manual Task': { w: 2 } } });
   assert.equal(taskWeight(m, 'Manual Task'), 2, 'the device wins');
+});
+
+test('scope: with a team file, only its people count — the profile’s team average and “below” stay inside it', () => {
+  const r = parseRoster({ people: { 70: { position: 'x' }, 124: { leaderId: '70' } } });
+  assert.deepEqual(scopeIds(r).sort(), ['124', '70']); assert.ok(inScope(r, '70')); assert.ok(!inScope(r, '999'));
+  assert.ok(inScope(parseRoster({}), '999'), 'an empty file means no scope: everyone');
+  const tasks = [T2('1', '70', 'done', '2026-10-03T08:00:00', '2026-10-03T10:00:00'), T2('2', '124', 'done', '2026-10-04T08:00:00', '2026-10-04T08:30:00'), T2('3', '999', 'done', '2026-10-05T08:00:00', '2026-10-05T09:00:00')];
+  const me = parseMePayload(MEV2(tasks, [{ id: '70', teams: ['Jeddah After sales Team'], branchCode: '2', h: false }, { id: '124', teams: ['Jeddah After sales Team'], branchCode: '2', h: false }, { id: '999', teams: ['Jeddah-Sales Team'], branchCode: '2', h: true }])).me;
+  const sc = scopeOf(me, r);
+  assert.deepEqual(sc.team.sort(), ['124', '70'], 'the sales person is out even though myafaqy shows them');
+  assert.deepEqual(sc.below, ['124'], 'myafaqy puts 999 below me, but 999 is out of scope; 124 reports to me by the file');
+  const strangers = parseMePayload(MEV2([T2('9', '555', 'done', '2026-10-03T08:00:00', '2026-10-03T10:00:00')], [{ id: '555', teams: ['X'], branchCode: '2', h: false }])).me;
+  assert.deepEqual(scopeOf(strangers, r).team, ['555'], 'a file with nobody from the scope shows its people rather than nobody');
 });
 
 test('formatting', () => {

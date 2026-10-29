@@ -1,24 +1,21 @@
 {
-  "version": "8.1",
+  "version": "8.2",
   "date": "2026-10-29",
   "notes": {
     "ar": [
-      "الأوزان: لكل نوع مهمة ولكل تصنيف نشاط مع العملاء وزن بأربع فئات معلنة — ١ إداري سريع، ٢ تعامل مع العميل أو تشخيص، ٣ ربط بجهة خارجية أو تنسيق ميداني، ٥ عمل متعدد المراحل. «النقاط الموزونة» في لوحة المؤشرات بجانب العدد، والترتيب بها. صفحة «الأوزان» لتعديل أي وزن واعتماده بملف «weights.json».",
-      "تثبيت التطبيق على أندرويد وآيفون وويندوز من زر «تثبيت التطبيق» أسفل القائمة.",
-      "تحديث تلقائي: كل نسخة جديدة تصل وحدها وتعيد تحميل البوابة مرة واحدة — إلا إن كنت تكتب، فيظهر زر التحديث.",
-      "علامة «؟» بجانب كل صفحة وكل قسم رئيسي تشرح ما هو وكيف يُستخدم، بلغتك."
+      "النطاق: ملف الفريق صار يحدد من يظهر — فريق ما بعد البيع وفريق البحث والتطوير في جدة فقط. لا مبيعات ولا تحصيل ولا فروع أخرى في أي صفحة: اللوحة والأزرار والمتوسطات والجداول والدوائر. صفحة «الفريق» تعرض النطاق، ومن ظهر في البيانات من خارجه مطويًّا لإضافته فقط.",
+      "ملف الفريق مكتمل من تصديرَي ماي أفاقي: مدير ما بعد البيع وقائدها ومهندسوها، وقائد البحث والتطوير ومهندساه — بالمناصب ومن يتبع من.",
+      "أوزان أنواع مهام فريق البحث والتطوير السبعة كما في ماي أفاقي."
     ],
     "en": [
-      "Weights: every task type and every category of activity with customers has a weight in four stated tiers — 1 quick administrative, 2 dealing with the customer or diagnosing, 3 outside integration or field coordination, 5 multi-stage work. “Weighted points” on the KPI board beside the count, and ordering by them. A “Weights” page to change any weight and adopt it through “weights.json”.",
-      "Install the app on Android, iPhone and Windows from the “Install the app” button at the bottom of the menu.",
-      "Automatic updates: every new version arrives by itself and reloads the portal once — unless you are typing, in which case the update button appears.",
-      "A “?” beside every page and every main section explains what it is and how to use it, in your language."
+      "Scope: the team file now decides who appears — Jeddah’s after-sales and R&D teams only. No sales, collection or other branches on any page: the board, its buttons, the averages, the tables and the donuts. The “Team” page shows the scope, with anyone seen in the data from outside it folded away, only to add them.",
+      "The team file is complete from myafaqy’s two exports: the after-sales manager, leader and engineers, and the R&D leader and his two engineers — with positions and who reports to whom.",
+      "Weights for the R&D team’s seven task types as myafaqy lists them."
     ],
     "ur": [
-      "اوزان: ہر ٹاسک کی قسم اور گاہکوں کے ساتھ سرگرمی کے ہر زمرے کا وزن چار واضح درجوں میں — ۱ تیز انتظامی، ۲ گاہک سے معاملہ یا تشخیص، ۳ بیرونی ربط یا فیلڈ کوآرڈینیشن، ۵ کثیر مرحلہ کام۔ اشاریوں کے بورڈ پر تعداد کے ساتھ «وزنی پوائنٹس»، اور ان کے مطابق ترتیب۔ «اوزان» کا صفحہ کسی بھی وزن کو بدلنے اور «weights.json» سے منظور کرنے کے لیے۔",
-      "مینو کے نیچے «ایپ انسٹال کریں» بٹن سے اینڈرائیڈ، آئی فون اور ونڈوز پر ایپ انسٹال کریں۔",
-      "خودکار تازہ کاری: ہر نیا ورژن خود آتا ہے اور پورٹل کو ایک بار دوبارہ لوڈ کرتا ہے — سوائے اس کے کہ آپ لکھ رہے ہوں، تب تازہ کاری کا بٹن آتا ہے۔",
-      "ہر صفحے اور ہر اہم حصے کے ساتھ «؟» بتاتا ہے کہ یہ کیا ہے اور کیسے استعمال ہوتا ہے، آپ کی زبان میں۔"
+      "دائرہ کار: ٹیم کی فائل اب طے کرتی ہے کہ کون دکھے — صرف جدہ کی آفٹر سیلز اور تحقیق و ترقی کی ٹیمیں۔ کسی صفحے پر سیلز، کلیکشن یا دوسری برانچیں نہیں: بورڈ، اس کے بٹن، اوسط، جدول اور دائرے۔ «ٹیم» کا صفحہ دائرہ کار دکھاتا ہے، اور ڈیٹا میں نظر آنے والے باہر کے لوگ صرف شامل کرنے کے لیے سمٹے ہوئے۔",
+      "ٹیم کی فائل مائی آفاقی کی دو برآمدات سے مکمل: آفٹر سیلز کا مینیجر، لیڈر اور انجینئرز، اور تحقیق و ترقی کا لیڈر اور اس کے دو انجینئر — عہدوں اور ماتحتی کے ساتھ۔",
+      "تحقیق و ترقی کی ٹیم کی سات ٹاسک اقسام کے اوزان جیسے مائی آفاقی میں درج ہیں۔"
     ]
   }
 }
