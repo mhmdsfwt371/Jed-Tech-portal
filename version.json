@@ -1,18 +1,18 @@
 {
-  "version": "8.13",
+  "version": "8.14",
   "date": "2026-10-30",
   "notes": {
     "ar": [
-      "أضيف تفصيل النقاط في بطاقة «مؤشراتي»: عدد المهام المنجزة لكل نوع × وزنه، وإجمالي النقاط، وتنبيه للأنواع التي تستخدم الوزن الافتراضي. بطاقات الشهور المقفولة القديمة تحتفظ بأرقامها دون تخمين تفاصيل مفقودة.",
-      "أوزان الموظفين تُقرأ من الملف المنشور رسميًا، بينما تعديلات المدير تبقى مسودة على جهازه. من صفحة الأوزان يمكن تجهيز ملف الاعتماد ونسخه وفتح محرر GitHub؛ النشر الفعلي يتطلب Commit هناك. ملف الأوزان المنشور يتحدث عند فتح البوابة أو إعادة السحب."
+      "إضافة طريقتين واضحتين في صفحة بيانات الإدارة: السحب شبه الأوتوماتيكي من MyAFAQY مباشرة إلى نافذة الإدارة، والطريقة اليدوية القديمة لتنزيل ملفي المهام والتقارير ورفعهما، مع بقاء أوامر كلود كروم.",
+      "السحب المباشر يتأكد من مصدر MyAFAQY وتطابق فترة الملفين قبل التخزين وفتح لوحة المؤشرات. إذا منع المتصفح الاتصال بالنافذة الجديدة تنزّل الإشارة الملفين تلقائيًا للرفع اليدوي. البيانات تظل على جهاز المدير ولا تنتقل تلقائيًا من أجهزة المهندسين."
     ],
     "en": [
-      "My KPIs now displays task-point details: completed counts per task type, each type's weight, total points and warnings for unlisted types using the default weight. Older closed cards retain their original results without inventing missing breakdowns.",
-      "Team members use only officially published weights. Management edits remain local drafts until committed on GitHub. The Weights page can prepare and copy the approved file and open the GitHub editor; publication requires a GitHub commit. The published weights file refreshes when the portal opens or personal tasks are imported."
+      "The admin Data page now offers both semi-automatic direct transfer from myafaqy to a dedicated admin tab and the original manual bookmark that downloads two files for upload. The Claude in Chrome prompts remain available.",
+      "Direct transfer validates the myafaqy opener and the matching task/report periods before saving locally and opening the KPI board. If cross-tab transfer is blocked, the bookmark downloads both files for manual upload. Team members' device data is not automatically synced to the manager."
     ],
     "ur": [
-      "میرے اشاریوں کے ماہانہ کارڈ میں اب کام کے پوائنٹس کی تفصیل ہے: ہر قسم کے مکمل کاموں کی تعداد، وزن، مجموعی پوائنٹس اور ایسی اقسام کی تنبیہ جن کے لیے طے شدہ عمومی وزن استعمال ہوا ہے۔ پہلے سے بند ماہانہ کارڈ اپنے اصل اعداد برقرار رکھتے ہیں اور غیر موجود تفصیل نہیں بناتے۔",
-      "ٹیم کے ارکان صرف مستودع میں منظور اور شائع شدہ اوزان استعمال کرتے ہیں۔ مینیجر کی مقامی تبدیلیاں GitHub پر Commit ہونے تک مسودہ رہتی ہیں۔ اوزان کے صفحے سے تیار فائل کاپی کی جا سکتی ہے اور GitHub ایڈیٹر کھولا جا سکتا ہے، لیکن اصل اشاعت کے لیے وہاں Commit کرنا ضروری ہے۔ پورٹل کھلنے یا ذاتی کام دوبارہ حاصل کرنے پر شائع شدہ وزن تازہ ہوتا ہے۔"
+      "انتظامی ڈیٹا کے صفحے پر اب دونوں طریقے واضح طور پر موجود ہیں: مائی آفاقی سے نئی انتظامی ٹیب میں نیم خودکار براہ راست ڈیٹا منتقل کرنا، اور پرانا دستی بک مارک جو کاموں اور رپورٹس کی دو فائلیں محفوظ کرتا ہے۔ کلاڈ کروم کی ہدایات بھی برقرار ہیں۔",
+      "براہ راست ترسیل میں مائی آفاقی کی اصل کھولی ہوئی ونڈو اور دونوں فائلوں کی یکساں مدت کی جانچ کے بعد ڈیٹا مقامی طور پر محفوظ کر کے اشاریے کھولے جاتے ہیں۔ اگر براؤزر مختلف ٹیبوں کے درمیان رابطہ روک دے تو بک مارک دونوں فائلیں دستی اپ لوڈ کے لیے محفوظ کر دیتا ہے۔ ملازمین کے آلات کا ڈیٹا مینیجر کے آلے سے خودکار طور پر نہیں جڑتا۔"
     ]
   }
 }

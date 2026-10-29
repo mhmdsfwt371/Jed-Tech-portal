@@ -8,7 +8,7 @@ import {
   parseRoster, mergeRoster, positionOf, leaderOf, reportsOf, donutParts, periodWindows, teamAlerts, activityTotals, descendantsOf,
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, scopeIds, inScope,
   weeklyDigest, goalProgress, patternPath, coverageTotals, monthCard, closableMonths, repairCheck, parseRepairLines,
-  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS, portalRoute, tourState, TOUR_DEVICES, tourDemoPlan,
+  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute, tourState, TOUR_DEVICES, tourDemoPlan,
   taskPointBreakdown, weightPublishDiff, publishableWeights, portalWeights,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
@@ -373,6 +373,35 @@ const REP = (extra = {}) => JSON.stringify({ schema: REPORTS_SCHEMA, range: { fr
   ],
   afterSales: { rows: [{ id: 68, name: 'Agent A', open: 1, pending: 0, done: 2, total: 3 }, { id: 69, name: 'Agent B', open: 0, pending: 0, done: 0, total: 0 },
                        { id: 70, afterSalesName: 'Agent C', openTickets: 0, pendingTickets: 2, doneTickets: 9, totalTickets: 11 }] }, ...extra });
+
+
+test('manager direct handoff validates both existing file formats atomically', () => {
+  const tasks = JSON.parse(V2([R('m1')], { range: { from: '2026-10-01', to: '2026-10-31' } }));
+  const reports = JSON.parse(REP({ range: { from: '2026-10-01', to: '2026-10-31' } }));
+  const message = { type: MANAGER_AUTO_SCHEMA, nonce: '0123456789abcdef0123456789abcdef', tasks, reports };
+  const imported = parseManagerTransfer(message);
+  assert.equal(imported.error, undefined);
+  assert.equal(imported.dataset.tasks.length, 1);
+  assert.equal(imported.reports.range.from, '2026-10-01');
+  assert.equal(parseManagerTransfer({ ...message, nonce: 'bad' }).error, 'mgr_auto_invalid');
+  assert.equal(parseManagerTransfer({ ...message, reports: { ...reports, range: { from: '2026-09-01', to: '2026-09-30' } } }).error, 'mgr_auto_range');
+  assert.equal(parseManagerTransfer({ ...message, tasks: { ...tasks, taskGroupId: 100000 } }).error, 'mgr_auto_invalid');
+  assert.equal(parseManagerTransfer({ ...message, reports: { ...reports, schema: 'unknown' } }).error, 'mgr_auto_invalid');
+});
+test('manual manager bookmark remains downloadable and auto transfer uses one exact portal origin', () => {
+  const args = ['2026-10-01', '2026-10-31', '2', 'ar'];
+  const manual = decodeURIComponent(buildManagerBookmarklet(...args));
+  const auto = decodeURIComponent(buildManagerBookmarklet(...args, 'auto', 'https://mhmdsfwt371.github.io/Jed-Tech-portal/'));
+  assert.match(manual, /DEL="download"/);
+  assert.match(auto, /DEL="auto"/);
+  assert.match(auto, /window.open\(dest.href/);
+  assert.match(auto, /sink.postMessage\(packet,targetOrigin\)/);
+  assert.match(auto, /'afaqy-manager-ready\/v1'/);
+  assert.match(auto, /'afaqy-manager-ack\/v1'/);
+  assert.match(auto, /dl\('afaqy-tasks-'/, 'fallback must still produce downloadable files');
+  assert.doesNotMatch(manual, /https:\/\/mhmdsfwt371.github.io\/Jed-Tech-portal\//);
+  assert.throws(() => buildManagerBookmarklet(...args, 'auto', 'http://example.com/'), /invalid portal URL/);
+});
 
 test('reports: months in the format the technician report expects', () => {
   assert.deepEqual(monthsOf('2026-10-15', '2026-12-31').map((m) => [m.key, m.quarterId, m.requestDate[0], m.requestDate[1]]),

@@ -9,13 +9,17 @@ import {
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, repairCheck, parseRepairLines,
-  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, portalRoute,
+  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
 } from './core.js';
 
 const $ = (id) => document.getElementById(id);
 // Same application, two presentation links. The existing URL stays the full admin portal.
 // Team mode removes management navigation, but is deliberately NOT an authentication boundary.
 const isTeamPortal = new URLSearchParams(location.search).get('portal') === 'team';
+// A single temporary token pairs the myafaqy bookmarklet with the admin tab it opened.
+const managerImportTokenParam = new URLSearchParams(location.search).get('mgrImport');
+const managerImportNonce = !isTeamPortal && /^[0-9a-f]{32}$/.test(managerImportTokenParam || '') ? managerImportTokenParam : null;
+let managerImportBusy = false, managerImportDone = false;
 const KEY = 'afaqy-portal:';
 const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem(KEY + k); localStorage.setItem(KEY + k, v); } catch { return null; } return v; };
 
@@ -773,6 +777,54 @@ async function copyPrompt(b, build = buildPrompt) {
   }
 }
 
+// A manager's opened tab accepts one authenticated browser hand-off from its myafaqy opener only.
+// The temporary nonce is a pairing hint, not a login or an authorization boundary.
+function managerImportStatus(key, vars = {}, failure = false) {
+  const output = $('mgr-auto-status');
+  if (!output) return;
+  output.className = failure ? 'msg err' : 'msg';
+  output.textContent = t(key, vars);
+}
+function managerImportAck(e, ok) {
+  try {
+    e.source.postMessage({ type: 'afaqy-manager-ack/v1', nonce: managerImportNonce, ok }, e.origin);
+  } catch { /* the manager can still use the existing manual file downloads */ }
+}
+window.addEventListener('message', async (e) => {
+  if (!managerImportNonce || isTeamPortal || managerImportBusy || e.origin !== MYAFAQY_ORIGIN ||
+      e.source !== window.opener || !e.data || e.data.type !== MANAGER_AUTO_SCHEMA ||
+      e.data.nonce !== managerImportNonce) return;
+  if (managerImportDone) { managerImportAck(e, true); return; }
+  managerImportBusy = true;
+  managerImportStatus('mgr_auto_receiving');
+  try {
+    const result = parseManagerTransfer(e.data);
+    if (result.error) {
+      managerImportStatus(result.error, {}, true);
+      managerImportAck(e, false);
+      return;
+    }
+    // Both files are validated before either is stored. Never accept a mismatched reporting period.
+    datasets = mergeDataset(datasets, result.dataset);
+    reports = [...reports.filter((x) => x.key !== result.reports.key), result.reports]
+      .sort((a, b) => (a.range.from < b.range.from ? 1 : -1));
+    await store.put(datasets);
+    await store.putReports(reports);
+    setTimeout(closeMonths, 0);
+    renderDatasets(); renderBlocks(); renderKpi(); renderMe();
+    managerImportDone = true;
+    managerImportAck(e, true);
+    const values = { n: result.dataset.tasks.length, period: `${result.dataset.range.from} → ${result.dataset.range.to}` };
+    managerImportStatus('mgr_auto_success', values);
+    toast(t('mgr_auto_success', values));
+    history.replaceState(null, '', location.pathname + '#kpi');
+    route();
+  } catch {
+    managerImportStatus('mgr_auto_store_error', {}, true);
+    managerImportAck(e, false);
+  } finally { managerImportBusy = false; }
+});
+
 // ---------- data: upload ----------
 async function ingest(text) {
   const msg = $('read-msg');
@@ -858,13 +910,23 @@ function renderTeamPicker(people, team) {
       p.teams && p.teams.length ? el('span', { class: 'muted', text: p.teams.join('، ') }) : null))));
 }
 const allTasks = () => datasets.flatMap((d) => d.tasks);
-// the manager bookmark for the current quarter — one press inside myafaqy saves both files
+// Two bookmarklets share the exact same CRM reads: direct transfer or the original downloadable files.
 function renderMgr() {
-  const row = $('mgr-row'); if (!row) return;
+  const row = $('mgr-row'), direct = $('mgr-auto-row'); if (!row || !direct) return;
   const q = currentBlocks()[0];
   const bm = buildManagerBookmarklet(q.from, q.to, undefined, lang);
-  set(row, el('a', { class: 'btn primary bm', href: bm, draggable: 'true', text: `⬇ ${t('mgr_bm', { from: q.from, to: q.to })}`, onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } }),
-    el('button', { type: 'button', class: 'btn', text: t('me_copy'), onclick: async () => { try { await navigator.clipboard.writeText(decodeURIComponent(bm)); toast(t('me_copied')); } catch { toast(t('me_copy_fail')); } } }));
+  const auto = buildManagerBookmarklet(q.from, q.to, undefined, lang, 'auto', portalHome());
+  const controls = (link, label, primary) => [
+    el('a', { class: `btn ${primary ? 'primary ' : ''}bm`, href: link, draggable: 'true',
+      text: label, onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } }),
+    el('button', { type: 'button', class: 'btn', text: t('me_copy'),
+      onclick: async () => {
+        try { await navigator.clipboard.writeText(decodeURIComponent(link)); toast(t('me_copied')); }
+        catch { toast(t('me_copy_fail')); }
+      } }),
+  ];
+  set(direct, controls(auto, `↪ ${t('mgr_auto_bm', { from: q.from, to: q.to })}`, true));
+  set(row, controls(bm, `⬇ ${t('mgr_bm', { from: q.from, to: q.to })}`, false));
 }
 function renderKpi() {
   const body = $('kpi-body');
@@ -1384,6 +1446,14 @@ $('update-btn').addEventListener('click', () => location.reload());
   repairs = (await store.getRepairs()) || [];
   await refreshOfficialWeights();
   applyLang();   // renders everything and routes
+  if (managerImportNonce) {
+    managerImportStatus('mgr_auto_wait');
+    try {
+      if (window.opener) window.opener.postMessage(
+        { type: 'afaqy-manager-ready/v1', nonce: managerImportNonce }, MYAFAQY_ORIGIN);
+      else managerImportStatus('mgr_auto_popup', {}, true);
+    } catch { managerImportStatus('mgr_auto_popup', {}, true); }
+  }
   loadRelease(); announceUpdate(); showInstall();
   setInterval(loadRelease, 15 * 60 * 1000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) loadRelease(); });

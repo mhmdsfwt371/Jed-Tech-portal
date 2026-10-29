@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.14 — 2026-10-30
+
+- إضافة طريقتين واضحتين في صفحة بيانات الإدارة: السحب شبه الأوتوماتيكي من MyAFAQY مباشرة إلى نافذة الإدارة، والطريقة اليدوية القديمة لتنزيل ملفي المهام والتقارير ورفعهما، مع بقاء أوامر كلود كروم.
+- السحب المباشر يتأكد من مصدر MyAFAQY وتطابق فترة الملفين قبل التخزين وفتح لوحة المؤشرات. إذا منع المتصفح الاتصال بالنافذة الجديدة تنزّل الإشارة الملفين تلقائيًا للرفع اليدوي. البيانات تظل على جهاز المدير ولا تنتقل تلقائيًا من أجهزة المهندسين.
+
+<details><summary>English</summary>
+
+- The admin Data page now offers both semi-automatic direct transfer from myafaqy to a dedicated admin tab and the original manual bookmark that downloads two files for upload. The Claude in Chrome prompts remain available.
+- Direct transfer validates the myafaqy opener and the matching task/report periods before saving locally and opening the KPI board. If cross-tab transfer is blocked, the bookmark downloads both files for manual upload. Team members' device data is not automatically synced to the manager.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- انتظامی ڈیٹا کے صفحے پر اب دونوں طریقے واضح طور پر موجود ہیں: مائی آفاقی سے نئی انتظامی ٹیب میں نیم خودکار براہ راست ڈیٹا منتقل کرنا، اور پرانا دستی بک مارک جو کاموں اور رپورٹس کی دو فائلیں محفوظ کرتا ہے۔ کلاڈ کروم کی ہدایات بھی برقرار ہیں۔
+- براہ راست ترسیل میں مائی آفاقی کی اصل کھولی ہوئی ونڈو اور دونوں فائلوں کی یکساں مدت کی جانچ کے بعد ڈیٹا مقامی طور پر محفوظ کر کے اشاریے کھولے جاتے ہیں۔ اگر براؤزر مختلف ٹیبوں کے درمیان رابطہ روک دے تو بک مارک دونوں فائلیں دستی اپ لوڈ کے لیے محفوظ کر دیتا ہے۔ ملازمین کے آلات کا ڈیٹا مینیجر کے آلے سے خودکار طور پر نہیں جڑتا۔
+
+</div>
+</details>
+
+
 ## v8.13 — 2026-10-30
 
 - أضيف تفصيل النقاط في بطاقة «مؤشراتي»: عدد المهام المنجزة لكل نوع × وزنه، وإجمالي النقاط، وتنبيه للأنواع التي تستخدم الوزن الافتراضي. بطاقات الشهور المقفولة القديمة تحتفظ بأرقامها دون تخمين تفاصيل مفقودة.

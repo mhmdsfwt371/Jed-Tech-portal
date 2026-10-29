@@ -272,8 +272,22 @@ export const STRINGS = {
     me_untitled: 'مهمة بلا عنوان',
     mgr_bm: 'سحب كل بيانات الفريق {from} ← {to}',
     mgr_bm_intro: 'للمدير: إشارة واحدة تسحب كل بيانات الفترة — المهام والتقارير معًا — من داخل ماي أفاقي بضغطة واحدة، وتحفظ ملفين ترفعهما أدناه. بديل عن نسخ الأمرين. اسحب الزر إلى شريط الإشارات مرة واحدة.',
+    mgr_methods_intro: 'اختار طريقة تحديث بيانات الفريق. الطريقتان تستخدمان نفس صلاحيات حسابك داخل ماي أفاقي، ونفس بيانات المهام والتقارير. كل النتائج بتتحفظ في المتصفح عندك فقط.',
+    mgr_auto_h: 'شبه أوتوماتيكي — إرسال مباشر للبوابة',
+    mgr_auto_desc: 'اسحب زر السحب المباشر لشريط الإشارات مرة واحدة. افتح MyAFAQY بحساب الإدارة واضغط الإشارة: هتفتح نافذة البوابة وتستلم بيانات المهام والتقارير وتحدّث المؤشرات تلقائيًا. لو النافذة اتمنعت، هيتنزّل الملفان للرفع اليدوي.',
+    mgr_auto_bm: 'سحب الفريق مباشرة {from} ← {to}',
+    mgr_manual_h: 'الطريقة اليدوية — تنزيل الملفين',
+    mgr_manual_desc: 'نفس الإشارة القديمة بالضبط: تسحب البيانات من ماي أفاقي وتحمّل ملف المهام وملف التقارير، وبعدين ترفع الاتنين هنا من «اختيار ملف». مناسبة لو المتصفح منع النقل المباشر.',
+    mgr_manual_more_h: 'طريقة أخرى يدوية: أوامر كلود كروم ورفع الملفات',
+    mgr_auto_wait: 'تم فتح صفحة الإدارة. جارٍ انتظار إرسال بيانات MyAFAQY من الإشارة...',
+    mgr_auto_receiving: 'وصلت البيانات. جارٍ التحقق من الملفين وتخزينهما على هذا الجهاز...',
+    mgr_auto_success: 'تم استيراد {n} مهمة للفترة {period} مع تقاريرها، وفتح لوحة المؤشرات.',
+    mgr_auto_invalid: 'تعذر الاستيراد: صيغة المهام أو التقارير غير صحيحة. استخدم تنزيل الملفين ورفعهما يدويًا.',
+    mgr_auto_range: 'الملفان لفترتين مختلفتين، ومش هنحفظهم مع بعض. استخدم الطريقة اليدوية لمراجعة التواريخ.',
+    mgr_auto_store_error: 'حصل خطأ أثناء حفظ بيانات الفريق في المتصفح. جرّب رفع الملفين يدويًا.',
+    mgr_auto_popup: 'المتصفح منع الاتصال بالنافذة اللي فتحتها الإشارة. استخدم الطريقة اليدوية لتنزيل الملفين.',
     g_mgr_h: 'إشارة المدير — سحب كل شيء بضغطة',
-    g_mgr_b: 'في صفحة البيانات، إشارة واحدة للمدير تقرأ من داخل ماي أفاقي كل ما يقرأه الأمران: مهام الفترة كلها، وطابور البحث والتطوير، ونقاط الفنيين، وتذاكر ما بعد البيع — وتحفظها ملفين (مهام وتقارير) تُرفعان في البوابة. تعمل بدخول المدير نفسه، للقراءة فقط، بالطلبات الستة المسموحة نفسها، ولا يغادر رمز الدخول صفحة ماي أفاقي. هي بديل أسرع عن نسخ الأمرين وتشغيلهما في كلود كروم؛ وتبقى طريقة كلود كروم متاحة لمن يفضّلها.',
+    g_mgr_b: 'في صفحة البيانات، إشارة واحدة للمدير تقرأ من داخل ماي أفاقي كل ما يقرأه الأمران: مهام الفترة كلها، وطابور البحث والتطوير، ونقاط الفنيين، وتذاكر ما بعد البيع — وتحفظها ملفين (مهام وتقارير) تُرفعان في البوابة. تعمل بدخول المدير نفسه، للقراءة فقط، بالطلبات الستة المسموحة نفسها، ولا يغادر رمز الدخول صفحة ماي أفاقي. هي بديل أسرع عن نسخ الأمرين وتشغيلهما في كلود كروم؛ وتبقى طريقة كلود كروم متاحة لمن يفضّلها. في صفحة البيانات فيه اختياران واضحان جنب بعض: «شبه أوتوماتيكي» و«الطريقة اليدوية». السحب المباشر يشتغل كإشارة من داخل ماي أفاقي بحساب المدير، ويفتح نافذة بوابة إدارة جديدة مرتبطة بعملية واحدة برمز مؤقت. بعد ما يقرأ المهام والتقارير يبعتهما للبوابة نفسها في المتصفح، وتتحقق البوابة من مصدر البيانات وفترة الملفين وتخزنهما وتفتح لوحة المؤشرات. لا تُرسل البيانات لخادم ولا يغادر رمز الدخول صفحة ماي أفاقي. لو متصفحك منع فتح النافذة أو التواصل معها، تنزّل الإشارة الملفين تلقائيًا. الإشارة اليدوية القديمة، ورفع الملفات، وأوامر كلود كروم، كلها ما زالت موجودة كما هي. نقل بيانات مهندس من جهازه لجهاز المدير تلقائيًا غير موجود؛ المدير يسحب ما يسمح به حسابه بنفسه.',
     me_updated: 'آخر تحديث {date}',
     me_scope: 'ماي أفاقي يعرض لك شغل {n} شخص',
     me_month_h: 'هذا الشهر مقابل الشهر الماضي — حتى يوم {d}',
@@ -803,8 +817,22 @@ export const STRINGS = {
     me_untitled: 'Untitled task',
     mgr_bm: 'Pull all team data {from} → {to}',
     mgr_bm_intro: 'For the manager: one bookmark pulls all of the period’s data — tasks and reports together — from inside myafaqy in one press, and saves two files to upload below. An alternative to copying the two prompts. Drag the button onto the bookmarks bar once.',
+    mgr_methods_intro: 'Choose how to update the team dashboard. Both methods use your own authorized myafaqy account and read the same tasks and reports. Results stay in this browser only.',
+    mgr_auto_h: 'Semi-automatic — direct portal import',
+    mgr_auto_desc: 'Drag the direct-import bookmark onto your bookmarks bar once. Open myafaqy with your manager account and run it: a new admin tab will receive the tasks and reports, store them and update the dashboard. If the tab cannot connect, both files are downloaded for manual upload.',
+    mgr_auto_bm: 'Import team directly {from} → {to}',
+    mgr_manual_h: 'Manual method — download both files',
+    mgr_manual_desc: 'The original bookmark is still available: run it inside myafaqy, save the tasks and reports files, then upload both using Choose file below. It is the fallback if direct transfer is blocked by your browser.',
+    mgr_manual_more_h: 'Another manual option: Claude in Chrome prompts and file upload',
+    mgr_auto_wait: 'Admin portal is ready and waiting for the myafaqy bookmark to deliver the team data...',
+    mgr_auto_receiving: 'Both files arrived. Checking their formats and saving the team data in this browser...',
+    mgr_auto_success: 'Imported {n} tasks for {period} and their reports. The KPI dashboard is open.',
+    mgr_auto_invalid: 'Import rejected: the task or report file format was invalid. Use the original bookmark to download both files and upload them manually.',
+    mgr_auto_range: 'The two files cover different periods; they will not be saved together. Use the manual upload to review their dates.',
+    mgr_auto_store_error: 'The browser could not finish saving the team data. Please upload both files manually.',
+    mgr_auto_popup: 'Your browser did not preserve the connection to the opened admin tab. Use the manual file-download method instead.',
     g_mgr_h: 'The manager bookmark — everything in one press',
-    g_mgr_b: 'On the Data page, one manager bookmark reads from inside myafaqy everything the two prompts read: all of the period’s tasks, the R&D queue, technician points and after-sales tickets — and saves them as two files (tasks and reports) to upload in the portal. It runs with the manager’s own sign-in, read-only, through the same six allowed requests, and the sign-in token never leaves the myafaqy page. It is a faster alternative to copying the two prompts and running them in Claude in Chrome; the Claude in Chrome way stays available for whoever prefers it.',
+    g_mgr_b: 'On the Data page, one manager bookmark reads from inside myafaqy everything the two prompts read: all of the period’s tasks, the R&D queue, technician points and after-sales tickets — and saves them as two files (tasks and reports) to upload in the portal. It runs with the manager’s own sign-in, read-only, through the same six allowed requests, and the sign-in token never leaves the myafaqy page. It is a faster alternative to copying the two prompts and running them in Claude in Chrome; the Claude in Chrome way stays available for whoever prefers it. The Data page now offers two clear methods: semi-automatic direct import and the existing manual workflow. Direct import runs as a bookmark on myafaqy under the manager\'s account and opens a fresh admin portal tab paired to that single pull with a temporary code. It sends the collected tasks and reports to that browser tab, which verifies their origin and matching date ranges, saves them locally and opens the KPI dashboard. No CRM sign-in token leaves myafaqy, and nothing is uploaded to an application server. If the browser blocks the new tab or messaging, the bookmark downloads the two files instead. The original manual bookmark, file uploads and Claude in Chrome prompts remain available. An employee\'s own device never syncs its private KPI data to the manager automatically; the manager pulls only what their account authorizes.',
     me_updated: 'Last updated {date}',
     me_scope: 'myafaqy shows you the work of {n} people',
     me_month_h: 'This month against last month — up to day {d}',
@@ -1334,8 +1362,22 @@ export const STRINGS = {
     me_untitled: 'بے عنوان ٹاسک',
     mgr_bm: 'ٹیم کا سارا ڈیٹا کھینچیں {from} ← {to}',
     mgr_bm_intro: 'مینیجر کے لیے: ایک بک مارک مائی آفاقی کے اندر سے ایک دباؤ میں مدت کا سارا ڈیٹا — ٹاسک اور رپورٹس ایک ساتھ — کھینچتا ہے، اور دو فائلیں محفوظ کرتا ہے جو نیچے اپ لوڈ ہوتی ہیں۔ دونوں ہدایات کاپی کرنے کا متبادل۔ بٹن کو ایک بار بک مارکس بار پر کھینچیں۔',
+    mgr_methods_intro: 'ٹیم کے اشاریوں کا ڈیٹا تازہ کرنے کا طریقہ منتخب کریں۔ دونوں طریقے مائی آفاقی میں آپ کے اپنے مجاز اکاؤنٹ سے ایک ہی کاموں اور رپورٹس کو پڑھتے ہیں۔ نتیجے صرف آپ کے اس براؤزر میں محفوظ رہتے ہیں۔',
+    mgr_auto_h: 'نیم خودکار طریقہ — پورٹل میں براہ راست ڈیٹا',
+    mgr_auto_desc: 'براہ راست سحب کا بک مارک ایک مرتبہ بک مارکس بار میں رکھیں۔ مائی آفاقی میں اپنے مینیجر اکاؤنٹ سے داخل ہو کر اسے چلائیں: نیا انتظامی ٹیب کام اور رپورٹس وصول کر کے محفوظ کرے گا اور اشاریے تازہ کرے گا۔ رابطہ نہ بنے تو دونوں فائلیں دستی اپ لوڈ کے لیے محفوظ ہو جائیں گی۔',
+    mgr_auto_bm: 'ٹیم کا ڈیٹا براہ راست لائیں {from} ← {to}',
+    mgr_manual_h: 'دستی طریقہ — دونوں فائلیں محفوظ کریں',
+    mgr_manual_desc: 'پرانا بک مارک بھی موجود ہے: اسے مائی آفاقی میں چلائیں، کاموں اور رپورٹس کی دو فائلیں محفوظ کریں اور پھر نیچے «فائل منتخب کریں» سے دونوں اپ لوڈ کریں۔ اگر براہ راست ترسیل رک جائے تو یہی متبادل ہے۔',
+    mgr_manual_more_h: 'ایک اور دستی طریقہ: کلاڈ کروم کی ہدایات اور فائل اپ لوڈ',
+    mgr_auto_wait: 'انتظامی پورٹل کھل گیا ہے اور مائی آفاقی کے بک مارک سے ٹیم کے ڈیٹا کا انتظار کر رہا ہے...',
+    mgr_auto_receiving: 'دونوں فائلیں موصول ہوگئی ہیں۔ ان کی درستگی جانچ کر اسی براؤزر میں ڈیٹا محفوظ کیا جا رہا ہے...',
+    mgr_auto_success: 'مدت {period} کے {n} کام اور ان کی رپورٹس محفوظ ہوگئی ہیں۔ اشاریوں کی تختی کھول دی گئی ہے۔',
+    mgr_auto_invalid: 'درآمد نہیں ہوسکی: کام یا رپورٹ کی فائل درست شکل میں نہیں ہے۔ پرانے بک مارک سے دونوں فائلیں محفوظ کر کے دستی طور پر اپ لوڈ کریں۔',
+    mgr_auto_range: 'دونوں فائلوں کی مدت الگ ہے۔ انہیں ایک ساتھ محفوظ نہیں کیا جائے گا۔ تاریخیں جانچنے کے لیے دستی اپ لوڈ استعمال کریں۔',
+    mgr_auto_store_error: 'اس براؤزر میں ٹیم کا ڈیٹا مکمل طور پر محفوظ نہیں ہوسکا۔ دونوں فائلیں دستی طریقے سے اپ لوڈ کریں۔',
+    mgr_auto_popup: 'براؤزر نے کھلنے والے انتظامی ٹیب سے رابطہ برقرار نہیں رکھا۔ اس صورت میں پرانے دستی طریقے سے دونوں فائلیں محفوظ کریں۔',
     g_mgr_h: 'مینیجر بک مارک — ایک دباؤ میں سب کچھ',
-    g_mgr_b: 'ڈیٹا کے صفحے پر، ایک مینیجر بک مارک مائی آفاقی کے اندر سے وہ سب پڑھتا ہے جو دونوں ہدایات پڑھتی ہیں: مدت کے تمام ٹاسک، R&D قطار، ٹیکنیشن پوائنٹس اور آفٹر سیلز ٹکٹس — اور انہیں دو فائلوں (ٹاسک اور رپورٹس) کے طور پر محفوظ کرتا ہے جو پورٹل میں اپ لوڈ ہوتی ہیں۔ یہ مینیجر کے اپنے لاگ اِن سے چلتا ہے، صرف پڑھنے کے لیے، انہی چھ اجازت شدہ درخواستوں کے ذریعے، اور لاگ اِن ٹوکن مائی آفاقی کے صفحے سے باہر نہیں جاتا۔ یہ دونوں ہدایات کاپی کر کے کلاڈ کروم میں چلانے کا تیز تر متبادل ہے؛ کلاڈ کروم والا طریقہ بھی دستیاب رہتا ہے۔',
+    g_mgr_b: 'ڈیٹا کے صفحے پر، ایک مینیجر بک مارک مائی آفاقی کے اندر سے وہ سب پڑھتا ہے جو دونوں ہدایات پڑھتی ہیں: مدت کے تمام ٹاسک، R&D قطار، ٹیکنیشن پوائنٹس اور آفٹر سیلز ٹکٹس — اور انہیں دو فائلوں (ٹاسک اور رپورٹس) کے طور پر محفوظ کرتا ہے جو پورٹل میں اپ لوڈ ہوتی ہیں۔ یہ مینیجر کے اپنے لاگ اِن سے چلتا ہے، صرف پڑھنے کے لیے، انہی چھ اجازت شدہ درخواستوں کے ذریعے، اور لاگ اِن ٹوکن مائی آفاقی کے صفحے سے باہر نہیں جاتا۔ یہ دونوں ہدایات کاپی کر کے کلاڈ کروم میں چلانے کا تیز تر متبادل ہے؛ کلاڈ کروم والا طریقہ بھی دستیاب رہتا ہے۔ ڈیٹا کے صفحے پر اب دو طریقے واضح طور پر موجود ہیں: نیم خودکار براہ راست درآمد اور پرانا دستی طریقہ۔ براہ راست طریقے میں مینیجر اپنی اجازت کے مطابق مائی آفاقی میں بک مارک چلاتا ہے، جو ایک عارضی کوڈ کے ذریعے نئی انتظامی ٹیب کھولتا ہے۔ کاموں اور رپورٹس کو اسی براؤزر کے ٹیب میں بھیجا جاتا ہے، جہاں اصل مقام اور دونوں فائلوں کی مدت کی جانچ کے بعد ڈیٹا مقامی طور پر محفوظ ہو کر اشاریے دکھائے جاتے ہیں۔ مائی آفاقی کا لاگ اِن ٹوکن باہر نہیں جاتا اور ڈیٹا کسی نئے سرور پر اپ لوڈ نہیں ہوتا۔ ٹیب یا پیغام رسانی رک جائے تو دونوں فائلیں خود محفوظ ہو جاتی ہیں۔ پرانا دستی بک مارک، فائل اپ لوڈ اور کلاڈ کروم کی ہدایات بدستور موجود ہیں۔ ملازم کے اپنے آلے کا نجی ڈیٹا مینیجر کے آلے سے خود بخود نہیں ملتا؛ مینیجر اپنے اکاؤنٹ کی اجازت کے مطابق الگ سے ڈیٹا لاتا ہے.',
     me_updated: 'آخری تازہ کاری {date}',
     me_scope: 'مائی آفاقی آپ کو {n} افراد کا کام دکھاتا ہے',
     me_month_h: 'یہ مہینہ بمقابلہ پچھلا مہینہ — دن {d} تک',
@@ -2258,21 +2300,52 @@ export const ME_MONTHS = 12;
  * prompts read — all tasks, the R&D queue, technician points, after-sales tickets — then saves two files to download
  * (tasks + reports), the same files the Data page takes. Read-only; the token never leaves the page.
  */
-export function buildManagerBookmarklet(from, to, branch = JEDDAH_BRANCH, lang = 'ar') {
+// Same schemas as the manual file upload. Reject a mixed or partial pair before anything is stored.
+export const MANAGER_AUTO_SCHEMA = 'afaqy-manager-import/v1';
+export function parseManagerTransfer(message) {
+  if (!message || message.type !== MANAGER_AUTO_SCHEMA ||
+    !/^[0-9a-f]{32}$/.test(message.nonce || '') ||
+    !message.tasks || !message.reports ||
+    message.tasks.schema !== SCHEMA || message.tasks.taskGroupId !== 100001 ||
+    message.reports.schema !== REPORTS_SCHEMA) return { error: 'mgr_auto_invalid' };
+  const tasks = parseDataset(message.tasks), reports = parseReports(message.reports);
+  if (tasks.error || reports.error) return { error: 'mgr_auto_invalid' };
+  const a = tasks.dataset.range, b = reports.reports.range;
+  if (a.from !== b.from || a.to !== b.to) return { error: 'mgr_auto_range' };
+  return { dataset: tasks.dataset, reports: reports.reports, skipped: tasks.skipped || 0 };
+}
+
+export function buildManagerBookmarklet(from, to, branch = JEDDAH_BRANCH, lang = 'ar', delivery = 'download', portalUrl = '') {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) throw new Error('invalid range');
+  const mode = delivery === 'auto' ? 'auto' : 'download';
+  const targetUrl = mode === 'auto' ? new URL(portalUrl) : null;
+  if (targetUrl && (targetUrl.protocol !== 'https:' || targetUrl.username || targetUrl.password)) throw new Error('invalid portal URL');
   const [fromZ, toZ] = saudiBoundsZ(from, to);
   const nowYmd = ymd(saudiToday());
   const [, nowZ] = saudiBoundsZ(nowYmd, nowYmd);
   const later = to < nowYmd;
   const months = monthsOf(from, to);
   const msg = {
-    ar: ['افتح ماي أفاقي أولًا ثم اضغط الإشارة من هناك', 'سجّل دخولك في ماي أفاقي أولًا', 'جارٍ تحميل بيانات الفريق… ', 'تعذّر التحميل: ', 'تم — نزّل الملفين وارفعهما في البوابة'],
-    en: ['Open myafaqy first, then press the bookmark there', 'Sign in to myafaqy first', 'Loading the team data… ', 'Could not load: ', 'Done — download both files and upload them in the portal'],
-    ur: ['پہلے مائی آفاقی کھولیں، پھر وہاں بک مارک دبائیں', 'پہلے مائی آفاقی میں لاگ اِن کریں', 'ٹیم کا ڈیٹا لوڈ ہو رہا ہے… ', 'لوڈ نہیں ہو سکا: ', 'ہو گیا — دونوں فائلیں ڈاؤن لوڈ کر کے پورٹل میں اپ لوڈ کریں'],
+    ar: ['افتح ماي أفاقي أولًا ثم اضغط الإشارة من هناك', 'سجّل دخولك في ماي أفاقي أولًا', 'جارٍ تحميل بيانات الفريق… ', 'تعذّر التحميل: ', 'تم — نزّل الملفين وارفعهما في البوابة', 'تم إرسال بيانات الفريق للوحة الإدارة وحفظها', 'تعذر الاستيراد المباشر؛ تم تنزيل الملفين للرفع اليدوي', 'جارٍ إرسال البيانات للبوابة…'],
+    en: ['Open myafaqy first, then press the bookmark there', 'Sign in to myafaqy first', 'Loading team data… ', 'Could not load: ', 'Done — download both files and upload them in the portal', 'Team data was imported into the admin portal', 'Direct import did not finish; both files were downloaded for manual upload', 'Sending data to the portal…'],
+    ur: ['پہلے مائی آفاقی کھولیں، پھر وہاں بک مارک دبائیں', 'پہلے مائی آفاقی میں لاگ اِن کریں', 'ٹیم کا ڈیٹا لوڈ ہو رہا ہے… ', 'لوڈ نہیں ہو سکا: ', 'ہو گیا — دونوں فائلیں ڈاؤن لوڈ کر کے پورٹل میں اپ لوڈ کریں', 'ٹیم کا ڈیٹا انتظامی پورٹل میں محفوظ ہوگیا', 'براہ راست ترسیل مکمل نہیں ہوئی؛ دستی اپ لوڈ کے لیے دونوں فائلیں محفوظ ہوگئیں', 'ڈیٹا پورٹل میں بھیجا جا رہا ہے…'],
   }[lang] || [];
-  const code = `(async()=>{const M=${JSON.stringify(msg)},FROM=${JSON.stringify(from)},TO=${JSON.stringify(to)},BR=${JSON.stringify(String(branch))};
+  const code = `(async()=>{const M=${JSON.stringify(msg)},FROM=${JSON.stringify(from)},TO=${JSON.stringify(to)},BR=${JSON.stringify(String(branch))},DEL=${JSON.stringify(mode)},PORTAL=${JSON.stringify(targetUrl ? targetUrl.origin + targetUrl.pathname : '')},PACKET=${JSON.stringify(MANAGER_AUTO_SCHEMA)};
 if(location.hostname!=='myafaqy.com'){alert(M[0]);return}
 const tk=localStorage.getItem('token');if(!tk){alert(M[1]);return}
+let sink=null,nonce='',ready=false,acked=null,receiver=null;let targetOrigin='';
+if(DEL==='auto'){
+  try{
+    nonce=Array.from(crypto.getRandomValues(new Uint32Array(4))).map(n=>n.toString(16).padStart(8,'0')).join('');
+    const dest=new URL(PORTAL);targetOrigin=dest.origin;dest.searchParams.set('mgrImport',nonce);dest.hash='data';
+    sink=window.open(dest.href,'_blank');
+    if(sink){receiver=e=>{if(e.origin!==targetOrigin||e.source!==sink||!e.data||e.data.nonce!==nonce)return;
+      if(e.data.type==='afaqy-manager-ready/v1')ready=true;
+      if(e.data.type==='afaqy-manager-ack/v1')acked=e.data.ok===true?'ok':'failed';};
+      window.addEventListener('message',receiver);
+    }
+  }catch(_){sink=null;}
+}
 const box=document.createElement('div');box.style.cssText='position:fixed;inset:auto 16px 16px auto;z-index:2147483647;background:#0F2231;color:#fff;padding:12px 16px;border-radius:10px;font:14px system-ui;max-width:320px';box.textContent=M[2];document.body.append(box);
 const H={'Authorization':'Bearer '+tk,'Content-Type':'application/json','X-Timezone-Offset':'-180','X-Client-Id':localStorage.getItem('browser_client_id')||'','lang':'en'};
 const say=t=>{box.textContent=t};const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -2304,9 +2377,23 @@ say(M[2]+'accounts');const ENG=((await post('AfterSales/GetAllAfterSalesEngineer
 const AS=await post('AfterSalesBoardReport/GetAfterSalesAgentsGrid',{categoryId:null,createDate:['${fromZ}','${toZ}'],branch:BR,afterSalesId:null});
 const asArr=(AS.data&&(AS.data.data||AS.data))||[];const afterSales={rows:asArr.map(r=>({id:r.id,name:r.afterSalesName,open:r.openTickets||0,pending:r.pendingTickets||0,done:r.doneTickets||0,total:r.totalTickets||0}))};
 const repFile={schema:'${REPORTS_SCHEMA}',range:{from:FROM,to:TO},branch:BR,extractedAt:new Date().toISOString(),techPoints,afterSales,activities:{rows:acts},accounts:{rows:accts,unmatched:ENG.filter(e=>!emp2uid[String(e.id)]).length},notes:['manager bookmark']};
+if(DEL==='auto'&&sink){
+  say(M[7]);
+  for(let k=0;k<40&&!ready;k++)await wait(500);
+  if(ready){
+    const packet={type:PACKET,nonce,tasks:tasksFile,reports:repFile};
+    for(let k=0;k<3&&!acked;k++){try{sink.postMessage(packet,targetOrigin)}catch(_){break}
+      for(let w=0;w<15&&!acked;w++)await wait(500)}
+  }
+  if(acked==='ok'){if(receiver)window.removeEventListener('message',receiver);
+    box.style.background='#0A5F67';say(M[5]);setTimeout(()=>box.remove(),12000);return}
+}
+if(receiver)window.removeEventListener('message',receiver);
 dl('afaqy-tasks-'+FROM+'_'+TO+'.json',tasksFile);await wait(400);dl('afaqy-reports-'+FROM+'_'+TO+'.json',repFile);
-box.style.background='#0A5F67';say(M[4]+' ('+taskRows.length+' / '+techPoints.reduce((s,m)=>s+m.rows.length,0)+' / '+afterSales.rows.length+' / '+acts.length+' / '+accts.length+')');setTimeout(()=>box.remove(),12000);
-}catch(e){box.style.background='#7a1f1f';say(M[3]+e.message);setTimeout(()=>box.remove(),12000)}})();`;
+box.style.background=DEL==='auto'?'#7d5f15':'#0A5F67';
+say((DEL==='auto'?M[6]:M[4])+' ('+taskRows.length+' / '+techPoints.reduce((s,m)=>s+m.rows.length,0)+' / '+afterSales.rows.length+' / '+acts.length+' / '+accts.length+')');
+setTimeout(()=>box.remove(),14000);
+}catch(e){if(receiver)window.removeEventListener('message',receiver);box.style.background='#7a1f1f';say(M[3]+e.message);setTimeout(()=>box.remove(),12000)}})();`;
   return 'javascript:' + encodeURIComponent(code.replace(/\n/g, ''));
 }
 

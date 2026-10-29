@@ -405,6 +405,14 @@
   .pill.pro-day { color: var(--note); border-color: var(--note); background: var(--note-wash); }
   .pill.pro-stale, .pill.pro-never { color: var(--warn); border-color: var(--warn); background: var(--warn-wash); }
 
+  .mgr-methods { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr)); gap:14px; margin:16px 0 24px; }
+  .mgr-method { padding:16px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); }
+  .mgr-method h2 { font-size:16px; margin:0 0 8px; color:var(--title); }
+  .mgr-method .hint { line-height:1.8; margin:0 0 14px; }
+  .mgr-method .row { flex-wrap:wrap; gap:8px; }
+  .mgr-method .bm { white-space:normal; }
+  .mgr-method .msg { line-height:1.8; margin:10px 0 0; }
+  .mgr-method .msg:empty { display:none; }
   /* Animated browser scene: visible simulation, never remote control over MyAFAQY. */
   .tour-demo { margin: 14px 0 16px; }
   .tour-demo-heading { display:flex; align-items:center; gap:8px; justify-content:space-between; flex-wrap:wrap; margin-bottom:10px; }
@@ -653,8 +661,21 @@
   <section id="view-data" hidden>
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="data_title">بيانات المؤشرات</h1><button type="button" class="help-q" data-help="g_data_b" data-help-title="data_title" aria-label="?">?</button></div>
     <p class="sub" data-t="data_sub"></p></div>
-    <p class="note info" data-t="mgr_bm_intro" style="margin:0 0 14px"></p>
-    <div class="row" id="mgr-row" style="margin-bottom:22px"></div>
+    <p class="note info" data-t="mgr_methods_intro" style="margin:0 0 14px"></p>
+    <div class="mgr-methods">
+      <section class="mgr-method" aria-labelledby="mgr-auto-title">
+        <h2 id="mgr-auto-title" data-t="mgr_auto_h">شبه أوتوماتيكي — بدون تنزيل ملفات</h2>
+        <p class="hint" data-t="mgr_auto_desc"></p>
+        <div class="row" id="mgr-auto-row"></div>
+        <p class="msg" id="mgr-auto-status" role="status" aria-live="polite"></p>
+      </section>
+      <section class="mgr-method" aria-labelledby="mgr-manual-title">
+        <h2 id="mgr-manual-title" data-t="mgr_manual_h">الطريقة اليدوية — تنزيل ورفع الملفات</h2>
+        <p class="hint" data-t="mgr_manual_desc"></p>
+        <div class="row" id="mgr-row"></div>
+      </section>
+    </div>
+    <h2 data-t="mgr_manual_more_h">الطريقة اليدوية بالأوامر ورفع الملفات</h2>
     <div class="steps">
       <div class="step"><span class="n">١</span><div>
         <h3 data-t="step1">اختر الفترة</h3>
