@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.15 — 2026-10-30
+
+- تصحيح فحص سلامة إشارة سحب المدير المباشر، بحيث يتم التحقق من كود الإشارة كما ينبغي دون أن يختلط بطلبات البوابة. الطريقتان، المباشرة واليدوية، متاحتان كما هما.
+
+<details><summary>English</summary>
+
+- Corrected the verification of the manager's direct-import bookmark so its myafaqy requests are not mistaken for portal requests. Both the direct and manual methods remain available unchanged.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- مینیجر کے براہ راست درآمد والے بک مارک کی حفاظتی جانچ درست کی گئی ہے تاکہ مائی آفاقی کے اندر ہونے والی درخواستیں پورٹل کی درخواستیں نہ سمجھی جائیں۔ براہ راست اور دستی دونوں طریقے پہلے کی طرح دستیاب ہیں۔
+
+</div>
+</details>
+
+
 ## v8.14 — 2026-10-30
 
 - إضافة طريقتين واضحتين في صفحة بيانات الإدارة: السحب شبه الأوتوماتيكي من MyAFAQY مباشرة إلى نافذة الإدارة، والطريقة اليدوية القديمة لتنزيل ملفي المهام والتقارير ورفعهما، مع بقاء أوامر كلود كروم.

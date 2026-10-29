@@ -2345,7 +2345,7 @@ if(DEL==='auto'){
       window.addEventListener('message',receiver);
     }
   }catch(_){sink=null;}
-}
+}/* popup setup finished */
 const box=document.createElement('div');box.style.cssText='position:fixed;inset:auto 16px 16px auto;z-index:2147483647;background:#0F2231;color:#fff;padding:12px 16px;border-radius:10px;font:14px system-ui;max-width:320px';box.textContent=M[2];document.body.append(box);
 const H={'Authorization':'Bearer '+tk,'Content-Type':'application/json','X-Timezone-Offset':'-180','X-Client-Id':localStorage.getItem('browser_client_id')||'','lang':'en'};
 const say=t=>{box.textContent=t};const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -2387,7 +2387,7 @@ if(DEL==='auto'&&sink){
   }
   if(acked==='ok'){if(receiver)window.removeEventListener('message',receiver);
     box.style.background='#0A5F67';say(M[5]);setTimeout(()=>box.remove(),12000);return}
-}
+}/* direct transfer or fallback */
 if(receiver)window.removeEventListener('message',receiver);
 dl('afaqy-tasks-'+FROM+'_'+TO+'.json',tasksFile);await wait(400);dl('afaqy-reports-'+FROM+'_'+TO+'.json',repFile);
 box.style.background=DEL==='auto'?'#7d5f15':'#0A5F67';
