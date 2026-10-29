@@ -44,7 +44,7 @@ if (!/^\d{4}-\d{2}-\d{2}$/.test(vj.date || '')) note('version.json: date must be
 // The Claude prompt and the my-KPIs bookmark both run on myafaqy's page, not in the portal; they have their own rules (9, 17).
 // The Afaqy PRO page is the one exception in the portal itself (ADR-0011) — it has its own rule (18); everything else holds.
 const appWithoutPro = app.replace(/\/\/ ---------- AFAQY PRO inside the portal[\s\S]*?\/\/ ---------- the side menu ----------/, '');
-const coreWithoutPrompt = core.replace(/export function buildPrompt[\s\S]*?\n}\n/, '').replace(/export function buildBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildReportsPrompt[\s\S]*?\n}\n/, '').replace(/export function buildManagerBookmarklet[\s\S]*?\n}\n/, '');
+const coreWithoutPrompt = core.replace(/export function buildPrompt[\s\S]*?\n}\n/, '').replace(/export function buildBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildReportsPrompt[\s\S]*?\n}\n/, '').replace(/export function buildManagerBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildAssignBookmarklet[\s\S]*?\n}\n/, '');
 for (const [name, src] of [['index.html', html], ['app.js', appWithoutPro], ['core.js', coreWithoutPrompt], ['config.js', cfg]]) {
   if (/firebase/i.test(src)) note(`${name}: Firebase is referenced — the portal runs without it`);
   if (/afaqy\.sa|afaqy\.pro\/|crmbackend/.test(src.replace(/https:\/\/afaqy\.pro\/'/g, ''))) note(`${name}: an Afaqy API address appeared — the portal never calls an Afaqy API`);
@@ -253,6 +253,26 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
     if (!/^\d+$/.test(id)) note(`team.json: key ${id} is not a myafaqy id`);
     for (const k of Object.keys(p || {})) if (!['position', 'positionEn', 'leaderId'].includes(k)) note(`team.json: field "${k}" on ${id} is not allowed — only position, positionEn, leaderId`);
   }
+}
+
+// 21. The assignment panel (ADR-0018) — the ONE write in the whole portal, fenced on every side.
+{
+  const { buildAssignBookmarklet } = await import(new URL('core.js', root));
+  const ab = decodeURIComponent(buildAssignBookmarklet('ar').replace(/^javascript:/, ''));
+  try { new Function(ab); } catch (e) { note(`assignment panel: does not compile (${e.message})`); }
+  const hosts = [...ab.matchAll(/https:\/\/([a-z0-9.-]+)/g)].map((m) => m[1]).filter((h) => h !== 'crmbackend.afaqy.sa');
+  if (hosts.length) note(`assignment panel: talks to ${[...new Set(hosts)].join(', ')} — only crmbackend.afaqy.sa`);
+  const paths = [...ab.matchAll(/post\('([A-Za-z/]+)'/g)].map((m) => m[1]);
+  const okA = ['AfterSales/GetAllAfterSalesEngineers', 'AfterSales/GetAfterSalesRequestGrid', 'AfterSales/AssignAfterSales'];
+  for (const x of new Set(paths)) if (!okA.includes(x)) note(`assignment panel: calls ${x} — only two reads and the one write are allowed`);
+  const writes = paths.filter((x) => !/\/Get/.test(x));
+  if (writes.length !== 1 || writes[0] !== 'AfterSales/AssignAfterSales') note('assignment panel: exactly one write endpoint, AfterSales/AssignAfterSales');
+  if (!/const union=r=>\[\.\.\.new Set\(\[\.\.\.r\.have,\.\.\.chosen\]\)\]/.test(ab)) note('assignment panel: ADD mode — the posted list must be the existing ids ∪ the chosen ids');
+  if (!/afterSalesIds:next\.map\(Number\)/.test(ab) || !/const next=union\(r\)/.test(ab)) note('assignment panel: the write must post exactly the union');
+  if (!/String\(r\.branchCode\)==='2'/.test(ab)) note('assignment panel: must keep only branchCode "2" rows — Jeddah');
+  if (!/location\.hostname!=='myafaqy\.com'/.test(ab)) note('assignment panel: must refuse to run anywhere but myafaqy.com');
+  if (!/btn\(M\.pilot,async\(\)=>/.test(ab) || !/btn\(M\.rest,async\(\)=>/.test(ab)) note('assignment panel: writes only happen behind the pilot and apply buttons');
+  if (/location\.href=[^;]*tk|dl\([^)]*tk/.test(ab)) note('assignment panel: the token must never leave the page');
 }
 
 // 18. The Afaqy PRO page (ADR-0011): one address, two read requests, and the password never kept.

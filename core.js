@@ -218,7 +218,7 @@ export const STRINGS = {
     kpi_tickets_h: 'تذاكر ما بعد البيع',
     others: 'الباقون',
     g_team_h: 'الفريق — المناصب ومن يتبع من',
-    g_team_b: 'في صفحة «الفريق» يكتب المدير منصب كل شخص ومن يتبع له، أمام اسمه كما يأتي من ماي أفاقي. يُحفظ ذلك بأرقام ماي أفاقي لا بالأسماء، فلا تظهر أسماء في أي ملف. المكتوب يبقى على الجهاز، ولكي يراه الفريق كله يُنزَّل الملف «team.json» ويوضع في المستودع. المنصب يظهر في بطاقة «مؤشراتي» وفي جداول الفريق ولوحة المؤشرات، و«يتبع لـ» يجعل من يُكتب قائدًا يرى من تحته في قسم «فريقي» — إلى جانب من يضعهم ماي أفاقي تحته. والدوائر في «مؤشراتي» ولوحة المؤشرات تُظهر مصادر الشغل وتوزيعه وحالة التذاكر.',
+    g_team_b: 'في صفحة «الفريق» قسمان. الأول «تعيين ما بعد البيع على حسابات جدة»: إشارة تُفتح داخل ماي أفاقي بدخولك لوحةً تختار فيها المهندسين وترى تغطية حسابات جدة، وتجرّب على عشرة بجدول قبل/بعد، ثم تطبّق على الباقي وتنزّل السجل — بإضافة فقط، لا يُحذف أحد موجود، وعلى فرع جدة فقط، وهي الكتابة الوحيدة في البوابة كلها. الثاني «المناصب ومن يتبع من»: يكتب المدير منصب كل شخص ومن يتبع له أمام اسمه كما يأتي من ماي أفاقي؛ يُحفظ بأرقام ماي أفاقي لا بالأسماء، ويبقى على الجهاز، ولكي يراه الفريق كله يُنزَّل «team.json» ويوضع في المستودع. المنصب يظهر في بطاقة «مؤشراتي» والجداول واللوحة، و«يتبع لـ» يجعل القائد يرى من تحته في «فريقي».',
     me_period_month: 'هذا الشهر',
     me_period_quarter: 'هذا الربع',
     me_period_half: 'آخر ٦ أشهر',
@@ -249,6 +249,15 @@ export const STRINGS = {
     f4_none: 'لا أنشطة في ملف هذه الفترة — ملف تقارير أقدم من v7.4، أو لا أنشطة لفريقك فيها.',
     f2_show: 'نقاط الفنيين — عرض',
     def_10: 'المؤشر الرابع يعدّ لكل مهندس تذاكره في الفترة — كل تذكرة نشاط سجّله مع عميل — وعدد العملاء المختلفين، وكم منها صار مهمة، وتوزيعها بالحالة والتصنيف كما في ماي أفاقي. لا تُنقل أوصاف التذاكر ولا أسماء العملاء.',
+    assign_h: 'تعيين ما بعد البيع على حسابات جدة',
+    assign_sub: 'لوحة تُفتح داخل ماي أفاقي بدخولك: تختار المهندسين، وترى التغطية، وتجرّب على عشرة، ثم تطبّق على الباقي — بإضافة فقط، ولا يُحذف أحد موجود.',
+    assign_s1: 'مرة واحدة: اسحب الزر إلى شريط الإشارات.',
+    assign_s2: 'افتح ماي أفاقي واضغط الإشارة — تظهر اللوحة فوق الصفحة.',
+    assign_s3: 'اختر المهندسين، ثم «تجربة على ١٠» وراجع الجدول قبل/بعد.',
+    assign_s4: '«تطبيق على الباقي» ثم نزّل السجل. وبعدها صدّر شيت الحسابات لتتأكد.',
+    assign_bm: 'لوحة التعيين',
+    assign_warn: 'هذه هي الكتابة الوحيدة في البوابة كلها: طلب واحد — تعيين ما بعد البيع — على فرع جدة فقط، ولا يُرسل إلا بضغطتك. الحارس يرفض أي نسخة تتجاوز ذلك.',
+    team_roster_h: 'المناصب ومن يتبع من',
   },
   en: {
     brand: 'Afaqy', portal: 'Technical team portal — Jeddah', nav_data: 'Data', nav_kpi: 'KPIs',
@@ -458,7 +467,7 @@ export const STRINGS = {
     kpi_tickets_h: 'After-sales tickets',
     others: 'Others',
     g_team_h: 'Team — positions and who reports to whom',
-    g_team_b: 'On the “Team” page the manager writes each person’s position and who they report to, next to the name as it comes from myafaqy. It is saved by myafaqy ids, not names, so no names appear in any file. What is written stays on the device; for the whole team to see it, the “team.json” file is downloaded and placed in the repository. The position shows on the “My KPIs” card, in team tables and on the KPI board, and “reports to” lets whoever is named a leader see their people in “My team” — alongside those myafaqy places below them. The donuts on “My KPIs” and the KPI board show where work came from, how it is spread, and the tickets’ state.',
+    g_team_b: 'The “Team” page has two parts. First, “Assign after-sales to Jeddah accounts”: a bookmark that opens, inside myafaqy with your sign-in, a panel where you choose the engineers, see the coverage of Jeddah accounts, pilot on ten with a before/after table, then apply to the rest and download the log — add only, nobody already there is removed, Jeddah branch only, and it is the one write in the whole portal. Second, “Positions and who reports to whom”: the manager writes each person’s position and leader next to the name as it comes from myafaqy; it is saved by myafaqy ids, not names, stays on the device, and for the whole team to see it, “team.json” is downloaded and placed in the repository. The position shows on the “My KPIs” card, the tables and the board, and “reports to” lets a leader see their people in “My team”.',
     me_period_month: 'This month',
     me_period_quarter: 'This quarter',
     me_period_half: 'Last 6 months',
@@ -489,6 +498,15 @@ export const STRINGS = {
     f4_none: 'No activities in this period’s file — a reports file older than v7.4, or none by your team.',
     f2_show: 'Technician points — show',
     def_10: 'Factor 4 counts, per engineer, their tickets in the period — each an activity logged with a customer — the distinct customers, how many became tasks, and their spread by status and category as in myafaqy. Ticket descriptions and customer names are not carried.',
+    assign_h: 'Assign after-sales to Jeddah accounts',
+    assign_sub: 'A panel that opens inside myafaqy with your sign-in: choose the engineers, see the coverage, pilot on ten, then apply to the rest — add only; nobody already there is removed.',
+    assign_s1: 'Once: drag the button onto the bookmarks bar.',
+    assign_s2: 'Open myafaqy and press the bookmark — the panel appears over the page.',
+    assign_s3: 'Choose the engineers, then “Pilot on 10” and review the before/after table.',
+    assign_s4: '“Apply to the rest”, then download the log. Then export the accounts sheet to confirm.',
+    assign_bm: 'Assignment panel',
+    assign_warn: 'This is the one write in the whole portal: a single request — assign after-sales — on the Jeddah branch only, sent only by your press. The guard refuses any version that goes beyond it.',
+    team_roster_h: 'Positions and who reports to whom',
   },
   ur: {
     brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ', nav_data: 'ڈیٹا', nav_kpi: 'کارکردگی کے اشاریے',
@@ -698,7 +716,7 @@ export const STRINGS = {
     kpi_tickets_h: 'آفٹر سیلز ٹکٹس',
     others: 'باقی',
     g_team_h: 'ٹیم — عہدے اور کون کس کے ماتحت',
-    g_team_b: '«ٹیم» کے صفحے پر مینیجر ہر فرد کا عہدہ اور اس کا سربراہ لکھتا ہے، اس نام کے سامنے جو مائی آفاقی سے آتا ہے۔ یہ ناموں سے نہیں بلکہ مائی آفاقی کی شناختوں سے محفوظ ہوتا ہے، اس لیے کسی فائل میں نام نہیں آتے۔ لکھا ہوا آلے پر رہتا ہے؛ پوری ٹیم کو دکھانے کے لیے «team.json» فائل ڈاؤن لوڈ کر کے ریپوزٹری میں رکھی جاتی ہے۔ عہدہ «میرے اشاریے» کے کارڈ، ٹیم کے جدولوں اور اشاریوں کے بورڈ پر دکھائی دیتا ہے، اور «ماتحت» جسے سربراہ لکھا جائے اسے «میری ٹیم» میں اس کے لوگ دکھاتا ہے — ان کے ساتھ جنہیں مائی آفاقی اس کے نیچے رکھتا ہے۔ «میرے اشاریے» اور اشاریوں کے بورڈ پر دائرے دکھاتے ہیں کہ کام کہاں سے آیا، کیسے تقسیم ہوا، اور ٹکٹس کی حالت۔',
+    g_team_b: '«ٹیم» کے صفحے کے دو حصے ہیں۔ پہلا «جدہ کے اکاؤنٹس پر آفٹر سیلز کی تفویض»: ایک بک مارک جو آپ کے لاگ اِن سے مائی آفاقی کے اندر ایک پینل کھولتا ہے جہاں آپ انجینئرز چنتے ہیں، جدہ کے اکاؤنٹس کی کوریج دیکھتے ہیں، پہلے/بعد کے جدول کے ساتھ دس پر آزماتے ہیں، پھر باقی پر لاگو کرتے اور لاگ ڈاؤن لوڈ کرتے ہیں — صرف اضافہ، جو موجود ہے ہٹایا نہیں جاتا، صرف جدہ برانچ، اور یہ پورے پورٹل میں واحد لکھائی ہے۔ دوسرا «عہدے اور کون کس کے ماتحت»: مینیجر ہر فرد کا عہدہ اور سربراہ اس نام کے سامنے لکھتا ہے جو مائی آفاقی سے آتا ہے؛ یہ ناموں سے نہیں، مائی آفاقی کی شناختوں سے محفوظ ہوتا ہے، آلے پر رہتا ہے، اور پوری ٹیم کو دکھانے کے لیے «team.json» ڈاؤن لوڈ کر کے ریپوزٹری میں رکھا جاتا ہے۔ عہدہ «میرے اشاریے» کے کارڈ، جدولوں اور بورڈ پر دکھائی دیتا ہے، اور «ماتحت» سربراہ کو «میری ٹیم» میں اس کے لوگ دکھاتا ہے۔',
     me_period_month: 'یہ مہینہ',
     me_period_quarter: 'یہ سہ ماہی',
     me_period_half: 'پچھلے ۶ ماہ',
@@ -729,6 +747,15 @@ export const STRINGS = {
     f4_none: 'اس مدت کی فائل میں کوئی سرگرمی نہیں — v7.4 سے پرانی رپورٹس فائل، یا آپ کی ٹیم کی کوئی نہیں۔',
     f2_show: 'ٹیکنیشن پوائنٹس — دکھائیں',
     def_10: 'چوتھا اشاریہ ہر انجینئر کے لیے مدت میں اس کے ٹکٹ گنتا ہے — ہر ایک گاہک کے ساتھ درج کی گئی سرگرمی — مختلف گاہک، کتنے ٹاسک بنے، اور مائی آفاقی کے مطابق حالت اور زمرے کی تقسیم۔ ٹکٹ کی تفصیل اور گاہکوں کے نام نہیں لائے جاتے۔',
+    assign_h: 'جدہ کے اکاؤنٹس پر آفٹر سیلز کی تفویض',
+    assign_sub: 'ایک پینل جو آپ کے لاگ اِن سے مائی آفاقی کے اندر کھلتا ہے: انجینئرز چنیں، کوریج دیکھیں، دس پر آزمائیں، پھر باقی پر لاگو کریں — صرف اضافہ؛ جو پہلے سے موجود ہے اسے ہٹایا نہیں جاتا۔',
+    assign_s1: 'ایک بار: بٹن کو بک مارکس بار پر کھینچیں۔',
+    assign_s2: 'مائی آفاقی کھولیں اور بک مارک دبائیں — پینل صفحے کے اوپر آ جاتا ہے۔',
+    assign_s3: 'انجینئرز چنیں، پھر «دس پر آزمائیں» اور پہلے/بعد کا جدول دیکھیں۔',
+    assign_s4: '«باقی پر لاگو کریں»، پھر لاگ ڈاؤن لوڈ کریں۔ پھر تصدیق کے لیے اکاؤنٹس کی شیٹ برآمد کریں۔',
+    assign_bm: 'تفویض پینل',
+    assign_warn: 'یہ پورے پورٹل میں واحد لکھائی ہے: ایک درخواست — آفٹر سیلز کی تفویض — صرف جدہ برانچ پر، اور صرف آپ کے دبانے سے بھیجی جاتی ہے۔ گارڈ اس سے آگے جانے والے کسی نسخے کو مسترد کرتا ہے۔',
+    team_roster_h: 'عہدے اور کون کس کے ماتحت',
   },
 };
 
@@ -1367,6 +1394,50 @@ const repFile={schema:'${REPORTS_SCHEMA}',range:{from:FROM,to:TO},branch:BR,extr
 dl('afaqy-tasks-'+FROM+'_'+TO+'.json',tasksFile);await wait(400);dl('afaqy-reports-'+FROM+'_'+TO+'.json',repFile);
 box.style.background='#0A5F67';say(M[4]+' ('+taskRows.length+' / '+techPoints.reduce((s,m)=>s+m.rows.length,0)+' / '+afterSales.rows.length+' / '+acts.length+')');setTimeout(()=>box.remove(),12000);
 }catch(e){box.style.background='#7a1f1f';say(M[3]+e.message);setTimeout(()=>box.remove(),12000)}})();`;
+  return 'javascript:' + encodeURIComponent(code.replace(/\n/g, ''));
+}
+
+/**
+ * The assignment panel (ADR-0018). A bookmark that opens a panel INSIDE myafaqy with the manager's own sign-in: pick the
+ * after-sales engineers, see the Jeddah coverage, pilot on ten accounts, then apply to the rest. The only write in the
+ * whole portal: POST AfterSales/AssignAfterSales, ADD mode (existing ∪ chosen), branchCode "2" only, by a button press.
+ */
+export function buildAssignBookmarklet(lang = 'ar') {
+  const M = {
+    ar: { only: 'افتح ماي أفاقي أولًا ثم اضغط الإشارة من هناك', login: 'سجّل دخولك في ماي أفاقي أولًا', title: 'تعيين ما بعد البيع على حسابات جدة', pick: 'اختر المهندسين الذين يكونون على كل حساب', loading: 'جارٍ قراءة الحسابات…',
+      total: 'حسابات جدة', complete: 'مكتملة بالمختارين', toUpdate: 'ستُحدَّث', cover: 'التغطية الحالية لكل مهندس', pilot: 'تجربة على ١٠', rest: 'تطبيق على الباقي', refresh: 'إعادة القراءة', close: 'إغلاق',
+      before: 'قبل', after: 'بعد', ok: 'تمام', bad: 'لم يُطبَّق', progress: 'جارٍ التطبيق', done: 'انتهى — مكتملة الآن', failed: 'لم تنجح', log: 'تنزيل السجل', mode: 'إضافة فقط — لا يُحذف أحد موجود', none: 'اختر مهندسًا واحدًا على الأقل' },
+    en: { only: 'Open myafaqy first, then press the bookmark there', login: 'Sign in to myafaqy first', title: 'Assign after-sales to Jeddah accounts', pick: 'Choose the engineers who should be on every account', loading: 'Reading accounts…',
+      total: 'Jeddah accounts', complete: 'complete with the chosen', toUpdate: 'to update', cover: 'Current coverage per engineer', pilot: 'Pilot on 10', rest: 'Apply to the rest', refresh: 'Re-read', close: 'Close',
+      before: 'before', after: 'after', ok: 'ok', bad: 'not applied', progress: 'Applying', done: 'Done — complete now', failed: 'failed', log: 'Download the log', mode: 'ADD only — nobody already there is removed', none: 'Choose at least one engineer' },
+  }[lang] || {};
+  const code = `(async()=>{const M=${JSON.stringify(M)},RTL=${lang === 'en' ? 'false' : 'true'};
+if(location.hostname!=='myafaqy.com'){alert(M.only);return}
+const tk=localStorage.getItem('token');if(!tk){alert(M.login);return}
+const H={'Authorization':'Bearer '+tk,'Content-Type':'application/json','X-Timezone-Offset':'-180','X-Client-Id':localStorage.getItem('browser_client_id')||'','lang':'en'};
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const post=async(path,body)=>{const r=await fetch('https://crmbackend.afaqy.sa/'+path,{method:'POST',headers:H,body:body===undefined?undefined:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(path+' '+(j.message||r.status));return j};
+const old=document.getElementById('afaqy-assign');if(old)old.remove();
+const box=document.createElement('div');box.id='afaqy-assign';box.dir=RTL?'rtl':'ltr';box.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);width:min(760px,96vw);max-height:92vh;overflow:auto;z-index:2147483647;background:#FFFFFF;color:#0F2231;border:1px solid #C3CED7;border-radius:12px;box-shadow:0 12px 40px rgba(15,34,49,.25);font:14px/1.5 system-ui,sans-serif;padding:16px 18px';
+const el=(t,a,...k)=>{const n=document.createElement(t);for(const[x,v]of Object.entries(a||{})){if(x==='text')n.textContent=v;else if(x.startsWith('on'))n.addEventListener(x.slice(2),v);else n.setAttribute(x,v)}for(const c of k.flat())if(c!=null)n.append(c.nodeType?c:String(c));return n};
+const btn=(text,fn,primary)=>el('button',{type:'button',style:'font:inherit;padding:8px 14px;border-radius:8px;cursor:pointer;border:1px solid '+(primary?'#0E7C86':'#C3CED7')+';background:'+(primary?'#0E7C86':'#FFFFFF')+';color:'+(primary?'#FFFFFF':'#0F2231'),onclick:fn,text});
+const status=el('div',{style:'margin:8px 0;color:#5A6B78'});const body=el('div');
+box.append(el('div',{style:'display:flex;justify-content:space-between;align-items:center;gap:10px'},el('b',{style:'font-size:16px',text:M.title}),btn(M.close,()=>box.remove())),el('div',{style:'font-size:12px;color:#B45309;margin:4px 0 8px',text:M.mode}),status,body);document.body.append(box);
+let engineers=[],rows=[],chosen=new Set(JSON.parse(localStorage.getItem('afaqy-assign-chosen')||'[]'));
+const say=t=>{status.textContent=t};
+const readAll=async()=>{say(M.loading);engineers=((await post('AfterSales/GetAllAfterSalesEngineers')).data||[]).map(e=>({id:String(e.id),name:e.nameEn||e.nameAr||String(e.id)}));
+rows=[];let size=500;for(let pg=0;pg<100;pg++){const R=await post('AfterSales/GetAfterSalesRequestGrid',{isSearchFilter:false,searchKey:'',search:{},pageSize:size,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const d=R.data||{};const arr=d.data||[];if(pg===0&&d.pageSize&&d.pageSize<size)size=d.pageSize;for(const r of arr)if(String(r.branchCode)==='2')rows.push({id:String(r.customerId??r.id),have:(r.afterSalesManIds||[]).map(String),devices:+r.connectedDevices||0});if(!arr.length||(pg+1)*size>=(d.listCount||0))break;await wait(200)}say('')};
+const need=()=>{const want=[...chosen];return rows.filter(r=>want.some(w=>!r.have.includes(w)))};
+const union=r=>[...new Set([...r.have,...chosen])];
+let logRows=[];
+const apply=async(list,label)=>{let n=0,bad=[];for(const r of list){say(M.progress+' '+(++n)+'/'+list.length);const before=r.have.slice();const next=union(r);try{await post('AfterSales/AssignAfterSales',{customerId:+r.id,afterSalesIds:next.map(Number)});logRows.push([r.id,before.join('|'),next.join('|'),'sent'])}catch(e){bad.push(r.id);logRows.push([r.id,before.join('|'),next.join('|'),'error:'+e.message])}await wait(300)}return bad};
+const verify=async(ids)=>{await readAll();const set=new Set(ids);return rows.filter(r=>set.has(r.id)).map(r=>({id:r.id,ok:[...chosen].every(w=>r.have.includes(w)),have:r.have}))};
+const dl=()=>{const csv=['customerId,before,after,result',...logRows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(','))].join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='afaqy-assign-log-'+new Date().toISOString().slice(0,10)+'.csv';document.body.append(a);a.click();a.remove()};
+const render=(extra)=>{const todo=need();const cov=engineers.map(e=>({e,n:rows.filter(r=>r.have.includes(e.id)).length})).sort((a,b)=>b.n-a.n);
+body.replaceChildren(el('div',{style:'font-weight:700;margin:6px 0',text:M.pick}),el('div',{style:'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;margin-bottom:10px'},engineers.map(e=>el('label',{style:'display:flex;gap:8px;align-items:center;padding:6px 8px;border:1px solid #DBE2E8;border-radius:8px'},el('input',{type:'checkbox',...(chosen.has(e.id)?{checked:''}:{}),onchange:ev=>{ev.target.checked?chosen.add(e.id):chosen.delete(e.id);localStorage.setItem('afaqy-assign-chosen',JSON.stringify([...chosen]));render()}}),el('span',{text:e.name}),el('span',{style:'margin-inline-start:auto;color:#5A6B78;font-size:12px',text:String(rows.filter(r=>r.have.includes(e.id)).length)})))),
+el('div',{style:'display:flex;gap:16px;flex-wrap:wrap;margin:8px 0;padding:10px 12px;background:#EEF1F4;border-radius:8px'},el('span',{},el('b',{text:String(rows.length)}),' '+M.total),el('span',{},el('b',{text:String(rows.length-todo.length)}),' '+M.complete),el('span',{style:'color:#B45309'},el('b',{text:String(todo.length)}),' '+M.toUpdate)),
+el('div',{style:'display:flex;gap:8px;flex-wrap:wrap'},btn(M.pilot,async()=>{if(!chosen.size){say(M.none);return}const list=need().slice(0,10);const bad=await apply(list,'pilot');const v=await verify(list.map(r=>r.id));render(el('table',{style:'width:100%;border-collapse:collapse;margin-top:10px;font-size:13px'},el('tr',{},['customerId',M.before,M.after,''].map(h=>el('th',{style:'text-align:start;border-bottom:1px solid #DBE2E8;padding:4px',text:h}))),v.map(x=>{const lg=logRows.find(l=>l[0]===x.id)||[];return el('tr',{},el('td',{style:'padding:4px',text:x.id}),el('td',{style:'padding:4px;color:#5A6B78',text:lg[1]||''}),el('td',{style:'padding:4px',text:x.have.join('|')}),el('td',{style:'padding:4px;font-weight:700;color:'+(x.ok?'#15803D':'#B42318'),text:x.ok?M.ok:M.bad}))})))},true),btn(M.rest,async()=>{if(!chosen.size){say(M.none);return}const list=need();const bad=await apply(list,'rest');await readAll();const left=need().length;render(el('div',{style:'margin-top:10px;padding:10px 12px;border-radius:8px;background:'+(left?'#FDF1E1':'#E6F4EA')},el('b',{text:M.done+': '+(rows.length-left)+'/'+rows.length}),bad.length?el('div',{text:M.failed+': '+bad.join(', ')}):null))},true),btn(M.refresh,async()=>{await readAll();render()}),logRows.length?btn(M.log,dl):null),...(extra?[extra]:[]))};
+try{await readAll();render()}catch(e){say(e.message)}})();`;
   return 'javascript:' + encodeURIComponent(code.replace(/\n/g, ''));
 }
 

@@ -1,18 +1,18 @@
 {
-  "version": "7.4",
+  "version": "7.5",
   "date": "2026-10-29",
   "notes": {
     "ar": [
-      "المؤشر الرابع — سجل الأنشطة مع العملاء: لكل مهندس ما سجّله مع العملاء في الفترة (التذاكر)، وعدد العملاء المختلفين، وكم صار مهمة، وتوزيعها بالحالة والتصنيف — بجدول بأشرطة ودائرتين. تقرؤه إشارة المدير وأمر التقارير تلقائيًّا، بلا أوصاف ولا أسماء عملاء.",
-      "نقاط الفنيين طُويت خلف «عرض» في اللوحة — الفريق مهندسون لا فنيون — وتبقى لمن يحتاجها."
+      "لوحة تعيين ما بعد البيع على حسابات جدة — من صفحة «الفريق»: إشارة تُفتح داخل ماي أفاقي بدخولك، تختار المهندسين وترى التغطية، وتجرّب على عشرة بجدول قبل/بعد، ثم تطبّق على الباقي وتنزّل السجل. بإضافة فقط — لا يُحذف أحد موجود — وعلى فرع جدة فقط.",
+      "هذه هي الكتابة الوحيدة في البوابة كلها، بقاعدة حارس خاصة: طلب واحد بالاسم، الاتحاد نصًّا، الفرع نصًّا، وخلف الزرين فقط. أُثبت أن الحارس يرفض الاستبدال وتسريب الفرع وأي طلب كتابة آخر."
     ],
     "en": [
-      "Factor 4 — the activity log with customers: per engineer, what they logged with customers in the period (tickets), the distinct customers, how many became tasks, and the spread by status and category — a table with bars and two donuts. The manager bookmark and the reports prompt read it automatically, without descriptions or customer names.",
-      "Technician points are tucked behind “show” on the board — the team is engineers, not technicians — and stay there for whoever needs them."
+      "An after-sales assignment panel for Jeddah accounts — from the “Team” page: a bookmark opens it inside myafaqy with your sign-in; choose the engineers, see the coverage, pilot on ten with a before/after table, then apply to the rest and download the log. Add only — nobody already there is removed — and Jeddah branch only.",
+      "This is the one write in the whole portal, under its own guard rule: one named request, the union verbatim, the branch verbatim, and only behind the two buttons. The guard was proven to refuse replace mode, a branch leak and any other write."
     ],
     "ur": [
-      "چوتھا اشاریہ — گاہکوں کے ساتھ سرگرمیوں کا ریکارڈ: ہر انجینئر کے لیے مدت میں گاہکوں کے ساتھ درج کی گئی سرگرمیاں (ٹکٹ)، مختلف گاہک، کتنے ٹاسک بنے، اور حالت اور زمرے کی تقسیم — بار والا جدول اور دو دائرے۔ مینیجر بک مارک اور رپورٹس کی ہدایت اسے خود بخود پڑھتی ہیں، بغیر تفصیل یا گاہکوں کے ناموں کے۔",
-      "ٹیکنیشن پوائنٹس بورڈ پر «دکھائیں» کے پیچھے سمٹ گئے — ٹیم انجینئرز کی ہے، ٹیکنیشنز کی نہیں — اور جسے ضرورت ہو اس کے لیے وہیں رہتے ہیں۔"
+      "جدہ کے اکاؤنٹس پر آفٹر سیلز تفویض کا پینل — «ٹیم» کے صفحے سے: ایک بک مارک اسے آپ کے لاگ اِن سے مائی آفاقی کے اندر کھولتا ہے؛ انجینئرز چنیں، کوریج دیکھیں، پہلے/بعد کے جدول کے ساتھ دس پر آزمائیں، پھر باقی پر لاگو کریں اور لاگ ڈاؤن لوڈ کریں۔ صرف اضافہ — جو موجود ہے ہٹایا نہیں جاتا — اور صرف جدہ برانچ۔",
+      "یہ پورے پورٹل میں واحد لکھائی ہے، اپنے گارڈ اصول کے تحت: ایک نامزد درخواست، یونین بعینہ، برانچ بعینہ، اور صرف دو بٹنوں کے پیچھے۔ ثابت ہوا کہ گارڈ بدلنے کے انداز، برانچ کے رساؤ اور کسی بھی دوسری لکھائی کو مسترد کرتا ہے۔"
     ]
   }
 }

@@ -4,7 +4,7 @@ import {
   t as tr, L, LANGS, dirOf, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1,
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
-  parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts,
+  parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet,
 } from './core.js';
 
@@ -613,7 +613,17 @@ function renderTeam() {
   const leaderSelect = (id) => el('select', { onchange: (e) => save(id, { leaderId: e.target.value || null }) },
     el('option', { value: '', text: t('team_no_leader'), selected: !leaderOf(ro, id) }),
     people.filter((p) => p.id !== id).map((p) => el('option', { value: p.id, text: nameOf(p, lang) || p.id, selected: leaderOf(ro, id) === p.id })));
+  const ab = buildAssignBookmarklet(lang);
   set(body,
+    el('section', { class: 'assign-box' },
+      el('h2', { text: t('assign_h') }),
+      el('p', { class: 'hint', text: t('assign_sub') }),
+      el('ol', { class: 'assign-steps' }, ['assign_s1', 'assign_s2', 'assign_s3', 'assign_s4'].map((k) => el('li', { text: t(k) }))),
+      el('div', { class: 'row' },
+        el('a', { class: 'btn primary bm', href: ab, draggable: 'true', text: `⚙ ${t('assign_bm')}`, onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } }),
+        el('button', { type: 'button', class: 'btn', text: t('me_copy'), onclick: async () => { try { await navigator.clipboard.writeText(decodeURIComponent(ab)); toast(t('me_copied')); } catch { toast(t('me_copy_fail')); } } })),
+      el('p', { class: 'note', text: t('assign_warn') })),
+    el('h2', { text: t('team_roster_h') }),
     el('p', { class: 'note info', text: t('team_note') }),
     el('div', { class: 'row', style: 'margin-bottom:14px' },
       el('button', { type: 'button', class: 'btn primary', text: t('team_download'), onclick: download }),

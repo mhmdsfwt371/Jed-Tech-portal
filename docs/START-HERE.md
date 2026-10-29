@@ -34,6 +34,7 @@
 | `docs/decisions/0015-team-file-and-donuts.md` | ملف الفريق بالأرقام والدوائر |
 | `docs/decisions/0016-profile-and-board-as-designed.md` | تنفيذ التصميم المعتمد: الأزرار والأشرطة والتنبيهات والأعمدة |
 | `docs/decisions/0017-activity-log-factor-4.md` | المؤشر الرابع — سجل الأنشطة، وطيّ نقاط الفنيين |
+| `docs/decisions/0018-assignment-panel-the-one-write.md` | لوحة التعيين — الكتابة الوحيدة، داخل ماي أفاقي |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

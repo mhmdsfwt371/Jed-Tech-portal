@@ -82,7 +82,10 @@
 تصنيف (دعم العملاء، مشاكل برمجية، API، ربط حكومي)، حالة، وضع، وصف، ومرفقات، واختيار «إنشاء مهمة». تظهر كلها في شاشة
 التذاكر `ActivityLog/GetTicketsGrid` — الصفوف من الأحدث — بحقول: `ticketId`، `taskId`، `customerId`، `categoryId/category`،
 `caseId/case`، `statusId/status`، `createdById`، `createDate`. الحالات المرئية: Open وDone.
-**لم يُلتقط بعد:** طلب شاشة «حسابات ما بعد البيع» (المهندس المسؤول عن كل حساب) — مطلوب لمؤشر تغطية الحسابات.
+**التقاط ٢٩ أكتوبر (التعيين):** العملاء `PreCustomer/GetAllPreCustomers` (صف: `id`، `dolphinId`، `branchName`، `afterSalesIds[]`)؛
+حسابات ما بعد البيع `AfterSales/GetAfterSalesRequestGrid` (صف: `customerId`، `branchCode`، `afterSalesManIds[]`، `connectedDevices`،
+`segment`)؛ قائمة المهندسين `AfterSales/GetAllAfterSalesEngineers`؛ **والتعيين** `POST AfterSales/AssignAfterSales`
+`{customerId, afterSalesIds[]}` — القائمة **تحلّ محل** القديمة (القرار 0018). لا مفتاح فرع مؤكد في `search`.
 
 ### الطوابير
 `Task/GetUsersTasksGroups`: يدوية ٣، تشغيل ٥، مالية ٧، ما بعد البيع ٨، **البحث والتطوير ١٢**، DVR ١٤، ومهامي ١٠٠٠٠٠،
