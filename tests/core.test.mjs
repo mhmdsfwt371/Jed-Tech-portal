@@ -5,7 +5,7 @@ import {
   factor1, creditOf, GROUP, formatHours, formatRate, sampleDataset, saudiToday, ymd,
   saudiBoundsZ, toIso, saudiDay, peopleOf, defaultTeam, nameOf, EMAIL_MODULE, SCHEMAS,
   buildBookmarklet, parseMe, myProfile, ME_SCHEMA, parseMePayload, profileMonths, monthWindows, scopeOf, ME_SCHEMA_V2, upgradeMe,
-  parseRoster, mergeRoster, positionOf, leaderOf, reportsOf, donutParts,
+  parseRoster, mergeRoster, positionOf, leaderOf, reportsOf, donutParts, periodWindows, teamAlerts,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS,
 } from '../core.js';
 import { gzipSync } from 'node:zlib';
@@ -399,6 +399,25 @@ test('donuts: shares sum to one, dashes sum to the circumference, zero parts dro
   const C = 2 * Math.PI * 40;
   assert.ok(Math.abs(d.parts.reduce((s, p) => s + parseFloat(p.dasharray.split(' ')[0]), 0) - C) < 0.05);
   assert.equal(donutParts([], 40).total, 0);
+});
+
+test('period windows: quarter so far against the same days of last quarter; six months against the six before', () => {
+  const now = new Date('2026-10-29T10:00:00Z');
+  assert.deepEqual(periodWindows('quarter', now), { kind: 'quarter', day: 29, this: { from: '2026-10-01', to: '2026-10-29' }, last: { from: '2026-07-01', to: '2026-07-29' } });
+  assert.deepEqual(periodWindows('quarter', new Date('2027-01-15T10:00:00Z')).last, { from: '2026-10-01', to: '2026-10-15' }, 'across the year');
+  const h = periodWindows('half', now);
+  assert.equal(h.this.from, '2026-04-30'); assert.equal(h.last.to, '2026-04-29'); assert.ok(h.last.from < h.this.from);
+  assert.equal(periodWindows('month', now).kind, 'month');
+});
+
+test('team alerts: the person to look at (with reasons) and the clearest improvement; nobody flagged on thin data', () => {
+  const row = (id, t, l) => ({ id, this: { assigned: 20, done: t.done, rate: t.rate, medianHours: t.med, open: t.open }, last: { done: l } });
+  const below = [row('a', { done: 18, rate: 0.95, med: 2, open: 2 }, 12), row('b', { done: 9, rate: 0.6, med: 9, open: 11 }, 10), row('c', { done: 15, rate: 0.9, med: 2.5, open: 3 }, 14)];
+  const al = teamAlerts(below);
+  assert.equal(al.attention.id, 'b');
+  assert.deepEqual(al.attention.why.map((w) => w.k).sort(), ['median', 'open', 'rate']);
+  assert.deepEqual(al.improved, { id: 'a', delta: 6 });
+  assert.deepEqual(teamAlerts([{ id: 'x', this: { assigned: 2, done: 1, rate: 0.5, medianHours: 50, open: 1 }, last: { done: 0 } }]), { attention: null, improved: null }, 'fewer than five tasks: no verdict');
 });
 
 test('formatting', () => {

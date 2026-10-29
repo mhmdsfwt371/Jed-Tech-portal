@@ -32,6 +32,7 @@
 | `docs/decisions/0013-work-list-and-manager-bookmark.md` | قائمة الشغل في «مؤشراتي» وإشارة المدير |
 | `docs/decisions/0014-profile-scoped-by-myafaqy.md` | ملف الموظف وقائد الفريق والمدير، ومن يرى من |
 | `docs/decisions/0015-team-file-and-donuts.md` | ملف الفريق بالأرقام والدوائر |
+| `docs/decisions/0016-profile-and-board-as-designed.md` | تنفيذ التصميم المعتمد: الأزرار والأشرطة والتنبيهات والأعمدة |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

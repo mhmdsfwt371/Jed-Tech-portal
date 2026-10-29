@@ -219,6 +219,26 @@ export const STRINGS = {
     others: 'الباقون',
     g_team_h: 'الفريق — المناصب ومن يتبع من',
     g_team_b: 'في صفحة «الفريق» يكتب المدير منصب كل شخص ومن يتبع له، أمام اسمه كما يأتي من ماي أفاقي. يُحفظ ذلك بأرقام ماي أفاقي لا بالأسماء، فلا تظهر أسماء في أي ملف. المكتوب يبقى على الجهاز، ولكي يراه الفريق كله يُنزَّل الملف «team.json» ويوضع في المستودع. المنصب يظهر في بطاقة «مؤشراتي» وفي جداول الفريق ولوحة المؤشرات، و«يتبع لـ» يجعل من يُكتب قائدًا يرى من تحته في قسم «فريقي» — إلى جانب من يضعهم ماي أفاقي تحته. والدوائر في «مؤشراتي» ولوحة المؤشرات تُظهر مصادر الشغل وتوزيعه وحالة التذاكر.',
+    me_period_month: 'هذا الشهر',
+    me_period_quarter: 'هذا الربع',
+    me_period_half: 'آخر ٦ أشهر',
+    me_cmp_h_month: 'هذا الشهر مقابل الشهر الماضي — حتى يوم {d}',
+    me_cmp_h_quarter: 'هذا الربع مقابل الربع الماضي — أول {d} يومًا',
+    me_cmp_h_half: 'آخر ستة أشهر مقابل الستة قبلها',
+    me_last_period: 'الفترة السابقة',
+    me_update: 'تحديث من ماي أفاقي',
+    me_refresh_hint: 'افتح ماي أفاقي واضغط الإشارة هناك — البوابة تتحدّث وحدها.',
+    me_setup_again: 'إعداد الإشارة',
+    alert_attention: 'يحتاج نظرة: {name} — {why}.',
+    alert_improved: 'تحسّن واضح: {name} — ‎+{n}‎ منجزة عن الفترة السابقة على الأيام نفسها.',
+    why_rate: 'نسبة إنجاز {r}',
+    why_open: '{n} مهمة مفتوحة',
+    why_median: 'وسيط {h} — أكثر من ضعف الفريق',
+    kpi_table_sub: 'الشريط = المنجزة نسبةً إلى الأعلى في الفريق.',
+    kpi_sort_done: 'بالمنجزة',
+    kpi_sort_median: 'بالوسيط',
+    kpi_sort_open: 'بالمفتوحة',
+    trend_sub: 'إجمالي الفريق لكل فترة مرفوعة. العمود = المنجزة، وتحته نسبة الإنجاز والوسيط.',
   },
   en: {
     brand: 'Afaqy', portal: 'Technical team portal — Jeddah', nav_data: 'Data', nav_kpi: 'KPIs',
@@ -429,6 +449,26 @@ export const STRINGS = {
     others: 'Others',
     g_team_h: 'Team — positions and who reports to whom',
     g_team_b: 'On the “Team” page the manager writes each person’s position and who they report to, next to the name as it comes from myafaqy. It is saved by myafaqy ids, not names, so no names appear in any file. What is written stays on the device; for the whole team to see it, the “team.json” file is downloaded and placed in the repository. The position shows on the “My KPIs” card, in team tables and on the KPI board, and “reports to” lets whoever is named a leader see their people in “My team” — alongside those myafaqy places below them. The donuts on “My KPIs” and the KPI board show where work came from, how it is spread, and the tickets’ state.',
+    me_period_month: 'This month',
+    me_period_quarter: 'This quarter',
+    me_period_half: 'Last 6 months',
+    me_cmp_h_month: 'This month against last month — up to day {d}',
+    me_cmp_h_quarter: 'This quarter against last quarter — the first {d} days',
+    me_cmp_h_half: 'The last six months against the six before',
+    me_last_period: 'Previous period',
+    me_update: 'Update from myafaqy',
+    me_refresh_hint: 'Open myafaqy and press the bookmark there — the portal updates by itself.',
+    me_setup_again: 'Bookmark setup',
+    alert_attention: 'Needs a look: {name} — {why}.',
+    alert_improved: 'Clear improvement: {name} — ‎+{n}‎ completed over the previous period on the same days.',
+    why_rate: 'completion rate {r}',
+    why_open: '{n} open tasks',
+    why_median: 'median {h} — more than twice the team’s',
+    kpi_table_sub: 'The bar is completed work relative to the team’s highest.',
+    kpi_sort_done: 'By completed',
+    kpi_sort_median: 'By median',
+    kpi_sort_open: 'By open',
+    trend_sub: 'The team total per uploaded period. The column is completed work; below it, the completion rate and the median.',
   },
   ur: {
     brand: 'آفاقی', portal: 'تکنیکی ٹیم کا پورٹل — جدہ', nav_data: 'ڈیٹا', nav_kpi: 'کارکردگی کے اشاریے',
@@ -639,6 +679,26 @@ export const STRINGS = {
     others: 'باقی',
     g_team_h: 'ٹیم — عہدے اور کون کس کے ماتحت',
     g_team_b: '«ٹیم» کے صفحے پر مینیجر ہر فرد کا عہدہ اور اس کا سربراہ لکھتا ہے، اس نام کے سامنے جو مائی آفاقی سے آتا ہے۔ یہ ناموں سے نہیں بلکہ مائی آفاقی کی شناختوں سے محفوظ ہوتا ہے، اس لیے کسی فائل میں نام نہیں آتے۔ لکھا ہوا آلے پر رہتا ہے؛ پوری ٹیم کو دکھانے کے لیے «team.json» فائل ڈاؤن لوڈ کر کے ریپوزٹری میں رکھی جاتی ہے۔ عہدہ «میرے اشاریے» کے کارڈ، ٹیم کے جدولوں اور اشاریوں کے بورڈ پر دکھائی دیتا ہے، اور «ماتحت» جسے سربراہ لکھا جائے اسے «میری ٹیم» میں اس کے لوگ دکھاتا ہے — ان کے ساتھ جنہیں مائی آفاقی اس کے نیچے رکھتا ہے۔ «میرے اشاریے» اور اشاریوں کے بورڈ پر دائرے دکھاتے ہیں کہ کام کہاں سے آیا، کیسے تقسیم ہوا، اور ٹکٹس کی حالت۔',
+    me_period_month: 'یہ مہینہ',
+    me_period_quarter: 'یہ سہ ماہی',
+    me_period_half: 'پچھلے ۶ ماہ',
+    me_cmp_h_month: 'یہ مہینہ بمقابلہ پچھلا مہینہ — دن {d} تک',
+    me_cmp_h_quarter: 'یہ سہ ماہی بمقابلہ پچھلی سہ ماہی — پہلے {d} دن',
+    me_cmp_h_half: 'پچھلے چھ ماہ بمقابلہ ان سے پہلے کے چھ',
+    me_last_period: 'پچھلی مدت',
+    me_update: 'مائی آفاقی سے تازہ کریں',
+    me_refresh_hint: 'مائی آفاقی کھولیں اور وہاں بک مارک دبائیں — پورٹل خود تازہ ہو جاتا ہے۔',
+    me_setup_again: 'بک مارک کی ترتیب',
+    alert_attention: 'توجہ درکار: {name} — {why}۔',
+    alert_improved: 'واضح بہتری: {name} — ‎+{n}‎ مکمل، انہی دنوں پر پچھلی مدت سے زیادہ۔',
+    why_rate: 'تکمیل کی شرح {r}',
+    why_open: '{n} کھلے ٹاسک',
+    why_median: 'وسط {h} — ٹیم سے دگنے سے زیادہ',
+    kpi_table_sub: 'بار = ٹیم کے سب سے زیادہ کے نسبت مکمل کام۔',
+    kpi_sort_done: 'مکمل کے مطابق',
+    kpi_sort_median: 'وسط کے مطابق',
+    kpi_sort_open: 'کھلے کے مطابق',
+    trend_sub: 'ہر اپ لوڈ شدہ مدت کا ٹیم مجموعہ۔ کالم = مکمل کام؛ نیچے تکمیل کی شرح اور وسط۔',
   },
 };
 
@@ -1399,6 +1459,49 @@ export function monthWindows(now = new Date()) {
   return { day: d, this: { from: `${y}-${pad(m)}-01`, to: today }, last: { from: `${py}-${pad(pm)}-01`, to: `${py}-${pad(pm)}-${pad(Math.min(d, lastDay))}` } };
 }
 
+/** A period so far against the same number of days before it: this month, this quarter, or the last six months. */
+export function periodWindows(kind = 'month', now = new Date()) {
+  if (kind === 'month') return { kind, ...monthWindows(now) };
+  const today = ymd(saudiToday(now));
+  const [y, m] = today.split('-').map(Number);
+  const dayMs = 86400000, at = (d) => Date.parse(`${d}T00:00:00Z`), toYmd = (ms) => new Date(ms).toISOString().slice(0, 10);
+  let start, prevStart;
+  if (kind === 'quarter') {
+    const qm = Math.floor((m - 1) / 3) * 3 + 1;
+    start = `${y}-${pad(qm)}-01`;
+    prevStart = qm === 1 ? `${y - 1}-10-01` : `${y}-${pad(qm - 3)}-01`;
+  } else {               // 'half': the last six months against the six before — both inside the twelve months the bookmark reads
+    start = toYmd(at(today) - 182 * dayMs);
+    prevStart = toYmd(at(start) - 183 * dayMs);
+  }
+  const span = Math.round((at(today) - at(start)) / dayMs);
+  const prevEnd = toYmd(at(prevStart) + span * dayMs);
+  const lastCap = kind === 'quarter' ? toYmd(at(start) - dayMs) : toYmd(at(start) - dayMs);
+  return { kind, day: span + 1, this: { from: start, to: today }, last: { from: prevStart, to: prevEnd < lastCap ? prevEnd : lastCap } };
+}
+
+/** Two things a leader looks for first: who needs a look, and who clearly improved — with the reasons. */
+export function teamAlerts(below) {
+  const rows = below.filter((r) => r.this.assigned >= 5 || r.this.done >= 5);
+  if (!rows.length) return { attention: null, improved: null };
+  const meds = rows.map((r) => r.this.medianHours).filter((v) => v != null).sort((a, b) => a - b);
+  const teamMed = meds.length ? meds[Math.floor(meds.length / 2)] : null;
+  const opens = rows.map((r) => r.this.open);
+  const maxOpen = Math.max(...opens);
+  let attention = null;
+  for (const r of rows) {
+    const why = [];
+    if (r.this.rate != null && r.this.rate < 0.85) why.push({ k: 'rate', v: r.this.rate });
+    if (r.this.open >= 8 && r.this.open === maxOpen) why.push({ k: 'open', v: r.this.open });
+    if (teamMed && r.this.medianHours != null && r.this.medianHours > 2 * teamMed) why.push({ k: 'median', v: r.this.medianHours });
+    const score = why.length + (why.some((w) => w.k === 'rate') ? 1 : 0);
+    if (why.length && (!attention || score > attention.score)) attention = { id: r.id, why, score };
+  }
+  let improved = null;
+  for (const r of rows) { const d = r.this.done - r.last.done; if (d >= 3 && (!improved || d > improved.delta)) improved = { id: r.id, delta: d }; }
+  return { attention, improved };
+}
+
 /** Who the hand-over lets this person see: assignees in the data, the default team, and the people below them. */
 export function scopeOf(me, roster = null) {
   const visible = [...new Set(me.tasks.filter((x) => x.assigneeId).map((x) => x.assigneeId))];
@@ -1412,8 +1515,8 @@ export function scopeOf(me, roster = null) {
 }
 
 /** The person's month against last month, the team average (no names) and the rows of the people below them. */
-export function profileMonths(me, now = new Date(), roster = null) {
-  const w = monthWindows(now);
+export function profileMonths(me, now = new Date(), roster = null, kind = 'month') {
+  const w = periodWindows(kind, now);
   const zero = { assigned: 0, done: 0, rate: null, medianHours: null, open: 0, selfLogged: 0, fromEmail: 0 };
   const row = (range, id) => factor1(me.tasks, { range, team: [id] }).people[0] || { ...zero, id };
   const sc = scopeOf(me, roster);

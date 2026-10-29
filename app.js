@@ -4,7 +4,7 @@ import {
   t as tr, L, LANGS, dirOf, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1,
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
-  parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay,
+  parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts,
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, REPORTS_SCHEMA, buildManagerBookmarklet,
 } from './core.js';
 
@@ -92,6 +92,8 @@ function renderTools() {
 
 // ---------- my KPIs (ADR-0010) ----------
 let me = null;
+let meKind = 'month';      // the profile's comparison window: month | quarter | half
+let kpiSort = 'done';      // the board's order: done | median | open
 let rosterRepo = null;      // team.json from the repository (ids, positions, leaders — never names)
 let rosterDevice = null;    // this device's own entries, which win
 const roster = () => mergeRoster(rosterRepo, rosterDevice);
@@ -134,7 +136,7 @@ function renderMe(waiting = false) {
   if (waiting) { set(body, el('div', { class: 'empty', text: t('me_wait') })); return; }
   if (!me) { set(body, el('div', { class: 'step me-setup' }, el('span', { class: 'n', text: '١' }), el('div', {}, el('h3', { text: t('me_how_h') }), ...setup))); return; }
   const qs = myProfile(me);
-  const pm = profileMonths(me, new Date(), roster());
+  const pm = profileMonths(me, new Date(), roster(), meKind);
   const fmtDate = (iso) => (iso ? `\u2066${iso.slice(0, 10)}\u2069` : '');
   const mine = openTasks(me.tasks, me.user.id);
   const hrsAge = (h) => (h == null ? '' : h < 48 ? t('hours', { n: Math.round(h) }) : t('days', { n: Math.round(h / 24) }));
@@ -160,7 +162,15 @@ function renderMe(waiting = false) {
     el('div', { class: 'work-main' }, el('span', { class: 'work-title', text: x.title || t('me_untitled') }),
       x.customer ? el('span', { class: 'work-cust', text: x.customer }) : null),
     el('div', { class: 'work-meta' }, el('span', { text: x.type || '' }), el('span', { class: 'work-age', text: hrsAge(x.ageHours) })));
+  const pills = (cur, kinds, onPick) => el('div', { class: 'pills' }, kinds.map(([k, label]) => el('button', { type: 'button', class: `pill-btn${cur === k ? ' on' : ''}`, text: label, onclick: () => onPick(k) })));
+  const alerts = teamAlerts(pm.below);
+  const whyText = (w) => (w.k === 'rate' ? t('why_rate', { r: formatRate(w.v) }) : w.k === 'open' ? t('why_open', { n: w.v }) : t('why_median', { h: formatHours(w.v, lang) }));
+  const maxDone = Math.max(1, ...pm.below.map((r) => r.this.done));
+  const bar = (v, max) => el('div', { class: 'bar-cell' }, el('b', { text: String(v) }), el('i', {}, el('span', { style: `width:${Math.round((v / max) * 100)}%` })));
   set(body,
+    el('div', { class: 'row', style: 'justify-content:space-between;margin-bottom:12px' },
+      el('details', { class: 'me-again' }, el('summary', { text: t('me_setup_again') }), ...setup),
+      el('a', { class: 'btn primary', href: 'https://myafaqy.com/', target: '_blank', rel: 'noopener', text: `↻ ${t('me_update')}`, onclick: () => toast(t('me_refresh_hint')) })),
     el('div', { class: 'me-card' },
       el('div', {}, el('h2', { class: 'me-name', text: who }),
         positionOf(roster(), me.user.id, lang) ? el('p', { class: 'me-pos', text: positionOf(roster(), me.user.id, lang) }) : null,
@@ -169,9 +179,11 @@ function renderMe(waiting = false) {
       el('div', { class: 'me-facts' },
         el('span', { text: t('me_updated', { date: fmtDate(me.extractedAt) }) }),
         el('span', { text: t('me_scope', { n: pm.scope.visible.length }) }))),
-    el('h2', { text: t('me_month_h', { d: pm.windows.day }) }),
+    el('div', { class: 'row', style: 'justify-content:space-between;align-items:flex-end' },
+      el('h2', { style: 'margin:0', text: t(`me_cmp_h_${meKind}`, { d: pm.windows.day }) }),
+      pills(meKind, [['month', t('me_period_month')], ['quarter', t('me_period_quarter')], ['half', t('me_period_half')]], (k) => { meKind = k; renderMe(); })),
     el('p', { class: 'hint', text: t('me_month_sub', { a: pm.windows.this.from, b: pm.windows.this.to, c: pm.windows.last.from, d: pm.windows.last.to }) }),
-    cards(pm.mine.this, pm.mine.last, '', t('me_last_month')),
+    cards(pm.mine.this, pm.mine.last, '', t('me_last_period')),
     (pm.sources.email + pm.sources.self + pm.sources.other) ? el('div', { class: 'donuts' },
       donut(t('me_sources_h'), [{ label: t('src_other'), value: pm.sources.other }, { label: t('src_email'), value: pm.sources.email }, { label: t('src_self'), value: pm.sources.self }])) : null,
     el('h2', { text: t('me_open_h', { n: mine.length }) }),
@@ -187,9 +199,12 @@ function renderMe(waiting = false) {
       el('div', { class: 'table-wrap' }, el('table', {},
         el('thead', {}, el('tr', {}, ...['col_person', 'col_assigned', 'col_done', 'me_vs_last', 'col_rate', 'col_median', 'col_open'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
         el('tbody', {}, pm.below.map((r) => el('tr', {},
-          el('td', {}, el('div', { text: nm(r.id) }), positionOf(roster(), r.id, lang) ? el('div', { class: 'hint', text: positionOf(roster(), r.id, lang) }) : null), el('td', { class: 'num', text: String(r.this.assigned) }), el('td', { class: 'num', text: String(r.this.done) }),
+          el('td', {}, el('div', { text: nm(r.id) }), positionOf(roster(), r.id, lang) ? el('div', { class: 'hint', text: positionOf(roster(), r.id, lang) }) : null), el('td', { class: 'num', text: String(r.this.assigned) }), el('td', { class: 'num' }, bar(r.this.done, maxDone)),
           el('td', { class: 'num' }, arrow('done', r.this, r.last)), el('td', { class: 'num', text: formatRate(r.this.rate) }),
-          el('td', { class: 'num', text: r.this.medianHours == null ? '—' : formatHours(r.this.medianHours, lang) }), el('td', { class: 'num', text: String(r.this.open) }))))))] : null,
+          el('td', { class: 'num', text: r.this.medianHours == null ? '—' : formatHours(r.this.medianHours, lang) }), el('td', { class: 'num', text: String(r.this.open) })))))),
+      (alerts.attention || alerts.improved) ? el('div', { class: 'alerts' },
+        alerts.attention ? el('div', { class: 'alert warn', text: t('alert_attention', { name: nm(alerts.attention.id), why: alerts.attention.why.map(whyText).join('، ') }) }) : null,
+        alerts.improved ? el('div', { class: 'alert ok', text: t('alert_improved', { name: nm(alerts.improved.id), n: alerts.improved.delta }) }) : null) : null] : null,
     el('h2', { text: t('me_history_h') }),
     el('div', { class: 'table-wrap' }, el('table', {},
       el('thead', {}, el('tr', {}, ...['me_q', 'col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_median', 'col_email', 'col_self', 'col_cancelled'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
@@ -500,16 +515,18 @@ function renderKpi() {
   const rateCell = (r) => el('span', { class: 'rate' }, el('i', {}, el('b', { style: `width:${Math.round((r || 0) * 100)}%` })), formatRate(r));
   const name = (r) => (r.id === GROUP ? t('group_bucket') : (nameOf(peopleById.get(r.id), lang) || r.name));
   const cols = ['col_person', 'col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_median', 'col_open', 'col_cancelled', 'col_email', 'col_self', ...(ds.rdKnown ? ['col_rd'] : []), 'col_created'];
+  const maxDone = Math.max(1, ...f.people.map((r) => r.done));
+  const ordered = [...f.people].sort((a, b) => kpiSort === 'median' ? ((b.medianHours ?? -1) - (a.medianHours ?? -1)) : kpiSort === 'open' ? (b.open - a.open) : (b.done - a.done));
   const line = (r, cls) => el('tr', { class: cls },
     el('td', {}, el('div', { text: cls === 'total' ? t('team') : name(r) }), cls || !positionOf(roster(), r.id, lang) ? null : el('div', { class: 'hint', text: positionOf(roster(), r.id, lang) })),
-    el('td', { class: 'num', text: r.assigned }), el('td', { class: 'num', text: r.done }),
+    el('td', { class: 'num', text: r.assigned }), el('td', { class: 'num' }, cls ? String(r.done) : el('div', { class: 'bar-cell' }, el('b', { text: String(r.done) }), el('i', {}, el('span', { style: `width:${Math.round((r.done / maxDone) * 100)}%` })))),
     el('td', { class: 'num' }, rateCell(r.rate)),
     el('td', { class: 'num', text: formatHours(r.avgHours, lang) }), el('td', { class: 'num', text: formatHours(r.medianHours, lang) }),
     el('td', { class: 'num', text: r.open }), el('td', { class: 'num', text: r.cancelled }),
     el('td', { class: 'num', text: r.fromEmail }), el('td', { class: 'num', text: r.selfLogged }), ds.rdKnown ? el('td', { class: 'num', text: r.rd }) : null, el('td', { class: 'num', text: r.created }));
   const table = el('div', { class: 'table-wrap' }, el('table', {},
     el('thead', {}, el('tr', {}, cols.map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
-    el('tbody', {}, f.people.map((r) => line(r)), f.group ? line({ ...f.group, id: GROUP }, 'group') : null, line(f.team, 'total'))));
+    el('tbody', {}, ordered.map((r) => line(r)), f.group ? line({ ...f.group, id: GROUP }, 'group') : null, line(f.team, 'total'))));
 
   // comparison: team totals per uploaded period, oldest to newest
   const trend = [...datasets].reverse().map((d) => ({ d, f: factor1(d.tasks, { range: d.range, team }).team }));
@@ -525,14 +542,24 @@ function renderKpi() {
     renderTeamPicker(people, team),
     ds.sample ? el('p', { class: 'note sample', text: t('sample_note') }) : null,
     c.known && !c.complete ? el('p', { class: 'note', text: `${t('data_incomplete_warn')} (${t('incomplete', { got: c.got, want: c.want })})` }) : null,
-    el('div', { class: 'strip' },
+    el('div', { class: 'strip six' },
+      el('div', { class: 'lead' }, el('b', { text: f.team.done }), el('span', { text: t('col_done') })),
       el('div', {}, el('b', { text: f.team.assigned }), el('span', { text: t('col_assigned') })),
-      el('div', {}, el('b', { text: f.team.done }), el('span', { text: t('col_done') })),
       el('div', {}, el('b', { text: formatRate(f.team.rate) }), el('span', { text: t('col_rate') })),
-      el('div', {}, el('b', { text: formatHours(f.team.medianHours, lang) }), el('span', { text: t('col_median') }))),
+      el('div', {}, el('b', { text: formatHours(f.team.medianHours, lang) }), el('span', { text: t('col_median') })),
+      el('div', {}, el('b', { text: f.team.open }), el('span', { text: t('col_open') })),
+      el('div', {}, el('b', { text: `${f.team.fromEmail} · ${f.team.selfLogged}` }), el('span', { text: `${t('col_email')} · ${t('col_self')}` }))),
+    el('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin-bottom:8px' },
+      el('p', { class: 'hint', style: 'margin:0', text: t('kpi_table_sub') }),
+      el('div', { class: 'pills' }, [['done', 'kpi_sort_done'], ['median', 'kpi_sort_median'], ['open', 'kpi_sort_open']].map(([k, label]) =>
+        el('button', { type: 'button', class: `pill-btn${kpiSort === k ? ' on' : ''}`, text: t(label), onclick: () => { kpiSort = k; renderKpi(); } })))),
     table,
     renderKpiDonuts(ds, f, team),
-    datasets.length > 1 ? [el('h2', { text: t('trend') }), trendTable] : null,
+    datasets.length > 1 ? [el('h2', { text: t('trend') }), el('p', { class: 'hint', text: t('trend_sub') }),
+      el('div', { class: 'columns' }, trend.map(({ d, f: x }) => el('div', { class: `column${d.key === kpiKey ? ' on' : ''}` },
+        el('b', { text: String(x.done) }), el('i', { style: `height:${Math.max(6, Math.round((x.done / Math.max(1, ...trend.map((q) => q.f.done))) * 140))}px` }),
+        el('span', { class: 'ltr', text: `${d.range.from.slice(0, 7)} → ${d.range.to.slice(0, 7)}` }), el('small', { text: `${formatRate(x.rate)} · ${formatHours(x.medianHours, lang)}` })))),
+      trendTable] : null,
     renderReports(ds.key),
     el('h2', { text: t('definitions') }),
     el('ul', { class: 'defs' }, DEFINITIONS.map((k) => el('li', { text: t(k) }))));

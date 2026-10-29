@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v7.3 — 2026-10-29
+
+- «مؤشراتي» كما في التصميم المعتمد: زر «تحديث من ماي أفاقي» فوق البطاقة، وأزرار الفترة — هذا الشهر، هذا الربع، آخر ستة أشهر — تقلب المقارنة كلها على الأيام نفسها من الفترة السابقة.
+- «فريقي» بأشرطة للمنجزة، وتحته تنبيهان بقواعد معلنة: «يحتاج نظرة» مع أسبابه، و«تحسّن واضح».
+- لوحة المؤشرات: شريط ستة أرقام، وترتيب الجدول بالمنجزة أو الوسيط أو المفتوحة، وأشرطة المنجزة، ومقارنة الفترات أعمدةً.
+
+<details><summary>English</summary>
+
+- “My KPIs” as in the approved design: an “Update from myafaqy” button above the card, and period buttons — this month, this quarter, the last six months — that switch the whole comparison over the same days of the previous period.
+- “My team” with bars for completed work, and two alerts beneath it with stated rules: “Needs a look” with its reasons, and “Clear improvement”.
+- The KPI board: a six-number strip, table ordering by completed, median or open, bars for completed work, and the period comparison as columns.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «میرے اشاریے» منظور شدہ ڈیزائن کے مطابق: کارڈ کے اوپر «مائی آفاقی سے تازہ کریں» کا بٹن، اور مدت کے بٹن — یہ مہینہ، یہ سہ ماہی، پچھلے چھ ماہ — جو پوری موازنے کو پچھلی مدت کے انہی دنوں پر بدل دیتے ہیں۔
+- «میری ٹیم» میں مکمل کام کے بار، اور اس کے نیچے واضح اصولوں والے دو انتباہات: «توجہ درکار» اس کی وجوہات کے ساتھ، اور «واضح بہتری»۔
+- اشاریوں کا بورڈ: چھ اعداد کی پٹی، مکمل، وسط یا کھلے کے مطابق جدول کی ترتیب، مکمل کام کے بار، اور مدتوں کا موازنہ کالموں کی صورت میں۔
+
+</div>
+</details>
+
+
 ## v7.2 — 2026-10-29
 
 - صفحة «الفريق»: المدير يكتب منصب كل شخص ومن يتبع له أمام اسمه كما يأتي من ماي أفاقي. يُحفظ بأرقام ماي أفاقي لا بالأسماء، ويُنزَّل «team.json» ليوضع في المستودع فيراه الفريق كله — بلا اسم واحد في الملف.
