@@ -1,15 +1,15 @@
 {
-  "version": "8.24",
+  "version": "8.25",
   "date": "2026-10-30",
   "notes": {
     "ar": [
-      "«ردود الإيميل — من صندوقك» على لوحة المؤشرات: بتسجيل دخولك بحساب مايكروسوفت تقرأ البوابة صندوق الوارد عندك (قراءة فقط) وتعرض لكل شخص عدد ردوده ونصيبه، والمحادثات التي رد فيها، ونسبة الصعب منها (ربط وتكامل وطلبات جديدة)، ووسيط وقت أول رد — يوم أو أسبوع أو شهر أو ربع سنة. نص الإيميلات لا يُحفظ، ومفتاح الدخول لا يُحفظ."
+      "سنة كاملة بأرباعها: «نصيب كل شخص» و«ردود الإيميل» فيهما الآن اختيار أي ربع من آخر أربعة، وعرض «سنة» يضع الأرباع الأربعة جنبًا إلى جنب لكل شخص. قراءة الصندوق تغطي آخر سنة. وربط وصل صار من الإيميلات السهلة، إلا إذا جاء معه كلام ربط برمجي حقيقي."
     ],
     "en": [
-      "“Email replies — from your inbox” on the KPI board: sign in with your Microsoft account and the portal reads your inbox (read-only), then shows for each person their replies and share, the threads they answered, the hard share among them (integration, new requests), and the median time to the first reply — by day, week, month or quarter. Email text is never stored, and neither is the sign-in token."
+      "A full year by quarter: “Each person’s share” and “Email replies” now let you pick any of the last four quarters, and a “Year” view puts the four quarters side by side for each person. The inbox read covers the last year. WASL linking now counts as an easy email, unless real integration words come with it."
     ],
     "ur": [
-      "اشاریوں کے بورڈ پر «ای میل جوابات — آپ کے ان باکس سے»: اپنے مائیکروسافٹ اکاؤنٹ سے سائن اِن کریں تو پورٹل آپ کا ان باکس پڑھتا ہے (صرف پڑھنا)، پھر ہر فرد کے جوابات اور حصہ، جواب دی گئی گفتگو، ان میں مشکل کا حصہ (ربط، نئی درخواستیں)، اور پہلے جواب کا وسط وقت دکھاتا ہے — دن، ہفتہ، مہینہ یا سہ ماہی کے حساب سے۔ ای میل کا متن کبھی محفوظ نہیں ہوتا، نہ ہی سائن اِن ٹوکن۔"
+      "سہ ماہیوں کے ساتھ پورا سال: «ہر فرد کا حصہ» اور «ای میل جوابات» میں اب پچھلی چار میں سے کوئی بھی سہ ماہی چنیں، اور «سال» کا منظر ہر فرد کے لیے چاروں سہ ماہیاں ساتھ ساتھ رکھتا ہے۔ ان باکس پچھلے سال تک پڑھا جاتا ہے۔ وصل ربط اب آسان ای میل شمار ہوتا ہے، جب تک اس کے ساتھ حقیقی انضمام کے الفاظ نہ ہوں۔"
     ]
   }
 }

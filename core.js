@@ -1269,6 +1269,13 @@ export function shareWindow(kind, day) {
   if (kind === 'quarter') { const q = Math.floor(m / 3) * 3; return { from: ymd(new Date(Date.UTC(y, q, 1))), to: ymd(new Date(Date.UTC(y, q + 3, 0))) }; }
   return { from: ymd(new Date(Date.UTC(y, m, 1))), to: ymd(new Date(Date.UTC(y, m + 1, 0))) };
 }
+/** The last n calendar quarters ending with the one holding `day`, newest first: [{ label: 'Q4 2026', from, to }]. */
+export function lastQuarters(day, n = 4) {
+  const d = new Date(`${day}T00:00:00Z`); let y = d.getUTCFullYear(), q = Math.floor(d.getUTCMonth() / 3);
+  const out = [];
+  for (let i = 0; i < n; i++) { out.push({ label: `Q${q + 1} ${y}`, from: ymd(new Date(Date.UTC(y, q * 3, 1))), to: ymd(new Date(Date.UTC(y, q * 3 + 3, 0))) }); q--; if (q < 0) { q = 3; y--; } }
+  return out;
+}
 /** Each person's share of the team's completed work in a window: tasks, weighted points, and email tasks (module 146). */
 export function workloadShare(tasks, wt, team, win) {
   const inW = (iso) => { const d = saudiDay(iso); return d && d >= win.from && d <= win.to; };
@@ -1289,7 +1296,10 @@ export function workloadShare(tasks, wt, team, win) {
 // the engineers' replies. The portal reads it with his own Microsoft sign-in, classifies each customer thread by its words, and keeps
 // ONLY: time, conversation hash, who (a scope person id, or "ext"/"x"), and the category. No subject, no body, no address is stored.
 export const MAIL_CATEGORIES = [
-  { k: 'integration', tier: 'hard', w: 3, words: ['api', 'integration', 'integrate', 'webhook', 'endpoint', 'json', 'sdk', 'token', 'wasl', 'ربط', 'تكامل', 'منصة وصل', 'ربط وصل', 'واجهة برمجية'] },
+  { k: 'integration', tier: 'hard', w: 3, words: ['api', 'integration', 'integrate', 'webhook', 'endpoint', 'json', 'sdk', 'token', 'تكامل', 'واجهة برمجية'] },
+  // WASL linking is routine work (the manager's call, 30 Oct 2026): easy — unless real integration words above are present
+  { k: 'wasl', tier: 'easy', w: 1, words: ['wasl', 'wasl link', 'منصة وصل', 'ربط وصل', 'ربط مع وصل', 'ربط بوصل', 'الربط مع وصل'] },
+  { k: 'integration', tier: 'hard', w: 3, words: ['ربط'] },
   { k: 'request', tier: 'hard', w: 3, words: ['requirement', 'requirements', 'rfq', 'quotation', 'quote', 'proposal', 'new request', 'tender', 'متطلبات', 'عرض سعر', 'طلب جديد', 'تسعير', 'مناقصة', 'عرض فني'] },
   { k: 'issue', tier: 'medium', w: 2, words: ['issue', 'problem', 'error', 'not working', 'offline', 'fault', 'down', 'disconnected', 'مشكلة', 'عطل', 'لا يعمل', 'خطأ', 'متوقف', 'توقف', 'لا تعمل'] },
   { k: 'inquiry', tier: 'easy', w: 1, words: ['inquiry', 'enquiry', 'question', 'password', 'report', 'how to', 'استفسار', 'كلمة المرور', 'كلمة السر', 'تقرير', 'سؤال', 'كيف'] },

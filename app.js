@@ -9,7 +9,7 @@ import {
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
-  mailRow, mailStats, MAIL_CATEGORIES,
+  mailRow, mailStats, MAIL_CATEGORIES, lastQuarters,
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
 } from './core.js';
 
@@ -467,7 +467,7 @@ async function msReturn() {
 }
 async function msReadMailbox(token) {
   mailBusy = true; renderKpi();
-  const since = new Date(Date.now() - 95 * 86400000).toISOString();
+  const since = new Date(Date.now() - 370 * 86400000).toISOString();   // a full year: four quarters
   const people = [...peopleOf(datasets), ...(me ? me.people : [])].filter((p, i, arr) => arr.findIndex((q) => q.id === p.id) === i);
   const internal = (addr) => /@afaqy\b|@afaqy[.-]/i.test(addr);
   let url = `${MS_GRAPH}/me/mailFolders/inbox/messages?$select=id,from,receivedDateTime,conversationId,subject,bodyPreview&$filter=receivedDateTime ge ${since}&$orderby=receivedDateTime desc&$top=100`;
@@ -497,7 +497,19 @@ function kpiMailSection(team, peopleById) {
       el('button', { type: 'button', class: 'btn primary', text: t('mail_setup_save'), onclick: () => { const g = /^[0-9a-f-]{36}$/i; if (!g.test(cid.value.trim()) || !g.test(tid.value.trim())) { toast(t('mail_setup_bad')); return; } localStorage.setItem('afaqy-portal:ms', JSON.stringify({ clientId: cid.value.trim(), tenantId: tid.value.trim() })); renderKpi(); } })); };
   if (!cfg) return el('section', { class: 'share mail', id: 'k-mail' }, el('h2', {}, t('mail_h'), helpQ('help_mail')), setup());
   const today = saudiDay(new Date().toISOString());
-  const win = shareWindow(mailKind, today); const ms = mailStats(mailRows, team, win);
+  if (mailKind === 'year') {
+    const qs = lastQuarters(today, 4).reverse(); const per = qs.map((q) => mailStats(mailRows, team, q));
+    return el('section', { class: 'share mail', id: 'k-mail' },
+      el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, el('h2', { style: 'margin:0' }, t('mail_h'), helpQ('help_mail')),
+        el('div', {}, periodPicker('year', 0, today, (k) => { mailKind = k; renderKpi(); }, () => {}))),
+      el('p', { class: 'hint', text: t('mail_year_sub') }),
+      el('div', { class: 'table-wrap' }, el('table', { class: 'share-table year' },
+        el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), ...qs.map((q) => el('th', { class: 'num', text: q.label })))),
+        el('tbody', {}, team.map((id) => el('tr', {}, el('td', { text: nmM(id) }), ...per.map((ms) => { const p = ms.people.find((x) => x.id === id);
+          return el('td', { class: 'num', text: p && p.replies ? `${p.replies} · ${t('mail_hard')} ${p.hardPct}%` : '—' }); })))))),
+      el('p', { class: 'note', text: t('mail_private') }));
+  }
+  const win = pickWindow(mailKind, mailQ, today); const ms = mailStats(mailRows, team, win);
   const last = localStorage.getItem('afaqy-portal:ms-last');
   const chip = (k, label) => el('button', { type: 'button', class: `pill-btn${mailKind === k ? ' on' : ''}`, text: t(label), onclick: () => { mailKind = k; renderKpi(); } });
   const mins = (m) => (m == null ? '—' : m < 60 ? `${Math.round(m)} ${t('mail_min')}` : `${(m / 60).toFixed(1)} ${t('mail_hr')}`);
@@ -505,9 +517,9 @@ function kpiMailSection(team, peopleById) {
   return el('section', { class: 'share mail', id: 'k-mail' },
     el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' },
       el('h2', { style: 'margin:0' }, t('mail_h'), helpQ('help_mail')),
-      el('div', { class: 'pills' }, [['day', 'share_day'], ['week', 'share_week'], ['month', 'share_month'], ['quarter', 'share_quarter']].map(([k, l]) => chip(k, l)))),
+      el('div', {}, periodPicker(mailKind, mailQ, today, (k) => { mailKind = k; renderKpi(); }, (q) => { mailQ = q; renderKpi(); }))),
     el('div', { class: 'row' },
-      el('button', { type: 'button', class: 'btn primary', disabled: mailBusy ? '' : null, text: mailBusy ? t('mail_busy') : t('mail_read'), onclick: () => msSignIn() }),
+      el('button', { type: 'button', class: 'btn primary', disabled: mailBusy ? '' : null, text: mailBusy ? t('mail_busy') : t('mail_read_year'), onclick: () => msSignIn() }),
       el('span', { class: 'hint', text: last ? t('mail_last', { d: last.slice(0, 16).replace('T', ' ') }) : t('mail_never') })),
     el('details', { class: 'mail-cfg' }, el('summary', { text: t('mail_setup_change') }), setup()),
     el('p', { class: 'hint', text: t('mail_window', { from: win.from, to: win.to, n: ms.total, c: ms.customerThreads, u: ms.unanswered }) }),
@@ -1066,12 +1078,34 @@ function meCardSection(pm, who, nm) { const ymNow = cardMonth; const team = pm.s
         el('h2', {}, t('path_h'), helpQ('help_path')), pathTable([me.user.id, ...below])]; }
 // ---------- the board's sections, each its own function (ADR-0023) ----------
 // the manager's view of each person's slice of the team's work — day / week / month / quarter
-let shareKind = 'week', shareBy = 'points';
+let shareKind = 'week', shareBy = 'points', shareQ = 0, mailQ = 0;
+// the period picker both sections use: day · week · month · quarter (pick one of the last four) · year (the four side by side)
+function periodPicker(kind, qi, today, onKind, onQ) {
+  const qs = lastQuarters(today, 4);
+  const chip = (k, label) => el('button', { type: 'button', class: `pill-btn${kind === k ? ' on' : ''}`, text: t(label), onclick: () => onKind(k) });
+  return [el('div', { class: 'pills' }, [['day', 'share_day'], ['week', 'share_week'], ['month', 'share_month'], ['quarter', 'share_quarter'], ['year', 'share_year']].map(([k, l]) => chip(k, l))),
+    kind === 'quarter' ? el('div', { class: 'pills qpick' }, qs.map((q, i) => el('button', { type: 'button', class: `pill-btn${qi === i ? ' on' : ''}`, text: q.label, onclick: () => onQ(i) }))) : null];
+}
+const pickWindow = (kind, qi, today) => (kind === 'quarter' ? lastQuarters(today, 4)[qi] : shareWindow(kind, today));
+function kpiYearShare(team, peopleById, anchor) {
+  const qs = lastQuarters(anchor, 4).reverse(); const tasks = allTasks(); const nmS = (id) => nameOf(peopleById.get(id), lang) || id;
+  const per = qs.map((q) => workloadShare(tasks, weights(), team, q));
+  const cover = qs.map((q) => datasets.some((d) => d.range.from <= q.from && d.range.to >= q.to));
+  return el('section', { class: 'share', id: 'k-share' },
+    el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, el('h2', { style: 'margin:0' }, t('share_h'), helpQ('help_share')),
+      el('div', {}, periodPicker('year', 0, anchor, (k) => { shareKind = k; renderKpi(); }, () => {}))),
+    el('p', { class: 'hint', text: t('share_year_sub') }),
+    cover.some((c) => !c) ? el('p', { class: 'note', text: t('share_year_partial') }) : null,
+    el('div', { class: 'table-wrap' }, el('table', { class: 'share-table year' },
+      el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), ...qs.map((q, i) => el('th', { class: 'num', text: `${q.label}${cover[i] ? '' : ' *'}` })))),
+      el('tbody', {}, team.map((id) => el('tr', {}, el('td', { text: nmS(id) }), ...per.map((sh) => { const p = sh.people.find((x) => x.id === id) || { points: 0, pointsPct: 0 }; return el('td', { class: 'num', text: sh.total.tasks ? `${p.points} · ${p.pointsPct}%` : '—' }); })))))));
+}
 function kpiShareSection(team, peopleById) {
   const tasks = allTasks(); if (!tasks.length) return null;
   const lastDay = tasks.reduce((m, x) => { const d = saudiDay(x.completedAt); return d && d > m ? d : m; }, '');
   const today = saudiDay(new Date().toISOString()); const anchor = lastDay && lastDay < today ? lastDay : today;
-  const win = shareWindow(shareKind, anchor); const sh = workloadShare(tasks, weights(), team, win);
+  if (shareKind === 'year') return kpiYearShare(team, peopleById, anchor);
+  const win = pickWindow(shareKind, shareQ, anchor); const sh = workloadShare(tasks, weights(), team, win);
   const covered = datasets.some((d) => d.range.from <= win.from && d.range.to >= win.to);
   const nmS = (id) => nameOf(peopleById.get(id), lang) || id;
   const key = { points: 'pointsPct', tasks: 'tasksPct', email: 'emailPct' }[shareBy];
@@ -1080,7 +1114,7 @@ function kpiShareSection(team, peopleById) {
   return el('section', { class: 'share', id: 'k-share' },
     el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' },
       el('h2', { style: 'margin:0' }, t('share_h'), helpQ('help_share')),
-      el('div', { class: 'pills' }, [['day', 'share_day'], ['week', 'share_week'], ['month', 'share_month'], ['quarter', 'share_quarter']].map(([k, l]) => chip(k, l, shareKind, (v) => { shareKind = v; })))),
+      el('div', {}, periodPicker(shareKind, shareQ, anchor, (k) => { shareKind = k; renderKpi(); }, (q) => { shareQ = q; renderKpi(); }))),
     el('p', { class: 'hint ltr-dates', text: t('share_window', { from: win.from, to: win.to, n: sh.total.tasks, p: sh.total.points, e: sh.total.email }) }),
     !covered ? el('p', { class: 'note', text: t('share_partial') }) : null,
     el('div', { class: 'pills' }, [['points', 'share_by_points'], ['tasks', 'share_by_tasks'], ['email', 'share_by_email']].map(([k, l]) => chip(k, l, shareBy, (v) => { shareBy = v; }))),

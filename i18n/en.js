@@ -610,4 +610,9 @@ export default {
     mail_err_read: 'Could not read the inbox ({e}).',
     jump_mail: 'Email',
     help_mail: 'The portal reads your inbox (it holds the team’s replies, since they reply to all). Each customer thread is classified from its words: hard (integration, new requests and requirements), medium (technical issues), easy (inquiries and the rest). For each person: replies and share, threads answered, the hard share among them, and the median time to the first reply to the customer. Words are an approximate rule — check samples before judging.',
+    share_year: 'Year (4 quarters)',
+    share_year_sub: 'The last four quarters side by side: each person’s weighted points and share in each quarter.',
+    share_year_partial: 'Quarters marked * are not fully covered by the pulled data — pull a full year from the Data page.',
+    mail_year_sub: 'The last four quarters side by side: each person’s replies and their hard share in each quarter.',
+    mail_read_year: 'Read my inbox (last year)',
 };

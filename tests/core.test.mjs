@@ -688,7 +688,12 @@ test('workload share: calendar windows (Sunday week) and each person’s share b
 test('email: classification by words (English and Arabic, without false «وصل»), sender matching, content-free rows, per-person stats', async () => {
   const C = await import('../core.js');
   assert.equal(C.classifyMail('Re: API integration needed'), 'integration');
-  assert.equal(C.classifyMail('طلب ربط مع منصة وصل'), 'integration');
+  assert.equal(C.classifyMail('طلب ربط مع منصة وصل'), 'wasl', 'WASL linking is easy');
+  assert.equal(C.mailTier(C.classifyMail('WASL link request')), 'easy');
+  assert.equal(C.classifyMail('WASL API integration'), 'integration', 'real integration words still make it hard');
+  assert.equal(C.classifyMail('ربط الأنظمة'), 'integration', 'a generic link request stays hard');
+  assert.deepEqual(C.lastQuarters('2026-10-30', 4).map((q) => q.label), ['Q4 2026', 'Q3 2026', 'Q2 2026', 'Q1 2026']);
+  assert.deepEqual(C.lastQuarters('2026-02-01', 2).map((q) => [q.label, q.from, q.to]), [['Q1 2026', '2026-01-01', '2026-03-31'], ['Q4 2025', '2025-10-01', '2025-12-31']]);
   assert.equal(C.classifyMail('وصل الجهاز اليوم'), 'other', '«وصل» meaning “arrived” is not WASL');
   assert.equal(C.classifyMail('RFQ for 40 trackers'), 'request');
   assert.equal(C.classifyMail('الجهاز متوقف'), 'issue');
