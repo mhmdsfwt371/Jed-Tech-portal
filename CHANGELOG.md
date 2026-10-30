@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.32 — 2026-10-31
+
+- قائمة «أنظمة الشركة» الجانبية صارت منظمة: كل فئة مجموعة تُطوى وحدها (مغلقة افتراضيًّا، واحدة مفتوحة في كل مرة) وبجانبها عدد أنظمتها، والصفوف أصغر، وسهم الفتح بجانب الاسم، ورابط «كل الأنظمة في الرئيسية» في آخرها.
+
+<details><summary>English</summary>
+
+- The side menu’s “Company systems” is organised: each category is its own fold-away group (closed by default, one open at a time) with its count beside it, rows are tighter, the open-in-new-tab arrow sits beside the name, and “All systems on the home page” closes the list.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- سائیڈ مینو کا «کمپنی سسٹمز» منظم ہو گیا: ہر زمرہ اپنا تہہ ہونے والا گروپ ہے (طے شدہ طور پر بند، ایک وقت میں ایک کھلا) اور ساتھ اس کی تعداد، قطاریں چھوٹی، نیا ٹیب تیر نام کے ساتھ، اور آخر میں «ہوم پیج پر تمام سسٹمز»۔
+
+</div>
+</details>
+
+
 ## v8.31 — 2026-10-31
 
 - أُضيف IOPGPS وبوابة دخول Transportic Online إلى «الموردون وبوابات الأجهزة».

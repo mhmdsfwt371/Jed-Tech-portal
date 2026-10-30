@@ -685,4 +685,5 @@ export default {
     load_act_delegate: 'A leader working after hours: delegate part of his work to the team',
     jump_load: 'Load',
     help_load: 'Signals, not a diagnosis. From when tasks are completed (and, on your device, when emails are answered) over the last 4 weeks: the share done outside Sun–Thu 8–5, on Fri/Sat and after 9 pm, whether after-hours work rose in the last two weeks; and each engineer’s load against peers under the same leader. Amber: 15% after hours, 5% weekends or ×1.5 load. Red: 30%, 15% or ×2, or three amber signals. Nobody else sees it. Evening shifts show as a signal — check before judging.',
+    nav_all_systems: 'All systems on the home page',
 };

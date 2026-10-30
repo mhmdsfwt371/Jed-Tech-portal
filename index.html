@@ -418,6 +418,16 @@
   .load-pill.green { color: var(--ok); border-color: var(--ok); background: var(--ok-wash); } .load-pill.quiet, .load-pill.leave { color: var(--slate); }
   .sigs { display: flex; gap: 4px; flex-wrap: wrap; } .sig { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid; white-space: nowrap; }
   .sig.red { color: var(--fail); border-color: var(--fail); } .sig.amber { color: var(--warn); border-color: var(--warn); } #k-load { scroll-margin-top: 130px; }
+  .nav-cat summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; padding: 8px 12px; padding-inline-start: 26px; border-radius: 6px; color: var(--slate-light); font-size: .8rem; font-weight: 600; }
+  .nav-cat summary::-webkit-details-marker { display: none; } .nav-cat summary:hover { background: var(--ink-soft); color: #FFFFFF; }
+  .nav-cat summary::before { content: "▸"; font-size: .7rem; transition: transform .15s; } html[dir="rtl"] .nav-cat summary::before { content: "◂"; }
+  .nav-cat[open] summary::before { transform: rotate(90deg); } html[dir="rtl"] .nav-cat[open] summary::before { transform: rotate(-90deg); }
+  .nav-cat summary > span:first-child { flex: 1; }
+  .nav-count { min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--ink-soft); color: var(--slate-light); font-size: .7rem; text-align: center; line-height: 18px; }
+  .nav-cat a.sub { padding: 6px 12px; padding-inline-start: 34px; margin-bottom: 0; font-size: .84rem; gap: 6px; justify-content: flex-start; overflow: hidden; max-width: 100%; box-sizing: border-box; }
+  .nav-cat a .ext { margin-inline-start: 4px; font-size: .72rem; }
+  .nav-cat a .nav-name { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .nav a.nav-all { font-size: .8rem; color: var(--slate-light); padding-inline-start: 26px; }
   .tucked { margin: 18px 0; } .tucked > summary { cursor: pointer; color: var(--slate); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
   .me-card { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; align-items: flex-end; padding: 18px 20px; margin-bottom: 8px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); border-inline-start: 4px solid var(--signal); }
   .me-name { margin: 0; }

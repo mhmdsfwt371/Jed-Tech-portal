@@ -817,10 +817,13 @@ const svg = (name) => { const s = el('span', { 'aria-hidden': 'true', style: 'di
 function renderSide() {
   if (isTeamPortal) $('nav-kpi').closest('[data-nav-section]').hidden = true;
   set($('nav-modules'), MODULES.map((m) => el('a', { href: `#m-${m.id}`, class: 'sub', 'data-module': m.id, text: L(m.name, lang) })));
-  set($('nav-systems'), SYSTEM_CATEGORIES.map((c) => el('div', {},
-    el('div', { class: 'sub', text: L(c.name, lang) }),
-    SYSTEMS.filter((x) => x.category === c.id).map((x) => (x.id === 'pro' ? el('a', { href: '#pro', class: 'sub', 'data-view': 'pro', text: L(x.name, lang) }) : el('a', { href: x.url, class: 'sub', target: '_blank', rel: 'noopener' },
-      el('span', { text: L(x.name, lang) }), el('span', { class: 'ext', 'aria-hidden': 'true', text: '↗' })))))));
+  // company systems: one fold-away sub-group per category (closed by default, one open at a time), then a link to the full grid
+  set($('nav-systems'), [...SYSTEM_CATEGORIES.map((c) => { const items = SYSTEMS.filter((x) => x.category === c.id); if (!items.length) return null;
+    return el('details', { class: 'nav-cat', ontoggle: (e) => { if (e.target.open) for (const d of $('nav-systems').querySelectorAll('details.nav-cat')) if (d !== e.target) d.open = false; } },
+      el('summary', {}, el('span', { text: L(c.name, lang) }), el('span', { class: 'nav-count', text: String(items.length) })),
+      items.map((x) => (x.id === 'pro' ? el('a', { href: '#pro', class: 'sub', 'data-view': 'pro', text: L(x.name, lang) }) : el('a', { href: x.url, class: 'sub', target: '_blank', rel: 'noopener', title: L(x.name, lang) },
+        el('span', { class: 'nav-name', text: L(x.name, lang) }), el('span', { class: 'ext', 'aria-hidden': 'true', text: '↗' }))))); }),
+    el('a', { href: '#tools', class: 'sub nav-all', text: t('nav_all_systems') })]);
 }
 const setMenu = (open) => { document.body.classList.toggle('nav-open', open); $('menu-btn').setAttribute('aria-expanded', String(open)); };
 // The groups fold as in the reference: one open at a time; the group holding the current page opens by itself.
