@@ -131,7 +131,7 @@ export default {
     me_bm: 'My KPIs from myafaqy',
     me_step1: 'On a computer: drag this button onto the browser’s bookmarks bar.',
     me_drag: 'Drag the button onto the bookmarks bar, then press it from inside myafaqy.',
-    me_step2: 'Then: open myafaqy and sign in, and press the bookmark. Your tasks are read and this page opens with your KPIs. To refresh, press it again.',
+    me_step2: 'Then open myafaqy and press the bookmark.',
     me_copy: 'Copy the bookmark code',
     me_copied: 'Code copied',
     me_copy_fail: 'Could not copy — long-press the button and copy the link',

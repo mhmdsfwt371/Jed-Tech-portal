@@ -1,15 +1,15 @@
 {
-  "version": "8.26",
-  "date": "2026-10-30",
+  "version": "8.27",
+  "date": "2026-10-31",
   "notes": {
     "ar": [
-      "أُضيف «روبوت أفاقي» إلى أنظمة أفاقي، و«سيرفر VPN مايل سايت — نسك» إلى المشاريع ونسك بموافقة المدير."
+      "«مؤشراتي» أخف: شيلنا الشرح والتطمينات (ما يُقرأ، والسطور تحت العناوين)، وخطوة الإعداد صارت سطرًا واحدًا. الشرح موجود لمن يريده في زر «؟»."
     ],
     "en": [
-      "“Afaqy Robot” is added under Afaqy systems, and “Milesight VPN server — Nusuk” under Projects and Nusuk, with the manager’s approval."
+      "“My KPIs” is leaner: the explanations and reassurances (what is read, the lines under the headings) are gone, and the setup step is one line. The “?” button still explains for anyone who wants it."
     ],
     "ur": [
-      "«آفاقی روبوٹ» آفاقی سسٹمز میں، اور «مائل سائٹ VPN سرور — نسک» منصوبے اور نسک میں مینیجر کی منظوری سے شامل کیا گیا۔"
+      "«میرے اشاریے» ہلکا ہو گیا: وضاحتیں اور یقین دہانیاں (کیا پڑھا جاتا ہے، عنوانوں کے نیچے کی سطریں) ہٹا دی گئیں، اور ترتیب کا قدم ایک سطر ہے۔ «؟» بٹن اب بھی جو چاہے اس کے لیے وضاحت کرتا ہے۔"
     ]
   }
 }

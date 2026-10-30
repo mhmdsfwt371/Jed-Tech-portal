@@ -599,7 +599,6 @@ function renderMe(waiting = false) {
       el('button', { type: 'button', class: 'btn', text: t('me_copy'), onclick: async () => { try { await navigator.clipboard.writeText(decodeURIComponent(bm)); toast(t('me_copied')); } catch { toast(t('me_copy_fail')); } } })),
     el('p', { class: 'hint', text: t('me_step2') }),
     el('details', { class: 'me-phones' }, el('summary', { text: t('me_phones') }), el('p', { class: 'hint', text: t('me_android') }), el('p', { class: 'hint', text: t('me_ios') })),
-    el('p', { class: 'note info', text: t('me_privacy') }),
   ];
   if (waiting) { set(body, el('div', { class: 'empty', text: t('me_wait') })); return; }
   if (!me) { set(body, el('div', { class: 'step me-setup' }, el('span', { class: 'n', text: '١' }), el('div', {}, el('h3', { text: t('me_how_h') }), ...setup))); return; }
@@ -659,11 +658,10 @@ function renderMe(waiting = false) {
       mine.length > 6 ? el('details', { class: 'more-work' }, el('summary', { text: t('me_open_more', { n: mine.length - 6 }) }), el('div', { class: 'worklist' }, mine.slice(6).map(workCard))) : null]
       : el('div', { class: 'empty', text: t('me_open_none') }),
     el('h2', { text: t('me_avg_h') }),
-    pm.average ? [el('p', { class: 'hint', text: t('me_avg_sub', { n: pm.average.n }) }), cards(pm.mine.this, pm.average, '', t('me_avg_team'))]
+    pm.average ? [ cards(pm.mine.this, pm.average, '', t('me_avg_team'))]
       : el('p', { class: 'note info', text: t('me_avg_none') }),
     pm.below.length ? [
       el('h2', { text: t('me_team_h', { n: pm.below.length }) }),
-      el('p', { class: 'hint', text: t('me_team_sub') }),
       el('div', { class: 'table-wrap' }, el('table', {},
         el('thead', {}, el('tr', {}, ...['col_person', 'col_assigned', 'col_done', 'me_vs_last', 'col_rate', 'col_median', 'col_open'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
         el('tbody', {}, pm.below.map((r) => el('tr', {},
@@ -677,7 +675,6 @@ function renderMe(waiting = false) {
       el('h2', { style: 'margin:0' }, t('card_h'), helpQ('help_card')),
       (() => { const months = [...new Set([...Object.keys(monthCards), ymd(new Date()).slice(0, 7)])].sort().reverse(); if (!cardMonth || !months.includes(cardMonth)) cardMonth = months[0];
         return el('select', { class: 'w-sel', onchange: (e) => { cardMonth = e.target.value; renderMe(); } }, months.map((m) => el('option', { value: m, selected: m === cardMonth, text: `${monthLabel(m)}${monthCards[m] ? '' : ` · ${t('card_live')}`}` }))); })()),
-    el('p', { class: 'hint', text: t('card_sub') }),
     meCardSection(pm, who, nm),
     el('h2', { text: t('me_history_h') }),
     el('div', { class: 'table-wrap' }, el('table', {},

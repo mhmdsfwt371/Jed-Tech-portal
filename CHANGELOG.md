@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.27 — 2026-10-31
+
+- «مؤشراتي» أخف: شيلنا الشرح والتطمينات (ما يُقرأ، والسطور تحت العناوين)، وخطوة الإعداد صارت سطرًا واحدًا. الشرح موجود لمن يريده في زر «؟».
+
+<details><summary>English</summary>
+
+- “My KPIs” is leaner: the explanations and reassurances (what is read, the lines under the headings) are gone, and the setup step is one line. The “?” button still explains for anyone who wants it.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «میرے اشاریے» ہلکا ہو گیا: وضاحتیں اور یقین دہانیاں (کیا پڑھا جاتا ہے، عنوانوں کے نیچے کی سطریں) ہٹا دی گئیں، اور ترتیب کا قدم ایک سطر ہے۔ «؟» بٹن اب بھی جو چاہے اس کے لیے وضاحت کرتا ہے۔
+
+</div>
+</details>
+
+
 ## v8.26 — 2026-10-30
 
 - أُضيف «روبوت أفاقي» إلى أنظمة أفاقي، و«سيرفر VPN مايل سايت — نسك» إلى المشاريع ونسك بموافقة المدير.
