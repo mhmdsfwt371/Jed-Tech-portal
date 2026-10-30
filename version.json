@@ -1,24 +1,15 @@
 {
-  "version": "8.34",
+  "version": "8.35",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "لوحة التعيين تعرض فريقك كما في البوابة، بلا أي اختيار مسبق — تختار بنفسك من تضيفه ومن تزيله.",
-      "صفحة الفريق: اختفت قائمة «آخرون ظهروا في البيانات»، ومكانها خانة «إضافة للفريق برقم ماي أفاقي». وبجانب كل اسم ✎ لتصحيح الاسم على جهازك.",
-      "مجموعة جديدة «التطوير» فيها بوابة دخول Transportic، وIOPGPS صار «AFAQY A1 — IOPGPS». وفي صفحة إدارة الروابط تسحب أي رابط وتفلته في مجموعته.",
-      "عنوان الصفحة والإشارات يوضح لمن هي: «المدير — …» و«الفريق — …»."
+      "أُضيف «Nusuk Card — Live Feed» و«Nusuk Card — Test» إلى «المشاريع ونسك»."
     ],
     "en": [
-      "The assignment panel lists your team as set in the portal, with nothing pre-ticked — you choose whom to add and whom to remove.",
-      "Team page: the “others seen in the data” list is gone, replaced by “Add to the team by myafaqy id”. A ✎ beside each name corrects it on your device.",
-      "A new “Development” group holds the Transportic sign-in console, and IOPGPS is now “AFAQY A1 — IOPGPS”. On the links admin page, drag any link and drop it into its group.",
-      "The page title and the bookmarks say who they are for: “Manager — …” and “Team — …”."
+      "“Nusuk Card — Live Feed” and “Nusuk Card — Test” are added under “Projects and Nusuk”."
     ],
     "ur": [
-      "تفویض پینل پورٹل میں آپ کی ٹیم دکھاتا ہے، کچھ پہلے سے منتخب نہیں — آپ خود چنتے ہیں کسے شامل اور کسے ہٹانا ہے۔",
-      "ٹیم صفحہ: «ڈیٹا میں نظر آنے والے دوسرے» کی فہرست ہٹ گئی، اس کی جگہ «مائی آفاقی آئی ڈی سے ٹیم میں شامل کریں»۔ ہر نام کے ساتھ ✎ اسے آپ کے آلے پر درست کرتا ہے۔",
-      "نیا گروپ «ڈویلپمنٹ» میں Transportic سائن اِن کنسول، اور IOPGPS اب «AFAQY A1 — IOPGPS»۔ لنکس کے ایڈمن صفحے پر کوئی بھی لنک گھسیٹ کر اس کے گروپ میں چھوڑیں۔",
-      "صفحے کا عنوان اور بک مارکس بتاتے ہیں کس کے لیے ہیں: «مینیجر — …» اور «ٹیم — …»۔"
+      "«Nusuk Card — Live Feed» اور «Nusuk Card — Test» «پروجیکٹس اور نسک» میں شامل کیے گئے۔"
     ]
   }
 }

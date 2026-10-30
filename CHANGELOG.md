@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.35 — 2026-10-31
+
+- أُضيف «Nusuk Card — Live Feed» و«Nusuk Card — Test» إلى «المشاريع ونسك».
+
+<details><summary>English</summary>
+
+- “Nusuk Card — Live Feed” and “Nusuk Card — Test” are added under “Projects and Nusuk”.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «Nusuk Card — Live Feed» اور «Nusuk Card — Test» «پروجیکٹس اور نسک» میں شامل کیے گئے۔
+
+</div>
+</details>
+
+
 ## v8.34 — 2026-10-31
 
 - لوحة التعيين تعرض فريقك كما في البوابة، بلا أي اختيار مسبق — تختار بنفسك من تضيفه ومن تزيله.

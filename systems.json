@@ -162,6 +162,26 @@
       }
     },
     {
+      "id": "nusuk_livefeed",
+      "category": "projects",
+      "url": "https://livefeed.nusukcard.net/login",
+      "name": {
+        "ar": "Nusuk Card — Live Feed",
+        "en": "Nusuk Card — Live Feed",
+        "ur": "Nusuk Card — Live Feed"
+      }
+    },
+    {
+      "id": "nusuk_test",
+      "category": "projects",
+      "url": "https://test.nusukcard.net/dashboard",
+      "name": {
+        "ar": "Nusuk Card — Test",
+        "en": "Nusuk Card — Test",
+        "ur": "Nusuk Card — Test"
+      }
+    },
+    {
       "id": "nusukreaders",
       "category": "projects",
       "url": "https://nusukreaders.net/",
