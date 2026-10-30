@@ -124,6 +124,16 @@
       }
     },
     {
+      "id": "robot",
+      "category": "afaqy",
+      "url": "https://robot.afaqy.sa/",
+      "name": {
+        "ar": "روبوت أفاقي",
+        "en": "Afaqy Robot",
+        "ur": "آفاقی روبوٹ"
+      }
+    },
+    {
       "id": "mardam",
       "category": "projects",
       "url": "https://makkah.mardam.afaqy.pro/",
@@ -151,6 +161,16 @@
         "ar": "Nusuk Readers",
         "en": "Nusuk Readers",
         "ur": "Nusuk Readers"
+      }
+    },
+    {
+      "id": "nusuk_vpn",
+      "category": "projects",
+      "url": "https://212.70.47.45:18443/login.html",
+      "name": {
+        "ar": "سيرفر VPN مايل سايت — نسك",
+        "en": "Milesight VPN server — Nusuk",
+        "ur": "مائل سائٹ VPN سرور — نسک"
       }
     },
     {

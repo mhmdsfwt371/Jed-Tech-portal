@@ -355,14 +355,17 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
 // 25. The repository is public: a published link may never point at a raw IP address or an internal host name.
 //     Internal addresses (VPN portals, device admin pages) belong in the private links kept on the device.
 {
+  // Approved exceptions, by id and exact host — each needs the manager's approval and a date. Nothing else may use a raw IP.
+  const APPROVED_RAW = { nusuk_vpn: { host: '212.70.47.45', approved: 'Mohamed Safwat, 30 Oct 2026 — Milesight VPN server login page, protected by its own credentials' } };
   const isRaw = (h) => /^\d{1,3}(\.\d{1,3}){3}$/.test(h) || h.includes(':') || !h.includes('.') || /\.(local|lan|internal|corp|home)$/i.test(h);
   const pub = [];
-  try { pub.push(...JSON.parse(read('systems.json')).systems.map((x) => ['systems.json', x.url])); } catch { note('systems.json: unreadable'); }
-  for (const m of cfg.matchAll(/"url": "([^"]+)"/g)) pub.push(['config.js', m[1]]);
+  const approvedUrl = (u) => { try { const h = new URL(u).hostname; return Object.values(APPROVED_RAW).some((a) => a.host === h); } catch { return false; } };
+  try { for (const x of JSON.parse(read('systems.json')).systems) { if (APPROVED_RAW[x.id] && new URL(x.url).hostname === APPROVED_RAW[x.id].host) continue; pub.push(['systems.json', x.url]); } } catch { note('systems.json: unreadable'); }
+  for (const m of cfg.matchAll(/"url": "([^"]+)"/g)) if (!approvedUrl(m[1])) pub.push(['config.js', m[1]]);
   for (const [f, u] of pub) { let h = ''; try { h = new URL(u).hostname.replace(/^\[|\]$/g, ''); } catch { continue; }
     if (h && isRaw(h)) note(`${f}: a published link points at a raw IP or internal name (${h.replace(/\d+$/, '…')}) — keep it in the device's private links`); }
   for (const f of ['index.html', 'app.js', 'core.js', 'config.js', 'systems.json', 'README.md', 'CHANGELOG.md', 'AGENTS.md', ...walkMd('docs/')])
-    for (const m of read(f).matchAll(/https?:\/\/(\d{1,3}(?:\.\d{1,3}){3})/g)) if (!/^(127\.|0\.0\.0\.0)/.test(m[1])) note(`${f}: a raw IP address in a link — the repository is public`);
+    for (const m of read(f).matchAll(/https?:\/\/(\d{1,3}(?:\.\d{1,3}){3})/g)) if (!/^(127\.|0\.0\.0\.0)/.test(m[1]) && !(['systems.json', 'config.js'].includes(f) && Object.values(APPROVED_RAW).some((a) => a.host === m[1]))) note(`${f}: a raw IP address in a link — the repository is public`);
 }
 
 // 26. ADR-0029: the Outlook section reads the manager's own inbox — Microsoft's two addresses only, read-only scope, PKCE without a

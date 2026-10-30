@@ -1,15 +1,15 @@
 {
-  "version": "8.25",
+  "version": "8.26",
   "date": "2026-10-30",
   "notes": {
     "ar": [
-      "سنة كاملة بأرباعها: «نصيب كل شخص» و«ردود الإيميل» فيهما الآن اختيار أي ربع من آخر أربعة، وعرض «سنة» يضع الأرباع الأربعة جنبًا إلى جنب لكل شخص. قراءة الصندوق تغطي آخر سنة. وربط وصل صار من الإيميلات السهلة، إلا إذا جاء معه كلام ربط برمجي حقيقي."
+      "أُضيف «روبوت أفاقي» إلى أنظمة أفاقي، و«سيرفر VPN مايل سايت — نسك» إلى المشاريع ونسك بموافقة المدير."
     ],
     "en": [
-      "A full year by quarter: “Each person’s share” and “Email replies” now let you pick any of the last four quarters, and a “Year” view puts the four quarters side by side for each person. The inbox read covers the last year. WASL linking now counts as an easy email, unless real integration words come with it."
+      "“Afaqy Robot” is added under Afaqy systems, and “Milesight VPN server — Nusuk” under Projects and Nusuk, with the manager’s approval."
     ],
     "ur": [
-      "سہ ماہیوں کے ساتھ پورا سال: «ہر فرد کا حصہ» اور «ای میل جوابات» میں اب پچھلی چار میں سے کوئی بھی سہ ماہی چنیں، اور «سال» کا منظر ہر فرد کے لیے چاروں سہ ماہیاں ساتھ ساتھ رکھتا ہے۔ ان باکس پچھلے سال تک پڑھا جاتا ہے۔ وصل ربط اب آسان ای میل شمار ہوتا ہے، جب تک اس کے ساتھ حقیقی انضمام کے الفاظ نہ ہوں۔"
+      "«آفاقی روبوٹ» آفاقی سسٹمز میں، اور «مائل سائٹ VPN سرور — نسک» منصوبے اور نسک میں مینیجر کی منظوری سے شامل کیا گیا۔"
     ]
   }
 }
