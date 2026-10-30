@@ -301,7 +301,17 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   for (const [k, x] of Object.entries(wj.tasks || {})) {
     if (!(x && typeof x.w === 'number' && x.w >= 0 && x.w <= 20)) note(`weights.json: task "${k}" needs a weight 0–20`);
     if (x && x.tier && !['admin', 'customer', 'integration', 'multistage'].includes(x.tier)) note(`weights.json: task "${k}" has an unknown tier`);
-    for (const f of Object.keys(x || {})) if (!['w', 'tier', 'team'].includes(f)) note(`weights.json: task "${k}" has field "${f}" — only w, tier, team`);
+    for (const f of Object.keys(x || {})) if (!['w', 'tier', 'team', 'f', 'mode', 'std', 'stdSrc'].includes(f)) note(`weights.json: task "${k}" has field "${f}" — only w, tier, team, f, mode, std, stdSrc`);
+    // ADR-0031: the basis must explain the number — four factors 0–2, the base they give, a method, and a standard time where the method needs one
+    if (x && x.f !== undefined) {
+      const okF = Array.isArray(x.f) && x.f.length === 4 && x.f.every((v) => [0, 1, 2].includes(v));
+      if (!okF) note(`weights.json: task "${k}" — f must be four factors, each 0, 1 or 2`);
+      else { const n = x.f.reduce((a, b) => a + b, 0), base = n <= 1 ? 1 : n <= 3 ? 2 : n <= 5 ? 3 : n === 6 ? 4 : 5;
+        if (x.w !== base) note(`weights.json: task "${k}" — weight ${x.w} does not follow its factors (they give ${base})`); }
+    }
+    if (x && x.mode !== undefined && !['done', 'speed', 'time'].includes(x.mode)) note(`weights.json: task "${k}" — mode must be done, speed or time`);
+    if (x && ['speed', 'time'].includes(x.mode) && !(x.std > 0 && x.std <= 400)) note(`weights.json: task "${k}" — ${x.mode} needs a standard time (hours, 0–400)`);
+    if (x && x.stdSrc !== undefined && !['oct', 'est', 'set'].includes(x.stdSrc)) note(`weights.json: task "${k}" — stdSrc must be oct, est or set`);
   }
   for (const [k, w] of Object.entries(wj.activities || {})) if (!(typeof w === 'number' && w >= 0 && w <= 20)) note(`weights.json: activity "${k}" needs a weight 0–20`);
   for (const [uid, list] of Object.entries(wj.editors || {})) { if (!/^\d+$/.test(uid)) note(`weights.json: editor "${uid}" is not a myafaqy id`); if (!Array.isArray(list) || !list.every((x) => typeof x === 'string')) note(`weights.json: editor ${uid} needs a list of type keys or "*"`); }

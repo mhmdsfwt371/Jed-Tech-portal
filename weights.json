@@ -1,7 +1,7 @@
 {
   "v": 1,
   "schema": "afaqy-weights/v1",
-  "reviewed": "2026-10-29",
+  "reviewed": "2026-10-30",
   "default": 1,
   "tiers": {
     "admin": 1,
@@ -13,147 +13,384 @@
     "account credentials": {
       "w": 1,
       "tier": "admin",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "mode": "done"
     },
     "st without tech visit": {
       "w": 1,
       "tier": "admin",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "mode": "done"
     },
     "client units list": {
       "w": 1,
       "tier": "admin",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "mode": "done"
     },
     "view units": {
       "w": 1,
       "tier": "admin",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "mode": "done"
     },
     "others": {
       "w": 1,
       "tier": "admin",
-      "team": "both"
+      "team": "both",
+      "f": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "mode": "done"
     },
     "active": {
       "w": 1,
       "tier": "admin",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "mode": "done"
     },
     "inactive": {
       "w": 1,
       "tier": "admin",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "mode": "done"
     },
     "manual task - after sales": {
       "w": 1,
       "tier": "admin",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "mode": "done"
     },
     "mt request": {
       "w": 2,
       "tier": "customer",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        1,
+        1,
+        0,
+        1
+      ],
+      "mode": "speed",
+      "std": 4,
+      "stdSrc": "est"
     },
     "wasl inquiry": {
-      "w": 2,
-      "tier": "customer",
-      "team": "aftersales"
+      "w": 1,
+      "tier": "admin",
+      "team": "aftersales",
+      "f": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "mode": "speed",
+      "std": 2,
+      "stdSrc": "est"
     },
     "client inquiry": {
       "w": 2,
       "tier": "customer",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        0,
+        1,
+        0,
+        1
+      ],
+      "mode": "speed",
+      "std": 2,
+      "stdSrc": "oct"
     },
     "cameras checking": {
       "w": 2,
       "tier": "customer",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "mode": "speed",
+      "std": 2,
+      "stdSrc": "est"
     },
     "vss account creation": {
       "w": 2,
       "tier": "customer",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        0,
+        1,
+        0,
+        1
+      ],
+      "mode": "done"
     },
     "mobile app issue": {
       "w": 2,
       "tier": "customer",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        1,
+        1,
+        0,
+        1
+      ],
+      "mode": "speed",
+      "std": 4,
+      "stdSrc": "est"
     },
     "st with tech visit": {
       "w": 3,
       "tier": "integration",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        1,
+        1,
+        2,
+        1
+      ],
+      "mode": "speed",
+      "std": 9,
+      "stdSrc": "oct"
     },
     "wasl link": {
-      "w": 3,
-      "tier": "integration",
-      "team": "aftersales"
+      "w": 2,
+      "tier": "customer",
+      "team": "aftersales",
+      "f": [
+        0,
+        1,
+        0,
+        1
+      ],
+      "mode": "done"
     },
     "madinty link": {
       "w": 3,
       "tier": "integration",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        1,
+        2,
+        0,
+        1
+      ],
+      "mode": "speed",
+      "std": 9,
+      "stdSrc": "est"
     },
     "rafed link": {
       "w": 3,
       "tier": "integration",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        1,
+        2,
+        0,
+        1
+      ],
+      "mode": "speed",
+      "std": 9,
+      "stdSrc": "est"
     },
     "naqaba link": {
       "w": 3,
       "tier": "integration",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        1,
+        2,
+        0,
+        1
+      ],
+      "mode": "speed",
+      "std": 9,
+      "stdSrc": "est"
     },
     "training request": {
       "w": 5,
       "tier": "multistage",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        1,
+        2,
+        2,
+        2
+      ],
+      "mode": "time",
+      "std": 45,
+      "stdSrc": "oct"
     },
     "tsu request": {
-      "w": 5,
+      "w": 4,
       "tier": "multistage",
-      "team": "aftersales"
+      "team": "aftersales",
+      "f": [
+        1,
+        1,
+        2,
+        2
+      ],
+      "mode": "time",
+      "std": 36,
+      "stdSrc": "oct"
     },
     "send ips": {
       "w": 1,
       "tier": "admin",
-      "team": "rd"
+      "team": "rd",
+      "f": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "mode": "done"
     },
     "check for device signals": {
       "w": 2,
       "tier": "customer",
-      "team": "rd"
+      "team": "rd",
+      "f": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "mode": "speed",
+      "std": 2,
+      "stdSrc": "est"
     },
     "wrong reading sensor": {
       "w": 3,
       "tier": "integration",
-      "team": "rd"
+      "team": "rd",
+      "f": [
+        2,
+        0,
+        1,
+        1
+      ],
+      "mode": "time",
+      "std": 4,
+      "stdSrc": "est"
     },
     "problem in can readings": {
       "w": 3,
       "tier": "integration",
-      "team": "rd"
+      "team": "rd",
+      "f": [
+        2,
+        0,
+        1,
+        1
+      ],
+      "mode": "time",
+      "std": 4,
+      "stdSrc": "est"
     },
     "check for devices config.": {
-      "w": 3,
-      "tier": "integration",
-      "team": "rd"
+      "w": 2,
+      "tier": "customer",
+      "team": "rd",
+      "f": [
+        2,
+        0,
+        0,
+        1
+      ],
+      "mode": "speed",
+      "std": 4,
+      "stdSrc": "oct"
     },
     "bulk requests": {
-      "w": 5,
-      "tier": "multistage",
-      "team": "rd"
+      "w": 3,
+      "tier": "integration",
+      "team": "rd",
+      "f": [
+        2,
+        1,
+        0,
+        2
+      ],
+      "mode": "time",
+      "std": 27,
+      "stdSrc": "est"
     },
     "email customer activity": {
       "w": 2,
       "tier": "customer",
-      "team": "general"
+      "team": "general",
+      "f": [
+        0,
+        1,
+        0,
+        1
+      ],
+      "mode": "speed",
+      "std": 2,
+      "stdSrc": "oct"
     },
     "manual task": {
       "w": 1,
       "tier": "admin",
-      "team": "general"
+      "team": "general",
+      "f": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "mode": "done"
     }
   },
   "activities": {

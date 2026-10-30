@@ -6,7 +6,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, baseFromFactors, tierFromBase, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
   mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, engineerLevels, developmentPlan, LEVELS,
@@ -1350,17 +1350,35 @@ function renderWeights() {
     set($('help-text'), list);
     dlg.showModal();
   };
+  // the basis of a type's points: four factors → the base, the method, the standard time (ADR-0031)
+  const doneTasks = allTasks().filter((x) => x.state === 'done');
+  const pointsOfType = (k) => doneTasks.filter((x) => typeKey(x.type) === k).reduce((s, x) => s + taskPoints(wt, x), 0);
+  const basisCells = (r, g) => {
+    const x = r.x || { w: wt.default, f: [0, 0, 0, 0], mode: 'done' }; const f = x.f || [0, 0, 0, 0]; const can = mayEdit(r.key);
+    const put = (patch) => { const nf = patch.f || f, b = baseFromFactors(nf), mode = patch.mode || x.mode || 'done';
+      const std = mode === 'done' ? undefined : (patch.std != null ? patch.std : x.std || 2);
+      save({ tasks: { [r.key]: { w: b, tier: tierFromBase(b), team: x.team || g.id, f: nf, mode, ...(std ? { std, stdSrc: patch.std != null ? 'set' : (x.stdSrc || 'est') } : {}) } } }); };
+    const fsel = (i) => el('select', { class: 'w-sel f-sel', title: t(`factor_${FACTORS[i]}`), 'aria-label': t(`factor_${FACTORS[i]}`), ...(can ? {} : { disabled: '' }),
+      onchange: (e) => { const nf = [...f]; nf[i] = Number(e.target.value); put({ f: nf }); } }, [0, 1, 2].map((v) => el('option', { value: String(v), selected: v === f[i], text: String(v) })));
+    return [
+      el('td', { class: 'factors' }, el('div', { class: 'f-row' }, FACTORS.map((k, i) => el('label', {}, el('span', { text: t(`factor_short_${k}`) }), fsel(i))))),
+      el('td', { class: 'num' }, el('b', { class: 'base', text: String(x.w) }), el('div', { class: 'hint', text: tierName(x.tier) })),
+      el('td', {}, el('select', { class: 'w-sel', ...(can ? {} : { disabled: '' }), onchange: (e) => put({ mode: e.target.value }) }, POINT_MODES.map((m) => el('option', { value: m, selected: m === (x.mode || 'done'), text: t(`mode_${m}`) })))),
+      el('td', { class: 'num' }, (x.mode || 'done') === 'done' ? el('span', { class: 'hint', text: '—' }) : [
+        el('input', { type: 'number', min: '0.25', max: '400', step: '0.25', class: 'std-in', value: String(x.std || ''), ...(can ? {} : { disabled: '' }), onchange: (e) => { const v = Number(e.target.value); if (v > 0 && v <= 400) put({ std: v }); } }),
+        el('div', { class: 'hint', text: x.stdSrc === 'est' ? t('std_est') : x.stdSrc === 'oct' ? t('std_oct') : t('std_set') })]),
+    ];
+  };
   const table = (g) => {
     const rows = g.rows.map((r) => { const x = wt.tasks[r.key]; const n = (seen.get(r.key) || {}).n || 0; const cur = x ? x.w : wt.default; return { ...r, x, n, cur }; })
       .sort((p, q) => (q.x ? q.x.w : -1) - (p.x ? p.x.w : -1) || q.n - p.n || p.key.localeCompare(q.key));
     return [el('h2', {}, g.title, el('span', { class: 'hint', text: ` — ${t('w_types_n', { n: rows.length })}${g.live ? ` · ${t('w_from_myafaqy')}` : ''}` })),
       el('div', { class: 'table-wrap' }, el('table', {},
-        el('thead', {}, el('tr', {}, ['w_col_type', 'w_col_tier', 'w_col_n', 'w_col_weight', 'w_col_points', 'w_col_editors'].map((k, i) => el('th', { class: i >= 2 && i <= 4 ? 'num' : null, text: t(k) })))),
+        el('thead', {}, el('tr', {}, ['w_col_type', 'w_col_factors', 'w_col_weight', 'w_col_mode', 'w_col_std', 'w_col_n', 'w_col_points', 'w_col_editors'].map((k, i) => el('th', { class: [2, 4, 5, 6].includes(i) ? 'num' : null, text: t(k) })))),
         el('tbody', {}, rows.map((r) => el('tr', { class: r.x ? null : 'unweighted' },
           el('td', {}, el('div', { text: r.name || pretty(r.key) }), r.x ? null : el('div', { class: 'hint warn-text', text: t('w_new_type') })),
-          el('td', { text: tierName(r.x && r.x.tier) }), el('td', { class: 'num', text: String(r.n) }),
-          el('td', { class: 'num' }, stepSel(r.cur, (w) => save({ tasks: { [r.key]: { w, tier: r.x ? r.x.tier : null, team: r.x ? r.x.team : g.id } } }), mayEdit(r.key))),
-          el('td', { class: 'num', text: String(r.n * r.cur) }), editorsCell(r.key))))))];
+          ...basisCells(r, g), el('td', { class: 'num', text: String(r.n) }),
+          el('td', { class: 'num', text: String(Math.round(pointsOfType(r.key) * 10) / 10) }), editorsCell(r.key))))))];
   };
   const diff = weightPublishDiff(weightsRepo, weightsDevice);
   const approvedJson = () => JSON.stringify(publishableWeights(weightsRepo, weightsDevice, ymd(new Date())), null, 2) + '\n';

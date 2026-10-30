@@ -729,6 +729,22 @@ test('levels: percentile axes among peers, a level only with enough work, and th
   assert.equal(tiny.Z.level, null, 'too little work, no level');
 });
 
+test('points basis: factors → base; working hours Sun–Thu 8–17 Saudi; done, speed (×1.5 within standard) and time (×0.5–×2)', async () => {
+  const C = await import('../core.js');
+  assert.deepEqual([[0, 0, 0, 1], [0, 1, 0, 1], [1, 1, 0, 1], [1, 2, 0, 1], [1, 1, 2, 2], [1, 2, 2, 2]].map(C.baseFromFactors), [1, 2, 2, 3, 4, 5]);
+  assert.equal(C.businessHours('2026-10-29T06:00:00Z', '2026-10-29T09:00:00Z'), 3, 'Thursday 9:00–12:00 Saudi');
+  assert.equal(C.businessHours('2026-10-29T13:00:00Z', '2026-11-01T06:00:00Z'), 2, 'Thursday 16:00 → Sunday 09:00: one hour Thursday, the weekend skipped, one hour Sunday');
+  const wt = C.parseWeights({ default: 1, tasks: {
+    'Email Customer Activity': { w: 2, f: [0, 1, 0, 1], mode: 'speed', std: 2 }, 'TSU Request': { w: 4, f: [1, 1, 2, 2], mode: 'time', std: 9 }, 'View Units': { w: 1, f: [0, 0, 0, 0], mode: 'done' } } });
+  const T = (type, from, to) => ({ type, createdAt: from, completedAt: to, state: 'done' });
+  assert.equal(C.taskPoints(wt, T('Email Customer Activity', '2026-10-28T06:00:00Z', '2026-10-28T07:00:00Z')), 3, 'within 2h → ×1.5');
+  assert.equal(C.taskPoints(wt, T('Email Customer Activity', '2026-10-28T06:00:00Z', '2026-10-28T10:00:00Z')), 2, 'beyond → the base');
+  assert.equal(C.taskPoints(wt, T('TSU Request', '2026-10-25T05:00:00Z', '2026-10-26T14:00:00Z')), 8, 'two full working days = 18h ÷ 9 = ×2');
+  assert.equal(C.taskPoints(wt, T('TSU Request', '2026-10-25T05:00:00Z', '2026-11-05T14:00:00Z')), 8, 'never more than ×2');
+  assert.equal(C.taskPoints(wt, T('TSU Request', '2026-10-25T05:00:00Z', '2026-10-25T06:00:00Z')), 2, 'never less than ×0.5');
+  assert.equal(C.taskPoints(wt, T('View Units', '2026-10-25T05:00:00Z', '2026-11-25T06:00:00Z')), 1, 'on completion: time does not count');
+});
+
 test('formatting', () => {
   assert.equal(formatHours(null, 'ar'), '—');
   assert.equal(formatHours(5.26, 'en'), '5.3 h');

@@ -981,7 +981,12 @@ export function parseWeights(raw) {
   if (num(raw.default) != null) out.default = num(raw.default);
   for (const [k, x] of Object.entries(raw.tasks || {})) {
     const w = num(x && typeof x === 'object' ? x.w : x); if (w == null) continue;
-    out.tasks[typeKey(k)] = { w, tier: TIERS.includes(x && x.tier) ? x.tier : null, team: ['aftersales', 'rd', 'both', 'general'].includes(x && x.team) ? x.team : null };
+    const o = { w, tier: TIERS.includes(x && x.tier) ? x.tier : null, team: ['aftersales', 'rd', 'both', 'general'].includes(x && x.team) ? x.team : null };
+    if (x && Array.isArray(x.f) && x.f.length === 4 && x.f.every((v) => [0, 1, 2].includes(Number(v)))) o.f = x.f.map(Number);
+    if (x && POINT_MODES.includes(x.mode)) o.mode = x.mode;
+    if (x && Number(x.std) > 0 && Number(x.std) <= 400) o.std = Number(x.std);
+    if (x && ['oct', 'est', 'set'].includes(x.stdSrc)) o.stdSrc = x.stdSrc;
+    out.tasks[typeKey(k)] = o;
   }
   for (const [k, x] of Object.entries(raw.activities || {})) { const w = num(x); if (w != null) out.activities[String(k).toLowerCase().trim()] = w; }
   out.card = {}; for (const [k, v] of Object.entries(raw.card || {})) if (k in CARD_DEFAULTS && Number.isFinite(Number(v))) out.card[k] = Number(v);
@@ -1005,6 +1010,33 @@ export function typeLabel(name, lang = 'ar') {
   const pick = (lang === 'en' ? (la || ar) : (ar || la)) || parts[0] || '';
   return `\u2068${pick}\u2069`;
 }
+// ===================== the basis of a type's points (ADR-0031) =====================
+// Base 1–5 from four stated factors (technical depth, outside party, field work, business impact — each 0, 1 or 2; sum of 8),
+// times the method: "done" (the base on closing, time ignored), "speed" (×1.5 when closed within the type's standard time)
+// or "time" (× working hours ÷ standard, between ×0.5 and ×2 — never rewarding slowness beyond twice the standard).
+export const POINT_MODES = ['done', 'speed', 'time'];
+export const FACTORS = ['tech', 'outside', 'field', 'impact'];
+export const baseFromFactors = (f) => { const n = (f || []).reduce((a, b) => a + Number(b || 0), 0); return n <= 1 ? 1 : n <= 3 ? 2 : n <= 5 ? 3 : n === 6 ? 4 : 5; };
+export const tierFromBase = (b) => (b >= 4 ? 'multistage' : b === 3 ? 'integration' : b === 2 ? 'customer' : 'admin');
+/** Working hours between two instants: Sunday–Thursday, 08:00–17:00 Saudi time. */
+export function businessHours(fromIso, toIso) {
+  const a = Date.parse(fromIso), b = Date.parse(toIso); if (!(b > a)) return 0;
+  const H = 3600000, off = 3 * H; let total = 0;
+  let day = Math.floor((a + off) / (24 * H)) * 24 * H - off;            // midnight Saudi of the start day, as UTC ms
+  for (let guard = 0; day < b && guard < 400; guard++, day += 24 * H) {
+    const dow = new Date(day + off).getUTCDay(); if (dow === 5 || dow === 6) continue;   // Friday, Saturday
+    const s = Math.max(a, day + 8 * H), e = Math.min(b, day + 17 * H); if (e > s) total += (e - s) / H;
+  }
+  return total;
+}
+/** One task's points: its type's base, by its method. */
+export function taskPoints(wt, task) {
+  const x = wt && wt.tasks[typeKey(task && task.type)]; const base = x ? x.w : (wt ? wt.default : 1);
+  if (!x || !x.mode || x.mode === 'done' || !x.std || !task.createdAt || !task.completedAt) return base;
+  const h = businessHours(task.createdAt, task.completedAt);
+  if (x.mode === 'speed') return h <= x.std ? Math.round(base * 1.5 * 10) / 10 : base;
+  return Math.round(base * Math.min(2, Math.max(0.5, h / x.std)) * 10) / 10;
+}
 export const taskWeight = (wt, typeName) => { const x = wt && wt.tasks[typeKey(typeName)]; return x ? x.w : (wt ? wt.default : 1); };
 export const activityWeight = (wt, category) => { const x = wt && wt.activities[String(category || '').toLowerCase().trim()]; return x != null ? x : (wt ? wt.default : 1); };
 /**
@@ -1016,7 +1048,7 @@ export function taskPointBreakdown(completedTasks, wt) {
   for (const x of completedTasks || []) {
     if (x.state !== 'done' || !x.completedAt) continue;
     const key = typeKey(x.type) || '—';
-    const weight = taskWeight(wt, x.type);
+    const weight = taskPoints(wt, x);
     if (!types.has(key)) types.set(key, {
       key, name: String(x.type || key), count: 0, weight, points: 0,
       unmapped: !Boolean(wt && wt.tasks && Object.prototype.hasOwnProperty.call(wt.tasks, key)),
@@ -1079,7 +1111,7 @@ export function weightedPoints(tasks, activities, wt, { range, team = null } = {
   const inR = (iso) => { const d = saudiDay(iso); return d && (!range || (d >= range.from && d <= range.to)); };
   for (const x of tasks || []) {
     if (x.state !== 'done' || !x.assigneeId || !inR(x.completedAt) || (keep && !keep.has(x.assigneeId))) continue;
-    const w = taskWeight(wt, x.type), r = row(x.assigneeId), k = typeKey(x.type) || '—';
+    const w = taskPoints(wt, x), r = row(x.assigneeId), k = typeKey(x.type) || '—';
     r.taskPoints += w; r.tasks++; (r.byType[k] = r.byType[k] || { n: 0, points: 0 }); r.byType[k].n++; r.byType[k].points += w;
   }
   for (const a of activities || []) {
@@ -1111,7 +1143,7 @@ export function monthCard(ctx, personId, ym) {
   const doneIn = (r) => (ctx.tasks || []).filter((x) => x.state === 'done' && x.completedAt && inM(x.completedAt, r) && x.assigneeId);
   const done = doneIn(range), donePrev = doneIn(prev);
   const tierOf = (type) => { const x = wt && wt.tasks[typeKey(type)]; return (x && x.tier) || 'admin'; };
-  const pts = (rows) => rows.reduce((s, x) => s + taskWeight(wt, x.type), 0);
+  const pts = (rows) => rows.reduce((s, x) => s + taskPoints(wt, x), 0);
   const mine = done.filter((x) => x.assigneeId === personId), minePrev = donePrev.filter((x) => x.assigneeId === personId);
   const teamRows = done.filter((x) => team.includes(x.assigneeId));
   // volume: points against the team's median, and the quartile band
@@ -1126,7 +1158,7 @@ export function monthCard(ctx, personId, ym) {
   const known = (x) => !!(wt && wt.tasks[typeKey(x.type)]);
   const mineK = wt && Object.keys(wt.tasks).length ? mine.filter(known) : mine, teamK = wt && Object.keys(wt.tasks).length ? teamRows.filter(known) : teamRows;
   const otherWork = mine.length - mineK.length;
-  const byTier = (rows) => { const o = { admin: 0, customer: 0, integration: 0, multistage: 0 }; for (const x of rows) o[tierOf(x.type)] += taskWeight(wt, x.type); return o; };
+  const byTier = (rows) => { const o = { admin: 0, customer: 0, integration: 0, multistage: 0 }; for (const x of rows) o[tierOf(x.type)] += taskPoints(wt, x); return o; };
   const mineT = byTier(mineK), teamT = byTier(teamK);
   const share = (o) => { const tot = Object.values(o).reduce((a, b) => a + b, 0) || 1; return Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v / tot])); };
   const ms = share(mineT), ts = share(teamT);
@@ -1175,7 +1207,7 @@ export function monthCard(ctx, personId, ym) {
   if (quartile === 4 && perPerson.length >= 3) { const quick = perType.filter((p) => tierOf(p.name) === 'admin' && p.team >= T.minN).sort((a, b) => b.team - a.team)[0]; if (quick) suggestions.push({ kind: 'balanceUp', type: quick.name }); }
   if (quartile === 1 && perPerson.length >= 3) { const deep = perType.filter((p) => tierOf(p.name) === 'multistage' && p.team >= 1).sort((a, b) => b.team - a.team)[0]; if (deep) suggestions.push({ kind: 'balanceDeep', type: deep.name }); }
   // consistency: points per week inside the month
-  const weeks = {}; for (const x of mine) { const w = isoWeek(x.completedAt); weeks[w] = (weeks[w] || 0) + taskWeight(wt, x.type); }
+  const weeks = {}; for (const x of mine) { const w = isoWeek(x.completedAt); weeks[w] = (weeks[w] || 0) + taskPoints(wt, x); }
   const wv = Object.values(weeks); const mean = wv.length ? wv.reduce((a, b) => a + b, 0) / wv.length : 0;
   const sd = wv.length > 1 ? Math.sqrt(wv.reduce((a, b) => a + (b - mean) ** 2, 0) / wv.length) : 0;
   const consistency = wv.length >= 3 && mean > 0 ? Math.max(0, Math.min(1, 1 - sd / mean)) : null;
@@ -1204,7 +1236,7 @@ export function weeklyDigest(tasks, wt, team, now = new Date(), T = CARD_DEFAULT
   const rows = (team || []).map((id) => {
     const mine = (tasks || []).filter((x) => x.assigneeId === id && x.state === 'done');
     const thisW = mine.filter((x) => win(x, end - d7, end)), lastW = mine.filter((x) => win(x, end - 2 * d7, end - d7));
-    const p = thisW.reduce((s, x) => s + taskWeight(wt, x.type), 0), q = lastW.reduce((s, x) => s + taskWeight(wt, x.type), 0);
+    const p = thisW.reduce((s, x) => s + taskPoints(wt, x), 0), q = lastW.reduce((s, x) => s + taskPoints(wt, x), 0);
     const aging = (tasks || []).filter((x) => x.assigneeId === id && x.state === 'open' && x.createdAt && end - Date.parse(x.createdAt) > (T.agingDays || 7) * 86400000).length;
     return { id, points: p, prev: q, delta: p - q, done: thisW.length, aging };
   });
@@ -1218,7 +1250,7 @@ export function goalProgress(tasks, wt, personId, ym, goals) {
   const r = monthRange(ym);
   const mine = (tasks || []).filter((x) => x.assigneeId === personId && x.state === 'done' && x.completedAt && saudiDay(x.completedAt) >= r.from && saudiDay(x.completedAt) <= r.to);
   return (goals || []).map((g) => {
-    const got = g.key === '__points__' ? mine.reduce((s, x) => s + taskWeight(wt, x.type), 0) : mine.filter((x) => typeKey(x.type) === g.key).length;
+    const got = g.key === '__points__' ? mine.reduce((s, x) => s + taskPoints(wt, x), 0) : mine.filter((x) => typeKey(x.type) === g.key).length;
     return { ...g, got, pct: g.target > 0 ? Math.min(100, Math.round((got / g.target) * 100)) : 0, met: got >= g.target };
   });
 }
@@ -1280,11 +1312,11 @@ export function lastQuarters(day, n = 4) {
 export function workloadShare(tasks, wt, team, win) {
   const inW = (iso) => { const d = saudiDay(iso); return d && d >= win.from && d <= win.to; };
   const done = (tasks || []).filter((x) => x.state === 'done' && x.completedAt && inW(x.completedAt) && (team || []).includes(x.assigneeId));
-  const tot = { tasks: done.length, points: done.reduce((s, x) => s + taskWeight(wt, x.type), 0), email: done.filter((x) => Number(x.moduleId) === 146).length };
+  const tot = { tasks: done.length, points: done.reduce((s, x) => s + taskPoints(wt, x), 0), email: done.filter((x) => Number(x.moduleId) === 146).length };
   const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 : 0);
   const people = (team || []).map((id) => {
     const mine = done.filter((x) => x.assigneeId === id);
-    const p = { id, tasks: mine.length, points: mine.reduce((s, x) => s + taskWeight(wt, x.type), 0), email: mine.filter((x) => Number(x.moduleId) === 146).length };
+    const p = { id, tasks: mine.length, points: mine.reduce((s, x) => s + taskPoints(wt, x), 0), email: mine.filter((x) => Number(x.moduleId) === 146).length };
     return { ...p, tasksPct: pct(p.tasks, tot.tasks), pointsPct: pct(p.points, tot.points), emailPct: pct(p.email, tot.email) };
   }).sort((a, b) => b.points - a.points || b.tasks - a.tasks);
   const fair = team && team.length ? Math.round(1000 / team.length) / 10 : 0;   // the even slice, for reference
@@ -1377,8 +1409,8 @@ function rawAxes(tasks, wt, id, win, mail) {
   const known = (x) => !wt || !Object.keys(wt.tasks || {}).length || !!wt.tasks[typeKey(x.type)];
   const tierOf = (type) => { const x = wt && wt.tasks[typeKey(type)]; return (x && x.tier) || 'admin'; };
   const done = (tasks || []).filter((x) => x.assigneeId === id && x.state === 'done' && x.completedAt && inW(x.completedAt) && known(x));
-  const points = done.reduce((a, x) => a + taskWeight(wt, x.type), 0);
-  const hardPts = done.filter((x) => ['integration', 'multistage'].includes(tierOf(x.type))).reduce((a, x) => a + taskWeight(wt, x.type), 0);
+  const points = done.reduce((a, x) => a + taskPoints(wt, x), 0);
+  const hardPts = done.filter((x) => ['integration', 'multistage'].includes(tierOf(x.type))).reduce((a, x) => a + taskPoints(wt, x), 0);
   const hrs = done.map((x) => (Date.parse(x.completedAt) - Date.parse(x.createdAt)) / 3600000).filter((h) => h >= 0).sort((a, b) => a - b);
   const assigned = (tasks || []).filter((x) => x.assigneeId === id && x.createdAt && inW(x.createdAt) && x.state !== 'cancelled');
   const m = mail && mail.people.find((p) => p.id === id);
