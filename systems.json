@@ -34,6 +34,14 @@
       }
     },
     {
+      "id": "dev",
+      "name": {
+        "ar": "التطوير",
+        "en": "Development",
+        "ur": "ڈویلپمنٹ"
+      }
+    },
+    {
       "id": "work",
       "name": {
         "ar": "العمل والتعلم والدعم",
@@ -248,14 +256,14 @@
       "category": "vendors",
       "url": "https://yw.iopgps.com/#/",
       "name": {
-        "ar": "IOPGPS",
-        "en": "IOPGPS",
-        "ur": "IOPGPS"
+        "ar": "AFAQY A1 — IOPGPS",
+        "en": "AFAQY A1 — IOPGPS",
+        "ur": "AFAQY A1 — IOPGPS"
       }
     },
     {
       "id": "transportic_sso",
-      "category": "vendors",
+      "category": "dev",
       "url": "https://sso.transporticonline.com/admin/master/console/",
       "name": {
         "ar": "Transportic Online — SSO",

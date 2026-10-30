@@ -1,18 +1,24 @@
 {
-  "version": "8.33",
+  "version": "8.34",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "السحب الأحدث يحل محل الأقدم: لو سحبت الشهر يوم ١٥ ثم يوم ٢٠، تبقى فترة واحدة بآخر بيانات. وزر ✕ بجانب قائمة الفترات في اللوحة يحذف أي فترة لا تريدها.",
-      "«فترة السحب» في صفحة البيانات: اختر هذا الشهر، أو أي ربع من آخر أربعة، أو سنة كاملة، أو تاريخين بنفسك — والإشارتان تتجهزان للفترة على الفور."
+      "لوحة التعيين تعرض فريقك كما في البوابة، بلا أي اختيار مسبق — تختار بنفسك من تضيفه ومن تزيله.",
+      "صفحة الفريق: اختفت قائمة «آخرون ظهروا في البيانات»، ومكانها خانة «إضافة للفريق برقم ماي أفاقي». وبجانب كل اسم ✎ لتصحيح الاسم على جهازك.",
+      "مجموعة جديدة «التطوير» فيها بوابة دخول Transportic، وIOPGPS صار «AFAQY A1 — IOPGPS». وفي صفحة إدارة الروابط تسحب أي رابط وتفلته في مجموعته.",
+      "عنوان الصفحة والإشارات يوضح لمن هي: «المدير — …» و«الفريق — …»."
     ],
     "en": [
-      "A newer pull replaces the older: pull the month on the 15th and again on the 20th, and one period remains with the latest data. A ✕ beside the board’s period list deletes any period you don’t want.",
-      "“Pull period” on the Data page: choose this month, any of the last four quarters, a full year, or two dates of your own — and both bookmarks are ready for that period at once."
+      "The assignment panel lists your team as set in the portal, with nothing pre-ticked — you choose whom to add and whom to remove.",
+      "Team page: the “others seen in the data” list is gone, replaced by “Add to the team by myafaqy id”. A ✎ beside each name corrects it on your device.",
+      "A new “Development” group holds the Transportic sign-in console, and IOPGPS is now “AFAQY A1 — IOPGPS”. On the links admin page, drag any link and drop it into its group.",
+      "The page title and the bookmarks say who they are for: “Manager — …” and “Team — …”."
     ],
     "ur": [
-      "نیا کھینچا پرانے کی جگہ لیتا ہے: مہینہ ۱۵ کو اور پھر ۲۰ کو کھینچیں تو تازہ ڈیٹا کے ساتھ ایک ہی مدت رہتی ہے۔ بورڈ پر مدتوں کی فہرست کے ساتھ ✕ کوئی بھی ناپسند مدت حذف کرتا ہے۔",
-      "ڈیٹا کے صفحے پر «کھینچنے کی مدت»: یہ مہینہ، پچھلی چار میں سے کوئی سہ ماہی، پورا سال، یا اپنی دو تاریخیں چنیں — اور دونوں بک مارکس فوراً اسی مدت کے لیے تیار۔"
+      "تفویض پینل پورٹل میں آپ کی ٹیم دکھاتا ہے، کچھ پہلے سے منتخب نہیں — آپ خود چنتے ہیں کسے شامل اور کسے ہٹانا ہے۔",
+      "ٹیم صفحہ: «ڈیٹا میں نظر آنے والے دوسرے» کی فہرست ہٹ گئی، اس کی جگہ «مائی آفاقی آئی ڈی سے ٹیم میں شامل کریں»۔ ہر نام کے ساتھ ✎ اسے آپ کے آلے پر درست کرتا ہے۔",
+      "نیا گروپ «ڈویلپمنٹ» میں Transportic سائن اِن کنسول، اور IOPGPS اب «AFAQY A1 — IOPGPS»۔ لنکس کے ایڈمن صفحے پر کوئی بھی لنک گھسیٹ کر اس کے گروپ میں چھوڑیں۔",
+      "صفحے کا عنوان اور بک مارکس بتاتے ہیں کس کے لیے ہیں: «مینیجر — …» اور «ٹیم — …»۔"
     ]
   }
 }

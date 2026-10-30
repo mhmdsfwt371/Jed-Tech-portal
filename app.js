@@ -581,6 +581,7 @@ function donut(title, parts, { size = 120, fmt = (v) => String(v) } = {}) {
 }
 const portalHome = () => location.origin + location.pathname.replace(/[^/]*$/, '') + (isTeamPortal ? '?portal=team' : '');
 function renderMe(waiting = false) {
+  applyNameFixes();
   const body = $('me-body');
   const bm = buildBookmarklet(portalHome(), lang);
   const link = el('a', { class: 'btn primary bm', href: bm, draggable: 'true', text: `📊 ${t('me_bm')}`,
@@ -1261,6 +1262,7 @@ function coverageSection(rep, team, nm) { const cv = coverageTotals(rep, team); 
             el('td', { class: 'num', text: String(r.devices) }), el('td', { class: 'num', text: String(r.solo) }),
             el('td', { class: 'num', text: r.accounts ? `${r.touched} · ${Math.round((r.touched / r.accounts) * 100)}%` : '—' })))))) : el('div', { class: 'empty', text: t('f5_none') })]; }
 function renderKpi() {
+  applyNameFixes();
   const body = $('kpi-body');
   if (!datasets.length) { set(body, el('div', { class: 'empty', text: t('no_data') })); return; }
   if (!datasets.some((d) => d.key === kpiKey)) kpiKey = datasets[0].key;
@@ -1500,7 +1502,17 @@ function renderWeights() {
 }
 
 // ---------- the Team page: positions and leaders by myafaqy id, kept on this device and exportable as team.json ----------
+// ---------- name corrections (device only, never in the repository) ----------
+const NAME_KEY = 'afaqy.names';
+const nameFixes = () => { try { return JSON.parse(localStorage.getItem(NAME_KEY) || '{}') || {}; } catch { return {}; } };
+function applyNameFixes() {
+  const fx = nameFixes(); if (!Object.keys(fx).length) return;
+  const fix = (p) => { const f = p && fx[p.id]; if (!f) return; if (f.ar) p.nameAr = f.ar; if (f.en) p.nameEn = f.en; };
+  for (const d of datasets) for (const p of d.people || []) fix(p);
+  if (me) for (const p of me.people || []) fix(p);
+}
 function renderTeam() {
+  applyNameFixes();
   const body = $('team-body'); if (!body) return;
   const known = new Map();
   for (const p of peopleOf(datasets)) known.set(p.id, p);
@@ -1530,8 +1542,8 @@ function renderTeam() {
   const leaderSelect = (id) => el('select', { onchange: (e) => save(id, { leaderId: e.target.value || null }) },
     el('option', { value: '', text: t('team_no_leader'), selected: !leaderOf(ro, id) }),
     everyone.filter((p) => p.id !== id && (inScope(ro, p.id) || leaderOf(ro, id) === p.id)).map((p) => el('option', { value: p.id, text: nameOf(p, lang) || p.id, selected: leaderOf(ro, id) === p.id })));
-  // preselect the team's after-sales people by name (names stay on this device; the panel matches them in myafaqy's own list)
-  const afterSalesNames = Object.entries(ro.people).filter(([, x]) => /after-sales/i.test(x.positionEn || '')).map(([id]) => (known.get(id) || {}).nameEn).filter(Boolean);
+  // the panel lists the whole team as set here (names stay on this device; the panel matches them in myafaqy's list) — nothing pre-ticked
+  const afterSalesNames = scopeIds(ro).map((id) => (known.get(id) || {}).nameEn).filter(Boolean);
   const ab = buildAssignBookmarklet(lang, afterSalesNames);
   set(body,
     el('section', { class: 'assign-box' },
@@ -1550,19 +1562,22 @@ function renderTeam() {
     people.length ? el('div', { class: 'table-wrap team-table' }, el('table', {},
       el('thead', {}, el('tr', {}, ['team_col_name', 'team_col_id', 'team_col_pos', 'team_col_leader'].map((k) => el('th', { text: t(k) })))),
       el('tbody', {}, people.map((p) => el('tr', {},
-        el('td', {}, el('div', { text: nameOf(p, lang) || '—' }), p.teams && p.teams.length ? el('div', { class: 'hint', text: p.teams.join(' · ') }) : null),
+        el('td', {}, el('div', { class: 'name-line' }, el('span', { text: nameOf(p, lang) || '—' }),
+          el('button', { type: 'button', class: 'btn quiet tiny', title: t('team_fix_name'), 'aria-label': t('team_fix_name'), text: '✎', onclick: () => {
+            const v = prompt(t('team_fix_name_q'), nameOf(p, lang) || ''); if (v == null) return; const fx = nameFixes();
+            const key = lang === 'ar' ? 'ar' : 'en'; fx[p.id] = { ...(fx[p.id] || {}), [key]: v.trim() }; if (!v.trim()) delete fx[p.id][key];
+            if (fx[p.id] && !fx[p.id].ar && !fx[p.id].en) delete fx[p.id]; localStorage.setItem(NAME_KEY, JSON.stringify(fx));
+            if (!v.trim()) location.reload(); else { renderTeam(); renderMe(); renderKpi(); } } })),
+          p.teams && p.teams.length ? el('div', { class: 'hint', text: p.teams.join(' · ') }) : null),
         el('td', { class: 'ltr', text: p.id }),
         el('td', {}, el('input', { type: 'text', value: positionOf(ro, p.id), placeholder: t('team_pos_ph'), onchange: (e) => save(p.id, { position: e.target.value.trim() }) })),
         el('td', {}, leaderSelect(p.id)))))))
       : el('div', { class: 'empty', text: t('team_none') }),
-    others.length ? el('details', { class: 'tucked' }, el('summary', { text: t('team_others', { n: others.length }) }),
-      el('div', { class: 'table-wrap team-table' }, el('table', {},
-        el('thead', {}, el('tr', {}, ['team_col_name', 'team_col_id', 'team_col_pos', 'team_col_leader'].map((k) => el('th', { text: t(k) })))),
-        el('tbody', {}, others.map((p) => el('tr', {},
-          el('td', {}, el('div', { text: nameOf(p, lang) || '—' }), p.teams && p.teams.length ? el('div', { class: 'hint', text: p.teams.join(' · ') }) : null),
-          el('td', { class: 'ltr', text: p.id }),
-          el('td', {}, el('input', { type: 'text', value: '', placeholder: t('team_pos_ph'), onchange: (e) => save(p.id, { position: e.target.value.trim() }) })),
-          el('td', {}, leaderSelect(p.id)))))))) : null);
+    (() => { const idIn = el('input', { type: 'text', inputmode: 'numeric', placeholder: t('team_add_id_ph'), class: 'ltr', style: 'max-width:160px' });
+      const posIn = el('input', { type: 'text', placeholder: t('team_pos_ph') });
+      return el('div', { class: 'row team-add' }, el('b', { text: t('team_add_h') }), idIn, posIn,
+        el('button', { type: 'button', class: 'btn tiny', text: t('team_add_btn'), onclick: () => { const id = idIn.value.trim();
+          if (!/^\d+$/.test(id) || !posIn.value.trim()) { toast(t('team_add_bad')); return; } save(id, { position: posIn.value.trim() }); } })); })());
 }
 
 // ---------- Factor 2 (technician points) and Factor 3 (after-sales tickets), from the reports file of the same period ----------
@@ -1676,7 +1691,7 @@ function applyLang() {
   $('lang-select').value = lang;
   $('menu-btn').setAttribute('aria-label', t('menu'));
   paintThemeButton();
-  document.title = `${t('brand')} — ${t('portal')}`;
+  document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`;
   renderSide(); renderTools(); renderBlocks(); renderDatasets(); renderKpi(); renderGuide(); renderMe(); renderPro(); renderMgr(); renderTeam(); renderWeights();
   for (const [id, f] of frames) f.title = L((MODULES.find((m) => m.id === id) || {}).name, lang);
   route(); renderMeTour();
@@ -1706,7 +1721,7 @@ function route() {
   for (const id of [...views, 'module']) $(`view-${id}`).hidden = id !== v;
   document.body.classList.toggle('in-module', v === 'module');
   if (mod) openModule(mod);
-  else { document.title = `${t('brand')} — ${t('portal')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', guide: 'nav_guide' }[v]); currentModule = null; }
+  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', guide: 'nav_guide' }[v]); currentModule = null; }
   $('module-open').hidden = v !== 'module';
   // one item in the menu is current — the open module, or the page — and its group is the open one
   let current = null;
@@ -1740,7 +1755,7 @@ $('file-in').addEventListener('change', async (e) => { for (const f of e.target.
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
 $('export-btn').addEventListener('click', async () => {
   const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION,
-    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null };
+    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null, names: nameFixes() };
   download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(all, null, 1));
 });
 $('import-in').addEventListener('change', async (e) => {
@@ -1763,6 +1778,7 @@ $('import-in').addEventListener('change', async (e) => {
       await store.putRepairs(repairs);
       const known = new Set(privLinks.map((x) => x.url));
       for (const x of Array.isArray(j.privlinks) ? j.privlinks : []) { const v = cleanPrivLink(x); if (v && !known.has(v.url)) privLinks.push(v); }
+      if (j.names && typeof j.names === 'object') { const fx = nameFixes(); for (const [id, v] of Object.entries(j.names)) if (/^\d+$/.test(id) && v && typeof v === 'object' && !fx[id]) fx[id] = { ar: String(v.ar || '').slice(0, 80), en: String(v.en || '').slice(0, 80) }; localStorage.setItem(NAME_KEY, JSON.stringify(fx)); }
       await store.putPriv(privLinks);
       const seenMail = new Set(mailRows.map((r) => r.i));
       for (const r of Array.isArray(j.mailrows) ? j.mailrows : []) if (r && r.i && !seenMail.has(r.i)) mailRows.push({ i: String(r.i), t: String(r.t), c: String(r.c), w: String(r.w), k: r.k == null ? null : String(r.k) });
