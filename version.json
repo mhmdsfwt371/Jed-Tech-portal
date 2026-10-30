@@ -1,15 +1,15 @@
 {
-  "version": "8.17",
+  "version": "8.18",
   "date": "2026-10-30",
   "notes": {
     "ar": [
-      "جمع روابط الأنظمة والأدوات في مجموعات واضحة مع إضافة الروابط الجديدة."
+      "إضافة رابط نظام نسك ضمن روابط المشاريع ونسك."
     ],
     "en": [
-      "Organized system and tool links into clear groups and added the new links."
+      "Added the Nusuk system link under Projects and Nusuk."
     ],
     "ur": [
-      "سسٹمز اور ٹولز کے لنکس واضح گروپوں میں ترتیب دیے اور نئے لنکس شامل کیے۔"
+      "پروجیکٹس اور نسک کے زمرے میں نسک سسٹم کا لنک شامل کیا گیا ہے۔"
     ]
   }
 }

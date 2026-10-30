@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.18 — 2026-10-30
+
+- إضافة رابط نظام نسك ضمن روابط المشاريع ونسك.
+
+<details><summary>English</summary>
+
+- Added the Nusuk system link under Projects and Nusuk.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- پروجیکٹس اور نسک کے زمرے میں نسک سسٹم کا لنک شامل کیا گیا ہے۔
+
+</div>
+</details>
+
+
 ## v8.17 — 2026-10-30
 
 - جمع روابط الأنظمة والأدوات في مجموعات واضحة مع إضافة الروابط الجديدة.
