@@ -47,6 +47,7 @@
 | `docs/decisions/0030-engineer-level.md` | Engineer level, trend, forecast; the plan is the manager’s |
 | `docs/decisions/0031-points-basis.md` | Points basis: four factors, three methods (completion, speed, time) |
 | `docs/decisions/0032-load-sustainability.md` | Load sustainability: early workload signals, manager only |
+| `docs/decisions/0033-pull-override-and-period-picker.md` | Newer pull overrides older; pick the pull period |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

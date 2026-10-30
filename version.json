@@ -1,15 +1,18 @@
 {
-  "version": "8.32",
+  "version": "8.33",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "قائمة «أنظمة الشركة» الجانبية صارت منظمة: كل فئة مجموعة تُطوى وحدها (مغلقة افتراضيًّا، واحدة مفتوحة في كل مرة) وبجانبها عدد أنظمتها، والصفوف أصغر، وسهم الفتح بجانب الاسم، ورابط «كل الأنظمة في الرئيسية» في آخرها."
+      "السحب الأحدث يحل محل الأقدم: لو سحبت الشهر يوم ١٥ ثم يوم ٢٠، تبقى فترة واحدة بآخر بيانات. وزر ✕ بجانب قائمة الفترات في اللوحة يحذف أي فترة لا تريدها.",
+      "«فترة السحب» في صفحة البيانات: اختر هذا الشهر، أو أي ربع من آخر أربعة، أو سنة كاملة، أو تاريخين بنفسك — والإشارتان تتجهزان للفترة على الفور."
     ],
     "en": [
-      "The side menu’s “Company systems” is organised: each category is its own fold-away group (closed by default, one open at a time) with its count beside it, rows are tighter, the open-in-new-tab arrow sits beside the name, and “All systems on the home page” closes the list."
+      "A newer pull replaces the older: pull the month on the 15th and again on the 20th, and one period remains with the latest data. A ✕ beside the board’s period list deletes any period you don’t want.",
+      "“Pull period” on the Data page: choose this month, any of the last four quarters, a full year, or two dates of your own — and both bookmarks are ready for that period at once."
     ],
     "ur": [
-      "سائیڈ مینو کا «کمپنی سسٹمز» منظم ہو گیا: ہر زمرہ اپنا تہہ ہونے والا گروپ ہے (طے شدہ طور پر بند، ایک وقت میں ایک کھلا) اور ساتھ اس کی تعداد، قطاریں چھوٹی، نیا ٹیب تیر نام کے ساتھ، اور آخر میں «ہوم پیج پر تمام سسٹمز»۔"
+      "نیا کھینچا پرانے کی جگہ لیتا ہے: مہینہ ۱۵ کو اور پھر ۲۰ کو کھینچیں تو تازہ ڈیٹا کے ساتھ ایک ہی مدت رہتی ہے۔ بورڈ پر مدتوں کی فہرست کے ساتھ ✕ کوئی بھی ناپسند مدت حذف کرتا ہے۔",
+      "ڈیٹا کے صفحے پر «کھینچنے کی مدت»: یہ مہینہ، پچھلی چار میں سے کوئی سہ ماہی، پورا سال، یا اپنی دو تاریخیں چنیں — اور دونوں بک مارکس فوراً اسی مدت کے لیے تیار۔"
     ]
   }
 }

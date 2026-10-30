@@ -310,8 +310,14 @@ const markRd = (tasks, ids) => {
 };
 
 /** Add a part to the stored datasets: same period → tasks and people merged by id (the newer copy wins). */
+/** A newer pull overrides older ones it fully covers (pull 1–15, then 1–20 of the month: the 1–15 one goes). ADR-0033 */
+export const covers = (a, b) => a && b && a.from <= b.from && a.to >= b.to;
+export function supersede(list, incoming) {
+  // only real pulls override each other — the sample set never replaces, nor is replaced by, real data
+  return (list || []).filter((d) => d.key === incoming.key || d.sample || incoming.sample || !covers(incoming.range, d.range));
+}
 export function mergeDataset(list, incoming) {
-  const out = (list || []).map((d) => ({ ...d }));
+  const out = supersede(list, incoming).map((d) => ({ ...d }));
   const i = out.findIndex((d) => d.key === incoming.key);
   if (i < 0) { out.push({ ...incoming, people: incoming.people || [], parts: incoming.part ? [incoming.part] : [] }); }
   else {

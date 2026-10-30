@@ -9,7 +9,7 @@ import {
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, baseFromFactors, tierFromBase, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
-  mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, engineerLevels, developmentPlan, LEVELS, loadSustainability,
+  mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
 } from './core.js';
 
@@ -919,7 +919,7 @@ window.addEventListener('message', async (e) => {
     }
     // Both files are validated before either is stored. Never accept a mismatched reporting period.
     datasets = mergeDataset(datasets, result.dataset);
-    reports = [...reports.filter((x) => x.key !== result.reports.key), result.reports]
+    reports = [...supersede(reports, result.reports).filter((x) => x.key !== result.reports.key), result.reports]
       .sort((a, b) => (a.range.from < b.range.from ? 1 : -1));
     await store.put(datasets);
     await store.putReports(reports);
@@ -945,7 +945,7 @@ async function ingest(text) {
   if (String(text).includes(REPORTS_SCHEMA)) {
     const r = parseReports(text);
     if (r.error) { msg.className = 'msg err'; msg.textContent = t(r.error, r.vars); return false; }
-    reports = [...reports.filter((x) => x.key !== r.reports.key), r.reports].sort((a, b) => (a.range.from < b.range.from ? 1 : -1));
+    reports = [...supersede(reports, r.reports).filter((x) => x.key !== r.reports.key), r.reports].sort((a, b) => (a.range.from < b.range.from ? 1 : -1));
     await store.putReports(reports);
     msg.className = 'msg';
     msg.textContent = t('reports_loaded', { range: `${r.reports.range.from} → ${r.reports.range.to}`, n: r.reports.techPoints.reduce((s, m) => s + m.rows.length, 0), a: r.reports.afterSales.length });
@@ -1029,9 +1029,24 @@ function renderTeamPicker(people, team) {
 }
 const allTasks = () => datasets.flatMap((d) => d.tasks);
 // Two bookmarklets share the exact same CRM reads: direct transfer or the original downloadable files.
+let mgrPick = null;   // { from, to, label } — the range the bookmarks pull
+function renderMgrPeriod() {
+  const box = $('mgr-period'); if (!box) return;
+  const today = saudiDay(new Date().toISOString()); const qs = lastQuarters(today, 4);
+  const month = { from: `${today.slice(0, 8)}01`, to: today, label: t('mgr_p_month') };
+  const year = { from: qs[3].from, to: today, label: t('mgr_p_year') };
+  const opts = [month, ...qs.map((q) => ({ from: q.from, to: q.to > today ? today : q.to, label: q.label })), year];
+  if (!mgrPick) mgrPick = month;
+  const fromIn = el('input', { type: 'date', value: mgrPick.from, max: today }), toIn = el('input', { type: 'date', value: mgrPick.to, max: today });
+  set(box, el('div', { class: 'pills' }, opts.map((o) => el('button', { type: 'button', class: `pill-btn${mgrPick.from === o.from && mgrPick.to === o.to ? ' on' : ''}`, text: o.label, onclick: () => { mgrPick = o; renderMgr(); } }))),
+    el('div', { class: 'row mgr-dates' }, el('label', {}, el('span', { text: t('mgr_p_from') }), fromIn), el('label', {}, el('span', { text: t('mgr_p_to') }), toIn),
+      el('button', { type: 'button', class: 'btn tiny', text: t('mgr_p_apply'), onclick: () => { if (!fromIn.value || !toIn.value || fromIn.value > toIn.value) { toast(t('mgr_p_bad')); return; } mgrPick = { from: fromIn.value, to: toIn.value, label: '' }; renderMgr(); } })),
+    el('p', { class: 'hint ltr-dates', text: t('mgr_p_now', { from: mgrPick.from, to: mgrPick.to }) }));
+}
 function renderMgr() {
   const row = $('mgr-row'), direct = $('mgr-auto-row'); if (!row || !direct) return;
-  const q = currentBlocks()[0];
+  renderMgrPeriod();
+  const q = mgrPick || currentBlocks()[0];
   const bm = buildManagerBookmarklet(q.from, q.to, undefined, lang);
   // on an unsafe address (a preview, a file) the direct method is simply not offered — the page never breaks over it
   const auto = safePortalUrl(portalHome()) ? buildManagerBookmarklet(q.from, q.to, undefined, lang, 'auto', portalHome()) : null;
@@ -1255,8 +1270,12 @@ function renderKpi() {
   const team = currentTeam(people, allTasks());
   const f = factor1(ds.tasks, { range: ds.range, team });
   const c = completeness(ds);
-  const select = el('select', { id: 'kpi-period', onchange: (e) => { kpiKey = e.target.value; renderKpi(); } },
-    datasets.map((d) => el('option', { value: d.key, selected: d.key === kpiKey, text: `${d.range.from} → ${d.range.to}${d.sample ? ' *' : ''}` })));
+  const select = el('span', { class: 'period-pick' }, el('select', { id: 'kpi-period', onchange: (e) => { kpiKey = e.target.value; renderKpi(); } },
+    datasets.map((d) => el('option', { value: d.key, selected: d.key === kpiKey, text: `${d.range.from} → ${d.range.to}${d.sample ? ' *' : ''}` }))),
+    el('button', { type: 'button', class: 'btn quiet tiny', title: t('period_delete'), 'aria-label': t('period_delete'), text: '✕', onclick: async () => {
+      const d = datasets.find((x) => x.key === kpiKey); if (!d || !confirm(t('period_delete_confirm', { from: d.range.from, to: d.range.to }))) return;
+      datasets = datasets.filter((x) => x.key !== d.key); reports = reports.filter((r) => !(r.range.from === d.range.from && r.range.to === d.range.to));
+      await store.put(datasets); await store.putReports(reports); kpiKey = datasets[0] ? datasets[0].key : null; renderDatasets(); renderBlocks(); renderKpi(); toast(t('period_deleted')); } }));
   const rateCell = (r) => el('span', { class: 'rate' }, el('i', {}, el('b', { style: `width:${Math.round((r || 0) * 100)}%` })), formatRate(r));
   const name = (r) => (r.id === GROUP ? t('group_bucket') : (nameOf(peopleById.get(r.id), lang) || r.name));
   const showCancel = f.team.cancelled > 0, showRd = ds.rdKnown && f.team.rd > 0;

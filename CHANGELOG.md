@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.33 — 2026-10-31
+
+- السحب الأحدث يحل محل الأقدم: لو سحبت الشهر يوم ١٥ ثم يوم ٢٠، تبقى فترة واحدة بآخر بيانات. وزر ✕ بجانب قائمة الفترات في اللوحة يحذف أي فترة لا تريدها.
+- «فترة السحب» في صفحة البيانات: اختر هذا الشهر، أو أي ربع من آخر أربعة، أو سنة كاملة، أو تاريخين بنفسك — والإشارتان تتجهزان للفترة على الفور.
+
+<details><summary>English</summary>
+
+- A newer pull replaces the older: pull the month on the 15th and again on the 20th, and one period remains with the latest data. A ✕ beside the board’s period list deletes any period you don’t want.
+- “Pull period” on the Data page: choose this month, any of the last four quarters, a full year, or two dates of your own — and both bookmarks are ready for that period at once.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- نیا کھینچا پرانے کی جگہ لیتا ہے: مہینہ ۱۵ کو اور پھر ۲۰ کو کھینچیں تو تازہ ڈیٹا کے ساتھ ایک ہی مدت رہتی ہے۔ بورڈ پر مدتوں کی فہرست کے ساتھ ✕ کوئی بھی ناپسند مدت حذف کرتا ہے۔
+- ڈیٹا کے صفحے پر «کھینچنے کی مدت»: یہ مہینہ، پچھلی چار میں سے کوئی سہ ماہی، پورا سال، یا اپنی دو تاریخیں چنیں — اور دونوں بک مارکس فوراً اسی مدت کے لیے تیار۔
+
+</div>
+</details>
+
+
 ## v8.32 — 2026-10-31
 
 - قائمة «أنظمة الشركة» الجانبية صارت منظمة: كل فئة مجموعة تُطوى وحدها (مغلقة افتراضيًّا، واحدة مفتوحة في كل مرة) وبجانبها عدد أنظمتها، والصفوف أصغر، وسهم الفتح بجانب الاسم، ورابط «كل الأنظمة في الرئيسية» في آخرها.

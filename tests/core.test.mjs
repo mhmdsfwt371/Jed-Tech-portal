@@ -763,6 +763,17 @@ test('load sustainability: after-hours, weekend and late-night shares in Saudi t
   assert.ok(r.people.A.share > 1 && r.people.C.share < 1);
 });
 
+test('a newer pull overrides older real pulls it covers; partial overlaps and the sample set stay', async () => {
+  const C = await import('../core.js');
+  const ds = (from, to, ids, extra = {}) => ({ key: `${from}_${to}`, range: { from, to }, tasks: ids.map((i) => ({ id: i })), people: [], ...extra });
+  let list = C.mergeDataset([], ds('2026-10-01', '2026-10-15', ['a']));
+  list = C.mergeDataset(list, ds('2026-09-20', '2026-10-10', ['z']));
+  list = C.mergeDataset(list, ds('2026-10-01', '2026-10-20', ['a', 'b']));
+  assert.deepEqual(list.map((d) => d.key).sort(), ['2026-09-20_2026-10-10', '2026-10-01_2026-10-20'], '1–15 is replaced by 1–20; the partial overlap stays');
+  list = C.mergeDataset(list, ds('2026-10-01', '2026-10-31', ['a', 'b', 'c'], { sample: true }));
+  assert.equal(list.length, 3, 'a sample set replaces nothing');
+});
+
 test('formatting', () => {
   assert.equal(formatHours(null, 'ar'), '—');
   assert.equal(formatHours(5.26, 'en'), '5.3 h');
