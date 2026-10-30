@@ -7,7 +7,7 @@ const EXPECT = { sensor: 'Sensor Displacement', apihelper: 'مساعد الإن�
 //   api_docs: AFAQY PRO's API docs are behind a login, so a stranger gets 404;
 //   vss, camera: the servers exist (DNS resolves) and answer 503 to visitors outside the company / the Kingdom.
 // They are reported as notes, never as failures. Any OTHER link that fails still turns the check red.
-const OUTSIDE_UNCHECKABLE = { api_docs: 'behind a login', vss: 'company network only', camera: 'company network only', nusuk_vpn: 'VPN appliance with its own certificate' };
+const OUTSIDE_UNCHECKABLE = { api_docs: 'behind a login', vss: 'company network only', camera: 'company network only', nusuk_vpn: 'VPN appliance with its own certificate', transportic_sso: 'admin console that refuses visitors outside its allowed networks' };
 const links = [...PRIMARY, ...MORE.filter((x) => x.status === 'live'), ...SYSTEMS];
 const notes = [];
 const problems = [];

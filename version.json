@@ -1,15 +1,15 @@
 {
-  "version": "8.30",
+  "version": "8.31",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "«استدامة الحِمل» على لوحة المؤشرات — للمدير فقط: إشارات مبكرة على الضغط قبل أن يتحول لإرهاق أو استقالة. لكل شخص في آخر ٤ أسابيع: نسبة شغله خارج الدوام، وفي الجمعة والسبت، وبعد ٩ مساءً، وهل يزيد؛ وحِمل المهندس مقارنة بزملائه. وحالة (مستدام، راقِب، يحتاج تدخلًا) ومقترح عملي: كم نقطة تُحوَّل ولمن، أو مراجعة ساعات العمل، أو تفويض القائد."
+      "أُضيف IOPGPS وبوابة دخول Transportic Online إلى «الموردون وبوابات الأجهزة»."
     ],
     "en": [
-      "“Load sustainability” on the KPI board — manager only: early signals of strain before it turns into burnout or resignation. For each person over the last 4 weeks: the share of work after hours, on Fri/Sat and after 9 pm, and whether it is rising; and an engineer’s load against peers. A status (sustainable, watch, needs action) and a practical suggestion: how many points to move and to whom, a review of working hours, or delegation for a leader."
+      "IOPGPS and the Transportic Online sign-in console are added under “Vendors and device portals”."
     ],
     "ur": [
-      "اشاریوں کے بورڈ پر «بوجھ کی پائیداری» — صرف مینیجر کے لیے: تھکن یا استعفے سے پہلے دباؤ کے ابتدائی اشارے۔ پچھلے ۴ ہفتوں میں ہر فرد کے لیے: اوقات کے بعد، جمعہ/ہفتہ اور رات ۹ کے بعد کام کا حصہ، اور کیا یہ بڑھ رہا ہے؛ اور انجینئر کا بوجھ ساتھیوں کے مقابلے میں۔ حالت (پائیدار، نظر رکھیں، کارروائی درکار) اور عملی تجویز: کتنے پوائنٹس کسے منتقل کریں، اوقاتِ کار کا جائزہ، یا لیڈر کے لیے تفویض۔"
+      "IOPGPS اور Transportic Online کا سائن اِن کنسول «وینڈرز اور ڈیوائس پورٹلز» میں شامل کیے گئے۔"
     ]
   }
 }
