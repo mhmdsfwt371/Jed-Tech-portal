@@ -1,5 +1,5 @@
 // app.js — everything on the page. Data stays in this browser (IndexedDB); nothing is sent anywhere.
-import { PRIMARY, SYSTEMS, MORE, PORTAL_VERSION, MODULE_ALLOW } from './config.js';
+import { PRIMARY, SYSTEMS, SYSTEM_CATEGORIES, MORE, PORTAL_VERSION, MODULE_ALLOW } from './config.js';
 import { mountTourDemo, replayTourDemo } from './tour-demo.js';
 import {
   t as tr, L, LANGS, dirOf, tourState, TOUR_DEVICES, tourDemoPlan, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1,
@@ -103,7 +103,7 @@ function renderTools() {
     return moduleLink(x, 'tool', icon, el('span', { class: 'name', text: L(x.name, lang) }), el('span', { class: 'desc', text: L(x.desc, lang) }),
       x.module ? el('span', { class: 'badge', text: t('in_portal') }) : null, el('span', { class: 'go', text: t('open') }));
   }));
-  set($('systems'), SYSTEMS.map((x) => el('a', { class: 'chip', href: x.url, target: '_blank', rel: 'noopener', text: L(x.name, lang) })));
+  set($('systems'), SYSTEM_CATEGORIES.map((c) => el('section', { class: 'systems-category' }, el('h3', { text: L(c.name, lang) }), el('div', { class: 'row' }, SYSTEMS.filter((x) => x.category === c.id).map((x) => el('a', { class: 'chip', href: x.url, target: '_blank', rel: 'noopener', text: L(x.name, lang) }))))));
   set($('more'), MORE.map((x) => (x.status === 'live'
     ? moduleLink(x, 'chip', L(x.name, lang))
     : el('span', { class: 'chip soon' }, L(x.name, lang), el('span', { class: 'tag', text: t('soon') })))));
@@ -695,8 +695,10 @@ const svg = (name) => { const s = el('span', { 'aria-hidden': 'true', style: 'di
 function renderSide() {
   if (isTeamPortal) $('nav-kpi').closest('[data-nav-section]').hidden = true;
   set($('nav-modules'), MODULES.map((m) => el('a', { href: `#m-${m.id}`, class: 'sub', 'data-module': m.id, text: L(m.name, lang) })));
-  set($('nav-systems'), SYSTEMS.map((x) => (x.id === 'pro' ? el('a', { href: '#pro', class: 'sub', 'data-view': 'pro', text: L(x.name, lang) }) : el('a', { href: x.url, class: 'sub', target: '_blank', rel: 'noopener' },
-    el('span', { text: L(x.name, lang) }), el('span', { class: 'ext', 'aria-hidden': 'true', text: '↗' })))));
+  set($('nav-systems'), SYSTEM_CATEGORIES.map((c) => el('div', {},
+    el('div', { class: 'sub', text: L(c.name, lang) }),
+    SYSTEMS.filter((x) => x.category === c.id).map((x) => (x.id === 'pro' ? el('a', { href: '#pro', class: 'sub', 'data-view': 'pro', text: L(x.name, lang) }) : el('a', { href: x.url, class: 'sub', target: '_blank', rel: 'noopener' },
+      el('span', { text: L(x.name, lang) }), el('span', { class: 'ext', 'aria-hidden': 'true', text: '↗' })))))));
 }
 const setMenu = (open) => { document.body.classList.toggle('nav-open', open); $('menu-btn').setAttribute('aria-expanded', String(open)); };
 // The groups fold as in the reference: one open at a time; the group holding the current page opens by itself.

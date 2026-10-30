@@ -143,6 +143,8 @@
   .row { display: flex; gap: 10px; flex-wrap: wrap; }
   .chip { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
           text-decoration: none; font-weight: 700; color: var(--ink); }
+  .systems-category { margin: 18px 0; }
+  .systems-category h3 { margin: 0 0 10px; font-size: 15px; color: var(--ink-2); }
   .chip:hover { border-color: var(--accent); }
   .chip.soon { color: var(--ink-2); font-weight: 400; cursor: default; }
   .chip .tag { font-size: 12px; font-weight: 400; color: var(--ink-2); }
@@ -639,7 +641,7 @@
     <div class="primary" id="primary"></div>
     <h2 data-t="systems">أنظمة الشركة</h2>
     <p class="hint" data-t="systems_note"></p>
-    <div class="row" id="systems"></div>
+    <div id="systems"></div>
     <h2 data-t="more">أدوات أخرى</h2>
     <div class="row" id="more"></div>
   </section>
