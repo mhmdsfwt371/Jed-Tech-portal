@@ -8,6 +8,13 @@ def strip(src):
 js = '\n'.join(strip((root/f).read_text(encoding='utf-8')) for f in ['config.js', 'core.js', 'app.js'])
 # core's t() becomes tr() — the name app.js already imports it under
 core = strip((root/'core.js').read_text(encoding='utf-8'))
+# the strings live in i18n/<lang>.js and load on demand; the single-file preview carries all three inside instead
+def lang_obj(l):
+    src=(root/f'i18n/{l}.js').read_text(encoding='utf-8')
+    return src[src.index('export default {')+len('export default '):src.rindex('};')+1]
+full='const STRINGS = { ' + ', '.join(f"{l}: {lang_obj(l)}" for l in ['ar','en','ur']) + ' };'
+assert core.count('const STRINGS = { ar: {}, en: {}, ur: {} };')==1
+core = core.replace('const STRINGS = { ar: {}, en: {}, ur: {} };', full)
 core = core.replace('function t(lang, key', 'function tr(lang, key').replace("t(lang, 'hours'", "tr(lang, 'hours'").replace("t(lang, 'days'", "tr(lang, 'days'")
 js = '\n'.join([strip((root/'config.js').read_text(encoding='utf-8')), core, strip((root/'app.js').read_text(encoding='utf-8'))])
 def uri(path, mime): return f"data:{mime};base64," + base64.b64encode((root/path).read_bytes()).decode()

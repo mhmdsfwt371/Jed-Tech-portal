@@ -11,6 +11,7 @@ import {
   buildReportsPrompt, parseReports, techTotals, afterSalesTotals, monthsOf, REPORTS_SCHEMA, TECH_FIELDS, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute, tourState, TOUR_DEVICES, tourDemoPlan,
   taskPointBreakdown, weightPublishDiff, publishableWeights, portalWeights,
 } from '../core.js';
+await (await import('../core.js')).loadStrings();
 import { gzipSync } from 'node:zlib';
 
 const tests = [];
@@ -643,6 +644,30 @@ test('repair check: came back after the repair, waiting inside 48 hours, failed 
   const A = r.people.find((p) => p.id === 'A'); assert.equal(A.rate, 0.5); assert.equal(r.people.find((p) => p.id === 'B').rate, null, 'nothing decided yet');
   const lines = parseRepairLines('866123456789012, 2026-10-20 14:00\n866123456789013\n12', now);
   assert.equal(lines.length, 2, 'too-short refs dropped'); assert.equal(lines[0].at, '2026-10-20T11:00:00.000Z', 'Saudi time read as UTC+3'); assert.equal(lines[1].at, now.toISOString());
+});
+
+test('type names in the reader’s language, isolated; safe portal addresses; strings load per language', async () => {
+  const C = await import('../core.js');
+  assert.equal(C.typeLabel('WASL Link | الربط مع وصل', 'ar'), '\u2068الربط مع وصل\u2069');
+  assert.equal(C.typeLabel('WASL Link | الربط مع وصل', 'en'), '\u2068WASL Link\u2069');
+  assert.equal(C.typeLabel('Prepare the visit', 'ar'), '\u2068Prepare the visit\u2069', 'no Arabic half: the name as it is');
+  assert.ok(C.safePortalUrl('https://mhmdsfwt371.github.io/Jed-Tech-portal/'));
+  assert.ok(C.safePortalUrl('http://127.0.0.1:8080/'), 'this machine, for testing');
+  for (const bad of ['http://example.com/', 'https://u:p@example.com/', 'file:///x', 'javascript:alert(1)']) assert.ok(!C.safePortalUrl(bad), bad);
+  for (const l of C.LANGS) assert.ok(Object.keys(C.STRINGS[l]).length > 500, `${l} strings loaded`);
+});
+
+test('the card judges only the teams’ own types: other types count in points as “other work”, never as strengths; no team work = too little to judge', () => {
+  const wt = parseWeights({ default: 1, tasks: { 'WASL Link': { w: 3, tier: 'integration' }, 'View Units': { w: 1, tier: 'admin' } } });
+  const D = (id, a, type, day) => ({ id, assigneeId: a, type, state: 'done', createdAt: `2026-10-${day}T08:00:00Z`, completedAt: `2026-10-${day}T09:00:00Z` });
+  const tasks = [...['01', '02', '03', '04', '05', '06', '07', '08'].map((d) => D('m' + d, 'M', 'Prepare the visit', d)),
+    ...['01', '02', '03', '04', '05', '06'].map((d) => D('w' + d, 'A', 'WASL Link', d)), ...['01', '02'].map((d) => D('x' + d, 'B', 'WASL Link', d)), ...['10', '11', '12', '13', '14', '15', '16', '17', '18', '19'].map((d) => D('v' + d, 'B', 'View Units', d))];
+  const ctx = { tasks, activities: [], weights: wt, team: ['M', 'A', 'B'], now: new Date('2026-10-29T10:00:00Z') };
+  const m = monthCard(ctx, 'M', '2026-10'), a = monthCard(ctx, 'A', '2026-10');
+  assert.equal(m.points, 8, 'other work still counts in points'); assert.equal(m.otherWork, 8);
+  assert.equal(m.archetype, 'early', 'no work of the teams’ types: too little to judge');
+  assert.ok(!m.strengths.some((s) => /Prepare/.test(s.type || '')), 'an outside type is never a strength');
+  assert.equal(a.otherWork, 0); assert.ok(a.strengths.some((s) => s.kind === 'spec'), 'the WASL specialist is still found');
 });
 
 test('formatting', () => {

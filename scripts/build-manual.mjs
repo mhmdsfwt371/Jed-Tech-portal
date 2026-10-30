@@ -11,7 +11,8 @@ const MANUAL_TITLE = { ar: 'دليل المستخدم — بوابة الفري�
 const NEWS_TITLE = { ar: 'ما الجديد في هذه النسخة', en: 'What is new in this version', ur: 'اس ورژن میں نیا کیا ہے' };
 
 export async function manualText() {
-  const { STRINGS, LANGS, GUIDE, DEFINITIONS } = await import(new URL('core.js', root));
+  const { STRINGS, LANGS, GUIDE, DEFINITIONS, loadStrings } = await import(new URL('core.js', root));
+  await loadStrings();
   const release = JSON.parse(readFileSync(new URL('version.json', root), 'utf8'));
   const tr = (lang, key, vars = {}) => String(STRINGS[lang][key]).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
   const out = [`# ${MANUAL_TITLE.ar} | ${MANUAL_TITLE.en} | ${MANUAL_TITLE.ur}`, '',

@@ -1,15 +1,27 @@
 {
-  "version": "8.15",
+  "version": "8.16",
   "date": "2026-10-30",
   "notes": {
     "ar": [
-      "تصحيح فحص سلامة إشارة سحب المدير المباشر، بحيث يتم التحقق من كود الإشارة كما ينبغي دون أن يختلط بطلبات البوابة. الطريقتان، المباشرة واليدوية، متاحتان كما هما."
+      "النسخة الاحتياطية صارت كاملة: تحمل كل ما على الجهاز — البيانات والتقارير والبطاقات المقفولة واللقاءات الشهرية وقائمة الإصلاح ومسودة الأوزان — والاستعادة تدمج ولا تمسح. والبوابة تطلب من المتصفح الاحتفاظ ببياناتها، وصفحة البيانات تقول إن وعد أم لا.",
+      "ملف الفريق يصل لكل الأجهزة فور نشره — إضافة شخص لم تعد تنتظر إصدارًا جديدًا.",
+      "البطاقة تحكم على أنواع الفريقين فقط: الأنواع الأخرى «شغل آخر» تُحسب في النقاط ولا تصنع تميّزًا وهميًّا. وأسماء الأنواع بلغتك.",
+      "تصميم أوضح على الجوال: عناوين الرسمة العنكبوتية مقروءة، صفحة الفريق بعرض الشاشة، أزرار أكبر للمس، وروابط سريعة أعلى لوحة المؤشرات.",
+      "البوابة أخف: كل لغة تُحمّل وحدها — القارئ العربي ينزّل أقل بالربع."
     ],
     "en": [
-      "Corrected the verification of the manager's direct-import bookmark so its myafaqy requests are not mistaken for portal requests. Both the direct and manual methods remain available unchanged."
+      "The backup is now complete: it carries everything on the device — data, reports, closed cards, monthly one-to-ones, the repair list and the weights draft — and restoring merges rather than erases. The portal asks the browser to keep its data, and the Data page says whether it promised.",
+      "The team file reaches every device as soon as it is published — adding a person no longer waits for a release.",
+      "The card judges only the two teams’ types: other types are “other work”, counted in the points but never making a false strength. Type names appear in your language.",
+      "Clearer on a phone: the radar’s labels are readable, the Team page fits the screen, touch targets are larger, and quick links sit at the top of the KPI board.",
+      "The portal is lighter: each language loads on its own — an Arabic reader downloads a quarter less."
     ],
     "ur": [
-      "مینیجر کے براہ راست درآمد والے بک مارک کی حفاظتی جانچ درست کی گئی ہے تاکہ مائی آفاقی کے اندر ہونے والی درخواستیں پورٹل کی درخواستیں نہ سمجھی جائیں۔ براہ راست اور دستی دونوں طریقے پہلے کی طرح دستیاب ہیں۔"
+      "بیک اپ اب مکمل ہے: آلے کا سب کچھ — ڈیٹا، رپورٹس، بند کارڈ، ماہانہ ملاقاتیں، مرمت کی فہرست اور اوزان کا مسودہ — اور بحالی ملاتی ہے، مٹاتی نہیں۔ پورٹل براؤزر سے اپنا ڈیٹا رکھنے کو کہتا ہے، اور ڈیٹا کا صفحہ بتاتا ہے کہ وعدہ ہوا یا نہیں۔",
+      "ٹیم کی فائل شائع ہوتے ہی ہر آلے تک پہنچتی ہے — کسی کو شامل کرنا اب نئے ورژن کا انتظار نہیں کرتا۔",
+      "کارڈ صرف دونوں ٹیموں کی اقسام پر فیصلہ کرتا ہے: دیگر اقسام «دیگر کام» ہیں، پوائنٹس میں شامل مگر جھوٹی نمایاں بات نہیں بناتیں۔ اقسام کے نام آپ کی زبان میں۔",
+      "فون پر زیادہ واضح: ریڈار کے لیبل پڑھنے کے قابل، ٹیم کا صفحہ اسکرین کے برابر، چھونے کے بڑے بٹن، اور اشاریوں کے بورڈ پر فوری روابط۔",
+      "پورٹل ہلکا ہے: ہر زبان الگ لوڈ ہوتی ہے — عربی قاری چوتھائی کم ڈاؤن لوڈ کرتا ہے۔"
     ]
   }
 }

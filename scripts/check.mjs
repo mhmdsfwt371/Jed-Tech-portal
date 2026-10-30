@@ -71,12 +71,13 @@ for (const i of manifest.icons || []) if (!exists(i.src)) note(`manifest icon mi
 // …or that the script itself creates (el('…', { id: 'x' }))
 const madeByScript = new Set([...app.matchAll(/\bid: '([\w-]+)'/g)].map((m) => m[1]));
 for (const [, id] of app.matchAll(/\$\('([\w-]+)'\)/g)) if (!html.includes(`id="${id}"`) && !madeByScript.has(id)) note(`app.js asks for #${id}, missing in index.html and never created`);
-const { STRINGS, LANGS } = await import(new URL('core.js', root));
+const { STRINGS, LANGS, loadStrings } = await import(new URL('core.js', root));
+await loadStrings();
 for (const [, k] of [...html.matchAll(/data-tp?="(\w+)"/g), ...app.matchAll(/\bt\('(\w+)'/g)]) if (!(k in STRINGS.ar)) note(`string "${k}" is not defined`);
 for (const lang of LANGS) for (const k of Object.keys(STRINGS.ar)) if (!(k in STRINGS[lang])) note(`${lang}: missing string ${k}`);
 // a key written twice in one language block silently overrides the first — refuse it
 for (const lang of LANGS) {
-  const block = core.slice(core.indexOf(`  ${lang}: {`), core.indexOf('\n  },', core.indexOf(`  ${lang}: {`)));
+  const block = read(`i18n/${lang}.js`);
   const seen = new Map();
   for (const [, k] of block.matchAll(/^\s{4}(\w+): '/gm)) seen.set(k, (seen.get(k) || 0) + 1);
   for (const [k, n] of seen) if (n > 1) note(`${lang}: string "${k}" is defined ${n} times — the last silently wins`);
@@ -146,7 +147,7 @@ const fingerprint = (w) => createHash('sha256').update(w).digest('hex').slice(0,
 // the Jeddah team itself (29 Oct 2026) — fingerprints only, as above
 for (const f of ["0be1e8491d132360", "0eee3231330958bc", "10f75987b734bd50", "15192f4a24c77aa8", "1d3a99e2f4f2bba3", "25ae3bf574575f62", "27715c6a5a183018", "2923b4f60d35fbce", "322e49b795fda0df", "3551ac5dc0815434", "39c27c48136dbf68", "402a947784d58cb8", "45185f3bc39e55da", "469a9455918ed408", "4c74d2323d34b34e", "4d3dd758e3262a8d", "5db688aff74ef50b", "5ed1fd4daa460667", "60409199a6cca757", "639e0252e8f41839", "694c271dc2318c00", "6df95ad0a252c668", "6ea5f03f8197a4c6", "6f64a360bca18d0a", "705301a7ca4c57fd", "7b0f0922a3700a15", "7d256b20141fb0fc", "8ad9672dfc2ee48a", "8afec982b4ea3c9d", "8c4e0bb679d74ee4", "8f7dfb13f1d1e5d1", "9108f01cc21bbb71", "9314a107617edf4c", "93ab256d195b2c84", "973d74ebb73735b9", "9bd9270a3dc6b3bf", "a7c73022b1cd9ace", "b42c3b92efe01065", "c3fb34ee2a7d9cd7", "d0892c3743fbdeef", "d7c12ba5fca0106f", "de13dbdcec62c9ec", "e01b5c571b8dce68", "e10f81efc499efd6", "ea3b62f4435c1e77", "f01e98bd4e393b0f", "f6274038b0611ac7", "fb41e979ac815b4e"]) CAPTURED.add(f);
 const walkMd = (dir) => { const out = []; for (const e of readdirSync(new URL(dir, root), { withFileTypes: true })) { const p = `${dir}${e.name}`; if (e.isDirectory()) out.push(...walkMd(`${p}/`)); else if (/\.(md|json)$/.test(e.name)) out.push(p); } return out; };
-for (const f of ['index.html', 'app.js', 'core.js', 'config.js', 'tests/core.test.mjs', 'README.md', 'AGENTS.md', 'CHANGELOG.md', 'CLAUDE.md', 'SECURITY.md',
+for (const f of ['index.html', 'app.js', 'core.js', 'config.js', 'i18n/ar.js', 'i18n/en.js', 'i18n/ur.js', 'tests/core.test.mjs', 'README.md', 'AGENTS.md', 'CHANGELOG.md', 'CLAUDE.md', 'SECURITY.md',
   'version.json', 'team.json', 'release/next.json', ...walkMd('docs/')]) {
   if (!exists(f)) continue;
   const words = read(f).toLowerCase().match(/[a-z]{4,}|[\u0600-\u06ff]{3,}/g) || [];
@@ -337,6 +338,18 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
     if (/sessionStorage\.setItem\([^)]*(pass|pw|user)/i.test(pro) || /PRO_KEY,\s*(pass|pw|user)/i.test(pro)) note('PRO page: the password or username must never be stored');
     if (!/p\.value = ''/.test(pro)) note('PRO page: the password box must be cleared as soon as it is read');
   }
+}
+
+// 24. ADR-0023: the device backup carries every store the page keeps, the language files are offline, and every language has
+//     exactly the keys of the Arabic file (Arabic is every key's fallback).
+{
+  const kv = [...new Set([...app.matchAll(/s\.(?:get|put|delete)\('([a-z]+)'/g)].map((m) => m[1]))];
+  const exp = (app.match(/backup: 'afaqy-portal\/v2'[\s\S]*?\};/) || [''])[0];
+  if (!exp) note('backup: the v2 export is missing');
+  for (const k of kv) if (!new RegExp(`\\b${k}\\b`).test(exp)) note(`backup: the store "${k}" is not in the device backup — a cleared browser would lose it`);
+  for (const l of ['ar', 'en', 'ur']) if (!sw.includes(`'./i18n/${l}.js'`)) note(`sw.js: i18n/${l}.js must be precached so the language works offline`);
+  for (const l of ['en', 'ur']) { const extra = Object.keys(STRINGS[l]).filter((k) => !(k in STRINGS.ar)); if (extra.length) note(`i18n/${l}.js: keys not in ar.js: ${extra.slice(0, 5).join(', ')}`); }
+  if (!/await loadStrings\(\['ar', lang\]\);\s*\/\/[^\n]*\n\s*applyLang\(\);/.test(app)) note('app.js: the strings must be loaded before the first render');
 }
 
 if (problems.length) { console.error(`check.mjs: ${problems.length} problem(s)\n- ${problems.join('\n- ')}`); process.exit(1); }

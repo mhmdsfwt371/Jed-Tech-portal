@@ -6,10 +6,10 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, repairCheck, parseRepairLines,
-  buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
+  safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
 } from './core.js';
 
 const $ = (id) => document.getElementById(id);
@@ -191,6 +191,7 @@ $('tour-next').addEventListener('click', () => {
 $('me-tour').addEventListener('close', () => $('me-tour-open').focus());
 
 let me = null;
+let storageKept = null;   // true when the browser promised to keep this site's data
 // a "?" beside a heading: what it is and how to use it, in the reader's language
 const helpQ = (key, titleKey) => el('button', { type: 'button', class: 'help-q', 'data-help': key, 'data-help-title': titleKey || '', 'aria-label': '?', text: '?' });
 function openHelp(key, titleKey, fallbackTitle) {
@@ -210,7 +211,7 @@ let cardMonth = null;       // the month shown on the profile
 const fmtH = (h) => formatHours(h, lang);
 const monthLabel = (ym) => { const [y, m] = ym.split('-').map(Number); return new Intl.DateTimeFormat(lang === 'ar' ? 'ar-EG-u-ca-gregory-nu-latn' : lang === 'ur' ? 'ur-PK-u-ca-gregory-nu-latn' : 'en-GB-u-ca-gregory', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(y, m - 1, 15))); };
 function radar(mine, team, size = 180) {
-  const svg = document.createElementNS(SVG, 'svg'); svg.setAttribute('viewBox', '0 0 200 200'); svg.setAttribute('width', size); svg.setAttribute('height', size); svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', t('card_radar'));
+  const svg = document.createElementNS(SVG, 'svg'); svg.setAttribute('viewBox', '-34 -16 268 232'); svg.style.overflow = 'visible'; svg.setAttribute('width', size); svg.setAttribute('height', size); svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', t('card_radar'));
   const c = 100, R = 78, axes = TIERS.map((k, i) => ({ k, a: -Math.PI / 2 + (i * Math.PI) / 2 }));
   const pt = (a, r) => [c + Math.cos(a) * r, c + Math.sin(a) * r];
   const mk = (tag, attrs) => { const n = document.createElementNS(SVG, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
@@ -219,7 +220,8 @@ function radar(mine, team, size = 180) {
   const poly = (sh, fill, stroke) => mk('polygon', { points: axes.map(({ k, a }) => pt(a, R * Math.min(1, sh[k] || 0)).join(',')).join(' '), fill, stroke, 'stroke-width': 2, 'fill-opacity': 0.35 });
   svg.append(poly(team, 'var(--slate)', 'var(--slate)'));
   svg.append(poly(mine, 'var(--accent)', 'var(--accent-dark)'));
-  for (const { k, a } of axes) { const [x, y] = pt(a, R + 14); const tx = mk('text', { x, y, 'text-anchor': 'middle', 'dominant-baseline': 'middle', 'font-size': 10, fill: 'var(--title)' }); tx.textContent = t(`tier_short_${k}`); svg.append(tx); }
+  const fs = Math.ceil(12.5 * 268 / size);   // ≥ 12.5 px on screen
+  for (const { k, a } of axes) { const [x, y] = pt(a, R + fs * 0.9); const tx = mk('text', { x, y, 'text-anchor': 'middle', 'dominant-baseline': 'middle', 'font-size': fs, 'font-weight': 600, fill: 'var(--title)' }); tx.textContent = t(`tier_short_${k}`); svg.append(tx); }
   return svg;
 }
 const why = (text) => el('span', { class: 'why', text });
@@ -228,13 +230,13 @@ function renderCard(card, nm, { showRank = false, showSuggestions = false, compa
   const arch = t(`arch_${card.archetype}`), archWhy = t(`arch_${card.archetype}_why`);
   const q = card.quartile ? t(`quartile_${card.quartile}`) : '—';
   const delta = card.points - card.prevPoints;
-  const S = card.strengths.slice(0, compact ? 2 : 4).map((s) => s.kind === 'spec' ? t('str_spec', { type: s.type, pct: s.pct, my: s.myPct, n: s.mine })
-    : s.kind === 'speed' ? t('str_speed', { type: s.type, me: fmtH(s.myMed), team: fmtH(s.teamMed) }) : t('str_initiative', { n: s.n, c: s.customers }));
+  const S = card.strengths.slice(0, compact ? 2 : 4).map((s) => s.kind === 'spec' ? t('str_spec', { type: typeLabel(s.type, lang), pct: s.pct, my: s.myPct, n: s.mine })
+    : s.kind === 'speed' ? t('str_speed', { type: typeLabel(s.type, lang), me: fmtH(s.myMed), team: fmtH(s.teamMed) }) : t('str_initiative', { n: s.n, c: s.customers }));
   const D = card.development.slice(0, compact ? 2 : 4).map((d) => d.kind === 'tierGap' ? t('dev_tierGap', { tier: t(`tier_${d.tier}`), mine: d.mine, team: d.team })
-    : d.kind === 'slow' ? t('dev_slow', { type: d.type, me: fmtH(d.myMed), team: fmtH(d.teamMed) }) : d.kind === 'selfLogged' ? t('dev_self', { pct: d.pct })
+    : d.kind === 'slow' ? t('dev_slow', { type: typeLabel(d.type, lang), me: fmtH(d.myMed), team: fmtH(d.teamMed) }) : d.kind === 'selfLogged' ? t('dev_self', { pct: d.pct })
     : d.kind === 'aging' ? t('dev_aging', { n: d.n, days: d.days }) : t('dev_rate', { pct: d.pct }));
-  const G = card.suggestions.map((g) => g.kind === 'stretch' ? t('sug_stretch', { type: g.type, tier: t(`tier_${g.tier}`), n: g.teamN })
-    : g.kind === 'invest' ? t('sug_invest', { type: g.type, me: fmtH(g.myMed), team: fmtH(g.teamMed) }) : g.kind === 'balanceUp' ? t('sug_balanceUp', { type: g.type, pts: card.points, med: card.teamMedian }) : t('sug_balanceDeep', { type: g.type, pts: card.points, med: card.teamMedian }));
+  const G = card.suggestions.map((g) => g.kind === 'stretch' ? t('sug_stretch', { type: typeLabel(g.type, lang), tier: t(`tier_${g.tier}`), n: g.teamN })
+    : g.kind === 'invest' ? t('sug_invest', { type: typeLabel(g.type, lang), me: fmtH(g.myMed), team: fmtH(g.teamMed) }) : g.kind === 'balanceUp' ? t('sug_balanceUp', { type: typeLabel(g.type, lang), pts: card.points, med: card.teamMedian }) : t('sug_balanceDeep', { type: typeLabel(g.type, lang), pts: card.points, med: card.teamMedian }));
   return el('div', { class: `card-month${compact ? ' compact' : ''}` },
     el('div', { class: 'card-head' },
       el('div', {}, el('h3', { text: nm }), el('div', { class: 'arch' }, el('b', { text: arch }), why(archWhy))),
@@ -245,8 +247,9 @@ function renderCard(card, nm, { showRank = false, showSuggestions = false, compa
         el('div', { class: 'hint', text: t('card_vs_prev', { d: (delta >= 0 ? '+' : '−') + Math.abs(delta), done: card.done }) }),
         el('div', { class: 'hint', text: showRank && card.rank ? t('card_rank', { r: card.rank, n: card.teamSize, med: card.teamMedian }) : t('card_quartile', { q, med: card.teamMedian }) }),
         card.consistency != null ? el('div', { class: 'hint', text: t('card_consistency', { pct: Math.round(card.consistency * 100), w: card.weeks }) }) : null),
-      el('div', { class: 'card-radar' }, radar(card.tiers.mineShare, card.tiers.teamShare, compact ? 140 : 180), el('div', { class: 'hint radar-legend' }, el('i', { class: 'me' }), t('card_me'), el('i', { class: 'team' }), t('card_team_legend')))),
+      el('div', { class: 'card-radar' }, radar(card.tiers.mineShare, card.tiers.teamShare, compact ? 140 : 180), el('div', { class: 'hint radar-legend' }, el('i', { class: 'sw-me' }), t('card_me'), el('i', { class: 'sw-team' }), t('card_team_legend')))),
     el('div', { class: 'card-cols' },
+      card.otherWork ? el('p', { class: 'hint other-work', text: t('card_other_work', { n: card.otherWork }) }) : null,
       el('div', { class: 'card-col good' }, el('h4', { text: t('card_strengths') }), S.length ? el('ul', {}, S.map((x) => el('li', { text: x }))) : el('p', { class: 'hint', text: t('card_none_yet') })),
       el('div', { class: 'card-col grow' }, el('h4', { text: t('card_development') }), D.length ? el('ul', {}, D.map((x) => el('li', { text: x }))) : el('p', { class: 'hint', text: t('card_none_dev') })),
       showSuggestions ? el('div', { class: 'card-col plan' }, el('h4', { text: t('card_suggestions') }), G.length ? el('ul', {}, G.map((x) => el('li', { text: x }))) : el('p', { class: 'hint', text: t('card_none_sug') })) : null),
@@ -262,7 +265,7 @@ function renderCard(card, nm, { showRank = false, showSuggestions = false, compa
               ['points_col_type', 'points_col_count', 'points_col_weight', 'points_col_sum'].map((k) =>
                 el('th', { text: t(k) })))),
             el('tbody', {}, card.breakdown.rows.map((r) => el('tr', {},
-              el('td', {}, el('span', { text: r.name }), r.unmapped
+              el('td', {}, el('span', { text: typeLabel(r.name, lang) }), r.unmapped
                 ? el('small', { class: 'points-unmapped', text: t('points_unknown') }) : null),
               el('td', { text: String(r.count) }),
               el('td', { text: String(r.weight) }),
@@ -541,24 +544,7 @@ function renderMe(waiting = false) {
       (() => { const months = [...new Set([...Object.keys(monthCards), ymd(new Date()).slice(0, 7)])].sort().reverse(); if (!cardMonth || !months.includes(cardMonth)) cardMonth = months[0];
         return el('select', { class: 'w-sel', onchange: (e) => { cardMonth = e.target.value; renderMe(); } }, months.map((m) => el('option', { value: m, selected: m === cardMonth, text: `${monthLabel(m)}${monthCards[m] ? '' : ` · ${t('card_live')}`}` }))); })()),
     el('p', { class: 'hint', text: t('card_sub') }),
-    (() => { const ymNow = cardMonth; const team = pm.scope.team; const ctx = cardCtxFromMe(team);
-      const own = (monthCards[ymNow] && monthCards[ymNow][me.user.id]) || monthCard(ctx, me.user.id, ymNow);
-      const below = pm.below.map((r) => r.id);
-      const typeChoices = Object.entries(weights().tasks).filter(([, x]) => x.team !== 'general').map(([k]) => [k, k.replace(/(^|\s)([a-z])/g, (mm, sp, ch) => sp + ch.toUpperCase())]);
-      const withMeet = (cardEl, id, name, editable) => { if (cardEl) { const b = meetBlock(ymNow, id, me.tasks, editable, name, typeChoices); if (b) cardEl.append(b); } return cardEl; };
-      const imp = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: (e) => { if (e.target.files[0]) importMeet(e.target.files[0]); e.target.value = ''; } });
-      const path = (id) => patternPath(monthCards, id);
-      const pathTable = (ids) => { const months = [...new Set(ids.flatMap((id) => path(id).map((p) => p.month)))].sort(); if (months.length < 2) return el('p', { class: 'hint', text: t('path_soon') });
-        const cellOf = (id, m) => { const p = path(id).find((x) => x.month === m); return el('td', {}, p ? [el('div', { text: t(`arch_${p.archetype}`) }), el('div', { class: 'hint', text: `${p.points} · ${t(`quartile_${p.quartile}`)}` })] : '—'); };
-        const head = el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), months.map((m) => el('th', { text: monthLabel(m) }))));
-        const bodyRows = el('tbody', {}, ids.map((id) => el('tr', {}, el('td', { text: id === me.user.id ? who : nm(id) }), months.map((m) => cellOf(id, m)))));
-        return el('div', { class: 'table-wrap' }, el('table', { class: 'path' }, head, bodyRows)); };
-      return [withMeet(renderCard(own, who, { showRank: false, showSuggestions: false }), me.user.id, who, false),
-        below.length ? [el('h3', { class: 'card-team-h', text: t('card_team_h', { n: below.length }) }),
-          el('div', { class: 'cards-grid' }, below.map((id) => withMeet(renderCard((monthCards[ymNow] && monthCards[ymNow][id]) || monthCard(ctx, id, ymNow), nm(id), { showRank: true, showSuggestions: true, compact: true }), id, nm(id), true)))] : null,
-        el('div', { class: 'row', style: 'margin-top:8px' }, el('button', { type: 'button', class: 'btn', text: t('card_print'), onclick: () => window.print() }),
-          below.length ? [el('button', { type: 'button', class: 'btn quiet', text: t('meet_export'), onclick: exportMeet }), el('button', { type: 'button', class: 'btn quiet', text: t('meet_import'), onclick: () => imp.click() }), imp] : null),
-        el('h2', {}, t('path_h'), helpQ('help_path')), pathTable([me.user.id, ...below])]; })(),
+    meCardSection(pm, who, nm),
     el('h2', { text: t('me_history_h') }),
     el('div', { class: 'table-wrap' }, el('table', {},
       el('thead', {}, el('tr', {}, ...['me_q', 'col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_median', 'col_email', 'col_self', 'col_cancelled'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
@@ -849,7 +835,13 @@ async function ingest(text) {
   renderDatasets(); renderBlocks();
   return true;
 }
+function storageNote() {
+  const n = $('storage-note'); if (!n) return;
+  n.className = `note ${storageKept ? 'ok-note' : 'info'}`;
+  n.textContent = storageKept === true ? t('storage_kept') : storageKept === false ? t('storage_not_kept') : t('storage_unknown');
+}
 function renderDatasets() {
+  storageNote();
   if (!datasets.length && !reports.length) { set($('datasets'), el('div', { class: 'empty', text: t('none_yet') })); return; }
   const reportRows = reports.map((r) => el('div', { class: 'ds' },
     el('span', { class: 'k ltr', text: `${r.range.from} → ${r.range.to}` }),
@@ -915,7 +907,8 @@ function renderMgr() {
   const row = $('mgr-row'), direct = $('mgr-auto-row'); if (!row || !direct) return;
   const q = currentBlocks()[0];
   const bm = buildManagerBookmarklet(q.from, q.to, undefined, lang);
-  const auto = buildManagerBookmarklet(q.from, q.to, undefined, lang, 'auto', portalHome());
+  // on an unsafe address (a preview, a file) the direct method is simply not offered — the page never breaks over it
+  const auto = safePortalUrl(portalHome()) ? buildManagerBookmarklet(q.from, q.to, undefined, lang, 'auto', portalHome()) : null;
   const controls = (link, label, primary) => [
     el('a', { class: `btn ${primary ? 'primary ' : ''}bm`, href: link, draggable: 'true',
       text: label, onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } }),
@@ -925,9 +918,63 @@ function renderMgr() {
         catch { toast(t('me_copy_fail')); }
       } }),
   ];
-  set(direct, controls(auto, `↪ ${t('mgr_auto_bm', { from: q.from, to: q.to })}`, true));
+  set(direct, auto ? controls(auto, `↪ ${t('mgr_auto_bm', { from: q.from, to: q.to })}`, true) : el('p', { class: 'hint', text: t('mgr_auto_unsafe') }));
   set(row, controls(bm, `⬇ ${t('mgr_bm', { from: q.from, to: q.to })}`, false));
 }
+// ---------- My KPIs: the month's card, the team's cards with one-to-ones, and the pattern's path ----------
+function meCardSection(pm, who, nm) { const ymNow = cardMonth; const team = pm.scope.team; const ctx = cardCtxFromMe(team);
+      const own = (monthCards[ymNow] && monthCards[ymNow][me.user.id]) || monthCard(ctx, me.user.id, ymNow);
+      const below = pm.below.map((r) => r.id);
+      const typeChoices = Object.entries(weights().tasks).filter(([, x]) => x.team !== 'general').map(([k]) => [k, k.replace(/(^|\s)([a-z])/g, (mm, sp, ch) => sp + ch.toUpperCase())]);
+      const withMeet = (cardEl, id, name, editable) => { if (cardEl) { const b = meetBlock(ymNow, id, me.tasks, editable, name, typeChoices); if (b) cardEl.append(b); } return cardEl; };
+      const imp = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: (e) => { if (e.target.files[0]) importMeet(e.target.files[0]); e.target.value = ''; } });
+      const path = (id) => patternPath(monthCards, id);
+      const pathTable = (ids) => { const months = [...new Set(ids.flatMap((id) => path(id).map((p) => p.month)))].sort(); if (months.length < 2) return el('p', { class: 'hint', text: t('path_soon') });
+        const cellOf = (id, m) => { const p = path(id).find((x) => x.month === m); return el('td', {}, p ? [el('div', { text: t(`arch_${p.archetype}`) }), el('div', { class: 'hint', text: `${p.points} · ${t(`quartile_${p.quartile}`)}` })] : '—'); };
+        const head = el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), months.map((m) => el('th', { text: monthLabel(m) }))));
+        const bodyRows = el('tbody', {}, ids.map((id) => el('tr', {}, el('td', { text: id === me.user.id ? who : nm(id) }), months.map((m) => cellOf(id, m)))));
+        return el('div', { class: 'table-wrap' }, el('table', { class: 'path' }, head, bodyRows)); };
+      return [withMeet(renderCard(own, who, { showRank: false, showSuggestions: false }), me.user.id, who, false),
+        below.length ? [el('h3', { class: 'card-team-h', text: t('card_team_h', { n: below.length }) }),
+          el('div', { class: 'cards-grid' }, below.map((id) => withMeet(renderCard((monthCards[ymNow] && monthCards[ymNow][id]) || monthCard(ctx, id, ymNow), nm(id), { showRank: true, showSuggestions: true, compact: true }), id, nm(id), true)))] : null,
+        el('div', { class: 'row', style: 'margin-top:8px' }, el('button', { type: 'button', class: 'btn', text: t('card_print'), onclick: () => window.print() }),
+          below.length ? [el('button', { type: 'button', class: 'btn quiet', text: t('meet_export'), onclick: exportMeet }), el('button', { type: 'button', class: 'btn quiet', text: t('meet_import'), onclick: () => imp.click() }), imp] : null),
+        el('h2', {}, t('path_h'), helpQ('help_path')), pathTable([me.user.id, ...below])]; }
+// ---------- the board's sections, each its own function (ADR-0023) ----------
+function kpiWeekSection(team, peopleById) { const wd = weeklyDigest(allTasks(), weights(), team, new Date(), { ...CARD_DEFAULTS, ...(weights().card || {}) });
+      const leave = (id) => !!(roster().people[id] && roster().people[id].onLeave);
+      const nmW = (id) => (nameOf(peopleById.get(id), lang) || id);
+      const drops = wd.drops.filter((r) => !leave(r.id)), away = wd.drops.filter((r) => leave(r.id));
+      const text = [t('week_h'), `${t('week_total', { p: wd.total, q: wd.prevTotal })}`,
+        wd.movers.length ? `${t('week_movers')}: ${wd.movers.map((r) => `${nmW(r.id)} +${r.delta}`).join('، ')}` : null,
+        drops.length ? `${t('week_drops')}: ${drops.map((r) => `${nmW(r.id)} ${r.prev}→${r.points}`).join('، ')}` : null,
+        wd.aging.length ? `${t('week_aging')}: ${wd.aging.map((r) => `${nmW(r.id)} ${r.aging}`).join('، ')}` : null].filter(Boolean).join('\n');
+      const share = async () => { try { if (navigator.share) await navigator.share({ title: t('week_h'), text }); else { await navigator.clipboard.writeText(text); toast(t('me_copied')); } } catch { /* closed */ } };
+      return el('section', { class: 'week', id: 'k-week' },
+        el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, el('h2', { style: 'margin:0' }, t('week_h'), helpQ('help_week')), el('button', { type: 'button', class: 'btn tiny', text: t('week_share'), onclick: share })),
+        el('div', { class: 'week-grid' },
+          el('div', { class: 'week-tile' }, el('b', { text: String(wd.total) }), el('span', { text: t('week_total_l', { q: wd.prevTotal, d: (wd.total - wd.prevTotal >= 0 ? '+' : '−') + Math.abs(wd.total - wd.prevTotal) }) })),
+          el('div', { class: 'week-list good' }, el('h4', { text: t('week_movers') }), wd.movers.length ? wd.movers.map((r) => el('div', { text: `${nmW(r.id)} · +${r.delta}` })) : el('div', { class: 'hint', text: '—' })),
+          el('div', { class: 'week-list grow' }, el('h4', { text: t('week_drops') }), drops.length ? drops.map((r) => el('div', {}, `${nmW(r.id)} · `, el('span', { class: 'ltr', text: `\u2066${r.prev} → ${r.points}\u2069` }))) : el('div', { class: 'hint', text: '—' }), away.length ? el('div', { class: 'hint', text: t('week_on_leave', { who: away.map((r) => nmW(r.id)).join('، ') }) }) : null),
+          el('div', { class: 'week-list plan' }, el('h4', { text: t('week_aging') }), wd.aging.length ? wd.aging.map((r) => el('div', { text: `${nmW(r.id)} · ${r.aging}` })) : el('div', { class: 'hint', text: '—' })))); }
+function kpiMapPlanSection(ds, team, peopleById) { const ym = ds.range.to.slice(0, 7); const tm = teamMonth(cardCtxFromDatasets(team), ym); const nmB = (id) => (nameOf(peopleById.get(id), lang) || id);
+      const max = Math.max(1, ...tm.heat.flatMap((h) => TIERS.map((k) => h[k])));
+      const cell = (v) => el('td', { class: 'num heat', style: `--heat:${(v / max).toFixed(2)}`, text: v ? String(v) : '' });
+      return [el('h2', { id: 'k-map' }, t('heat_h', { m: monthLabel(ym) }), helpQ('help_heat')), el('p', { class: 'hint', text: t('heat_sub') }),
+        el('div', { class: 'table-wrap' }, el('table', { class: 'heatmap' },
+          el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), ...TIERS.map((k) => el('th', { class: 'num', text: t(`tier_short_${k}`) })), el('th', { class: 'num', text: t('card_points') }), el('th', { text: t('card_arch') }))),
+          el('tbody', {}, tm.cards.sort((x, y) => y.points - x.points).map((c) => el('tr', {}, el('td', { text: nmB(c.personId) }), ...TIERS.map((k) => cell(c.tiers.mine[k])), el('td', { class: 'num', text: String(c.points) }), el('td', { text: t(`arch_${c.archetype}`) })))))),
+        el('h2', { id: 'k-plan' }, t('plan_h'), helpQ('help_plan')), el('p', { class: 'hint', text: t('plan_sub') }),
+        tm.plan.length ? el('div', { class: 'cards-grid' }, tm.plan.map((p) => { const c = tm.cards.find((x) => x.personId === p.id); return renderCard(c, nmB(p.id), { showRank: true, showSuggestions: true, compact: true }); })) : el('div', { class: 'empty', text: t('plan_none') })]; }
+function coverageSection(rep, team, nm) { const cv = coverageTotals(rep, team); if (!cv.people.length && !cv.total.accounts) return null;
+      const maxA = Math.max(1, ...cv.people.map((r) => r.accounts));
+      return [el('h2', {}, t('f5_title'), helpQ('help_f5')), el('p', { class: 'hint', text: t('f5_sub', { n: cv.total.accounts, d: cv.total.devices, u: cv.total.uncovered, z: cv.total.zeroDevices }) }),
+        cv.people.length ? el('div', { class: 'table-wrap' }, el('table', {},
+          el('thead', {}, el('tr', {}, ['col_person', 'f5_accounts', 'f5_devices', 'f5_solo', 'f5_touched'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+          el('tbody', {}, cv.people.map((r) => el('tr', {}, el('td', { text: nm(r.id) }),
+            el('td', { class: 'num' }, el('div', { class: 'bar-cell' }, el('b', { text: String(r.accounts) }), el('i', {}, el('span', { style: `width:${Math.round((r.accounts / maxA) * 100)}%` })))),
+            el('td', { class: 'num', text: String(r.devices) }), el('td', { class: 'num', text: String(r.solo) }),
+            el('td', { class: 'num', text: r.accounts ? `${r.touched} · ${Math.round((r.touched / r.accounts) * 100)}%` : '—' })))))) : el('div', { class: 'empty', text: t('f5_none') })]; }
 function renderKpi() {
   const body = $('kpi-body');
   if (!datasets.length) { set(body, el('div', { class: 'empty', text: t('no_data') })); return; }
@@ -970,8 +1017,12 @@ function renderKpi() {
       el('td', { class: 'num', text: x.assigned }), el('td', { class: 'num', text: x.done }), el('td', { class: 'num', text: formatRate(x.rate) }),
       el('td', { class: 'num', text: formatHours(x.medianHours, lang) }), el('td', { class: 'num', text: x.fromEmail }))))));
 
+  // quick links: the board is long on a phone — each jumps to its section (buttons, not hash links: the hash routes pages)
+  const jump = (id) => { const n = document.getElementById(id); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   set(body,
     el('div', { class: 'bar' }, el('label', {}, el('span', { text: t('period') }), select)),
+    el('nav', { class: 'jump', 'aria-label': t('jump_label') }, [['k-week', 'jump_week'], ['k-table', 'jump_table'], ['k-map', 'jump_map'], ['k-plan', 'jump_plan'], ['k-reports', 'jump_reports']]
+      .map(([id, k]) => el('button', { type: 'button', class: 'pill-btn', text: t(k), onclick: () => jump(id) }))),
     renderTeamPicker(people, team),
     ds.sample ? el('p', { class: 'note sample', text: t('sample_note') }) : null,
     c.known && !c.complete ? el('p', { class: 'note', text: `${t('data_incomplete_warn')} (${t('incomplete', { got: c.got, want: c.want })})` }) : null,
@@ -988,33 +1039,11 @@ function renderKpi() {
       el('p', { class: 'hint', style: 'margin:0', text: t('kpi_table_sub') }),
       el('div', { class: 'pills' }, [['done', 'kpi_sort_done'], ['points', 'kpi_sort_points'], ['median', 'kpi_sort_median'], ['open', 'kpi_sort_open']].map(([k, label]) =>
         el('button', { type: 'button', class: `pill-btn${kpiSort === k ? ' on' : ''}`, text: t(label), onclick: () => { kpiSort = k; renderKpi(); } })))),
+    el('div', { id: 'k-table' }),
     table,
-    (() => { const wd = weeklyDigest(allTasks(), weights(), team, new Date(), { ...CARD_DEFAULTS, ...(weights().card || {}) });
-      const leave = (id) => !!(roster().people[id] && roster().people[id].onLeave);
-      const nmW = (id) => (nameOf(peopleById.get(id), lang) || id);
-      const drops = wd.drops.filter((r) => !leave(r.id)), away = wd.drops.filter((r) => leave(r.id));
-      const text = [t('week_h'), `${t('week_total', { p: wd.total, q: wd.prevTotal })}`,
-        wd.movers.length ? `${t('week_movers')}: ${wd.movers.map((r) => `${nmW(r.id)} +${r.delta}`).join('، ')}` : null,
-        drops.length ? `${t('week_drops')}: ${drops.map((r) => `${nmW(r.id)} ${r.prev}→${r.points}`).join('، ')}` : null,
-        wd.aging.length ? `${t('week_aging')}: ${wd.aging.map((r) => `${nmW(r.id)} ${r.aging}`).join('، ')}` : null].filter(Boolean).join('\n');
-      const share = async () => { try { if (navigator.share) await navigator.share({ title: t('week_h'), text }); else { await navigator.clipboard.writeText(text); toast(t('me_copied')); } } catch { /* closed */ } };
-      return el('section', { class: 'week' },
-        el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, el('h2', { style: 'margin:0' }, t('week_h'), helpQ('help_week')), el('button', { type: 'button', class: 'btn tiny', text: t('week_share'), onclick: share })),
-        el('div', { class: 'week-grid' },
-          el('div', { class: 'week-tile' }, el('b', { text: String(wd.total) }), el('span', { text: t('week_total_l', { q: wd.prevTotal, d: (wd.total - wd.prevTotal >= 0 ? '+' : '−') + Math.abs(wd.total - wd.prevTotal) }) })),
-          el('div', { class: 'week-list good' }, el('h4', { text: t('week_movers') }), wd.movers.length ? wd.movers.map((r) => el('div', { text: `${nmW(r.id)} · +${r.delta}` })) : el('div', { class: 'hint', text: '—' })),
-          el('div', { class: 'week-list grow' }, el('h4', { text: t('week_drops') }), drops.length ? drops.map((r) => el('div', {}, `${nmW(r.id)} · `, el('span', { class: 'ltr', text: `\u2066${r.prev} → ${r.points}\u2069` }))) : el('div', { class: 'hint', text: '—' }), away.length ? el('div', { class: 'hint', text: t('week_on_leave', { who: away.map((r) => nmW(r.id)).join('، ') }) }) : null),
-          el('div', { class: 'week-list plan' }, el('h4', { text: t('week_aging') }), wd.aging.length ? wd.aging.map((r) => el('div', { text: `${nmW(r.id)} · ${r.aging}` })) : el('div', { class: 'hint', text: '—' })))); })(),
+    kpiWeekSection(team, peopleById),
     renderKpiDonuts(ds, f, team),
-    (() => { const ym = ds.range.to.slice(0, 7); const tm = teamMonth(cardCtxFromDatasets(team), ym); const nmB = (id) => (nameOf(peopleById.get(id), lang) || id);
-      const max = Math.max(1, ...tm.heat.flatMap((h) => TIERS.map((k) => h[k])));
-      const cell = (v) => el('td', { class: 'num heat', style: `--heat:${(v / max).toFixed(2)}`, text: v ? String(v) : '' });
-      return [el('h2', {}, t('heat_h', { m: monthLabel(ym) }), helpQ('help_heat')), el('p', { class: 'hint', text: t('heat_sub') }),
-        el('div', { class: 'table-wrap' }, el('table', { class: 'heatmap' },
-          el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), ...TIERS.map((k) => el('th', { class: 'num', text: t(`tier_short_${k}`) })), el('th', { class: 'num', text: t('card_points') }), el('th', { text: t('card_arch') }))),
-          el('tbody', {}, tm.cards.sort((x, y) => y.points - x.points).map((c) => el('tr', {}, el('td', { text: nmB(c.personId) }), ...TIERS.map((k) => cell(c.tiers.mine[k])), el('td', { class: 'num', text: String(c.points) }), el('td', { text: t(`arch_${c.archetype}`) })))))),
-        el('h2', {}, t('plan_h'), helpQ('help_plan')), el('p', { class: 'hint', text: t('plan_sub') }),
-        tm.plan.length ? el('div', { class: 'cards-grid' }, tm.plan.map((p) => { const c = tm.cards.find((x) => x.personId === p.id); return renderCard(c, nmB(p.id), { showRank: true, showSuggestions: true, compact: true }); })) : el('div', { class: 'empty', text: t('plan_none') })]; })(),
+    kpiMapPlanSection(ds, team, peopleById),
     datasets.length > 1 ? [el('h2', { text: t('trend') }), el('p', { class: 'hint', text: t('trend_sub') }),
       el('div', { class: 'columns' }, trend.map(({ d, f: x }) => el('div', { class: `column${d.key === kpiKey ? ' on' : ''}` },
         el('b', { text: String(x.done) }), el('i', { style: `height:${Math.max(6, Math.round((x.done / Math.max(1, ...trend.map((q) => q.f.done))) * 140))}px` }),
@@ -1245,7 +1274,7 @@ function renderReports(key, team = null) {
   const tline = (r, cls, label) => el('tr', { class: cls }, el('td', { text: label || ((lang === 'en' ? r.nameEn || r.nameAr : r.nameAr || r.nameEn) || r.technicianId) }), ...tcols.slice(1).map(([, f]) => el('td', { class: 'num', text: r[f] })));
   const maxAct = Math.max(1, ...ac.people.map((r) => r.activities));
   return [
-    el('h2', {}, t('f3_title'), helpQ('help_f3')),
+    el('h2', { id: 'k-reports' }, t('f3_title'), helpQ('help_f3')),
     el('p', { class: 'hint', text: t('f3_sub') }),
     at.rows.length ? el('div', { class: 'table-wrap' }, el('table', {},
       el('thead', {}, el('tr', {}, ['f3_name', 'f3_open', 'f3_pending', 'f3_done', 'f3_total'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
@@ -1272,15 +1301,7 @@ function renderReports(key, team = null) {
         if (!all.total.activities) return el('div', { class: 'empty', text: (rep.activities || []).length || rep.activities ? t('f4_zero') : t('f4_none') });
         return el('p', { class: 'note', text: t('f4_outside_n', { n: all.total.activities }) });
       })(),
-    (() => { const cv = coverageTotals(rep, team); if (!cv.people.length && !cv.total.accounts) return null;
-      const maxA = Math.max(1, ...cv.people.map((r) => r.accounts));
-      return [el('h2', {}, t('f5_title'), helpQ('help_f5')), el('p', { class: 'hint', text: t('f5_sub', { n: cv.total.accounts, d: cv.total.devices, u: cv.total.uncovered, z: cv.total.zeroDevices }) }),
-        cv.people.length ? el('div', { class: 'table-wrap' }, el('table', {},
-          el('thead', {}, el('tr', {}, ['col_person', 'f5_accounts', 'f5_devices', 'f5_solo', 'f5_touched'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
-          el('tbody', {}, cv.people.map((r) => el('tr', {}, el('td', { text: nm(r.id) }),
-            el('td', { class: 'num' }, el('div', { class: 'bar-cell' }, el('b', { text: String(r.accounts) }), el('i', {}, el('span', { style: `width:${Math.round((r.accounts / maxA) * 100)}%` })))),
-            el('td', { class: 'num', text: String(r.devices) }), el('td', { class: 'num', text: String(r.solo) }),
-            el('td', { class: 'num', text: r.accounts ? `${r.touched} · ${Math.round((r.touched / r.accounts) * 100)}%` : '—' })))))) : el('div', { class: 'empty', text: t('f5_none') })]; })(),
+    coverageSection(rep, team, nm),
     el('details', { class: 'tucked' }, el('summary', { text: t('f2_show') }),
       el('p', { class: 'hint', text: t('f2_sub', { months }) }),
       tt.rows.length ? el('div', { class: 'table-wrap' }, el('table', {},
@@ -1404,23 +1425,54 @@ function route() {
 $('menu-btn').addEventListener('click', () => setMenu(!document.body.classList.contains('nav-open')));
 $('scrim').addEventListener('click', () => setMenu(false));
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
-$('lang-select').addEventListener('change', (e) => { if (LANGS.includes(e.target.value)) { lang = e.target.value; pref('lang', lang); applyLang(); } });
+$('lang-select').addEventListener('change', async (e) => { if (LANGS.includes(e.target.value)) { lang = e.target.value; pref('lang', lang); await loadStrings(['ar', lang]); applyLang(); } });
 $('theme-btn').addEventListener('click', () => {
   pref('theme', isDark() ? 'light' : 'dark'); applyTheme();
 });
 ['block-size', 'block-count'].forEach((id) => $(id).addEventListener('input', () => { renderBlocks(); renderMgr(); }));
 $('read-text').addEventListener('click', async () => { if (await ingest($('paste').value)) $('paste').value = ''; });
 $('file-in').addEventListener('change', async (e) => { for (const f of e.target.files) await ingest(await f.text()); e.target.value = ''; });
-$('export-btn').addEventListener('click', () => download(`afaqy-kpi-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ backup: 'afaqy-portal/v1', datasets }, null, 1)));
+// The device backup carries EVERYTHING this device holds — data, reports, closed month cards, one-to-ones, the repair list,
+// the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
+$('export-btn').addEventListener('click', async () => {
+  const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION,
+    datasets, reports, cards: monthCards, oneonone: meet, repairs, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null };
+  download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(all, null, 1));
+});
 $('import-in').addEventListener('change', async (e) => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try {
     const j = JSON.parse(await f.text());
-    if (j.backup !== 'afaqy-portal/v1' || !Array.isArray(j.datasets)) throw new Error('format');
+    if (!['afaqy-portal/v1', 'afaqy-portal/v2'].includes(j.backup) || !Array.isArray(j.datasets)) throw new Error('format');
     for (const d of j.datasets) datasets = mergeDataset(datasets, d);
-    await store.put(datasets); renderDatasets(); renderBlocks(); toast(t('loaded', { n: datasets.reduce((s, d) => s + d.tasks.length, 0), range: '' }));
+    await store.put(datasets);
+    if (j.backup === 'afaqy-portal/v2') {
+      // merge, never overwrite: what this device already has stays, what the backup adds joins it
+      for (const r of Array.isArray(j.reports) ? j.reports : []) if (r && r.key && !reports.some((x) => x.key === r.key)) reports.push(r);
+      await store.putReports(reports);
+      for (const [ym, people] of Object.entries(j.cards || {})) monthCards[ym] = { ...(people || {}), ...(monthCards[ym] || {}) };
+      await store.putCards(monthCards);
+      for (const [ym, people] of Object.entries(j.oneonone || {})) meet[ym] = { ...(people || {}), ...(meet[ym] || {}) };
+      await store.putMeet(meet);
+      const seen = new Set(repairs.map((r) => `${r.ref}|${r.at}`));
+      for (const r of Array.isArray(j.repairs) ? j.repairs : []) if (r && r.ref && !seen.has(`${r.ref}|${r.at}`)) repairs.push({ ref: String(r.ref), at: String(r.at), engineerId: r.engineerId || null, added: r.added || null });
+      await store.putRepairs(repairs);
+      if (j.weights && !weightsDevice) { weightsDevice = j.weights; await store.putWeights(weightsDevice); }
+      if (j.roster && !(rosterDevice && Object.keys(rosterDevice.people || {}).length)) { rosterDevice = parseRoster(j.roster); await store.putRoster(rosterDevice); }
+      if (j.me && !me) { const m = upgradeMe(j.me); if (m) { me = m; await store.putMe(me); } }
+    }
+    renderDatasets(); renderBlocks(); renderKpi(); renderMe(); renderTeam(); renderWeights();
+    toast(t(j.backup === 'afaqy-portal/v2' ? 'backup_restored_all' : 'loaded', { n: datasets.reduce((s, d) => s + d.tasks.length, 0), range: '' }));
   } catch { toast(t('err_json')); }
 });
+// ask the browser to keep this site's storage — without it, Safari clears it after seven days unused
+async function keepStorage() {
+  try {
+    if (!navigator.storage || !navigator.storage.persist) return null;
+    if (await navigator.storage.persisted()) return true;
+    return await navigator.storage.persist();
+  } catch { return null; }
+}
 $('sample-btn').addEventListener('click', async () => {
   for (const b of periodBlocks(3, 2)) { const out = parseDataset(sampleDataset({ from: b.from, to: b.to }, b.from.length + +b.from.slice(5, 7))); datasets = mergeDataset(datasets, out.dataset); }
   await store.put(datasets); renderDatasets(); renderBlocks(); location.hash = '#kpi';
@@ -1445,6 +1497,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   meet = (await store.getMeet()) || {};
   repairs = (await store.getRepairs()) || [];
   await refreshOfficialWeights();
+  await loadStrings(['ar', lang]);   // Arabic is every key's fallback; the reader's language besides
   applyLang();   // renders everything and routes
   if (managerImportNonce) {
     managerImportStatus('mgr_auto_wait');
@@ -1454,6 +1507,7 @@ $('update-btn').addEventListener('click', () => location.reload());
       else managerImportStatus('mgr_auto_popup', {}, true);
     } catch { managerImportStatus('mgr_auto_popup', {}, true); }
   }
+  keepStorage().then((ok) => { storageKept = ok; renderDatasets(); });
   loadRelease(); announceUpdate(); showInstall();
   setInterval(loadRelease, 15 * 60 * 1000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) loadRelease(); });

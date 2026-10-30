@@ -90,6 +90,7 @@
 | لوحة التعيين (القرار 0018) | `buildAssignBookmarklet()` |
 | جودة الإصلاح (القرار 0022) | `repairCheck()`، `parseRepairLines()` |
 | الأسبوع والأهداف والمسار والتغطية (القرار 0021) | `weeklyDigest()`، `goalProgress()`، `patternPath()`، `coverageTotals()` |
+| الترجمات (القرار 0023) | `i18n/ar.js`، `i18n/en.js`، `i18n/ur.js` — تُحمّل بـ`loadStrings()`؛ أضف المفتاح في الثلاثة |
 | بطاقة الشهر (القرار 0020) | `monthCard()`، `teamMonth()`، `closableMonths()` |
 | الأوزان (القرار 0019) | `typeKey()`، `parseWeights()`، `weightedPoints()` — والملف `weights.json` |
 | الوقت والفترات بتوقيت السعودية | `toIso()`، `saudiDay()`، `saudiBoundsZ()` |
