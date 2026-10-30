@@ -653,14 +653,14 @@ function renderMe(waiting = false) {
     pm.average ? [ cards(pm.mine.this, pm.average, '', t('me_avg_team'))]
       : el('p', { class: 'note info', text: t('me_avg_none') }),
     pm.below.length ? [
-      el('h2', { text: t('me_team_h', { n: pm.below.length }) }),
-      el('div', { class: 'table-wrap' }, el('table', {},
+      el('h2', { 'data-tab': 'team', text: t('me_team_h', { n: pm.below.length }) }),
+      el('div', { class: 'table-wrap', 'data-tab': 'team' }, el('table', {},
         el('thead', {}, el('tr', {}, ...['col_person', 'col_assigned', 'col_done', 'me_vs_last', 'col_rate', 'col_median', 'col_open'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
         el('tbody', {}, pm.below.map((r) => el('tr', {},
           el('td', {}, el('div', { text: nm(r.id) }), positionOf(roster(), r.id, lang) ? el('div', { class: 'hint', text: positionOf(roster(), r.id, lang) }) : null), el('td', { class: 'num', text: String(r.this.assigned) }), el('td', { class: 'num' }, bar(r.this.done, maxDone)),
           el('td', { class: 'num' }, arrow('done', r.this, r.last)), el('td', { class: 'num', text: formatRate(r.this.rate) }),
           el('td', { class: 'num', text: r.this.medianHours == null ? '—' : formatHours(r.this.medianHours, lang) }), el('td', { class: 'num', text: String(r.this.open) })))))),
-      (alerts.attention || alerts.improved) ? el('div', { class: 'alerts' },
+      (alerts.attention || alerts.improved) ? el('div', { class: 'alerts', 'data-tab': 'alerts' },
         alerts.attention ? el('div', { class: 'alert warn', text: t('alert_attention', { name: nm(alerts.attention.id), why: alerts.attention.why.map(whyText).join('، ') }) }) : null,
         alerts.improved ? el('div', { class: 'alert ok', text: t('alert_improved', { name: nm(alerts.improved.id), n: alerts.improved.delta }) }) : null) : null] : null,
     el('div', { class: 'row', style: 'justify-content:space-between;align-items:flex-end' },
@@ -685,6 +685,85 @@ function renderMe(waiting = false) {
     el('h2', { text: t('definitions') }), el('ul', { class: 'defs' }, DEFINITIONS.map((k) => el('li', { text: t(k) }))),
     el('details', { class: 'team' }, el('summary', { text: t('me_refresh_h') }), el('p', { class: 'hint', text: t('me_refresh') }), ...setup,
       el('button', { type: 'button', class: 'btn', text: t('me_forget'), onclick: async () => { me = null; await store.putMe(null); renderMe(); } })));
+  meDashboard(body, pm, { METRICS, val, nm, arrow });
+}
+// ---------- My KPIs as a dashboard (ADR-0034): openable tiles, a collapsible block for me and one for my team, tabs for a leader ----------
+let meTab = 'me';
+function sheet(title, content, csv) {
+  let dlg = $('sheet-dlg');
+  if (!dlg) { dlg = el('dialog', { id: 'sheet-dlg', class: 'sheet' }); document.body.append(dlg); }
+  const exportCsv = () => { const esc = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    const blob = new Blob(['\ufeff' + csv.map((r) => r.map(esc).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const a = el('a', { href: URL.createObjectURL(blob), download: `${title.replace(/[^\p{L}\p{N}]+/gu, '-')}.csv` }); document.body.append(a); a.click(); a.remove(); };
+  set(dlg, el('div', { class: 'sheet-head' }, el('h3', { text: title }),
+      el('div', { class: 'row' }, csv && csv.length > 1 ? el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('sheet_export')}`, onclick: exportCsv }) : null,
+        el('button', { type: 'button', class: 'btn quiet tiny', 'aria-label': t('close'), text: '✕', onclick: () => dlg.close() }))),
+    el('div', { class: 'sheet-body' }, content));
+  dlg.showModal();
+}
+function meDashboard(body, pm, { METRICS, val, nm, arrow }) {
+  const win = pm.windows.this, prev = pm.windows.last;
+  const inW = (iso, w) => { const d = saudiDay(iso); return d && d >= w.from && d <= w.to; };
+  const hrs = (x) => (x.createdAt && x.completedAt ? Math.round(((Date.parse(x.completedAt) - Date.parse(x.createdAt)) / 3600000) * 10) / 10 : '');
+  const pick = (ids, k, w) => me.tasks.filter((x) => ids.includes(x.assigneeId) && (
+    k === 'done' || k === 'medianHours' ? x.state === 'done' && inW(x.completedAt, w)
+    : k === 'selfLogged' ? x.createdById === x.assigneeId && inW(x.createdAt, w)
+    : k === 'fromEmail' ? x.fromEmail && inW(x.createdAt, w)
+    : inW(x.createdAt, w) && x.state !== 'cancelled'));
+  const taskCsv = (list) => [[t('col_person'), 'ID', t('col_type'), t('col_state'), t('col_created'), t('col_completed'), t('col_hours')],
+    ...list.map((x) => [nm(x.assigneeId), x.id, x.type || '', x.state, (x.createdAt || '').slice(0, 16), (x.completedAt || '').slice(0, 16), hrs(x)])];
+  const taskTable = (list) => list.length ? el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('col_person'), t('col_type'), t('col_state'), t('col_created'), t('col_hours')].map((h, i) => el('th', { class: i === 4 ? 'num' : null, text: h })))),
+      el('tbody', {}, list.slice(0, 300).map((x) => el('tr', {}, el('td', { text: nm(x.assigneeId) }), el('td', { text: typeLabel(x.type || '', lang) }), el('td', { text: t(`state_${x.state}`) }),
+        el('td', { class: 'ltr', text: (x.createdAt || '').slice(0, 10) }), el('td', { class: 'num', text: String(hrs(x)) }))))))
+    : el('div', { class: 'empty', text: t('sheet_none') });
+  // my tiles open my own list
+  const myGrid = body.querySelector('.cmp-grid');
+  if (myGrid) [...myGrid.children].forEach((tile, i) => { const [k, label] = METRICS[i] || []; if (!k) return; tile.classList.add('tile-open'); tile.tabIndex = 0;
+    tile.onclick = () => { const list = pick([me.user.id], k, win); sheet(`${t(label)} — ${win.from} → ${win.to}`, taskTable(list), taskCsv(list)); }; });
+  // collapse my block: the heading row, the dates line and the tiles
+  if (myGrid) { const dates = myGrid.previousElementSibling, headRow = dates && dates.previousElementSibling;
+    const box = el('details', { class: 'tile-block', open: '' }, el('summary', { text: t('tiles_mine') }));
+    myGrid.before(box); if (headRow) box.append(headRow); if (dates) box.append(dates); box.append(myGrid); }
+  if (!pm.below.length) return;
+  // my team's tiles: totals over the people below me, each opening a per-person table and the task list
+  const ids = pm.below.map((r) => r.id);
+  const sum = (rows, k) => rows.reduce((s, r) => s + ((r && r[k]) || 0), 0);
+  const team = (side) => { const rows = pm.below.map((r) => r[side]); const a = sum(rows, 'assigned'), d = sum(rows, 'done');
+    const h = pick(ids, 'medianHours', side === 'this' ? win : prev).map((x) => hrs(x)).filter((v) => v !== '').sort((p, q) => p - q);
+    const asg = pick(ids, 'assigned', side === 'this' ? win : prev), rate = asg.length ? asg.filter((x) => x.state === 'done').length / asg.length : null;   // of what was assigned in the period, how much is done
+    return { assigned: a, done: d, rate, medianHours: h.length ? h[Math.floor(h.length / 2)] : null, selfLogged: sum(rows, 'selfLogged'), fromEmail: sum(rows, 'fromEmail') }; };
+  const now = team('this'), before = team('last');
+  const teamGrid = el('div', { class: 'cmp-grid' }, METRICS.map(([k, label]) => el('div', { class: 'cmp tile-open', tabIndex: 0, onclick: () => {
+      const list = pick(ids, k, win);
+      const per = el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('col_person'), t(label), t('me_last_period')].map((h, i) => el('th', { class: i ? 'num' : null, text: h })))),
+        el('tbody', {}, [...pm.below].sort((p, q) => ((q.this && q.this[k]) || 0) - ((p.this && p.this[k]) || 0)).map((r) => el('tr', {}, el('td', { text: nm(r.id) }),
+          el('td', { class: 'num', text: val(k, r.this) }), el('td', { class: 'num', text: val(k, r.last) }))))));
+      sheet(`${t(label)} — ${t('tiles_team')} — ${win.from} → ${win.to}`, [per, el('h4', { text: t('sheet_tasks', { n: list.length }) }), taskTable(list)], taskCsv(list)); } },
+    el('span', { class: 'cmp-k', text: t(label) }), el('b', { class: 'cmp-v', text: `\u2068${val(k, now)}\u2069` }),
+    el('span', { class: 'cmp-was', text: `${t('me_last_period')}: \u2068${val(k, before)}\u2069` }), arrow(k, now, before))));
+  const people = el('div', { class: 'people-grid' }, [...pm.below].sort((p, q) => ((q.this && q.this.done) || 0) - ((p.this && p.this.done) || 0)).map((r) => {
+    const max = Math.max(1, ...pm.below.map((x) => (x.this && x.this.done) || 0));
+    return el('button', { type: 'button', class: 'person-card', onclick: () => { const list = me.tasks.filter((x) => x.assigneeId === r.id && (x.state === 'open' || (x.state === 'done' && inW(x.completedAt, win))));
+        sheet(nm(r.id), [el('div', { class: 'cmp-grid' }, METRICS.map(([k, label]) => el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: t(label) }), el('b', { class: 'cmp-v', text: `\u2068${val(k, r.this)}\u2069` }), arrow(k, r.this, r.last)))),
+          el('h4', { text: t('sheet_tasks', { n: list.length }) }), taskTable(list)], taskCsv(list)); } },
+      el('b', { text: nm(r.id) }), el('span', { class: 'hint', text: positionOf(roster(), r.id, lang) || '' }),
+      el('i', { class: 'pbar' }, el('span', { style: `width:${Math.round((((r.this && r.this.done) || 0) / max) * 100)}%` })),
+      el('span', { class: 'hint', text: `${val('done', r.this)} · ${val('rate', r.this)}` })); }));
+  // alerts: what was flagged, plus open work older than 7 days for me and my team
+  const old = me.tasks.filter((x) => [me.user.id, ...ids].includes(x.assigneeId) && x.state === 'open' && x.createdAt && (Date.now() - Date.parse(x.createdAt)) > 7 * 86400000);
+  // build the three panels and move the tagged sections into them
+  const panels = { me: el('div', { class: 'tab-panel' }), team: el('div', { class: 'tab-panel' }), alerts: el('div', { class: 'tab-panel' }) };
+  panels.team.append(el('details', { class: 'tile-block', open: '' }, el('summary', { text: t('tiles_team') }), teamGrid), el('h2', { text: t('me_people_h') }), people);
+  panels.alerts.append(old.length ? el('div', { class: 'alert warn tile-open', onclick: () => sheet(t('alert_old', { n: old.length }), taskTable(old), taskCsv(old)), text: t('alert_old', { n: old.length }) }) : null);
+  const card = body.querySelector('.me-card');
+  const after = []; let n = card ? card.nextElementSibling : null; while (n) { after.push(n); n = n.nextElementSibling; }
+  for (const x of after) { const tab = x.getAttribute('data-tab'); (panels[tab] || panels.me).append(x); }
+  if (!panels.alerts.children.length) panels.alerts.append(el('div', { class: 'empty', text: t('alerts_none') }));
+  const counts = { alerts: panels.alerts.querySelectorAll('.alert').length };
+  const bar = el('div', { class: 'tabs', role: 'tablist' }, [['me', t('tab_me')], ['team', t('tab_team')], ['alerts', counts.alerts ? `${t('tab_alerts')} (${counts.alerts})` : t('tab_alerts')]].map(([k, label]) =>
+    el('button', { type: 'button', role: 'tab', 'data-k': k, class: `tab${meTab === k ? ' on' : ''}`, 'aria-selected': String(meTab === k), text: label, onclick: () => { meTab = k; for (const [p, el2] of Object.entries(panels)) el2.hidden = p !== k; for (const b of bar.children) { const on = b.getAttribute('data-k') === k; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); } } })));
+  for (const [p, el2] of Object.entries(panels)) el2.hidden = p !== meTab;
+  (card || body.firstChild).after(bar, panels.me, panels.team, panels.alerts);
 }
 async function receiveMe(fragment) {
   const r = await parseMe(fragment);
@@ -1502,6 +1581,15 @@ function renderWeights() {
 }
 
 // ---------- the Team page: positions and leaders by myafaqy id, kept on this device and exportable as team.json ----------
+// the team by department: management, after-sales, R&D — leaders first in each
+function byDept(people, ro) {
+  const dept = (id) => { const pos = ((ro.people[id] || {}).positionEn || ''); return /after-sales/i.test(pos) ? 'aftersales' : /r&d|presales|research/i.test(pos) ? 'rd' : 'mgmt'; };
+  const lead = (id) => Object.values(ro.people).some((x) => x.leaderId === id) ? 0 : 1;
+  const order = { mgmt: 0, aftersales: 1, rd: 2 }; const out = []; let cur = null;
+  for (const p of [...people].sort((x, y) => order[dept(x.id)] - order[dept(y.id)] || lead(x.id) - lead(y.id))) {
+    if (dept(p.id) !== cur) { cur = dept(p.id); out.push({ __head: t(`team_dept_${cur}`) }); } out.push(p); }
+  return out;
+}
 // ---------- name corrections (device only, never in the repository) ----------
 const NAME_KEY = 'afaqy.names';
 const nameFixes = () => { try { return JSON.parse(localStorage.getItem(NAME_KEY) || '{}') || {}; } catch { return {}; } };
@@ -1543,7 +1631,7 @@ function renderTeam() {
     el('option', { value: '', text: t('team_no_leader'), selected: !leaderOf(ro, id) }),
     everyone.filter((p) => p.id !== id && (inScope(ro, p.id) || leaderOf(ro, id) === p.id)).map((p) => el('option', { value: p.id, text: nameOf(p, lang) || p.id, selected: leaderOf(ro, id) === p.id })));
   // the panel lists the whole team as set here (names stay on this device; the panel matches them in myafaqy's list) — nothing pre-ticked
-  const afterSalesNames = scopeIds(ro).map((id) => (known.get(id) || {}).nameEn).filter(Boolean);
+  const afterSalesNames = scopeIds(ro).filter((id) => /after-sales/i.test((ro.people[id] || {}).positionEn || '')).map((id) => (known.get(id) || {}).nameEn).filter(Boolean);
   const ab = buildAssignBookmarklet(lang, afterSalesNames);
   set(body,
     el('section', { class: 'assign-box' },
@@ -1561,7 +1649,7 @@ function renderTeam() {
       el('span', { class: 'hint', text: on ? t('team_scope_n', { n: people.length }) : t('team_filled', { n: Object.keys(ro.people).length, m: people.length }) })),
     people.length ? el('div', { class: 'table-wrap team-table' }, el('table', {},
       el('thead', {}, el('tr', {}, ['team_col_name', 'team_col_id', 'team_col_pos', 'team_col_leader'].map((k) => el('th', { text: t(k) })))),
-      el('tbody', {}, people.map((p) => el('tr', {},
+      el('tbody', {}, byDept(people, ro).map((p) => p.__head ? el('tr', { class: 'team-dept' }, el('td', { colspan: '4', text: p.__head })) : el('tr', {},
         el('td', {}, el('div', { class: 'name-line' }, el('span', { text: nameOf(p, lang) || '—' }),
           el('button', { type: 'button', class: 'btn quiet tiny', title: t('team_fix_name'), 'aria-label': t('team_fix_name'), text: '✎', onclick: () => {
             const v = prompt(t('team_fix_name_q'), nameOf(p, lang) || ''); if (v == null) return; const fx = nameFixes();

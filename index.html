@@ -433,6 +433,20 @@
   .mgr-dates label { display: grid; gap: 4px; font-size: 13px; color: var(--slate); } .mgr-dates input { font: inherit; padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }
   .period-pick { display: inline-flex; gap: 6px; align-items: center; }
   .name-line { display: flex; align-items: center; gap: 6px; } .team-add { gap: 8px; align-items: center; margin: 14px 0; flex-wrap: wrap; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: 14px 0 16px; }
+  .tab { border: 0; background: transparent; padding: 10px 16px; font: inherit; color: var(--slate); border-bottom: 3px solid transparent; cursor: pointer; }
+  .tab.on { color: var(--title); border-bottom-color: var(--accent); font-weight: 600; }
+  .tile-block { margin: 6px 0 18px; } .tile-block > summary { cursor: pointer; font-weight: 600; font-size: 1.05rem; color: var(--title); padding: 6px 0 10px; list-style: none; display: flex; align-items: center; gap: 8px; }
+  .tile-block > summary::-webkit-details-marker { display: none; } .tile-block > summary::before { content: "▾"; transition: transform .15s; } .tile-block:not([open]) > summary::before { transform: rotate(-90deg); }
+  html[dir="rtl"] .tile-block:not([open]) > summary::before { transform: rotate(90deg); }
+  .tile-open { cursor: pointer; transition: border-color .15s; } .tile-open:hover, .tile-open:focus-visible { border-color: var(--accent); outline: none; }
+  .people-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-bottom: 18px; }
+  .person-card { display: grid; gap: 4px; text-align: start; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; font: inherit; color: var(--text); cursor: pointer; }
+  .person-card:hover { border-color: var(--accent); } .pbar { display: block; height: 6px; background: var(--paper); border-radius: 3px; overflow: hidden; } .pbar span { display: block; height: 6px; background: var(--accent); }
+  dialog.sheet { width: min(980px, 94vw); max-height: 86vh; border: 1px solid var(--line); border-radius: var(--radius); padding: 0; background: var(--card); color: var(--text); }
+  dialog.sheet::backdrop { background: rgba(0,0,0,.45); } .sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--card); }
+  .sheet-head h3 { margin: 0; } .sheet-body { padding: 14px 16px; overflow: auto; max-height: calc(86vh - 60px); }
+  .team-dept td { background: var(--paper); font-weight: 600; color: var(--title); }
   .tucked { margin: 18px 0; } .tucked > summary { cursor: pointer; color: var(--slate); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
   .me-card { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; align-items: flex-end; padding: 18px 20px; margin-bottom: 8px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); border-inline-start: 4px solid var(--signal); }
   .me-name { margin: 0; }

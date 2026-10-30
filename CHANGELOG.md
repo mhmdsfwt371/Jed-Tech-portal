@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.36 — 2026-10-31
+
+- «مؤشراتي» للقادة صارت لوحة بثلاث تبويبات: «أنا» و«فريقي» و«تنبيهات». في «أنا» و«فريقي» ستة مربعات تُطوى بسهم، وكل مربع يفتح نافذة فيها التفاصيل وزر تصدير. وفي «فريقي» بطاقة لكل شخص تفتح مربعاته وشغله.
+- صفحة الفريق مقسّمة بالأقسام: الإدارة، ما بعد البيع، البحث والتطوير. ولوحة التعيين تعرض قسم ما بعد البيع فقط.
+
+<details><summary>English</summary>
+
+- “My KPIs” for leaders is a dashboard with three tabs: “Me”, “My team” and “Alerts”. In “Me” and “My team”, six tiles fold under an arrow, and every tile opens a window with the detail and an export button. In “My team”, a card per person opens their tiles and work.
+- The Team page is grouped by department: management, after-sales, R&D. The assignment panel lists the after-sales department only.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- لیڈرز کے لیے «میرے اشاریے» اب تین ٹیبز والا ڈیش بورڈ ہے: «میں»، «میری ٹیم» اور «انتباہات»۔ «میں» اور «میری ٹیم» میں چھ خانے تیر سے تہہ ہوتے ہیں، اور ہر خانہ تفصیل اور برآمد بٹن والی ونڈو کھولتا ہے۔ «میری ٹیم» میں ہر فرد کا کارڈ اس کے خانے اور کام کھولتا ہے۔
+- ٹیم صفحہ شعبوں میں تقسیم: انتظامیہ، بعد از فروخت، تحقیق و ترقی۔ تفویض پینل صرف بعد از فروخت شعبہ دکھاتا ہے۔
+
+</div>
+</details>
+
+
 ## v8.35 — 2026-10-31
 
 - أُضيف «Nusuk Card — Live Feed» و«Nusuk Card — Test» إلى «المشاريع ونسك».
