@@ -1,15 +1,15 @@
 {
-  "version": "8.18",
+  "version": "8.19",
   "date": "2026-10-30",
   "notes": {
     "ar": [
-      "إضافة رابط نظام نسك ضمن روابط المشاريع ونسك."
+      "توضيح اسم رابط OpenVPN ضمن المشاريع ونسك."
     ],
     "en": [
-      "Added the Nusuk system link under Projects and Nusuk."
+      "Clarified the OpenVPN link name under Projects and Nusuk."
     ],
     "ur": [
-      "پروجیکٹس اور نسک کے زمرے میں نسک سسٹم کا لنک شامل کیا گیا ہے۔"
+      "پروجیکٹس اور نسک میں اوپن وی پی این لنک کا نام واضح کیا گیا ہے۔"
     ]
   }
 }

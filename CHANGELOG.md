@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.19 — 2026-10-30
+
+- توضيح اسم رابط OpenVPN ضمن المشاريع ونسك.
+
+<details><summary>English</summary>
+
+- Clarified the OpenVPN link name under Projects and Nusuk.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- پروجیکٹس اور نسک میں اوپن وی پی این لنک کا نام واضح کیا گیا ہے۔
+
+</div>
+</details>
+
+
 ## v8.18 — 2026-10-30
 
 - إضافة رابط نظام نسك ضمن روابط المشاريع ونسك.
