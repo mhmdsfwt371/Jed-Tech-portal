@@ -556,4 +556,9 @@ export default {
     jump_plan: 'The plan',
     jump_reports: 'Reports',
     card_other_work: 'Plus {n} tasks of types outside the two teams’ types — counted in the points at the default weight, but never used to judge strengths or development.',
+    priv_h: 'My private links — on this device only',
+    priv_sub: 'For internal addresses: VPN portals, device admin pages, any link with an IP address. Kept on your device, never published to the public repository, and carried by the full backup.',
+    priv_name_ph: 'Name — e.g. Nusuk OpenVPN',
+    priv_add: 'Add',
+    priv_invalid: 'Enter a name and a link starting with http or https.',
 };

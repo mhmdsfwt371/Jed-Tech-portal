@@ -386,6 +386,11 @@
   @media (max-width: 520px) { .work { flex-direction: column; gap: 6px; } .work-meta { text-align: start; white-space: normal; } .work-meta span { display: inline; } .work-meta span + span::before { content: " · "; } }
   .points-unmapped { font-size: 12px; }
   @media (pointer: coarse) { .team label { min-height: 44px; display: inline-flex; align-items: center; gap: 8px; } .team input[type=checkbox] { width: 22px; height: 22px; flex: 0 0 auto; } .ver-tag { min-height: 36px; } }
+  .priv { margin-top: 14px; padding: 12px 14px; background: var(--card); border: 1px dashed var(--line-strong); border-radius: var(--radius); }
+  .priv summary { cursor: pointer; font-weight: 700; } .priv-chip { display: inline-flex; align-items: center; gap: 4px; }
+  .priv-add { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto; gap: 8px; margin-top: 10px; }
+  .priv-add input { font: inherit; padding: 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); min-width: 0; }
+  @media (max-width: 560px) { .priv-add { grid-template-columns: 1fr; } }
   .tucked { margin: 18px 0; } .tucked > summary { cursor: pointer; color: var(--slate); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
   .me-card { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; align-items: flex-end; padding: 18px 20px; margin-bottom: 8px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); border-inline-start: 4px solid var(--signal); }
   .me-name { margin: 0; }
@@ -643,6 +648,7 @@
     <p class="hint" data-t="systems_note"></p>
     <a id="manage-systems" class="btn" href="./manage-systems.html" target="_blank" rel="noopener noreferrer" hidden data-t="manage_systems">إدارة الروابط</a>
     <div id="systems"></div>
+    <div id="private-links"></div>
     <h2 data-t="more">أدوات أخرى</h2>
     <div class="row" id="more"></div>
   </section>

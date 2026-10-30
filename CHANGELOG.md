@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.21 — 2026-10-30
+
+- أُزيل رابط دخول VPN لمشروع نسك من قائمة الأنظمة المنشورة — كان عنوانه الداخلي ظاهرًا في المستودع العام. والحارس يرفض الآن أي رابط منشور بعنوان IP أو اسم داخلي.
+- «روابطي الخاصة» تحت أنظمة الشركة: للعناوين الداخلية مثل بوابات VPN وصفحات إدارة الأجهزة. تُحفظ على جهازك فقط ولا تُنشر أبدًا، وتنتقل مع النسخة الاحتياطية الكاملة.
+
+<details><summary>English</summary>
+
+- The Nusuk project’s VPN login link is removed from the published systems list — its internal address was visible in the public repository. The guard now refuses any published link with an IP address or an internal name.
+- “My private links” under company systems: for internal addresses such as VPN portals and device admin pages. Kept on your device only, never published, and carried by the full backup.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- نسک منصوبے کا VPN لاگ اِن لنک شائع شدہ سسٹمز کی فہرست سے ہٹا دیا گیا — اس کا اندرونی پتہ عوامی ریپوزٹری میں نظر آ رہا تھا۔ گارڈ اب IP پتے یا اندرونی نام والا کوئی بھی شائع شدہ لنک رد کرتا ہے۔
+- کمپنی سسٹمز کے نیچے «میرے نجی لنکس»: VPN پورٹلز اور آلات کے انتظامی صفحات جیسے اندرونی پتوں کے لیے۔ صرف آپ کے آلے پر، کبھی شائع نہیں، اور مکمل بیک اپ کے ساتھ منتقل۔
+
+</div>
+</details>
+
+
 ## v8.20 — 2026-10-30
 
 - إدارة روابط الأنظمة وتصنيفاتها ونشرها للفريق من صفحة الإدارة باستخدام GitHub.

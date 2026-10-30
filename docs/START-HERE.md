@@ -41,6 +41,7 @@
 | `docs/decisions/0021-week-coverage-one-to-one.md` | الأسبوع، تغطية الحسابات، اللقاء الشهري والأهداف، مسار النمط |
 | `docs/decisions/0022-repair-quality-from-pro.md` | جودة الإصلاح من برو — عاد للإرسال؟ |
 | `docs/decisions/0023-review-fixes-data-design-card-speed.md` | إصلاحات المراجعة: النسخة الكاملة، التصميم، البطاقة، اللغات عند الحاجة |
+| `docs/decisions/0027-no-internal-addresses-in-public.md` | لا عناوين داخلية في المستودع العام؛ روابطي الخاصة على الجهاز |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

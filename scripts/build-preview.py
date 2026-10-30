@@ -16,7 +16,14 @@ full='const STRINGS = { ' + ', '.join(f"{l}: {lang_obj(l)}" for l in ['ar','en',
 assert core.count('const STRINGS = { ar: {}, en: {}, ur: {} };')==1
 core = core.replace('const STRINGS = { ar: {}, en: {}, ur: {} };', full)
 core = core.replace('function t(lang, key', 'function tr(lang, key').replace("t(lang, 'hours'", "tr(lang, 'hours'").replace("t(lang, 'days'", "tr(lang, 'days'")
-js = '\n'.join([strip((root/'config.js').read_text(encoding='utf-8')), core, strip((root/'app.js').read_text(encoding='utf-8'))])
+# in one file the modules share a scope: config's SYSTEMS / SYSTEM_CATEGORIES take the names app.js imports them under
+def config_src():
+    c=strip((root/'config.js').read_text(encoding='utf-8'))
+    for a,b in [('const SYSTEMS =','const DEFAULT_SYSTEMS ='),('const SYSTEM_CATEGORIES =','const DEFAULT_SYSTEM_CATEGORIES =')]:
+        assert c.count(a)==1, a; c=c.replace(a,b)
+    return c
+# every local module app.js imports must be inside the bundle (systems-core.js validates the shared links)
+js = '\n'.join([config_src(), strip((root/'systems-core.js').read_text(encoding='utf-8')), core, strip((root/'app.js').read_text(encoding='utf-8'))])
 def uri(path, mime): return f"data:{mime};base64," + base64.b64encode((root/path).read_bytes()).decode()
 for f, m in [('assets/afaqy-logo-reverse.png', 'image/png'), ('assets/favicon.png', 'image/png'), ('assets/apple-touch-icon.png', 'image/png'),
              ('assets/fonts/NotoSansArabic-Regular.ttf', 'font/ttf'), ('assets/fonts/NotoSansArabic-Bold.ttf', 'font/ttf')]:

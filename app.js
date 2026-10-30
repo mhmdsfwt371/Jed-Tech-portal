@@ -50,7 +50,7 @@ function toast(msg) {
 
 // ---------- storage: IndexedDB, with an in-memory fallback where it is unavailable ----------
 const store = (() => {
-  let mem = []; let memMe = null; let memRep = []; let memRoster = null; let memWeights = null; let memCards = {}; let memMeet = {}; let memRepairs = [];
+  let mem = []; let memMe = null; let memRep = []; let memRoster = null; let memWeights = null; let memCards = {}; let memMeet = {}; let memRepairs = []; let memPriv = [];
   const open = () => new Promise((res, rej) => {
     if (!('indexedDB' in window)) return rej(new Error('no idb'));
     const r = indexedDB.open('afaqy-portal', 1);
@@ -64,6 +64,8 @@ const store = (() => {
     // "my KPIs" — an engineer's own profile, kept apart from the manager's datasets
     async getReports() { try { return (await run('readonly', (s) => s.get('reports'))) || []; } catch { return memRep; } },
     async putReports(v) { try { await run('readwrite', (s) => s.put(v, 'reports')); } catch { memRep = v; } },
+    async getPriv() { try { return (await run('readonly', (s) => s.get('privlinks'))) || []; } catch { return memPriv; } },
+    async putPriv(v) { try { await run('readwrite', (s) => s.put(v, 'privlinks')); } catch { memPriv = v; } },
     async getRepairs() { try { return (await run('readonly', (s) => s.get('repairs'))) || []; } catch { return memRepairs; } },
     async putRepairs(v) { try { await run('readwrite', (s) => s.put(v, 'repairs')); } catch { memRepairs = v; } },
     async getMeet() { try { return (await run('readonly', (s) => s.get('oneonone'))) || {}; } catch { return memMeet; } },
@@ -111,6 +113,7 @@ function renderTools() {
   set($('more'), MORE.map((x) => (x.status === 'live'
     ? moduleLink(x, 'chip', L(x.name, lang))
     : el('span', { class: 'chip soon' }, L(x.name, lang), el('span', { class: 'tag', text: t('soon') })))));
+  renderPrivLinks();
 }
 
 // ---------- my KPIs (ADR-0010) ----------
@@ -405,6 +408,26 @@ function renderSignatures() {
     el('div', { class: 'sign-grid' }, SIGN_MAKERS.map(card)),
     el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn quiet', text: t('sign_export'), onclick: exp }), el('button', { type: 'button', class: 'btn quiet', text: t('sign_import'), onclick: () => imp.click() }), imp),
     el('p', { class: 'note', text: t('sign_private') }));
+}
+// ---------- private links: internal addresses (VPN portals, device admin pages) kept on this device, never published (ADR-0026) ----------
+let privLinks = [];
+function cleanPrivLink(x) {
+  try { const name = String((x && x.name) || '').trim().slice(0, 80), u = new URL(String((x && x.url) || '').trim());
+    if (!name || !['http:', 'https:'].includes(u.protocol) || u.username || u.password) return null; return { name, url: u.href }; } catch { return null; }
+}
+function renderPrivLinks() {
+  const box = $('private-links'); if (!box) return;
+  const nameIn = el('input', { type: 'text', placeholder: t('priv_name_ph'), maxlength: '80' });
+  const urlIn = el('input', { type: 'url', dir: 'ltr', placeholder: 'https://…', maxlength: '2048' });
+  const add = async () => { const v = cleanPrivLink({ name: nameIn.value, url: urlIn.value }); if (!v) { toast(t('priv_invalid')); return; }
+    privLinks = [...privLinks.filter((x) => x.url !== v.url), v].slice(0, 100); await store.putPriv(privLinks); renderPrivLinks(); };
+  set(box, el('details', { class: 'priv', open: privLinks.length ? '' : null },
+    el('summary', {}, `🔒 ${t('priv_h')}`, privLinks.length ? el('span', { class: 'hint', text: ` · ${privLinks.length}` }) : null),
+    el('p', { class: 'hint', text: t('priv_sub') }),
+    privLinks.length ? el('div', { class: 'row' }, privLinks.map((x) => el('span', { class: 'priv-chip' },
+      el('a', { class: 'chip', href: x.url, target: '_blank', rel: 'noopener noreferrer', text: x.name }),
+      el('button', { type: 'button', class: 'btn quiet tiny', 'aria-label': t('remove'), text: '✕', onclick: async () => { privLinks = privLinks.filter((y) => y.url !== x.url); await store.putPriv(privLinks); renderPrivLinks(); } })))) : null,
+    el('div', { class: 'priv-add' }, nameIn, urlIn, el('button', { type: 'button', class: 'btn', text: t('priv_add'), onclick: add }))));
 }
 // ---------- install on Android, iPhone and Windows ----------
 let installPrompt = null;
@@ -1442,7 +1465,7 @@ $('file-in').addEventListener('change', async (e) => { for (const f of e.target.
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
 $('export-btn').addEventListener('click', async () => {
   const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION,
-    datasets, reports, cards: monthCards, oneonone: meet, repairs, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null };
+    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null };
   download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(all, null, 1));
 });
 $('import-in').addEventListener('change', async (e) => {
@@ -1463,11 +1486,14 @@ $('import-in').addEventListener('change', async (e) => {
       const seen = new Set(repairs.map((r) => `${r.ref}|${r.at}`));
       for (const r of Array.isArray(j.repairs) ? j.repairs : []) if (r && r.ref && !seen.has(`${r.ref}|${r.at}`)) repairs.push({ ref: String(r.ref), at: String(r.at), engineerId: r.engineerId || null, added: r.added || null });
       await store.putRepairs(repairs);
+      const known = new Set(privLinks.map((x) => x.url));
+      for (const x of Array.isArray(j.privlinks) ? j.privlinks : []) { const v = cleanPrivLink(x); if (v && !known.has(v.url)) privLinks.push(v); }
+      await store.putPriv(privLinks);
       if (j.weights && !weightsDevice) { weightsDevice = j.weights; await store.putWeights(weightsDevice); }
       if (j.roster && !(rosterDevice && Object.keys(rosterDevice.people || {}).length)) { rosterDevice = parseRoster(j.roster); await store.putRoster(rosterDevice); }
       if (j.me && !me) { const m = upgradeMe(j.me); if (m) { me = m; await store.putMe(me); } }
     }
-    renderDatasets(); renderBlocks(); renderKpi(); renderMe(); renderTeam(); renderWeights();
+    renderDatasets(); renderBlocks(); renderKpi(); renderMe(); renderTeam(); renderWeights(); renderPrivLinks();
     toast(t(j.backup === 'afaqy-portal/v2' ? 'backup_restored_all' : 'loaded', { n: datasets.reduce((s, d) => s + d.tasks.length, 0), range: '' }));
   } catch { toast(t('err_json')); }
 });
@@ -1502,6 +1528,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   monthCards = (await store.getCards()) || {};
   meet = (await store.getMeet()) || {};
   repairs = (await store.getRepairs()) || [];
+  privLinks = (await store.getPriv()) || [];
   await refreshOfficialWeights();
   try { const r = await fetch('./systems.json', { cache: 'no-store' }); const data = r.ok && validateSystems(await r.json()); if (data) { SYSTEMS = data.systems; SYSTEM_CATEGORIES = data.categories; } } catch { /* retain built-in links when unavailable */ }
   await loadStrings(['ar', lang]);   // Arabic is every key's fallback; the reader's language besides

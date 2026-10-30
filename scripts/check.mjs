@@ -352,5 +352,18 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   if (!/await loadStrings\(\['ar', lang\]\);\s*\/\/[^\n]*\n\s*applyLang\(\);/.test(app)) note('app.js: the strings must be loaded before the first render');
 }
 
+// 25. The repository is public: a published link may never point at a raw IP address or an internal host name.
+//     Internal addresses (VPN portals, device admin pages) belong in the private links kept on the device.
+{
+  const isRaw = (h) => /^\d{1,3}(\.\d{1,3}){3}$/.test(h) || h.includes(':') || !h.includes('.') || /\.(local|lan|internal|corp|home)$/i.test(h);
+  const pub = [];
+  try { pub.push(...JSON.parse(read('systems.json')).systems.map((x) => ['systems.json', x.url])); } catch { note('systems.json: unreadable'); }
+  for (const m of cfg.matchAll(/"url": "([^"]+)"/g)) pub.push(['config.js', m[1]]);
+  for (const [f, u] of pub) { let h = ''; try { h = new URL(u).hostname.replace(/^\[|\]$/g, ''); } catch { continue; }
+    if (h && isRaw(h)) note(`${f}: a published link points at a raw IP or internal name (${h.replace(/\d+$/, '…')}) — keep it in the device's private links`); }
+  for (const f of ['index.html', 'app.js', 'core.js', 'config.js', 'systems.json', 'README.md', 'CHANGELOG.md', 'AGENTS.md', ...walkMd('docs/')])
+    for (const m of read(f).matchAll(/https?:\/\/(\d{1,3}(?:\.\d{1,3}){3})/g)) if (!/^(127\.|0\.0\.0\.0)/.test(m[1])) note(`${f}: a raw IP address in a link — the repository is public`);
+}
+
 if (problems.length) { console.error(`check.mjs: ${problems.length} problem(s)\n- ${problems.join('\n- ')}`); process.exit(1); }
 console.log(`check.mjs: all checks passed (v${version})`);

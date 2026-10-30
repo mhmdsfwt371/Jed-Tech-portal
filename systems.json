@@ -154,16 +154,6 @@
       }
     },
     {
-      "id": "nusuk_ip",
-      "category": "projects",
-      "url": "https://vpn-address-removed.invalid:18443/login.html",
-      "name": {
-        "ar": "OpenVPN — نسك",
-        "en": "OpenVPN — Nusuk",
-        "ur": "اوپن وی پی این — نسک"
-      }
-    },
-    {
       "id": "ods",
       "category": "rafed",
       "url": "https://ods.rafedsa.com/#/batch_devices",
