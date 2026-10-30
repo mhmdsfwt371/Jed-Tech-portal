@@ -49,7 +49,7 @@ for (const [name, src] of [['index.html', html], ['app.js', appWithoutPro], ['co
   if (/firebase/i.test(src)) note(`${name}: Firebase is referenced — the portal runs without it`);
   if (/afaqy\.sa|afaqy\.pro\/|crmbackend/.test((name === 'config.js' ? src.replace(/https:\/\/[^\s"']+/g, '') : src.replace(/https:\/\/afaqy\.pro\/'/g, '')))) note(`${name}: an Afaqy API address appeared — the portal never calls an Afaqy API`);
   const calls = [...src.matchAll(/fetch\(\s*([^,)]+)/g)].map((m) => m[1].trim());
-  for (const c of calls) if (!["'./version.json'", "'./team.json'", "'./weights.json'"].includes(c)) note(`${name}: network call to ${c} — the only allowed reads are the site's own version.json, team.json and weights.json`);
+  for (const c of calls) if (!["'./version.json'", "'./team.json'", "'./weights.json'", "'./systems.json'"].includes(c)) note(`${name}: network call to ${c} — the only allowed reads are the site's own version.json, team.json and weights.json`);
 }
 
 // 5. The service worker stays inside this folder, so the other tools on the same domain are never taken over.

@@ -1,5 +1,5 @@
 // app.js — everything on the page. Data stays in this browser (IndexedDB); nothing is sent anywhere.
-import { PRIMARY, SYSTEMS, SYSTEM_CATEGORIES, MORE, PORTAL_VERSION, MODULE_ALLOW } from './config.js';
+import { PRIMARY, SYSTEMS as DEFAULT_SYSTEMS, SYSTEM_CATEGORIES as DEFAULT_SYSTEM_CATEGORIES, MORE, PORTAL_VERSION, MODULE_ALLOW } from './config.js';
 import { mountTourDemo, replayTourDemo } from './tour-demo.js';
 import {
   t as tr, L, LANGS, dirOf, tourState, TOUR_DEVICES, tourDemoPlan, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1,
@@ -12,6 +12,9 @@ import {
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
 } from './core.js';
 
+import { validateSystems } from './systems-core.js';
+
+let SYSTEMS = DEFAULT_SYSTEMS, SYSTEM_CATEGORIES = DEFAULT_SYSTEM_CATEGORIES;
 const $ = (id) => document.getElementById(id);
 // Same application, two presentation links. The existing URL stays the full admin portal.
 // Team mode removes management navigation, but is deliberately NOT an authentication boundary.
@@ -103,6 +106,7 @@ function renderTools() {
     return moduleLink(x, 'tool', icon, el('span', { class: 'name', text: L(x.name, lang) }), el('span', { class: 'desc', text: L(x.desc, lang) }),
       x.module ? el('span', { class: 'badge', text: t('in_portal') }) : null, el('span', { class: 'go', text: t('open') }));
   }));
+  $('manage-systems').hidden = isTeamPortal;
   set($('systems'), SYSTEM_CATEGORIES.map((c) => el('section', { class: 'systems-category' }, el('h3', { text: L(c.name, lang) }), el('div', { class: 'row' }, SYSTEMS.filter((x) => x.category === c.id).map((x) => el('a', { class: 'chip', href: x.url, target: '_blank', rel: 'noopener', text: L(x.name, lang) }))))));
   set($('more'), MORE.map((x) => (x.status === 'live'
     ? moduleLink(x, 'chip', L(x.name, lang))
@@ -1499,6 +1503,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   meet = (await store.getMeet()) || {};
   repairs = (await store.getRepairs()) || [];
   await refreshOfficialWeights();
+  try { const r = await fetch('./systems.json', { cache: 'no-store' }); const data = r.ok && validateSystems(await r.json()); if (data) { SYSTEMS = data.systems; SYSTEM_CATEGORIES = data.categories; } } catch { /* retain built-in links when unavailable */ }
   await loadStrings(['ar', lang]);   // Arabic is every key's fallback; the reader's language besides
   applyLang();   // renders everything and routes
   if (managerImportNonce) {

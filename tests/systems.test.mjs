@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { validateSystems } from '../systems-core.js';
+const data = JSON.parse(readFileSync(new URL('../systems.json', import.meta.url), 'utf8'));
+assert.ok(validateSystems(data), 'the shared directory must be valid');
+const bad = (edit) => { const v = structuredClone(data); edit(v); assert.equal(validateSystems(v), null); };
+bad(v => { v.systems[0].url = 'javascript:alert(1)'; });
+bad(v => { v.systems[0].url = 'https://name:password@example.com/'; });
+bad(v => { v.systems[0].category = 'missing'; });
+bad(v => { v.systems[1].id = v.systems[0].id; });
+bad(v => { v.categories[0].name.ur = ''; });
+console.log('systems.test.mjs: validation passed');

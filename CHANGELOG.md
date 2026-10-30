@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.20 — 2026-10-30
+
+- إدارة روابط الأنظمة وتصنيفاتها ونشرها للفريق من صفحة الإدارة باستخدام GitHub.
+
+<details><summary>English</summary>
+
+- Manage system links and categories and publish them to the team from an administration page using GitHub.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- انتظامی صفحے سے GitHub کے ذریعے سسٹم لنکس اور زمرے منظم کریں اور ٹیم کے لیے شائع کریں۔
+
+</div>
+</details>
+
+
 ## v8.19 — 2026-10-30
 
 - توضيح اسم رابط OpenVPN ضمن المشاريع ونسك.
