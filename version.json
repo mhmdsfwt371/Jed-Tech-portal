@@ -1,15 +1,18 @@
 {
-  "version": "8.27",
+  "version": "8.28",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "«مؤشراتي» أخف: شيلنا الشرح والتطمينات (ما يُقرأ، والسطور تحت العناوين)، وخطوة الإعداد صارت سطرًا واحدًا. الشرح موجود لمن يريده في زر «؟»."
+      "«مستواي» في مؤشراتي: لكل مهندس كل ربع سنة أربعة محاور مقارنة بزملائه تحت القائد نفسه — الحجم والصعوبة والسرعة والالتزام — ودرجة ومستوى (مبتدئ، ممارس، متخصص، مرجع) واتجاه وتوقّع. وعلى لوحة المؤشرات «مستوى الفريق» للمدير، ومعه خطة تطوير لكل مهندس لا يراها غيره.",
+      "شيلنا الشرح الثابت من كل الصفحات؛ الشرح التفاعلي في زر «؟» و«إرشادي خطوة بخطوة»."
     ],
     "en": [
-      "“My KPIs” is leaner: the explanations and reassurances (what is read, the lines under the headings) are gone, and the setup step is one line. The “?” button still explains for anyone who wants it."
+      "“My level” on My KPIs: each quarter, every engineer gets four axes against peers under the same leader — volume, difficulty, speed and reliability — with a score, a level (Starter, Practitioner, Specialist, Reference), a trend and a forecast. On the KPI board, “Team levels” for the manager, with a development plan per engineer that only he sees.",
+      "Static explanations are gone from every page; the interactive help stays in the “?” button and the step-by-step guide."
     ],
     "ur": [
-      "«میرے اشاریے» ہلکا ہو گیا: وضاحتیں اور یقین دہانیاں (کیا پڑھا جاتا ہے، عنوانوں کے نیچے کی سطریں) ہٹا دی گئیں، اور ترتیب کا قدم ایک سطر ہے۔ «؟» بٹن اب بھی جو چاہے اس کے لیے وضاحت کرتا ہے۔"
+      "«میرے اشاریے» میں «میری سطح»: ہر سہ ماہی ہر انجینئر کو اسی لیڈر کے ساتھیوں کے مقابلے میں چار محور — حجم، مشکل، رفتار اور پابندی — نمبر، سطح (ابتدائی، عملی، ماہر، حوالہ)، رجحان اور پیش گوئی کے ساتھ۔ اشاریوں کے بورڈ پر مینیجر کے لیے «ٹیم کی سطحیں»، ہر انجینئر کے ترقی کے منصوبے کے ساتھ جو صرف وہ دیکھتا ہے۔",
+      "ہر صفحے سے مستقل وضاحتیں ہٹا دی گئیں؛ تعاملی مدد «؟» بٹن اور مرحلہ وار رہنما میں ہے۔"
     ]
   }
 }

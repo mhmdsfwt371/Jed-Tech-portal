@@ -9,7 +9,7 @@ import {
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
-  mailRow, mailStats, MAIL_CATEGORIES, lastQuarters,
+  mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, engineerLevels, developmentPlan, LEVELS,
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
 } from './core.js';
 
@@ -266,7 +266,6 @@ function renderCard(card, nm, { showRank = false, showSuggestions = false, compa
     el('details', { class: 'points-details' },
       el('summary', { text: t('points_detail_title') }),
       card.breakdown ? [
-        el('p', { class: 'hint', text: t('points_detail_sub') }),
         el('p', { class: 'hint', text: !isTeamPortal && weightPublishDiff(weightsRepo, weightsDevice).count
           ? t('points_source_draft') : t('points_source_official') }),
         card.breakdown.rows.length ? el('div', { class: 'table-wrap' },
@@ -327,7 +326,6 @@ function openMeet(ym, id, name, typeChoices) {
   const note = el('textarea', { rows: '3', placeholder: t('meet_note_ph') }); note.value = cur.note || '';
   const agreed = el('textarea', { rows: '2', placeholder: t('meet_agreed_ph') }); agreed.value = cur.agreed || '';
   dlg.append(el('h2', { text: t('meet_title', { name, m: monthLabel(ym) }) }),
-    el('p', { class: 'hint', text: t('meet_private') }),
     el('label', { class: 'meet-l', text: t('meet_note') }), note,
     el('label', { class: 'meet-l', text: t('meet_agreed') }), agreed,
     el('label', { class: 'meet-l', text: t('meet_goals') }), goalRows,
@@ -366,7 +364,6 @@ function renderRepairs() {
   const badge = (st) => el('span', { class: `rstat ${st}`, text: t(`repair_${st}`) });
   return el('section', { class: 'repairs' },
     el('h2', {}, t('repair_h'), helpQ('help_repair')),
-    el('p', { class: 'hint', text: t('repair_sub') }),
     el('div', { class: 'repair-add' }, ta, el('div', { class: 'row' }, eng, el('button', { type: 'button', class: 'btn primary', text: t('repair_add'), onclick: add }))),
     repairs.length ? [
       el('div', { class: 'strip' },
@@ -407,10 +404,8 @@ function renderSignatures() {
   const imp = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); if (j.schema !== 'afaqy-signatures/v1' || typeof j.signatures !== 'object') throw 0; const next = signRead(); for (const [m, v] of Object.entries(j.signatures)) if (['TZ', 'TF'].includes(m) && v && typeof v === 'object') next[m] = { ...(next[m] || {}), ...v }; signWrite(next); toast(t('sign_imported')); renderTeam(); } catch { toast(t('err_json')); } e.target.value = ''; } });
   return el('section', { class: 'signs' },
     el('h2', {}, t('sign_h'), helpQ('help_sign')),
-    el('p', { class: 'hint', text: t('sign_sub') }),
     el('div', { class: 'sign-grid' }, SIGN_MAKERS.map(card)),
-    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn quiet', text: t('sign_export'), onclick: exp }), el('button', { type: 'button', class: 'btn quiet', text: t('sign_import'), onclick: () => imp.click() }), imp),
-    el('p', { class: 'note', text: t('sign_private') }));
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn quiet', text: t('sign_export'), onclick: exp }), el('button', { type: 'button', class: 'btn quiet', text: t('sign_import'), onclick: () => imp.click() }), imp),);
 }
 // ---------- private links: internal addresses (VPN portals, device admin pages) kept on this device, never published (ADR-0026) ----------
 let privLinks = [];
@@ -426,7 +421,6 @@ function renderPrivLinks() {
     privLinks = [...privLinks.filter((x) => x.url !== v.url), v].slice(0, 100); await store.putPriv(privLinks); renderPrivLinks(); };
   set(box, el('details', { class: 'priv', open: privLinks.length ? '' : null },
     el('summary', {}, `🔒 ${t('priv_h')}`, privLinks.length ? el('span', { class: 'hint', text: ` · ${privLinks.length}` }) : null),
-    el('p', { class: 'hint', text: t('priv_sub') }),
     privLinks.length ? el('div', { class: 'row' }, privLinks.map((x) => el('span', { class: 'priv-chip' },
       el('a', { class: 'chip', href: x.url, target: '_blank', rel: 'noopener noreferrer', text: x.name }),
       el('button', { type: 'button', class: 'btn quiet tiny', 'aria-label': t('remove'), text: '✕', onclick: async () => { privLinks = privLinks.filter((y) => y.url !== x.url); await store.putPriv(privLinks); renderPrivLinks(); } })))) : null,
@@ -502,12 +496,10 @@ function kpiMailSection(team, peopleById) {
     return el('section', { class: 'share mail', id: 'k-mail' },
       el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, el('h2', { style: 'margin:0' }, t('mail_h'), helpQ('help_mail')),
         el('div', {}, periodPicker('year', 0, today, (k) => { mailKind = k; renderKpi(); }, () => {}))),
-      el('p', { class: 'hint', text: t('mail_year_sub') }),
       el('div', { class: 'table-wrap' }, el('table', { class: 'share-table year' },
         el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), ...qs.map((q) => el('th', { class: 'num', text: q.label })))),
         el('tbody', {}, team.map((id) => el('tr', {}, el('td', { text: nmM(id) }), ...per.map((ms) => { const p = ms.people.find((x) => x.id === id);
-          return el('td', { class: 'num', text: p && p.replies ? `${p.replies} · ${t('mail_hard')} ${p.hardPct}%` : '—' }); })))))),
-      el('p', { class: 'note', text: t('mail_private') }));
+          return el('td', { class: 'num', text: p && p.replies ? `${p.replies} · ${t('mail_hard')} ${p.hardPct}%` : '—' }); })))))),);
   }
   const win = pickWindow(mailKind, mailQ, today); const ms = mailStats(mailRows, team, win);
   const last = localStorage.getItem('afaqy-portal:ms-last');
@@ -533,8 +525,7 @@ function kpiMailSection(team, peopleById) {
         el('td', { class: 'num mix', text: `${t('mail_hard')} ${p.cats.hard} · ${t('mail_medium')} ${p.cats.medium} · ${t('mail_easy')} ${p.cats.easy + p.cats.other}` }),
         el('td', { class: 'num', text: mins(p.firstReplyMin) }))))))
       : el('div', { class: 'empty', text: mailRows.length ? t('share_none') : t('mail_empty') }),
-    ms.otherColleagues ? el('p', { class: 'hint', text: t('mail_others', { n: ms.otherColleagues }) }) : null,
-    el('p', { class: 'note', text: t('mail_private') }));
+    ms.otherColleagues ? el('p', { class: 'hint', text: t('mail_others', { n: ms.otherColleagues }) }) : null,);
 }
 // ---------- install on Android, iPhone and Windows ----------
 let installPrompt = null;
@@ -675,6 +666,7 @@ function renderMe(waiting = false) {
       el('h2', { style: 'margin:0' }, t('card_h'), helpQ('help_card')),
       (() => { const months = [...new Set([...Object.keys(monthCards), ymd(new Date()).slice(0, 7)])].sort().reverse(); if (!cardMonth || !months.includes(cardMonth)) cardMonth = months[0];
         return el('select', { class: 'w-sel', onchange: (e) => { cardMonth = e.target.value; renderMe(); } }, months.map((m) => el('option', { value: m, selected: m === cardMonth, text: `${monthLabel(m)}${monthCards[m] ? '' : ` · ${t('card_live')}`}` }))); })()),
+    meLevelSection(pm, who),
     meCardSection(pm, who, nm),
     el('h2', { text: t('me_history_h') }),
     el('div', { class: 'table-wrap' }, el('table', {},
@@ -781,8 +773,7 @@ function renderPro() {
       el('h3', { text: t('pro_signin_h') }),
       el('label', {}, el('span', { text: t('pro_user') }), u), el('label', {}, el('span', { text: t('pro_pass') }), p),
       el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: t('pro_signin'), onclick: go }), site),
-      el('p', { class: 'msg', id: 'pro-msg' }),
-      el('p', { class: 'note info', text: t('pro_privacy') }))));
+      el('p', { class: 'msg', id: 'pro-msg' }),)));
     return;
   }
   if (proBusy || !proUnits) { set(body, el('div', { class: 'empty', id: 'pro-wait', text: t('pro_loading', { n: 0, total: '…' }) })); return; }
@@ -1014,7 +1005,6 @@ function renderTeamPicker(people, team) {
   const sorted = [...people].sort((a, b) => String(nameOf(a, lang)).localeCompare(String(nameOf(b, lang))));
   return el('details', { class: 'team' },
     el('summary', {}, `${t('team_title')} — ${t('team_count', { n: chosen.size, total: people.length })}`),
-    el('p', { class: 'hint', text: t('team_hint') }),
     el('div', { class: 'row' },
       el('button', { type: 'button', class: 'btn', text: t('team_jeddah'), onclick: () => save(scopeOn(people) ? people.map((p) => p.id) : defaultTeam(people, allTasks())) }),
       el('button', { type: 'button', class: 'btn quiet', text: t('team_all'), onclick: () => save(people.map((p) => p.id)) })),
@@ -1055,6 +1045,62 @@ function renderMgr() {
   set(row, controls(bm, `⬇ ${t('mgr_bm', { from: q.from, to: q.to })}`, false));
 }
 // ---------- My KPIs: the month's card, the team's cards with one-to-ones, and the pattern's path ----------
+// ---------- the engineer's level (ADR-0030) ----------
+// Each engineer is compared only with peers under the same leader; leaders themselves are not levelled.
+function levelPools(ids) {
+  const ro = roster().people || {}; const leaders = new Set(Object.values(ro).map((p) => p.leaderId).filter(Boolean));
+  const pools = {}; for (const id of ids) { if (leaders.has(id)) continue; const l = (ro[id] && ro[id].leaderId) || '_'; (pools[l] = pools[l] || []).push(id); }
+  return Object.values(pools);
+}
+function levelsFor(tasks, ids, today, mail) {
+  const qs = lastQuarters(today, 4); const out = {};
+  const ro = roster().people || {};
+  for (const pool of levelPools(ids)) {
+    const active = pool.filter((id) => !(ro[id] && ro[id].onLeave));   // someone on leave is neither judged nor a yardstick
+    Object.assign(out, engineerLevels(tasks, weights(), active, qs[0], { prev: qs.slice(1).reverse(), mailRows: mail }));
+    for (const id of pool.filter((x) => !active.includes(x))) out[id] = { id, onLeave: true, axes: {}, score: null, level: null, trend: null, forecast: null };
+  }
+  return { levels: out, quarter: qs[0] };
+}
+const AXES = ['volume', 'difficulty', 'speed', 'reliability'];
+function levelView(x, who, quarter) {
+  if (!x) return null;
+  const lvl = x.level ? LEVELS.find((l) => l.n === x.level) : null;
+  return el('section', { class: 'level-card' },
+    el('div', { class: 'level-head' },
+      el('div', {}, el('h3', { text: who }), el('span', { class: 'hint', text: quarter.label })),
+      el('div', { class: `level-badge l${x.level || 0}` }, el('b', { text: lvl ? String(lvl.n) : '—' }), el('span', { text: lvl ? t(`lvl_${lvl.k}`) : x.onLeave ? t('card_on_leave') : t('lvl_early') }))),
+    x.score != null ? el('div', { class: 'level-score' }, el('b', { text: String(x.score) }), el('span', { text: t('lvl_score') })) : null,
+    el('div', { class: 'level-axes' }, AXES.map((k) => el('div', { class: 'axis' },
+      el('span', { text: t(`axis_${k}`) }),
+      el('i', {}, el('span', { style: `width:${x.axes[k] ?? 0}%` })),
+      el('b', { text: x.axes[k] == null ? '—' : t('lvl_better', { p: x.axes[k] }) })))),
+    el('p', { class: 'level-trend' }, x.trend ? `${{ up: '▲', down: '▼', steady: '■' }[x.trend]} ${t(`lvl_trend_${x.trend}`)}` : t('lvl_trend_none'),
+      ' · ', x.forecast != null ? t('lvl_forecast', { f: x.forecast }) : t('lvl_forecast_none')));
+}
+function meLevelSection(pm, who) {
+  const today = saudiDay(new Date().toISOString()); const ids = [...new Set([me.user.id, ...(pm.scope.team || [])])];
+  if (!levelPools(ids).some((p) => p.includes(me.user.id))) return null;   // leaders are not levelled
+  const { levels, quarter } = levelsFor(me.tasks, ids, today, null);
+  return [el('h2', {}, t('lvl_h'), helpQ('help_level')), levelView(levels[me.user.id], who, quarter)];
+}
+function kpiLevelSection(team, peopleById) {
+  const today = saudiDay(new Date().toISOString()); const nmL = (id) => nameOf(peopleById.get(id), lang) || id;
+  const { levels, quarter } = levelsFor(allTasks(), team, today, mailRows);
+  const rows = Object.values(levels).sort((a, b) => (b.score ?? -1) - (a.score ?? -1)); if (!rows.length) return null;
+  const planText = (p) => t(`plan_${p.axis}`, { buddy: p.buddy ? nmL(p.buddy) : '—', p: p.pct });
+  return el('section', { class: 'share', id: 'k-level' },
+    el('h2', {}, t('lvl_team_h', { q: quarter.label }), helpQ('help_level')),
+    el('div', { class: 'table-wrap' }, el('table', { class: 'share-table' },
+      el('thead', {}, el('tr', {}, ['col_person', 'lvl_col_level', 'lvl_col_score', ...AXES.map((k) => `axis_${k}`), 'lvl_col_trend', 'lvl_col_plan'].map((k, i) => el('th', { class: i && i < 7 ? 'num' : null, text: t(k) })))),
+      el('tbody', {}, rows.map((x) => el('tr', {},
+        el('td', { text: nmL(x.id) }),
+        el('td', { class: 'num' }, el('span', { class: `level-pill l${x.level || 0}`, text: x.level ? `${x.level} · ${t(`lvl_${LEVELS[x.level - 1].k}`)}` : x.onLeave ? t('card_on_leave') : t('lvl_early') })),
+        el('td', { class: 'num', text: x.score == null ? '—' : String(x.score) }),
+        ...AXES.map((k) => el('td', { class: 'num', text: x.axes[k] == null ? '—' : String(x.axes[k]) })),
+        el('td', { class: 'num', text: x.trend ? { up: '▲', down: '▼', steady: '■' }[x.trend] : '—' }),
+        el('td', { class: 'plan-cell' }, x.onLeave ? [] : developmentPlan(levels, x.id).map((p) => el('div', { text: planText(p) })))))))));
+}
 function meCardSection(pm, who, nm) { const ymNow = cardMonth; const team = pm.scope.team; const ctx = cardCtxFromMe(team);
       const own = (monthCards[ymNow] && monthCards[ymNow][me.user.id]) || monthCard(ctx, me.user.id, ymNow);
       const below = pm.below.map((r) => r.id);
@@ -1091,7 +1137,6 @@ function kpiYearShare(team, peopleById, anchor) {
   return el('section', { class: 'share', id: 'k-share' },
     el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, el('h2', { style: 'margin:0' }, t('share_h'), helpQ('help_share')),
       el('div', {}, periodPicker('year', 0, anchor, (k) => { shareKind = k; renderKpi(); }, () => {}))),
-    el('p', { class: 'hint', text: t('share_year_sub') }),
     cover.some((c) => !c) ? el('p', { class: 'note', text: t('share_year_partial') }) : null,
     el('div', { class: 'table-wrap' }, el('table', { class: 'share-table year' },
       el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), ...qs.map((q, i) => el('th', { class: 'num', text: `${q.label}${cover[i] ? '' : ' *'}` })))),
@@ -1143,11 +1188,11 @@ function kpiWeekSection(team, peopleById) { const wd = weeklyDigest(allTasks(), 
 function kpiMapPlanSection(ds, team, peopleById) { const ym = ds.range.to.slice(0, 7); const tm = teamMonth(cardCtxFromDatasets(team), ym); const nmB = (id) => (nameOf(peopleById.get(id), lang) || id);
       const max = Math.max(1, ...tm.heat.flatMap((h) => TIERS.map((k) => h[k])));
       const cell = (v) => el('td', { class: 'num heat', style: `--heat:${(v / max).toFixed(2)}`, text: v ? String(v) : '' });
-      return [el('h2', { id: 'k-map' }, t('heat_h', { m: monthLabel(ym) }), helpQ('help_heat')), el('p', { class: 'hint', text: t('heat_sub') }),
+      return [el('h2', { id: 'k-map' }, t('heat_h', { m: monthLabel(ym) }), helpQ('help_heat')),
         el('div', { class: 'table-wrap' }, el('table', { class: 'heatmap' },
           el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), ...TIERS.map((k) => el('th', { class: 'num', text: t(`tier_short_${k}`) })), el('th', { class: 'num', text: t('card_points') }), el('th', { text: t('card_arch') }))),
           el('tbody', {}, tm.cards.sort((x, y) => y.points - x.points).map((c) => el('tr', {}, el('td', { text: nmB(c.personId) }), ...TIERS.map((k) => cell(c.tiers.mine[k])), el('td', { class: 'num', text: String(c.points) }), el('td', { text: t(`arch_${c.archetype}`) })))))),
-        el('h2', { id: 'k-plan' }, t('plan_h'), helpQ('help_plan')), el('p', { class: 'hint', text: t('plan_sub') }),
+        el('h2', { id: 'k-plan' }, t('plan_h'), helpQ('help_plan')),
         tm.plan.length ? el('div', { class: 'cards-grid' }, tm.plan.map((p) => { const c = tm.cards.find((x) => x.personId === p.id); return renderCard(c, nmB(p.id), { showRank: true, showSuggestions: true, compact: true }); })) : el('div', { class: 'empty', text: t('plan_none') })]; }
 function coverageSection(rep, team, nm) { const cv = coverageTotals(rep, team); if (!cv.people.length && !cv.total.accounts) return null;
       const maxA = Math.max(1, ...cv.people.map((r) => r.accounts));
@@ -1204,7 +1249,7 @@ function renderKpi() {
   const jump = (id) => { const n = document.getElementById(id); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   set(body,
     el('div', { class: 'bar' }, el('label', {}, el('span', { text: t('period') }), select)),
-    el('nav', { class: 'jump', 'aria-label': t('jump_label') }, [['k-share', 'jump_share'], ['k-mail', 'jump_mail'], ['k-week', 'jump_week'], ['k-table', 'jump_table'], ['k-map', 'jump_map'], ['k-plan', 'jump_plan'], ['k-reports', 'jump_reports']]
+    el('nav', { class: 'jump', 'aria-label': t('jump_label') }, [['k-share', 'jump_share'], ['k-mail', 'jump_mail'], ['k-level', 'jump_level'], ['k-week', 'jump_week'], ['k-table', 'jump_table'], ['k-map', 'jump_map'], ['k-plan', 'jump_plan'], ['k-reports', 'jump_reports']]
       .map(([id, k]) => el('button', { type: 'button', class: 'pill-btn', text: t(k), onclick: () => jump(id) }))),
     renderTeamPicker(people, team),
     ds.sample ? el('p', { class: 'note sample', text: t('sample_note') }) : null,
@@ -1219,17 +1264,17 @@ function renderKpi() {
       el('div', {}, el('b', { text: `${f.team.fromEmail} · ${f.team.selfLogged}` }), el('span', { text: `${t('col_email')} · ${t('col_self')}` }))),
     el('p', { class: 'strip-note' }, t('kpi_strip_note'), helpQ('help_points')),
     el('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin-bottom:8px' },
-      el('p', { class: 'hint', style: 'margin:0', text: t('kpi_table_sub') }),
       el('div', { class: 'pills' }, [['done', 'kpi_sort_done'], ['points', 'kpi_sort_points'], ['median', 'kpi_sort_median'], ['open', 'kpi_sort_open']].map(([k, label]) =>
         el('button', { type: 'button', class: `pill-btn${kpiSort === k ? ' on' : ''}`, text: t(label), onclick: () => { kpiSort = k; renderKpi(); } })))),
     el('div', { id: 'k-table' }),
     table,
     kpiShareSection(team, peopleById),
     kpiMailSection(team, peopleById),
+    kpiLevelSection(team, peopleById),
     kpiWeekSection(team, peopleById),
     renderKpiDonuts(ds, f, team),
     kpiMapPlanSection(ds, team, peopleById),
-    datasets.length > 1 ? [el('h2', { text: t('trend') }), el('p', { class: 'hint', text: t('trend_sub') }),
+    datasets.length > 1 ? [el('h2', { text: t('trend') }),
       el('div', { class: 'columns' }, trend.map(({ d, f: x }) => el('div', { class: `column${d.key === kpiKey ? ' on' : ''}` },
         el('b', { text: String(x.done) }), el('i', { style: `height:${Math.max(6, Math.round((x.done / Math.max(1, ...trend.map((q) => q.f.done))) * 140))}px` }),
         el('span', { class: 'ltr', text: `${d.range.from.slice(0, 7)} → ${d.range.to.slice(0, 7)}` }), el('small', { text: `${formatRate(x.rate)} · ${formatHours(x.medianHours, lang)}` })))),
@@ -1302,7 +1347,7 @@ function renderWeights() {
         await save({ editors: { [p.id]: [...next] } }); dlg.close(); grantDialog(k);
       } }), el('span', { text: nameOf(p, lang) || p.id }), cur.includes('*') ? el('span', { class: 'hint', text: t('w_is_admin') }) : null);
     }));
-    set($('help-text'), el('p', { class: 'hint', text: t('w_grant_hint') }), list);
+    set($('help-text'), list);
     dlg.showModal();
   };
   const table = (g) => {
@@ -1347,7 +1392,6 @@ function renderWeights() {
         el('a', { class: 'btn', href: 'https://github.com/mhmdsfwt371/Jed-Tech-portal/edit/main/weights.json',
           target: '_blank', rel: 'noopener', text: t('weights_github_open') })),
       input,
-      el('p', { class: 'note', text: t('weights_publish_manual') }),
       el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() }));
     dlg.addEventListener('close', () => dlg.remove());
     document.body.append(dlg);
@@ -1357,7 +1401,6 @@ function renderWeights() {
   const myRights = uid ? (admin ? t('w_you_admin') : (Object.keys(wt.tasks).filter(mayEdit).length ? t('w_you_some', { n: Object.keys(wt.tasks).filter(mayEdit).length }) : t('w_you_none'))) : t('w_you_unknown');
   set(body,
     el('div', { class: 'tiers' }, TIERS.map((tr) => el('div', { class: 'tier' }, el('b', { text: String((weightsRepo && weightsRepo.tiers && weightsRepo.tiers[tr]) || { admin: 1, customer: 2, integration: 3, multistage: 5 }[tr]) }), el('div', {}, el('strong', { text: t(`tier_${tr}`) }), el('p', { text: t(`tier_${tr}_why`) }))))),
-    el('p', { class: 'note info', text: t('weights_rules') }),
     el('p', { class: 'note', text: myRights }),
     admin ? el('p', { class: diff.count ? 'note' : 'hint',
       text: diff.count ? t('weights_draft_notice', { n: diff.count }) : t('weights_official_notice') }) : null,
@@ -1413,7 +1456,6 @@ function renderTeam() {
   set(body,
     el('section', { class: 'assign-box' },
       el('h2', {}, t('assign_h'), helpQ('help_assign')),
-      el('p', { class: 'hint', text: t('assign_sub') }),
       el('ol', { class: 'assign-steps' }, ['assign_s1', 'assign_s2', 'assign_s3', 'assign_s4'].map((k) => el('li', { text: t(k) }))),
       el('div', { class: 'row' },
         el('a', { class: 'btn primary bm', href: ab, draggable: 'true', text: `⚙ ${t('assign_bm')}`, onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } }),
@@ -1421,7 +1463,6 @@ function renderTeam() {
       el('p', { class: 'note', text: t('assign_warn') })),
     renderSignatures(),
     el('h2', {}, t('team_roster_h'), helpQ('help_roster')),
-    el('p', { class: 'note info', text: t('team_note') }),
     el('div', { class: 'row', style: 'margin-bottom:14px' },
       el('button', { type: 'button', class: 'btn primary', text: t('team_download'), onclick: download }),
       el('button', { type: 'button', class: 'btn', text: t('team_upload'), onclick: () => upload.click() }), upload,
@@ -1434,7 +1475,7 @@ function renderTeam() {
         el('td', {}, el('input', { type: 'text', value: positionOf(ro, p.id), placeholder: t('team_pos_ph'), onchange: (e) => save(p.id, { position: e.target.value.trim() }) })),
         el('td', {}, leaderSelect(p.id)))))))
       : el('div', { class: 'empty', text: t('team_none') }),
-    others.length ? el('details', { class: 'tucked' }, el('summary', { text: t('team_others', { n: others.length }) }), el('p', { class: 'hint', text: t('team_others_hint') }),
+    others.length ? el('details', { class: 'tucked' }, el('summary', { text: t('team_others', { n: others.length }) }),
       el('div', { class: 'table-wrap team-table' }, el('table', {},
         el('thead', {}, el('tr', {}, ['team_col_name', 'team_col_id', 'team_col_pos', 'team_col_leader'].map((k) => el('th', { text: t(k) })))),
         el('tbody', {}, others.map((p) => el('tr', {},
@@ -1460,13 +1501,11 @@ function renderReports(key, team = null) {
   const maxAct = Math.max(1, ...ac.people.map((r) => r.activities));
   return [
     el('h2', { id: 'k-reports' }, t('f3_title'), helpQ('help_f3')),
-    el('p', { class: 'hint', text: t('f3_sub') }),
     at.rows.length ? el('div', { class: 'table-wrap' }, el('table', {},
       el('thead', {}, el('tr', {}, ['f3_name', 'f3_open', 'f3_pending', 'f3_done', 'f3_total'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
       el('tbody', {}, at.rows.map((r) => el('tr', {}, el('td', { text: r.name }), ...[r.open, r.pending, r.done, r.total].map((v) => el('td', { class: 'num', text: v })))),
         el('tr', { class: 'total' }, el('td', { text: t('team') }), ...[at.total.open, at.total.pending, at.total.done, at.total.total].map((v) => el('td', { class: 'num', text: v })))))) : el('div', { class: 'empty', text: t('f3_none') }),
     el('h2', {}, t('f4_title'), helpQ('help_f4')),
-    el('p', { class: 'hint', text: t('f4_sub') }),
     ac.people.length ? [
       el('div', { class: 'table-wrap' }, el('table', {},
         el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), el('th', { class: 'num', text: t('f4_activities') }), el('th', { class: 'num', text: t('f4_customers') }),

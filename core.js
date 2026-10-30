@@ -1364,6 +1364,63 @@ export function mailStats(rows, team, win) {
   return { win, total, customerThreads, unanswered, otherColleagues, people };
 }
 
+// ===================== the engineer's level (ADR-0030): four axes against teammates, a level, a trend and a forecast =====================
+export const LEVELS = [{ n: 1, k: 'starter' }, { n: 2, k: 'practitioner' }, { n: 3, k: 'specialist' }, { n: 4, k: 'reference' }];
+const pctRank = (vals, v, higherBetter = true) => {
+  const others = vals.filter((x) => x != null); if (v == null || others.length < 2) return null;
+  const better = others.filter((x) => (higherBetter ? x < v : x > v)).length, same = others.filter((x) => x === v).length - 1;
+  return Math.round(((better + same / 2) / (others.length - 1)) * 100);
+};
+/** Raw axes for one person in a window (tasks; plus email stats when the manager's device has them). */
+function rawAxes(tasks, wt, id, win, mail) {
+  const inW = (iso) => { const d = saudiDay(iso); return d && d >= win.from && d <= win.to; };
+  const known = (x) => !wt || !Object.keys(wt.tasks || {}).length || !!wt.tasks[typeKey(x.type)];
+  const tierOf = (type) => { const x = wt && wt.tasks[typeKey(type)]; return (x && x.tier) || 'admin'; };
+  const done = (tasks || []).filter((x) => x.assigneeId === id && x.state === 'done' && x.completedAt && inW(x.completedAt) && known(x));
+  const points = done.reduce((a, x) => a + taskWeight(wt, x.type), 0);
+  const hardPts = done.filter((x) => ['integration', 'multistage'].includes(tierOf(x.type))).reduce((a, x) => a + taskWeight(wt, x.type), 0);
+  const hrs = done.map((x) => (Date.parse(x.completedAt) - Date.parse(x.createdAt)) / 3600000).filter((h) => h >= 0).sort((a, b) => a - b);
+  const assigned = (tasks || []).filter((x) => x.assigneeId === id && x.createdAt && inW(x.createdAt) && x.state !== 'cancelled');
+  const m = mail && mail.people.find((p) => p.id === id);
+  return { points, difficulty: points >= 10 ? hardPts / points : null, speed: hrs.length >= 5 ? hrs[Math.floor(hrs.length / 2)] : null,
+    reliability: assigned.length >= 5 ? assigned.filter((x) => x.state === 'done').length / assigned.length : null,
+    mailHard: m && m.threads >= 5 ? m.hardPct : null, mailFirst: m && m.firsts >= 5 ? m.firstReplyMin : null };
+}
+/** Levels for everyone in `team` for one window; `prev` windows (oldest first) give the trend and the forecast. */
+export function engineerLevels(tasks, wt, team, win, { prev = [], mailRows = null } = {}) {
+  const at = (w) => { const mail = mailRows && mailRows.length ? mailStats(mailRows, team, w) : null;
+    const raw = Object.fromEntries(team.map((id) => [id, rawAxes(tasks, wt, id, w, mail)]));
+    const col = (k) => team.map((id) => raw[id][k]);
+    const avg = (...xs) => { const v = xs.filter((x) => x != null); return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null; };
+    return Object.fromEntries(team.map((id) => { const r = raw[id];
+      const axes = { volume: r.points >= 10 ? pctRank(col('points'), r.points) : null,
+        difficulty: avg(pctRank(col('difficulty'), r.difficulty), pctRank(col('mailHard'), r.mailHard)),
+        speed: avg(pctRank(col('speed'), r.speed, false), pctRank(col('mailFirst'), r.mailFirst, false)),
+        reliability: pctRank(col('reliability'), r.reliability) };
+      const vals = Object.values(axes).filter((x) => x != null);
+      const score = vals.length >= 2 ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
+      const level = r.points < 10 || score == null ? null : score >= 80 && (axes.difficulty ?? 0) >= 60 ? 4 : score >= 60 ? 3 : score >= 35 ? 2 : 1;
+      return [id, { id, raw: r, axes, score, level, mailUsed: !!mail }]; })); };
+  const now = at(win), before = prev.map(at);
+  for (const id of team) {
+    const series = [...before.map((b) => b[id].score), now[id].score].filter((x) => x != null);
+    const last = before.length ? before[before.length - 1][id].score : null;
+    now[id].trend = now[id].score == null || last == null ? null : now[id].score - last >= 8 ? 'up' : last - now[id].score >= 8 ? 'down' : 'steady';
+    if (series.length >= 3) { const n = series.length, xs = series.map((_, i) => i), mx = (n - 1) / 2, my = series.reduce((a, b) => a + b, 0) / n;
+      const slope = xs.reduce((a, x, i) => a + (x - mx) * (series[i] - my), 0) / xs.reduce((a, x) => a + (x - mx) ** 2, 0);
+      now[id].forecast = Math.max(0, Math.min(100, Math.round(series[n - 1] + slope))); } else now[id].forecast = null;
+    now[id].history = series;
+  }
+  return now;
+}
+/** The manager's development suggestions from the weakest axes — never shown to the engineer. */
+export function developmentPlan(levels, id) {
+  const me = levels[id]; if (!me || me.score == null) return [];
+  const weak = Object.entries(me.axes).filter(([, v]) => v != null).sort((a, b) => a[1] - b[1]).slice(0, 2).filter(([, v]) => v < 50);
+  return weak.map(([axis, v]) => { const top = Object.values(levels).filter((p) => p.id !== id && p.axes[axis] != null).sort((a, b) => b.axes[axis] - a.axes[axis])[0];
+    return { axis, pct: v, buddy: top ? top.id : null }; });
+}
+
 /** Parts of a whole as donut segments: each gets its share, and the SVG dash pair for a circle of radius r. */
 export function donutParts(parts, r = 40) {
   const C = 2 * Math.PI * r;

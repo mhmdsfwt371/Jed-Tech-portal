@@ -712,6 +712,23 @@ test('email: classification by words (English and Arabic, without false «وصل
   assert.deepEqual([A.replies, A.hardPct, A.firstReplyMin], [1, 100, 30]); assert.deepEqual([B.cats.easy, B.firstReplyMin], [1, 120]);
 });
 
+test('levels: percentile axes among peers, a level only with enough work, and the plan from the weakest axes', async () => {
+  const C = await import('../core.js');
+  const wt = parseWeights({ default: 1, tasks: { 'WASL Link': { w: 3, tier: 'integration' }, 'View Units': { w: 1, tier: 'admin' } } });
+  const D = (id, a, type, day, hrs) => ({ id, assigneeId: a, type, state: 'done', createdAt: `2026-10-${day}T08:00:00Z`, completedAt: new Date(Date.parse(`2026-10-${day}T08:00:00Z`) + hrs * 3600000).toISOString() });
+  const mk = (who, n, type, hrs) => Array.from({ length: n }, (_, i) => D(`${who}${type}${i}`, who, type, String(10 + (i % 15)).padStart(2, '0'), hrs));
+  const tasks = [...mk('A', 12, 'WASL Link', 2), ...mk('B', 12, 'View Units', 30), ...mk('C', 6, 'WASL Link', 5), ...mk('C', 6, 'View Units', 5)];
+  const q = C.lastQuarters('2026-10-29', 1)[0];
+  const L = C.engineerLevels(tasks, wt, ['A', 'B', 'C'], q);
+  assert.equal(L.A.axes.difficulty, 100); assert.equal(L.B.axes.difficulty, 0); assert.equal(L.A.axes.speed, 100); assert.equal(L.B.axes.speed, 0);
+  assert.ok(L.A.level > L.B.level, 'the harder, faster engineer ranks higher');
+  assert.equal(L.A.trend, null, 'no previous quarter, no trend'); assert.equal(L.A.forecast, null, 'a forecast needs three quarters');
+  const plan = C.developmentPlan(L, 'B');
+  assert.ok(plan.length && plan.every((p) => p.pct < 50), 'the plan targets weak axes'); assert.equal(plan.find((p) => p.axis === 'difficulty').buddy, 'A');
+  const tiny = C.engineerLevels(mk('Z', 2, 'View Units', 1), wt, ['Z', 'A'], q);
+  assert.equal(tiny.Z.level, null, 'too little work, no level');
+});
+
 test('formatting', () => {
   assert.equal(formatHours(null, 'ar'), '—');
   assert.equal(formatHours(5.26, 'en'), '5.3 h');

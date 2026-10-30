@@ -399,6 +399,18 @@
   .mail-cfg { margin: 6px 0; } .mail-cfg summary { cursor: pointer; color: var(--slate); font-size: 13px; } #k-mail { scroll-margin-top: 130px; }
   .share-table td.mix { font-size: 12px; color: var(--slate); white-space: nowrap; } b.ok-t { color: var(--ok); } b.warn-t { color: var(--warn); }
   .pills.qpick .pill-btn { font-size: 12px; padding: 4px 10px; } .share-table.year td, .share-table.year th { white-space: nowrap; }
+  .level-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; margin: 10px 0 18px; }
+  .level-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; } .level-head h3 { margin: 0 0 2px; }
+  .level-badge { display: grid; justify-items: center; min-width: 96px; padding: 8px 12px; border-radius: var(--radius); background: var(--paper); border: 1px solid var(--line); }
+  .level-badge b { font-size: 30px; line-height: 1; } .level-badge span { font-size: 13px; color: var(--slate); }
+  .level-badge.l4, .level-pill.l4 { border-color: var(--ok); } .level-badge.l3, .level-pill.l3 { border-color: var(--accent); } .level-badge.l1, .level-pill.l1 { border-color: var(--warn); }
+  .level-score { display: flex; align-items: baseline; gap: 6px; margin: 8px 0 12px; } .level-score b { font-size: 26px; color: var(--title); } .level-score span { color: var(--slate); }
+  .level-axes { display: grid; gap: 8px; } .axis { display: grid; grid-template-columns: 90px minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 14px; }
+  .axis i { display: block; height: 8px; background: var(--paper); border-radius: 4px; overflow: hidden; } .axis i span { display: block; height: 8px; background: var(--accent); }
+  .axis b { font-size: 12px; color: var(--slate); font-weight: 600; white-space: nowrap; } .level-trend { margin: 12px 0 0; font-size: 13px; color: var(--slate); }
+  .level-pill { display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line-strong); font-size: 12px; white-space: nowrap; }
+  .plan-cell { font-size: 12px; line-height: 1.6; min-width: 260px; } #k-level { scroll-margin-top: 130px; }
+  @media (max-width: 520px) { .axis { grid-template-columns: 70px minmax(0, 1fr); } .axis b { grid-column: 2; } }
   .tucked { margin: 18px 0; } .tucked > summary { cursor: pointer; color: var(--slate); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
   .me-card { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; align-items: flex-end; padding: 18px 20px; margin-bottom: 8px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); border-inline-start: 4px solid var(--signal); }
   .me-name { margin: 0; }
@@ -649,11 +661,9 @@
   </header>
 <main class="content">
   <section id="view-tools">
-    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="tools_title">أدوات الفريق</h1><button type="button" class="help-q" data-help="g_tools_b" data-help-title="tools_title" aria-label="?">?</button></div>
-    <p class="sub" data-t="tools_sub"></p></div>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="tools_title">أدوات الفريق</h1><button type="button" class="help-q" data-help="g_tools_b" data-help-title="tools_title" aria-label="?">?</button></div></div>
     <div class="primary" id="primary"></div>
     <h2 data-t="systems">أنظمة الشركة</h2>
-    <p class="hint" data-t="systems_note"></p>
     <a id="manage-systems" class="btn" href="./manage-systems.html" target="_blank" rel="noopener noreferrer" hidden data-t="manage_systems">إدارة الروابط</a>
     <div id="systems"></div>
     <div id="private-links"></div>
@@ -667,27 +677,22 @@
   </section>
 
   <section id="view-team" hidden>
-    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_team">الفريق</h1><button type="button" class="help-q" data-help="g_team_b" data-help-title="nav_team" aria-label="?">?</button></div>
-    <p class="sub" data-t="team_sub"></p></div>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_team">الفريق</h1><button type="button" class="help-q" data-help="g_team_b" data-help-title="nav_team" aria-label="?">?</button></div></div>
     <div id="team-body"></div>
   </section>
 
   <section id="view-weights" hidden>
-    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_weights">الأوزان</h1><button type="button" class="help-q" data-help="g_weights_b" data-help-title="nav_weights" aria-label="?">?</button></div>
-    <p class="sub" data-t="weights_sub"></p></div>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_weights">الأوزان</h1><button type="button" class="help-q" data-help="g_weights_b" data-help-title="nav_weights" aria-label="?">?</button></div></div>
     <div id="weights-body"></div>
   </section>
 
   <section id="view-pro" hidden>
-    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_pro">أفاقي برو</h1><button type="button" class="help-q" data-help="g_pro_b" data-help-title="nav_pro" aria-label="?">?</button></div>
-    <p class="sub" data-t="pro_sub"></p></div>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_pro">أفاقي برو</h1><button type="button" class="help-q" data-help="g_pro_b" data-help-title="nav_pro" aria-label="?">?</button></div></div>
     <div id="pro-body"></div>
   </section>
 
   <section id="view-data" hidden>
-    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="data_title">بيانات المؤشرات</h1><button type="button" class="help-q" data-help="g_data_b" data-help-title="data_title" aria-label="?">?</button></div>
-    <p class="sub" data-t="data_sub"></p></div>
-    <p class="note info" data-t="mgr_methods_intro" style="margin:0 0 14px"></p>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="data_title">بيانات المؤشرات</h1><button type="button" class="help-q" data-help="g_data_b" data-help-title="data_title" aria-label="?">?</button></div></div>
     <div class="mgr-methods">
       <section class="mgr-method" aria-labelledby="mgr-auto-title">
         <h2 id="mgr-auto-title" data-t="mgr_auto_h">شبه أوتوماتيكي — بدون تنزيل ملفات</h2>
@@ -749,8 +754,7 @@
   </section>
 
   <section id="view-kpi" hidden>
-    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="kpi_title">المؤشرات</h1><button type="button" class="help-q" data-help="g_kpi_b" data-help-title="kpi_title" aria-label="?">?</button></div>
-    <p class="sub" data-t="kpi_sub"></p></div>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="kpi_title">المؤشرات</h1><button type="button" class="help-q" data-help="g_kpi_b" data-help-title="kpi_title" aria-label="?">?</button></div></div>
     <div id="kpi-body"></div>
   </section>
 </main>

@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.28 — 2026-10-31
+
+- «مستواي» في مؤشراتي: لكل مهندس كل ربع سنة أربعة محاور مقارنة بزملائه تحت القائد نفسه — الحجم والصعوبة والسرعة والالتزام — ودرجة ومستوى (مبتدئ، ممارس، متخصص، مرجع) واتجاه وتوقّع. وعلى لوحة المؤشرات «مستوى الفريق» للمدير، ومعه خطة تطوير لكل مهندس لا يراها غيره.
+- شيلنا الشرح الثابت من كل الصفحات؛ الشرح التفاعلي في زر «؟» و«إرشادي خطوة بخطوة».
+
+<details><summary>English</summary>
+
+- “My level” on My KPIs: each quarter, every engineer gets four axes against peers under the same leader — volume, difficulty, speed and reliability — with a score, a level (Starter, Practitioner, Specialist, Reference), a trend and a forecast. On the KPI board, “Team levels” for the manager, with a development plan per engineer that only he sees.
+- Static explanations are gone from every page; the interactive help stays in the “?” button and the step-by-step guide.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «میرے اشاریے» میں «میری سطح»: ہر سہ ماہی ہر انجینئر کو اسی لیڈر کے ساتھیوں کے مقابلے میں چار محور — حجم، مشکل، رفتار اور پابندی — نمبر، سطح (ابتدائی، عملی، ماہر، حوالہ)، رجحان اور پیش گوئی کے ساتھ۔ اشاریوں کے بورڈ پر مینیجر کے لیے «ٹیم کی سطحیں»، ہر انجینئر کے ترقی کے منصوبے کے ساتھ جو صرف وہ دیکھتا ہے۔
+- ہر صفحے سے مستقل وضاحتیں ہٹا دی گئیں؛ تعاملی مدد «؟» بٹن اور مرحلہ وار رہنما میں ہے۔
+
+</div>
+</details>
+
+
 ## v8.27 — 2026-10-31
 
 - «مؤشراتي» أخف: شيلنا الشرح والتطمينات (ما يُقرأ، والسطور تحت العناوين)، وخطوة الإعداد صارت سطرًا واحدًا. الشرح موجود لمن يريده في زر «؟».
