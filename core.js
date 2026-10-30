@@ -1453,6 +1453,42 @@ export function developmentPlan(levels, id) {
     return { axis, pct: v, buddy: top ? top.id : null }; });
 }
 
+// ===================== load sustainability (ADR-0032): workload signals that come weeks before burnout or resignation =====================
+// Signals, never a diagnosis: when each person's completed work and email replies happen (outside Sun–Thu 08:00–17:00 Saudi time,
+// weekends, late night 21:00–05:00), their slice of the team's points against an even slice, and whether after-hours work is rising.
+export const LOAD_LIMITS = { afterAmber: 15, afterRed: 30, weekendAmber: 5, weekendRed: 15, lateAmber: 5, shareAmber: 1.5, shareRed: 2, riseAmber: 10, minEvents: 15 };
+const saClock = (iso) => { const d = new Date(Date.parse(iso) + 3 * 3600000); return { dow: d.getUTCDay(), h: d.getUTCHours() + d.getUTCMinutes() / 60 }; };
+export function loadSustainability(tasks, wt, team, endDay, { mailRows = null, L = LOAD_LIMITS } = {}) {
+  const end = Date.parse(`${endDay}T21:00:00Z`), start = end - 28 * 86400000, mid = end - 14 * 86400000;
+  const inW = (iso, a, b) => { const t0 = Date.parse(iso); return t0 > a && t0 <= b; };
+  const pts = Object.fromEntries(team.map((id) => [id, 0]));
+  for (const x of tasks || []) if (x.state === 'done' && x.completedAt && inW(x.completedAt, start, end) && x.assigneeId in pts) pts[x.assigneeId] += taskPoints(wt, x);
+  const total = Object.values(pts).reduce((a, b) => a + b, 0), fair = team.length ? total / team.length : 0;
+  const out = {};
+  for (const id of team) {
+    const ev = (tasks || []).filter((x) => x.assigneeId === id && x.state === 'done' && x.completedAt && inW(x.completedAt, start, end)).map((x) => x.completedAt)
+      .concat((mailRows || []).filter((r) => r.w === id && inW(r.t, start, end)).map((r) => r.t));
+    const off = (t0) => { const c = saClock(t0); return c.dow === 5 || c.dow === 6 || c.h < 8 || c.h >= 17; };
+    const pct = (arr, f) => (arr.length ? Math.round((arr.filter(f).length / arr.length) * 100) : 0);
+    const after = pct(ev, off), weekend = pct(ev, (t0) => [5, 6].includes(saClock(t0).dow)), late = pct(ev, (t0) => { const h = saClock(t0).h; return h >= 21 || h < 5; });
+    const recent = ev.filter((t0) => Date.parse(t0) > mid), earlier = ev.filter((t0) => Date.parse(t0) <= mid);
+    const rise = recent.length >= 8 && earlier.length >= 8 ? pct(recent, off) - pct(earlier, off) : null;
+    const share = fair ? pts[id] / fair : 0;
+    const signals = [];
+    if (ev.length >= L.minEvents) {
+      if (after >= L.afterAmber) signals.push({ k: 'after', v: after, level: after >= L.afterRed ? 'red' : 'amber' });
+      if (weekend >= L.weekendAmber) signals.push({ k: 'weekend', v: weekend, level: weekend >= L.weekendRed ? 'red' : 'amber' });
+      if (late >= L.lateAmber) signals.push({ k: 'late', v: late, level: 'amber' });
+      if (rise != null && rise >= L.riseAmber) signals.push({ k: 'rise', v: rise, level: 'amber' });
+    }
+    if (share >= L.shareAmber && pts[id] >= 20) signals.push({ k: 'share', v: Math.round(share * 10) / 10, level: share >= L.shareRed ? 'red' : 'amber' });
+    const reds = signals.filter((x) => x.level === 'red').length, ambers = signals.length - reds;
+    const status = ev.length < L.minEvents && !signals.length ? 'quiet' : reds || ambers >= 3 ? 'red' : ambers ? 'amber' : 'green';
+    out[id] = { id, events: ev.length, after, weekend, late, rise, points: Math.round(pts[id]), share: Math.round(share * 10) / 10, signals, status };
+  }
+  return { from: new Date(start).toISOString(), to: new Date(end).toISOString(), people: out, fairPoints: Math.round(fair) };
+}
+
 /** Parts of a whole as donut segments: each gets its share, and the SVG dash pair for a circle of radius r. */
 export function donutParts(parts, r = 40) {
   const C = 2 * Math.PI * r;

@@ -745,6 +745,24 @@ test('points basis: factors → base; working hours Sun–Thu 8–17 Saudi; done
   assert.equal(C.taskPoints(wt, T('View Units', '2026-10-25T05:00:00Z', '2026-11-25T06:00:00Z')), 1, 'on completion: time does not count');
 });
 
+test('load sustainability: after-hours, weekend and late-night shares in Saudi time; load against an even slice; red, amber, green', async () => {
+  const C = await import('../core.js');
+  const wt = parseWeights({ default: 1 });
+  const at = (day, hh) => `2026-10-${day}T${String(hh - 3).padStart(2, '0')}:30:00Z`;   // hh is Saudi time
+  const D = (id, a, day, hh) => ({ id, assigneeId: a, type: 'x', state: 'done', createdAt: at(day, hh), completedAt: at(day, hh) });
+  const days = ['18', '19', '20', '21', '22', '25', '26', '27', '28', '29'];   // Sun–Thu working days
+  const tasks = [
+    ...days.flatMap((d, i) => [D(`a${i}`, 'A', d, 10), D(`b${i}`, 'A', d, 11)]),                                 // A: all in hours
+    ...days.flatMap((d, i) => [D(`c${i}`, 'B', d, 19), D(`e${i}`, 'B', d, 22)]), D('f1', 'B', '23', 12), D('f2', 'B', '24', 12),   // B: evenings, late, weekend
+    ...days.map((d, i) => D(`g${i}`, 'C', d, 9)),
+  ];
+  const r = C.loadSustainability(tasks, wt, ['A', 'B', 'C'], '2026-10-29');
+  assert.equal(r.people.A.after, 0); assert.equal(r.people.A.status, 'green');
+  assert.ok(r.people.B.after >= 90 && r.people.B.weekend > 0 && r.people.B.late >= 45); assert.equal(r.people.B.status, 'red');
+  assert.equal(r.people.C.status, 'quiet', 'too few events and no load signal');
+  assert.ok(r.people.A.share > 1 && r.people.C.share < 1);
+});
+
 test('formatting', () => {
   assert.equal(formatHours(null, 'ar'), '—');
   assert.equal(formatHours(5.26, 'en'), '5.3 h');

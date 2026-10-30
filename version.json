@@ -1,15 +1,15 @@
 {
-  "version": "8.29",
+  "version": "8.30",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "كل وزن صار له أساس مكتوب: أربعة معايير (العمق الفني، الطرف الخارجي، الشغل الميداني، الأثر) كلٌّ من ٠ إلى ٢، تعطي الأساس من ١ إلى ٥. وثلاث طرق للحساب: «إنجاز» للروتيني، «إنجاز + سرعة» (×١٫٥ لو قُفلت في الوقت المعياري)، و«وقت» للشغل الذي يختلف حجمه (بين النصف والضعف، بساعات العمل). كله يتعدّل من صفحة الأوزان، والأوقات المعيارية المعلّمة «تقدير» تحتاج مراجعتك."
+      "«استدامة الحِمل» على لوحة المؤشرات — للمدير فقط: إشارات مبكرة على الضغط قبل أن يتحول لإرهاق أو استقالة. لكل شخص في آخر ٤ أسابيع: نسبة شغله خارج الدوام، وفي الجمعة والسبت، وبعد ٩ مساءً، وهل يزيد؛ وحِمل المهندس مقارنة بزملائه. وحالة (مستدام، راقِب، يحتاج تدخلًا) ومقترح عملي: كم نقطة تُحوَّل ولمن، أو مراجعة ساعات العمل، أو تفويض القائد."
     ],
     "en": [
-      "Every weight now has a written basis: four factors (technical depth, outside party, field work, impact), each 0 to 2, give the base from 1 to 5. And three methods: “On completion” for routine work, “Completion + speed” (×1.5 if closed within the standard time), and “By time” for work whose size varies (half to double, in working hours). All editable on the Weights page; standards marked “estimate” need your review."
+      "“Load sustainability” on the KPI board — manager only: early signals of strain before it turns into burnout or resignation. For each person over the last 4 weeks: the share of work after hours, on Fri/Sat and after 9 pm, and whether it is rising; and an engineer’s load against peers. A status (sustainable, watch, needs action) and a practical suggestion: how many points to move and to whom, a review of working hours, or delegation for a leader."
     ],
     "ur": [
-      "ہر وزن کی اب لکھی ہوئی بنیاد ہے: چار معیار (فنی گہرائی، بیرونی فریق، میدانی کام، اثر)، ہر ایک ۰ سے ۲، بنیاد ۱ سے ۵ دیتے ہیں۔ اور حساب کے تین طریقے: معمول کے کام کے لیے «تکمیل پر»، «تکمیل + رفتار» (معیاری وقت میں بند ہو تو ×۱٫۵)، اور بدلتے حجم والے کام کے لیے «وقت کے حساب سے» (آدھے سے دوگنا، کام کے گھنٹوں میں)۔ سب اوزان کے صفحے سے قابلِ ترمیم؛ «اندازہ» والے معیاری اوقات آپ کے جائزے کے منتظر۔"
+      "اشاریوں کے بورڈ پر «بوجھ کی پائیداری» — صرف مینیجر کے لیے: تھکن یا استعفے سے پہلے دباؤ کے ابتدائی اشارے۔ پچھلے ۴ ہفتوں میں ہر فرد کے لیے: اوقات کے بعد، جمعہ/ہفتہ اور رات ۹ کے بعد کام کا حصہ، اور کیا یہ بڑھ رہا ہے؛ اور انجینئر کا بوجھ ساتھیوں کے مقابلے میں۔ حالت (پائیدار، نظر رکھیں، کارروائی درکار) اور عملی تجویز: کتنے پوائنٹس کسے منتقل کریں، اوقاتِ کار کا جائزہ، یا لیڈر کے لیے تفویض۔"
     ]
   }
 }

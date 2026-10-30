@@ -9,7 +9,7 @@ import {
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, baseFromFactors, tierFromBase, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
-  mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, engineerLevels, developmentPlan, LEVELS,
+  mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, engineerLevels, developmentPlan, LEVELS, loadSustainability,
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
 } from './core.js';
 
@@ -1084,6 +1084,45 @@ function meLevelSection(pm, who) {
   const { levels, quarter } = levelsFor(me.tasks, ids, today, null);
   return [el('h2', {}, t('lvl_h'), helpQ('help_level')), levelView(levels[me.user.id], who, quarter)];
 }
+// ---------- load sustainability (ADR-0032) — the manager's eyes only ----------
+function kpiLoadSection(team, peopleById) {
+  const tasks = allTasks(); if (!tasks.length) return null;
+  const nmL = (id) => nameOf(peopleById.get(id), lang) || id; const ro = roster().people || {};
+  const lastDay = tasks.reduce((m, x) => { const d = saudiDay(x.completedAt); return d && d > m ? d : m; }, '');
+  const today = saudiDay(new Date().toISOString()); const endDay = lastDay && lastDay < today ? lastDay : today;
+  // engineers are compared with peers under the same leader; a leader is read on his own (no share signal); leave is skipped
+  const leaders = team.filter((id) => !levelPools(team).some((p) => p.includes(id)));
+  const res = {}; let win = null;
+  for (const pool of [...levelPools(team), ...leaders.map((id) => [id])]) {
+    const active = pool.filter((id) => !(ro[id] && ro[id].onLeave));
+    if (active.length) { const r = loadSustainability(tasks, weights(), active, endDay, { mailRows }); win = r; Object.assign(res, r.people);
+      for (const id of active) res[id].pool = active; }
+    for (const id of pool.filter((x) => !active.includes(x))) res[id] = { id, status: 'leave', signals: [] };
+  }
+  const order = { red: 0, amber: 1, green: 2, quiet: 3, leave: 4 };
+  const rows = Object.values(res).sort((x, y) => order[x.status] - order[y.status] || (y.after || 0) - (x.after || 0));
+  const lightest = (p) => (p.pool || []).filter((id) => id !== p.id && res[id] && res[id].status !== 'leave').sort((x, y) => (res[x].points || 0) - (res[y].points || 0))[0];
+  const action = (p) => {
+    if (p.status === 'leave' || p.status === 'quiet' || p.status === 'green') return '';
+    const isLeader = leaders.includes(p.id); const out = [];
+    if (p.signals.some((s) => s.k === 'share') && lightest(p)) { const fair = (p.pool || []).reduce((s, id) => s + (res[id].points || 0), 0) / (p.pool || [1]).length;
+      out.push(t('load_act_move', { n: Math.max(1, Math.round((p.points - fair) / 4)), to: nmL(lightest(p)) })); }
+    if (p.signals.some((s) => ['after', 'weekend', 'late', 'rise'].includes(s.k))) out.push(isLeader ? t('load_act_delegate') : t('load_act_hours'));
+    return out.join(' · ');
+  };
+  const sig = (p) => p.signals.map((s) => el('span', { class: `sig ${s.level}`, text: t(`load_sig_${s.k}`, { v: s.v }) }));
+  return el('section', { class: 'share', id: 'k-load' },
+    el('h2', {}, t('load_h'), helpQ('help_load')),
+    win ? el('p', { class: 'hint', text: t('load_window', { from: saudiDay(win.from), to: saudiDay(win.to) }) }) : null,
+    el('div', { class: 'table-wrap' }, el('table', { class: 'share-table load' },
+      el('thead', {}, el('tr', {}, ['col_person', 'load_col_status', 'load_col_after', 'load_col_weekend', 'load_col_share', 'load_col_signals', 'load_col_action'].map((k, i) => el('th', { class: [2, 3, 4].includes(i) ? 'num' : null, text: t(k) })))),
+      el('tbody', {}, rows.map((p) => el('tr', { class: `st-${p.status}` },
+        el('td', { text: nmL(p.id) }),
+        el('td', {}, el('span', { class: `load-pill ${p.status}`, text: t(`load_st_${p.status}`) })),
+        el('td', { class: 'num', text: p.status === 'leave' ? '—' : `${p.after}%` }), el('td', { class: 'num', text: p.status === 'leave' ? '—' : `${p.weekend}%` }),
+        el('td', { class: 'num', text: p.status === 'leave' || leaders.includes(p.id) ? '—' : `×${p.share}` }),
+        el('td', { class: 'sigs' }, sig(p)), el('td', { class: 'plan-cell', text: action(p) })))))));
+}
 function kpiLevelSection(team, peopleById) {
   const today = saudiDay(new Date().toISOString()); const nmL = (id) => nameOf(peopleById.get(id), lang) || id;
   const { levels, quarter } = levelsFor(allTasks(), team, today, mailRows);
@@ -1249,7 +1288,7 @@ function renderKpi() {
   const jump = (id) => { const n = document.getElementById(id); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   set(body,
     el('div', { class: 'bar' }, el('label', {}, el('span', { text: t('period') }), select)),
-    el('nav', { class: 'jump', 'aria-label': t('jump_label') }, [['k-share', 'jump_share'], ['k-mail', 'jump_mail'], ['k-level', 'jump_level'], ['k-week', 'jump_week'], ['k-table', 'jump_table'], ['k-map', 'jump_map'], ['k-plan', 'jump_plan'], ['k-reports', 'jump_reports']]
+    el('nav', { class: 'jump', 'aria-label': t('jump_label') }, [['k-share', 'jump_share'], ['k-mail', 'jump_mail'], ['k-load', 'jump_load'], ['k-level', 'jump_level'], ['k-week', 'jump_week'], ['k-table', 'jump_table'], ['k-map', 'jump_map'], ['k-plan', 'jump_plan'], ['k-reports', 'jump_reports']]
       .map(([id, k]) => el('button', { type: 'button', class: 'pill-btn', text: t(k), onclick: () => jump(id) }))),
     renderTeamPicker(people, team),
     ds.sample ? el('p', { class: 'note sample', text: t('sample_note') }) : null,
@@ -1270,6 +1309,7 @@ function renderKpi() {
     table,
     kpiShareSection(team, peopleById),
     kpiMailSection(team, peopleById),
+    kpiLoadSection(team, peopleById),
     kpiLevelSection(team, peopleById),
     kpiWeekSection(team, peopleById),
     renderKpiDonuts(ds, f, team),
