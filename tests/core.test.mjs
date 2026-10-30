@@ -685,6 +685,28 @@ test('workload share: calendar windows (Sunday week) and each person’s share b
   assert.equal(A.pointsPct, 60); assert.equal(B.tasksPct, 66.7); assert.equal(B.emailPct, 100); assert.equal(s.fair, 33.3);
 });
 
+test('email: classification by words (English and Arabic, without false «وصل»), sender matching, content-free rows, per-person stats', async () => {
+  const C = await import('../core.js');
+  assert.equal(C.classifyMail('Re: API integration needed'), 'integration');
+  assert.equal(C.classifyMail('طلب ربط مع منصة وصل'), 'integration');
+  assert.equal(C.classifyMail('وصل الجهاز اليوم'), 'other', '«وصل» meaning “arrived” is not WASL');
+  assert.equal(C.classifyMail('RFQ for 40 trackers'), 'request');
+  assert.equal(C.classifyMail('الجهاز متوقف'), 'issue');
+  assert.equal(C.classifyMail('استفسار عن التقرير'), 'inquiry');
+  const people = [{ id: 'A', nameEn: 'Lina Testwell' }, { id: 'B', nameEn: 'Karim Sample' }]; const internal = (a) => /@afaqy/.test(a);
+  const row = C.mailRow({ id: 'm1', receivedDateTime: '2026-10-28T08:00:00Z', conversationId: 'c1', subject: 'API please', bodyPreview: 'secret text', from: { emailAddress: { address: 'x@client.com', name: 'Client' } } }, people, internal);
+  assert.deepEqual(Object.keys(row), ['i', 't', 'c', 'w', 'k']); assert.equal(row.w, 'ext'); assert.equal(row.k, 'integration');
+  assert.ok(!JSON.stringify(row).includes('secret') && !JSON.stringify(row).includes('client.com'), 'no content, no address');
+  const M = (id, at, conv, addr, name, subj = '') => C.mailRow({ id, receivedDateTime: at, conversationId: conv, subject: subj, from: { emailAddress: { address: addr, name } } }, people, internal);
+  const rows = [M('1', '2026-10-27T08:00:00Z', 'c1', 'a@cl.com', 'C', 'API integration'), M('2', '2026-10-27T08:30:00Z', 'c1', 'lina.testwell@afaqy.sa', 'Lina Testwell'),
+    M('3', '2026-10-27T09:00:00Z', 'c2', 'b@cl.com', 'C', 'استفسار'), M('4', '2026-10-27T11:00:00Z', 'c2', 'k.sample@afaqy.sa', 'Karim Sample'),
+    M('5', '2026-10-28T09:00:00Z', 'c3', 'c@cl.com', 'C', 'issue'), M('6', '2026-10-28T09:10:00Z', 'c3', 'z@afaqy.sa', 'Other Colleague')];
+  const s = C.mailStats(rows, ['A', 'B'], C.shareWindow('week', '2026-10-29'));
+  const A = s.people.find((p) => p.id === 'A'), B = s.people.find((p) => p.id === 'B');
+  assert.deepEqual([s.total, s.customerThreads, s.unanswered, s.otherColleagues], [2, 3, 0, 1]);
+  assert.deepEqual([A.replies, A.hardPct, A.firstReplyMin], [1, 100, 30]); assert.deepEqual([B.cats.easy, B.firstReplyMin], [1, 120]);
+});
+
 test('formatting', () => {
   assert.equal(formatHours(null, 'ar'), '—');
   assert.equal(formatHours(5.26, 'en'), '5.3 h');

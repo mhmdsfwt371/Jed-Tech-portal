@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.24 — 2026-10-30
+
+- «ردود الإيميل — من صندوقك» على لوحة المؤشرات: بتسجيل دخولك بحساب مايكروسوفت تقرأ البوابة صندوق الوارد عندك (قراءة فقط) وتعرض لكل شخص عدد ردوده ونصيبه، والمحادثات التي رد فيها، ونسبة الصعب منها (ربط وتكامل وطلبات جديدة)، ووسيط وقت أول رد — يوم أو أسبوع أو شهر أو ربع سنة. نص الإيميلات لا يُحفظ، ومفتاح الدخول لا يُحفظ.
+
+<details><summary>English</summary>
+
+- “Email replies — from your inbox” on the KPI board: sign in with your Microsoft account and the portal reads your inbox (read-only), then shows for each person their replies and share, the threads they answered, the hard share among them (integration, new requests), and the median time to the first reply — by day, week, month or quarter. Email text is never stored, and neither is the sign-in token.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اشاریوں کے بورڈ پر «ای میل جوابات — آپ کے ان باکس سے»: اپنے مائیکروسافٹ اکاؤنٹ سے سائن اِن کریں تو پورٹل آپ کا ان باکس پڑھتا ہے (صرف پڑھنا)، پھر ہر فرد کے جوابات اور حصہ، جواب دی گئی گفتگو، ان میں مشکل کا حصہ (ربط، نئی درخواستیں)، اور پہلے جواب کا وسط وقت دکھاتا ہے — دن، ہفتہ، مہینہ یا سہ ماہی کے حساب سے۔ ای میل کا متن کبھی محفوظ نہیں ہوتا، نہ ہی سائن اِن ٹوکن۔
+
+</div>
+</details>
+
+
 ## v8.23 — 2026-10-30
 
 - لوحة المؤشرات تبدأ الآن بـ«نصيب كل شخص من شغل الفريق»: نسبة كل واحد من المنجز، بفلتر يوم أو أسبوع (من الأحد للسبت) أو شهر أو ربع سنة — بالنقاط الموزونة أو بعدد المهام أو بمهام الإيميل وحدها، مع النصيب المتساوي وتمييز الأعلى والأقل منه بوضوح.

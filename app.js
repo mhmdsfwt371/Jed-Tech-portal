@@ -9,6 +9,7 @@ import {
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
+  mailRow, mailStats, MAIL_CATEGORIES,
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
 } from './core.js';
 
@@ -50,7 +51,7 @@ function toast(msg) {
 
 // ---------- storage: IndexedDB, with an in-memory fallback where it is unavailable ----------
 const store = (() => {
-  let mem = []; let memMe = null; let memRep = []; let memRoster = null; let memWeights = null; let memCards = {}; let memMeet = {}; let memRepairs = []; let memPriv = [];
+  let mem = []; let memMe = null; let memRep = []; let memRoster = null; let memWeights = null; let memCards = {}; let memMeet = {}; let memRepairs = []; let memPriv = []; let memMail = [];
   const open = () => new Promise((res, rej) => {
     if (!('indexedDB' in window)) return rej(new Error('no idb'));
     const r = indexedDB.open('afaqy-portal', 1);
@@ -66,6 +67,8 @@ const store = (() => {
     async putReports(v) { try { await run('readwrite', (s) => s.put(v, 'reports')); } catch { memRep = v; } },
     async getPriv() { try { return (await run('readonly', (s) => s.get('privlinks'))) || []; } catch { return memPriv; } },
     async putPriv(v) { try { await run('readwrite', (s) => s.put(v, 'privlinks')); } catch { memPriv = v; } },
+    async getMail() { try { return (await run('readonly', (s) => s.get('mailrows'))) || []; } catch { return memMail; } },
+    async putMail(v) { try { await run('readwrite', (s) => s.put(v, 'mailrows')); } catch { memMail = v; } },
     async getRepairs() { try { return (await run('readonly', (s) => s.get('repairs'))) || []; } catch { return memRepairs; } },
     async putRepairs(v) { try { await run('readwrite', (s) => s.put(v, 'repairs')); } catch { memRepairs = v; } },
     async getMeet() { try { return (await run('readonly', (s) => s.get('oneonone'))) || {}; } catch { return memMeet; } },
@@ -428,6 +431,98 @@ function renderPrivLinks() {
       el('a', { class: 'chip', href: x.url, target: '_blank', rel: 'noopener noreferrer', text: x.name }),
       el('button', { type: 'button', class: 'btn quiet tiny', 'aria-label': t('remove'), text: '✕', onclick: async () => { privLinks = privLinks.filter((y) => y.url !== x.url); await store.putPriv(privLinks); renderPrivLinks(); } })))) : null,
     el('div', { class: 'priv-add' }, nameIn, urlIn, el('button', { type: 'button', class: 'btn', text: t('priv_add'), onclick: add }))));
+}
+// ---------- Outlook inside the portal (ADR-0029) ----------
+// The manager signs in with his own Microsoft account; the portal reads HIS inbox (Mail.Read, read-only) straight from Microsoft,
+// keeps only time / thread hash / who / category, and forgets the token right after the read. Talks to two Microsoft addresses only.
+const MS_LOGIN = 'https://login.microsoftonline.com', MS_GRAPH = 'https://graph.microsoft.com/v1.0';
+const MS_SCOPE = 'openid profile Mail.Read';
+let mailRows = [], mailKind = 'week', mailBusy = false;
+const msCfg = () => { try { return JSON.parse(localStorage.getItem('afaqy-portal:ms') || 'null'); } catch { return null; } };
+const msRedirect = () => location.origin + location.pathname.replace(/index\.html$/, '');
+const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+async function msSignIn() {
+  const cfg = msCfg(); if (!cfg) return;
+  const verifier = b64url(crypto.getRandomValues(new Uint8Array(48))), state = b64url(crypto.getRandomValues(new Uint8Array(16)));
+  const challenge = b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)));
+  sessionStorage.setItem('afaqy-portal:ms-pkce', JSON.stringify({ verifier, state }));
+  const q = new URLSearchParams({ client_id: cfg.clientId, response_type: 'code', redirect_uri: msRedirect(), response_mode: 'query', scope: MS_SCOPE, state, code_challenge: challenge, code_challenge_method: 'S256', prompt: 'select_account' });
+  location.assign(`${MS_LOGIN}/${encodeURIComponent(cfg.tenantId)}/oauth2/v2.0/authorize?${q}`);
+}
+// back from Microsoft: exchange the one-time code, read the mailbox, then drop the token
+async function msReturn() {
+  const p = new URLSearchParams(location.search); const code = p.get('code'), state = p.get('state'), err = p.get('error');
+  if (!code && !err) return false;
+  history.replaceState(null, '', location.pathname + '#kpi');   // the code never stays in the address or the history
+  const saved = JSON.parse(sessionStorage.getItem('afaqy-portal:ms-pkce') || 'null'); sessionStorage.removeItem('afaqy-portal:ms-pkce');
+  if (err) { toast(t('mail_err_signin', { e: err })); return true; }
+  const cfg = msCfg(); if (!cfg || !saved || saved.state !== state) { toast(t('mail_err_state')); return true; }
+  try {
+    const r = await fetch(`${MS_LOGIN}/${encodeURIComponent(cfg.tenantId)}/oauth2/v2.0/token`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ client_id: cfg.clientId, grant_type: 'authorization_code', code, redirect_uri: msRedirect(), code_verifier: saved.verifier, scope: MS_SCOPE }) });
+    const j = await r.json(); if (!r.ok || !j.access_token) throw new Error(j.error_description || j.error || r.status);
+    await msReadMailbox(j.access_token);
+  } catch (e) { toast(t('mail_err_token', { e: String(e.message || e).slice(0, 120) })); }
+  return true;
+}
+async function msReadMailbox(token) {
+  mailBusy = true; renderKpi();
+  const since = new Date(Date.now() - 95 * 86400000).toISOString();
+  const people = [...peopleOf(datasets), ...(me ? me.people : [])].filter((p, i, arr) => arr.findIndex((q) => q.id === p.id) === i);
+  const internal = (addr) => /@afaqy\b|@afaqy[.-]/i.test(addr);
+  let url = `${MS_GRAPH}/me/mailFolders/inbox/messages?$select=id,from,receivedDateTime,conversationId,subject,bodyPreview&$filter=receivedDateTime ge ${since}&$orderby=receivedDateTime desc&$top=100`;
+  let n = 0; const fresh = [];
+  try {
+    for (let page = 0; url && page < 200; page++) {
+      const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!r.ok) throw new Error(`${r.status}`);
+      const j = await r.json();
+      for (const m of j.value || []) fresh.push(mailRow(m, people, internal));   // subject and preview are read here and never kept
+      n += (j.value || []).length; url = j['@odata.nextLink'] || null;
+      if (page % 5 === 4) toast(t('mail_reading', { n }));
+    }
+    const known = new Set(mailRows.map((r) => r.i));
+    mailRows = [...mailRows, ...fresh.filter((r) => !known.has(r.i))];
+    await store.putMail(mailRows);
+    localStorage.setItem('afaqy-portal:ms-last', new Date().toISOString());
+    toast(t('mail_done', { n }));
+  } catch (e) { toast(t('mail_err_read', { e: String(e.message || e) })); }
+  finally { token = null; mailBusy = false; renderKpi(); }
+}
+// ---------- end Outlook ----------
+function kpiMailSection(team, peopleById) {
+  const cfg = msCfg(); const nmM = (id) => nameOf(peopleById.get(id), lang) || id;
+  const setup = () => { const cid = el('input', { type: 'text', dir: 'ltr', placeholder: 'Application (client) ID', value: (cfg && cfg.clientId) || '' }), tid = el('input', { type: 'text', dir: 'ltr', placeholder: 'Directory (tenant) ID', value: (cfg && cfg.tenantId) || '' });
+    return el('div', { class: 'mail-setup' }, el('p', { class: 'hint', text: t('mail_setup_sub') }), cid, tid,
+      el('button', { type: 'button', class: 'btn primary', text: t('mail_setup_save'), onclick: () => { const g = /^[0-9a-f-]{36}$/i; if (!g.test(cid.value.trim()) || !g.test(tid.value.trim())) { toast(t('mail_setup_bad')); return; } localStorage.setItem('afaqy-portal:ms', JSON.stringify({ clientId: cid.value.trim(), tenantId: tid.value.trim() })); renderKpi(); } })); };
+  if (!cfg) return el('section', { class: 'share mail', id: 'k-mail' }, el('h2', {}, t('mail_h'), helpQ('help_mail')), setup());
+  const today = saudiDay(new Date().toISOString());
+  const win = shareWindow(mailKind, today); const ms = mailStats(mailRows, team, win);
+  const last = localStorage.getItem('afaqy-portal:ms-last');
+  const chip = (k, label) => el('button', { type: 'button', class: `pill-btn${mailKind === k ? ' on' : ''}`, text: t(label), onclick: () => { mailKind = k; renderKpi(); } });
+  const mins = (m) => (m == null ? '—' : m < 60 ? `${Math.round(m)} ${t('mail_min')}` : `${(m / 60).toFixed(1)} ${t('mail_hr')}`);
+  const max = Math.max(1, ...ms.people.map((p) => p.replies));
+  return el('section', { class: 'share mail', id: 'k-mail' },
+    el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' },
+      el('h2', { style: 'margin:0' }, t('mail_h'), helpQ('help_mail')),
+      el('div', { class: 'pills' }, [['day', 'share_day'], ['week', 'share_week'], ['month', 'share_month'], ['quarter', 'share_quarter']].map(([k, l]) => chip(k, l)))),
+    el('div', { class: 'row' },
+      el('button', { type: 'button', class: 'btn primary', disabled: mailBusy ? '' : null, text: mailBusy ? t('mail_busy') : t('mail_read'), onclick: () => msSignIn() }),
+      el('span', { class: 'hint', text: last ? t('mail_last', { d: last.slice(0, 16).replace('T', ' ') }) : t('mail_never') })),
+    el('details', { class: 'mail-cfg' }, el('summary', { text: t('mail_setup_change') }), setup()),
+    el('p', { class: 'hint', text: t('mail_window', { from: win.from, to: win.to, n: ms.total, c: ms.customerThreads, u: ms.unanswered }) }),
+    ms.total ? el('div', { class: 'table-wrap' }, el('table', { class: 'share-table' },
+      el('thead', {}, el('tr', {}, ['col_person', 'mail_col_replies', 'mail_col_threads', 'mail_col_hard', 'mail_col_mix', 'mail_col_first'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+      el('tbody', {}, ms.people.filter((p) => p.replies).map((p) => el('tr', {},
+        el('td', { text: nmM(p.id) }),
+        el('td', { class: 'num' }, el('div', { class: 'bar-cell' }, el('b', { text: `${p.replies} · ${p.share}%` }), el('i', {}, el('span', { style: `width:${Math.round((p.replies / max) * 100)}%` })))),
+        el('td', { class: 'num', text: String(p.threads) }),
+        el('td', { class: 'num' }, el('b', { class: p.hardPct >= 40 ? 'ok-t' : p.hardPct <= 10 && p.threads >= 5 ? 'warn-t' : null, text: `${p.hardPct}%` })),
+        el('td', { class: 'num mix', text: `${t('mail_hard')} ${p.cats.hard} · ${t('mail_medium')} ${p.cats.medium} · ${t('mail_easy')} ${p.cats.easy + p.cats.other}` }),
+        el('td', { class: 'num', text: mins(p.firstReplyMin) }))))))
+      : el('div', { class: 'empty', text: mailRows.length ? t('share_none') : t('mail_empty') }),
+    ms.otherColleagues ? el('p', { class: 'hint', text: t('mail_others', { n: ms.otherColleagues }) }) : null,
+    el('p', { class: 'note', text: t('mail_private') }));
 }
 // ---------- install on Android, iPhone and Windows ----------
 let installPrompt = null;
@@ -1078,7 +1173,7 @@ function renderKpi() {
   const jump = (id) => { const n = document.getElementById(id); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   set(body,
     el('div', { class: 'bar' }, el('label', {}, el('span', { text: t('period') }), select)),
-    el('nav', { class: 'jump', 'aria-label': t('jump_label') }, [['k-share', 'jump_share'], ['k-week', 'jump_week'], ['k-table', 'jump_table'], ['k-map', 'jump_map'], ['k-plan', 'jump_plan'], ['k-reports', 'jump_reports']]
+    el('nav', { class: 'jump', 'aria-label': t('jump_label') }, [['k-share', 'jump_share'], ['k-mail', 'jump_mail'], ['k-week', 'jump_week'], ['k-table', 'jump_table'], ['k-map', 'jump_map'], ['k-plan', 'jump_plan'], ['k-reports', 'jump_reports']]
       .map(([id, k]) => el('button', { type: 'button', class: 'pill-btn', text: t(k), onclick: () => jump(id) }))),
     renderTeamPicker(people, team),
     ds.sample ? el('p', { class: 'note sample', text: t('sample_note') }) : null,
@@ -1099,6 +1194,7 @@ function renderKpi() {
     el('div', { id: 'k-table' }),
     table,
     kpiShareSection(team, peopleById),
+    kpiMailSection(team, peopleById),
     kpiWeekSection(team, peopleById),
     renderKpiDonuts(ds, f, team),
     kpiMapPlanSection(ds, team, peopleById),
@@ -1494,7 +1590,7 @@ $('file-in').addEventListener('change', async (e) => { for (const f of e.target.
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
 $('export-btn').addEventListener('click', async () => {
   const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION,
-    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null };
+    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null };
   download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(all, null, 1));
 });
 $('import-in').addEventListener('change', async (e) => {
@@ -1518,6 +1614,9 @@ $('import-in').addEventListener('change', async (e) => {
       const known = new Set(privLinks.map((x) => x.url));
       for (const x of Array.isArray(j.privlinks) ? j.privlinks : []) { const v = cleanPrivLink(x); if (v && !known.has(v.url)) privLinks.push(v); }
       await store.putPriv(privLinks);
+      const seenMail = new Set(mailRows.map((r) => r.i));
+      for (const r of Array.isArray(j.mailrows) ? j.mailrows : []) if (r && r.i && !seenMail.has(r.i)) mailRows.push({ i: String(r.i), t: String(r.t), c: String(r.c), w: String(r.w), k: r.k == null ? null : String(r.k) });
+      await store.putMail(mailRows);
       if (j.weights && !weightsDevice) { weightsDevice = j.weights; await store.putWeights(weightsDevice); }
       if (j.roster && !(rosterDevice && Object.keys(rosterDevice.people || {}).length)) { rosterDevice = parseRoster(j.roster); await store.putRoster(rosterDevice); }
       if (j.me && !me) { const m = upgradeMe(j.me); if (m) { me = m; await store.putMe(me); } }
@@ -1558,6 +1657,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   meet = (await store.getMeet()) || {};
   repairs = (await store.getRepairs()) || [];
   privLinks = (await store.getPriv()) || [];
+  mailRows = (await store.getMail()) || [];
   await refreshOfficialWeights();
   try { const r = await fetch('./systems.json', { cache: 'no-store' }); const data = r.ok && validateSystems(await r.json()); if (data) { SYSTEMS = data.systems; SYSTEM_CATEGORIES = data.categories; } } catch { /* retain built-in links when unavailable */ }
   await loadStrings(['ar', lang]);   // Arabic is every key's fallback; the reader's language besides
@@ -1571,6 +1671,7 @@ $('update-btn').addEventListener('click', () => location.reload());
     } catch { managerImportStatus('mgr_auto_popup', {}, true); }
   }
   keepStorage().then((ok) => { storageKept = ok; renderDatasets(); });
+  if (!isTeamPortal) msReturn();
   loadRelease(); announceUpdate(); showInstall();
   setInterval(loadRelease, 15 * 60 * 1000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) loadRelease(); });

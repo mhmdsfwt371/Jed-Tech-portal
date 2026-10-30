@@ -1,15 +1,15 @@
 {
-  "version": "8.23",
+  "version": "8.24",
   "date": "2026-10-30",
   "notes": {
     "ar": [
-      "لوحة المؤشرات تبدأ الآن بـ«نصيب كل شخص من شغل الفريق»: نسبة كل واحد من المنجز، بفلتر يوم أو أسبوع (من الأحد للسبت) أو شهر أو ربع سنة — بالنقاط الموزونة أو بعدد المهام أو بمهام الإيميل وحدها، مع النصيب المتساوي وتمييز الأعلى والأقل منه بوضوح."
+      "«ردود الإيميل — من صندوقك» على لوحة المؤشرات: بتسجيل دخولك بحساب مايكروسوفت تقرأ البوابة صندوق الوارد عندك (قراءة فقط) وتعرض لكل شخص عدد ردوده ونصيبه، والمحادثات التي رد فيها، ونسبة الصعب منها (ربط وتكامل وطلبات جديدة)، ووسيط وقت أول رد — يوم أو أسبوع أو شهر أو ربع سنة. نص الإيميلات لا يُحفظ، ومفتاح الدخول لا يُحفظ."
     ],
     "en": [
-      "The KPI board now opens with “Each person’s share of the team’s work”: everyone’s percentage of what was completed, filtered by day, week (Sunday to Saturday), month or quarter — by weighted points, by task count, or by email tasks alone, with the even share shown and those well above or below it marked."
+      "“Email replies — from your inbox” on the KPI board: sign in with your Microsoft account and the portal reads your inbox (read-only), then shows for each person their replies and share, the threads they answered, the hard share among them (integration, new requests), and the median time to the first reply — by day, week, month or quarter. Email text is never stored, and neither is the sign-in token."
     ],
     "ur": [
-      "اشاریوں کا بورڈ اب «ٹیم کے کام میں ہر فرد کا حصہ» سے شروع ہوتا ہے: مکمل کام میں ہر ایک کا فیصد، دن، ہفتہ (اتوار سے ہفتہ)، مہینہ یا سہ ماہی کے فلٹر کے ساتھ — وزنی پوائنٹس، ٹاسک کی تعداد، یا صرف ای میل ٹاسک کے حساب سے، برابر حصہ دکھا کر اور اس سے بہت اوپر یا نیچے والوں کو نمایاں کر کے۔"
+      "اشاریوں کے بورڈ پر «ای میل جوابات — آپ کے ان باکس سے»: اپنے مائیکروسافٹ اکاؤنٹ سے سائن اِن کریں تو پورٹل آپ کا ان باکس پڑھتا ہے (صرف پڑھنا)، پھر ہر فرد کے جوابات اور حصہ، جواب دی گئی گفتگو، ان میں مشکل کا حصہ (ربط، نئی درخواستیں)، اور پہلے جواب کا وسط وقت دکھاتا ہے — دن، ہفتہ، مہینہ یا سہ ماہی کے حساب سے۔ ای میل کا متن کبھی محفوظ نہیں ہوتا، نہ ہی سائن اِن ٹوکن۔"
     ]
   }
 }

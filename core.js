@@ -1284,6 +1284,76 @@ export function workloadShare(tasks, wt, team, win) {
   return { win, total: tot, people, fair };
 }
 
+// ===================== email replies from the manager's own mailbox (ADR-0029) =====================
+// Every customer email reaches the manager (reply-all keeps the team in copy), so his inbox holds both the customers' messages and
+// the engineers' replies. The portal reads it with his own Microsoft sign-in, classifies each customer thread by its words, and keeps
+// ONLY: time, conversation hash, who (a scope person id, or "ext"/"x"), and the category. No subject, no body, no address is stored.
+export const MAIL_CATEGORIES = [
+  { k: 'integration', tier: 'hard', w: 3, words: ['api', 'integration', 'integrate', 'webhook', 'endpoint', 'json', 'sdk', 'token', 'wasl', 'ربط', 'تكامل', 'منصة وصل', 'ربط وصل', 'واجهة برمجية'] },
+  { k: 'request', tier: 'hard', w: 3, words: ['requirement', 'requirements', 'rfq', 'quotation', 'quote', 'proposal', 'new request', 'tender', 'متطلبات', 'عرض سعر', 'طلب جديد', 'تسعير', 'مناقصة', 'عرض فني'] },
+  { k: 'issue', tier: 'medium', w: 2, words: ['issue', 'problem', 'error', 'not working', 'offline', 'fault', 'down', 'disconnected', 'مشكلة', 'عطل', 'لا يعمل', 'خطأ', 'متوقف', 'توقف', 'لا تعمل'] },
+  { k: 'inquiry', tier: 'easy', w: 1, words: ['inquiry', 'enquiry', 'question', 'password', 'report', 'how to', 'استفسار', 'كلمة المرور', 'كلمة السر', 'تقرير', 'سؤال', 'كيف'] },
+];
+const MAIL_TIER_RANK = { hard: 3, medium: 2, easy: 1, other: 0 };
+/** The category of a customer message from its subject and preview; the first matching category in the list wins. */
+export function classifyMail(text) {
+  const s = ` ${String(text || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ')} `;
+  for (const c of MAIL_CATEGORIES) if (c.words.some((w) => s.includes(` ${w} `) || (/[\u0600-\u06FF]/.test(w) && s.includes(w)))) return c.k;
+  return 'other';
+}
+export const mailTier = (k) => (MAIL_CATEGORIES.find((c) => c.k === k) || { tier: 'other' }).tier;
+const fnv = (str) => { let h = 0x811c9dc5; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36); };
+const normName = (n) => String(n || '').toLowerCase().normalize('NFKD').replace(/[^\p{L}\p{N} ]+/gu, ' ').replace(/\s+/g, ' ').trim();
+/** Who sent it: a person from the given list by display name (or by the address's local part), "x" for an unmatched colleague, "ext" for a customer. */
+export function mailSender(from, people, isInternal) {
+  const addr = String((from && from.address) || '').toLowerCase(), name = normName(from && from.name);
+  if (!isInternal(addr)) return 'ext';
+  const local = normName(addr.split('@')[0].replace(/[._-]+/g, ' '));
+  for (const p of people || []) {
+    const n = normName(p.nameEn), a = normName(p.nameAr);
+    if (n && (n === name || (local && local.split(' ').length > 1 && local.split(' ').every((t) => n.split(' ').includes(t))))) return p.id;
+    if (a && a === name) return p.id;
+  }
+  return 'x';
+}
+/** A Graph message → the stored row (nothing personal kept). */
+export function mailRow(msg, people, isInternal) {
+  const w = mailSender(msg.from && msg.from.emailAddress, people, isInternal);
+  return { i: fnv(String(msg.id || '')), t: msg.receivedDateTime, c: fnv(String(msg.conversationId || '')), w: w, k: w === 'ext' ? classifyMail(`${msg.subject || ''} ${msg.bodyPreview || ''}`) : null };
+}
+/** Per person in a window: replies, threads, the thread categories they answered, the hard share, and the median first-reply time. */
+export function mailStats(rows, team, win) {
+  const inW = (iso) => { const d = saudiDay(iso); return d && d >= win.from && d <= win.to; };
+  const conv = new Map();
+  for (const r of [...(rows || [])].sort((a, b) => Date.parse(a.t) - Date.parse(b.t))) { if (!conv.has(r.c)) conv.set(r.c, []); conv.get(r.c).push(r); }
+  const per = new Map((team || []).map((id) => [id, { id, replies: 0, threads: new Set(), cats: { hard: 0, medium: 0, easy: 0, other: 0 }, firsts: [] }]));
+  let customerThreads = 0, unanswered = 0, otherColleagues = 0;
+  for (const msgs of conv.values()) {
+    const cust = msgs.filter((m) => m.w === 'ext');
+    const cat = cust.reduce((best, m) => (MAIL_TIER_RANK[mailTier(m.k)] > MAIL_TIER_RANK[mailTier(best)] ? m.k : best), 'other');
+    const firstCust = cust.find((m) => inW(m.t));
+    if (firstCust) {
+      customerThreads++;
+      const reply = msgs.find((m) => m.w !== 'ext' && Date.parse(m.t) > Date.parse(firstCust.t));
+      if (!reply) unanswered++;
+      else if (per.has(reply.w)) per.get(reply.w).firsts.push((Date.parse(reply.t) - Date.parse(firstCust.t)) / 60000);
+    }
+    for (const m of msgs) {
+      if (m.w === 'ext' || !inW(m.t)) continue;
+      if (!per.has(m.w)) { otherColleagues++; continue; }
+      const p = per.get(m.w); p.replies++;
+      if (cust.length && !p.threads.has(msgs)) { p.threads.add(msgs); p.cats[mailTier(cat)]++; }
+    }
+  }
+  const total = [...per.values()].reduce((s, p) => s + p.replies, 0);
+  const med = (a) => { const x = [...a].sort((m, n) => m - n); return x.length ? x[Math.floor(x.length / 2)] : null; };
+  const people = [...per.values()].map((p) => { const th = p.threads.size;
+    return { id: p.id, replies: p.replies, share: total ? Math.round((p.replies / total) * 1000) / 10 : 0, threads: th, cats: p.cats,
+      hardPct: th ? Math.round((p.cats.hard / th) * 100) : 0, firstReplyMin: med(p.firsts), firsts: p.firsts.length }; })
+    .sort((a, b) => b.replies - a.replies);
+  return { win, total, customerThreads, unanswered, otherColleagues, people };
+}
+
 /** Parts of a whole as donut segments: each gets its share, and the SVG dash pair for a circle of radius r. */
 export function donutParts(parts, r = 40) {
   const C = 2 * Math.PI * r;

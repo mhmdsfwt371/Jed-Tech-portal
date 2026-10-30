@@ -43,6 +43,7 @@
 | `docs/decisions/0023-review-fixes-data-design-card-speed.md` | إصلاحات المراجعة: النسخة الكاملة، التصميم، البطاقة، اللغات عند الحاجة |
 | `docs/decisions/0027-no-internal-addresses-in-public.md` | لا عناوين داخلية في المستودع العام؛ روابطي الخاصة على الجهاز |
 | `docs/decisions/0028-workload-share.md` | Each person’s share of the work by day/week/month/quarter |
+| `docs/decisions/0029-outlook-replies-from-own-inbox.md` | Email replies per person from the manager’s inbox, read-only |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |
