@@ -582,6 +582,7 @@ function donut(title, parts, { size = 120, fmt = (v) => String(v) } = {}) {
 const portalHome = () => location.origin + location.pathname.replace(/[^/]*$/, '') + (isTeamPortal ? '?portal=team' : '');
 function renderMe(waiting = false) {
   applyNameFixes();
+  applyPending().then((changed) => { if (changed) { renderTeam(); renderKpi(); renderMe(); } });
   const body = $('me-body');
   const bm = buildBookmarklet(portalHome(), lang);
   const link = el('a', { class: 'btn primary bm', href: bm, draggable: 'true', text: `📊 ${t('me_bm')}`,
@@ -1342,6 +1343,7 @@ function coverageSection(rep, team, nm) { const cv = coverageTotals(rep, team); 
             el('td', { class: 'num', text: r.accounts ? `${r.touched} · ${Math.round((r.touched / r.accounts) * 100)}%` : '—' })))))) : el('div', { class: 'empty', text: t('f5_none') })]; }
 function renderKpi() {
   applyNameFixes();
+  applyPending().then((changed) => { if (changed) { renderTeam(); renderKpi(); renderMe(); } });
   const body = $('kpi-body');
   if (!datasets.length) { set(body, el('div', { class: 'empty', text: t('no_data') })); return; }
   if (!datasets.some((d) => d.key === kpiKey)) kpiKey = datasets[0].key;
@@ -1590,6 +1592,20 @@ function byDept(people, ro) {
     if (dept(p.id) !== cur) { cur = dept(p.id); out.push({ __head: t(`team_dept_${cur}`) }); } out.push(p); }
   return out;
 }
+// ---------- waiting by name (device only): people who join the team the first time they appear in a pull ----------
+const PENDING_KEY = 'afaqy.pending';
+const pendingList = () => { try { const v = JSON.parse(localStorage.getItem(PENDING_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } };
+const cleanPending = (x) => (x && typeof x.name === 'string' && x.name.trim() ? { name: x.name.trim().slice(0, 80), position: String(x.position || '').slice(0, 80), positionEn: String(x.positionEn || '').slice(0, 80), leaderId: /^\d+$/.test(String(x.leaderId || '')) ? String(x.leaderId) : null, onLeave: !!x.onLeave } : null);
+async function applyPending() {
+  const list = pendingList(); if (!list.length) return false;
+  const seen = new Map(); for (const d of datasets) for (const p of d.people || []) if (p.nameEn) seen.set(p.nameEn.trim().toLowerCase(), p.id);
+  if (me) for (const p of me.people || []) if (p.nameEn && !seen.has(p.nameEn.trim().toLowerCase())) seen.set(p.nameEn.trim().toLowerCase(), p.id);
+  const joined = [], left = [];
+  for (const x of list) { const id = seen.get(x.name.toLowerCase()); if (!id) { left.push(x); continue; }
+    rosterDevice = parseRoster(rosterDevice); rosterDevice.people[id] = { ...(rosterDevice.people[id] || {}), position: x.position, positionEn: x.positionEn, leaderId: x.leaderId, ...(x.onLeave ? { onLeave: true } : {}) }; joined.push(x.name); }
+  if (!joined.length) return false;
+  localStorage.setItem(PENDING_KEY, JSON.stringify(left)); await store.putRoster(rosterDevice); toast(t('pending_joined', { names: joined.join('، ') })); return true;
+}
 // ---------- name corrections (device only, never in the repository) ----------
 const NAME_KEY = 'afaqy.names';
 const nameFixes = () => { try { return JSON.parse(localStorage.getItem(NAME_KEY) || '{}') || {}; } catch { return {}; } };
@@ -1601,6 +1617,7 @@ function applyNameFixes() {
 }
 function renderTeam() {
   applyNameFixes();
+  applyPending().then((changed) => { if (changed) { renderTeam(); renderKpi(); renderMe(); } });
   const body = $('team-body'); if (!body) return;
   const known = new Map();
   for (const p of peopleOf(datasets)) known.set(p.id, p);
@@ -1661,6 +1678,15 @@ function renderTeam() {
         el('td', {}, el('input', { type: 'text', value: positionOf(ro, p.id), placeholder: t('team_pos_ph'), onchange: (e) => save(p.id, { position: e.target.value.trim() }) })),
         el('td', {}, leaderSelect(p.id)))))))
       : el('div', { class: 'empty', text: t('team_none') }),
+    (() => { const list = pendingList();
+      const up = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return;
+        try { const j = JSON.parse(await f.text()); const rows = (Array.isArray(j) ? j : j.people || []).map(cleanPending).filter(Boolean);
+          const have = new Set(pendingList().map((x) => x.name.toLowerCase())); localStorage.setItem(PENDING_KEY, JSON.stringify([...pendingList(), ...rows.filter((x) => !have.has(x.name.toLowerCase()))]));
+          toast(t('pending_loaded', { n: rows.length })); renderTeam(); } catch { toast(t('err_json')); } e.target.value = ''; } });
+      return el('section', { class: 'pending-box' }, el('h3', { text: t('pending_h', { n: list.length }) }),
+        list.length ? el('ul', { class: 'pending-list' }, list.map((x) => el('li', {}, el('b', { class: 'ltr', text: x.name }), el('span', { class: 'hint', text: ` — ${lang === 'ar' ? x.position : (x.positionEn || x.position)}${x.onLeave ? ` · ${t('card_on_leave')}` : ''}` }),
+          el('button', { type: 'button', class: 'btn quiet tiny', 'aria-label': t('remove'), text: '✕', onclick: () => { localStorage.setItem(PENDING_KEY, JSON.stringify(pendingList().filter((y) => y.name !== x.name))); renderTeam(); } })))) : null,
+        el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny', text: t('pending_upload'), onclick: () => up.click() }), up)); })(),
     (() => { const idIn = el('input', { type: 'text', inputmode: 'numeric', placeholder: t('team_add_id_ph'), class: 'ltr', style: 'max-width:160px' });
       const posIn = el('input', { type: 'text', placeholder: t('team_pos_ph') });
       return el('div', { class: 'row team-add' }, el('b', { text: t('team_add_h') }), idIn, posIn,
@@ -1843,7 +1869,7 @@ $('file-in').addEventListener('change', async (e) => { for (const f of e.target.
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
 $('export-btn').addEventListener('click', async () => {
   const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION,
-    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null, names: nameFixes() };
+    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null, names: nameFixes(), pending: pendingList() };
   download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(all, null, 1));
 });
 $('import-in').addEventListener('change', async (e) => {
@@ -1866,6 +1892,7 @@ $('import-in').addEventListener('change', async (e) => {
       await store.putRepairs(repairs);
       const known = new Set(privLinks.map((x) => x.url));
       for (const x of Array.isArray(j.privlinks) ? j.privlinks : []) { const v = cleanPrivLink(x); if (v && !known.has(v.url)) privLinks.push(v); }
+      if (Array.isArray(j.pending)) { const have = new Set(pendingList().map((x) => x.name.toLowerCase())); localStorage.setItem(PENDING_KEY, JSON.stringify([...pendingList(), ...j.pending.map(cleanPending).filter((x) => x && !have.has(x.name.toLowerCase()))])); }
       if (j.names && typeof j.names === 'object') { const fx = nameFixes(); for (const [id, v] of Object.entries(j.names)) if (/^\d+$/.test(id) && v && typeof v === 'object' && !fx[id]) fx[id] = { ar: String(v.ar || '').slice(0, 80), en: String(v.en || '').slice(0, 80) }; localStorage.setItem(NAME_KEY, JSON.stringify(fx)); }
       await store.putPriv(privLinks);
       const seenMail = new Set(mailRows.map((r) => r.i));

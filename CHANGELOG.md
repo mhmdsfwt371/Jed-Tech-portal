@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v8.37 — 2026-10-31
+
+- مجموعة «التطوير» صار اسمها «النقابة».
+- صفحة إدارة الروابط: بجانب كل رابط قائمة لنقله إلى أي مجموعة وسهمان ↑ ↓ لترتيبه — بلا سحب — وقلم ✎ بجانب كل مجموعة لتسميتها بنفسك. والسحب بالمقبض ⠿ ما زال متاحًا.
+- صفحة الفريق: «بانتظار الظهور» — قائمة بالأسماء على جهازك، ويُضاف كل شخص للفريق تلقائيًّا بمنصبه وقائده أول ما يظهر في سحب.
+
+<details><summary>English</summary>
+
+- The “Development” group is now called “Naqaba”.
+- Links admin page: beside each link, a list to move it to any group and ↑ ↓ to order it — no dragging — and a ✎ beside each group to name it yourself. Dragging by the ⠿ handle still works.
+- Team page: “Waiting to appear” — a names list on your device; each person joins the team with their position and leader the first time they appear in a pull.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «ڈویلپمنٹ» گروپ کا نام اب «نقابہ» ہے۔
+- لنکس ایڈمن صفحہ: ہر لنک کے ساتھ کسی بھی گروپ میں منتقل کرنے کی فہرست اور ترتیب کے لیے ↑ ↓ — گھسیٹے بغیر — اور ہر گروپ کے ساتھ ✎ تاکہ خود نام دیں۔ ⠿ سے گھسیٹنا اب بھی کام کرتا ہے۔
+- ٹیم صفحہ: «ظاہر ہونے کے منتظر» — آپ کے آلے پر ناموں کی فہرست؛ ہر فرد پہلی بار کھینچنے میں آتے ہی اپنے عہدے اور لیڈر کے ساتھ ٹیم میں شامل۔
+
+</div>
+</details>
+
+
 ## v8.36 — 2026-10-31
 
 - «مؤشراتي» للقادة صارت لوحة بثلاث تبويبات: «أنا» و«فريقي» و«تنبيهات». في «أنا» و«فريقي» ستة مربعات تُطوى بسهم، وكل مربع يفتح نافذة فيها التفاصيل وزر تصدير. وفي «فريقي» بطاقة لكل شخص تفتح مربعاته وشغله.

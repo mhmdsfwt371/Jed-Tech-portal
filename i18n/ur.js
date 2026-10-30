@@ -727,4 +727,8 @@ export default {
     team_dept_aftersales: 'بعد از فروخت',
     team_dept_rd: 'تحقیق و ترقی',
     team_dept_mgmt: 'انتظامیہ',
+    pending_h: 'ظاہر ہونے کے منتظر ({n}) — پہلی بار کھینچنے میں آتے ہی ٹیم میں شامل',
+    pending_upload: 'ناموں کی فہرست اپ لوڈ کریں',
+    pending_loaded: '{n} انتظار کی فہرست میں شامل۔',
+    pending_joined: 'ٹیم میں شامل: {names}',
 };

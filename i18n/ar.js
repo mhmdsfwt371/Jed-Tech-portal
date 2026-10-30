@@ -727,4 +727,8 @@ export default {
     team_dept_aftersales: 'ما بعد البيع',
     team_dept_rd: 'البحث والتطوير',
     team_dept_mgmt: 'الإدارة',
+    pending_h: 'بانتظار الظهور ({n}) — يُضافون للفريق تلقائيًّا أول ما يظهروا في سحب',
+    pending_upload: 'رفع قائمة الأسماء',
+    pending_loaded: 'أُضيف {n} إلى قائمة الانتظار.',
+    pending_joined: 'انضموا للفريق: {names}',
 };

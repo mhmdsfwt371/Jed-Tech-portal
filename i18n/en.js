@@ -727,4 +727,8 @@ export default {
     team_dept_aftersales: 'After-sales',
     team_dept_rd: 'R&D',
     team_dept_mgmt: 'Management',
+    pending_h: 'Waiting to appear ({n}) — they join the team the first time they appear in a pull',
+    pending_upload: 'Upload the names list',
+    pending_loaded: '{n} added to the waiting list.',
+    pending_joined: 'Joined the team: {names}',
 };
