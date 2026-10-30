@@ -1,8 +1,8 @@
 {
-  "name": "أفاقي — بوابة الفريق التقني",
-  "short_name": "بوابة أفاقي",
-  "lang": "ar",
-  "dir": "rtl",
+  "name": "AFAQY — Technical Team Portal",
+  "short_name": "AFAQY Portal",
+  "lang": "en",
+  "dir": "ltr",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -23,7 +23,7 @@
     }
   ],
   "id": "./",
-  "description": "بوابة الفريق التقني في أفاقي — جدة: الأدوات والمؤشرات",
+  "description": "AFAQY Jeddah technical team portal: tools and KPIs",
   "orientation": "any",
   "categories": [
     "business",

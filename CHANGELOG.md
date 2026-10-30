@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.22 — 2026-10-30
+
+- الإنجليزية صارت اللغة الافتراضية للبوابة ولرابط الفريق. من اختار العربية أو الأردية من قبل تبقى لغته كما هي، والتغيير من قائمة اللغة في أسفل القائمة الجانبية.
+
+<details><summary>English</summary>
+
+- English is now the portal’s default language, for the admin and team links alike. Anyone who already chose Arabic or Urdu keeps their language; switch any time from the language list at the bottom of the side menu.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- انگریزی اب پورٹل اور ٹیم لنک دونوں کی طے شدہ زبان ہے۔ جس نے پہلے عربی یا اردو چنی تھی اس کی زبان وہی رہتی ہے؛ سائیڈ مینو کے نیچے زبان کی فہرست سے کسی بھی وقت بدلیں۔
+
+</div>
+</details>
+
+
 ## v8.21 — 2026-10-30
 
 - أُزيل رابط دخول VPN لمشروع نسك من قائمة الأنظمة المنشورة — كان عنوانه الداخلي ظاهرًا في المستودع العام. والحارس يرفض الآن أي رابط منشور بعنوان IP أو اسم داخلي.

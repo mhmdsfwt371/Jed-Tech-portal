@@ -26,7 +26,7 @@ let managerImportBusy = false, managerImportDone = false;
 const KEY = 'afaqy-portal:';
 const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem(KEY + k); localStorage.setItem(KEY + k, v); } catch { return null; } return v; };
 
-let lang = LANGS.includes(pref('lang')) ? pref('lang') : 'ar';
+let lang = LANGS.includes(pref('lang')) ? pref('lang') : 'en';   // English by default; a reader's own choice is kept
 const t = (k, vars) => tr(lang, k, vars);
 
 // ---------- element helper: drops null/false children so nothing prints the word "null" ----------
