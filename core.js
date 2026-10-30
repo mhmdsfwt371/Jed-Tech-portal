@@ -1259,6 +1259,31 @@ export function parseRepairLines(text, now = new Date()) {
   }).filter((x) => x.ref && x.ref.length >= 4);
 }
 
+// ===================== workload share (ADR-0028): each person's slice of the team's work, by day / week / month / quarter =====================
+/** The calendar window ending on `day` (YYYY-MM-DD, Saudi): the day itself, its week (Sunday–Saturday, the Saudi work week),
+ *  its month, or its quarter. */
+export function shareWindow(kind, day) {
+  const d = new Date(`${day}T00:00:00Z`), y = d.getUTCFullYear(), m = d.getUTCMonth();
+  if (kind === 'day') return { from: day, to: day };
+  if (kind === 'week') { const s = new Date(d); s.setUTCDate(d.getUTCDate() - d.getUTCDay()); const e = new Date(s); e.setUTCDate(s.getUTCDate() + 6); return { from: ymd(s), to: ymd(e) }; }
+  if (kind === 'quarter') { const q = Math.floor(m / 3) * 3; return { from: ymd(new Date(Date.UTC(y, q, 1))), to: ymd(new Date(Date.UTC(y, q + 3, 0))) }; }
+  return { from: ymd(new Date(Date.UTC(y, m, 1))), to: ymd(new Date(Date.UTC(y, m + 1, 0))) };
+}
+/** Each person's share of the team's completed work in a window: tasks, weighted points, and email tasks (module 146). */
+export function workloadShare(tasks, wt, team, win) {
+  const inW = (iso) => { const d = saudiDay(iso); return d && d >= win.from && d <= win.to; };
+  const done = (tasks || []).filter((x) => x.state === 'done' && x.completedAt && inW(x.completedAt) && (team || []).includes(x.assigneeId));
+  const tot = { tasks: done.length, points: done.reduce((s, x) => s + taskWeight(wt, x.type), 0), email: done.filter((x) => Number(x.moduleId) === 146).length };
+  const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 : 0);
+  const people = (team || []).map((id) => {
+    const mine = done.filter((x) => x.assigneeId === id);
+    const p = { id, tasks: mine.length, points: mine.reduce((s, x) => s + taskWeight(wt, x.type), 0), email: mine.filter((x) => Number(x.moduleId) === 146).length };
+    return { ...p, tasksPct: pct(p.tasks, tot.tasks), pointsPct: pct(p.points, tot.points), emailPct: pct(p.email, tot.email) };
+  }).sort((a, b) => b.points - a.points || b.tasks - a.tasks);
+  const fair = team && team.length ? Math.round(1000 / team.length) / 10 : 0;   // the even slice, for reference
+  return { win, total: tot, people, fair };
+}
+
 /** Parts of a whole as donut segments: each gets its share, and the SVG dash pair for a circle of radius r. */
 export function donutParts(parts, r = 40) {
   const C = 2 * Math.PI * r;

@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.23 — 2026-10-30
+
+- لوحة المؤشرات تبدأ الآن بـ«نصيب كل شخص من شغل الفريق»: نسبة كل واحد من المنجز، بفلتر يوم أو أسبوع (من الأحد للسبت) أو شهر أو ربع سنة — بالنقاط الموزونة أو بعدد المهام أو بمهام الإيميل وحدها، مع النصيب المتساوي وتمييز الأعلى والأقل منه بوضوح.
+
+<details><summary>English</summary>
+
+- The KPI board now opens with “Each person’s share of the team’s work”: everyone’s percentage of what was completed, filtered by day, week (Sunday to Saturday), month or quarter — by weighted points, by task count, or by email tasks alone, with the even share shown and those well above or below it marked.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اشاریوں کا بورڈ اب «ٹیم کے کام میں ہر فرد کا حصہ» سے شروع ہوتا ہے: مکمل کام میں ہر ایک کا فیصد، دن، ہفتہ (اتوار سے ہفتہ)، مہینہ یا سہ ماہی کے فلٹر کے ساتھ — وزنی پوائنٹس، ٹاسک کی تعداد، یا صرف ای میل ٹاسک کے حساب سے، برابر حصہ دکھا کر اور اس سے بہت اوپر یا نیچے والوں کو نمایاں کر کے۔
+
+</div>
+</details>
+
+
 ## v8.22 — 2026-10-30
 
 - الإنجليزية صارت اللغة الافتراضية للبوابة ولرابط الفريق. من اختار العربية أو الأردية من قبل تبقى لغته كما هي، والتغيير من قائمة اللغة في أسفل القائمة الجانبية.

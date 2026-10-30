@@ -670,6 +670,21 @@ test('the card judges only the teams’ own types: other types count in points a
   assert.equal(a.otherWork, 0); assert.ok(a.strengths.some((s) => s.kind === 'spec'), 'the WASL specialist is still found');
 });
 
+test('workload share: calendar windows (Sunday week) and each person’s share by points, tasks and email', async () => {
+  const C = await import('../core.js');
+  assert.deepEqual(C.shareWindow('day', '2026-10-29'), { from: '2026-10-29', to: '2026-10-29' });
+  assert.deepEqual(C.shareWindow('week', '2026-10-29'), { from: '2026-10-25', to: '2026-10-31' }, 'Sunday to Saturday');
+  assert.deepEqual(C.shareWindow('month', '2026-10-29'), { from: '2026-10-01', to: '2026-10-31' });
+  assert.deepEqual(C.shareWindow('quarter', '2026-11-15'), { from: '2026-10-01', to: '2026-12-31' });
+  const wt = parseWeights({ default: 1, tasks: { 'WASL Link': { w: 3 } } });
+  const D = (id, a, type, day, m) => ({ id, assigneeId: a, type, state: 'done', moduleId: m, createdAt: `2026-10-${day}T08:00:00Z`, completedAt: `2026-10-${day}T09:00:00Z` });
+  const tasks = [D('1', 'A', 'WASL Link', '26'), D('2', 'B', 'x', '26', 146), D('3', 'B', 'x', '27', 146), D('4', 'C', 'x', '20')];
+  const s = C.workloadShare(tasks, wt, ['A', 'B', 'C'], C.shareWindow('week', '2026-10-29'));
+  const A = s.people.find((p) => p.id === 'A'), B = s.people.find((p) => p.id === 'B');
+  assert.deepEqual([s.total.tasks, s.total.points, s.total.email], [3, 5, 2], 'C’s task is the week before');
+  assert.equal(A.pointsPct, 60); assert.equal(B.tasksPct, 66.7); assert.equal(B.emailPct, 100); assert.equal(s.fair, 33.3);
+});
+
 test('formatting', () => {
   assert.equal(formatHours(null, 'ar'), '—');
   assert.equal(formatHours(5.26, 'en'), '5.3 h');

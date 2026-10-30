@@ -391,6 +391,10 @@
   .priv-add { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto; gap: 8px; margin-top: 10px; }
   .priv-add input { font: inherit; padding: 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); min-width: 0; }
   @media (max-width: 560px) { .priv-add { grid-template-columns: 1fr; } }
+  .share { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin: 14px 0; }
+  .share .pills { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; } #k-share { scroll-margin-top: 130px; }
+  .share-table tr.heavy td:first-child { box-shadow: inset 4px 0 0 var(--fail); } .share-table tr.light td:first-child { box-shadow: inset 4px 0 0 var(--line-strong); }
+  [dir="rtl"] .share-table tr.heavy td:first-child { box-shadow: inset -4px 0 0 var(--fail); } [dir="rtl"] .share-table tr.light td:first-child { box-shadow: inset -4px 0 0 var(--line-strong); }
   .tucked { margin: 18px 0; } .tucked > summary { cursor: pointer; color: var(--slate); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
   .me-card { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; align-items: flex-end; padding: 18px 20px; margin-bottom: 8px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); border-inline-start: 4px solid var(--signal); }
   .me-name { margin: 0; }

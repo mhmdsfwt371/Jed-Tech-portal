@@ -8,7 +8,7 @@ import {
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
-  weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, repairCheck, parseRepairLines,
+  weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
 } from './core.js';
 
@@ -970,6 +970,34 @@ function meCardSection(pm, who, nm) { const ymNow = cardMonth; const team = pm.s
           below.length ? [el('button', { type: 'button', class: 'btn quiet', text: t('meet_export'), onclick: exportMeet }), el('button', { type: 'button', class: 'btn quiet', text: t('meet_import'), onclick: () => imp.click() }), imp] : null),
         el('h2', {}, t('path_h'), helpQ('help_path')), pathTable([me.user.id, ...below])]; }
 // ---------- the board's sections, each its own function (ADR-0023) ----------
+// the manager's view of each person's slice of the team's work — day / week / month / quarter
+let shareKind = 'week', shareBy = 'points';
+function kpiShareSection(team, peopleById) {
+  const tasks = allTasks(); if (!tasks.length) return null;
+  const lastDay = tasks.reduce((m, x) => { const d = saudiDay(x.completedAt); return d && d > m ? d : m; }, '');
+  const today = saudiDay(new Date().toISOString()); const anchor = lastDay && lastDay < today ? lastDay : today;
+  const win = shareWindow(shareKind, anchor); const sh = workloadShare(tasks, weights(), team, win);
+  const covered = datasets.some((d) => d.range.from <= win.from && d.range.to >= win.to);
+  const nmS = (id) => nameOf(peopleById.get(id), lang) || id;
+  const key = { points: 'pointsPct', tasks: 'tasksPct', email: 'emailPct' }[shareBy];
+  const max = Math.max(1, ...sh.people.map((p) => p[key]));
+  const chip = (k, label, cur, set) => el('button', { type: 'button', class: `pill-btn${cur === k ? ' on' : ''}`, text: t(label), onclick: () => { set(k); renderKpi(); } });
+  return el('section', { class: 'share', id: 'k-share' },
+    el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' },
+      el('h2', { style: 'margin:0' }, t('share_h'), helpQ('help_share')),
+      el('div', { class: 'pills' }, [['day', 'share_day'], ['week', 'share_week'], ['month', 'share_month'], ['quarter', 'share_quarter']].map(([k, l]) => chip(k, l, shareKind, (v) => { shareKind = v; })))),
+    el('p', { class: 'hint ltr-dates', text: t('share_window', { from: win.from, to: win.to, n: sh.total.tasks, p: sh.total.points, e: sh.total.email }) }),
+    !covered ? el('p', { class: 'note', text: t('share_partial') }) : null,
+    el('div', { class: 'pills' }, [['points', 'share_by_points'], ['tasks', 'share_by_tasks'], ['email', 'share_by_email']].map(([k, l]) => chip(k, l, shareBy, (v) => { shareBy = v; }))),
+    sh.total.tasks ? el('div', { class: 'table-wrap' }, el('table', { class: 'share-table' },
+      el('thead', {}, el('tr', {}, ['col_person', 'share_col_share', 'share_col_points', 'share_col_tasks', 'share_col_email'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+      el('tbody', {}, [...sh.people].sort((x, y) => y[key] - x[key] || y.points - x.points).map((p) => el('tr', { class: p[key] >= sh.fair * 1.5 ? 'heavy' : p[key] <= sh.fair * 0.5 ? 'light' : null },
+        el('td', { text: nmS(p.id) }),
+        el('td', { class: 'num' }, el('div', { class: 'bar-cell' }, el('b', { text: `${p[key]}%` }), el('i', {}, el('span', { style: `width:${Math.round((p[key] / max) * 100)}%` })))),
+        el('td', { class: 'num', text: `${p.points} · ${p.pointsPct}%` }), el('td', { class: 'num', text: `${p.tasks} · ${p.tasksPct}%` }), el('td', { class: 'num', text: `${p.email} · ${p.emailPct}%` })))))) :
+      el('div', { class: 'empty', text: t('share_none') }),
+    el('p', { class: 'hint', text: t('share_fair', { f: sh.fair }) }));
+}
 function kpiWeekSection(team, peopleById) { const wd = weeklyDigest(allTasks(), weights(), team, new Date(), { ...CARD_DEFAULTS, ...(weights().card || {}) });
       const leave = (id) => !!(roster().people[id] && roster().people[id].onLeave);
       const nmW = (id) => (nameOf(peopleById.get(id), lang) || id);
@@ -1050,7 +1078,7 @@ function renderKpi() {
   const jump = (id) => { const n = document.getElementById(id); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   set(body,
     el('div', { class: 'bar' }, el('label', {}, el('span', { text: t('period') }), select)),
-    el('nav', { class: 'jump', 'aria-label': t('jump_label') }, [['k-week', 'jump_week'], ['k-table', 'jump_table'], ['k-map', 'jump_map'], ['k-plan', 'jump_plan'], ['k-reports', 'jump_reports']]
+    el('nav', { class: 'jump', 'aria-label': t('jump_label') }, [['k-share', 'jump_share'], ['k-week', 'jump_week'], ['k-table', 'jump_table'], ['k-map', 'jump_map'], ['k-plan', 'jump_plan'], ['k-reports', 'jump_reports']]
       .map(([id, k]) => el('button', { type: 'button', class: 'pill-btn', text: t(k), onclick: () => jump(id) }))),
     renderTeamPicker(people, team),
     ds.sample ? el('p', { class: 'note sample', text: t('sample_note') }) : null,
@@ -1070,6 +1098,7 @@ function renderKpi() {
         el('button', { type: 'button', class: `pill-btn${kpiSort === k ? ' on' : ''}`, text: t(label), onclick: () => { kpiSort = k; renderKpi(); } })))),
     el('div', { id: 'k-table' }),
     table,
+    kpiShareSection(team, peopleById),
     kpiWeekSection(team, peopleById),
     renderKpiDonuts(ds, f, team),
     kpiMapPlanSection(ds, team, peopleById),
