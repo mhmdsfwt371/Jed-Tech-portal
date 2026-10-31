@@ -1,15 +1,15 @@
 {
-  "version": "8.52",
+  "version": "8.53",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "ورقة التعريف بالعربية والإنجليزية: «عرض» و«تحميل» يفتحان النسخة بلغة القارئ، والنسخة الأخرى بجانبهما."
+      "ورقة التعريف على رابط الفريق نسخة للفريق بلا رابط المدير (بالعربية والإنجليزية)، ورابط المدير يبقى بالنسخة الكاملة."
     ],
     "en": [
-      "The overview in Arabic and English: “View” and “Download” open the reader’s language, with the other version beside them."
+      "On the team link the overview is a team edition without the manager link (Arabic and English); the manager link keeps the full edition."
     ],
     "ur": [
-      "تعارف عربی اور انگریزی میں: «دیکھیں» اور «ڈاؤن لوڈ» قاری کی زبان کھولتے ہیں، دوسرا ورژن ساتھ میں۔"
+      "ٹیم لنک پر تعارف ٹیم ایڈیشن ہے، مینیجر لنک کے بغیر (عربی اور انگریزی)؛ مینیجر لنک پر مکمل ایڈیشن۔"
     ]
   }
 }

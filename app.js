@@ -2444,7 +2444,7 @@ function renderGuide() {
     el('div', { class: 'guide-head' }, el('span', { class: 'guide-ver', text: stamp }),
       el('button', { type: 'button', class: 'btn no-print', text: t('g_print'), onclick: () => window.print() })),
     el('div', { class: 'intro-card' }, el('div', { class: 'ic-txt' }, el('b', { text: t('intro_h') }), el('span', { text: t('intro_b') })),
-      el('div', { class: 'ic-acts' }, el('a', { class: 'btn primary', href: lang === 'ar' ? 'assets/docs/AFAQY-Jeddah-Portal-Overview.pdf' : 'assets/docs/AFAQY-Jeddah-Portal-Overview-EN.pdf', target: '_blank', rel: 'noopener', text: t('intro_view') }), el('a', { class: 'btn', href: lang === 'ar' ? 'assets/docs/AFAQY-Jeddah-Portal-Overview.pdf' : 'assets/docs/AFAQY-Jeddah-Portal-Overview-EN.pdf', download: '', text: t('intro_dl') }), el('a', { class: 'ic-alt', href: lang === 'ar' ? 'assets/docs/AFAQY-Jeddah-Portal-Overview-EN.pdf' : 'assets/docs/AFAQY-Jeddah-Portal-Overview.pdf', target: '_blank', rel: 'noopener', text: t('intro_alt') }))),
+      el('div', { class: 'ic-acts' }, el('a', { class: 'btn primary', href: overviewDoc(lang === 'ar'), target: '_blank', rel: 'noopener', text: t('intro_view') }), el('a', { class: 'btn', href: overviewDoc(lang === 'ar'), download: '', text: t('intro_dl') }), el('a', { class: 'ic-alt', href: overviewDoc(lang !== 'ar'), target: '_blank', rel: 'noopener', text: t('intro_alt') }))),
     GUIDE.map(([h, b]) => el('section', {}, el('h3', { text: t(h) }), el('p', { text: t(b) }))),
     el('section', {}, el('h3', { text: t('definitions') }), el('ul', { class: 'defs' }, DEFINITIONS.map((k) => el('li', { text: t(k) })))));
 }
@@ -2492,13 +2492,15 @@ function openNews() {
 }
 
 // ---------- language, theme, routing ----------
+// the overview PDF: Arabic or English; the team link's edition leaves out the manager link
+const overviewDoc = (arabic) => `assets/docs/AFAQY-Jeddah-Portal-Overview${isTeamPortal ? '-Team' : ''}${arabic ? '' : '-EN'}.pdf`;
 function applyLang() {
   document.documentElement.lang = lang;
   document.documentElement.dir = dirOf(lang);
   document.querySelectorAll('[data-t]').forEach((n) => { n.textContent = t(n.dataset.t); });
   document.querySelectorAll('[data-tp]').forEach((n) => { n.placeholder = t(n.dataset.tp); });
   $('lang-select').value = lang;
-  { const mine = lang === 'ar' ? 'assets/docs/AFAQY-Jeddah-Portal-Overview.pdf' : 'assets/docs/AFAQY-Jeddah-Portal-Overview-EN.pdf', other = lang === 'ar' ? 'assets/docs/AFAQY-Jeddah-Portal-Overview-EN.pdf' : 'assets/docs/AFAQY-Jeddah-Portal-Overview.pdf';   // the overview in the reader's language, the other one beside it
+  { const mine = overviewDoc(lang === 'ar'), other = overviewDoc(lang !== 'ar');   // the overview in the reader's language, the other one beside it; the team link gets the team edition
     document.querySelectorAll('[data-intro-doc]').forEach((x) => { x.href = x.dataset.introDoc === 'alt' ? other : mine; }); }
   $('menu-btn').setAttribute('aria-label', t('menu'));
   paintThemeButton();

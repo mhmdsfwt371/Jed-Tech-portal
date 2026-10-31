@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.53 — 2026-10-31
+
+- ورقة التعريف على رابط الفريق نسخة للفريق بلا رابط المدير (بالعربية والإنجليزية)، ورابط المدير يبقى بالنسخة الكاملة.
+
+<details><summary>English</summary>
+
+- On the team link the overview is a team edition without the manager link (Arabic and English); the manager link keeps the full edition.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹیم لنک پر تعارف ٹیم ایڈیشن ہے، مینیجر لنک کے بغیر (عربی اور انگریزی)؛ مینیجر لنک پر مکمل ایڈیشن۔
+
+</div>
+</details>
+
+
 ## v8.52 — 2026-10-31
 
 - ورقة التعريف بالعربية والإنجليزية: «عرض» و«تحميل» يفتحان النسخة بلغة القارئ، والنسخة الأخرى بجانبهما.
