@@ -1,5 +1,6 @@
 // run: node tests/core.test.mjs
 import assert from 'node:assert/strict';
+import * as core from '../core.js';
 import {
   STRINGS, LANGS, t, periodBlocks, buildPrompt, SCHEMA, extractJson, parseDataset, mergeDataset, completeness,
   factor1, creditOf, GROUP, formatHours, formatRate, sampleDataset, saudiToday, ymd,
@@ -809,4 +810,27 @@ for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }
 if (failed) { console.error(`core.test.mjs: ${failed} failed`); process.exit(1); }
+
+// ---- quarter development plans ----
+test('quarterRange gives the first and last day and the months; quarterOf shifts across the year', () => {
+  const q = core.quarterRange('2027-Q1'); assert.equal(q.from, '2027-01-01'); assert.equal(q.to, '2027-03-31'); assert.equal(q.months[2], '2027-03');
+  assert.equal(core.quarterOf('2026-10-31', 1).key, '2027-Q1'); assert.equal(core.quarterOf('2026-02-10', -1).key, '2025-Q4');
+});
+const QWT = { tasks: { 'manual task': { w: 2 } }, activities: {} };
+const QTK = [{ assigneeId: 'a', state: 'done', type: 'Manual Task', createdAt: '2026-10-01T06:00:00Z', completedAt: '2026-10-01T16:00:00Z' },
+  { assigneeId: 'a', state: 'done', type: 'Manual Task', createdAt: '2026-10-05T06:00:00Z', completedAt: '2026-10-06T06:00:00Z' },
+  { assigneeId: 'a', state: 'open', type: 'Manual Task', createdAt: '2026-11-01T06:00:00Z' }];
+test('quarterBaseline counts done, mean hours, completion rate and task types', () => {
+  const b = core.quarterBaseline(QTK, QWT, 'a', core.quarterRange('2026-Q4'));
+  assert.equal(b.done, 2); assert.equal(b.avgHours, 17); assert.equal(b.rate, 0.67); assert.equal(b.types[0].k, 'manual task');
+});
+test('goal progress handles higher-better, lower-better and custom goals, and weights the plan', () => {
+  const pr = core.quarterGoalProgress(QTK, QWT, 'a', core.quarterRange('2026-Q4'), [{ metric: 'done', target: 4, weight: 1 }, { metric: 'avgHours', target: 34, weight: 1 }, { metric: 'custom', pct: 50, weight: 2 }]);
+  assert.equal(pr[0].pct, 50); assert.equal(pr[1].pct, 100); assert.equal(pr[2].pct, 50); assert.equal(core.planProgress(pr), 63);
+});
+test('suggested goals stretch the baseline and aim at the weakest axes', () => {
+  const b = core.quarterBaseline(QTK, QWT, 'a', core.quarterRange('2026-Q4'));
+  const s = core.suggestQuarterGoals(b, { axes: { volume: 80, difficulty: 60, speed: 20, reliability: 40 } });
+  const sp = s.find((g) => g.metric === 'avgHours'); assert.equal(sp.target, 13.6); assert.ok(sp.weak); assert.ok(s.some((g) => g.metric === 'type'));
+});
 console.log(`core.test.mjs: ${tests.length} passed`);

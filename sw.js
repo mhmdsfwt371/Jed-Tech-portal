@@ -1,7 +1,7 @@
 // sw.js — offline shell for the portal. Scope is this folder only (registered with scope './'), so it never touches
 // the other tools that live on the same domain. The shell is served from the cache of this version; version.json is
 // always read from the network so a new release is noticed.
-const VERSION = '8.49';   // stamped by scripts/bump.mjs — never edit by hand
+const VERSION = '8.50';   // stamped by scripts/bump.mjs — never edit by hand
 const CACHE = 'afaqy-portal-' + VERSION;
 const SHELL = [
   './', './index.html', './app.js', './core.js', './i18n/ar.js', './i18n/en.js', './i18n/ur.js', './tour-demo.js', './config.js', './manifest.webmanifest',

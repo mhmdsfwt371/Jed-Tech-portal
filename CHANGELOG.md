@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v8.50 — 2026-10-31
+
+- صفحة «التطوير» تحت المؤشرات: خطة كل موظف للربع الجاي — خط أساس من شغله في الربع السابق، وأهداف مقترحة من شغله وأضعف محاوره، ومتابعة تلقائية من شغله الجاري، وزميل مرجع وإجراءات تطوير، واعتماد الخطة.
+- الاجتماع الشهري واقتراحات الشهر وخريطة الفريق انتقلت إلى «التطوير» في مكان واحد، وروابط إليها من لوحة المؤشرات ومؤشراتي.
+- تصدير خطط الفريق إكسل، وPDF لخطة كل موظف بخانات التوقيع.
+
+<details><summary>English</summary>
+
+- A “Development” page under the indicators: each person’s plan for next quarter — a baseline from their previous quarter, goals suggested from their work and weakest axes, automatic follow-up from current work, a reference colleague, development actions, and agreeing the plan.
+- The monthly meeting, this month’s suggestions and the team map moved to “Development” in one place, with links from the KPI board and My KPIs.
+- Team plans export to Excel, and each person’s plan to a PDF with signature lines.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اشاریوں کے تحت «ترقی» کا صفحہ: اگلی سہ ماہی کے لیے ہر فرد کا منصوبہ — پچھلی سہ ماہی سے بنیاد، اس کے کام اور کمزور محور سے تجویز کردہ اہداف، جاری کام سے خودکار پیروی، حوالہ ساتھی اور منصوبے کی منظوری۔
+- ماہانہ ملاقات، اس ماہ کی تجاویز اور ٹیم نقشہ «ترقی» میں ایک جگہ۔
+- ٹیم منصوبے ایکسل میں، اور ہر فرد کا منصوبہ دستخط کے ساتھ PDF میں۔
+
+</div>
+</details>
+
+
 ## v8.49 — 2026-10-31
 
 - جداول «مشاريعي» تتسع للشاشة: أعمدة بعرض ثابت والنص الطويل يلتف على سطرين — بلا تمرير يمين ويسار.

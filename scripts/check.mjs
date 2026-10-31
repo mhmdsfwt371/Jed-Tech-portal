@@ -88,7 +88,7 @@ for (const [, f] of html.matchAll(/(?:src|href)="(assets\/[^"]+|manifest\.webman
 const views = [...html.matchAll(/<section id="view-(\w+)"/g)].map((m) => m[1]).filter((v) => v !== 'guide');
 const guideKeys = (core.match(/export const GUIDE = (\[[\s\S]*?\]);/) || [])[1] || '';
 // the module view is where a tool opens from the Tools page; the Tools section explains it
-const covers = { tools: 'g_tools_h', module: 'g_tools_h', me: 'g_me_h', pro: 'g_pro_h', data: 'g_data_h', kpi: 'g_kpi_h', team: 'g_team_h', weights: 'g_weights_h' };  // g_mgr_* lives on the data page
+const covers = { tools: 'g_tools_h', module: 'g_tools_h', me: 'g_me_h', pro: 'g_pro_h', data: 'g_data_h', kpi: 'g_kpi_h', team: 'g_team_h', weights: 'g_weights_h', dev: 'g_dev_h' };  // g_mgr_* lives on the data page
 for (const v of views) if (!covers[v] || !guideKeys.includes(covers[v])) note(`the guide has no section for the "${v}" page — add one before releasing it`);
 
 // 8. The three core tools stay first and point somewhere real.

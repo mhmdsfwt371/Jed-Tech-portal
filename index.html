@@ -502,6 +502,23 @@
   dialog { max-height: 92vh; overflow: auto; } dialog:has(> .dlg-bar) { padding-top: 0; }
   .dlg-bar { position: sticky; top: 0; z-index: 20; display: flex; justify-content: flex-end; margin: 0 -1em 10px; padding: 10px 1em; background: inherit; background-color: var(--bg); border-bottom: 1px solid var(--line); }
   .dlg-x { font: inherit; font-weight: 700; color: var(--accent); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 4px 14px; cursor: pointer; } .dlg-x:hover { border-color: var(--accent); background: var(--accent-wash); }
+  .dev-head { justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+  .dev-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .dev-card { font: inherit; color: inherit; text-align: start; cursor: pointer; display: grid; gap: 6px; padding: 12px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--card); transition: transform .15s, box-shadow .15s; }
+  .dev-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.12); } .dev-card.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-wash); }
+  .dc-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; } .dc-top b { display: block; } .dc-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; } .dc-trend { font-size: 12px; color: var(--slate); }
+  .dc-load { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--paper); } .dc-load.s-red { color: var(--fail, #B42318); } .dc-load.s-amber { color: var(--warn); } .dc-load.s-green { color: var(--accent); }
+  .ring { --p: 0; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--accent) calc(var(--p) * 1%), var(--paper) 0); flex: none; }
+  .ring::before { content: ''; grid-area: 1 / 1; width: 36px; height: 36px; border-radius: 50%; background: var(--card); } .ring b { grid-area: 1 / 1; font-size: 11px; z-index: 1; } .ring.big { width: 64px; height: 64px; } .ring.big::before { width: 50px; height: 50px; } .ring.big b { font-size: 14px; }
+  .dev-panel { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; background: var(--card); margin-bottom: 16px; } .dp-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .dp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; } .dp-grid .card { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; } .dp-grid h3 { margin: 0 0 8px; font-size: 14px; }
+  .dev-axes { display: grid; gap: 5px; margin-top: 8px; } .dev-axes div { display: grid; grid-template-columns: 90px 1fr 30px; gap: 8px; align-items: center; font-size: 12.5px; } .dev-axes i { display: block; height: 8px; background: var(--paper); border-radius: 4px; overflow: hidden; } .dev-axes i b { display: block; height: 8px; background: var(--accent); }
+  .dev-f { display: grid; gap: 4px; font-size: 13px; margin-bottom: 8px; } .dev-f select, .dev-f textarea, .dev-goals input, .dev-goals select { font: inherit; padding: 5px 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); width: 100%; box-sizing: border-box; }
+  .dev-goals input[type=range] { padding: 0; } .dev-goals-head { justify-content: space-between; align-items: center; margin: 6px 0 8px; } .dev-weak { display: inline-block; margin-top: 3px; font-size: 11px; color: var(--warn); }
+  .gbar { height: 8px; background: var(--paper); border-radius: 4px; overflow: hidden; } .gbar i { display: block; height: 8px; background: var(--warn); } .gbar i.met { background: var(--accent); }
+  .dev-months { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; } .dev-month { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; } .dev-month h4 { margin: 0 0 6px; }
+  .moved-note { margin: 16px 0; padding: 12px 14px; border: 1px dashed var(--line-strong); border-radius: var(--radius); color: var(--slate); } .moved-link { display: inline-block; margin-top: 8px; font-size: 13px; }
+  @media (max-width: 900px) { .dp-grid { grid-template-columns: 1fr; } }
   .row-acts { white-space: nowrap; } .icon-btn { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px; padding: 2px 7px; cursor: pointer; margin-inline-start: 3px; } .icon-btn:hover { border-color: var(--accent); } @media (max-width: 760px) { .funnel { grid-template-columns: repeat(2, 1fr); } } .proj-months { display: flex; align-items: flex-end; gap: 6px; height: 128px; margin: 12px 0; padding: 0 2px; overflow-x: auto; }
   .pm { display: grid; justify-items: center; gap: 2px; min-width: 34px; } .pm i { display: block; width: 22px; background: var(--accent); border-radius: 4px 4px 0 0; } .pm b { font-size: 12px; } .pm span { font-size: 10.5px; color: var(--slate); }
   .proj-tools { gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0 8px; } .proj-q { flex: 1; min-width: 220px; font: inherit; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }
@@ -725,6 +742,7 @@
         <a href="#kpi" class="sub" data-view="kpi" data-t="kpi_board">لوحة المؤشرات</a>
         <a href="#team" class="sub" data-view="team" data-t="nav_team">الفريق</a>
         <a href="#weights" class="sub" data-view="weights" data-t="nav_weights">الأوزان</a>
+        <a href="#dev" class="sub" data-view="dev" data-t="nav_dev">التطوير</a>
       </div>
     </div>
     <div class="nav-section" data-nav-section="systems">
@@ -775,6 +793,11 @@
   <section id="view-team" hidden>
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_team">الفريق</h1><button type="button" class="help-q" data-help="g_team_b" data-help-title="nav_team" aria-label="?">?</button></div></div>
     <div id="team-body"></div>
+  </section>
+
+  <section id="view-dev" hidden>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_dev">التطوير</h1><button type="button" class="help-q" data-help="g_dev_b" data-help-t="nav_dev" aria-label="?">?</button></div><p class="lead" data-t="dev_lead"></p></div>
+    <div id="dev-body"></div>
   </section>
 
   <section id="view-weights" hidden>

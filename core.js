@@ -63,7 +63,7 @@ export async function loadStrings(langs = ['ar', 'en', 'ur']) {
 }
 
 // The user guide: one list, read by the page (Guide tab) and by scripts/build-manual.mjs, so they can never differ.
-export const GUIDE = [['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_team_h', 'g_team_b'], ['g_weights_h', 'g_weights_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
+export const GUIDE = [['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_team_h', 'g_team_b'], ['g_weights_h', 'g_weights_b'], ['g_dev_h', 'g_dev_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
 export const DEFINITIONS = ['def_1', 'def_2', 'def_3', 'def_4', 'def_5', 'def_6', 'def_7', 'def_8', 'def_9', 'def_10'];
 
 export function t(lang, key, vars = {}) {
@@ -1265,6 +1265,65 @@ export function goalProgress(tasks, wt, personId, ym, goals) {
     const got = g.key === '__points__' ? mine.reduce((s, x) => s + taskPoints(wt, x), 0) : mine.filter((x) => typeKey(x.type) === g.key).length;
     return { ...g, got, pct: g.target > 0 ? Math.min(100, Math.round((got / g.target) * 100)) : 0, met: got >= g.target };
   });
+}
+// ---------- quarter development plans (ADR-0040) ----------
+/** 'YYYY-Qn' → the quarter's first and last Saudi day and its label. */
+export function quarterRange(key) {
+  const m = /^(\d{4})-Q([1-4])$/.exec(String(key || '')); if (!m) return null;
+  const y = +m[1], q = +m[2], from = `${y}-${String((q - 1) * 3 + 1).padStart(2, '0')}-01`;
+  const end = new Date(Date.UTC(y, q * 3, 0)).toISOString().slice(0, 10);
+  return { key, from, to: end, label: `Q${q} ${y}`, months: [0, 1, 2].map((k) => `${y}-${String((q - 1) * 3 + 1 + k).padStart(2, '0')}`) };
+}
+/** The quarter holding a day, and the ones before and after it. */
+export function quarterOf(day, shift = 0) {
+  const y = +String(day).slice(0, 4), q = Math.floor((+String(day).slice(5, 7) - 1) / 3) + shift;
+  const yy = y + Math.floor(q / 4), qq = ((q % 4) + 4) % 4 + 1; return quarterRange(`${yy}-Q${qq}`);
+}
+/** What one person delivered in a window: the plan's starting line. */
+export function quarterBaseline(tasks, wt, personId, range) {
+  const inR = (d) => d && saudiDay(d) >= range.from && saudiDay(d) <= range.to;
+  const done = (tasks || []).filter((x) => x.assigneeId === personId && x.state === 'done' && inR(x.completedAt));
+  const born = (tasks || []).filter((x) => x.assigneeId === personId && inR(x.createdAt) && x.state !== 'cancelled');
+  const hrs = done.map((x) => (Date.parse(x.completedAt) - Date.parse(x.createdAt)) / 3600000).filter((h) => h >= 0);
+  const byType = new Map(); for (const x of done) { const k = typeKey(x.type); byType.set(k, (byType.get(k) || 0) + 1); }
+  return { done: done.length, points: Math.round(done.reduce((s, x) => s + taskPoints(wt, x), 0) * 10) / 10,
+    avgHours: hrs.length ? Math.round((hrs.reduce((s, h) => s + h, 0) / hrs.length) * 10) / 10 : null,
+    rate: born.length ? Math.round((born.filter((x) => x.state === 'done').length / born.length) * 100) / 100 : null,
+    types: [...byType.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => ({ k, n })) };
+}
+const LOWER_BETTER = new Set(['avgHours']);
+/** Progress of each quarter goal from the work done in the quarter; a custom goal carries its own percentage. */
+export function quarterGoalProgress(tasks, wt, personId, range, goals) {
+  const b = quarterBaseline(tasks, wt, personId, range);
+  return (goals || []).map((g) => {
+    let got = null;
+    if (g.metric === 'custom') got = Math.max(0, Math.min(100, Number(g.pct) || 0));
+    else if (g.metric === 'type') got = (b.types.find((x) => x.k === g.type) || { n: 0 }).n;
+    else got = b[g.metric];
+    const tgt = Number(g.target) || 0;
+    let pct = 0;
+    if (g.metric === 'custom') pct = got;
+    else if (got == null || !tgt) pct = 0;
+    else if (LOWER_BETTER.has(g.metric)) pct = got <= tgt ? 100 : Math.max(0, Math.round((tgt / got) * 100));
+    else pct = Math.min(100, Math.round((got / tgt) * 100));
+    return { ...g, got, pct, met: pct >= 100 };
+  });
+}
+/** The weighted progress of a whole plan (0–100), or null with no goals. */
+export function planProgress(progress) {
+  const w = (progress || []).reduce((s, g) => s + (Number(g.weight) || 1), 0); if (!w) return null;
+  return Math.round(progress.reduce((s, g) => s + g.pct * (Number(g.weight) || 1), 0) / w);
+}
+/** Goals suggested from the baseline and the weakest axes: a stretch on what the person already does, aimed at what is weakest. */
+export function suggestQuarterGoals(base, level) {
+  const out = [], up = (v, f) => Math.max(1, Math.ceil(v * f));
+  const weak = level && level.axes ? Object.entries(level.axes).filter(([, v]) => v != null).sort((a, b) => a[1] - b[1]).slice(0, 2).map(([k]) => k) : [];
+  out.push({ metric: 'points', base: base.points, target: up(base.points || 10, weak.includes('volume') ? 1.2 : 1.1), weight: 3 });
+  out.push({ metric: 'done', base: base.done, target: up(base.done || 5, 1.1), weight: 2 });
+  if (base.avgHours != null) out.push({ metric: 'avgHours', base: base.avgHours, target: Math.max(1, Math.round(base.avgHours * (weak.includes('speed') ? 0.8 : 0.9) * 10) / 10), weight: weak.includes('speed') ? 2 : 1 });
+  out.push({ metric: 'rate', base: base.rate, target: Math.min(1, Math.max(0.9, Math.round(((base.rate || 0) + 0.05) * 100) / 100)), weight: weak.includes('reliability') ? 2 : 1 });
+  if (base.types[0]) out.push({ metric: 'type', type: base.types[0].k, base: base.types[0].n, target: up(base.types[0].n, 1.1), weight: 1 });
+  return out.map((g, i) => ({ id: `s${i + 1}`, ...g, weak: weak.includes({ points: 'volume', done: 'volume', avgHours: 'speed', rate: 'reliability' }[g.metric]) }));
 }
 /** The pattern's path: closed months in order, for one person — archetype, points, quartile. */
 export function patternPath(closed, personId) {

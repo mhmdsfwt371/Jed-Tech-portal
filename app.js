@@ -11,6 +11,7 @@ import {
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
   mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
+  quarterRange, quarterOf, quarterBaseline, quarterGoalProgress, planProgress, suggestQuarterGoals,
 } from './core.js';
 
 import { validateSystems } from './systems-core.js';
@@ -323,6 +324,7 @@ async function closeMonths() {
 // ---------- the monthly one-to-one: notes, what was agreed, and goals — kept on the leader's device, never in the repository ----------
 let meet = {};   // { 'YYYY-MM': { personId: { note, agreed, done: bool, goals: [{ key, target }] } } }
 const meetOf = (ym, id) => (meet[ym] && meet[ym][id]) || null;
+const meetRefresh = () => { const dv = $('view-dev'); if (dv && !dv.hidden) renderDev(); else renderMe(); };   // the meeting redraws the page it was opened from
 async function saveMeet(ym, id, v) { meet = { ...meet, [ym]: { ...(meet[ym] || {}), [id]: v } }; await store.putMeet(meet); }
 function openMeet(ym, id, name, typeChoices) {
   const cur = meetOf(ym, id) || { note: '', agreed: '', done: false, goals: [] };
@@ -342,12 +344,12 @@ function openMeet(ym, id, name, typeChoices) {
     el('label', { class: 'meet-l', text: t('meet_goals') }), goalRows,
     el('button', { type: 'button', class: 'btn tiny', text: t('meet_add_goal'), onclick: () => { goals.push({ key: '__points__', target: 0 }); paintGoals(); } }),
     el('div', { class: 'row', style: 'margin-top:14px' },
-      el('button', { type: 'button', class: 'btn primary', text: t('meet_save'), onclick: async () => { await saveMeet(ym, id, { note: note.value.slice(0, 2000), agreed: agreed.value.slice(0, 1000), done: !!cur.done, goals: goals.filter((g) => g.target > 0).slice(0, 8) }); dlg.close(); dlg.remove(); toast(t('meet_saved')); renderMe(); } }),
+      el('button', { type: 'button', class: 'btn primary', text: t('meet_save'), onclick: async () => { await saveMeet(ym, id, { note: note.value.slice(0, 2000), agreed: agreed.value.slice(0, 1000), done: !!cur.done, goals: goals.filter((g) => g.target > 0).slice(0, 8) }); dlg.close(); dlg.remove(); toast(t('meet_saved')); meetRefresh(); } }),
       el('button', { type: 'button', class: 'btn', text: t('close'), onclick: () => { dlg.close(); dlg.remove(); } })));
   document.body.append(dlg); dlg.showModal();
 }
 function exportMeet() { const a = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify({ schema: 'afaqy-oneonone/v1', exportedAt: new Date().toISOString(), meet }, null, 2)], { type: 'application/json' })), download: `afaqy-one-to-one-${ymd(new Date())}.json` }); document.body.append(a); a.click(); a.remove(); }
-async function importMeet(file) { try { const j = JSON.parse(await file.text()); if (j.schema !== 'afaqy-oneonone/v1' || typeof j.meet !== 'object') throw 0; for (const [ym, people] of Object.entries(j.meet)) for (const [id, v] of Object.entries(people || {})) meet[ym] = { ...(meet[ym] || {}), [id]: { ...(meet[ym] || {})[id], ...v } }; await store.putMeet(meet); toast(t('meet_imported')); renderMe(); } catch { toast(t('err_json')); } }
+async function importMeet(file) { try { const j = JSON.parse(await file.text()); if (j.schema !== 'afaqy-oneonone/v1' || typeof j.meet !== 'object') throw 0; for (const [ym, people] of Object.entries(j.meet)) for (const [id, v] of Object.entries(people || {})) meet[ym] = { ...(meet[ym] || {}), [id]: { ...(meet[ym] || {})[id], ...v } }; await store.putMeet(meet); toast(t('meet_imported')); meetRefresh(); } catch { toast(t('err_json')); } }
 // the goals and last month's agreement, shown inside a card
 function meetBlock(ym, id, tasks, editable, name, typeChoices) {
   const m = meetOf(ym, id), prev = meetOf(prevMonth(ym), id);
@@ -356,7 +358,7 @@ function meetBlock(ym, id, tasks, editable, name, typeChoices) {
   if (!prog.length && !(prev && prev.agreed) && !editable) return null;
   return el('div', { class: 'meet-block' },
     prev && prev.agreed ? el('div', { class: 'agreed' }, el('b', { text: t('meet_prev_agreed') }), el('span', { text: ` ${prev.agreed}` }),
-      editable ? el('label', { class: 'done-tick' }, el('input', { type: 'checkbox', ...(prev.done ? { checked: '' } : {}), onchange: async (e) => { await saveMeet(prevMonth(ym), id, { ...prev, done: e.target.checked }); renderMe(); } }), t('meet_done')) : el('span', { class: 'hint', text: prev.done ? ` · ${t('meet_done')}` : '' })) : null,
+      editable ? el('label', { class: 'done-tick' }, el('input', { type: 'checkbox', ...(prev.done ? { checked: '' } : {}), onchange: async (e) => { await saveMeet(prevMonth(ym), id, { ...prev, done: e.target.checked }); meetRefresh(); } }), t('meet_done')) : el('span', { class: 'hint', text: prev.done ? ` · ${t('meet_done')}` : '' })) : null,
     prog.length ? el('div', { class: 'goals' }, el('b', { text: t('meet_goals') }), prog.map((g) => el('div', { class: 'goal' }, el('span', { text: label(g) }), el('i', {}, el('span', { style: `width:${g.pct}%`, class: g.met ? 'met' : '' })), el('b', { class: 'ltr', text: `\u2066${g.got} / ${g.target}\u2069` })))) : null,
     editable ? el('button', { type: 'button', class: 'btn tiny', text: m ? t('meet_edit') : t('meet_open'), onclick: () => openMeet(ym, id, name, typeChoices) }) : null);
 }
@@ -422,6 +424,8 @@ function renderSignatures() {
 let privLinks = [];
 let myProjects = null;   // the projects-from-mail file, on this device only (ADR-0039)
 let projAll = false, projOnlyMine = false, projQuery = '', projView = 'summary', projStatus = '';
+let devPlans = {};   // quarter development plans (ADR-0040) — { 'YYYY-Qn': { personId: plan } }, device only
+let devQ = pref('devq') === 'cur' ? 'cur' : 'next', devSel = pref('devsel') || null;
 let myRegister = null;   // the projects register (won / submitted from the management deck, presales board) — device only
 function cleanPrivLink(x) {
   try { const name = String((x && x.name) || '').trim().slice(0, 80), u = new URL(String((x && x.url) || '').trim());
@@ -1833,13 +1837,13 @@ function kpiLevelSection(team, peopleById) {
         el('td', { class: 'num', text: x.score == null ? '—' : String(x.score) }),
         ...AXES.map((k) => el('td', { class: 'num', text: x.axes[k] == null ? '—' : String(x.axes[k]) })),
         el('td', { class: 'num', text: x.trend ? { up: '▲', down: '▼', steady: '■' }[x.trend] : '—' }),
-        el('td', { class: 'plan-cell' }, x.onLeave ? [] : developmentPlan(levels, x.id).map((p) => el('div', { text: planText(p) })))))))));
+        el('td', { class: 'plan-cell' }, x.onLeave ? [] : [el('a', { href: '#dev', onclick: () => { devSel = x.id; pref('devsel', x.id); }, text: `${t('dev_open_plan')} ↗` })], x.onLeave ? [] : developmentPlan(levels, x.id).slice(0, 1).map((p) => el('div', { class: 'hint', text: planText(p) })))))))));
 }
 function meCardSection(pm, who, nm) { const ymNow = cardMonth; const team = pm.scope.team; const ctx = cardCtxFromMe(team);
       const own = (monthCards[ymNow] && monthCards[ymNow][me.user.id]) || monthCard(ctx, me.user.id, ymNow);
       const below = pm.below.map((r) => r.id);
       const typeChoices = Object.entries(weights().tasks).filter(([, x]) => x.team !== 'general').map(([k]) => [k, k.replace(/(^|\s)([a-z])/g, (mm, sp, ch) => sp + ch.toUpperCase())]);
-      const withMeet = (cardEl, id, name, editable) => { if (cardEl) { const b = meetBlock(ymNow, id, me.tasks, editable, name, typeChoices); if (b) cardEl.append(b); } return cardEl; };
+      const withMeet = (cardEl, id, name, editable) => { if (cardEl) { if (!isTeamPortal && editable && datasets.length) { cardEl.append(el('a', { class: 'moved-link', href: '#dev', onclick: () => { devSel = id; pref('devsel', id); }, text: `${t('dev_meet_moved')} ↗` })); return cardEl; } const b = meetBlock(ymNow, id, me.tasks, editable, name, typeChoices); if (b) cardEl.append(b); } return cardEl; };
       const imp = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: (e) => { if (e.target.files[0]) importMeet(e.target.files[0]); e.target.value = ''; } });
       const path = (id) => patternPath(monthCards, id);
       const pathTable = (ids) => { const months = [...new Set(ids.flatMap((id) => path(id).map((p) => p.month)))].sort(); if (months.length < 2) return el('p', { class: 'hint', text: t('path_soon') });
@@ -1919,6 +1923,109 @@ function kpiWeekSection(team, peopleById) { const wd = weeklyDigest(allTasks(), 
           el('div', { class: 'week-list good' }, el('h4', { text: t('week_movers') }), wd.movers.length ? wd.movers.map((r) => el('div', { text: `${nmW(r.id)} · +${r.delta}` })) : el('div', { class: 'hint', text: '—' })),
           el('div', { class: 'week-list grow' }, el('h4', { text: t('week_drops') }), drops.length ? drops.map((r) => el('div', {}, `${nmW(r.id)} · `, el('span', { class: 'ltr', text: `\u2066${r.prev} → ${r.points}\u2069` }))) : el('div', { class: 'hint', text: '—' }), away.length ? el('div', { class: 'hint', text: t('week_on_leave', { who: away.map((r) => nmW(r.id)).join('، ') }) }) : null),
           el('div', { class: 'week-list plan' }, el('h4', { text: t('week_aging') }), wd.aging.length ? wd.aging.map((r) => el('div', { text: `${nmW(r.id)} · ${r.aging}` })) : el('div', { class: 'hint', text: '—' })))); }
+// ---------- «التطوير»: one page for each person's quarter plan, its baseline, live progress, monthly follow-up and this month's suggestions (ADR-0040) ----------
+const GOAL_METRICS = ['points', 'done', 'avgHours', 'rate', 'type', 'custom'];
+async function devSave() { await store.kvPut('devplans', devPlans); }
+function devPlanOf(qKey, id) { devPlans[qKey] = devPlans[qKey] || {}; return devPlans[qKey][id] || (devPlans[qKey][id] = { goals: [], buddy: '', actions: '', note: '', status: 'draft' }); }
+function renderDev() {
+  const body = $('dev-body'); if (!body) return;
+  if (!datasets.length) { set(body, el('div', { class: 'empty' }, t('dev_no_data'), ' ', el('a', { href: '#data', text: t('nav_data') }))); return; }
+  const ds = datasets.find((d) => d.key === kpiKey) || datasets[0], tasks = allTasks(), wt = weights();
+  const peopleById = new Map(peopleOf(datasets).map((p) => [p.id, p])), team = currentTeam(scoped(peopleOf(datasets)), tasks), nm = (id) => nameOf(peopleById.get(id), lang) || id;
+  const today = saudiDay(new Date().toISOString()), qPlan = quarterOf(today, devQ === 'next' ? 1 : 0), qBase = quarterOf(qPlan.from, -1);
+  const { levels } = levelsFor(tasks, team, today, mailRows), ro = roster().people || {};
+  const load = {}; for (const pool of levelPools(team)) { const act = pool.filter((id) => !(ro[id] && ro[id].onLeave)); if (act.length) Object.assign(load, loadSustainability(tasks, wt, act, today).people); }
+  const plansQ = devPlans[qPlan.key] || {};
+  const progOf = (id) => { const p = plansQ[id]; return p && p.goals.length ? planProgress(quarterGoalProgress(tasks, wt, id, qPlan, p.goals)) : null; };
+  const ring = (pct) => el('div', { class: 'ring', style: `--p:${pct == null ? 0 : pct}` }, el('b', { text: pct == null ? '—' : `${pct}%` }));
+  const weakest = (lv) => (lv && lv.axes ? Object.entries(lv.axes).filter(([, v]) => v != null).sort((x, y) => x[1] - y[1])[0] : null);
+  if (!devSel || !team.includes(devSel)) devSel = team[0];
+  const qPick = el('div', { class: 'pills' }, [['cur', quarterOf(today, 0)], ['next', quarterOf(today, 1)]].map(([k, q]) => el('button', { type: 'button', class: `pill-btn${devQ === k ? ' on' : ''}`, text: `${t(k === 'next' ? 'dev_q_next' : 'dev_q_cur')} — ${q.label}`, onclick: () => { devQ = k; pref('devq', k); renderDev(); } })));
+  const cards = makeSortable(el('div', { class: 'dev-cards' }, sortByOrder(team, 'dev-people').map((id) => { const lv = levels[id], w = weakest(lv), p = plansQ[id], L2 = load[id];
+    return el('button', { type: 'button', 'data-id': id, class: `dev-card${devSel === id ? ' on' : ''}`, onclick: () => { devSel = id; pref('devsel', id); renderDev(); } },
+      el('div', { class: 'dc-top' }, el('div', {}, el('b', { text: nm(id) }), el('span', { class: 'hint', text: positionOf(ro[id] || {}) || (peopleById.get(id) || {}).position || '' })), ring(progOf(id))),
+      el('div', { class: 'dc-tags' }, lv && lv.level ? el('span', { class: `level-pill l${lv.level}`, text: `${lv.level} · ${t(`lvl_${LEVELS[lv.level - 1].k}`)}` }) : el('span', { class: 'hint', text: ro[id] && ro[id].onLeave ? t('card_on_leave') : t('lvl_early') }),
+        lv && lv.trend ? el('span', { class: 'dc-trend', text: { up: '▲', down: '▼', steady: '■' }[lv.trend] }) : null, L2 ? el('span', { class: `dc-load s-${L2.status}`, text: t(`rep_load_${L2.status}`) }) : null),
+      el('small', { class: 'hint', text: [w ? t('dev_weak', { a: t(`axis_${w[0]}`) }) : '', p ? t('dev_goals_n', { n: p.goals.length }) : t('dev_no_plan'), p && p.status === 'agreed' ? t('dev_agreed') : ''].filter(Boolean).join(' · ') })); })), 'dev-people');
+  set(body, el('div', { class: 'row dev-head' }, qPick, el('div', { class: 'row' },
+      el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('proj_excel')}`, onclick: () => devXlsx(team, nm, qPlan) }), el('span', { class: 'hint', text: t('dev_base_from', { q: qBase.label }) }))),
+    cards, devPanel(devSel, { tasks, wt, nm, team, levels, load, qPlan, qBase, peopleById }),
+    el('details', { class: 'tucked', open: '' }, el('summary', { text: t('dev_month_h') }), kpiMapPlanSection(ds, team, peopleById)));
+}
+function devPanel(id, ctx) {
+  if (!id) return null;
+  const { tasks, wt, nm, team, levels, qPlan, qBase } = ctx, plan = devPlanOf(qPlan.key, id), base = quarterBaseline(tasks, wt, id, qBase), lv = levels[id];
+  const prog = quarterGoalProgress(tasks, wt, id, qPlan, plan.goals), total = planProgress(prog);
+  const save = async () => { await devSave(); renderDev(); };
+  const label = (g) => (g.metric === 'type' ? typeLabel(g.type, lang) || g.type : g.metric === 'custom' ? g.title || t('dev_m_custom') : t(`dev_m_${g.metric}`));
+  const fmt = (m, v) => (v == null ? '—' : m === 'rate' ? `${Math.round(v * 100)}%` : m === 'avgHours' ? formatHours(v, lang) : m === 'custom' ? `${v}%` : String(v));
+  const typeOpts = Object.keys(wt.tasks || {});
+  const suggest = async () => { const s = suggestQuarterGoals(base, lv); const have = new Set(plan.goals.map((g) => `${g.metric}:${g.type || ''}`));
+    for (const g of s) if (!have.has(`${g.metric}:${g.type || ''}`)) plan.goals.push({ ...g, id: `g${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}` });
+    if (!plan.buddy) { const dp = developmentPlan(levels, id).find((x) => x.buddy); if (dp) plan.buddy = dp.buddy; } toast(t('dev_suggested')); await save(); };
+  const addGoal = async (metric) => { plan.goals.push({ id: `g${Date.now().toString(36)}`, metric, type: metric === 'type' ? typeOpts[0] : '', title: '', base: metric === 'type' ? 0 : metric === 'custom' ? 0 : base[metric], target: metric === 'rate' ? 0.9 : metric === 'custom' ? 100 : 1, weight: 1, pct: 0 }); await save(); };
+  const goalRow = (g, p) => el('tr', { 'data-id': g.id },
+    el('td', {}, g.metric === 'type' ? el('select', { onchange: async (e) => { g.type = e.target.value; g.base = (base.types.find((x) => x.k === g.type) || { n: 0 }).n; await save(); } }, typeOpts.map((k) => el('option', { value: k, selected: g.type === k ? '' : null, text: typeLabel(k, lang) || k })))
+      : g.metric === 'custom' ? el('input', { type: 'text', value: g.title || '', placeholder: t('dev_custom_ph'), onchange: async (e) => { g.title = e.target.value.slice(0, 120); await save(); } }) : el('span', { text: label(g) }),
+      g.weak ? el('span', { class: 'dev-weak', text: t('dev_weak_tag') }) : null),
+    el('td', { class: 'num', text: g.metric === 'custom' ? '—' : fmt(g.metric, g.base) }),
+    el('td', { class: 'num' }, el('input', { type: 'number', step: g.metric === 'rate' ? '0.01' : g.metric === 'avgHours' ? '0.5' : '1', min: '0', value: g.target, onchange: async (e) => { g.target = Number(e.target.value) || 0; await save(); } })),
+    el('td', { class: 'num' }, el('input', { type: 'number', min: '1', max: '5', step: '1', value: g.weight || 1, onchange: async (e) => { g.weight = Math.max(1, Math.min(5, Number(e.target.value) || 1)); await save(); } })),
+    el('td', { class: 'num' }, g.metric === 'custom' ? el('input', { type: 'range', min: '0', max: '100', step: '5', value: g.pct || 0, onchange: async (e) => { g.pct = Number(e.target.value); await save(); } }) : el('span', { text: fmt(g.metric, p.got) })),
+    el('td', {}, el('div', { class: 'gbar' }, el('i', { style: `width:${p.pct}%`, class: p.met ? 'met' : '' })), el('small', { text: `${p.pct}%` })),
+    el('td', {}, el('button', { type: 'button', class: 'icon-btn', title: t('proj_delete'), text: '✕', onclick: async () => { plan.goals = plan.goals.filter((x) => x.id !== g.id); await save(); } })));
+  const months = qPlan.months.map((ym) => { const b = meetBlock(ym, id, tasks, true, nm(id), typeOpts.map((k) => [k, typeLabel(k, lang) || k])); return el('div', { class: 'dev-month' }, el('h4', { text: monthLabel(ym) }), b || el('p', { class: 'hint', text: t('dev_month_none') })); });
+  return el('section', { class: 'dev-panel' },
+    el('div', { class: 'dp-head' }, el('div', {}, el('h2', { style: 'margin:0', text: nm(id) }), el('span', { class: 'hint', text: t('dev_plan_for', { q: qPlan.label, b: qBase.label }) })),
+      el('div', { class: 'row' }, el('div', { class: 'ring big', style: `--p:${total == null ? 0 : total}` }, el('b', { text: total == null ? '—' : `${total}%` })),
+        el('button', { type: 'button', class: `btn tiny${plan.status === 'agreed' ? ' primary' : ''}`, text: plan.status === 'agreed' ? `✓ ${t('dev_agreed')}` : t('dev_mark_agreed'), onclick: async () => { plan.status = plan.status === 'agreed' ? 'draft' : 'agreed'; plan.agreedAt = plan.status === 'agreed' ? today0() : ''; await save(); } }),
+        el('button', { type: 'button', class: 'btn tiny', text: `🖨 ${t('proj_pdf')}`, onclick: () => devPdf(id, ctx) }))),
+    el('div', { class: 'dp-grid' },
+      el('div', { class: 'card' }, el('h3', { text: t('dev_base_h', { q: qBase.label }) }),
+        el('div', { class: 'cmp-grid' }, [['dev_m_done', base.done], ['dev_m_points', base.points], ['dev_m_avgHours', fmt('avgHours', base.avgHours)], ['dev_m_rate', fmt('rate', base.rate)]].map(([k, v]) => el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: t(k) }), el('b', { class: 'cmp-v', text: String(v) })))),
+        base.types.length ? el('p', { class: 'hint', text: t('dev_top_types', { l: base.types.slice(0, 4).map((x) => `${typeLabel(x.k, lang) || x.k} ${x.n}`).join(' · ') }) }) : null,
+        lv && lv.axes ? el('div', { class: 'dev-axes' }, AXES.map((k) => el('div', {}, el('span', { text: t(`axis_${k}`) }), el('i', {}, el('b', { style: `width:${lv.axes[k] || 0}%` })), el('small', { text: lv.axes[k] == null ? '—' : String(lv.axes[k]) })))) : el('p', { class: 'hint', text: t('lvl_early') })),
+      el('div', { class: 'card' }, el('h3', { text: t('dev_growth_h') }),
+        el('label', { class: 'dev-f' }, el('span', { text: t('dev_buddy') }), el('select', { onchange: async (e) => { plan.buddy = e.target.value; await save(); } }, [el('option', { value: '', text: '—' }), ...team.filter((x) => x !== id).map((x) => el('option', { value: x, selected: plan.buddy === x ? '' : null, text: nm(x) }))])),
+        el('label', { class: 'dev-f' }, el('span', { text: t('dev_actions') }), el('textarea', { rows: '3', placeholder: t('dev_actions_ph'), onchange: async (e) => { plan.actions = e.target.value.slice(0, 1000); await devSave(); } }, plan.actions || '')),
+        el('label', { class: 'dev-f' }, el('span', { text: t('dev_note') }), el('textarea', { rows: '2', onchange: async (e) => { plan.note = e.target.value.slice(0, 1000); await devSave(); } }, plan.note || '')))),
+    el('div', { class: 'row dev-goals-head' }, el('h3', { style: 'margin:0', text: t('dev_goals_h') }),
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary tiny', text: `✨ ${t('dev_suggest')}`, onclick: suggest }),
+        el('select', { class: 'btn tiny', onchange: (e) => { if (e.target.value) addGoal(e.target.value); e.target.value = ''; } }, [el('option', { value: '', text: `＋ ${t('dev_add_goal')}` }), ...GOAL_METRICS.map((m) => el('option', { value: m, text: t(`dev_m_${m}`) }))]))),
+    plan.goals.length ? el('div', { class: 'table-wrap fit' }, el('table', { class: 'proj-tbl dev-goals' }, el('colgroup', {}, ['28%', '11%', '12%', '8%', '13%', '22%', '6%'].map((w) => el('col', { style: `width:${w}` }))),
+      el('thead', {}, el('tr', {}, ['dev_c_goal', 'dev_c_base', 'dev_c_target', 'dev_c_weight', 'dev_c_got', 'dev_c_prog', ''].map((k) => el('th', { text: k ? t(k) : '' })))),
+      makeSortable(el('tbody', {}, plan.goals.map((g, n) => goalRow(g, prog[n]))), `dev-goals-${id}`))) : el('div', { class: 'empty', text: t('dev_goals_none') }),
+    el('details', { class: 'tucked', open: '' }, el('summary', { text: t('dev_follow_h', { q: qPlan.label }) }), el('div', { class: 'dev-months' }, months)));
+}
+const today0 = () => saudiDay(new Date().toISOString());
+async function devXlsx(team, nm, qPlan) {
+  let X; try { X = await loadXlsx(); } catch { toast(t('proj_x_fail')); return; }
+  const tasks = allTasks(), wt = weights(), rows = [];
+  for (const id of team) { const p = (devPlans[qPlan.key] || {})[id]; if (!p) continue; const pr = quarterGoalProgress(tasks, wt, id, qPlan, p.goals);
+    for (const g of pr) rows.push({ [t('col_person')]: nm(id), [t('dev_c_goal')]: g.metric === 'type' ? (typeLabel(g.type, lang) || g.type) : g.metric === 'custom' ? (g.title || t('dev_m_custom')) : t(`dev_m_${g.metric}`), [t('dev_c_base')]: g.base ?? '', [t('dev_c_target')]: g.target, [t('dev_c_weight')]: g.weight || 1, [t('dev_c_got')]: g.got ?? '', [t('dev_c_prog')]: `${g.pct}%`, [t('dev_status')]: p.status === 'agreed' ? t('dev_agreed') : t('dev_draft'), [t('dev_buddy')]: p.buddy ? nm(p.buddy) : '' }); }
+  if (!rows.length) { toast(t('dev_x_empty')); return; }
+  const wb = X.utils.book_new(), ws = X.utils.json_to_sheet(rows); ws['!views'] = [{ RTL: lang !== 'en' }]; X.utils.book_append_sheet(wb, ws, qPlan.label); X.writeFile(wb, `AFAQY-development-${qPlan.key}.xlsx`);
+}
+function devPdf(id, ctx) {
+  const { tasks, wt, nm, levels, qPlan, qBase } = ctx, plan = devPlanOf(qPlan.key, id), base = quarterBaseline(tasks, wt, id, qBase), pr = quarterGoalProgress(tasks, wt, id, qPlan, plan.goals), lv = levels[id];
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]), fontUrl = (f) => new URL(`assets/fonts/${f}`, location.href).href;
+  const fmt = (m, v) => (v == null ? '—' : m === 'rate' ? `${Math.round(v * 100)}%` : m === 'avgHours' ? formatHours(v, lang).replace(/[\u2066-\u2069]/g, '') : m === 'custom' ? `${v}%` : String(v));
+  const name = (g) => (g.metric === 'type' ? typeLabel(g.type, lang) || g.type : g.metric === 'custom' ? g.title || t('dev_m_custom') : t(`dev_m_${g.metric}`));
+  const html = `<!doctype html><html lang="${lang}" dir="${lang !== 'en' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>${esc(t('dev_pdf_title'))} — ${esc(nm(id))}</title><style>
+  @font-face{font-family:NS;src:url('${fontUrl('NotoSansArabic-Regular.ttf')}')}@font-face{font-family:NS;font-weight:700;src:url('${fontUrl('NotoSansArabic-Bold.ttf')}')}
+  body{margin:0;font-family:NS,'Segoe UI',Tahoma,sans-serif;color:#1C1E3D;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{padding:14mm}header{display:flex;align-items:center;gap:14px;border-bottom:4px solid #2A7130;padding-bottom:10px;margin-bottom:14px}header img{height:34px}h1{margin:0;font-size:21px}h2{font-size:15px;margin:16px 0 8px;border-inline-start:5px solid #2A7130;padding-inline-start:8px}
+  .k{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.k div{background:#F1F5F8;border-radius:10px;padding:10px;border-top:4px solid #0E7C86}.k b{display:block;font-size:20px}.k .t{border-top-color:#2A7130}
+  table{width:100%;border-collapse:collapse;font-size:12px}th{background:#1C1E3D;color:#FFFFFF;padding:6px;text-align:start}td{padding:6px;border-bottom:1px solid #E3EAF0}.bar{height:8px;background:#E3EAF0;border-radius:4px;overflow:hidden}.bar i{display:block;height:8px;background:#2A7130}
+  .box{border:1px solid #E3EAF0;border-radius:10px;padding:10px;white-space:pre-wrap;font-size:12.5px}.sig{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:30px;font-size:12px}.sig div{border-top:1px solid #8797A3;padding-top:6px}@page{size:A4;margin:0}</style></head><body><section class="page">
+  <header><img src="${logoDataUrl()}" alt="AFAQY"><div><h1>${esc(t('dev_pdf_title'))} — ${esc(nm(id))}</h1><div>${esc(qPlan.label)} · ${esc(plan.status === 'agreed' ? `${t('dev_agreed')} ${plan.agreedAt || ''}` : t('dev_draft'))}</div></div></header>
+  <h2>${esc(t('dev_base_h', { q: qBase.label }))}</h2><div class="k"><div><b>${base.done}</b>${esc(t('dev_m_done'))}</div><div><b>${base.points}</b>${esc(t('dev_m_points'))}</div><div><b>${esc(fmt('avgHours', base.avgHours))}</b>${esc(t('dev_m_avgHours'))}</div><div><b>${esc(fmt('rate', base.rate))}</b>${esc(t('dev_m_rate'))}</div><div class="t"><b>${planProgress(pr) ?? '—'}${planProgress(pr) == null ? '' : '%'}</b>${esc(t('dev_c_prog'))}</div></div>
+  ${lv && lv.level ? `<p>${esc(t('rep_level'))}: ${lv.level} · ${esc(t(`lvl_${LEVELS[lv.level - 1].k}`))} — ${AXES.map((k) => `${esc(t(`axis_${k}`))} ${lv.axes[k] ?? '—'}`).join(' · ')}</p>` : ''}
+  <h2>${esc(t('dev_goals_h'))}</h2><table><thead><tr><th>${esc(t('dev_c_goal'))}</th><th>${esc(t('dev_c_base'))}</th><th>${esc(t('dev_c_target'))}</th><th>${esc(t('dev_c_weight'))}</th><th>${esc(t('dev_c_got'))}</th><th>${esc(t('dev_c_prog'))}</th></tr></thead><tbody>
+  ${pr.map((g) => `<tr><td>${esc(name(g))}</td><td>${esc(g.metric === 'custom' ? '—' : fmt(g.metric, g.base))}</td><td>${esc(fmt(g.metric, g.target))}</td><td>${g.weight || 1}</td><td>${esc(fmt(g.metric, g.got))}</td><td><div class="bar"><i style="width:${g.pct}%"></i></div>${g.pct}%</td></tr>`).join('')}</tbody></table>
+  <h2>${esc(t('dev_growth_h'))}</h2><p>${esc(t('dev_buddy'))}: ${esc(plan.buddy ? nm(plan.buddy) : '—')}</p>${plan.actions ? `<div class="box">${esc(plan.actions)}</div>` : ''}${plan.note ? `<p class="box">${esc(plan.note)}</p>` : ''}
+  <div class="sig"><div>${esc(t('dev_sig_emp'))}</div><div>${esc(t('dev_sig_mgr'))}</div></div></section></body></html>`;
+  openReport(html, 'pdf', `AFAQY-development-${qPlan.key}-${id}`);
+}
 function kpiMapPlanSection(ds, team, peopleById) { const ym = ds.range.to.slice(0, 7); const tm = teamMonth(cardCtxFromDatasets(team), ym); const nmB = (id) => (nameOf(peopleById.get(id), lang) || id);
       const max = Math.max(1, ...tm.heat.flatMap((h) => TIERS.map((k) => h[k])));
       const cell = (v) => el('td', { class: 'num heat', style: `--heat:${(v / max).toFixed(2)}`, text: v ? String(v) : '' });
@@ -2013,7 +2120,7 @@ function renderKpi() {
     tag('team', kpiLevelSection(team, peopleById)),
     tag('team', kpiWeekSection(team, peopleById)),
     tag('overview', renderKpiDonuts(ds, f, team)),
-    tag('team', kpiMapPlanSection(ds, team, peopleById)),
+    tag('team', el('div', { class: 'moved-note' }, t('dev_moved_board'), ' ', el('a', { href: '#dev', class: 'btn tiny', text: `${t('nav_dev')} ↗` }))),
     tag('overview', datasets.length > 1 ? [el('h2', { text: t('trend') }),
       el('div', { class: 'columns' }, trend.map(({ d, f: x }) => el('div', { class: `column${d.key === kpiKey ? ' on' : ''}` },
         el('b', { text: String(x.done) }), el('i', { style: `height:${Math.max(6, Math.round((x.done / Math.max(1, ...trend.map((q) => q.f.done))) * 140))}px` }),
@@ -2402,7 +2509,7 @@ function applyTheme() {
   paintThemeButton();
 }
 function route() {
-  const views = ['tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'guide'];
+  const views = ['tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'guide'];
   const requested = location.hash.slice(1);
   let hash = portalRoute(requested, isTeamPortal);
   if (requested !== hash) history.replaceState(null, '', '#' + hash);
@@ -2419,7 +2526,7 @@ function route() {
   for (const id of [...views, 'module']) $(`view-${id}`).hidden = id !== v;
   document.body.classList.toggle('in-module', v === 'module');
   if (mod) openModule(mod);
-  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', guide: 'nav_guide' }[v]); currentModule = null; }
+  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', dev: 'nav_dev', guide: 'nav_guide' }[v]); currentModule = null; }
   $('module-open').hidden = v !== 'module';
   // one item in the menu is current — the open module, or the page — and its group is the open one
   let current = null;
@@ -2436,6 +2543,7 @@ function route() {
   if (v === 'pro' && proToken.get() && !proUnits && !proBusy) proLoad();
   if (v === 'team') renderTeam();
   if (v === 'weights') renderWeights();
+  if (v === 'dev') renderDev();
 }
 
 // ---------- wiring ----------
@@ -2453,7 +2561,7 @@ $('file-in').addEventListener('change', async (e) => { for (const f of e.target.
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
 $('export-btn').addEventListener('click', async () => {
   const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION,
-    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projfiles: await projFilesExport() };
+    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projfiles: await projFilesExport(), devplans: devPlans };
   download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(all, null, 1));
 });
 $('import-in').addEventListener('change', async (e) => {
@@ -2477,6 +2585,7 @@ $('import-in').addEventListener('change', async (e) => {
       const known = new Set(privLinks.map((x) => x.url));
       for (const x of Array.isArray(j.privlinks) ? j.privlinks : []) { const v = cleanPrivLink(x); if (v && !known.has(v.url)) privLinks.push(v); }
       if (j.projfiles && typeof j.projfiles === 'object') await projFilesImport(j.projfiles);
+      if (j.devplans && typeof j.devplans === 'object') { for (const [q, ppl] of Object.entries(j.devplans)) devPlans[q] = { ...(ppl || {}), ...(devPlans[q] || {}) }; await store.kvPut('devplans', devPlans); }
       if (j.register && !myRegister) { const r = cleanRegister(j.register); if (r) { myRegister = r; await store.putRegister(r); } }
       if (j.projects && !myProjects) { const p = cleanProjects(j.projects); if (p) { myProjects = p; await store.putProjects(myProjects); } }
       if (Array.isArray(j.pending)) { const have = new Set(pendingList().map((x) => x.name.toLowerCase())); localStorage.setItem(PENDING_KEY, JSON.stringify([...pendingList(), ...j.pending.map(cleanPending).filter((x) => x && !have.has(x.name.toLowerCase()))])); }
@@ -2528,6 +2637,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   mailRows = (await store.getMail()) || [];
   myProjects = await store.getProjects();
   myRegister = await store.getRegister();
+  devPlans = (await store.kvGet('devplans')) || {};
   await refreshOfficialWeights();
   try { const r = await fetch('./systems.json', { cache: 'no-store' }); const data = r.ok && validateSystems(await r.json()); if (data) { SYSTEMS = data.systems; SYSTEM_CATEGORIES = data.categories; } } catch { /* retain built-in links when unavailable */ }
   await loadStrings(['ar', lang]);   // Arabic is every key's fallback; the reader's language besides
