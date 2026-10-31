@@ -17,6 +17,35 @@
 
 <!-- releases -->
 
+## v8.43 — 2026-10-31
+
+- لوحة المؤشرات صارت أربع تبويبات: نظرة عامة · الفريق · البريد · التقارير — بدل عشرة أقسام في تمرير واحد.
+- تقارير الإدارة في تبويب «التقارير»: «ملخص الفريق — صفحتان» و«التقرير الكامل — كل موظف» والنسخة التفاعلية، و«PDF» بجانب كل اسم.
+- بطاقة «اليوم» أعلى مؤشراتي للجميع: تحية، وسلسلة أيام الإنجاز، وأمس مقابل متوسطك، وأسبوعك مقابل أفضل أسبوع لك، وأقدم مفتوح تبدأ به، وهدف الفريق الأسبوعي.
+- تنظيف: طريقة نشر واحدة للأوزان، ولا ذكر لأي مفتاح أو مستودع فيما يراه الفريق.
+
+<details><summary>English</summary>
+
+- The KPI board is four tabs — Overview · Team · Email · Reports — instead of ten sections in one scroll.
+- Management reports live in the Reports tab: “Team summary — two pages”, “Full report — every employee” and the interactive version, with “PDF” beside each name.
+- A “Today” card tops My KPIs for everyone: a greeting, your streak of completion days, yesterday against your average, this week against your best, the oldest open item to start with, and the team’s weekly goal.
+- Clean-up: one publish path for weights, and nothing the team reads mentions a key or a repository.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اشاریوں کا بورڈ اب چار ٹیبز: جائزہ · ٹیم · ای میل · رپورٹس۔
+- انتظامیہ کی رپورٹس «رپورٹس» ٹیب میں: «ٹیم خلاصہ — دو صفحات»، «مکمل رپورٹ — ہر ملازم» اور تعاملی ورژن۔
+- «آج» کارڈ سب کے لیے میرے اشاریوں کے اوپر: سلام، تکمیل کے دنوں کا سلسلہ، کل بمقابلہ اوسط، ہفتہ بمقابلہ بہترین، سب سے پرانا کھلا کام، اور ٹیم کا ہفتہ وار ہدف۔
+- صفائی: اوزان کی اشاعت کا ایک راستہ، اور ٹیم کے سامنے کسی کلید یا ریپوزٹری کا ذکر نہیں۔
+
+</div>
+</details>
+
+
 ## v8.42 — 2026-10-31
 
 - التقرير للإدارة أوضح للتقييم: تقييم عام لكل مهندس (يفوق التوقعات · يحقق · يحقق جزئيًّا · دون التوقعات) بمؤشر من ١٠٠، وكل رقم مقابل متوسط الفريق، ومصفوفة أداء (الحجم × الجودة)، وتوزيع التقييمات، وتوصيات. وعبء العمل بمسميات الشركة (متوازن · مرتفع — يُتابَع · حرج — يتطلب إجراء)، ومن في إجازة لا يُقيَّم.

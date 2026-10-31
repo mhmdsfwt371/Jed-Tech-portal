@@ -728,6 +728,37 @@ function sheet(title, views, csv) {
     bodyEl);
   dlg.showModal();
 }
+// ---------- the "Today" card (ADR-0038): a greeting, a streak, yesterday against your own average, what to start with, and the team's weekly bar ----------
+function todayCard(pm, nm) {
+  const wt = weights(), uid = me.user.id, now = new Date(), day = (d) => saudiDay(d.toISOString());
+  const hour = new Date(now.getTime() + 3 * 3600000).getUTCHours();
+  const greet = t(hour < 12 ? 'today_morning' : hour < 17 ? 'today_afternoon' : 'today_evening', { name: (nm(uid) || '').split(' ')[0] });
+  const mine = me.tasks.filter((x) => x.assigneeId === uid);
+  const doneDays = new Set(mine.filter((x) => x.state === 'done' && x.completedAt).map((x) => saudiDay(x.completedAt)));
+  const isWork = (d) => ![5, 6].includes(new Date(Date.parse(d + 'T00:00:00Z')).getUTCDay());
+  let streak = 0, d = new Date(now); if (!doneDays.has(day(d))) d.setUTCDate(d.getUTCDate() - 1);   // today may still be in progress
+  for (let i = 0; i < 400; i++) { const s = day(d); if (!isWork(s)) { d.setUTCDate(d.getUTCDate() - 1); continue; } if (!doneDays.has(s)) break; streak++; d.setUTCDate(d.getUTCDate() - 1); }
+  const since = mine.filter((x) => x.state === 'done' && x.completedAt).map((x) => saudiDay(x.completedAt)).sort();
+  const y = new Date(now); y.setUTCDate(y.getUTCDate() - 1); const yd = day(y), yesterday = since.filter((s) => s === yd).length;
+  const workDays = new Set(since.filter(isWork)).size, avg = workDays ? Math.round((since.length / workDays) * 10) / 10 : 0;
+  const weekOf = (s) => { const dt = new Date(Date.parse(s + 'T00:00:00Z')); dt.setUTCDate(dt.getUTCDate() - dt.getUTCDay()); return dt.toISOString().slice(0, 10); };
+  const weeks = new Map(); for (const s of since) weeks.set(weekOf(s), (weeks.get(weekOf(s)) || 0) + 1);
+  const best = Math.max(0, ...weeks.values()), thisWeek = weeks.get(weekOf(day(now))) || 0;
+  const open = openTasks(me.tasks, uid), oldest = open[open.length - 1];
+  const team = [...new Set([uid, ...(pm.scope.visible || [])])];
+  const wk = weekOf(day(now)), lastWk = weekOf(day(new Date(now.getTime() - 7 * 86400000)));
+  const pts = (w) => me.tasks.filter((x) => team.includes(x.assigneeId) && x.state === 'done' && x.completedAt && weekOf(saudiDay(x.completedAt)) === w).reduce((s, x) => s + taskPoints(wt, x), 0);
+  const cur = Math.round(pts(wk)), goal = Math.max(1, Math.round(pts(lastWk)));
+  return el('section', { class: 'today' },
+    el('div', { class: 'today-head' }, el('h2', { text: greet }), el('span', { class: 'today-date ltr', text: day(now) })),
+    el('div', { class: 'today-grid' },
+      el('div', { class: `t-tile${streak >= 5 ? ' hot' : ''}` }, el('b', { text: String(streak) }), el('span', { text: t('today_streak') }), el('small', { text: streak ? t('today_streak_keep') : t('today_streak_start') })),
+      el('div', { class: 't-tile' }, el('b', { text: String(yesterday) }), el('span', { text: t('today_yesterday') }), el('small', { text: t('today_avg', { n: avg }) })),
+      el('div', { class: 't-tile' }, el('b', { text: String(thisWeek) }), el('span', { text: t('today_week') }), el('small', { text: thisWeek >= best && best ? t('today_best_now') : t('today_best', { n: best }) })),
+      el('div', { class: 't-tile' }, el('b', { text: String(open.length) }), el('span', { text: t('today_open') }), oldest ? el('small', { class: 'ltr-dates', text: t('today_oldest', { n: Math.max(1, Math.round((oldest.ageHours || 0) / 24)), title: oldest.title || typeLabel(oldest.type || '', lang) || '' }) }) : el('small', { text: t('today_clear') }))),
+    team.length > 1 ? el('div', { class: 'team-goal' }, el('div', { class: 'tg-row' }, el('span', { text: t('today_team_goal') }), el('b', { text: `${cur} / ${goal}` })),
+      el('i', {}, el('b', { style: `width:${Math.min(100, Math.round((cur / goal) * 100))}%` })), el('small', { text: cur >= goal ? t('today_team_done') : t('today_team_left', { n: goal - cur }) })) : null);
+}
 function meDashboard(body, pm, { nm, arrow }) {
   const win = pm.windows.this, prev = pm.windows.last, wt = weights();
   // the type: the bookmark now sends it; older pulls get it from the team data on this device
@@ -784,7 +815,7 @@ function meDashboard(body, pm, { nm, arrow }) {
   if (old) { const dates = old.previousElementSibling, headRow = dates && dates.previousElementSibling;
     const box = el('details', { class: 'tile-block', open: '' }, el('summary', { text: t('tiles_mine') }));
     old.before(box); if (headRow) box.append(headRow); if (dates) box.append(dates); box.append(mine); old.remove(); }
-  if (!pm.below.length) return;
+  if (!pm.below.length) { const box = body.querySelector('details.tile-block'); if (box) box.before(todayCard(pm, nm)); return; }
   const ids = pm.below.map((r) => r.id);
   const people = makeSortable(el('div', { class: 'people-grid' }, (() => { const rows = sortByOrder(ids.map((id) => ({ id, s: stats([id], win) })).sort((p, q) => q.s.points - p.s.points).map((r) => r.id), 'people').map((id) => ({ id, s: stats([id], win) })); const max = Math.max(1, ...rows.map((r) => r.s.points));
     return rows.map(({ id, s }) => el('button', { type: 'button', class: 'person-card', 'data-id': id, onclick: () => {
@@ -801,6 +832,7 @@ function meDashboard(body, pm, { nm, arrow }) {
   const card = body.querySelector('.me-card');
   const after = []; let n = card ? card.nextElementSibling : null; while (n) { after.push(n); n = n.nextElementSibling; }
   for (const x of after) { const tab = x.getAttribute('data-tab'); (panels[tab] || panels.me).append(x); }
+  panels.me.prepend(todayCard(pm, nm));
   if (!panels.alerts.children.length) panels.alerts.append(el('div', { class: 'empty', text: t('alerts_none') }));
   const nAlerts = panels.alerts.querySelectorAll('.alert').length;
   const bar = el('div', { class: 'tabs', role: 'tablist' }, [['me', t('tab_me')], ['team', t('tab_team')], ['alerts', nAlerts ? `${t('tab_alerts')} (${nAlerts})` : t('tab_alerts')]].map(([k, label]) =>
@@ -1259,7 +1291,7 @@ function reportData(ds, ids, peopleById) {
     avgHours: dur.length ? dur.reduce((s, v) => s + v, 0) / dur.length : null, open: tot('open'), fromEmail: tot('fromEmail') } };
 }
 const RATING = (s) => (s == null ? 'na' : s >= 75 ? 'exceeds' : s >= 55 ? 'meets' : s >= 35 ? 'partial' : 'below');
-function reportHtml(D, { single = false } = {}) {
+function reportHtml(D, { single = false, summaryOnly = false } = {}) {
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const rtl = lang !== 'en', logo = logoDataUrl(), fontUrl = (f) => new URL(`assets/fonts/${f}`, location.href).href;
   const rate = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`), hrs = (v) => (v == null ? '—' : formatHours(v, lang).replace(/[\u2066-\u2069]/g, ''));
@@ -1346,7 +1378,7 @@ function reportHtml(D, { single = false } = {}) {
   const js = `function sortBy(n){const tb=document.querySelector('.tbl tbody');if(!tb)return;const rows=[...tb.rows];const dir=tb.dataset.c==n&&tb.dataset.d==='1'?-1:1;tb.dataset.c=n;tb.dataset.d=dir===1?'1':'0';rows.sort((a,b)=>{const x=a.cells[n],y=b.cells[n];const vx=x.dataset.v!=null?+x.dataset.v:x.textContent,vy=y.dataset.v!=null?+y.dataset.v:y.textContent;return (vx>vy?1:vx<vy?-1:0)*(n===0?dir:-dir);});rows.forEach(r=>tb.append(r));}
     function spot(q){q=q.trim().toLowerCase();document.querySelectorAll('section.person,[data-name]').forEach(e=>{const m=!q||(e.dataset.name||'').toLowerCase().includes(q);e.classList.toggle('dim',!m);});const hit=q&&[...document.querySelectorAll('section.person')].find(e=>(e.dataset.name||'').toLowerCase().includes(q));if(hit)hit.scrollIntoView({behavior:'smooth'});}`;
   return `<!doctype html><html lang="${lang}" dir="${rtl ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(single ? `${t('rep_title_one')} — ${D.people[0] ? D.people[0].name : ''}` : t('rep_title_team'))}</title><style>${css}</style></head>
-    <body>${cover}${D.people.map(personPage).join('')}<script>${js}<\/script></body></html>`;
+    <body>${cover}${summaryOnly ? '' : D.people.map(personPage).join('')}<script>${js}<\/script></body></html>`;
 }
 function openReport(html, mode, fileBase) {
   if (mode === 'html') { const a = el('a', { href: URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' })), download: `${fileBase}.html` }); document.body.append(a); a.click(); a.remove(); toast(t('rep_saved_html')); return; }
@@ -1358,16 +1390,18 @@ function kpiReportSection(ds, team, peopleById) {
   if (!reportPick) reportPick = new Set(engineers);
   const nmR = (id) => nameOf(peopleById.get(id), lang) || id;
   const base = (s) => `AFAQY-${s}-${ds.range.from}_${ds.range.to}`;
-  const run = (ids, mode, single) => { if (!ids.length) { toast(t('rep_pick_one')); return; } const D = reportData(ds, ids, peopleById); openReport(reportHtml(D, { single }), mode, base(single ? (D.people[0] ? D.people[0].name.replace(/\s+/g, '-') : 'engineer') : 'team')); };
+  const run = (ids, mode, kind) => { if (!ids.length) { toast(t('rep_pick_one')); return; } const D = reportData(ds, ids, peopleById);
+    openReport(reportHtml(D, { single: kind === 'single', summaryOnly: kind === 'summary' }), mode, base(kind === 'single' ? (D.people[0] ? D.people[0].name.replace(/\s+/g, '-') : 'engineer') : kind === 'summary' ? 'team-summary' : 'team-full')); };
   return el('section', { class: 'share', id: 'k-report' },
     el('h2', {}, t('rep_h', { from: ds.range.from, to: ds.range.to }), helpQ('help_report')),
     el('div', { class: 'rep-pick' }, team.map((id) => el('label', { class: 'rep-person' },
       el('input', { type: 'checkbox', ...(reportPick.has(id) ? { checked: '' } : {}), onchange: (e) => { if (e.target.checked) reportPick.add(id); else reportPick.delete(id); } }),
       el('span', { text: nmR(id) }),
-      el('button', { type: 'button', class: 'btn quiet tiny', title: t('rep_one_pdf'), text: 'PDF', onclick: (e) => { e.preventDefault(); run([id], 'pdf', true); } })))),
+      el('button', { type: 'button', class: 'btn quiet tiny', title: t('rep_one_pdf'), text: 'PDF', onclick: (e) => { e.preventDefault(); run([id], 'pdf', 'single'); } })))),
     el('div', { class: 'row' },
-      el('button', { type: 'button', class: 'btn primary', text: `⬇ ${t('rep_team_pdf')}`, onclick: () => run([...reportPick].filter((id) => team.includes(id)), 'pdf', false) }),
-      el('button', { type: 'button', class: 'btn', text: `✦ ${t('rep_team_html')}`, onclick: () => run([...reportPick].filter((id) => team.includes(id)), 'html', false) })));
+      el('button', { type: 'button', class: 'btn primary', text: `⬇ ${t('rep_summary_pdf')}`, onclick: () => run([...reportPick].filter((id) => team.includes(id)), 'pdf', 'summary') }),
+      el('button', { type: 'button', class: 'btn primary', text: `⬇ ${t('rep_full_pdf')}`, onclick: () => run([...reportPick].filter((id) => team.includes(id)), 'pdf', 'full') }),
+      el('button', { type: 'button', class: 'btn', text: `✦ ${t('rep_team_html')}`, onclick: () => run([...reportPick].filter((id) => team.includes(id)), 'html', 'full') })));
 }
 function kpiLoadSection(team, peopleById) {
   const tasks = allTasks(); if (!tasks.length) return null;
@@ -1578,41 +1612,53 @@ function renderKpi() {
   const jump = (id) => { const n = document.getElementById(id); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   set(body,
     el('div', { class: 'bar' }, el('label', {}, el('span', { text: t('period') }), select)),
-    el('nav', { class: 'jump', 'aria-label': t('jump_label') }, [['k-share', 'jump_share'], ['k-mail', 'jump_mail'], ['k-load', 'jump_load'], ['k-report', 'jump_report'], ['k-level', 'jump_level'], ['k-week', 'jump_week'], ['k-table', 'jump_table'], ['k-map', 'jump_map'], ['k-plan', 'jump_plan'], ['k-reports', 'jump_reports']]
-      .map(([id, k]) => el('button', { type: 'button', class: 'pill-btn', text: t(k), onclick: () => jump(id) }))),
     renderTeamPicker(people, team),
     ds.sample ? el('p', { class: 'note sample', text: t('sample_note') }) : null,
     c.known && !c.complete ? el('p', { class: 'note', text: `${t('data_incomplete_warn')} (${t('incomplete', { got: c.got, want: c.want })})` }) : null,
-    el('div', { class: 'strip six' },
+    tag('overview', el('div', { class: 'strip six' },
       el('div', { class: 'lead' }, el('b', { text: f.team.done }), el('span', { text: t('col_done') })),
       el('div', {}, el('b', { text: String(wp.total) }), el('span', { text: t('col_points') })),
       el('div', {}, el('b', { text: f.team.assigned }), el('span', { text: t('col_assigned') })),
       el('div', {}, el('b', { text: formatRate(f.team.rate) }), el('span', { text: t('col_rate') })),
       el('div', {}, el('b', { text: formatHours(f.team.avgHours, lang) }), el('span', { text: t('col_avg') })),
       el('div', {}, el('b', { text: f.team.open }), el('span', { text: t('col_open') })),
-      el('div', {}, el('b', { text: `${f.team.fromEmail} · ${f.team.selfLogged}` }), el('span', { text: `${t('col_email')} · ${t('col_self')}` }))),
+      el('div', {}, el('b', { text: `${f.team.fromEmail} · ${f.team.selfLogged}` }), el('span', { text: `${t('col_email')} · ${t('col_self')}` })))),
     el('p', { class: 'strip-note' }, t('kpi_strip_note'), helpQ('help_points')),
     el('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin-bottom:8px' },
       el('div', { class: 'pills' }, [['done', 'kpi_sort_done'], ['points', 'kpi_sort_points'], ['median', 'kpi_sort_median'], ['open', 'kpi_sort_open']].map(([k, label]) =>
         el('button', { type: 'button', class: `pill-btn${kpiSort === k ? ' on' : ''}`, text: t(label), onclick: () => { kpiSort = k; renderKpi(); } })))),
     el('div', { id: 'k-table' }),
     table,
-    kpiShareSection(team, peopleById),
-    kpiMailSection(team, peopleById),
-    kpiLoadSection(team, peopleById),
-    kpiReportSection(ds, team, peopleById),
-    kpiLevelSection(team, peopleById),
-    kpiWeekSection(team, peopleById),
-    renderKpiDonuts(ds, f, team),
-    kpiMapPlanSection(ds, team, peopleById),
-    datasets.length > 1 ? [el('h2', { text: t('trend') }),
+    tag('team', kpiShareSection(team, peopleById)),
+    tag('mail', kpiMailSection(team, peopleById)),
+    tag('team', kpiLoadSection(team, peopleById)),
+    tag('reports', kpiReportSection(ds, team, peopleById)),
+    tag('team', kpiLevelSection(team, peopleById)),
+    tag('team', kpiWeekSection(team, peopleById)),
+    tag('overview', renderKpiDonuts(ds, f, team)),
+    tag('team', kpiMapPlanSection(ds, team, peopleById)),
+    tag('overview', datasets.length > 1 ? [el('h2', { text: t('trend') }),
       el('div', { class: 'columns' }, trend.map(({ d, f: x }) => el('div', { class: `column${d.key === kpiKey ? ' on' : ''}` },
         el('b', { text: String(x.done) }), el('i', { style: `height:${Math.max(6, Math.round((x.done / Math.max(1, ...trend.map((q) => q.f.done))) * 140))}px` }),
-        el('span', { class: 'ltr', text: `${d.range.from.slice(0, 7)} → ${d.range.to.slice(0, 7)}` }), el('small', { text: `${formatRate(x.rate)} · ${formatHours(x.medianHours, lang)}` })))),
-      trendTable] : null,
-    renderReports(ds.key, team),
-    el('h2', { text: t('definitions') }),
-    el('ul', { class: 'defs' }, DEFINITIONS.map((k) => el('li', { text: t(k) }))));
+        el('span', { class: 'ltr', text: `${d.range.from.slice(0, 7)} → ${d.range.to.slice(0, 7)}` }), el('small', { text: `${formatRate(x.rate)} · ${formatHours(x.avgHours, lang)}` })))),
+      trendTable] : null),
+    tag('reports', renderReports(ds.key, team)),
+    tag('overview', [el('h2', { text: t('definitions') }),
+    el('ul', { class: 'defs' }, DEFINITIONS.map((k) => el('li', { text: t(k) })))]));
+  kpiTabs(body);
+}
+// the board in four tabs: overview, team, email, reports — a section without a tag follows the one before it
+let kpiTab = 'overview';
+const tag = (tab, x) => { for (const n of (Array.isArray(x) ? x.flat(Infinity) : [x])) if (n && n.dataset) n.dataset.tab = tab; return x; };
+function kpiTabs(body) {
+  const first = body.querySelector('.strip'); if (!first) return;
+  const panels = { overview: el('div', { class: 'tab-panel' }), team: el('div', { class: 'tab-panel' }), mail: el('div', { class: 'tab-panel' }), reports: el('div', { class: 'tab-panel' }) };
+  const items = []; let n = first; while (n) { items.push(n); n = n.nextElementSibling; }
+  let cur = 'overview'; for (const x of items) { if (x.dataset.tab) cur = x.dataset.tab; panels[cur].append(x); }
+  const bar = el('div', { class: 'tabs', role: 'tablist' }, [['overview', 'ktab_overview'], ['team', 'ktab_team'], ['mail', 'ktab_mail'], ['reports', 'ktab_reports']].map(([k, label]) =>
+    el('button', { type: 'button', role: 'tab', 'data-k': k, class: `tab${kpiTab === k ? ' on' : ''}`, 'aria-selected': String(kpiTab === k), text: t(label), onclick: () => { kpiTab = k; for (const [p, el2] of Object.entries(panels)) el2.hidden = p !== k; for (const b of bar.children) { const on = b.getAttribute('data-k') === k; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); } } })));
+  for (const [p, el2] of Object.entries(panels)) el2.hidden = p !== kpiTab;
+  body.append(bar, panels.overview, panels.team, panels.mail, panels.reports);
 }
 
 // ---------- the board's donuts: who did the work, where it came from, and the tickets' state ----------
@@ -1720,32 +1766,6 @@ function renderWeights() {
     document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
-  const preparePublication = () => {
-    if (!admin || !weightsRepo || !diff.count) return;
-    const dlg = el('dialog', { class: 'help-dialog weight-publish-dialog' });
-    const prepared = approvedJson();
-    const input = el('textarea', { class: 'ltr weight-publish-json', rows: '10', readonly: '' });
-    input.value = prepared;
-    const copy = async () => {
-      try { await navigator.clipboard.writeText(prepared); toast(t('weights_json_copied')); }
-      catch { input.focus(); input.select(); toast(t('weights_json_copy_fail')); }
-    };
-    dlg.append(
-      el('h2', { text: t('weights_publish_title') }),
-      el('p', { class: 'hint', text: t('weights_publish_intro', { n: diff.count }) }),
-      el('ol', { class: 'weight-publish-steps' },
-        ...['weights_publish_1', 'weights_publish_2', 'weights_publish_3'].map((k) =>
-          el('li', { text: t(k) }))),
-      el('div', { class: 'row' },
-        el('button', { type: 'button', class: 'btn primary', text: t('weights_copy_json'), onclick: copy }),
-        el('a', { class: 'btn', href: 'https://github.com/mhmdsfwt371/Jed-Tech-portal/edit/main/weights.json',
-          target: '_blank', rel: 'noopener', text: t('weights_github_open') })),
-      input,
-      el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() }));
-    dlg.addEventListener('close', () => dlg.remove());
-    document.body.append(dlg);
-    dlg.showModal();
-  };
   const upload = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const file = e.target.files[0]; if (!file) return; try { weightsDevice = parseWeights(JSON.parse(await file.text())); await store.putWeights(weightsDevice); toast(t('weights_loaded')); renderWeights(); renderKpi(); renderMe(); } catch { toast(t('err_json')); } e.target.value = ''; } });
   const myRights = uid ? (admin ? t('w_you_admin') : (Object.keys(wt.tasks).filter(mayEdit).length ? t('w_you_some', { n: Object.keys(wt.tasks).filter(mayEdit).length }) : t('w_you_none'))) : t('w_you_unknown');
   set(body,
@@ -1756,8 +1776,6 @@ function renderWeights() {
     el('div', { class: 'row', style: 'margin:12px 0' },
       admin ? el('button', { type: 'button', class: 'btn primary', text: `⇪ ${t('weights_publish_team')}`, onclick: () => { localStorage.setItem('afaqy.weights.publish', approvedJson()); window.open('./manage-systems.html#weights', '_blank', 'noopener'); toast(t('weights_publish_opened')); } }) : null,
       el('button', { type: 'button', class: 'btn', text: t('weights_download'), onclick: download }),
-      admin ? el('button', { type: 'button', class: 'btn', disabled: !diff.count || !weightsRepo,
-        text: t('weights_publish_button'), onclick: preparePublication }) : null,
       admin ? el('button', { type: 'button', class: 'btn', text: t('weights_upload'), onclick: () => upload.click() }) : null, upload,
       weightsDevice ? el('button', { type: 'button', class: 'btn quiet', text: t('weights_reset'), onclick: async () => { weightsDevice = null; await store.putWeights(null); renderWeights(); renderKpi(); renderMe(); } }) : null,
       el('span', { class: 'hint', text: wt.reviewed ? t('weights_reviewed', { d: wt.reviewed }) : '' })),

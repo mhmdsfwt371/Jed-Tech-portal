@@ -52,6 +52,7 @@
 | `docs/decisions/0035-average-only-and-dashboard-views.md` | Average only; type and points in My KPIs; board and list views |
 | `docs/decisions/0036-publish-weights-and-card-order.md` | Publish weights from the portal; activities in points; card order |
 | `docs/decisions/0037-management-reports.md` | Management reports: branded PDF and interactive HTML |
+| `docs/decisions/0038-board-tabs-today-card.md` | Board in tabs; two report files; the Today card |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |
