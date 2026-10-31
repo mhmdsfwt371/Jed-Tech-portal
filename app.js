@@ -1371,7 +1371,14 @@ function renderSide() {
     el('a', { href: '#tools', class: 'sub nav-all', text: t('nav_all_systems') }),
     isTeamPortal ? null : el('a', { href: 'manage-systems.html', class: 'sub nav-all nav-manage', text: `⚙ ${t('manage_systems')}` })]);
 }
-const setMenu = (open) => { document.body.classList.toggle('nav-open', open); $('menu-btn').setAttribute('aria-expanded', String(open)); };
+// on a phone the open menu scrolls on its own and the page behind stays still (iOS passes swipes through otherwise); closing restores the position
+let navScrollY = 0;
+const setMenu = (open) => {
+  const b = document.body, small = window.matchMedia('(max-width: 820px)').matches;
+  if (open && small && !b.classList.contains('nav-locked')) { navScrollY = window.scrollY; b.style.top = `-${navScrollY}px`; b.classList.add('nav-locked'); }
+  if (!open && b.classList.contains('nav-locked')) { b.classList.remove('nav-locked'); b.style.top = ''; window.scrollTo({ top: navScrollY, behavior: 'instant' }); }
+  b.classList.toggle('nav-open', open); $('menu-btn').setAttribute('aria-expanded', String(open));
+};
 // The groups fold as in the reference: one open at a time; the group holding the current page opens by itself.
 function setGroup(section, open) {
   if (open) document.querySelectorAll('[data-nav-section]').forEach((o) => { if (o !== section) setGroup(o, false); });

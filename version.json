@@ -1,18 +1,15 @@
 {
-  "version": "8.55",
+  "version": "8.56",
   "date": "2026-11-01",
   "notes": {
     "ar": [
-      "حُذف رابط «Mardam Makkah» المكرر من أنظمة أفاقي، ويبقى «Makkah Mardam» في المشاريع ونسك.",
-      "ورقة تعريف الفريق بلا صفحات المدير: ست صفحات، ومعها مؤشرات «مؤشراتي» الستة."
+      "على الجوال (خاصة الآيفون): القائمة الجانبية تتمرر وحدها حتى آخرها — اللغة والوضع وتثبيت التطبيق — والصفحة خلفها ثابتة، وعند إغلاقها تعود الصفحة لمكانها."
     ],
     "en": [
-      "The duplicate “Mardam Makkah” link was removed from AFAQY systems; “Makkah Mardam” stays under Projects and Nusuk.",
-      "The team overview leaves out the manager pages: six pages, plus the six indicators of My KPIs."
+      "On phones (especially iPhone): the side menu scrolls on its own to the bottom — language, theme and install — while the page behind stays still, and closing it returns the page to where it was."
     ],
     "ur": [
-      "دہرا «Mardam Makkah» لنک آفاقی سسٹمز سے ہٹا دیا؛ «Makkah Mardam» پروجیکٹس اور نسک میں رہتا ہے۔",
-      "ٹیم تعارف میں مینیجر کے صفحات نہیں: چھ صفحات، اور میرے اشاریوں کے چھ اشاریے۔"
+      "فون پر (خاص طور پر آئی فون): سائیڈ مینو خود نیچے تک اسکرول ہوتا ہے — زبان، تھیم اور انسٹال — پیچھے کا صفحہ رکا رہتا ہے، اور بند کرنے پر صفحہ اپنی جگہ لوٹ آتا ہے۔"
     ]
   }
 }

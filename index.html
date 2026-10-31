@@ -710,7 +710,10 @@
     .burger { display: grid; }
     .content { padding: 18px 16px 72px; }
     #module-open { border-color: var(--ink-line); color: #FFFFFF; background: transparent; }
-    .sidebar { position: fixed; inset-block: 0; inset-inline-start: 0; z-index: 60; transform: translateX(-100%); transition: transform .22s ease; box-shadow: 0 0 40px rgba(0,0,0,.4); }
+    .sidebar { position: fixed; inset-block: 0; inset-inline-start: 0; z-index: 60; transform: translateX(-100%); transition: transform .22s ease; box-shadow: 0 0 40px rgba(0,0,0,.4);
+               height: 100vh; height: 100dvh; max-height: 100dvh; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+    .sidebar-foot { padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+    body.nav-locked { position: fixed; inset-inline: 0; width: 100%; overflow: hidden; }
     html[dir="rtl"] .sidebar { transform: translateX(100%); }
     body.nav-open .sidebar { transform: translateX(0); }
     body.nav-open .scrim { display: block; position: fixed; inset: 0; z-index: 50; background: rgba(10,20,28,.5); }

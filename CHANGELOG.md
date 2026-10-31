@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.56 — 2026-11-01
+
+- على الجوال (خاصة الآيفون): القائمة الجانبية تتمرر وحدها حتى آخرها — اللغة والوضع وتثبيت التطبيق — والصفحة خلفها ثابتة، وعند إغلاقها تعود الصفحة لمكانها.
+
+<details><summary>English</summary>
+
+- On phones (especially iPhone): the side menu scrolls on its own to the bottom — language, theme and install — while the page behind stays still, and closing it returns the page to where it was.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- فون پر (خاص طور پر آئی فون): سائیڈ مینو خود نیچے تک اسکرول ہوتا ہے — زبان، تھیم اور انسٹال — پیچھے کا صفحہ رکا رہتا ہے، اور بند کرنے پر صفحہ اپنی جگہ لوٹ آتا ہے۔
+
+</div>
+</details>
+
+
 ## v8.55 — 2026-11-01
 
 - حُذف رابط «Mardam Makkah» المكرر من أنظمة أفاقي، ويبقى «Makkah Mardam» في المشاريع ونسك.
