@@ -11,6 +11,7 @@
   * { box-sizing: border-box } body { margin:0; font-family: NS, 'Segoe UI', Tahoma, sans-serif; color: var(--navy); background: #EEF1F4; line-height: 1.8; }
   header { background: var(--navy); color:#FFFFFF; padding: 28px 24px 22px; border-bottom: 6px solid var(--green); }
   header .in { max-width: 1040px; margin: auto; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .dl { margin-inline-start: auto; display: grid; justify-items: center; gap: 2px; background: var(--green); color:#FFFFFF; text-decoration: none; padding: 10px 18px; border-radius: 10px; font-weight: 700; } .dl small { font-weight: 400; font-size: 11px; opacity: .9; }
   header img { height: 46px; background:#FFFFFF; padding: 8px 12px; border-radius: 10px; }
   header h1 { margin: 0; font-size: 28px; } header p { margin: 4px 0 0; opacity: .85; }
   .wrap { max-width: 1040px; margin: 22px auto; display: grid; grid-template-columns: 240px 1fr; gap: 20px; padding: 0 16px; }
@@ -32,7 +33,7 @@
 </style>
 </head>
 <body>
-<header><div class="in"><img src="assets/afaqy-logo.png" alt="AFAQY"><div><h1>محلل المناقصات — دليل الاستخدام</h1><p>من فولدر المنافسة إلى دراسة القرار وجدول الكميات والعرض الفني والمالي — بهوية آفاقي</p></div></div></header>
+<header><div class="in"><img src="assets/afaqy-logo.png" alt="AFAQY"><div><h1>محلل المناقصات — دليل الاستخدام</h1><p>من فولدر المنافسة إلى دراسة القرار وجدول الكميات والعرض الفني والمالي — بهوية آفاقي</p></div><a class="dl" href="https://afaqyitegy-my.sharepoint.com/:u:/g/personal/mohammed_safwat_afaqy_com/IQAVk8ih4MmuSIgk3r345N-VAd22cAUWBOQcI5Lvt-eXgeE?e=yTIZ7n" target="_blank" rel="noopener">⬇ تحميل البرنامج<small>شيربوينت — بحساب آفاقي</small></a></div></header>
 <div class="wrap">
 <nav aria-label="المحتويات">
   <a href="#what">ما البرنامج</a><a href="#need">المتطلبات</a><a href="#install">التثبيت</a><a href="#run">التشغيل لأول مرة</a><a href="#use">تحليل منافسة</a>
@@ -59,7 +60,7 @@
 </section>
 <section id="install"><h2>التثبيت</h2>
   <ol class="steps">
-    <li>نزّل ملف البرنامج المضغوط من مجلد الإدارة الفنية على شيربوينت (يحتاج حساب آفاقي)، وفك الضغط في مجلد ثابت (مثل <code>C:\TenderAnalyzer</code>).</li>
+    <li>نزّل ملف البرنامج المضغوط من <a href="https://afaqyitegy-my.sharepoint.com/:u:/g/personal/mohammed_safwat_afaqy_com/IQAVk8ih4MmuSIgk3r345N-VAd22cAUWBOQcI5Lvt-eXgeE?e=yTIZ7n" target="_blank" rel="noopener">رابط شيربوينت</a> (يحتاج حساب آفاقي)، وفك الضغط في مجلد ثابت (مثل <code>C:\TenderAnalyzer</code>).</li>
     <li>شغّل <code>setup.bat</code> بنقرة مزدوجة: يثبّت مكتبات بايثون المطلوبة.</li>
     <li>عند سؤال «API key» الصق مفتاحك واضغط Enter — يُحفظ في خزنة الويندوز، لا في ملف. (Enter بدون كتابة يحتفظ بالمفتاح المحفوظ سابقًا.)</li>
     <li>عند ظهور «Setup complete» أغلق النافذة.</li>

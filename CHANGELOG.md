@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.44 — 2026-10-31
+
+- دليل «محلل المناقصات» فيه الآن زر تحميل البرنامج (شيربوينت — بحساب آفاقي).
+
+<details><summary>English</summary>
+
+- The Tender Analyzer manual now has the program’s download button (SharePoint — AFAQY account).
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «ٹینڈر تجزیہ کار» گائیڈ میں اب پروگرام کا ڈاؤن لوڈ بٹن ہے (شیئرپوائنٹ — آفاقی اکاؤنٹ)۔
+
+</div>
+</details>
+
+
 ## v8.43 — 2026-10-31
 
 - لوحة المؤشرات صارت أربع تبويبات: نظرة عامة · الفريق · البريد · التقارير — بدل عشرة أقسام في تمرير واحد.
