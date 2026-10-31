@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v8.41 — 2026-10-31
+
+- «تقارير للإدارة» في لوحة المؤشرات: اختر الفترة والأشخاص، ثم «تقرير الفريق — PDF» بهوية أفاقي (غلاف، ملخص تنفيذي، مقارنة، وصفحة لكل مهندس بمستواه ومحاوره ونقاطه وإيقاعه وحِمله)، أو «PDF» بجانب أي اسم لتقريره وحده، أو النسخة التفاعلية HTML للإرسال.
+- صفحة إدارة الروابط تتذكر المفتاح على جهازك وتفتح وحدها.
+- كل البطاقات تُرتَّب بالسحب: أدوات الرئيسية، مربعات مؤشراتي، بطاقات الفريق، البطاقات الشهرية، وبطاقات الخطة.
+
+<details><summary>English</summary>
+
+- “Reports for management” on the KPI board: choose the period and the people, then “Chosen team report — PDF” in AFAQY’s identity (cover, executive summary, comparison, and a page per engineer with level, axes, points, rhythm and load), “PDF” beside any name for that person alone, or the interactive HTML version to send.
+- The links admin page remembers the key on your device and opens by itself.
+- Every card list is ordered by drag: home tools, My KPIs tiles, team cards, monthly cards and plan cards.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اشاریوں کے بورڈ پر «انتظامیہ کے لیے رپورٹس»: مدت اور افراد چنیں، پھر آفاقی کی شناخت میں «منتخب ٹیم کی رپورٹ — PDF»، کسی نام کے ساتھ «PDF» صرف اس کے لیے، یا بھیجنے کے لیے تعاملی HTML ورژن۔
+- لنکس کا ایڈمن صفحہ آپ کے آلے پر کلید یاد رکھتا اور خود کھلتا ہے۔
+- ہر کارڈ فہرست گھسیٹ کر ترتیب پاتی ہے۔
+
+</div>
+</details>
+
+
 ## v8.40 — 2026-10-31
 
 - «نشر الأوزان للفريق» في صفحة الأوزان: يفتح صفحة الإدارة، تلصق المفتاح وتضغط «نشر الآن» — فتُحسب نقاط الجميع بأوزانك في اللوحة وكل الملفات الشخصية.

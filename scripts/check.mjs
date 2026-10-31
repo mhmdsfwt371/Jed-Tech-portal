@@ -177,7 +177,7 @@ for (const f of ['docs/crm-api.md', 'docs/data-format.md', 'docs/kpi-factors.md'
 // 15. Identity colours only. Every colour in the page is the AFAQY template palette or a tint/shade of it.
 {
   // the Service Management / R&D Portal colours (light) and the dark set derived from them — docs/design.md
-  const PALETTE = new Set(["#0369A1", "#08131C", "#0A5F67", "#0B1824", "#0E3438", "#0E7C86", "#0F2231", "#10283A", "#11222F", "#12301F", "#14293A", "#15803D", "#1B3547", "#223A4D", "#24394A", "#27455B", "#2CA6B0", "#2F4A5E", "#3A2A10", "#3B1714", "#4CB782", "#5A6B78", "#5AB0E0", "#6CC7CF", "#8797A3", "#8FA0AC", "#B42318", "#B45309", "#C3CED7", "#CFDAE2", "#DBE2E8", "#DCE6EC", "#E0A32E", "#E2F0F9", "#E3EAF0", "#E4F2F3", "#E6F4EA", "#EEF1F4", "#F07167", "#F1F5F8", "#FDECEB", "#FDF1E1", "#FFFFFF"]);
+  const PALETTE = new Set(["#1C1E3D", "#2A7130", "#0369A1", "#08131C", "#0A5F67", "#0B1824", "#0E3438", "#0E7C86", "#0F2231", "#10283A", "#11222F", "#12301F", "#14293A", "#15803D", "#1B3547", "#223A4D", "#24394A", "#27455B", "#2CA6B0", "#2F4A5E", "#3A2A10", "#3B1714", "#4CB782", "#5A6B78", "#5AB0E0", "#6CC7CF", "#8797A3", "#8FA0AC", "#B42318", "#B45309", "#C3CED7", "#CFDAE2", "#DBE2E8", "#DCE6EC", "#E0A32E", "#E2F0F9", "#E3EAF0", "#E4F2F3", "#E6F4EA", "#EEF1F4", "#F07167", "#F1F5F8", "#FDECEB", "#FDF1E1", "#FFFFFF"]);
   for (const f of ['index.html', 'app.js']) {
     for (const c of read(f).match(/#[0-9A-Fa-f]{6}\b/g) || []) if (!PALETTE.has(c.toUpperCase())) note(`${f}: colour ${c} is not in the Service Management palette (docs/design.md)`);
   }

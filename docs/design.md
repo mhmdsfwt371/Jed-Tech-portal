@@ -39,3 +39,8 @@
 
 ## الوحدات
 الأداة داخل البوابة تحتفظ بتصميمها هي — البوابة لا تغيّر كود أي أداة.
+
+
+## AFAQY brand colours (reports)
+
+Taken from the AFAQY logo (assets/afaqy-logo.png): navy **#1C1E3D** and green **#2A7130**. Used only in the management reports (ADR-0037), with the portal teal #0E7C86 as the supporting colour.

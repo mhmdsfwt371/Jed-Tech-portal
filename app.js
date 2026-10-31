@@ -107,12 +107,15 @@ const moduleLink = (x, cls, ...kids) => (x.module
   : el('a', { class: cls, href: x.url, target: '_blank', rel: 'noopener' }, ...kids));
 function renderTools() {
   // every team tool as a card: what it does, and how it helps the team
-  set($('primary'), [...PRIMARY, ...MORE.filter((x) => x.module && x.status === 'live')].map((x) => {
+  const allTools = [...PRIMARY, ...MORE.filter((x) => x.module && x.status === 'live')]; const toolById = new Map(allTools.map((x) => [x.id, x]));
+  set($('primary'), sortByOrder(allTools.map((x) => x.id), 'tools').map((id) => toolById.get(id)).map((x) => {
     const icon = el('span', { 'aria-hidden': 'true' }); icon.innerHTML = ICONS[x.icon] || ICONS.api || '';
     return moduleLink(x, 'tool', icon, el('span', { class: 'name', text: L(x.name, lang) }), x.desc ? el('span', { class: 'desc', text: L(x.desc, lang) }) : null,
       x.helps ? el('span', { class: 'helps' }, el('b', { text: `${t('tool_helps')}: ` }), L(x.helps, lang)) : null,
       x.module ? el('span', { class: 'badge', text: t('in_portal') }) : null, el('span', { class: 'go', text: t('open') }));
   }));
+  for (const c of $('primary').children) { const id = (c.getAttribute('href') || '').replace('#m-', ''); if (id) c.dataset.id = id; }
+  makeSortable($('primary'), 'tools');
   $('manage-systems').hidden = isTeamPortal;
   set($('systems'), SYSTEM_CATEGORIES.map((c) => el('section', { class: 'systems-category' }, el('h3', { text: L(c.name, lang) }), el('div', { class: 'row' }, SYSTEMS.filter((x) => x.category === c.id).map((x) => el('a', { class: 'chip', href: x.url, target: '_blank', rel: 'noopener', text: L(x.name, lang) }))))));
   set($('more'), MORE.filter((x) => !x.module).map((x) => (x.status === 'live'
@@ -771,11 +774,11 @@ function meDashboard(body, pm, { nm, arrow }) {
   };
   const open = (title, list, perPerson, k, actsOf = []) => sheet(title, [{ k: 'board', label: t('sheet_view_board'), node: board(list, perPerson, k, actsOf) }, { k: 'list', label: t('sheet_view_list'), node: table(list) }], csvOf(list));
   const grid = (ids, isTeam) => { const now = stats(ids, win), before = stats(ids, prev);
-    return el('div', { class: 'cmp-grid' }, DASH.map(([k, label]) => el('div', { class: 'cmp tile-open', tabIndex: 0, onclick: () => {
+    return makeSortable(el('div', { class: 'cmp-grid' }, sortByOrder(DASH.map((d) => d[0]), isTeam ? 'tiles-team' : 'tiles-me').map((k) => DASH.find((d) => d[0] === k)).map(([k, label]) => el('div', { class: 'cmp tile-open', 'data-id': k, tabIndex: 0, onclick: () => {
         const per = isTeam ? ids.map((id) => { const s = stats([id], win); return { l: nm(id), v: k === 'rate' ? Math.round((s.rate || 0) * 100) : k === 'avgHours' ? Math.round((s.avgHours || 0) * 10) / 10 : s[k], t: show(k, s) }; }).sort((p, q) => q.v - p.v) : null;
         open(`${t(label)} — ${isTeam ? t('tiles_team') : t('tiles_mine')} — ${k === 'open' ? t('sheet_now') : `${win.from} → ${win.to}`}`, listFor(ids, k, win), per, k, k === 'points' ? actsFor(ids, win) : []); } },
       el('span', { class: 'cmp-k', text: t(label) }), el('b', { class: 'cmp-v', text: `\u2068${show(k, now)}\u2069` }),
-      el('span', { class: 'cmp-was', text: k === 'open' ? t('sheet_now') : `${t('me_last_period')}: \u2068${show(k, before)}\u2069` }), k === 'open' ? el('span', { class: 'delta same', text: ' ' }) : arrow(k, now, before)))); };
+      el('span', { class: 'cmp-was', text: k === 'open' ? t('sheet_now') : `${t('me_last_period')}: \u2068${show(k, before)}\u2069` }), k === 'open' ? el('span', { class: 'delta same', text: ' ' }) : arrow(k, now, before)))), isTeam ? 'tiles-team' : 'tiles-me'); };
   // my block replaces the page's first tile grid; the heading row and the dates line fold with it
   const old = body.querySelector('.cmp-grid'); const mine = grid([me.user.id], false);
   if (old) { const dates = old.previousElementSibling, headRow = dates && dates.previousElementSibling;
@@ -1224,6 +1227,110 @@ function meLevelSection(pm, who) {
   return [el('h2', {}, t('lvl_h'), helpQ('help_level')), levelView(levels[me.user.id], who, quarter)];
 }
 // ---------- load sustainability (ADR-0032) — the manager's eyes only ----------
+// ---------- reports for management (ADR-0037): a branded PDF and an interactive HTML, per engineer or for a chosen team ----------
+let reportPick = null;
+function logoDataUrl() { try { const img = document.querySelector('img[src$="afaqy-logo.png"]'); if (!img || !img.naturalWidth) return new URL('assets/afaqy-logo.png', location.href).href;
+  const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight; c.getContext('2d').drawImage(img, 0, 0); return c.toDataURL('image/png'); } catch { return new URL('assets/afaqy-logo.png', location.href).href; } }
+function reportData(ds, ids, peopleById) {
+  const wt = weights(), range = ds.range, team = scopeIds(roster());
+  const nmR = (id) => nameOf(peopleById.get(id), lang) || id;
+  const f = factor1(ds.tasks, { range, team });
+  const repK = reports.find((r) => r.key === ds.key);
+  const wp = weightedPoints(ds.tasks, repK ? repK.activities : [], wt, { range, team });
+  const win = { from: range.from, to: range.to, label: `${range.from} → ${range.to}` };
+  const levels = {}; for (const pool of levelPools(team)) Object.assign(levels, engineerLevels(ds.tasks, wt, pool, win));
+  const load = {}; for (const pool of levelPools(team)) Object.assign(load, loadSustainability(allTasks(), wt, pool, range.to).people);
+  const inR = (iso) => { const d = saudiDay(iso); return d && d >= range.from && d <= range.to; };
+  const weekOf = (iso) => { const d = new Date(Date.parse(iso) + 3 * 3600000); d.setUTCDate(d.getUTCDate() - d.getUTCDay()); return d.toISOString().slice(5, 10); };
+  const people = ids.map((id) => { const r = f.people.find((x) => x.id === id) || { assigned: 0, done: 0, rate: null, avgHours: null, open: 0, fromEmail: 0 };
+    const done = ds.tasks.filter((x) => x.assigneeId === id && x.state === 'done' && inR(x.completedAt));
+    const byType = new Map(); for (const x of done) { const k = x.type ? typeLabel(x.type, lang).replace(/[\u2066-\u2069]/g, '') : t('type_unknown'); const o = byType.get(k) || { n: 0, p: 0 }; o.n++; o.p += taskPoints(wt, x); byType.set(k, o); }
+    const weeks = new Map(); for (const x of done) weeks.set(weekOf(x.completedAt), (weeks.get(weekOf(x.completedAt)) || 0) + 1);
+    return { ...r, id, name: nmR(id), position: positionOf(roster(), id, lang) || '', points: Math.round(((wp.byId.get(id) || {}).total || 0) * 10) / 10,
+      level: levels[id] || null, load: load[id] || null, byType: [...byType.entries()].map(([k, v]) => ({ k, n: v.n, p: Math.round(v.p * 10) / 10 })).sort((p, q) => q.p - p.p),
+      weeks: [...weeks.entries()].sort((p, q) => (p[0] < q[0] ? -1 : 1)) }; }).sort((p, q) => q.points - p.points);
+  const tot = (k) => people.reduce((s, p) => s + (p[k] || 0), 0);
+  const asg = ds.tasks.filter((x) => ids.includes(x.assigneeId) && inR(x.createdAt) && x.state !== 'cancelled');
+  const dur = ds.tasks.filter((x) => ids.includes(x.assigneeId) && x.state === 'done' && inR(x.completedAt) && x.createdAt).map((x) => (Date.parse(x.completedAt) - Date.parse(x.createdAt)) / 3600000).filter((h) => h >= 0);
+  const author = me ? `${nameOf(me.people.find((p) => p.id === me.user.id) || {}, lang) || me.user.name || ''}${positionOf(roster(), me.user.id, lang) ? ` — ${positionOf(roster(), me.user.id, lang)}` : ''}` : '';
+  return { range, people, author, team: { done: tot('done'), points: Math.round(tot('points') * 10) / 10, rate: asg.length ? asg.filter((x) => x.state === 'done').length / asg.length : null,
+    avgHours: dur.length ? dur.reduce((s, v) => s + v, 0) / dur.length : null, open: tot('open'), fromEmail: tot('fromEmail') } };
+}
+function reportHtml(D, { single = false } = {}) {
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const rtl = lang !== 'en', logo = logoDataUrl(), fontUrl = (f) => new URL(`assets/fonts/${f}`, location.href).href;
+  const rate = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`), hrs = (v) => (v == null ? '—' : formatHours(v, lang).replace(/[\u2066-\u2069]/g, ''));
+  const axes = ['volume', 'difficulty', 'speed', 'reliability'];
+  const radar = (lv) => { if (!lv || lv.score == null) return `<div class="muted">${esc(t('lvl_early'))}</div>`; const cx = 90, cy = 90, R = 70;
+    const pt = (i, v) => { const a = -Math.PI / 2 + (i * Math.PI) / 2, r = (R * (v || 0)) / 100; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; };
+    const ring = (f2) => axes.map((_, i) => pt(i, f2 * 100).join(',')).join(' ');
+    return `<svg viewBox="0 0 180 180" class="radar" role="img" aria-label="${esc(t('lvl_h'))}">${[0.25, 0.5, 0.75, 1].map((f2) => `<polygon points="${ring(f2)}" class="ring"/>`).join('')}
+      <polygon points="${axes.map((k, i) => pt(i, lv.axes[k]).join(',')).join(' ')}" class="shape"/>${axes.map((k, i) => { const [x, y] = pt(i, 118); return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle">${esc(t(`axis_${k}`))} ${lv.axes[k] == null ? '—' : lv.axes[k]}</text>`; }).join('')}</svg>`; };
+  const bars = (rows, unit = '') => { const max = Math.max(1, ...rows.map((r) => r.v)); return rows.map((r) => `<div class="bar" title="${esc(r.l)}: ${r.v}${unit}"><span class="bl">${esc(r.l)}</span><i><b style="width:${Math.round((r.v / max) * 100)}%"></b></i><span class="bv">${r.v}</span></div>`).join(''); };
+  const loadTxt = (L2) => (!L2 ? '—' : t(`load_st_${L2.status}`));
+  const teamMax = Math.max(1, ...D.people.map((p) => p.points));
+  const personPage = (p, i) => { const lv = p.level, lvl = lv && lv.level ? `${lv.level} · ${t(`lvl_${LEVELS[lv.level - 1].k}`)}` : t('lvl_early');
+    const ax = lv ? axes.filter((k) => lv.axes[k] != null).sort((a2, b2) => lv.axes[b2] - lv.axes[a2]) : [];
+    return `<section class="page person" data-name="${esc(p.name)}"><header class="ph"><img src="${logo}" alt="AFAQY" class="logo"/><div><h2>${esc(p.name)}</h2><p>${esc(p.position)}</p></div><div class="rank">${esc(t('rep_rank', { r: i + 1, n: D.people.length }))}</div></header>
+      <div class="kpis">${[['col_done', p.done], ['col_points', p.points], ['col_rate', rate(p.rate)], ['col_avg', hrs(p.avgHours)], ['col_open', p.open], ['col_email', p.fromEmail]].map(([k, v]) => `<div class="kpi"><span>${esc(t(k))}</span><b>${esc(v)}</b></div>`).join('')}</div>
+      <div class="grid2"><div class="card"><h3>${esc(t('lvl_h'))} — <span class="badge">${esc(lvl)}</span></h3>${radar(lv)}
+        ${ax.length ? `<p class="note"><b>${esc(t('rep_strong'))}:</b> ${esc(t(`axis_${ax[0]}`))} · <b>${esc(t('rep_develop'))}:</b> ${esc(t(`axis_${ax[ax.length - 1]}`))}</p>` : ''}</div>
+        <div class="card"><h3>${esc(t('sheet_points_by_type'))}</h3>${p.byType.length ? bars(p.byType.slice(0, 8).map((r) => ({ l: r.k, v: r.p }))) : `<div class="muted">${esc(t('sheet_none'))}</div>`}</div></div>
+      <div class="grid2"><div class="card"><h3>${esc(t('sheet_by_week'))}</h3>${p.weeks.length ? bars(p.weeks.map(([l, v]) => ({ l, v }))) : `<div class="muted">${esc(t('sheet_none'))}</div>`}</div>
+        <div class="card"><h3>${esc(t('rep_load'))}</h3><p class="big ${p.load ? p.load.status : ''}">${esc(loadTxt(p.load))}</p>${p.load && p.load.signals && p.load.signals.length ? `<p class="note">${p.load.signals.map((s) => esc(t(`load_sig_${s.k}`, { v: s.v }))).join(' · ')}</p>` : ''}
+          <h3>${esc(t('rep_share'))}</h3><div class="share"><i><b style="width:${Math.round((p.points / teamMax) * 100)}%"></b></i></div></div></div>
+      <footer>${esc(t('rep_footer', { from: D.range.from, to: D.range.to }))}${D.author ? ` · ${esc(t('rep_by', { who: D.author }))}` : ''}</footer></section>`; };
+  const top = D.people.slice(0, 3).map((p) => p.name).join('، ');
+  const attention = D.people.filter((p) => p.load && p.load.status === 'red').map((p) => p.name);
+  const lvCount = [1, 2, 3, 4].map((n) => ({ l: t(`lvl_${LEVELS[n - 1].k}`), v: D.people.filter((p) => p.level && p.level.level === n).length }));
+  const cover = single ? '' : `<section class="page cover"><img src="${logo}" alt="AFAQY" class="logo big"/><h1>${esc(t('rep_title_team'))}</h1><p class="period">${esc(D.range.from)} → ${esc(D.range.to)}</p><p class="period">${esc(t('rep_people', { n: D.people.length }))}</p>${D.author ? `<p class="by">${esc(t('rep_by', { who: D.author }))}</p>` : ''}</section>
+    <section class="page"><header class="ph"><img src="${logo}" alt="AFAQY" class="logo"/><h2>${esc(t('rep_exec'))}</h2></header>
+      <div class="kpis">${[['col_done', D.team.done], ['col_points', D.team.points], ['col_rate', rate(D.team.rate)], ['col_avg', hrs(D.team.avgHours)], ['col_open', D.team.open], ['col_email', D.team.fromEmail]].map(([k, v]) => `<div class="kpi"><span>${esc(t(k))}</span><b>${esc(v)}</b></div>`).join('')}</div>
+      <ul class="exec"><li>${esc(t('rep_exec_1', { done: D.team.done, points: D.team.points, rate: rate(D.team.rate), avg: hrs(D.team.avgHours) }))}</li><li>${esc(t('rep_exec_top', { names: top || '—' }))}</li>
+        <li>${esc(attention.length ? t('rep_exec_attn', { names: attention.join('، ') }) : t('rep_exec_ok'))}</li></ul>
+      <div class="grid2"><div class="card"><h3>${esc(t('rep_points_team'))}</h3>${bars(D.people.map((p) => ({ l: p.name, v: p.points })))}</div><div class="card"><h3>${esc(t('rep_levels'))}</h3>${bars(lvCount)}</div></div>
+      <div class="card"><h3>${esc(t('rep_table'))} <input class="find no-print" placeholder="${esc(t('rep_find'))}" oninput="spot(this.value)"/></h3><table class="tbl"><thead><tr>${['col_person', 'col_points', 'col_done', 'col_rate', 'col_avg', 'col_open', 'lvl_col_level', 'rep_load'].map((k, n) => `<th onclick="sortBy(${n})">${esc(t(k))}</th>`).join('')}</tr></thead><tbody>
+        ${D.people.map((p) => `<tr data-name="${esc(p.name)}"><td>${esc(p.name)}</td><td data-v="${p.points}">${p.points}</td><td data-v="${p.done}">${p.done}</td><td data-v="${p.rate ?? -1}">${rate(p.rate)}</td><td data-v="${p.avgHours ?? 1e9}">${hrs(p.avgHours)}</td><td data-v="${p.open}">${p.open}</td><td data-v="${p.level && p.level.level || 0}">${esc(p.level && p.level.level ? p.level.level : '—')}</td><td>${esc(loadTxt(p.load))}</td></tr>`).join('')}</tbody></table></div>
+      <footer>${esc(t('rep_footer', { from: D.range.from, to: D.range.to }))}</footer></section>`;
+  const css = `@font-face{font-family:NS;src:url('${fontUrl('NotoSansArabic-Regular.ttf')}')}@font-face{font-family:NS;font-weight:700;src:url('${fontUrl('NotoSansArabic-Bold.ttf')}')}
+    :root{--navy:#1C1E3D;--green:#2A7130;--teal:#0E7C86;--line:#E3EAF0;--soft:#F1F5F8}*{box-sizing:border-box}body{margin:0;font-family:NS,'Segoe UI',Tahoma,sans-serif;color:var(--navy);background:#EEF1F4;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .page{width:210mm;min-height:297mm;margin:12px auto;background:#fff;padding:16mm 14mm 14mm;position:relative;box-shadow:0 2px 14px rgba(28,30,61,.08);border-top:6px solid var(--green)}
+    .cover{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:linear-gradient(160deg,var(--navy) 0 62%,#fff 62%);color:#fff}.cover h1{font-size:30px;margin:26px 0 8px}.cover .period{font-size:16px;opacity:.9;margin:4px 0}.cover .by{position:absolute;bottom:22mm;color:var(--navy);font-weight:700}
+    .logo{height:34px}.logo.big{height:70px;background:#fff;padding:12px 18px;border-radius:12px}.ph{display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--line);padding-bottom:10px;margin-bottom:14px}.ph h2{margin:0;font-size:22px}.ph p{margin:2px 0 0;color:#5A6B78}.rank{margin-inline-start:auto;background:var(--navy);color:#fff;border-radius:999px;padding:6px 14px;font-weight:700;font-size:13px}
+    .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px}.kpi{background:var(--soft);border-radius:10px;padding:10px;border-inline-start:4px solid var(--teal)}.kpi span{display:block;font-size:11px;color:#5A6B78}.kpi b{font-size:20px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}.card{border:1px solid var(--line);border-radius:12px;padding:12px}.card h3{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .badge{background:var(--green);color:#fff;border-radius:999px;padding:2px 10px;font-size:12px}.radar{width:100%;max-width:230px;display:block;margin:auto}.radar .ring{fill:none;stroke:var(--line)}.radar .shape{fill:rgba(42,113,48,.25);stroke:var(--green);stroke-width:2}.radar text{font-size:9px;fill:var(--navy)}
+    .bar{display:grid;grid-template-columns:38% 1fr 40px;gap:8px;align-items:center;font-size:12px;margin:4px 0}.bl{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.bar i,.share i{display:block;height:10px;background:var(--soft);border-radius:5px;overflow:hidden}.bar b,.share b{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--green))}.bv{font-weight:700;text-align:end}
+    .share i{height:14px}.big{font-size:20px;font-weight:700;margin:0 0 6px}.big.red{color:#B42318}.big.amber{color:#B45309}.big.green{color:var(--green)}.note{font-size:12px;color:#2F4A5E}.muted{color:#8797A3;font-size:12px}
+    .exec{margin:0 0 14px;padding-inline-start:18px;line-height:1.9}.tbl{width:100%;border-collapse:collapse;font-size:12px}.tbl th{background:var(--navy);color:#fff;padding:7px;cursor:pointer;text-align:start}.tbl td{padding:6px 7px;border-bottom:1px solid var(--line)}.tbl tr:nth-child(even) td{background:var(--soft)}
+    .find{margin-inline-start:auto;font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:8px}footer{position:absolute;bottom:8mm;inset-inline:14mm;font-size:10px;color:#8797A3;border-top:1px solid var(--line);padding-top:4px}
+    .dim{opacity:.18}@media print{body{background:#fff}.page{margin:0;box-shadow:none;page-break-after:always}.no-print{display:none}}@page{size:A4;margin:0}`;
+  const js = `function sortBy(n){const tb=document.querySelector('.tbl tbody');if(!tb)return;const rows=[...tb.rows];const dir=tb.dataset.c==n&&tb.dataset.d==='1'?-1:1;tb.dataset.c=n;tb.dataset.d=dir===1?'1':'0';rows.sort((a,b)=>{const x=a.cells[n],y=b.cells[n];const vx=x.dataset.v!=null?+x.dataset.v:x.textContent,vy=y.dataset.v!=null?+y.dataset.v:y.textContent;return (vx>vy?1:vx<vy?-1:0)*(n===0?dir:-dir);});rows.forEach(r=>tb.append(r));}
+    function spot(q){q=q.trim().toLowerCase();document.querySelectorAll('.person,[data-name]').forEach(e=>{const m=!q||(e.dataset.name||'').toLowerCase().includes(q);e.classList.toggle('dim',!m);});const hit=q&&[...document.querySelectorAll('section.person')].find(e=>(e.dataset.name||'').toLowerCase().includes(q));if(hit)hit.scrollIntoView({behavior:'smooth'});}`;
+  return `<!doctype html><html lang="${lang}" dir="${rtl ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(single ? `${t('rep_title_one')} — ${D.people[0] ? D.people[0].name : ''}` : t('rep_title_team'))}</title><style>${css}</style></head>
+    <body>${cover}${D.people.map(personPage).join('')}<script>${js}<\/script></body></html>`;
+}
+function openReport(html, mode, fileBase) {
+  if (mode === 'html') { const a = el('a', { href: URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' })), download: `${fileBase}.html` }); document.body.append(a); a.click(); a.remove(); toast(t('rep_saved_html')); return; }
+  const w = window.open('', '_blank'); if (!w) { toast(t('rep_popup')); return; }
+  w.document.open(); w.document.write(html.replace('</body>', '<script>window.addEventListener("load",()=>setTimeout(()=>window.print(),600))<\/script></body>')); w.document.close();
+}
+function kpiReportSection(ds, team, peopleById) {
+  if (!ds) return null; const engineers = levelPools(team).flat();
+  if (!reportPick) reportPick = new Set(engineers);
+  const nmR = (id) => nameOf(peopleById.get(id), lang) || id;
+  const base = (s) => `AFAQY-${s}-${ds.range.from}_${ds.range.to}`;
+  const run = (ids, mode, single) => { if (!ids.length) { toast(t('rep_pick_one')); return; } const D = reportData(ds, ids, peopleById); openReport(reportHtml(D, { single }), mode, base(single ? (D.people[0] ? D.people[0].name.replace(/\s+/g, '-') : 'engineer') : 'team')); };
+  return el('section', { class: 'share', id: 'k-report' },
+    el('h2', {}, t('rep_h', { from: ds.range.from, to: ds.range.to }), helpQ('help_report')),
+    el('div', { class: 'rep-pick' }, team.map((id) => el('label', { class: 'rep-person' },
+      el('input', { type: 'checkbox', ...(reportPick.has(id) ? { checked: '' } : {}), onchange: (e) => { if (e.target.checked) reportPick.add(id); else reportPick.delete(id); } }),
+      el('span', { text: nmR(id) }),
+      el('button', { type: 'button', class: 'btn quiet tiny', title: t('rep_one_pdf'), text: 'PDF', onclick: (e) => { e.preventDefault(); run([id], 'pdf', true); } })))),
+    el('div', { class: 'row' },
+      el('button', { type: 'button', class: 'btn primary', text: `⬇ ${t('rep_team_pdf')}`, onclick: () => run([...reportPick].filter((id) => team.includes(id)), 'pdf', false) }),
+      el('button', { type: 'button', class: 'btn', text: `✦ ${t('rep_team_html')}`, onclick: () => run([...reportPick].filter((id) => team.includes(id)), 'html', false) })));
+}
 function kpiLoadSection(team, peopleById) {
   const tasks = allTasks(); if (!tasks.length) return null;
   const nmL = (id) => nameOf(peopleById.get(id), lang) || id; const ro = roster().people || {};
@@ -1371,7 +1478,7 @@ function kpiMapPlanSection(ds, team, peopleById) { const ym = ds.range.to.slice(
           el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), ...TIERS.map((k) => el('th', { class: 'num', text: t(`tier_short_${k}`) })), el('th', { class: 'num', text: t('card_points') }), el('th', { text: t('card_arch') }))),
           el('tbody', {}, tm.cards.sort((x, y) => y.points - x.points).map((c) => el('tr', {}, el('td', { text: nmB(c.personId) }), ...TIERS.map((k) => cell(c.tiers.mine[k])), el('td', { class: 'num', text: String(c.points) }), el('td', { text: t(`arch_${c.archetype}`) })))))),
         el('h2', { id: 'k-plan' }, t('plan_h'), helpQ('help_plan')),
-        tm.plan.length ? el('div', { class: 'cards-grid' }, tm.plan.map((p) => { const c = tm.cards.find((x) => x.personId === p.id); return renderCard(c, nmB(p.id), { showRank: true, showSuggestions: true, compact: true }); })) : el('div', { class: 'empty', text: t('plan_none') })]; }
+        tm.plan.length ? makeSortable(el('div', { class: 'cards-grid' }, sortByOrder(tm.plan.map((p) => p.id), 'plan').map((id) => { const c = tm.cards.find((x) => x.personId === id); const n = renderCard(c, nmB(id), { showRank: true, showSuggestions: true, compact: true }); if (n) n.dataset.id = id; return n; })), 'plan') : el('div', { class: 'empty', text: t('plan_none') })]; }
 function coverageSection(rep, team, nm) { const cv = coverageTotals(rep, team); if (!cv.people.length && !cv.total.accounts) return null;
       const maxA = Math.max(1, ...cv.people.map((r) => r.accounts));
       return [el('h2', {}, t('f5_title'), helpQ('help_f5')), el('p', { class: 'hint', text: t('f5_sub', { n: cv.total.accounts, d: cv.total.devices, u: cv.total.uncovered, z: cv.total.zeroDevices }) }),
@@ -1433,7 +1540,7 @@ function renderKpi() {
   const jump = (id) => { const n = document.getElementById(id); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   set(body,
     el('div', { class: 'bar' }, el('label', {}, el('span', { text: t('period') }), select)),
-    el('nav', { class: 'jump', 'aria-label': t('jump_label') }, [['k-share', 'jump_share'], ['k-mail', 'jump_mail'], ['k-load', 'jump_load'], ['k-level', 'jump_level'], ['k-week', 'jump_week'], ['k-table', 'jump_table'], ['k-map', 'jump_map'], ['k-plan', 'jump_plan'], ['k-reports', 'jump_reports']]
+    el('nav', { class: 'jump', 'aria-label': t('jump_label') }, [['k-share', 'jump_share'], ['k-mail', 'jump_mail'], ['k-load', 'jump_load'], ['k-report', 'jump_report'], ['k-level', 'jump_level'], ['k-week', 'jump_week'], ['k-table', 'jump_table'], ['k-map', 'jump_map'], ['k-plan', 'jump_plan'], ['k-reports', 'jump_reports']]
       .map(([id, k]) => el('button', { type: 'button', class: 'pill-btn', text: t(k), onclick: () => jump(id) }))),
     renderTeamPicker(people, team),
     ds.sample ? el('p', { class: 'note sample', text: t('sample_note') }) : null,
@@ -1455,6 +1562,7 @@ function renderKpi() {
     kpiShareSection(team, peopleById),
     kpiMailSection(team, peopleById),
     kpiLoadSection(team, peopleById),
+    kpiReportSection(ds, team, peopleById),
     kpiLevelSection(team, peopleById),
     kpiWeekSection(team, peopleById),
     renderKpiDonuts(ds, f, team),
