@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.45 — 2026-10-31
+
+- «مشاريعي من البريد» في «مؤشراتي ← أنا»: استورد الملف الذي يُخرجه كلود في كروم من أوتلوك، فترى عدد المشاريع واللي اشتغلت عليها، ونشاطها شهريًّا، وبحثًا وتصفية وتصديرًا — على جهازك فقط.
+
+<details><summary>English</summary>
+
+- “My projects from email” under My KPIs → Me: import the file Claude in Chrome builds from Outlook to see the projects and those you worked on, activity per month, search, filters and export — on your device only.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «میرے اشاریے ← میں» میں «ای میل سے میرے پروجیکٹس»: کروم میں کلاڈ کی آؤٹ لک سے بنائی فائل درآمد کریں — پروجیکٹس، جن پر کام کیا، ماہانہ سرگرمی، تلاش، فلٹر اور برآمد — صرف آپ کے آلے پر۔
+
+</div>
+</details>
+
+
 ## v8.44 — 2026-10-31
 
 - دليل «محلل المناقصات» فيه الآن زر تحميل البرنامج (شيربوينت — بحساب آفاقي).

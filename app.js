@@ -51,7 +51,7 @@ function toast(msg) {
 
 // ---------- storage: IndexedDB, with an in-memory fallback where it is unavailable ----------
 const store = (() => {
-  let mem = []; let memMe = null; let memRep = []; let memRoster = null; let memWeights = null; let memCards = {}; let memMeet = {}; let memRepairs = []; let memPriv = []; let memMail = [];
+  let mem = []; let memProj = null; let memMe = null; let memRep = []; let memRoster = null; let memWeights = null; let memCards = {}; let memMeet = {}; let memRepairs = []; let memPriv = []; let memMail = [];
   const open = () => new Promise((res, rej) => {
     if (!('indexedDB' in window)) return rej(new Error('no idb'));
     const r = indexedDB.open('afaqy-portal', 1);
@@ -67,6 +67,8 @@ const store = (() => {
     async putReports(v) { try { await run('readwrite', (s) => s.put(v, 'reports')); } catch { memRep = v; } },
     async getPriv() { try { return (await run('readonly', (s) => s.get('privlinks'))) || []; } catch { return memPriv; } },
     async putPriv(v) { try { await run('readwrite', (s) => s.put(v, 'privlinks')); } catch { memPriv = v; } },
+    async getProjects() { try { return (await run('readonly', (s) => s.get('projects'))) || null; } catch { return memProj; } },
+    async putProjects(v) { try { await run('readwrite', (s) => s.put(v, 'projects')); } catch { memProj = v; } },
     async getMail() { try { return (await run('readonly', (s) => s.get('mailrows'))) || []; } catch { return memMail; } },
     async putMail(v) { try { await run('readwrite', (s) => s.put(v, 'mailrows')); } catch { memMail = v; } },
     async getRepairs() { try { return (await run('readonly', (s) => s.get('repairs'))) || []; } catch { return memRepairs; } },
@@ -414,6 +416,8 @@ function renderSignatures() {
 }
 // ---------- private links: internal addresses (VPN portals, device admin pages) kept on this device, never published (ADR-0026) ----------
 let privLinks = [];
+let myProjects = null;   // the projects-from-mail file, on this device only (ADR-0039)
+let projAll = false, projOnlyMine = false, projQuery = '';
 function cleanPrivLink(x) {
   try { const name = String((x && x.name) || '').trim().slice(0, 80), u = new URL(String((x && x.url) || '').trim());
     if (!name || !['http:', 'https:'].includes(u.protocol) || u.username || u.password) return null; return { name, url: u.href }; } catch { return null; }
@@ -759,6 +763,54 @@ function todayCard(pm, nm) {
     team.length > 1 ? el('div', { class: 'team-goal' }, el('div', { class: 'tg-row' }, el('span', { text: t('today_team_goal') }), el('b', { text: `${cur} / ${goal}` })),
       el('i', {}, el('b', { style: `width:${Math.min(100, Math.round((cur / goal) * 100))}%` })), el('small', { text: cur >= goal ? t('today_team_done') : t('today_team_left', { n: goal - cur }) })) : null);
 }
+// ---------- my projects from mail (ADR-0039): imported from the file Claude in Chrome builds from Outlook web — device only ----------
+function cleanProjects(raw) {
+  if (!raw || raw.schema !== 'afaqy-projects-from-mail/v1' || !Array.isArray(raw.projects)) return null;
+  const s = (v, n = 160) => String(v == null ? '' : v).slice(0, n), d = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : ''), n = (v) => Math.max(0, Math.round(Number(v) || 0));
+  return { schema: raw.schema, from: d(raw.from), to: d(raw.to), importedAt: new Date().toISOString().slice(0, 10), note: s(raw.notes, 600),
+    projects: raw.projects.map((p) => ({ project: s(p.project), tender: s(p.tender_no, 40), first: d(p.first_date), last: d(p.last_date), messages: n(p.messages),
+      me: n(p.sent_by_me), akram: n(p.sent_by_akram), shaarawi: n(p.sent_by_shaarawi), aibrahim: !!p.with_a_ibrahim, kraasa: !!p.has_kraasa,
+      rules: s(p.matched_rules, 20), worked: !!p.worked_on })).filter((p) => p.project),
+    skipped: (Array.isArray(raw.skipped) ? raw.skipped : []).map((x) => ({ subject: s(x.subject), reason: s(x.reason, 120) })) };
+}
+function projectsSection() {
+  const up = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return;
+    try { const p = cleanProjects(JSON.parse(await f.text())); if (!p) { toast(t('proj_bad')); return; } myProjects = p; await store.putProjects(p); toast(t('proj_loaded', { n: p.projects.length })); renderMe(); } catch { toast(t('err_json')); } e.target.value = ''; } });
+  const head = el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, el('h2', { style: 'margin:0' }, t('proj_h'), helpQ('help_proj')),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny', text: myProjects ? t('proj_replace') : t('proj_import'), onclick: () => up.click() }), up));
+  if (!myProjects) return el('section', { class: 'proj' }, head, el('div', { class: 'empty', text: t('proj_none') }));
+  const year = (myProjects.to || '2026').slice(0, 4);
+  const all = myProjects.projects, inYear = (p) => (p.last || '') >= `${year}-01-01`;
+  let rows = all.filter((p) => (projAll || inYear(p)) && (!projOnlyMine || p.worked));
+  if (projQuery) rows = rows.filter((p) => `${p.project} ${p.tender}`.toLowerCase().includes(projQuery.toLowerCase()));
+  rows = [...rows].sort((a, b) => (b.last || '').localeCompare(a.last || ''));
+  const scope = all.filter((p) => projAll || inYear(p));
+  const sum = (f) => scope.reduce((s, p) => s + f(p), 0);
+  const tiles = [['proj_t_all', scope.length], ['proj_t_mine', scope.filter((p) => p.worked).length], ['proj_t_ai', scope.filter((p) => p.aibrahim).length], ['proj_t_kraasa', scope.filter((p) => p.kraasa).length], ['proj_t_msgs', sum((p) => p.me + p.akram + p.shaarawi)]];
+  const months = new Map(); for (const p of scope) { const m = (p.last || '').slice(0, 7); if (m) months.set(m, (months.get(m) || 0) + 1); }
+  const mlist = [...months.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)), max = Math.max(1, ...mlist.map((m) => m[1]));
+  const csv = () => { const esc = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    const lines = [[t('proj_c_name'), t('proj_c_tender'), t('proj_c_first'), t('proj_c_last'), t('proj_c_msgs'), t('proj_c_me'), t('proj_c_akram'), t('proj_c_shaarawi'), t('proj_c_rules'), t('proj_c_worked')], ...rows.map((p) => [p.project, p.tender, p.first, p.last, p.messages, p.me, p.akram, p.shaarawi, p.rules, p.worked ? '✓' : ''])];
+    const a2 = el('a', { href: URL.createObjectURL(new Blob(['\ufeff' + lines.map((r) => r.map(esc).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' })), download: `AFAQY-projects-${year}.csv` }); document.body.append(a2); a2.click(); a2.remove(); };
+  return el('section', { class: 'proj' }, head,
+    el('p', { class: 'hint' }, t('proj_src', { from: myProjects.from, to: myProjects.to, d: myProjects.importedAt })),
+    el('div', { class: 'cmp-grid' }, tiles.map(([k, v]) => el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: t(k) }), el('b', { class: 'cmp-v', text: String(v) })))),
+    mlist.length ? el('div', { class: 'proj-months' }, mlist.map(([m, v]) => el('div', { class: 'pm', title: `${m}: ${v}` }, el('i', { style: `height:${Math.max(6, Math.round((v / max) * 90))}px` }), el('b', { text: String(v) }), el('span', { class: 'ltr', text: m.slice(2) })))) : null,
+    el('div', { class: 'row proj-tools' },
+      el('div', { class: 'pills' }, el('button', { type: 'button', class: `pill-btn${projAll ? '' : ' on'}`, text: t('proj_year', { y: year }), onclick: () => { projAll = false; renderMe(); } }),
+        el('button', { type: 'button', class: `pill-btn${projAll ? ' on' : ''}`, text: t('proj_all'), onclick: () => { projAll = true; renderMe(); } }),
+        el('button', { type: 'button', class: `pill-btn${projOnlyMine ? ' on' : ''}`, text: t('proj_only_mine'), onclick: () => { projOnlyMine = !projOnlyMine; renderMe(); } })),
+      el('input', { type: 'search', class: 'proj-q', placeholder: t('proj_find'), value: projQuery, oninput: (e) => { projQuery = e.target.value; clearTimeout(projectsSection.t); projectsSection.t = setTimeout(renderMe, 300); } }),
+      el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('sheet_export')}`, onclick: csv })),
+    el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, ['proj_c_name', 'proj_c_last', 'proj_c_msgs', 'proj_c_who', 'proj_c_rules'].map((k, i) => el('th', { class: i === 2 ? 'num' : null, text: t(k) })))),
+      el('tbody', {}, rows.map((p) => el('tr', { class: p.worked ? 'worked' : null },
+        el('td', {}, el('div', { text: p.project }), el('div', { class: 'hint' }, p.tender ? `${p.tender} · ` : '', (p.first || '') < `${year}-01-01` && p.first ? t('proj_started', { y: p.first.slice(0, 4) }) : '', p.worked ? el('span', { class: 'proj-badge', text: t('proj_worked') }) : null)),
+        el('td', { class: 'ltr', text: p.last || '—' }), el('td', { class: 'num', text: String(p.messages) }),
+        el('td', { text: [p.me && t('proj_who_me', { n: p.me }), p.akram && t('proj_who_akram', { n: p.akram }), p.shaarawi && t('proj_who_shaarawi', { n: p.shaarawi })].filter(Boolean).join(' · ') || '—' }),
+        el('td', { text: [p.aibrahim && 'a.ibrahim', p.kraasa && t('proj_kraasa'), (p.rules || '').includes('R2') && t('proj_subject')].filter(Boolean).join(' · ') })))))),
+    myProjects.skipped.length ? el('details', { class: 'tucked' }, el('summary', { text: t('proj_skipped', { n: myProjects.skipped.length }) }),
+      el('ul', { class: 'proj-skip' }, myProjects.skipped.map((x) => el('li', {}, el('b', { text: x.subject }), el('span', { class: 'hint', text: ` — ${x.reason}` }))))) : null);
+}
 function meDashboard(body, pm, { nm, arrow }) {
   const win = pm.windows.this, prev = pm.windows.last, wt = weights();
   // the type: the bookmark now sends it; older pulls get it from the team data on this device
@@ -833,6 +885,7 @@ function meDashboard(body, pm, { nm, arrow }) {
   const after = []; let n = card ? card.nextElementSibling : null; while (n) { after.push(n); n = n.nextElementSibling; }
   for (const x of after) { const tab = x.getAttribute('data-tab'); (panels[tab] || panels.me).append(x); }
   panels.me.prepend(todayCard(pm, nm));
+  if (!isTeamPortal) panels.me.append(projectsSection());
   if (!panels.alerts.children.length) panels.alerts.append(el('div', { class: 'empty', text: t('alerts_none') }));
   const nAlerts = panels.alerts.querySelectorAll('.alert').length;
   const bar = el('div', { class: 'tabs', role: 'tablist' }, [['me', t('tab_me')], ['team', t('tab_team')], ['alerts', nAlerts ? `${t('tab_alerts')} (${nAlerts})` : t('tab_alerts')]].map(([k, label]) =>
@@ -2076,7 +2129,7 @@ $('file-in').addEventListener('change', async (e) => { for (const f of e.target.
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
 $('export-btn').addEventListener('click', async () => {
   const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION,
-    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null, names: nameFixes(), pending: pendingList() };
+    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null, names: nameFixes(), pending: pendingList(), projects: myProjects };
   download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(all, null, 1));
 });
 $('import-in').addEventListener('change', async (e) => {
@@ -2099,6 +2152,7 @@ $('import-in').addEventListener('change', async (e) => {
       await store.putRepairs(repairs);
       const known = new Set(privLinks.map((x) => x.url));
       for (const x of Array.isArray(j.privlinks) ? j.privlinks : []) { const v = cleanPrivLink(x); if (v && !known.has(v.url)) privLinks.push(v); }
+      if (j.projects && !myProjects) { const p = cleanProjects(j.projects); if (p) { myProjects = p; await store.putProjects(myProjects); } }
       if (Array.isArray(j.pending)) { const have = new Set(pendingList().map((x) => x.name.toLowerCase())); localStorage.setItem(PENDING_KEY, JSON.stringify([...pendingList(), ...j.pending.map(cleanPending).filter((x) => x && !have.has(x.name.toLowerCase()))])); }
       if (j.names && typeof j.names === 'object') { const fx = nameFixes(); for (const [id, v] of Object.entries(j.names)) if (/^\d+$/.test(id) && v && typeof v === 'object' && !fx[id]) fx[id] = { ar: String(v.ar || '').slice(0, 80), en: String(v.en || '').slice(0, 80) }; localStorage.setItem(NAME_KEY, JSON.stringify(fx)); }
       await store.putPriv(privLinks);
@@ -2146,6 +2200,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   repairs = (await store.getRepairs()) || [];
   privLinks = (await store.getPriv()) || [];
   mailRows = (await store.getMail()) || [];
+  myProjects = await store.getProjects();
   await refreshOfficialWeights();
   try { const r = await fetch('./systems.json', { cache: 'no-store' }); const data = r.ok && validateSystems(await r.json()); if (data) { SYSTEMS = data.systems; SYSTEM_CATEGORIES = data.categories; } } catch { /* retain built-in links when unavailable */ }
   await loadStrings(['ar', lang]);   // Arabic is every key's fallback; the reader's language besides

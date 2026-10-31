@@ -1,15 +1,15 @@
 {
-  "version": "8.44",
+  "version": "8.45",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "دليل «محلل المناقصات» فيه الآن زر تحميل البرنامج (شيربوينت — بحساب آفاقي)."
+      "«مشاريعي من البريد» في «مؤشراتي ← أنا»: استورد الملف الذي يُخرجه كلود في كروم من أوتلوك، فترى عدد المشاريع واللي اشتغلت عليها، ونشاطها شهريًّا، وبحثًا وتصفية وتصديرًا — على جهازك فقط."
     ],
     "en": [
-      "The Tender Analyzer manual now has the program’s download button (SharePoint — AFAQY account)."
+      "“My projects from email” under My KPIs → Me: import the file Claude in Chrome builds from Outlook to see the projects and those you worked on, activity per month, search, filters and export — on your device only."
     ],
     "ur": [
-      "«ٹینڈر تجزیہ کار» گائیڈ میں اب پروگرام کا ڈاؤن لوڈ بٹن ہے (شیئرپوائنٹ — آفاقی اکاؤنٹ)۔"
+      "«میرے اشاریے ← میں» میں «ای میل سے میرے پروجیکٹس»: کروم میں کلاڈ کی آؤٹ لک سے بنائی فائل درآمد کریں — پروجیکٹس، جن پر کام کیا، ماہانہ سرگرمی، تلاش، فلٹر اور برآمد — صرف آپ کے آلے پر۔"
     ]
   }
 }
