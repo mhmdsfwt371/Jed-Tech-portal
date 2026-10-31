@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.51 — 2026-10-31
+
+- «جديد على البوابة؟» — ورقة تعريف في صفحتين بزرّي عرض وتحميل، أعلى الرئيسية و«مؤشراتي» (حيث يفتح رابط الفريق) وفي «الدليل»، ويمكن إخفاؤها.
+- صفحة إدارة الروابط: بعد «حفظ ونشر للجميع» تتابع البوابة الحية وتقول «✓ ظهرت للجميع» لحظة ظهور التعديل، بدل «قد يستغرق دقائق».
+
+<details><summary>English</summary>
+
+- “New to the portal?” — a two-page overview with View and Download, at the top of Home and My KPIs (where the team link opens) and in the Guide; it can be hidden.
+- Manage links: after “Save and publish”, the page watches the live portal and says “✓ Live for everyone” the moment the change appears, instead of “may take minutes”.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «پورٹل میں نئے ہیں؟» — دو صفحوں کا تعارف دیکھنے اور ڈاؤن لوڈ کے بٹنوں کے ساتھ، ہوم اور میرے اشاریوں کے اوپر اور گائیڈ میں؛ چھپایا جا سکتا ہے۔
+- لنکس کا انتظام: «محفوظ اور شائع» کے بعد صفحہ لائیو پورٹل دیکھتا ہے اور تبدیلی ظاہر ہوتے ہی «✓ سب کے لیے لائیو» بتاتا ہے۔
+
+</div>
+</details>
+
+
 ## v8.50 — 2026-10-31
 
 - صفحة «التطوير» تحت المؤشرات: خطة كل موظف للربع الجاي — خط أساس من شغله في الربع السابق، وأهداف مقترحة من شغله وأضعف محاوره، ومتابعة تلقائية من شغله الجاري، وزميل مرجع وإجراءات تطوير، واعتماد الخطة.

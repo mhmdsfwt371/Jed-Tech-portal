@@ -122,6 +122,8 @@ function renderTools() {
       x.module ? el('span', { class: 'badge', text: t('in_portal') }) : null, el('span', { class: 'go', text: t('open') }));
   }));
   for (const c of $('primary').children) { const id = (c.getAttribute('href') || '').replace('#m-', ''); if (id) c.dataset.id = id; }
+  { const cards = [...document.querySelectorAll('[data-intro]')], hide = () => { pref('intro_hidden', '1'); cards.forEach((c) => { c.hidden = true; }); toast(t('intro_hidden_toast')); };
+    cards.forEach((c) => { c.hidden = pref('intro_hidden') === '1'; const x = c.querySelector('.intro-hide'); if (x) x.onclick = hide; }); }
   makeSortable($('primary'), 'tools');
   $('manage-systems').hidden = isTeamPortal;
   set($('systems'), SYSTEM_CATEGORIES.map((c) => el('section', { class: 'systems-category' }, el('h3', { text: L(c.name, lang) }), el('div', { class: 'row' }, SYSTEMS.filter((x) => x.category === c.id).map((x) => el('a', { class: 'chip', href: x.url, target: '_blank', rel: 'noopener', text: L(x.name, lang) }))))));
@@ -2441,6 +2443,8 @@ function renderGuide() {
   set($('guide-body'),
     el('div', { class: 'guide-head' }, el('span', { class: 'guide-ver', text: stamp }),
       el('button', { type: 'button', class: 'btn no-print', text: t('g_print'), onclick: () => window.print() })),
+    el('div', { class: 'intro-card' }, el('div', { class: 'ic-txt' }, el('b', { text: t('intro_h') }), el('span', { text: t('intro_b') })),
+      el('div', { class: 'ic-acts' }, el('a', { class: 'btn primary', href: 'assets/docs/AFAQY-Jeddah-Portal-Overview.pdf', target: '_blank', rel: 'noopener', text: t('intro_view') }), el('a', { class: 'btn', href: 'assets/docs/AFAQY-Jeddah-Portal-Overview.pdf', download: '', text: t('intro_dl') }))),
     GUIDE.map(([h, b]) => el('section', {}, el('h3', { text: t(h) }), el('p', { text: t(b) }))),
     el('section', {}, el('h3', { text: t('definitions') }), el('ul', { class: 'defs' }, DEFINITIONS.map((k) => el('li', { text: t(k) })))));
 }

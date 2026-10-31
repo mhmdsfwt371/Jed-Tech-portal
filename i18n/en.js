@@ -1051,4 +1051,10 @@ export default {
     dev_open_plan: 'Quarter plan',
     dev_meet_moved: 'The monthly meeting is on the Development page',
     g_dev_h: 'Development — each person’s quarter plan',
+    intro_h: 'New to the portal?',
+    intro_b: 'A two-page overview (in Arabic): what the portal does, what is in it, and how to start in five minutes.',
+    intro_view: 'View',
+    intro_dl: 'Download',
+    intro_hide: 'Hide',
+    intro_hidden_toast: 'Hidden — the overview is always in the Guide.',
 };

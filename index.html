@@ -519,6 +519,10 @@
   .dev-months { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; } .dev-month { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; } .dev-month h4 { margin: 0 0 6px; }
   .moved-note { margin: 16px 0; padding: 12px 14px; border: 1px dashed var(--line-strong); border-radius: var(--radius); color: var(--slate); } .moved-link { display: inline-block; margin-top: 8px; font-size: 13px; }
   @media (max-width: 900px) { .dp-grid { grid-template-columns: 1fr; } }
+  .intro-card { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; margin: 0 0 18px; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--accent); background: linear-gradient(135deg, var(--accent-wash), var(--card)); }
+  .intro-card .ic-ico { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: var(--accent); color: var(--card); } .ic-txt { display: grid; gap: 2px; } .ic-txt b { font-size: 1.02rem; color: var(--title); } .ic-txt span { font-size: 13.5px; color: var(--text); }
+  .ic-acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; } .ic-x { font: inherit; font-size: 12.5px; background: none; border: none; color: var(--slate); cursor: pointer; text-decoration: underline; }
+  @media (max-width: 700px) { .intro-card { grid-template-columns: 1fr; } }
   .row-acts { white-space: nowrap; } .icon-btn { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px; padding: 2px 7px; cursor: pointer; margin-inline-start: 3px; } .icon-btn:hover { border-color: var(--accent); } @media (max-width: 760px) { .funnel { grid-template-columns: repeat(2, 1fr); } } .proj-months { display: flex; align-items: flex-end; gap: 6px; height: 128px; margin: 12px 0; padding: 0 2px; overflow-x: auto; }
   .pm { display: grid; justify-items: center; gap: 2px; min-width: 34px; } .pm i { display: block; width: 22px; background: var(--accent); border-radius: 4px 4px 0 0; } .pm b { font-size: 12px; } .pm span { font-size: 10.5px; color: var(--slate); }
   .proj-tools { gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0 8px; } .proj-q { flex: 1; min-width: 220px; font: inherit; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }
@@ -776,6 +780,11 @@
 <main class="content">
   <section id="view-tools">
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="tools_title">أدوات الفريق</h1><button type="button" class="help-q" data-help="g_tools_b" data-help-title="tools_title" aria-label="?">?</button></div></div>
+    <div class="intro-card" id="intro-card" data-intro>
+      <div class="ic-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg></div>
+      <div class="ic-txt"><b data-t="intro_h">جديد على البوابة؟</b><span data-t="intro_b">ورقة تعريف في صفحتين: ماذا تفعل البوابة، وما فيها، وكيف تبدأ في خمس دقائق.</span></div>
+      <div class="ic-acts"><a class="btn primary" href="assets/docs/AFAQY-Jeddah-Portal-Overview.pdf" target="_blank" rel="noopener" data-t="intro_view">عرض</a><a class="btn" href="assets/docs/AFAQY-Jeddah-Portal-Overview.pdf" download data-t="intro_dl">تحميل</a><button type="button" class="ic-x intro-hide" id="intro-hide" data-t="intro_hide">إخفاء</button></div>
+    </div>
     <div class="primary" id="primary"></div>
     <h2 data-t="systems">أنظمة الشركة</h2>
     <a id="manage-systems" class="btn" href="./manage-systems.html" target="_blank" rel="noopener noreferrer" hidden data-t="manage_systems">إدارة الروابط</a>
@@ -787,6 +796,11 @@
 
   <section id="view-me" hidden>
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="me_title">مؤشراتي</h1><button type="button" class="help-q" data-help="g_me_b" data-help-title="me_title" aria-label="?">?</button><button type="button" class="btn me-tour-open no-print" id="me-tour-open" data-t="tour_open">إرشادي خطوة بخطوة</button></div></div>
+    <div class="intro-card" id="intro-card-me" data-intro>
+      <div class="ic-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg></div>
+      <div class="ic-txt"><b data-t="intro_h">جديد على البوابة؟</b><span data-t="intro_b">ورقة تعريف في صفحتين: ماذا تفعل البوابة، وما فيها، وكيف تبدأ في خمس دقائق.</span></div>
+      <div class="ic-acts"><a class="btn primary" href="assets/docs/AFAQY-Jeddah-Portal-Overview.pdf" target="_blank" rel="noopener" data-t="intro_view">عرض</a><a class="btn" href="assets/docs/AFAQY-Jeddah-Portal-Overview.pdf" download data-t="intro_dl">تحميل</a><button type="button" class="ic-x intro-hide" data-t="intro_hide">إخفاء</button></div>
+    </div>
     <div id="me-body"></div>
   </section>
 
