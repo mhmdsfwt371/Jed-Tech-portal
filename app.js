@@ -6,7 +6,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, baseFromFactors, tierFromBase, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
   mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
@@ -636,7 +636,8 @@ function renderMe(waiting = false) {
     el('div', { class: 'me-card' },
       el('div', {}, el('h2', { class: 'me-name', text: who }),
         positionOf(roster(), me.user.id, lang) ? el('p', { class: 'me-pos', text: positionOf(roster(), me.user.id, lang) }) : null,
-        self.teams && self.teams.length ? el('p', { class: 'me-teams', text: self.teams.join(' · ') }) : null,
+        (roster().people[me.user.id] || {}).covers ? el('p', { class: 'me-teams', text: t('me_covers', { list: roster().people[me.user.id].covers.map((k) => t(`dept_${k}`)).join(' · ') }) })
+          : self.teams && self.teams.length ? el('p', { class: 'me-teams', text: self.teams.join(' · ') }) : null,
         leaderOf(roster(), me.user.id) ? el('p', { class: 'me-teams', text: t('me_leader', { name: nm(leaderOf(roster(), me.user.id)) }) }) : null),
       el('div', { class: 'me-facts' },
         el('span', { text: t('me_updated', { date: fmtDate(me.extractedAt) }) }),
@@ -691,6 +692,22 @@ function renderMe(waiting = false) {
 }
 // ---------- My KPIs as a dashboard (ADR-0034): openable tiles, a collapsible block for me and one for my team, tabs for a leader ----------
 let meTab = 'me';
+// ---------- drag-and-drop ordering for cards (kept on this device, per list) ----------
+const ORDER_KEY = 'afaqy.order';
+const orders = () => { try { return JSON.parse(localStorage.getItem(ORDER_KEY) || '{}') || {}; } catch { return {}; } };
+function sortByOrder(ids, key) { const o = orders()[key]; if (!Array.isArray(o)) return ids; const pos = new Map(o.map((id, i) => [id, i])); return [...ids].sort((x, y) => (pos.has(x) ? pos.get(x) : 1e9) - (pos.has(y) ? pos.get(y) : 1e9)); }
+function makeSortable(box, key) {
+  if (!box) return box; let dragged = null;
+  for (const c of box.children) { if (!c.dataset.id) continue; c.draggable = true; c.classList.add('sortable');
+    c.addEventListener('dragstart', (e) => { dragged = c; c.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', c.dataset.id); });
+    c.addEventListener('dragend', () => { c.classList.remove('dragging'); for (const x of box.children) x.classList.remove('drop-before'); dragged = null; });
+    c.addEventListener('dragover', (e) => { if (!dragged || dragged === c) return; e.preventDefault(); for (const x of box.children) x.classList.remove('drop-before'); c.classList.add('drop-before'); });
+    c.addEventListener('drop', (e) => { e.preventDefault(); if (!dragged || dragged === c) return; box.insertBefore(dragged, c); c.classList.remove('drop-before');
+      const o = orders(); o[key] = [...box.children].map((x) => x.dataset.id).filter(Boolean); localStorage.setItem(ORDER_KEY, JSON.stringify(o)); toast(t('order_saved')); }); }
+  box.addEventListener('dragover', (e) => { if (dragged) e.preventDefault(); });
+  box.addEventListener('drop', (e) => { if (!dragged || e.target !== box) return; box.append(dragged); const o = orders(); o[key] = [...box.children].map((x) => x.dataset.id).filter(Boolean); localStorage.setItem(ORDER_KEY, JSON.stringify(o)); });
+  return box;
+}
 function sheet(title, views, csv) {
   // views: [{ k, label, node }] — a window with an information board and the list, and an export of the list
   let dlg = $('sheet-dlg');
@@ -716,6 +733,10 @@ function meDashboard(body, pm, { nm, arrow }) {
   const inW = (iso, w) => { const d = saudiDay(iso); return d && d >= w.from && d <= w.to; };
   const hrs = (x) => (x.createdAt && x.completedAt ? Math.max(0, (Date.parse(x.completedAt) - Date.parse(x.createdAt)) / 3600000) : null);
   const ptsOf = (x) => taskPoints(wt, { ...x, type: typeOf(x) });
+  // activities with customers (the activity log, from the reports on this device) count in the points too — Done only, by their category's weight
+  const seenAct = new Set(); const acts = reports.flatMap((r) => r.activities || []).filter((x) => { const k = x.id || `${x.createdById}|${x.createdAt}|${x.category}`; if (seenAct.has(k)) return false; seenAct.add(k); return true; });
+  const actsFor = (ids, w) => acts.filter((x) => ids.includes(x.createdById) && /^done$/i.test(x.status || '') && inW(x.createdAt, w));
+  const actPts = (list) => list.reduce((s, x) => s + activityWeight(wt, x.category), 0);
   const DASH = [['done', 'col_done'], ['points', 'col_points'], ['rate', 'col_rate'], ['avgHours', 'col_avg'], ['open', 'col_open'], ['fromEmail', 'col_email']];
   const listFor = (ids, k, w) => me.tasks.filter((x) => ids.includes(x.assigneeId) && (
     k === 'open' ? x.state === 'open'
@@ -723,7 +744,7 @@ function meDashboard(body, pm, { nm, arrow }) {
     : k === 'fromEmail' ? x.fromEmail && inW(x.createdAt, w)
     : x.state === 'done' && inW(x.completedAt, w)));
   const stats = (ids, w) => { const done = listFor(ids, 'done', w), asg = listFor(ids, 'rate', w), h = done.map(hrs).filter((v) => v != null);
-    return { done: done.length, points: Math.round(done.reduce((s, x) => s + ptsOf(x), 0) * 10) / 10, rate: asg.length ? asg.filter((x) => x.state === 'done').length / asg.length : null,
+    return { done: done.length, points: Math.round((done.reduce((s, x) => s + ptsOf(x), 0) + actPts(actsFor(ids, w))) * 10) / 10, rate: asg.length ? asg.filter((x) => x.state === 'done').length / asg.length : null,
       avgHours: h.length ? h.reduce((s, v) => s + v, 0) / h.length : null, open: listFor(ids, 'open', w).length, fromEmail: listFor(ids, 'fromEmail', w).length }; };
   const show = (k, r) => (!r || r[k] == null ? '—' : k === 'rate' ? formatRate(r[k]) : k === 'avgHours' ? formatHours(r[k], lang) : String(r[k]));
   const fmtH = (v) => (v == null ? '' : Math.round(v * 10) / 10);
@@ -738,21 +759,21 @@ function meDashboard(body, pm, { nm, arrow }) {
       return rows.map((r) => el('div', { class: 'hbar' }, el('span', { class: 'hb-l', title: r.l, text: r.l }), el('i', {}, el('b', { style: `width:${Math.round((r.v / max) * 100)}%` })), el('span', { class: 'hb-v', text: r.t || String(r.v) }))); })())) : null;
   const group = (list, key, val) => { const m = new Map(); for (const x of list) { const g = key(x); m.set(g, (m.get(g) || 0) + val(x)); } return [...m.entries()].map(([l, v]) => ({ l, v: Math.round(v * 10) / 10 })).sort((p, q) => q.v - p.v); };
   const weekOf = (iso) => { const d = new Date(Date.parse(iso) + 3 * 3600000); d.setUTCDate(d.getUTCDate() - d.getUTCDay()); return d.toISOString().slice(0, 10); };
-  const board = (list, perPerson, k) => { const done = list.filter((x) => x.state === 'done'), h = done.map(hrs).filter((v) => v != null);
+  const board = (list, perPerson, k, actsOf = []) => { const done = list.filter((x) => x.state === 'done'), h = done.map(hrs).filter((v) => v != null);
     return el('div', { class: 'dash' },
-      el('div', { class: 'dash-nums' }, [[t('sheet_count'), String(list.length)], [t('col_points'), String(Math.round(done.reduce((s, x) => s + ptsOf(x), 0) * 10) / 10)],
+      el('div', { class: 'dash-nums' }, [[t('sheet_count'), String(list.length)], [t('col_points'), String(Math.round((done.reduce((s, x) => s + ptsOf(x), 0) + actPts(actsOf)) * 10) / 10)],
         [t('col_avg'), h.length ? formatHours(h.reduce((s, v) => s + v, 0) / h.length, lang) : '—']].map(([l, v]) => el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: l }), el('b', { class: 'cmp-v', text: v })))),
       el('div', { class: 'dash-grid' },
         perPerson ? bars(`${t(DASH.find((d) => d[0] === k)[1])} — ${t('sheet_by_person')}`, perPerson) : null,
         bars(t('sheet_by_type'), group(list, (x) => (typeOf(x) ? typeLabel(typeOf(x), lang) : t('type_unknown')), () => 1).slice(0, 12)),
-        done.length ? bars(t('sheet_points_by_type'), group(done, (x) => (typeOf(x) ? typeLabel(typeOf(x), lang) : t('type_unknown')), ptsOf).slice(0, 12)) : null,
+        done.length || (k === 'points' && actsOf.length) ? bars(t('sheet_points_by_type'), [...group(done, (x) => (typeOf(x) ? typeLabel(typeOf(x), lang) : t('type_unknown')), ptsOf), ...group(actsOf, (x) => `${t('activity')}: ${x.category || '—'}`, (x) => activityWeight(wt, x.category))].sort((p, q) => q.v - p.v).slice(0, 14)) : null,
         bars(t('sheet_by_week'), group(list.filter((x) => x.createdAt), (x) => weekOf(x.state === 'done' && x.completedAt ? x.completedAt : x.createdAt), () => 1).sort((p, q) => (p.l < q.l ? -1 : 1)).map((r) => ({ ...r, l: r.l.slice(5) })))));
   };
-  const open = (title, list, perPerson, k) => sheet(title, [{ k: 'board', label: t('sheet_view_board'), node: board(list, perPerson, k) }, { k: 'list', label: t('sheet_view_list'), node: table(list) }], csvOf(list));
+  const open = (title, list, perPerson, k, actsOf = []) => sheet(title, [{ k: 'board', label: t('sheet_view_board'), node: board(list, perPerson, k, actsOf) }, { k: 'list', label: t('sheet_view_list'), node: table(list) }], csvOf(list));
   const grid = (ids, isTeam) => { const now = stats(ids, win), before = stats(ids, prev);
     return el('div', { class: 'cmp-grid' }, DASH.map(([k, label]) => el('div', { class: 'cmp tile-open', tabIndex: 0, onclick: () => {
         const per = isTeam ? ids.map((id) => { const s = stats([id], win); return { l: nm(id), v: k === 'rate' ? Math.round((s.rate || 0) * 100) : k === 'avgHours' ? Math.round((s.avgHours || 0) * 10) / 10 : s[k], t: show(k, s) }; }).sort((p, q) => q.v - p.v) : null;
-        open(`${t(label)} — ${isTeam ? t('tiles_team') : t('tiles_mine')} — ${k === 'open' ? t('sheet_now') : `${win.from} → ${win.to}`}`, listFor(ids, k, win), per, k); } },
+        open(`${t(label)} — ${isTeam ? t('tiles_team') : t('tiles_mine')} — ${k === 'open' ? t('sheet_now') : `${win.from} → ${win.to}`}`, listFor(ids, k, win), per, k, k === 'points' ? actsFor(ids, win) : []); } },
       el('span', { class: 'cmp-k', text: t(label) }), el('b', { class: 'cmp-v', text: `\u2068${show(k, now)}\u2069` }),
       el('span', { class: 'cmp-was', text: k === 'open' ? t('sheet_now') : `${t('me_last_period')}: \u2068${show(k, before)}\u2069` }), k === 'open' ? el('span', { class: 'delta same', text: ' ' }) : arrow(k, now, before)))); };
   // my block replaces the page's first tile grid; the heading row and the dates line fold with it
@@ -762,14 +783,14 @@ function meDashboard(body, pm, { nm, arrow }) {
     old.before(box); if (headRow) box.append(headRow); if (dates) box.append(dates); box.append(mine); old.remove(); }
   if (!pm.below.length) return;
   const ids = pm.below.map((r) => r.id);
-  const people = el('div', { class: 'people-grid' }, (() => { const rows = ids.map((id) => ({ id, s: stats([id], win) })).sort((p, q) => q.s.points - p.s.points); const max = Math.max(1, ...rows.map((r) => r.s.points));
-    return rows.map(({ id, s }) => el('button', { type: 'button', class: 'person-card', onclick: () => {
+  const people = makeSortable(el('div', { class: 'people-grid' }, (() => { const rows = sortByOrder(ids.map((id) => ({ id, s: stats([id], win) })).sort((p, q) => q.s.points - p.s.points).map((r) => r.id), 'people').map((id) => ({ id, s: stats([id], win) })); const max = Math.max(1, ...rows.map((r) => r.s.points));
+    return rows.map(({ id, s }) => el('button', { type: 'button', class: 'person-card', 'data-id': id, onclick: () => {
         const list = me.tasks.filter((x) => x.assigneeId === id && (x.state === 'open' || (x.state === 'done' && inW(x.completedAt, win))));
         const tiles = el('div', { class: 'cmp-grid' }, DASH.map(([k, label]) => el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: t(label) }), el('b', { class: 'cmp-v', text: `\u2068${show(k, s)}\u2069` }))));
         sheet(nm(id), [{ k: 'board', label: t('sheet_view_board'), node: el('div', {}, tiles, board(list, null, 'done')) }, { k: 'list', label: t('sheet_view_list'), node: table(list) }], csvOf(list)); } },
       el('b', { text: nm(id) }), el('span', { class: 'hint', text: positionOf(roster(), id, lang) || '' }),
       el('i', { class: 'pbar' }, el('span', { style: `width:${Math.round((s.points / max) * 100)}%` })),
-      el('span', { class: 'hint', text: `${s.points} ${t('col_points')} · ${show('done', s)} · ${show('rate', s)}` }))); })());
+      el('span', { class: 'hint', text: `${s.points} ${t('col_points')} · ${show('done', s)} · ${show('rate', s)}` }))); })()), 'people');
   const oldOpen = me.tasks.filter((x) => [me.user.id, ...ids].includes(x.assigneeId) && x.state === 'open' && x.createdAt && (Date.now() - Date.parse(x.createdAt)) > 7 * 86400000);
   const panels = { me: el('div', { class: 'tab-panel' }), team: el('div', { class: 'tab-panel' }), alerts: el('div', { class: 'tab-panel' }) };
   panels.team.append(el('details', { class: 'tile-block', open: '' }, el('summary', { text: t('tiles_team') }), grid(ids, true)), el('h2', { text: t('me_people_h') }), people);
@@ -1272,7 +1293,7 @@ function meCardSection(pm, who, nm) { const ymNow = cardMonth; const team = pm.s
         return el('div', { class: 'table-wrap' }, el('table', { class: 'path' }, head, bodyRows)); };
       return [withMeet(renderCard(own, who, { showRank: false, showSuggestions: false }), me.user.id, who, false),
         below.length ? [el('h3', { class: 'card-team-h', text: t('card_team_h', { n: below.length }) }),
-          el('div', { class: 'cards-grid' }, below.map((id) => withMeet(renderCard((monthCards[ymNow] && monthCards[ymNow][id]) || monthCard(ctx, id, ymNow), nm(id), { showRank: true, showSuggestions: true, compact: true }), id, nm(id), true)))] : null,
+          makeSortable(el('div', { class: 'cards-grid' }, sortByOrder(below, 'monthcards').map((id) => { const c = withMeet(renderCard((monthCards[ymNow] && monthCards[ymNow][id]) || monthCard(ctx, id, ymNow), nm(id), { showRank: true, showSuggestions: true, compact: true }), id, nm(id), true); if (c) c.dataset.id = id; return c; })), 'monthcards')] : null,
         el('div', { class: 'row', style: 'margin-top:8px' }, el('button', { type: 'button', class: 'btn', text: t('card_print'), onclick: () => window.print() }),
           below.length ? [el('button', { type: 'button', class: 'btn quiet', text: t('meet_export'), onclick: exportMeet }), el('button', { type: 'button', class: 'btn quiet', text: t('meet_import'), onclick: () => imp.click() }), imp] : null),
         el('h2', {}, t('path_h'), helpQ('help_path')), pathTable([me.user.id, ...below])]; }
@@ -1587,7 +1608,8 @@ function renderWeights() {
     admin ? el('p', { class: diff.count ? 'note' : 'hint',
       text: diff.count ? t('weights_draft_notice', { n: diff.count }) : t('weights_official_notice') }) : null,
     el('div', { class: 'row', style: 'margin:12px 0' },
-      el('button', { type: 'button', class: 'btn primary', text: t('weights_download'), onclick: download }),
+      admin ? el('button', { type: 'button', class: 'btn primary', text: `⇪ ${t('weights_publish_team')}`, onclick: () => { localStorage.setItem('afaqy.weights.publish', approvedJson()); window.open('./manage-systems.html#weights', '_blank', 'noopener'); toast(t('weights_publish_opened')); } }) : null,
+      el('button', { type: 'button', class: 'btn', text: t('weights_download'), onclick: download }),
       admin ? el('button', { type: 'button', class: 'btn', disabled: !diff.count || !weightsRepo,
         text: t('weights_publish_button'), onclick: preparePublication }) : null,
       admin ? el('button', { type: 'button', class: 'btn', text: t('weights_upload'), onclick: () => upload.click() }) : null, upload,

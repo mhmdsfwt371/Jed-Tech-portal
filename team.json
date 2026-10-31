@@ -4,7 +4,13 @@
   "people": {
     "70": {
       "position": "المدير التقني — المنطقة الغربية",
-      "positionEn": "Western Technical Manager"
+      "positionEn": "Western Technical Manager",
+      "covers": [
+        "aftersales",
+        "presales",
+        "rd",
+        "projects"
+      ]
     },
     "91": {
       "position": "مدير ما بعد البيع",

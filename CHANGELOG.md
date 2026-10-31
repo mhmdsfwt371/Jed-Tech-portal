@@ -17,6 +17,35 @@
 
 <!-- releases -->
 
+## v8.40 — 2026-10-31
+
+- «نشر الأوزان للفريق» في صفحة الأوزان: يفتح صفحة الإدارة، تلصق المفتاح وتضغط «نشر الآن» — فتُحسب نقاط الجميع بأوزانك في اللوحة وكل الملفات الشخصية.
+- النقاط في «مؤشراتي» تجمع المهام وأنشطة سجل الأنشطة معًا.
+- بطاقات الفريق (في «فريقي» والبطاقات الشهرية) تُرتَّب بالسحب والإفلات، والترتيب يبقى على جهازك.
+- «النقاط الموزونة» صارت «النقاط»، و«اللقاء» صار «الاجتماع الشهري». وتحت اسمك: «معايا: ما بعد البيع · ما قبل البيع · البحث والتطوير · المشاريع».
+
+<details><summary>English</summary>
+
+- “Publish the weights to the team” on the Weights page: it opens the admin page, you paste the key and press “Publish now” — everyone’s points follow your weights on the board and in every profile.
+- Points in My KPIs count tasks and activity-log entries together.
+- Team cards (in “My team” and the monthly cards) are ordered by drag and drop, and the order stays on your device.
+- “Weighted points” are now “points”, and the one-to-one is “the monthly meeting”. Under your name: “With me: After-sales · Presales · R&D · Projects”.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اوزان کے صفحے پر «اوزان ٹیم کے لیے شائع کریں»: ایڈمن صفحہ کھلتا ہے، کلید چسپاں کر کے «ابھی شائع کریں» — بورڈ اور ہر پروفائل میں سب کے پوائنٹس آپ کے اوزان سے۔
+- «میرے اشاریے» میں پوائنٹس ٹاسکس اور سرگرمیوں کے لاگ کو ساتھ گنتے ہیں۔
+- ٹیم کارڈز («میری ٹیم» اور ماہانہ کارڈز) گھسیٹ کر ترتیب دیے جاتے ہیں، ترتیب آپ کے آلے پر رہتی ہے۔
+- «وزنی پوائنٹس» اب «پوائنٹس»، اور ملاقات اب «ماہانہ اجلاس»۔ آپ کے نام کے نیچے: «میرے ساتھ: بعد از فروخت · پری سیلز · تحقیق و ترقی · پروجیکٹس»۔
+
+</div>
+</details>
+
+
 ## v8.39 — 2026-10-31
 
 - صفحة الفريق: زر ✕ بجانب كل شخص لحذفه من الفريق — يختفي من كل الصفحات ومن team.json الذي تنزّله.

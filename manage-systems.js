@@ -24,3 +24,25 @@ $('add').onclick=()=>{const name=$('name').value.trim(),url=$('url').value.trim(
 $('add-category').onclick=()=>{let n=$('new-category').value.trim();if(!n)return status(t('invalid'));if(data.categories.some(c=>Object.values(c.name).some(v=>v.toLowerCase()===n.toLowerCase())))return status(t('duplicate'));data.categories.push({id:freshId(),name:names(n)});$('new-category').value='';render();status(t('loaded'));};
 $('save').onclick=async()=>{if(!token()||!sha||!validateSystems(data))return status(t('invalid'));$('save').disabled=true;try{const r=await fetch(api,{method:'PUT',headers:{...headers(),'Content-Type':'application/json'},body:JSON.stringify({message:'Update shared system links',content:encode(JSON.stringify(data,null,2)+'\n'),sha,branch:'main'})});if(!r.ok)throw Error();$('token').value='';sha=null;data=null;$('editor').hidden=true;status(t('saved'));}catch{status(t('failed'));}finally{$('save').disabled=false;}};
 translate();
+
+// ---------- publish the weights the portal handed over (ADR-0036) ----------
+(()=>{const KEY='afaqy.weights.publish';const draft=localStorage.getItem(KEY);if(!draft)return;
+const W={ar:{h:'نشر الأوزان للفريق',sum:'{n} نوع مهمة و{a} فئة نشاط — مراجعة {d}. بعد النشر تُحسب نقاط الجميع بها في البوابة كلها.',go:'نشر الآن',bad:'ملف الأوزان غير صالح — لم يُنشر شيء.',ok:'نُشرت الأوزان — تصل للجميع خلال دقيقة.',fail:'لم ينجح النشر — تحقق من المفتاح.',need:'الصق مفتاح GitHub أعلاه أولًا.',drop:'تجاهل'},
+en:{h:'Publish the weights to the team',sum:'{n} task types and {a} activity categories — reviewed {d}. Once published, everyone’s points use them across the portal.',go:'Publish now',bad:'The weights file is not valid — nothing was published.',ok:'Weights published — everyone has them within a minute.',fail:'Publishing failed — check the key.',need:'Paste the GitHub key above first.',drop:'Discard'},
+ur:{h:'اوزان ٹیم کے لیے شائع کریں',sum:'{n} ٹاسک اقسام اور {a} سرگرمی زمرے — جائزہ {d}۔ شائع ہونے کے بعد پورے پورٹل میں سب کے پوائنٹس انہی سے۔',go:'ابھی شائع کریں',bad:'اوزان کی فائل درست نہیں — کچھ شائع نہیں ہوا۔',ok:'اوزان شائع — ایک منٹ میں سب کے پاس۔',fail:'شائع نہیں ہو سکا — کلید دیکھیں۔',need:'پہلے اوپر GitHub کلید چسپاں کریں۔',drop:'رد کریں'}};
+const L=()=>W[document.documentElement.lang]||W.ar;
+let w;try{w=JSON.parse(draft);}catch{w=null;}
+const base=(f)=>{const n=f.reduce((a,b)=>a+b,0);return n<=1?1:n<=3?2:n<=5?3:n===6?4:5;};
+const valid=(x)=>x&&x.schema==='afaqy-weights/v1'&&x.tasks&&typeof x.tasks==='object'&&Object.values(x.tasks).every(v=>v&&Number.isFinite(v.w)&&(!v.f||(Array.isArray(v.f)&&v.f.length===4&&v.f.every(k=>[0,1,2].includes(k))&&v.w===base(v.f))));
+const box=document.createElement('section');box.className='weights-publish';
+const h=document.createElement('h2');h.textContent=L().h;const p=document.createElement('p');
+p.textContent=valid(w)?L().sum.replace('{n}',Object.keys(w.tasks).length).replace('{a}',Object.keys(w.activities||{}).length).replace('{d}',w.reviewed||'—'):L().bad;
+const go=document.createElement('button');go.type='button';go.textContent=L().go;go.disabled=!valid(w);
+const drop=document.createElement('button');drop.type='button';drop.className='secondary';drop.textContent=L().drop;drop.onclick=()=>{localStorage.removeItem(KEY);box.remove();};
+const msg=document.createElement('p');msg.setAttribute('role','status');
+go.onclick=async()=>{if(!token())return msg.textContent=L().need;go.disabled=true;const url='https://api.github.com/repos/mhmdsfwt371/Jed-Tech-portal/contents/weights.json';
+try{const r0=await fetch(url,{headers:headers(),cache:'no-store'});if(!r0.ok)throw Error();const cur=await r0.json();
+const r=await fetch(url,{method:'PUT',headers:{...headers(),'Content-Type':'application/json'},body:JSON.stringify({message:'Publish weights from the portal',content:encode(JSON.stringify(w,null,2)+'\n'),sha:cur.sha,branch:'main'})});
+if(!r.ok)throw Error();localStorage.removeItem(KEY);msg.textContent=L().ok;}catch{msg.textContent=L().fail;go.disabled=false;}};
+box.append(h,p,go,drop,msg);const anchor=document.querySelector('main')||document.body;anchor.prepend(box);
+if(location.hash==='#weights')box.scrollIntoView();})();

@@ -938,6 +938,8 @@ export function openTasks(tasks, assigneeId = null) {
 // team.json lives in the repository (public), so it holds ids, positions and who reports to whom — the names arrive from
 // myafaqy with the bookmark. The manager fills it on the Team page; each device may also hold its own copy.
 export const ROSTER_SCHEMA = 'afaqy-team/v1';
+/** Departments a person can oversee — keys only; the names come from the language files. */
+export const COVERS = ['aftersales', 'presales', 'rd', 'projects'];
 export function parseRoster(raw) {
   if (!raw || typeof raw !== 'object' || !raw.people || typeof raw.people !== 'object') return { v: 1, schema: ROSTER_SCHEMA, people: {} };
   const people = {};
@@ -946,6 +948,7 @@ export function parseRoster(raw) {
     const o = { position: String(p.position || '').slice(0, 80), leaderId: p.leaderId == null || p.leaderId === '' ? null : String(p.leaderId) };
     if (p.positionEn) o.positionEn = String(p.positionEn).slice(0, 80);
     if (p.onLeave === true) o.onLeave = true;
+    if (Array.isArray(p.covers)) { const c = p.covers.filter((k) => COVERS.includes(k)); if (c.length) o.covers = c; }
     if (p.removed === true) { people[String(id)] = { removed: true }; continue; }   // a device-only marker: taken off the team
     if (o.position || o.leaderId || o.positionEn || o.onLeave) people[String(id)] = o;
   }

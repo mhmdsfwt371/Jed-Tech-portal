@@ -1,24 +1,24 @@
 {
-  "version": "8.39",
+  "version": "8.40",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "صفحة الفريق: زر ✕ بجانب كل شخص لحذفه من الفريق — يختفي من كل الصفحات ومن team.json الذي تنزّله.",
-      "«الوحدات» صار اسمها «أدوات الفريق الفنية»، والأدوات الخمس في الرئيسية بطاقات فيها ما تفعله و«كيف يساعد» — ونفس الشرح عند المرور عليها في القائمة الجانبية.",
-      "«⚙ إدارة الروابط» صار في آخر «أنظمة الشركة» في القائمة الجانبية (للمدير).",
-      "فحص الروابط على GitHub يعيد المحاولة، ولا يعتبر موقعًا خارجيًّا لم يرد للحظة خطأً — فلا تصلك رسائل فشل بلا سبب."
+      "«نشر الأوزان للفريق» في صفحة الأوزان: يفتح صفحة الإدارة، تلصق المفتاح وتضغط «نشر الآن» — فتُحسب نقاط الجميع بأوزانك في اللوحة وكل الملفات الشخصية.",
+      "النقاط في «مؤشراتي» تجمع المهام وأنشطة سجل الأنشطة معًا.",
+      "بطاقات الفريق (في «فريقي» والبطاقات الشهرية) تُرتَّب بالسحب والإفلات، والترتيب يبقى على جهازك.",
+      "«النقاط الموزونة» صارت «النقاط»، و«اللقاء» صار «الاجتماع الشهري». وتحت اسمك: «معايا: ما بعد البيع · ما قبل البيع · البحث والتطوير · المشاريع»."
     ],
     "en": [
-      "Team page: a ✕ beside each person removes them from the team — gone from every page and from the team.json you download.",
-      "“Modules” is now “Team engineering tools”, and the five tools on the home page are cards with what they do and “How it helps” — the same text on hover in the side menu.",
-      "“⚙ Manage links” now sits at the end of “Company systems” in the side menu (manager only).",
-      "The link check on GitHub retries, and an outside site that misses one request is no longer a failure — no more failure emails without cause."
+      "“Publish the weights to the team” on the Weights page: it opens the admin page, you paste the key and press “Publish now” — everyone’s points follow your weights on the board and in every profile.",
+      "Points in My KPIs count tasks and activity-log entries together.",
+      "Team cards (in “My team” and the monthly cards) are ordered by drag and drop, and the order stays on your device.",
+      "“Weighted points” are now “points”, and the one-to-one is “the monthly meeting”. Under your name: “With me: After-sales · Presales · R&D · Projects”."
     ],
     "ur": [
-      "ٹیم صفحہ: ہر فرد کے ساتھ ✕ اسے ٹیم سے ہٹاتا ہے — ہر صفحے اور آپ کی ڈاؤن لوڈ کردہ team.json سے غائب۔",
-      "«ماڈیولز» اب «ٹیم کے فنی ٹولز» ہے، اور ہوم پیج پر پانچوں ٹولز کارڈز ہیں جن میں ان کا کام اور «کیسے مدد کرتا ہے» — سائیڈ مینو میں ماؤس لانے پر وہی متن۔",
-      "«⚙ لنکس کا انتظام» اب سائیڈ مینو میں «کمپنی سسٹمز» کے آخر میں ہے (صرف مینیجر)۔",
-      "GitHub پر لنکس کی جانچ دوبارہ کوشش کرتی ہے، اور ایک لمحے کو جواب نہ دینے والی بیرونی سائٹ اب ناکامی نہیں — بلاوجہ ناکامی کی ای میلز نہیں۔"
+      "اوزان کے صفحے پر «اوزان ٹیم کے لیے شائع کریں»: ایڈمن صفحہ کھلتا ہے، کلید چسپاں کر کے «ابھی شائع کریں» — بورڈ اور ہر پروفائل میں سب کے پوائنٹس آپ کے اوزان سے۔",
+      "«میرے اشاریے» میں پوائنٹس ٹاسکس اور سرگرمیوں کے لاگ کو ساتھ گنتے ہیں۔",
+      "ٹیم کارڈز («میری ٹیم» اور ماہانہ کارڈز) گھسیٹ کر ترتیب دیے جاتے ہیں، ترتیب آپ کے آلے پر رہتی ہے۔",
+      "«وزنی پوائنٹس» اب «پوائنٹس»، اور ملاقات اب «ماہانہ اجلاس»۔ آپ کے نام کے نیچے: «میرے ساتھ: بعد از فروخت · پری سیلز · تحقیق و ترقی · پروجیکٹس»۔"
     ]
   }
 }
