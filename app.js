@@ -859,7 +859,7 @@ function projWorkspaceBody() {
     page = el('div', {},
       el('p', { class: 'hint', text: t('proj_p_mail_hint', { n: rows.length, w: rows.filter((x) => x.p.worked).length, ok: rows.filter((x) => x.r.ok).length }) }),
       el('div', { class: 'row proj-tools' }, el('button', { type: 'button', class: `pill-btn${projOnlyMine ? ' on' : ''}`, text: t('proj_only_mine'), onclick: () => { projOnlyMine = !projOnlyMine; projRefresh(); } }), search(t('proj_find'))),
-      el('div', { class: 'table-wrap' }, el('table', { class: 'proj-tbl' }, el('thead', {}, el('tr', {}, ['proj_c_subject', 'proj_c_belongs', 'proj_c_status', 'proj_c_last', 'proj_c_msgs', 'proj_c_who', 'proj_c_why', ''].map((k, n) => el('th', { class: n === 4 ? 'num' : null, text: k ? t(k) : '' })))),
+      el('div', { class: 'table-wrap fit' }, el('table', { class: 'proj-tbl' }, el('colgroup', {}, ['28%', '13%', '10%', '9%', '7%', '10%', '13%', '10%'].map((w) => el('col', { style: `width:${w}` }))), el('thead', {}, el('tr', {}, ['proj_c_subject', 'proj_c_belongs', 'proj_c_status', 'proj_c_last', 'proj_c_msgs', 'proj_c_who', 'proj_c_why', ''].map((k, n) => el('th', { class: n === 4 ? 'num' : null, text: k ? t(k) : '' })))),
         el('tbody', {}, shown.map(({ r, p }) => el('tr', { class: `${p.worked ? 'worked' : ''}${r.ok ? ' ok' : ''}` },
           el('td', {}, el('div', { text: r.deck ? p.project : r.name }), r.deck || r.name === p.project ? null : el('div', { class: 'hint', text: p.project })),
           el('td', { text: r.deck ? r.name : '—' }), el('td', {}, pill(r.status)), el('td', { class: 'ltr', text: p.last || '—' }), el('td', { class: 'num', text: String(p.messages) }),
@@ -872,7 +872,7 @@ function projWorkspaceBody() {
     const bids = scope.filter((r) => BIDISH.includes(r.status) && q(r));
     const group = (key, label, list) => el('section', { class: 'bid-group' },
       el('div', { class: 'bg-head' }, el('h3', { text: label }), el('span', { class: 'hint', text: t('proj_bg_tot', { n: list.length, v: sar(sumV(list)), w: list.filter((r) => WONISH.includes(r.status)).length }) })),
-      list.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'proj-tbl' }, el('thead', {}, el('tr', {}, ['proj_c_name', 'proj_c_client', 'proj_c_status', 'proj_c_value', 'proj_c_date', 'proj_c_note', ''].map((k, n) => el('th', { class: n === 3 ? 'num' : null, text: k ? t(k) : '' })))),
+      list.length ? el('div', { class: 'table-wrap fit' }, el('table', { class: 'proj-tbl' }, el('colgroup', {}, ['28%', '15%', '11%', '10%', '9%', '17%', '10%'].map((w) => el('col', { style: `width:${w}` }))), el('thead', {}, el('tr', {}, ['proj_c_name', 'proj_c_client', 'proj_c_status', 'proj_c_value', 'proj_c_date', 'proj_c_note', ''].map((k, n) => el('th', { class: n === 3 ? 'num' : null, text: k ? t(k) : '' })))),
         makeSortable(el('tbody', {}, ordered(list, key).map((r) => el('tr', { 'data-id': r.id, class: r.ok ? 'ok' : null },
           el('td', {}, el('div', { text: r.name }), el('div', { class: 'hint', text: [r.line, r.threads.length ? t('proj_threads', { n: r.threads.length }) : '', r.source && !r.manual ? r.source.replace(/^.*— /, '') : ''].filter(Boolean).join(' · ') })),
           el('td', { text: r.client && r.client !== r.name ? r.client : '—' }), el('td', {}, pill(r.status)), el('td', { class: 'num', text: r.value ? r.value.toLocaleString('en-US') : '—' }),
@@ -888,7 +888,7 @@ function projWorkspaceBody() {
     let list = [...map.values()].map((c) => ({ ...c, st: statusOf(c.client) })).filter((c) => !projQuery || c.client.toLowerCase().includes(projQuery.toLowerCase()));
     list.sort((x, y) => (PROJ_RANK[y.st] || 0) - (PROJ_RANK[x.st] || 0) || y.n - x.n);
     page = board.length ? el('div', {}, search(t('proj_find_client')),
-      el('div', { class: 'table-wrap' }, el('table', { class: 'proj-tbl' }, el('thead', {}, el('tr', {}, ['proj_c_client', 'proj_c_status', 'proj_c_req', 'proj_c_types', 'proj_c_last'].map((k, n) => el('th', { class: n === 2 ? 'num' : null, text: t(k) })))),
+      el('div', { class: 'table-wrap fit' }, el('table', { class: 'proj-tbl' }, el('colgroup', {}, ['34%', '14%', '9%', '31%', '12%'].map((w) => el('col', { style: `width:${w}` }))), el('thead', {}, el('tr', {}, ['proj_c_client', 'proj_c_status', 'proj_c_req', 'proj_c_types', 'proj_c_last'].map((k, n) => el('th', { class: n === 2 ? 'num' : null, text: t(k) })))),
         el('tbody', {}, list.slice(0, 300).map((c) => el('tr', {}, el('td', { text: c.client }), el('td', {}, c.st ? pill(c.st) : '—'), el('td', { class: 'num', text: String(c.n) }), el('td', { text: [...c.types].join(' · ') }), el('td', { class: 'ltr', text: c.last || '—' }))))))) : el('div', { class: 'empty', text: t('proj_need_reg') });
   } else {
     // page 3 — where I stand: bid, won, with us now, delivered, lost — counts and money, each opens its projects
@@ -1003,6 +1003,15 @@ function projectsCard() {
       el('div', { class: 'pc-val' }, el('b', { text: won.reduce((x, r) => x + r.value, 0).toLocaleString('en-US') }), el('span', { text: `${t('sar')} · ${t('proj_v_won')}` })))
       : el('p', { class: 'hint', text: t('proj_card_empty') }));
 }
+// every window in the portal: a header bar with ✕ pinned at the top while its content scrolls (added once, when it opens)
+{ const open = HTMLDialogElement.prototype.showModal;
+  HTMLDialogElement.prototype.showModal = function showModalWithBar() {
+    if (!this.querySelector(':scope > .dlg-bar, :scope > .pl-top')) {
+      const bar = el('div', { class: 'dlg-bar' }, el('button', { type: 'button', class: 'dlg-x', 'aria-label': t('close'), text: `✕ ${t('close')}`, onclick: () => this.close() }));
+      this.prepend(bar);
+    }
+    return open.call(this);
+  }; }
 function projOpen() {
   let dlg = $('proj-dlg'); if (!dlg) { dlg = el('dialog', { id: 'proj-dlg', class: 'proj-layer' }); document.body.append(dlg); dlg.addEventListener('close', () => renderMe()); }
   set(dlg, el('div', { class: 'pl-top' }, el('button', { type: 'button', class: 'btn quiet', text: `✕ ${t('close')}`, onclick: () => dlg.close() })), el('div', { class: 'pl-body' }, projWorkspaceBody()));
@@ -1014,8 +1023,7 @@ function projDetail(k, scope) {
   const list = scope.filter((r) => (k === 'bid' ? BIDISH.includes(r.status) : k === 'wonall' ? WONISH.includes(r.status) : k === 'worked' ? r.worked : k === 'studied' ? (r.kraasa || r.status === 'studied') : k === 'submitted' ? PROJ_RANK[r.status] >= 3 : k === 'commercial' ? r.status === 'submitted' && r.kind === 'commercial' : k === 'tender' ? r.status === 'submitted' && r.kind === 'tender' : r.status === k))
     .sort((x, y) => y.value - x.value || (y.last || '').localeCompare(x.last || ''));
   const dlg = el('dialog', { class: 'proj-detail' });
-  dlg.append(el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, el('h2', { style: 'margin:0', text: `${t(k === 'commercial' ? 'proj_v_com' : k === 'tender' ? 'proj_v_ten' : k === 'bid' ? 'proj_s_bid' : k === 'wonall' ? 'proj_s_won' : `proj_f_${k}`)} — ${list.length}` }),
-      el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() })),
+  dlg.append(el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, el('h2', { style: 'margin:0', text: `${t(k === 'commercial' ? 'proj_v_com' : k === 'tender' ? 'proj_v_ten' : k === 'bid' ? 'proj_s_bid' : k === 'wonall' ? 'proj_s_won' : `proj_f_${k}`)} — ${list.length}` })),
     el('div', { class: 'pd-grid' }, list.map((r) => el('button', { type: 'button', class: `pd-card st-b-${r.status}`, onclick: () => { dlg.close(); projEdit(r); } },
       el('span', { class: `st-pill st-${r.status}`, text: t(`proj_f_${r.status}`) }), el('b', { text: r.name }), r.client && r.client !== r.name ? el('span', { class: 'hint', text: r.client }) : null,
       r.value ? el('strong', { text: `${r.value.toLocaleString('en-US')} ${t('sar')}` }) : null,
