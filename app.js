@@ -602,16 +602,16 @@ function renderMe(waiting = false) {
   const hrsAge = (h) => (h == null ? '' : h < 48 ? t('hours', { n: Math.round(h) }) : t('days', { n: Math.round(h / 24) }));
   const self = me.people.find((p) => p.id === me.user.id) || {};
   const who = nameOf(self, lang) || me.user.name || me.user.id;
-  const val = (k, r) => (r == null ? '—' : k === 'rate' ? formatRate(r.rate) : k === 'medianHours' ? (r.medianHours == null ? '—' : formatHours(r.medianHours, lang)) : String(Math.round((r[k] || 0) * 10) / 10));
+  const val = (k, r) => (r == null ? '—' : k === 'rate' ? formatRate(r.rate) : k === 'medianHours' || k === 'avgHours' ? (r[k] == null ? '—' : formatHours(r[k], lang)) : String(Math.round((r[k] || 0) * 10) / 10));
   // better is up for counts and rate, down for time; an arrow says which way it moved and whether that is good
   const arrow = (k, now, before) => {
     const a = now && now[k], b = before && before[k];
     if (a == null || b == null || a === b) return el('span', { class: 'delta same', text: '=' });
-    const up = a > b, judged = ['done', 'rate', 'medianHours'].includes(k), good = k === 'medianHours' ? !up : up;
-    const diff = k === 'rate' ? `${Math.round(Math.abs(a - b) * 100)}%` : k === 'medianHours' ? formatHours(Math.abs(a - b), lang) : String(Math.round(Math.abs(a - b) * 10) / 10);
+    const up = a > b, judged = ['done', 'rate', 'medianHours', 'avgHours', 'points'].includes(k), good = (k === 'medianHours' || k === 'avgHours') ? !up : up;
+    const diff = k === 'rate' ? `${Math.round(Math.abs(a - b) * 100)}%` : (k === 'medianHours' || k === 'avgHours') ? formatHours(Math.abs(a - b), lang) : String(Math.round(Math.abs(a - b) * 10) / 10);
     return el('span', { class: `delta ${judged ? (good ? 'good' : 'bad') : 'neutral'}`, text: `${up ? '▲' : '▼'} \u2068${diff}\u2069` });
   };
-  const METRICS = [['done', 'col_done'], ['assigned', 'col_assigned'], ['rate', 'col_rate'], ['medianHours', 'col_median'], ['selfLogged', 'col_self'], ['fromEmail', 'col_email']];
+  const METRICS = [['done', 'col_done'], ['assigned', 'col_assigned'], ['rate', 'col_rate'], ['avgHours', 'col_avg'], ['selfLogged', 'col_self'], ['fromEmail', 'col_email']];
   const cards = (cmpA, cmpB, labelA, labelB) => el('div', { class: 'cmp-grid' }, METRICS.map(([k, label]) => el('div', { class: 'cmp' },
     el('span', { class: 'cmp-k', text: t(label) }),
     el('b', { class: 'cmp-v', text: `\u2068${val(k, cmpA)}\u2069` }),
@@ -656,11 +656,11 @@ function renderMe(waiting = false) {
     pm.below.length ? [
       el('h2', { 'data-tab': 'team', text: t('me_team_h', { n: pm.below.length }) }),
       el('div', { class: 'table-wrap', 'data-tab': 'team' }, el('table', {},
-        el('thead', {}, el('tr', {}, ...['col_person', 'col_assigned', 'col_done', 'me_vs_last', 'col_rate', 'col_median', 'col_open'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
+        el('thead', {}, el('tr', {}, ...['col_person', 'col_assigned', 'col_done', 'me_vs_last', 'col_rate', 'col_avg', 'col_open'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
         el('tbody', {}, pm.below.map((r) => el('tr', {},
           el('td', {}, el('div', { text: nm(r.id) }), positionOf(roster(), r.id, lang) ? el('div', { class: 'hint', text: positionOf(roster(), r.id, lang) }) : null), el('td', { class: 'num', text: String(r.this.assigned) }), el('td', { class: 'num' }, bar(r.this.done, maxDone)),
           el('td', { class: 'num' }, arrow('done', r.this, r.last)), el('td', { class: 'num', text: formatRate(r.this.rate) }),
-          el('td', { class: 'num', text: r.this.medianHours == null ? '—' : formatHours(r.this.medianHours, lang) }), el('td', { class: 'num', text: String(r.this.open) })))))),
+          el('td', { class: 'num', text: r.this.avgHours == null ? '—' : formatHours(r.this.avgHours, lang) }), el('td', { class: 'num', text: String(r.this.open) })))))),
       (alerts.attention || alerts.improved) ? el('div', { class: 'alerts', 'data-tab': 'alerts' },
         alerts.attention ? el('div', { class: 'alert warn', text: t('alert_attention', { name: nm(alerts.attention.id), why: alerts.attention.why.map(whyText).join('، ') }) }) : null,
         alerts.improved ? el('div', { class: 'alert ok', text: t('alert_improved', { name: nm(alerts.improved.id), n: alerts.improved.delta }) }) : null) : null] : null,
@@ -672,96 +672,112 @@ function renderMe(waiting = false) {
     meCardSection(pm, who, nm),
     el('h2', { text: t('me_history_h') }),
     el('div', { class: 'table-wrap' }, el('table', {},
-      el('thead', {}, el('tr', {}, ...['me_q', 'col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_median', 'col_email', 'col_self', 'col_cancelled'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
+      el('thead', {}, el('tr', {}, ...['me_q', 'col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_email', 'col_self', 'col_cancelled'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
       el('tbody', {}, qs.map((q) => {
         const r = q.row;
         return el('tr', {}, el('td', {}, q.label, q.partial ? el('span', { class: 'pill', text: ` ${t('me_partial')}` }) : null),
           ...(r ? [r.assigned, r.done].map((v) => el('td', { class: 'num', text: String(v) })) : [el('td', { class: 'num', text: '0' }), el('td', { class: 'num', text: '0' })]),
           el('td', { class: 'num', text: r ? formatRate(r.rate) : '—' }),
           el('td', { class: 'num', text: r && r.avgHours != null ? formatHours(r.avgHours, lang) : '—' }),
-          el('td', { class: 'num', text: r && r.medianHours != null ? formatHours(r.medianHours, lang) : '—' }),
           el('td', { class: 'num', text: String(r ? r.fromEmail : 0) }), el('td', { class: 'num', text: String(r ? r.selfLogged : 0) }),
           el('td', { class: 'num', text: String(r ? r.cancelled : 0) }));
       })))),
     el('h2', { text: t('definitions') }), el('ul', { class: 'defs' }, DEFINITIONS.map((k) => el('li', { text: t(k) }))),
     el('details', { class: 'team' }, el('summary', { text: t('me_refresh_h') }), el('p', { class: 'hint', text: t('me_refresh') }), ...setup,
       el('button', { type: 'button', class: 'btn', text: t('me_forget'), onclick: async () => { me = null; await store.putMe(null); renderMe(); } })));
-  meDashboard(body, pm, { METRICS, val, nm, arrow });
+  meDashboard(body, pm, { nm, arrow });
 }
 // ---------- My KPIs as a dashboard (ADR-0034): openable tiles, a collapsible block for me and one for my team, tabs for a leader ----------
 let meTab = 'me';
-function sheet(title, content, csv) {
+function sheet(title, views, csv) {
+  // views: [{ k, label, node }] — a window with an information board and the list, and an export of the list
   let dlg = $('sheet-dlg');
   if (!dlg) { dlg = el('dialog', { id: 'sheet-dlg', class: 'sheet' }); document.body.append(dlg); }
   const exportCsv = () => { const esc = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
     const blob = new Blob(['\ufeff' + csv.map((r) => r.map(esc).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
-    const a = el('a', { href: URL.createObjectURL(blob), download: `${title.replace(/[^\p{L}\p{N}]+/gu, '-')}.csv` }); document.body.append(a); a.click(); a.remove(); };
+    const link = el('a', { href: URL.createObjectURL(blob), download: `${title.replace(/[^\p{L}\p{N}]+/gu, '-')}.csv` }); document.body.append(link); link.click(); link.remove(); };
+  const list = Array.isArray(views) ? views : [{ k: 'one', label: '', node: views }];
+  const bodyEl = el('div', { class: 'sheet-body' }, list[0].node);
+  const switcher = list.length > 1 ? el('div', { class: 'sheet-views' }, list.map((v, n) => el('button', { type: 'button', class: `pill-btn${n === 0 ? ' on' : ''}`, 'data-k': v.k, text: v.label,
+    onclick: (e) => { set(bodyEl, v.node); for (const b of e.currentTarget.parentNode.children) b.classList.toggle('on', b.getAttribute('data-k') === v.k); } }))) : null;
   set(dlg, el('div', { class: 'sheet-head' }, el('h3', { text: title }),
-      el('div', { class: 'row' }, csv && csv.length > 1 ? el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('sheet_export')}`, onclick: exportCsv }) : null,
+      el('div', { class: 'row' }, switcher, csv && csv.length > 1 ? el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('sheet_export')}`, onclick: exportCsv }) : null,
         el('button', { type: 'button', class: 'btn quiet tiny', 'aria-label': t('close'), text: '✕', onclick: () => dlg.close() }))),
-    el('div', { class: 'sheet-body' }, content));
+    bodyEl);
   dlg.showModal();
 }
-function meDashboard(body, pm, { METRICS, val, nm, arrow }) {
-  const win = pm.windows.this, prev = pm.windows.last;
+function meDashboard(body, pm, { nm, arrow }) {
+  const win = pm.windows.this, prev = pm.windows.last, wt = weights();
+  // the type: the bookmark now sends it; older pulls get it from the team data on this device
+  const typeById = new Map(); for (const x of allTasks()) if (x.type) typeById.set(x.id, x.type);
+  const typeOf = (x) => x.type || typeById.get(x.id) || '';
   const inW = (iso, w) => { const d = saudiDay(iso); return d && d >= w.from && d <= w.to; };
-  const hrs = (x) => (x.createdAt && x.completedAt ? Math.round(((Date.parse(x.completedAt) - Date.parse(x.createdAt)) / 3600000) * 10) / 10 : '');
-  const pick = (ids, k, w) => me.tasks.filter((x) => ids.includes(x.assigneeId) && (
-    k === 'done' || k === 'medianHours' ? x.state === 'done' && inW(x.completedAt, w)
-    : k === 'selfLogged' ? x.createdById === x.assigneeId && inW(x.createdAt, w)
+  const hrs = (x) => (x.createdAt && x.completedAt ? Math.max(0, (Date.parse(x.completedAt) - Date.parse(x.createdAt)) / 3600000) : null);
+  const ptsOf = (x) => taskPoints(wt, { ...x, type: typeOf(x) });
+  const DASH = [['done', 'col_done'], ['points', 'col_points'], ['rate', 'col_rate'], ['avgHours', 'col_avg'], ['open', 'col_open'], ['fromEmail', 'col_email']];
+  const listFor = (ids, k, w) => me.tasks.filter((x) => ids.includes(x.assigneeId) && (
+    k === 'open' ? x.state === 'open'
+    : k === 'rate' ? inW(x.createdAt, w) && x.state !== 'cancelled'
     : k === 'fromEmail' ? x.fromEmail && inW(x.createdAt, w)
-    : inW(x.createdAt, w) && x.state !== 'cancelled'));
-  const taskCsv = (list) => [[t('col_person'), 'ID', t('col_type'), t('col_state'), t('col_created'), t('col_completed'), t('col_hours')],
-    ...list.map((x) => [nm(x.assigneeId), x.id, x.type || '', x.state, (x.createdAt || '').slice(0, 16), (x.completedAt || '').slice(0, 16), hrs(x)])];
-  const taskTable = (list) => list.length ? el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('col_person'), t('col_type'), t('col_state'), t('col_created'), t('col_hours')].map((h, i) => el('th', { class: i === 4 ? 'num' : null, text: h })))),
-      el('tbody', {}, list.slice(0, 300).map((x) => el('tr', {}, el('td', { text: nm(x.assigneeId) }), el('td', { text: typeLabel(x.type || '', lang) }), el('td', { text: t(`state_${x.state}`) }),
-        el('td', { class: 'ltr', text: (x.createdAt || '').slice(0, 10) }), el('td', { class: 'num', text: String(hrs(x)) }))))))
+    : x.state === 'done' && inW(x.completedAt, w)));
+  const stats = (ids, w) => { const done = listFor(ids, 'done', w), asg = listFor(ids, 'rate', w), h = done.map(hrs).filter((v) => v != null);
+    return { done: done.length, points: Math.round(done.reduce((s, x) => s + ptsOf(x), 0) * 10) / 10, rate: asg.length ? asg.filter((x) => x.state === 'done').length / asg.length : null,
+      avgHours: h.length ? h.reduce((s, v) => s + v, 0) / h.length : null, open: listFor(ids, 'open', w).length, fromEmail: listFor(ids, 'fromEmail', w).length }; };
+  const show = (k, r) => (!r || r[k] == null ? '—' : k === 'rate' ? formatRate(r[k]) : k === 'avgHours' ? formatHours(r[k], lang) : String(r[k]));
+  const fmtH = (v) => (v == null ? '' : Math.round(v * 10) / 10);
+  const csvOf = (list) => [[t('col_person'), 'ID', t('col_type'), t('col_state'), t('col_created'), t('col_completed'), t('col_hours'), t('col_points')],
+    ...list.map((x) => [nm(x.assigneeId), x.id, typeOf(x).split('|')[lang === 'en' ? 0 : 1] || typeOf(x), t(`state_${x.state}`), (x.createdAt || '').slice(0, 16).replace('T', ' '), (x.completedAt || '').slice(0, 16).replace('T', ' '), fmtH(hrs(x)), x.state === 'done' ? ptsOf(x) : ''])];
+  const table = (list) => list.length ? el('div', { class: 'table-wrap' }, el('table', {},
+      el('thead', {}, el('tr', {}, [t('col_person'), t('col_type'), t('col_state'), t('col_created'), t('col_hours'), t('col_points')].map((h, n) => el('th', { class: n >= 4 ? 'num' : null, text: h })))),
+      el('tbody', {}, list.slice(0, 400).map((x) => el('tr', {}, el('td', { text: nm(x.assigneeId) }), el('td', { text: typeOf(x) ? typeLabel(typeOf(x), lang) : '—' }), el('td', { text: t(`state_${x.state}`) }),
+        el('td', { class: 'ltr', text: (x.createdAt || '').slice(0, 10) }), el('td', { class: 'num', text: String(fmtH(hrs(x))) }), el('td', { class: 'num', text: x.state === 'done' ? String(ptsOf(x)) : '—' }))))))
     : el('div', { class: 'empty', text: t('sheet_none') });
-  // my tiles open my own list
-  const myGrid = body.querySelector('.cmp-grid');
-  if (myGrid) [...myGrid.children].forEach((tile, i) => { const [k, label] = METRICS[i] || []; if (!k) return; tile.classList.add('tile-open'); tile.tabIndex = 0;
-    tile.onclick = () => { const list = pick([me.user.id], k, win); sheet(`${t(label)} — ${win.from} → ${win.to}`, taskTable(list), taskCsv(list)); }; });
-  // collapse my block: the heading row, the dates line and the tiles
-  if (myGrid) { const dates = myGrid.previousElementSibling, headRow = dates && dates.previousElementSibling;
+  const bars = (title, rows) => rows.length ? el('section', { class: 'dash-box' }, el('h4', { text: title }), el('div', { class: 'hbars' }, (() => { const max = Math.max(1, ...rows.map((r) => r.v));
+      return rows.map((r) => el('div', { class: 'hbar' }, el('span', { class: 'hb-l', title: r.l, text: r.l }), el('i', {}, el('b', { style: `width:${Math.round((r.v / max) * 100)}%` })), el('span', { class: 'hb-v', text: r.t || String(r.v) }))); })())) : null;
+  const group = (list, key, val) => { const m = new Map(); for (const x of list) { const g = key(x); m.set(g, (m.get(g) || 0) + val(x)); } return [...m.entries()].map(([l, v]) => ({ l, v: Math.round(v * 10) / 10 })).sort((p, q) => q.v - p.v); };
+  const weekOf = (iso) => { const d = new Date(Date.parse(iso) + 3 * 3600000); d.setUTCDate(d.getUTCDate() - d.getUTCDay()); return d.toISOString().slice(0, 10); };
+  const board = (list, perPerson, k) => { const done = list.filter((x) => x.state === 'done'), h = done.map(hrs).filter((v) => v != null);
+    return el('div', { class: 'dash' },
+      el('div', { class: 'dash-nums' }, [[t('sheet_count'), String(list.length)], [t('col_points'), String(Math.round(done.reduce((s, x) => s + ptsOf(x), 0) * 10) / 10)],
+        [t('col_avg'), h.length ? formatHours(h.reduce((s, v) => s + v, 0) / h.length, lang) : '—']].map(([l, v]) => el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: l }), el('b', { class: 'cmp-v', text: v })))),
+      el('div', { class: 'dash-grid' },
+        perPerson ? bars(`${t(DASH.find((d) => d[0] === k)[1])} — ${t('sheet_by_person')}`, perPerson) : null,
+        bars(t('sheet_by_type'), group(list, (x) => (typeOf(x) ? typeLabel(typeOf(x), lang) : t('type_unknown')), () => 1).slice(0, 12)),
+        done.length ? bars(t('sheet_points_by_type'), group(done, (x) => (typeOf(x) ? typeLabel(typeOf(x), lang) : t('type_unknown')), ptsOf).slice(0, 12)) : null,
+        bars(t('sheet_by_week'), group(list.filter((x) => x.createdAt), (x) => weekOf(x.state === 'done' && x.completedAt ? x.completedAt : x.createdAt), () => 1).sort((p, q) => (p.l < q.l ? -1 : 1)).map((r) => ({ ...r, l: r.l.slice(5) })))));
+  };
+  const open = (title, list, perPerson, k) => sheet(title, [{ k: 'board', label: t('sheet_view_board'), node: board(list, perPerson, k) }, { k: 'list', label: t('sheet_view_list'), node: table(list) }], csvOf(list));
+  const grid = (ids, isTeam) => { const now = stats(ids, win), before = stats(ids, prev);
+    return el('div', { class: 'cmp-grid' }, DASH.map(([k, label]) => el('div', { class: 'cmp tile-open', tabIndex: 0, onclick: () => {
+        const per = isTeam ? ids.map((id) => { const s = stats([id], win); return { l: nm(id), v: k === 'rate' ? Math.round((s.rate || 0) * 100) : k === 'avgHours' ? Math.round((s.avgHours || 0) * 10) / 10 : s[k], t: show(k, s) }; }).sort((p, q) => q.v - p.v) : null;
+        open(`${t(label)} — ${isTeam ? t('tiles_team') : t('tiles_mine')} — ${k === 'open' ? t('sheet_now') : `${win.from} → ${win.to}`}`, listFor(ids, k, win), per, k); } },
+      el('span', { class: 'cmp-k', text: t(label) }), el('b', { class: 'cmp-v', text: `\u2068${show(k, now)}\u2069` }),
+      el('span', { class: 'cmp-was', text: k === 'open' ? t('sheet_now') : `${t('me_last_period')}: \u2068${show(k, before)}\u2069` }), k === 'open' ? el('span', { class: 'delta same', text: ' ' }) : arrow(k, now, before)))); };
+  // my block replaces the page's first tile grid; the heading row and the dates line fold with it
+  const old = body.querySelector('.cmp-grid'); const mine = grid([me.user.id], false);
+  if (old) { const dates = old.previousElementSibling, headRow = dates && dates.previousElementSibling;
     const box = el('details', { class: 'tile-block', open: '' }, el('summary', { text: t('tiles_mine') }));
-    myGrid.before(box); if (headRow) box.append(headRow); if (dates) box.append(dates); box.append(myGrid); }
+    old.before(box); if (headRow) box.append(headRow); if (dates) box.append(dates); box.append(mine); old.remove(); }
   if (!pm.below.length) return;
-  // my team's tiles: totals over the people below me, each opening a per-person table and the task list
   const ids = pm.below.map((r) => r.id);
-  const sum = (rows, k) => rows.reduce((s, r) => s + ((r && r[k]) || 0), 0);
-  const team = (side) => { const rows = pm.below.map((r) => r[side]); const a = sum(rows, 'assigned'), d = sum(rows, 'done');
-    const h = pick(ids, 'medianHours', side === 'this' ? win : prev).map((x) => hrs(x)).filter((v) => v !== '').sort((p, q) => p - q);
-    const asg = pick(ids, 'assigned', side === 'this' ? win : prev), rate = asg.length ? asg.filter((x) => x.state === 'done').length / asg.length : null;   // of what was assigned in the period, how much is done
-    return { assigned: a, done: d, rate, medianHours: h.length ? h[Math.floor(h.length / 2)] : null, selfLogged: sum(rows, 'selfLogged'), fromEmail: sum(rows, 'fromEmail') }; };
-  const now = team('this'), before = team('last');
-  const teamGrid = el('div', { class: 'cmp-grid' }, METRICS.map(([k, label]) => el('div', { class: 'cmp tile-open', tabIndex: 0, onclick: () => {
-      const list = pick(ids, k, win);
-      const per = el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('col_person'), t(label), t('me_last_period')].map((h, i) => el('th', { class: i ? 'num' : null, text: h })))),
-        el('tbody', {}, [...pm.below].sort((p, q) => ((q.this && q.this[k]) || 0) - ((p.this && p.this[k]) || 0)).map((r) => el('tr', {}, el('td', { text: nm(r.id) }),
-          el('td', { class: 'num', text: val(k, r.this) }), el('td', { class: 'num', text: val(k, r.last) }))))));
-      sheet(`${t(label)} — ${t('tiles_team')} — ${win.from} → ${win.to}`, [per, el('h4', { text: t('sheet_tasks', { n: list.length }) }), taskTable(list)], taskCsv(list)); } },
-    el('span', { class: 'cmp-k', text: t(label) }), el('b', { class: 'cmp-v', text: `\u2068${val(k, now)}\u2069` }),
-    el('span', { class: 'cmp-was', text: `${t('me_last_period')}: \u2068${val(k, before)}\u2069` }), arrow(k, now, before))));
-  const people = el('div', { class: 'people-grid' }, [...pm.below].sort((p, q) => ((q.this && q.this.done) || 0) - ((p.this && p.this.done) || 0)).map((r) => {
-    const max = Math.max(1, ...pm.below.map((x) => (x.this && x.this.done) || 0));
-    return el('button', { type: 'button', class: 'person-card', onclick: () => { const list = me.tasks.filter((x) => x.assigneeId === r.id && (x.state === 'open' || (x.state === 'done' && inW(x.completedAt, win))));
-        sheet(nm(r.id), [el('div', { class: 'cmp-grid' }, METRICS.map(([k, label]) => el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: t(label) }), el('b', { class: 'cmp-v', text: `\u2068${val(k, r.this)}\u2069` }), arrow(k, r.this, r.last)))),
-          el('h4', { text: t('sheet_tasks', { n: list.length }) }), taskTable(list)], taskCsv(list)); } },
-      el('b', { text: nm(r.id) }), el('span', { class: 'hint', text: positionOf(roster(), r.id, lang) || '' }),
-      el('i', { class: 'pbar' }, el('span', { style: `width:${Math.round((((r.this && r.this.done) || 0) / max) * 100)}%` })),
-      el('span', { class: 'hint', text: `${val('done', r.this)} · ${val('rate', r.this)}` })); }));
-  // alerts: what was flagged, plus open work older than 7 days for me and my team
-  const old = me.tasks.filter((x) => [me.user.id, ...ids].includes(x.assigneeId) && x.state === 'open' && x.createdAt && (Date.now() - Date.parse(x.createdAt)) > 7 * 86400000);
-  // build the three panels and move the tagged sections into them
+  const people = el('div', { class: 'people-grid' }, (() => { const rows = ids.map((id) => ({ id, s: stats([id], win) })).sort((p, q) => q.s.points - p.s.points); const max = Math.max(1, ...rows.map((r) => r.s.points));
+    return rows.map(({ id, s }) => el('button', { type: 'button', class: 'person-card', onclick: () => {
+        const list = me.tasks.filter((x) => x.assigneeId === id && (x.state === 'open' || (x.state === 'done' && inW(x.completedAt, win))));
+        const tiles = el('div', { class: 'cmp-grid' }, DASH.map(([k, label]) => el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: t(label) }), el('b', { class: 'cmp-v', text: `\u2068${show(k, s)}\u2069` }))));
+        sheet(nm(id), [{ k: 'board', label: t('sheet_view_board'), node: el('div', {}, tiles, board(list, null, 'done')) }, { k: 'list', label: t('sheet_view_list'), node: table(list) }], csvOf(list)); } },
+      el('b', { text: nm(id) }), el('span', { class: 'hint', text: positionOf(roster(), id, lang) || '' }),
+      el('i', { class: 'pbar' }, el('span', { style: `width:${Math.round((s.points / max) * 100)}%` })),
+      el('span', { class: 'hint', text: `${s.points} ${t('col_points')} · ${show('done', s)} · ${show('rate', s)}` }))); })());
+  const oldOpen = me.tasks.filter((x) => [me.user.id, ...ids].includes(x.assigneeId) && x.state === 'open' && x.createdAt && (Date.now() - Date.parse(x.createdAt)) > 7 * 86400000);
   const panels = { me: el('div', { class: 'tab-panel' }), team: el('div', { class: 'tab-panel' }), alerts: el('div', { class: 'tab-panel' }) };
-  panels.team.append(el('details', { class: 'tile-block', open: '' }, el('summary', { text: t('tiles_team') }), teamGrid), el('h2', { text: t('me_people_h') }), people);
-  panels.alerts.append(old.length ? el('div', { class: 'alert warn tile-open', onclick: () => sheet(t('alert_old', { n: old.length }), taskTable(old), taskCsv(old)), text: t('alert_old', { n: old.length }) }) : null);
+  panels.team.append(el('details', { class: 'tile-block', open: '' }, el('summary', { text: t('tiles_team') }), grid(ids, true)), el('h2', { text: t('me_people_h') }), people);
+  if (oldOpen.length) panels.alerts.append(el('div', { class: 'alert warn tile-open', onclick: () => open(t('alert_old', { n: oldOpen.length }), oldOpen, null, 'open'), text: t('alert_old', { n: oldOpen.length }) }));
   const card = body.querySelector('.me-card');
   const after = []; let n = card ? card.nextElementSibling : null; while (n) { after.push(n); n = n.nextElementSibling; }
   for (const x of after) { const tab = x.getAttribute('data-tab'); (panels[tab] || panels.me).append(x); }
   if (!panels.alerts.children.length) panels.alerts.append(el('div', { class: 'empty', text: t('alerts_none') }));
-  const counts = { alerts: panels.alerts.querySelectorAll('.alert').length };
-  const bar = el('div', { class: 'tabs', role: 'tablist' }, [['me', t('tab_me')], ['team', t('tab_team')], ['alerts', counts.alerts ? `${t('tab_alerts')} (${counts.alerts})` : t('tab_alerts')]].map(([k, label]) =>
+  const nAlerts = panels.alerts.querySelectorAll('.alert').length;
+  const bar = el('div', { class: 'tabs', role: 'tablist' }, [['me', t('tab_me')], ['team', t('tab_team')], ['alerts', nAlerts ? `${t('tab_alerts')} (${nAlerts})` : t('tab_alerts')]].map(([k, label]) =>
     el('button', { type: 'button', role: 'tab', 'data-k': k, class: `tab${meTab === k ? ' on' : ''}`, 'aria-selected': String(meTab === k), text: label, onclick: () => { meTab = k; for (const [p, el2] of Object.entries(panels)) el2.hidden = p !== k; for (const b of bar.children) { const on = b.getAttribute('data-k') === k; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); } } })));
   for (const [p, el2] of Object.entries(panels)) el2.hidden = p !== meTab;
   (card || body.firstChild).after(bar, panels.me, panels.team, panels.alerts);
@@ -1362,18 +1378,18 @@ function renderKpi() {
   const rateCell = (r) => el('span', { class: 'rate' }, el('i', {}, el('b', { style: `width:${Math.round((r || 0) * 100)}%` })), formatRate(r));
   const name = (r) => (r.id === GROUP ? t('group_bucket') : (nameOf(peopleById.get(r.id), lang) || r.name));
   const showCancel = f.team.cancelled > 0, showRd = ds.rdKnown && f.team.rd > 0;
-  const cols = ['col_person', 'col_assigned', 'col_done', 'col_points', 'col_rate', 'col_avg', 'col_median', 'col_open', ...(showCancel ? ['col_cancelled'] : []), 'col_email', 'col_self', ...(showRd ? ['col_rd'] : []), 'col_created'];
+  const cols = ['col_person', 'col_assigned', 'col_done', 'col_points', 'col_rate', 'col_avg', 'col_open', ...(showCancel ? ['col_cancelled'] : []), 'col_email', 'col_self', ...(showRd ? ['col_rd'] : []), 'col_created'];
   const repK = reports.find((r) => r.key === ds.key);
   const wp = weightedPoints(ds.tasks, repK ? repK.activities : [], weights(), { range: ds.range, team });
   const pts = (id) => (wp.byId.get(id) || { total: 0 }).total;
   const maxDone = Math.max(1, ...f.people.map((r) => r.done));
-  const ordered = [...f.people].sort((a, b) => kpiSort === 'points' ? (pts(b.id) - pts(a.id)) : kpiSort === 'median' ? ((b.medianHours ?? -1) - (a.medianHours ?? -1)) : kpiSort === 'open' ? (b.open - a.open) : (b.done - a.done));
+  const ordered = [...f.people].sort((a, b) => kpiSort === 'points' ? (pts(b.id) - pts(a.id)) : kpiSort === 'median' ? ((b.avgHours ?? -1) - (a.avgHours ?? -1)) : kpiSort === 'open' ? (b.open - a.open) : (b.done - a.done));
   const line = (r, cls) => el('tr', { class: cls },
     el('td', {}, el('div', { text: cls === 'total' ? t('team') : name(r) }), cls || !positionOf(roster(), r.id, lang) ? null : el('div', { class: 'hint', text: positionOf(roster(), r.id, lang) })),
     el('td', { class: 'num', text: r.assigned }), el('td', { class: 'num' }, cls ? String(r.done) : el('div', { class: 'bar-cell' }, el('b', { text: String(r.done) }), el('i', {}, el('span', { style: `width:${Math.round((r.done / maxDone) * 100)}%` })))),
     el('td', { class: 'num pts', text: cls === 'total' ? String(wp.total) : cls ? '' : String(pts(r.id)) }),
     el('td', { class: 'num' }, rateCell(r.rate)),
-    el('td', { class: 'num', text: formatHours(r.avgHours, lang) }), el('td', { class: 'num', text: formatHours(r.medianHours, lang) }),
+    el('td', { class: 'num', text: formatHours(r.avgHours, lang) }),
     el('td', { class: 'num', text: r.open }), showCancel ? el('td', { class: 'num', text: r.cancelled }) : null,
     el('td', { class: 'num', text: r.fromEmail }), el('td', { class: 'num', text: r.selfLogged }), showRd ? el('td', { class: 'num', text: r.rd }) : null, el('td', { class: 'num', text: r.created }));
   const table = el('div', { class: 'table-wrap' }, el('table', {},
@@ -1383,11 +1399,11 @@ function renderKpi() {
   // comparison: team totals per uploaded period, oldest to newest
   const trend = [...datasets].reverse().map((d) => ({ d, f: factor1(d.tasks, { range: d.range, team }).team }));
   const trendTable = el('div', { class: 'table-wrap' }, el('table', {},
-    el('thead', {}, el('tr', {}, el('th', { text: t('period') }), ['col_assigned', 'col_done', 'col_rate', 'col_median', 'col_email'].map((k) => el('th', { class: 'num', text: t(k) })))),
+    el('thead', {}, el('tr', {}, el('th', { text: t('period') }), ['col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_email'].map((k) => el('th', { class: 'num', text: t(k) })))),
     el('tbody', {}, trend.map(({ d, f: x }) => el('tr', { class: d.key === kpiKey ? 'total' : null },
       el('td', { class: 'ltr', text: `${d.range.from} → ${d.range.to}${d.sample ? ' *' : ''}` }),
       el('td', { class: 'num', text: x.assigned }), el('td', { class: 'num', text: x.done }), el('td', { class: 'num', text: formatRate(x.rate) }),
-      el('td', { class: 'num', text: formatHours(x.medianHours, lang) }), el('td', { class: 'num', text: x.fromEmail }))))));
+      el('td', { class: 'num', text: formatHours(x.avgHours, lang) }), el('td', { class: 'num', text: x.fromEmail }))))));
 
   // quick links: the board is long on a phone — each jumps to its section (buttons, not hash links: the hash routes pages)
   const jump = (id) => { const n = document.getElementById(id); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
@@ -1403,7 +1419,7 @@ function renderKpi() {
       el('div', {}, el('b', { text: String(wp.total) }), el('span', { text: t('col_points') })),
       el('div', {}, el('b', { text: f.team.assigned }), el('span', { text: t('col_assigned') })),
       el('div', {}, el('b', { text: formatRate(f.team.rate) }), el('span', { text: t('col_rate') })),
-      el('div', {}, el('b', { text: formatHours(f.team.medianHours, lang) }), el('span', { text: t('col_median') })),
+      el('div', {}, el('b', { text: formatHours(f.team.avgHours, lang) }), el('span', { text: t('col_avg') })),
       el('div', {}, el('b', { text: f.team.open }), el('span', { text: t('col_open') })),
       el('div', {}, el('b', { text: `${f.team.fromEmail} · ${f.team.selfLogged}` }), el('span', { text: `${t('col_email')} · ${t('col_self')}` }))),
     el('p', { class: 'strip-note' }, t('kpi_strip_note'), helpQ('help_points')),

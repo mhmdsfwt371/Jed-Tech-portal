@@ -852,7 +852,7 @@ const rows=new Map();let n=0;
 for(const g of[100000,100001]){for(const[b,c]of[['done',[since,end]],['open',[]],['toDo',[]]]){let size=500,pg=0,total=null;
 for(;;){const d=((await post('Task/GetMyTasksGrid',base(g,c,b,pg,size))).data||{})[b];if(!d)break;if(pg===0&&d.pageSize!==size)size=d.pageSize||20;total=d.listCount;
 for(const x of d.data||[]){const id=String(x.id);if(rows.has(id))continue;const a=String(x.assigneeId==null?(g===100000?me:''):x.assigneeId);
-rows.set(id,{i:id,c:x.createdOn,d:x.statusId===3&&!x.isCancelled?x.closeDate:null,s:x.isCancelled?'cancelled':x.statusId===3?'done':'open',m:x.moduleId,o:String(x.createUserId)===a,b,a,t:a===me&&b!=='done'?String(x.title||x.taskType||'').slice(0,80):undefined})}
+rows.set(id,{i:id,c:x.createdOn,d:x.statusId===3&&!x.isCancelled?x.closeDate:null,s:x.isCancelled?'cancelled':x.statusId===3?'done':'open',m:x.moduleId,o:String(x.createUserId)===a,b,a,y:String(x.taskType||'').slice(0,60),t:a===me&&b!=='done'?String(x.title||x.taskType||'').slice(0,80):undefined})}
 n+=(d.data||[]).length;box.textContent=M[2]+' '+n;pg++;if(!d.data||!d.data.length||pg*size>=total)break;await new Promise(r=>setTimeout(r,250))}}}
 const U=await soft(()=>post('Security/GetAllHierarchyUsersDropDown',{pageSize:1000,pageNumber:0,searchCriteria:'',selectedId:[]}));
 const ud=(U&&U.data&&(U.data.data||U.data))||[];const nm={};for(const p of(Array.isArray(ud)?ud:[]))nm[String(p.id)]=p;
@@ -904,7 +904,7 @@ export function parseMePayload(raw) {
     const assigneeId = v2 ? String(x.a || '') : uid;
     const mine = assigneeId === uid;
     return { id: String(x.i), state, createdAt: toIso(x.c), completedAt: state === 'done' ? toIso(x.d) : null,
-      title: mine && state !== 'done' ? String(x.t || '').slice(0, 80) : '', typeId: null, type: '',
+      title: mine && state !== 'done' ? String(x.t || '').slice(0, 80) : '', typeId: null, type: String(x.y || '').slice(0, 60),
       assigneeId, assigneeName: '', createdById: null, createdByName: '', assignedToGroup: !assigneeId,
       fromEmail: moduleId === EMAIL_MODULE, own: x.o === true, moduleId, bucket: x.b || null };
   });

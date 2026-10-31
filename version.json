@@ -1,21 +1,24 @@
 {
-  "version": "8.37",
+  "version": "8.38",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "مجموعة «التطوير» صار اسمها «النقابة».",
-      "صفحة إدارة الروابط: بجانب كل رابط قائمة لنقله إلى أي مجموعة وسهمان ↑ ↓ لترتيبه — بلا سحب — وقلم ✎ بجانب كل مجموعة لتسميتها بنفسك. والسحب بالمقبض ⠿ ما زال متاحًا.",
-      "صفحة الفريق: «بانتظار الظهور» — قائمة بالأسماء على جهازك، ويُضاف كل شخص للفريق تلقائيًّا بمنصبه وقائده أول ما يظهر في سحب."
+      "«الوسيط» اختفى من البرنامج كله — مقياس الوقت الوحيد صار «متوسط مدة الإنجاز» في اللوحة والمؤشرات والجداول.",
+      "مربعات «مؤشراتي» و«مؤشرات فريقي»: المنجزة · النقاط الموزونة · نسبة الإنجاز · متوسط مدة الإنجاز · المفتوحة الآن · من البريد.",
+      "كل نافذة فيها عرضان: «لوحة المعلومات» (لكل شخص، حسب نوع المهمة، النقاط حسب النوع، حسب الأسبوع) و«القائمة» بالنوع والنقاط — مع التصدير.",
+      "إشارة «مؤشراتي» تنقل نوع المهمة الآن — اسحبها من جديد."
     ],
     "en": [
-      "The “Development” group is now called “Naqaba”.",
-      "Links admin page: beside each link, a list to move it to any group and ↑ ↓ to order it — no dragging — and a ✎ beside each group to name it yourself. Dragging by the ⠿ handle still works.",
-      "Team page: “Waiting to appear” — a names list on your device; each person joins the team with their position and leader the first time they appear in a pull."
+      "“Median” is gone from the whole program — the only time measure is now “Average duration”, on the board, in My KPIs and in the tables.",
+      "The “My indicators” and “My team’s indicators” tiles: done · weighted points · completion · average duration · open now · from email.",
+      "Every window has two views: “Information board” (per person, by task type, points by type, by week) and “The list” with type and points — with export.",
+      "The My KPIs bookmark now carries the task type — drag it again."
     ],
     "ur": [
-      "«ڈویلپمنٹ» گروپ کا نام اب «نقابہ» ہے۔",
-      "لنکس ایڈمن صفحہ: ہر لنک کے ساتھ کسی بھی گروپ میں منتقل کرنے کی فہرست اور ترتیب کے لیے ↑ ↓ — گھسیٹے بغیر — اور ہر گروپ کے ساتھ ✎ تاکہ خود نام دیں۔ ⠿ سے گھسیٹنا اب بھی کام کرتا ہے۔",
-      "ٹیم صفحہ: «ظاہر ہونے کے منتظر» — آپ کے آلے پر ناموں کی فہرست؛ ہر فرد پہلی بار کھینچنے میں آتے ہی اپنے عہدے اور لیڈر کے ساتھ ٹیم میں شامل۔"
+      "«درمیانی قدر» پورے پروگرام سے ہٹ گئی — وقت کا واحد پیمانہ اب «اوسط مدت» ہے، بورڈ، اشاریوں اور جدولوں میں۔",
+      "«میرے اشاریے» اور «میری ٹیم کے اشاریے» کے خانے: مکمل · وزنی پوائنٹس · تکمیل کی شرح · اوسط مدت · ابھی کھلے · ای میل سے۔",
+      "ہر ونڈو کے دو منظر: «معلوماتی بورڈ» (ہر فرد، ٹاسک کی قسم، قسم کے لحاظ سے پوائنٹس، ہفتہ وار) اور «فہرست» قسم اور پوائنٹس کے ساتھ — برآمد سمیت۔",
+      "«میرے اشاریے» بک مارک اب ٹاسک کی قسم بھیجتا ہے — دوبارہ گھسیٹیں۔"
     ]
   }
 }

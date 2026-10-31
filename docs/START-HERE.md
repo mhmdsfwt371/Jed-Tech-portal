@@ -49,6 +49,7 @@
 | `docs/decisions/0032-load-sustainability.md` | Load sustainability: early workload signals, manager only |
 | `docs/decisions/0033-pull-override-and-period-picker.md` | Newer pull overrides older; pick the pull period |
 | `docs/decisions/0034-my-kpis-dashboard.md` | My KPIs dashboard: tabs, folding tiles, detail windows, export |
+| `docs/decisions/0035-average-only-and-dashboard-views.md` | Average only; type and points in My KPIs; board and list views |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

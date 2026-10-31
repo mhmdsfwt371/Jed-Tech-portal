@@ -449,6 +449,11 @@
   .team-dept td { background: var(--paper); font-weight: 600; color: var(--title); }
   .pending-box { background: var(--card); border: 1px dashed var(--line-strong); border-radius: var(--radius); padding: 12px 14px; margin: 14px 0; } .pending-box h3 { margin: 0 0 8px; font-size: 1rem; }
   .pending-list { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 4px; } .pending-list li { display: flex; align-items: center; gap: 6px; }
+  .sheet-views { display: inline-flex; gap: 4px; } .dash-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; } .dash-box { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
+  .dash-box h4 { margin: 0 0 8px; font-size: .9rem; } .hbars { display: grid; gap: 6px; } .hbar { display: grid; grid-template-columns: minmax(90px, 40%) minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12.5px; }
+  .hb-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .hbar i { display: block; height: 10px; background: var(--card); border-radius: 5px; overflow: hidden; } .hbar i b { display: block; height: 10px; background: var(--accent); }
+  .hb-v { font-weight: 600; min-width: 34px; text-align: end; }
   .tucked { margin: 18px 0; } .tucked > summary { cursor: pointer; color: var(--slate); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
   .me-card { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; align-items: flex-end; padding: 18px 20px; margin-bottom: 8px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); border-inline-start: 4px solid var(--signal); }
   .me-name { margin: 0; }

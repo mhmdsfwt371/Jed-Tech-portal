@@ -17,6 +17,35 @@
 
 <!-- releases -->
 
+## v8.38 — 2026-10-31
+
+- «الوسيط» اختفى من البرنامج كله — مقياس الوقت الوحيد صار «متوسط مدة الإنجاز» في اللوحة والمؤشرات والجداول.
+- مربعات «مؤشراتي» و«مؤشرات فريقي»: المنجزة · النقاط الموزونة · نسبة الإنجاز · متوسط مدة الإنجاز · المفتوحة الآن · من البريد.
+- كل نافذة فيها عرضان: «لوحة المعلومات» (لكل شخص، حسب نوع المهمة، النقاط حسب النوع، حسب الأسبوع) و«القائمة» بالنوع والنقاط — مع التصدير.
+- إشارة «مؤشراتي» تنقل نوع المهمة الآن — اسحبها من جديد.
+
+<details><summary>English</summary>
+
+- “Median” is gone from the whole program — the only time measure is now “Average duration”, on the board, in My KPIs and in the tables.
+- The “My indicators” and “My team’s indicators” tiles: done · weighted points · completion · average duration · open now · from email.
+- Every window has two views: “Information board” (per person, by task type, points by type, by week) and “The list” with type and points — with export.
+- The My KPIs bookmark now carries the task type — drag it again.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «درمیانی قدر» پورے پروگرام سے ہٹ گئی — وقت کا واحد پیمانہ اب «اوسط مدت» ہے، بورڈ، اشاریوں اور جدولوں میں۔
+- «میرے اشاریے» اور «میری ٹیم کے اشاریے» کے خانے: مکمل · وزنی پوائنٹس · تکمیل کی شرح · اوسط مدت · ابھی کھلے · ای میل سے۔
+- ہر ونڈو کے دو منظر: «معلوماتی بورڈ» (ہر فرد، ٹاسک کی قسم، قسم کے لحاظ سے پوائنٹس، ہفتہ وار) اور «فہرست» قسم اور پوائنٹس کے ساتھ — برآمد سمیت۔
+- «میرے اشاریے» بک مارک اب ٹاسک کی قسم بھیجتا ہے — دوبارہ گھسیٹیں۔
+
+</div>
+</details>
+
+
 ## v8.37 — 2026-10-31
 
 - مجموعة «التطوير» صار اسمها «النقابة».

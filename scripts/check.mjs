@@ -240,7 +240,7 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
 
   const row = (code.match(/rows\.set\(id,\{([\s\S]*?)\}\)/) || ['', ''])[1];
   const keys = [...row.matchAll(/(?:^|,)([a-z]+)(?=[:,]|$)/g)].map((m) => m[1]);
-  if (keys.join(',') !== 'i,c,d,s,m,o,b,a,t') note(`bookmark: hands over fields ${keys.join(',')} — only i,c,d,s,m,o,b,a,t are allowed`);
+  if (keys.join(',') !== 'i,c,d,s,m,o,b,a,y,t') note(`bookmark: hands over fields ${keys.join(',')} — only i,c,d,s,m,o,b,a,y,t are allowed (y = the task type's name, the same list for everyone; ADR-0035)`);
   if (!/t:a===me&&b!=='done'\?/.test(row)) note('bookmark: a task title (t) may be carried only for the person’s own open tasks');
   if (!/o:String\(x\.createUserId\)===a/.test(row)) note('bookmark: "o" must be the yes/no "the assignee opened it" — never an id');
 }
