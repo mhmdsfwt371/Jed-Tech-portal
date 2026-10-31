@@ -946,6 +946,7 @@ export function parseRoster(raw) {
     const o = { position: String(p.position || '').slice(0, 80), leaderId: p.leaderId == null || p.leaderId === '' ? null : String(p.leaderId) };
     if (p.positionEn) o.positionEn = String(p.positionEn).slice(0, 80);
     if (p.onLeave === true) o.onLeave = true;
+    if (p.removed === true) { people[String(id)] = { removed: true }; continue; }   // a device-only marker: taken off the team
     if (o.position || o.leaderId || o.positionEn || o.onLeave) people[String(id)] = o;
   }
   return { v: 1, schema: ROSTER_SCHEMA, people };
@@ -953,7 +954,9 @@ export function parseRoster(raw) {
 /** The device's own entries win over the repository's. */
 export function mergeRoster(repo, device) {
   const a = parseRoster(repo), b = parseRoster(device);
-  return { v: 1, schema: ROSTER_SCHEMA, people: { ...a.people, ...b.people } };
+  const people = { ...a.people, ...b.people };
+  for (const [id, p] of Object.entries(people)) if (p.removed) delete people[id];   // removed on this device: gone from scope and from the downloaded file
+  return { v: 1, schema: ROSTER_SCHEMA, people };
 }
 /** The scope: everyone in the team file. When the file has people, nobody else is counted or shown anywhere. */
 export const scopeIds = (roster) => Object.keys((roster && roster.people) || {});

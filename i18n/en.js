@@ -65,7 +65,7 @@ export default {
     module_loading: 'Opening the tool…',
     in_portal: 'Works inside the portal',
     systems_note: "System links are grouped by category and open in a new tab.",
-    side_modules: 'Modules',
+    side_modules: 'Team engineering tools',
     menu: 'Menu',
     nav_home: 'Home',
     kpi_board: 'KPI board',
@@ -740,4 +740,8 @@ export default {
     sheet_by_week: 'By week',
     sheet_now: 'now',
     type_unknown: 'No type',
+    team_remove: 'Remove from the team',
+    team_remove_q: 'Remove {who} from the team? They disappear from every page and from the team.json you download.',
+    team_removed: 'Removed from the team.',
+    tool_helps: 'How it helps',
 };

@@ -65,7 +65,7 @@ export default {
     module_loading: 'جارٍ فتح الأداة…',
     in_portal: 'تعمل داخل البوابة',
     systems_note: "روابط الأنظمة مرتبة حسب الفئة وتفتح في نافذة جديدة.",
-    side_modules: 'الوحدات',
+    side_modules: 'أدوات الفريق الفنية',
     menu: 'القائمة',
     nav_home: 'الرئيسية',
     kpi_board: 'لوحة المؤشرات',
@@ -740,4 +740,8 @@ export default {
     sheet_by_week: 'حسب الأسبوع',
     sheet_now: 'الآن',
     type_unknown: 'بلا نوع',
+    team_remove: 'حذف من الفريق',
+    team_remove_q: 'حذف {who} من الفريق؟ يختفي من كل الصفحات ومن team.json الذي تنزّله.',
+    team_removed: 'حُذف من الفريق.',
+    tool_helps: 'كيف يساعد',
 };

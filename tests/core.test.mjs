@@ -774,6 +774,14 @@ test('a newer pull overrides older real pulls it covers; partial overlaps and th
   assert.equal(list.length, 3, 'a sample set replaces nothing');
 });
 
+test('team: a device “removed” marker takes someone off the scope and out of the merged file', async () => {
+  const C = await import('../core.js');
+  const repo = { people: { 1: { position: 'a' }, 2: { position: 'b' } } };
+  const merged = C.mergeRoster(repo, { people: { 2: { removed: true }, 3: { position: 'c' } } });
+  assert.deepEqual(Object.keys(merged.people).sort(), ['1', '3']);
+  assert.ok(!JSON.stringify(merged).includes('removed'), 'the downloaded file never carries the marker');
+});
+
 test('formatting', () => {
   assert.equal(formatHours(null, 'ar'), '—');
   assert.equal(formatHours(5.26, 'en'), '5.3 h');

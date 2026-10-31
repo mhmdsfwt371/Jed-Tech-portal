@@ -454,6 +454,8 @@
   .dash-box h4 { margin: 0 0 8px; font-size: .9rem; } .hbars { display: grid; gap: 6px; } .hbar { display: grid; grid-template-columns: minmax(90px, 40%) minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12.5px; }
   .hb-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .hbar i { display: block; height: 10px; background: var(--card); border-radius: 5px; overflow: hidden; } .hbar i b { display: block; height: 10px; background: var(--accent); }
   .hb-v { font-weight: 600; min-width: 34px; text-align: end; }
+  .row-actions { display: flex; gap: 6px; align-items: center; } .row-actions select { flex: 1; }
+  .tool .helps { display: block; font-size: 12.5px; color: var(--accent-ink, var(--accent)); line-height: 1.6; margin-top: 4px; } .tool .helps b { font-weight: 600; }
   .tucked { margin: 18px 0; } .tucked > summary { cursor: pointer; color: var(--slate); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
   .me-card { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; align-items: flex-end; padding: 18px 20px; margin-bottom: 8px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); border-inline-start: 4px solid var(--signal); }
   .me-name { margin: 0; }
@@ -659,7 +661,7 @@
     <a href="#me" data-view="me"><span class="nav-item-icon" aria-hidden="true">★</span><span data-t="nav_me">مؤشراتي</span></a>
     <div class="nav-section" data-nav-section="modules">
       <button type="button" class="nav-group-toggle" data-nav-group-toggle aria-expanded="true" aria-controls="nav-modules">
-        <span class="nav-group-label"><span class="nav-item-icon" aria-hidden="true">▦</span><span data-t="side_modules">الوحدات</span></span><span class="nav-chevron" aria-hidden="true"></span>
+        <span class="nav-group-label"><span class="nav-item-icon" aria-hidden="true">▦</span><span data-t="side_modules">أدوات الفريق الفنية</span></span><span class="nav-chevron" aria-hidden="true"></span>
       </button>
       <div class="nav-group-panel" id="nav-modules"></div>
     </div>

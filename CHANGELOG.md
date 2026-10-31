@@ -17,6 +17,35 @@
 
 <!-- releases -->
 
+## v8.39 — 2026-10-31
+
+- صفحة الفريق: زر ✕ بجانب كل شخص لحذفه من الفريق — يختفي من كل الصفحات ومن team.json الذي تنزّله.
+- «الوحدات» صار اسمها «أدوات الفريق الفنية»، والأدوات الخمس في الرئيسية بطاقات فيها ما تفعله و«كيف يساعد» — ونفس الشرح عند المرور عليها في القائمة الجانبية.
+- «⚙ إدارة الروابط» صار في آخر «أنظمة الشركة» في القائمة الجانبية (للمدير).
+- فحص الروابط على GitHub يعيد المحاولة، ولا يعتبر موقعًا خارجيًّا لم يرد للحظة خطأً — فلا تصلك رسائل فشل بلا سبب.
+
+<details><summary>English</summary>
+
+- Team page: a ✕ beside each person removes them from the team — gone from every page and from the team.json you download.
+- “Modules” is now “Team engineering tools”, and the five tools on the home page are cards with what they do and “How it helps” — the same text on hover in the side menu.
+- “⚙ Manage links” now sits at the end of “Company systems” in the side menu (manager only).
+- The link check on GitHub retries, and an outside site that misses one request is no longer a failure — no more failure emails without cause.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹیم صفحہ: ہر فرد کے ساتھ ✕ اسے ٹیم سے ہٹاتا ہے — ہر صفحے اور آپ کی ڈاؤن لوڈ کردہ team.json سے غائب۔
+- «ماڈیولز» اب «ٹیم کے فنی ٹولز» ہے، اور ہوم پیج پر پانچوں ٹولز کارڈز ہیں جن میں ان کا کام اور «کیسے مدد کرتا ہے» — سائیڈ مینو میں ماؤس لانے پر وہی متن۔
+- «⚙ لنکس کا انتظام» اب سائیڈ مینو میں «کمپنی سسٹمز» کے آخر میں ہے (صرف مینیجر)۔
+- GitHub پر لنکس کی جانچ دوبارہ کوشش کرتی ہے، اور ایک لمحے کو جواب نہ دینے والی بیرونی سائٹ اب ناکامی نہیں — بلاوجہ ناکامی کی ای میلز نہیں۔
+
+</div>
+</details>
+
+
 ## v8.38 — 2026-10-31
 
 - «الوسيط» اختفى من البرنامج كله — مقياس الوقت الوحيد صار «متوسط مدة الإنجاز» في اللوحة والمؤشرات والجداول.

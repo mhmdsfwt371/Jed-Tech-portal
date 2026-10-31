@@ -106,14 +106,16 @@ const moduleLink = (x, cls, ...kids) => (x.module
   ? el('a', { class: cls, href: `#m-${x.id}` }, ...kids)
   : el('a', { class: cls, href: x.url, target: '_blank', rel: 'noopener' }, ...kids));
 function renderTools() {
-  set($('primary'), PRIMARY.map((x) => {
-    const icon = el('span', { 'aria-hidden': 'true' }); icon.innerHTML = ICONS[x.icon] || '';
-    return moduleLink(x, 'tool', icon, el('span', { class: 'name', text: L(x.name, lang) }), el('span', { class: 'desc', text: L(x.desc, lang) }),
+  // every team tool as a card: what it does, and how it helps the team
+  set($('primary'), [...PRIMARY, ...MORE.filter((x) => x.module && x.status === 'live')].map((x) => {
+    const icon = el('span', { 'aria-hidden': 'true' }); icon.innerHTML = ICONS[x.icon] || ICONS.api || '';
+    return moduleLink(x, 'tool', icon, el('span', { class: 'name', text: L(x.name, lang) }), x.desc ? el('span', { class: 'desc', text: L(x.desc, lang) }) : null,
+      x.helps ? el('span', { class: 'helps' }, el('b', { text: `${t('tool_helps')}: ` }), L(x.helps, lang)) : null,
       x.module ? el('span', { class: 'badge', text: t('in_portal') }) : null, el('span', { class: 'go', text: t('open') }));
   }));
   $('manage-systems').hidden = isTeamPortal;
   set($('systems'), SYSTEM_CATEGORIES.map((c) => el('section', { class: 'systems-category' }, el('h3', { text: L(c.name, lang) }), el('div', { class: 'row' }, SYSTEMS.filter((x) => x.category === c.id).map((x) => el('a', { class: 'chip', href: x.url, target: '_blank', rel: 'noopener', text: L(x.name, lang) }))))));
-  set($('more'), MORE.map((x) => (x.status === 'live'
+  set($('more'), MORE.filter((x) => !x.module).map((x) => (x.status === 'live'
     ? moduleLink(x, 'chip', L(x.name, lang))
     : el('span', { class: 'chip soon' }, L(x.name, lang), el('span', { class: 'tag', text: t('soon') })))));
   renderPrivLinks();
@@ -913,14 +915,15 @@ const iconOf = (x) => ({ sensor: 'heatmap', apihelper: 'api', canval: 'can', nus
 const svg = (name) => { const s = el('span', { 'aria-hidden': 'true', style: 'display:contents' }); s.innerHTML = ICONS[name] || ''; return s; };
 function renderSide() {
   if (isTeamPortal) $('nav-kpi').closest('[data-nav-section]').hidden = true;
-  set($('nav-modules'), MODULES.map((m) => el('a', { href: `#m-${m.id}`, class: 'sub', 'data-module': m.id, text: L(m.name, lang) })));
+  set($('nav-modules'), MODULES.map((m) => el('a', { href: `#m-${m.id}`, class: 'sub', 'data-module': m.id, title: [m.desc && L(m.desc, lang), m.helps && `${t('tool_helps')}: ${L(m.helps, lang)}`].filter(Boolean).join('\n'), text: L(m.name, lang) })));
   // company systems: one fold-away sub-group per category (closed by default, one open at a time), then a link to the full grid
   set($('nav-systems'), [...SYSTEM_CATEGORIES.map((c) => { const items = SYSTEMS.filter((x) => x.category === c.id); if (!items.length) return null;
     return el('details', { class: 'nav-cat', ontoggle: (e) => { if (e.target.open) for (const d of $('nav-systems').querySelectorAll('details.nav-cat')) if (d !== e.target) d.open = false; } },
       el('summary', {}, el('span', { text: L(c.name, lang) }), el('span', { class: 'nav-count', text: String(items.length) })),
       items.map((x) => (x.id === 'pro' ? el('a', { href: '#pro', class: 'sub', 'data-view': 'pro', text: L(x.name, lang) }) : el('a', { href: x.url, class: 'sub', target: '_blank', rel: 'noopener', title: L(x.name, lang) },
         el('span', { class: 'nav-name', text: L(x.name, lang) }), el('span', { class: 'ext', 'aria-hidden': 'true', text: '↗' }))))); }),
-    el('a', { href: '#tools', class: 'sub nav-all', text: t('nav_all_systems') })]);
+    el('a', { href: '#tools', class: 'sub nav-all', text: t('nav_all_systems') }),
+    isTeamPortal ? null : el('a', { href: 'manage-systems.html', class: 'sub nav-all nav-manage', text: `⚙ ${t('manage_systems')}` })]);
 }
 const setMenu = (open) => { document.body.classList.toggle('nav-open', open); $('menu-btn').setAttribute('aria-expanded', String(open)); };
 // The groups fold as in the reference: one open at a time; the group holding the current page opens by itself.
@@ -1692,7 +1695,9 @@ function renderTeam() {
           p.teams && p.teams.length ? el('div', { class: 'hint', text: p.teams.join(' · ') }) : null),
         el('td', { class: 'ltr', text: p.id }),
         el('td', {}, el('input', { type: 'text', value: positionOf(ro, p.id), placeholder: t('team_pos_ph'), onchange: (e) => save(p.id, { position: e.target.value.trim() }) })),
-        el('td', {}, leaderSelect(p.id)))))))
+        el('td', { class: 'row-actions' }, leaderSelect(p.id), el('button', { type: 'button', class: 'btn quiet tiny', title: t('team_remove'), 'aria-label': t('team_remove'), text: '✕', onclick: async () => {
+          if (!confirm(t('team_remove_q', { who: nameOf(p, lang) || p.id }))) return;
+          rosterDevice = parseRoster(rosterDevice); rosterDevice.people[p.id] = { removed: true }; await store.putRoster(rosterDevice); renderTeam(); renderMe(); renderKpi(); toast(t('team_removed')); } })))))))
       : el('div', { class: 'empty', text: t('team_none') }),
     (() => { const list = pendingList();
       const up = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return;

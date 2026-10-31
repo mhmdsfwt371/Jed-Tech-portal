@@ -15,8 +15,10 @@ for (const x of links) {
   try {
     // myafaqy and Afaqy PRO sit behind Cloudflare, which refuses a script's default identity with 403
     // while letting a browser through (checked 29 Oct 2026) — so the check asks the way a browser does
-    const res = await fetch(x.url, { redirect: 'follow', signal: AbortSignal.timeout(20000),
+    // one retry after a short pause: an outside site that misses one request from a cloud runner is usually up
+    const ask = () => fetch(x.url, { redirect: 'follow', signal: AbortSignal.timeout(20000),
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36', Accept: 'text/html' } });
+    let res; try { res = await ask(); } catch { await new Promise((r) => setTimeout(r, 5000)); res = await ask(); }
     const html = await res.text();
     const title = (html.match(/<title>([^<]*)/) || [])[1] || '';
     // a company system behind Cloudflare that refuses scripts (403 with Cloudflare's own headers) is up; an outage
@@ -28,7 +30,11 @@ for (const x of links) {
     else if (x.module && (/^(deny|sameorigin)$/i.test(res.headers.get('x-frame-options') || '') || /frame-ancestors/i.test(res.headers.get('content-security-policy') || '')))
       problems.push(`${x.id}: now refuses to be shown inside another page — it can no longer open as a module`);
     else console.log(`✓ ${x.id.padEnd(10)} ${res.status}  ${title.slice(0, 50)}${x.module ? '  · module' : ''}`);
-  } catch (e) { (OUTSIDE_UNCHECKABLE[x.id] ? notes : problems).push(`${x.id}: ${x.url} did not answer (${e.name})${OUTSIDE_UNCHECKABLE[x.id] ? ` (${OUTSIDE_UNCHECKABLE[x.id]})` : ''}`); }
+  } catch (e) {
+    // no answer twice: an outside site is noted (it is not a broken link — a wrong address answers 404); our own tools must answer
+    const own = !!x.module || /mhmdsfwt371\.github\.io/.test(x.url);
+    (OUTSIDE_UNCHECKABLE[x.id] || !own ? notes : problems).push(`${x.id}: ${x.url} did not answer (${e.name})${OUTSIDE_UNCHECKABLE[x.id] ? ` (${OUTSIDE_UNCHECKABLE[x.id]})` : own ? '' : ' — outside site, noted only'}`);
+  }
 }
 if (notes.length) console.log(`check-links: ${notes.length} not checkable from outside (expected)\n- ${notes.join('\n- ')}`);
 for (const id of Object.keys(OUTSIDE_UNCHECKABLE)) if (!links.some((x) => x.id === id)) problems.push(`OUTSIDE_UNCHECKABLE lists "${id}", which is no longer a link — remove it`);

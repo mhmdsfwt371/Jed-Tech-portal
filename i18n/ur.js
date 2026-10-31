@@ -65,7 +65,7 @@ export default {
     module_loading: 'ٹول کھل رہا ہے…',
     in_portal: 'پورٹل کے اندر چلتا ہے',
     systems_note: "سسٹمز کے لنکس زمرے کے مطابق ترتیب دیے گئے ہیں اور نئی ٹیب میں کھلتے ہیں۔",
-    side_modules: 'ماڈیولز',
+    side_modules: 'ٹیم کے فنی ٹولز',
     menu: 'مینو',
     nav_home: 'ہوم',
     kpi_board: 'اشاریوں کا بورڈ',
@@ -740,4 +740,8 @@ export default {
     sheet_by_week: 'ہفتہ وار',
     sheet_now: 'ابھی',
     type_unknown: 'بغیر قسم',
+    team_remove: 'ٹیم سے ہٹائیں',
+    team_remove_q: '{who} کو ٹیم سے ہٹائیں؟ ہر صفحے اور آپ کی ڈاؤن لوڈ کردہ team.json سے غائب ہو جائیں گے۔',
+    team_removed: 'ٹیم سے ہٹا دیا گیا۔',
+    tool_helps: 'کیسے مدد کرتا ہے',
 };

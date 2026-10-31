@@ -1,5 +1,5 @@
 // config.js — the only file to edit when a tool is added or moves.
-export const PORTAL_VERSION = '8.38';   // stamped by scripts/bump.mjs — never edit by hand
+export const PORTAL_VERSION = '8.39';   // stamped by scripts/bump.mjs — never edit by hand
 
 // MODULES open inside the portal (an embedded frame under the portal's header), stay alive while you switch between
 // them, and keep their own code in their own repository. A module must live on the portal's own address
@@ -12,13 +12,16 @@ export const MODULE_ALLOW = 'geolocation; camera; clipboard-read; clipboard-writ
 export const PRIMARY = [
   { id: 'sensor', icon: 'heatmap', module: true, url: 'https://mhmdsfwt371.github.io/sensor-displacment-tool/',
     name: { ar: 'مخطط توزيع الحساسات', en: 'Sensor displacement tool', ur: 'سینسرز کی تقسیم کا نقشہ' },
-    desc: { ar: 'خريطة حرارية لتوزيع حساسات الحرارة والرطوبة على موقع العميل.', en: 'Heat map for placing temperature and humidity sensors on a client site.', ur: 'کلائنٹ کی سائٹ پر درجۂ حرارت اور نمی کے سینسرز لگانے کے لیے حرارتی نقشہ۔' } },
+    desc: { ar: 'خريطة حرارية لتوزيع حساسات الحرارة والرطوبة على موقع العميل.', en: 'Heat map for placing temperature and humidity sensors on a client site.', ur: 'کلائنٹ کی سائٹ پر درجۂ حرارت اور نمی کے سینسرز لگانے کے لیے حرارتی نقشہ۔' },
+    helps: { ar: 'يحدد أماكن الحساسات قبل الزيارة، فتقل الزيارات ويصل للعميل مخطط جاهز.', en: 'Places the sensors before the visit, so fewer visits and a ready plan for the client.', ur: 'دورے سے پہلے سینسرز کی جگہ طے کرتا ہے، دورے کم اور کلائنٹ کو تیار نقشہ۔' } },
   { id: 'apihelper', icon: 'api', module: true, url: 'https://mhmdsfwt371.github.io/Afaqy-API-Helper/',
     name: { ar: 'مساعد الإنتجريشن', en: 'API helper', ur: 'انٹیگریشن ہیلپر' },
-    desc: { ar: 'شرح واجهات أفاقي البرمجية وتجهيز طلبات الربط للعملاء.', en: 'Afaqy API reference and integration requests for clients.', ur: 'آفاقی کے پروگرامنگ انٹرفیس کی وضاحت، اور کلائنٹس کے لیے انٹیگریشن کی درخواستوں کی تیاری۔' } },
+    desc: { ar: 'شرح واجهات أفاقي البرمجية وتجهيز طلبات الربط للعملاء.', en: 'Afaqy API reference and integration requests for clients.', ur: 'آفاقی کے پروگرامنگ انٹرفیس کی وضاحت، اور کلائنٹس کے لیے انٹیگریشن کی درخواستوں کی تیاری۔' },
+    helps: { ar: 'يجهّز طلب الربط ويشرح الواجهة للعميل بدل الشرح في إيميلات متكررة.', en: 'Prepares the integration request and explains the API to the client instead of repeated emails.', ur: 'انٹیگریشن کی درخواست تیار کرتا اور کلائنٹ کو انٹرفیس سمجھاتا ہے، بار بار ای میلز کے بجائے۔' } },
   { id: 'canval', icon: 'can', module: true, url: 'https://mhmdsfwt371.github.io/canval-CAN/',
     name: { ar: 'كانفال', en: 'canval', ur: 'کینوال' },
-    desc: { ar: 'هل تدعم المركبة قراءة كان باص؟ إجابة فورية بلا زيارة فني.', en: 'Does the vehicle support CAN bus reading? An instant answer without a site visit.', ur: 'کیا گاڑی کین بس پڑھنے کو سپورٹ کرتی ہے؟ ٹیکنیشن بھیجے بغیر فوری جواب۔' } },
+    desc: { ar: 'هل تدعم المركبة قراءة كان باص؟ إجابة فورية بلا زيارة فني.', en: 'Does the vehicle support CAN bus reading? An instant answer without a site visit.', ur: 'کیا گاڑی کین بس پڑھنے کو سپورٹ کرتی ہے؟ ٹیکنیشن بھیجے بغیر فوری جواب۔' },
+    helps: { ar: 'يجيب العميل في دقائق ويوفّر زيارة فني لا داعي لها.', en: 'Answers the client in minutes and saves an unnecessary technician visit.', ur: 'منٹوں میں کلائنٹ کو جواب اور غیر ضروری ٹیکنیشن دورے کی بچت۔' } },
 ];
 
 // Company systems — links only: myafaqy forbids being shown inside another page (X-Frame-Options DENY) and Afaqy PRO
@@ -29,9 +32,13 @@ export const SYSTEMS = [{"id": "myafaqy", "category": "afaqy", "url": "https://m
 // Everything else. status: 'live' or 'soon'.
 export const MORE = [
   { id: 'nusuk', status: 'live', module: true, url: 'https://mhmdsfwt371.github.io/Project-survey/',
-    name: { ar: 'قارئات أفاقي — المسح الميداني', en: 'Afaqy readers — field survey', ur: 'آفاقی ریڈرز — فیلڈ سروے' } },   // the tool's own name
+    name: { ar: 'قارئات أفاقي — المسح الميداني', en: 'Afaqy readers — field survey', ur: 'آفاقی ریڈرز — فیلڈ سروے' },
+    desc: { ar: 'تطبيق المسح الميداني لقارئات نسك في المشاعر: لكل نقطة موقعها وصورها وحالتها.', en: 'The field survey app for the Nusuk readers in the holy sites: each point’s location, photos and status.', ur: 'مشاعر میں نسک ریڈرز کی فیلڈ سروے ایپ: ہر مقام کی جگہ، تصاویر اور حالت۔' },
+    helps: { ar: 'يوحّد بيانات المسح بين الفرق ويُظهر التقدم والنواقص قبل موسم الحج.', en: 'One survey record across teams, showing progress and gaps before the Hajj season.', ur: 'ٹیموں میں سروے کا ایک ریکارڈ، حج سیزن سے پہلے پیش رفت اور کمی دکھاتا ہے۔' } },   // the tool's own name
   { id: 'calibration', status: 'live', module: true, url: 'https://mhmdsfwt371.github.io/sensor-displacment-tool/certificates.html',
-    name: { ar: 'شهادات المعايرة', en: 'Calibration certificates', ur: 'کیلیبریشن سرٹیفکیٹس' } },  // on Lovable, not on the portal's address — so it opens in a new tab (decision 0007: modules come from MODULE_ORIGIN only)
+    name: { ar: 'شهادات المعايرة', en: 'Calibration certificates', ur: 'کیلیبریشن سرٹیفکیٹس' },
+    desc: { ar: 'إصدار شهادات معايرة حساسات الحرارة والرطوبة (TZONE وTOPFLY) بتوقيع الفني.', en: 'Issues calibration certificates for temperature and humidity sensors (TZONE, TOPFLY) with the technician’s signature.', ur: 'درجۂ حرارت اور نمی کے سینسرز (TZONE، TOPFLY) کے کیلیبریشن سرٹیفکیٹ ٹیکنیشن کے دستخط کے ساتھ۔' },
+    helps: { ar: 'شهادة جاهزة للعميل في دقائق بدل إعدادها يدويًّا لكل جهاز.', en: 'A certificate ready for the client in minutes instead of preparing one by hand per device.', ur: 'منٹوں میں کلائنٹ کے لیے تیار سرٹیفکیٹ، ہر آلے کے لیے ہاتھ سے بنانے کے بجائے۔' } },  // on Lovable, not on the portal's address — so it opens in a new tab (decision 0007: modules come from MODULE_ORIGIN only)
   { id: 'hunt', status: 'live', url: 'https://afaqy-hunt.lovable.app/',
     name: { ar: 'أفاقي هنت — محرك الاستهداف', en: 'AFAQY Hunt — prospecting engine', ur: 'آفاقی ہنٹ — پراسپیکٹنگ انجن' } },
 ];
