@@ -76,9 +76,9 @@
       "category": "afaqy",
       "url": "https://afaqy.in/",
       "name": {
-        "ar": "AFAQY Legacy",
-        "en": "AFAQY Legacy",
-        "ur": "AFAQY Legacy"
+        "ar": "AFAQY IN",
+        "en": "AFAQY IN",
+        "ur": "AFAQY IN"
       }
     },
     {
@@ -96,9 +96,9 @@
       "category": "afaqy",
       "url": "https://vss.afaqy.pro/",
       "name": {
-        "ar": "VSS",
-        "en": "VSS",
-        "ur": "VSS"
+        "ar": "New VSS",
+        "en": "New VSS",
+        "ur": "New VSS"
       }
     },
     {
@@ -136,9 +136,9 @@
       "category": "afaqy",
       "url": "https://robot.afaqy.sa/",
       "name": {
-        "ar": "روبوت أفاقي",
-        "en": "Afaqy Robot",
-        "ur": "آفاقی روبوٹ"
+        "ar": "AFAQY Robot",
+        "en": "AFAQY Robot",
+        "ur": "AFAQY Robot"
       }
     },
     {
@@ -292,26 +292,6 @@
       }
     },
     {
-      "id": "mail",
-      "category": "work",
-      "url": "https://outlook.office.com/mail/",
-      "name": {
-        "ar": "Outlook",
-        "en": "Outlook",
-        "ur": "Outlook"
-      }
-    },
-    {
-      "id": "onedrive",
-      "category": "work",
-      "url": "https://www.office.com/launch/onedrive",
-      "name": {
-        "ar": "OneDrive",
-        "en": "OneDrive",
-        "ur": "OneDrive"
-      }
-    },
-    {
       "id": "learn",
       "category": "work",
       "url": "https://learn.afaqy.pro/",
@@ -322,8 +302,18 @@
       }
     },
     {
+      "id": "custom_2ec64779bdfd4823912d0fbfe437826f",
+      "category": "afaqy",
+      "url": "https://makkah.mardam.afaqy.pro/",
+      "name": {
+        "ar": "Mardam Makkah",
+        "en": "Mardam Makkah",
+        "ur": "Mardam Makkah"
+      }
+    },
+    {
       "id": "service_desk",
-      "category": "work",
+      "category": "afaqy",
       "url": "https://afaqy.atlassian.net/servicedesk/customer/portal/3/user/login?",
       "name": {
         "ar": "AFAQY Service Desk",
@@ -332,13 +322,23 @@
       }
     },
     {
-      "id": "custom_2ec64779bdfd4823912d0fbfe437826f",
+      "id": "mail",
       "category": "afaqy",
-      "url": "https://makkah.mardam.afaqy.pro/",
+      "url": "https://outlook.office.com/mail/",
       "name": {
-        "ar": "Mardam Makkah",
-        "en": "Mardam Makkah",
-        "ur": "Mardam Makkah"
+        "ar": "Outlook",
+        "en": "Outlook",
+        "ur": "Outlook"
+      }
+    },
+    {
+      "id": "onedrive",
+      "category": "afaqy",
+      "url": "https://www.office.com/launch/onedrive",
+      "name": {
+        "ar": "OneDrive",
+        "en": "OneDrive",
+        "ur": "OneDrive"
       }
     }
   ]
