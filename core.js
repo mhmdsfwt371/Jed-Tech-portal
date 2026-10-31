@@ -245,7 +245,12 @@ export function toIso(v) {
 const idOf = (v) => (v == null || v === '' ? null : String(v));
 
 /** The Saudi calendar day of an ISO instant, as YYYY-MM-DD. */
-export const saudiDay = (iso) => (iso ? ymd(new Date(Date.parse(iso) + 3 * 3600000)) : null);
+const SAUDI_DAYS = new Map();   // the same instants are converted again and again across 20,000 tasks: remember them (bounded)
+export const saudiDay = (iso) => {
+  if (!iso) return null;
+  let d = SAUDI_DAYS.get(iso); if (d !== undefined) return d;
+  d = ymd(new Date(Date.parse(iso) + 3 * 3600000)); if (SAUDI_DAYS.size > 200000) SAUDI_DAYS.clear(); SAUDI_DAYS.set(iso, d); return d;
+};
 
 /**
  * Validate and normalise one uploaded part (v1 or v2). Returns { dataset, skipped } or { error, vars }.

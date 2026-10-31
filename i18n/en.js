@@ -1058,4 +1058,6 @@ export default {
     intro_hide: 'Hide',
     intro_hidden_toast: 'Hidden — the overview is always in the Guide.',
     intro_alt: 'النسخة العربية',
+    rows_more: 'Show {n} more — {left} left',
+    rows_total: '{n} rows',
 };

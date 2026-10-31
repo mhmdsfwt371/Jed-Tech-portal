@@ -1058,4 +1058,6 @@ export default {
     intro_hide: 'إخفاء',
     intro_hidden_toast: 'أُخفيت — تجد الورقة دائمًا في «الدليل».',
     intro_alt: 'English version',
+    rows_more: 'عرض {n} أخرى — المتبقي {left}',
+    rows_total: '{n} صفًا',
 };

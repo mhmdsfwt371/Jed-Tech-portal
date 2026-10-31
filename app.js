@@ -726,6 +726,13 @@ function makeSortable(box, key) {
   box.addEventListener('drop', (e) => { if (!dragged || e.target !== box) return; box.append(dragged); const o = orders(); o[key] = [...box.children].map((x) => x.dataset.id).filter(Boolean); localStorage.setItem(ORDER_KEY, JSON.stringify(o)); });
   return box;
 }
+// long lists draw 200 rows at a time; a button under the table shows how many remain and draws the next page (ADR-0041)
+function pagedBody(list, rowOf, step = 200) {
+  const tbody = el('tbody', {}), more = el('button', { type: 'button', class: 'btn quiet more-rows' }); let shown = 0;
+  const page = () => { const next = list.slice(shown, shown + step); tbody.append(...next.map(rowOf)); shown += next.length; const left = list.length - shown;
+    more.hidden = left <= 0; more.textContent = t('rows_more', { n: Math.min(step, left), left }); };
+  more.onclick = page; page(); return { tbody, more };
+}
 function sheet(title, views, csv) {
   // views: [{ k, label, node }] — a window with an information board and the list, and an export of the list
   let dlg = $('sheet-dlg');
@@ -892,10 +899,10 @@ function projWorkspaceBody() {
     for (const b of board) { if (!b.client) continue; const c = map.get(b.client) || { client: b.client, n: 0, types: new Set(), last: '' }; c.n++; c.types.add(b.type); if (b.date > c.last) c.last = b.date; map.set(b.client, c); }
     const statusOf = (c) => { const lc = c.toLowerCase(); const it = all.filter((r) => r.deck && r.client && (lc.includes(r.client.toLowerCase()) || r.client.toLowerCase().includes(lc))); return it.length ? it.sort((x, y) => PROJ_RANK[y.status] - PROJ_RANK[x.status])[0].status : ''; };
     let list = [...map.values()].map((c) => ({ ...c, st: statusOf(c.client) })).filter((c) => !projQuery || c.client.toLowerCase().includes(projQuery.toLowerCase()));
-    list.sort((x, y) => (PROJ_RANK[y.st] || 0) - (PROJ_RANK[x.st] || 0) || y.n - x.n);
+    list.sort((x, y) => (PROJ_RANK[y.st] || 0) - (PROJ_RANK[x.st] || 0) || y.n - x.n); let cp;
     page = board.length ? el('div', {}, search(t('proj_find_client')),
       el('div', { class: 'table-wrap fit' }, el('table', { class: 'proj-tbl' }, el('colgroup', {}, ['34%', '14%', '9%', '31%', '12%'].map((w) => el('col', { style: `width:${w}` }))), el('thead', {}, el('tr', {}, ['proj_c_client', 'proj_c_status', 'proj_c_req', 'proj_c_types', 'proj_c_last'].map((k, n) => el('th', { class: n === 2 ? 'num' : null, text: t(k) })))),
-        el('tbody', {}, list.slice(0, 300).map((c) => el('tr', {}, el('td', { text: c.client }), el('td', {}, c.st ? pill(c.st) : '—'), el('td', { class: 'num', text: String(c.n) }), el('td', { text: [...c.types].join(' · ') }), el('td', { class: 'ltr', text: c.last || '—' }))))))) : el('div', { class: 'empty', text: t('proj_need_reg') });
+        (cp = pagedBody(list, (c) => el('tr', {}, el('td', { text: c.client }), el('td', {}, c.st ? pill(c.st) : '—'), el('td', { class: 'num', text: String(c.n) }), el('td', { text: [...c.types].join(' · ') }), el('td', { class: 'ltr', text: c.last || '—' })))).tbody)), cp.more) : el('div', { class: 'empty', text: t('proj_need_reg') });
   } else {
     // page 3 — where I stand: bid, won, with us now, delivered, lost — counts and money, each opens its projects
     const bid = scope.filter((r) => BIDISH.includes(r.status)), by = (st) => scope.filter((r) => r.status === st), wonAll = scope.filter((r) => WONISH.includes(r.status));
@@ -1127,7 +1134,7 @@ function projReport() {
   const kpi = [['s_worked', rows.filter((r) => r.worked).length], ['s_bid', rows.filter((r) => BIDISH.includes(r.status)).length], ['s_won', rows.filter((r) => WONISH.includes(r.status)).length], ['f_delivered', by('delivered').length]];
   const table = (list) => `<table><thead><tr><th>${esc(t('proj_c_name'))}</th><th>${esc(t('proj_c_client'))}</th><th>${esc(t('proj_c_kind'))}</th><th>${esc(t('proj_c_value'))}</th><th>${esc(t('proj_c_last'))}</th><th>${esc(t('proj_c_why'))}</th></tr></thead><tbody>${list.map((r) => `<tr><td>${esc(r.name)}${r.note ? `<div class="n">${esc(r.note)}</div>` : ''}</td><td>${esc(r.client && r.client !== r.name ? r.client : '')}</td><td>${esc(r.kind ? t(`proj_k_${r.kind}`) : '')}</td><td class="v">${r.value ? f0(r.value) : '—'}</td><td class="d">${esc(r.last || '—')}</td><td>${esc(projWhy(r))}</td></tr>`).join('')}</tbody></table>`;
   const html = `<!doctype html><html lang="${lang}" dir="${rtl ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>${esc(t('proj_pdf_title'))}</title><style>
-  @font-face{font-family:NS;src:url('${fontUrl('NotoSansArabic-Regular.ttf')}')}@font-face{font-family:NS;font-weight:700;src:url('${fontUrl('NotoSansArabic-Bold.ttf')}')}
+  @font-face{font-family:NS;src:url('${fontUrl('NotoSansArabic-Regular.woff2')}')}@font-face{font-family:NS;font-weight:700;src:url('${fontUrl('NotoSansArabic-Bold.woff2')}')}
   body{margin:0;font-family:NS,'Segoe UI',Tahoma,sans-serif;color:#1C1E3D;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{padding:14mm;page-break-after:always}
   header{display:flex;align-items:center;gap:14px;border-bottom:4px solid #2A7130;padding-bottom:10px;margin-bottom:14px}header img{height:34px}h1{font-size:22px;margin:0}h2{font-size:16px;margin:16px 0 8px;border-inline-start:5px solid #2A7130;padding-inline-start:8px}
   .k{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.k div{background:#F1F5F8;border-radius:10px;padding:10px;border-top:4px solid #0E7C86}.k b{display:block;font-size:24px}.k .w{border-top-color:#2A7130}
@@ -1166,11 +1173,11 @@ function meDashboard(body, pm, { nm, arrow }) {
   const fmtH = (v) => (v == null ? '' : Math.round(v * 10) / 10);
   const csvOf = (list) => [[t('col_person'), 'ID', t('col_type'), t('col_state'), t('col_created'), t('col_completed'), t('col_hours'), t('col_points')],
     ...list.map((x) => [nm(x.assigneeId), x.id, typeOf(x).split('|')[lang === 'en' ? 0 : 1] || typeOf(x), t(`state_${x.state}`), (x.createdAt || '').slice(0, 16).replace('T', ' '), (x.completedAt || '').slice(0, 16).replace('T', ' '), fmtH(hrs(x)), x.state === 'done' ? ptsOf(x) : ''])];
-  const table = (list) => list.length ? el('div', { class: 'table-wrap' }, el('table', {},
-      el('thead', {}, el('tr', {}, [t('col_person'), t('col_type'), t('col_state'), t('col_created'), t('col_hours'), t('col_points')].map((h, n) => el('th', { class: n >= 4 ? 'num' : null, text: h })))),
-      el('tbody', {}, list.slice(0, 400).map((x) => el('tr', {}, el('td', { text: nm(x.assigneeId) }), el('td', { text: typeOf(x) ? typeLabel(typeOf(x), lang) : '—' }), el('td', { text: t(`state_${x.state}`) }),
-        el('td', { class: 'ltr', text: (x.createdAt || '').slice(0, 10) }), el('td', { class: 'num', text: String(fmtH(hrs(x))) }), el('td', { class: 'num', text: x.state === 'done' ? String(ptsOf(x)) : '—' }))))))
-    : el('div', { class: 'empty', text: t('sheet_none') });
+  const table = (list) => { if (!list.length) return el('div', { class: 'empty', text: t('sheet_none') });
+    const { tbody, more } = pagedBody(list, (x) => el('tr', {}, el('td', { text: nm(x.assigneeId) }), el('td', { text: typeOf(x) ? typeLabel(typeOf(x), lang) : '—' }), el('td', { text: t(`state_${x.state}`) }),
+      el('td', { class: 'ltr', text: (x.createdAt || '').slice(0, 10) }), el('td', { class: 'num', text: String(fmtH(hrs(x))) }), el('td', { class: 'num', text: x.state === 'done' ? String(ptsOf(x)) : '—' })));
+    return el('div', {}, el('p', { class: 'hint', text: t('rows_total', { n: list.length }) }), el('div', { class: 'table-wrap' }, el('table', {},
+      el('thead', {}, el('tr', {}, [t('col_person'), t('col_type'), t('col_state'), t('col_created'), t('col_hours'), t('col_points')].map((h, n) => el('th', { class: n >= 4 ? 'num' : null, text: h })))), tbody)), more); };
   const bars = (title, rows) => rows.length ? el('section', { class: 'dash-box' }, el('h4', { text: title }), el('div', { class: 'hbars' }, (() => { const max = Math.max(1, ...rows.map((r) => r.v));
       return rows.map((r) => el('div', { class: 'hbar' }, el('span', { class: 'hb-l', title: r.l, text: r.l }), el('i', {}, el('b', { style: `width:${Math.round((r.v / max) * 100)}%` })), el('span', { class: 'hb-v', text: r.t || String(r.v) }))); })())) : null;
   const group = (list, key, val) => { const m = new Map(); for (const x of list) { const g = key(x); m.set(g, (m.get(g) || 0) + val(x)); } return [...m.entries()].map(([l, v]) => ({ l, v: Math.round(v * 10) / 10 })).sort((p, q) => q.v - p.v); };
@@ -1566,7 +1573,16 @@ function renderTeamPicker(people, team) {
       el('span', { text: nameOf(p, lang) }),
       p.teams && p.teams.length ? el('span', { class: 'muted', text: p.teams.join('، ') }) : null))));
 }
-const allTasks = () => datasets.flatMap((d) => d.tasks);
+// The heavy engines keep their results until their inputs change: the tasks, the weights, the team file, the mail rows (ADR-0041).
+let atSig = '', atList = [];
+const allTasks = () => { const sig = datasets.map((d) => `${d.key}:${d.tasks.length}:${d.range ? d.range.to : ''}`).join(','); if (sig !== atSig) { atSig = sig; atList = datasets.flatMap((d) => d.tasks); } return atList; };
+const hashStr = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return h >>> 0; };
+const MEMO = new WeakMap();
+function memoTasks(tasks, parts, fn) {
+  let m = MEMO.get(tasks); if (!m) { m = new Map(); MEMO.set(tasks, m); }
+  const key = [...parts, hashStr(JSON.stringify(weights())), hashStr(JSON.stringify(roster().people || {})), mailRows.length].join('|');
+  if (m.has(key)) return m.get(key); if (m.size > 40) m.clear(); const v = fn(); m.set(key, v); return v;
+}
 // Two bookmarklets share the exact same CRM reads: direct transfer or the original downloadable files.
 let mgrPick = null;   // { from, to, label } — the range the bookmarks pull
 function renderMgrPeriod() {
@@ -1609,7 +1625,9 @@ function levelPools(ids) {
   const pools = {}; for (const id of ids) { if (leaders.has(id)) continue; const l = (ro[id] && ro[id].leaderId) || '_'; (pools[l] = pools[l] || []).push(id); }
   return Object.values(pools);
 }
-function levelsFor(tasks, ids, today, mail) {
+function levelsFor(tasks, ids, today, mail) { return memoTasks(tasks, ['levels', ids.join(','), today, (mail || []).length], () => levelsForRaw(tasks, ids, today, mail)); }
+const loadFor = (tasks, ids, endDay) => memoTasks(tasks, ['load', ids.join(','), endDay], () => loadSustainability(tasks, weights(), ids, endDay, { mailRows }));
+function levelsForRaw(tasks, ids, today, mail) {
   const qs = lastQuarters(today, 4); const out = {};
   const ro = roster().people || {};
   for (const pool of levelPools(ids)) {
@@ -1737,7 +1755,7 @@ function reportHtml(D, { single = false, summaryOnly = false } = {}) {
       <div class="card"><h3>${esc(t('rep_table'))} <input class="find no-print" placeholder="${esc(t('rep_find'))}" oninput="spot(this.value)"/></h3><table class="tbl"><thead><tr>${['col_person', 'rep_overall', 'col_points', 'col_done', 'col_rate', 'col_avg', 'lvl_col_level', 'rep_load'].map((k, n) => `<th onclick="sortBy(${n})">${esc(t(k))}</th>`).join('')}</tr></thead><tbody>
         ${D.people.map((p) => `<tr data-name="${esc(p.name)}"><td>${esc(p.name)}</td><td data-v="${p.level && p.level.score != null ? p.level.score : -1}">${pill(ratingOf(p))}</td><td data-v="${p.points}">${p.points}</td><td data-v="${p.done}">${p.done}</td><td data-v="${p.rate ?? -1}">${rate(p.rate)}</td><td data-v="${p.avgHours ?? 1e9}">${hrs(p.avgHours)}</td><td data-v="${p.level && p.level.level || 0}">${esc(p.level && p.level.level ? p.level.level : '—')}</td><td>${esc(loadTxt(p.load))}</td></tr>`).join('')}</tbody></table></div>
       <footer>${esc(t('rep_footer', { from: D.range.from, to: D.range.to }))}</footer></section>`;
-  const css = `@font-face{font-family:NS;src:url('${fontUrl('NotoSansArabic-Regular.ttf')}')}@font-face{font-family:NS;font-weight:700;src:url('${fontUrl('NotoSansArabic-Bold.ttf')}')}
+  const css = `@font-face{font-family:NS;src:url('${fontUrl('NotoSansArabic-Regular.woff2')}')}@font-face{font-family:NS;font-weight:700;src:url('${fontUrl('NotoSansArabic-Bold.woff2')}')}
     :root{--navy:#1C1E3D;--green:#2A7130;--teal:#0E7C86;--line:#E3EAF0;--soft:#F1F5F8;--ex:#15803D;--me:#0E7C86;--pa:#B45309;--be:#B42318;--na:#8797A3}*{box-sizing:border-box}body{margin:0;font-family:NS,'Segoe UI',Tahoma,sans-serif;color:var(--navy);background:#EEF1F4;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .page{width:210mm;min-height:297mm;margin:12px auto;background:#FFFFFF;padding:15mm 14mm 16mm;position:relative;box-shadow:0 2px 14px rgba(28,30,61,.08);border-top:6px solid var(--green)}
     .cover{padding:0;display:flex;flex-direction:column;background:var(--navy);color:#FFFFFF;border-top:0}.c-top{padding:18mm 14mm 0}.c-mid{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 14mm}.c-eyebrow{color:#6CC7CF;letter-spacing:.12em;font-size:12px}.cover h1{font-size:36px;margin:8px 0 6px;line-height:1.25}.period{opacity:.85;font-size:16px;margin:0 0 26px}
@@ -1796,7 +1814,7 @@ function kpiLoadSection(team, peopleById) {
   const res = {}; let win = null;
   for (const pool of [...levelPools(team), ...leaders.map((id) => [id])]) {
     const active = pool.filter((id) => !(ro[id] && ro[id].onLeave));
-    if (active.length) { const r = loadSustainability(tasks, weights(), active, endDay, { mailRows }); win = r; Object.assign(res, r.people);
+    if (active.length) { const r = loadFor(tasks, active, endDay); win = r; Object.assign(res, r.people);
       for (const id of active) res[id].pool = active; }
     for (const id of pool.filter((x) => !active.includes(x))) res[id] = { id, status: 'leave', signals: [] };
   }
@@ -1928,6 +1946,18 @@ function kpiWeekSection(team, peopleById) { const wd = weeklyDigest(allTasks(), 
 // ---------- «التطوير»: one page for each person's quarter plan, its baseline, live progress, monthly follow-up and this month's suggestions (ADR-0040) ----------
 const GOAL_METRICS = ['points', 'done', 'avgHours', 'rate', 'type', 'custom'];
 async function devSave() { await store.kvPut('devplans', devPlans); }
+// an edit in a plan redraws that plan and its card's ring only — the team's levels and workload are not recomputed (ADR-0041)
+let devCtx = null;
+function devRefresh() {
+  const body = $('dev-body'), old = body && body.querySelector('.dev-panel');
+  if (!old || !devCtx) { renderDev(); return; }
+  old.replaceWith(devPanel(devSel, devCtx));
+  const card = body.querySelector(`.dev-card[data-id="${CSS.escape(devSel)}"]`); if (!card) return;
+  const p = (devPlans[devCtx.qPlan.key] || {})[devSel], pct = p && p.goals.length ? planProgress(quarterGoalProgress(devCtx.tasks, devCtx.wt, devSel, devCtx.qPlan, p.goals)) : null;
+  const ring = card.querySelector('.ring'); if (ring) { ring.style.setProperty('--p', pct == null ? 0 : pct); ring.querySelector('b').textContent = pct == null ? '—' : `${pct}%`; }
+  const lv = devCtx.levels[devSel], w = lv && lv.axes ? Object.entries(lv.axes).filter(([, v]) => v != null).sort((x, y) => x[1] - y[1])[0] : null, hint = card.querySelector('small.hint');
+  if (hint) hint.textContent = [w ? t('dev_weak', { a: t(`axis_${w[0]}`) }) : '', p ? t('dev_goals_n', { n: p.goals.length }) : t('dev_no_plan'), p && p.status === 'agreed' ? t('dev_agreed') : ''].filter(Boolean).join(' · ');
+}
 function devPlanOf(qKey, id) { devPlans[qKey] = devPlans[qKey] || {}; return devPlans[qKey][id] || (devPlans[qKey][id] = { goals: [], buddy: '', actions: '', note: '', status: 'draft' }); }
 function renderDev() {
   const body = $('dev-body'); if (!body) return;
@@ -1936,7 +1966,7 @@ function renderDev() {
   const peopleById = new Map(peopleOf(datasets).map((p) => [p.id, p])), team = currentTeam(scoped(peopleOf(datasets)), tasks), nm = (id) => nameOf(peopleById.get(id), lang) || id;
   const today = saudiDay(new Date().toISOString()), qPlan = quarterOf(today, devQ === 'next' ? 1 : 0), qBase = quarterOf(qPlan.from, -1);
   const { levels } = levelsFor(tasks, team, today, mailRows), ro = roster().people || {};
-  const load = {}; for (const pool of levelPools(team)) { const act = pool.filter((id) => !(ro[id] && ro[id].onLeave)); if (act.length) Object.assign(load, loadSustainability(tasks, wt, act, today).people); }
+  const load = {}; for (const pool of levelPools(team)) { const act = pool.filter((id) => !(ro[id] && ro[id].onLeave)); if (act.length) Object.assign(load, loadFor(tasks, act, today).people); }
   const plansQ = devPlans[qPlan.key] || {};
   const progOf = (id) => { const p = plansQ[id]; return p && p.goals.length ? planProgress(quarterGoalProgress(tasks, wt, id, qPlan, p.goals)) : null; };
   const ring = (pct) => el('div', { class: 'ring', style: `--p:${pct == null ? 0 : pct}` }, el('b', { text: pct == null ? '—' : `${pct}%` }));
@@ -1951,14 +1981,14 @@ function renderDev() {
       el('small', { class: 'hint', text: [w ? t('dev_weak', { a: t(`axis_${w[0]}`) }) : '', p ? t('dev_goals_n', { n: p.goals.length }) : t('dev_no_plan'), p && p.status === 'agreed' ? t('dev_agreed') : ''].filter(Boolean).join(' · ') })); })), 'dev-people');
   set(body, el('div', { class: 'row dev-head' }, qPick, el('div', { class: 'row' },
       el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('proj_excel')}`, onclick: () => devXlsx(team, nm, qPlan) }), el('span', { class: 'hint', text: t('dev_base_from', { q: qBase.label }) }))),
-    cards, devPanel(devSel, { tasks, wt, nm, team, levels, load, qPlan, qBase, peopleById }),
+    cards, devPanel(devSel, (devCtx = { tasks, wt, nm, team, levels, load, qPlan, qBase, peopleById })),
     el('details', { class: 'tucked', open: '' }, el('summary', { text: t('dev_month_h') }), kpiMapPlanSection(ds, team, peopleById)));
 }
 function devPanel(id, ctx) {
   if (!id) return null;
   const { tasks, wt, nm, team, levels, qPlan, qBase } = ctx, plan = devPlanOf(qPlan.key, id), base = quarterBaseline(tasks, wt, id, qBase), lv = levels[id];
   const prog = quarterGoalProgress(tasks, wt, id, qPlan, plan.goals), total = planProgress(prog);
-  const save = async () => { await devSave(); renderDev(); };
+  const save = async () => { await devSave(); devRefresh(); };
   const label = (g) => (g.metric === 'type' ? typeLabel(g.type, lang) || g.type : g.metric === 'custom' ? g.title || t('dev_m_custom') : t(`dev_m_${g.metric}`));
   const fmt = (m, v) => (v == null ? '—' : m === 'rate' ? `${Math.round(v * 100)}%` : m === 'avgHours' ? formatHours(v, lang) : m === 'custom' ? `${v}%` : String(v));
   const typeOpts = Object.keys(wt.tasks || {});
@@ -2014,7 +2044,7 @@ function devPdf(id, ctx) {
   const fmt = (m, v) => (v == null ? '—' : m === 'rate' ? `${Math.round(v * 100)}%` : m === 'avgHours' ? formatHours(v, lang).replace(/[\u2066-\u2069]/g, '') : m === 'custom' ? `${v}%` : String(v));
   const name = (g) => (g.metric === 'type' ? typeLabel(g.type, lang) || g.type : g.metric === 'custom' ? g.title || t('dev_m_custom') : t(`dev_m_${g.metric}`));
   const html = `<!doctype html><html lang="${lang}" dir="${lang !== 'en' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>${esc(t('dev_pdf_title'))} — ${esc(nm(id))}</title><style>
-  @font-face{font-family:NS;src:url('${fontUrl('NotoSansArabic-Regular.ttf')}')}@font-face{font-family:NS;font-weight:700;src:url('${fontUrl('NotoSansArabic-Bold.ttf')}')}
+  @font-face{font-family:NS;src:url('${fontUrl('NotoSansArabic-Regular.woff2')}')}@font-face{font-family:NS;font-weight:700;src:url('${fontUrl('NotoSansArabic-Bold.woff2')}')}
   body{margin:0;font-family:NS,'Segoe UI',Tahoma,sans-serif;color:#1C1E3D;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{padding:14mm}header{display:flex;align-items:center;gap:14px;border-bottom:4px solid #2A7130;padding-bottom:10px;margin-bottom:14px}header img{height:34px}h1{margin:0;font-size:21px}h2{font-size:15px;margin:16px 0 8px;border-inline-start:5px solid #2A7130;padding-inline-start:8px}
   .k{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.k div{background:#F1F5F8;border-radius:10px;padding:10px;border-top:4px solid #0E7C86}.k b{display:block;font-size:20px}.k .t{border-top-color:#2A7130}
   table{width:100%;border-collapse:collapse;font-size:12px}th{background:#1C1E3D;color:#FFFFFF;padding:6px;text-align:start}td{padding:6px;border-bottom:1px solid #E3EAF0}.bar{height:8px;background:#E3EAF0;border-radius:4px;overflow:hidden}.bar i{display:block;height:8px;background:#2A7130}
@@ -2028,7 +2058,7 @@ function devPdf(id, ctx) {
   <div class="sig"><div>${esc(t('dev_sig_emp'))}</div><div>${esc(t('dev_sig_mgr'))}</div></div></section></body></html>`;
   openReport(html, 'pdf', `AFAQY-development-${qPlan.key}-${id}`);
 }
-function kpiMapPlanSection(ds, team, peopleById) { const ym = ds.range.to.slice(0, 7); const tm = teamMonth(cardCtxFromDatasets(team), ym); const nmB = (id) => (nameOf(peopleById.get(id), lang) || id);
+function kpiMapPlanSection(ds, team, peopleById) { const ym = ds.range.to.slice(0, 7); const tm = memoTasks(allTasks(), ['teamMonth', team.join(','), ym, reports.length], () => teamMonth(cardCtxFromDatasets(team), ym)); const nmB = (id) => (nameOf(peopleById.get(id), lang) || id);
       const max = Math.max(1, ...tm.heat.flatMap((h) => TIERS.map((k) => h[k])));
       const cell = (v) => el('td', { class: 'num heat', style: `--heat:${(v / max).toFixed(2)}`, text: v ? String(v) : '' });
       return [el('h2', { id: 'k-map' }, t('heat_h', { m: monthLabel(ym) }), helpQ('help_heat')),

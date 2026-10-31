@@ -1058,4 +1058,6 @@ export default {
     intro_hide: 'چھپائیں',
     intro_hidden_toast: 'چھپا دیا — تعارف ہمیشہ «گائیڈ» میں ہے۔',
     intro_alt: 'عربی ورژن',
+    rows_more: '{n} مزید دکھائیں — باقی {left}',
+    rows_total: '{n} سطریں',
 };

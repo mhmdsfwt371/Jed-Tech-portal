@@ -13,8 +13,8 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0F2231">
 <style>
-  @font-face { font-family: 'Noto Sans Arabic'; src: url('assets/fonts/NotoSansArabic-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
-  @font-face { font-family: 'Noto Sans Arabic'; src: url('assets/fonts/NotoSansArabic-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+  @font-face { font-family: 'Noto Sans Arabic'; src: url('assets/fonts/NotoSansArabic-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+  @font-face { font-family: 'Noto Sans Arabic'; src: url('assets/fonts/NotoSansArabic-Bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
   /* The design system of the Service Management / R&D Portal app, copied as it is (docs/design.md): instrument-panel
      ink menu, paper grey page, white cards, one teal action colour, a thin amber marker on the current item, and its
      status colours. Its own font stack. Dark mode is derived from the same colours — the reference has none. */
@@ -523,6 +523,7 @@
   .intro-card .ic-ico { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: var(--accent); color: var(--card); } .ic-txt { display: grid; gap: 2px; } .ic-txt b { font-size: 1.02rem; color: var(--title); } .ic-txt span { font-size: 13.5px; color: var(--text); }
   .ic-acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; } .ic-alt { font-size: 13px; color: var(--accent); } .ic-x { font: inherit; font-size: 12.5px; background: none; border: none; color: var(--slate); cursor: pointer; text-decoration: underline; }
   @media (max-width: 700px) { .intro-card { grid-template-columns: 1fr; } }
+  .more-rows { display: block; margin: 10px auto 0; }
   .row-acts { white-space: nowrap; } .icon-btn { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px; padding: 2px 7px; cursor: pointer; margin-inline-start: 3px; } .icon-btn:hover { border-color: var(--accent); } @media (max-width: 760px) { .funnel { grid-template-columns: repeat(2, 1fr); } } .proj-months { display: flex; align-items: flex-end; gap: 6px; height: 128px; margin: 12px 0; padding: 0 2px; overflow-x: auto; }
   .pm { display: grid; justify-items: center; gap: 2px; min-width: 34px; } .pm i { display: block; width: 22px; background: var(--accent); border-radius: 4px 4px 0 0; } .pm b { font-size: 12px; } .pm span { font-size: 10.5px; color: var(--slate); }
   .proj-tools { gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0 8px; } .proj-q { flex: 1; min-width: 220px; font: inherit; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }

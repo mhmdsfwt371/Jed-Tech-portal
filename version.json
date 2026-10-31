@@ -1,15 +1,24 @@
 {
-  "version": "8.53",
+  "version": "8.54",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "ورقة التعريف على رابط الفريق نسخة للفريق بلا رابط المدير (بالعربية والإنجليزية)، ورابط المدير يبقى بالنسخة الكاملة."
+      "أسرع: الحسابات الثقيلة (المستويات وعبء العمل وبطاقات الشهر) تُحسب مرة وتُحفظ حتى تتغير البيانات — بداتا سنة: إعادة فتح التطوير من ٠٫٦٥ ثانية إلى لحظي، ولوحة المؤشرات من ٠٫٣٩ إلى ٠٫١٦.",
+      "تعديل هدف في التطوير صار فوريًّا (كان يجمّد الصفحة ثانية كاملة بداتا سنة).",
+      "القوائم الطويلة تعرض ٢٠٠ صف وزر «عرض المزيد» بعدد المتبقي — بدل قطعها بصمت عند ٤٠٠.",
+      "الخطوط أخف بنحو الثلث، وحُذف ملف غير مستخدم."
     ],
     "en": [
-      "On the team link the overview is a team edition without the manager link (Arabic and English); the manager link keeps the full edition."
+      "Faster: the heavy computations (levels, workload, monthly cards) run once and are kept until the data changes — with a year of data, reopening Development went from 0.65 s to instant and the KPI board from 0.39 to 0.16 s.",
+      "Editing a goal in Development is instant (it froze the page for a full second with a year of data).",
+      "Long lists show 200 rows and a “show more” button with the count left — instead of silently cutting at 400.",
+      "Fonts are about a third lighter, and an unused file was removed."
     ],
     "ur": [
-      "ٹیم لنک پر تعارف ٹیم ایڈیشن ہے، مینیجر لنک کے بغیر (عربی اور انگریزی)؛ مینیجر لنک پر مکمل ایڈیشن۔"
+      "تیز: بھاری حسابات (سطحیں، کام کا بوجھ، ماہانہ کارڈز) ایک بار ہو کر ڈیٹا بدلنے تک محفوظ رہتے ہیں۔",
+      "ترقی میں ہدف کی ترمیم اب فوری ہے۔",
+      "لمبی فہرستیں ۲۰۰ سطریں اور «مزید دکھائیں» بٹن باقی تعداد کے ساتھ دکھاتی ہیں۔",
+      "فونٹس تقریباً ایک تہائی ہلکے، اور ایک غیر استعمال شدہ فائل حذف۔"
     ]
   }
 }
