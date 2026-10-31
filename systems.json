@@ -330,6 +330,16 @@
         "en": "AFAQY Service Desk",
         "ur": "AFAQY Service Desk"
       }
+    },
+    {
+      "id": "custom_2ec64779bdfd4823912d0fbfe437826f",
+      "category": "afaqy",
+      "url": "https://makkah.mardam.afaqy.pro/",
+      "name": {
+        "ar": "Mardam Makkah",
+        "en": "Mardam Makkah",
+        "ur": "Mardam Makkah"
+      }
     }
   ]
 }
