@@ -1,5 +1,5 @@
 // config.js — the only file to edit when a tool is added or moves.
-export const PORTAL_VERSION = '8.41';   // stamped by scripts/bump.mjs — never edit by hand
+export const PORTAL_VERSION = '8.42';   // stamped by scripts/bump.mjs — never edit by hand
 
 // MODULES open inside the portal (an embedded frame under the portal's header), stay alive while you switch between
 // them, and keep their own code in their own repository. A module must live on the portal's own address
@@ -39,6 +39,8 @@ export const MORE = [
     name: { ar: 'شهادات المعايرة', en: 'Calibration certificates', ur: 'کیلیبریشن سرٹیفکیٹس' },
     desc: { ar: 'إصدار شهادات معايرة حساسات الحرارة والرطوبة (TZONE وTOPFLY) بتوقيع الفني.', en: 'Issues calibration certificates for temperature and humidity sensors (TZONE, TOPFLY) with the technician’s signature.', ur: 'درجۂ حرارت اور نمی کے سینسرز (TZONE، TOPFLY) کے کیلیبریشن سرٹیفکیٹ ٹیکنیشن کے دستخط کے ساتھ۔' },
     helps: { ar: 'شهادة جاهزة للعميل في دقائق بدل إعدادها يدويًّا لكل جهاز.', en: 'A certificate ready for the client in minutes instead of preparing one by hand per device.', ur: 'منٹوں میں کلائنٹ کے لیے تیار سرٹیفکیٹ، ہر آلے کے لیے ہاتھ سے بنانے کے بجائے۔' } },  // on Lovable, not on the portal's address — so it opens in a new tab (decision 0007: modules come from MODULE_ORIGIN only)
+  { id: 'tender', status: 'live', url: './tender-analyzer.html',
+    name: { ar: 'محلل المناقصات — دليل الاستخدام', en: 'Tender Analyzer — user manual', ur: 'ٹینڈر تجزیہ کار — استعمال کی گائیڈ' } },   // the program itself is shared from the company's SharePoint (it carries AFAQY's internal library)
   { id: 'hunt', status: 'live', url: 'https://afaqy-hunt.lovable.app/',
     name: { ar: 'أفاقي هنت — محرك الاستهداف', en: 'AFAQY Hunt — prospecting engine', ur: 'آفاقی ہنٹ — پراسپیکٹنگ انجن' } },
 ];

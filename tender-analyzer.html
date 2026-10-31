@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>محلل المناقصات — دليل الاستخدام</title>
+<link rel="icon" href="assets/favicon.png">
+<style>
+  @font-face { font-family: NS; src: url('assets/fonts/NotoSansArabic-Regular.ttf'); }
+  @font-face { font-family: NS; font-weight: 700; src: url('assets/fonts/NotoSansArabic-Bold.ttf'); }
+  :root { --navy:#1C1E3D; --green:#2A7130; --teal:#0E7C86; --line:#E3EAF0; --soft:#F1F5F8; }
+  * { box-sizing: border-box } body { margin:0; font-family: NS, 'Segoe UI', Tahoma, sans-serif; color: var(--navy); background: #EEF1F4; line-height: 1.8; }
+  header { background: var(--navy); color:#FFFFFF; padding: 28px 24px 22px; border-bottom: 6px solid var(--green); }
+  header .in { max-width: 1040px; margin: auto; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  header img { height: 46px; background:#FFFFFF; padding: 8px 12px; border-radius: 10px; }
+  header h1 { margin: 0; font-size: 28px; } header p { margin: 4px 0 0; opacity: .85; }
+  .wrap { max-width: 1040px; margin: 22px auto; display: grid; grid-template-columns: 240px 1fr; gap: 20px; padding: 0 16px; }
+  nav { position: sticky; top: 16px; align-self: start; background:#FFFFFF; border:1px solid var(--line); border-radius: 12px; padding: 12px; }
+  nav a { display: block; color: var(--navy); text-decoration: none; padding: 6px 8px; border-radius: 8px; font-size: 14px; } nav a:hover { background: var(--soft); }
+  main section { background:#FFFFFF; border:1px solid var(--line); border-radius: 14px; padding: 18px 22px; margin-bottom: 14px; scroll-margin-top: 16px; }
+  h2 { margin: 0 0 10px; font-size: 20px; border-inline-start: 5px solid var(--green); padding-inline-start: 10px; }
+  h3 { margin: 16px 0 6px; font-size: 16px; color: var(--teal); }
+  code { background: var(--soft); padding: 1px 6px; border-radius: 6px; direction: ltr; unicode-bidi: isolate; font-size: .92em; }
+  .steps { counter-reset: s; list-style: none; padding: 0; } .steps li { counter-increment: s; position: relative; padding: 8px 46px 8px 0; border-bottom: 1px dashed var(--line); }
+  .steps li::before { content: counter(s); position: absolute; right: 0; top: 8px; width: 32px; height: 32px; border-radius: 50%; background: var(--navy); color:#FFFFFF; display: grid; place-items: center; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; } th { background: var(--navy); color:#FFFFFF; text-align: start; padding: 8px; } td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .note { background: #FDF1E1; border-inline-start: 4px solid #B45309; padding: 10px 14px; border-radius: 8px; margin: 10px 0; }
+  .ok { background: #E6F4EA; border-inline-start: 4px solid #15803D; padding: 10px 14px; border-radius: 8px; margin: 10px 0; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; } .card { background: var(--soft); border-radius: 12px; padding: 12px 14px; border-top: 4px solid var(--teal); } .card b { display: block; margin-bottom: 4px; }
+  footer { text-align: center; color: #5A6B78; font-size: 13px; padding: 20px; }
+  @media (max-width: 820px) { .wrap { grid-template-columns: 1fr; } nav { position: static; } }
+  @media print { nav { display: none } .wrap { grid-template-columns: 1fr } body { background:#FFFFFF } section { break-inside: avoid } }
+</style>
+</head>
+<body>
+<header><div class="in"><img src="assets/afaqy-logo.png" alt="AFAQY"><div><h1>محلل المناقصات — دليل الاستخدام</h1><p>من فولدر المنافسة إلى دراسة القرار وجدول الكميات والعرض الفني والمالي — بهوية آفاقي</p></div></div></header>
+<div class="wrap">
+<nav aria-label="المحتويات">
+  <a href="#what">ما البرنامج</a><a href="#need">المتطلبات</a><a href="#install">التثبيت</a><a href="#run">التشغيل لأول مرة</a><a href="#use">تحليل منافسة</a>
+  <a href="#out">المخرجات</a><a href="#offer">ملف العرض</a><a href="#chat">اسأل ووجّه</a><a href="#restart">البدء من جديد</a><a href="#settings">الإعدادات</a>
+  <a href="#cost">الأمان والتكلفة</a><a href="#team">العمل كفريق</a><a href="#trouble">حل المشكلات</a>
+</nav>
+<main>
+<section id="what"><h2>ما البرنامج</h2>
+  <p>ضع ملفات المنافسة كلها في فولدر واحد — الكراسة والملاحق وجدول الكميات — واسحب الفولدر على البرنامج. يقرأ كل الملفات ويخرج الملفات النهائية بلا محادثة، بالعربية والإنجليزية، وعليها توقيعك:</p>
+  <div class="cards">
+    <div class="card"><b>دراسة المنافسة</b>عرض وإكسل: هل المنافسة في نطاق آفاقي، ومن ينفذ كل جزء، والقرار، والمخاطر، والاستفسارات، وخطة إعداد العرض.</div>
+    <div class="card"><b>جدول الكميات والأجهزة</b>إكسل: جهاز لكل بند، وتكلفة كل مكوّن بعملته ومصدره. الربح يُكتب يدويًّا.</div>
+    <div class="card"><b>العرض الفني والمالي</b>عرض واحد: دباجة آفاقي الثابتة، ثم بند في كل صفحة، ثم العرض المالي — ومعه PDF حين يكون أوفيس مثبتًا.</div>
+    <div class="card"><b>الاستفسارات والشات</b>استفسارات جاهزة للرفع على اعتماد، ومحادثة تجيب من ملفات المنافسة فقط.</div>
+  </div>
+</section>
+<section id="need"><h2>المتطلبات</h2>
+  <table><tr><th>المطلوب</th><th>التفاصيل</th></tr>
+  <tr><td>ويندوز</td><td>البرنامج يعمل على ويندوز، ويحفظ المفتاح في «خزنة بيانات الدخول» فيه.</td></tr>
+  <tr><td>بايثون 3.10 أو أحدث</td><td>من <code>python.org</code> — علّم على «Add Python to PATH» أثناء التثبيت.</td></tr>
+  <tr><td>مفتاح Claude API</td><td>من <code>platform.claude.com</code> ← API Keys، على حساب فيه رصيد. كل تحليل يُخصم من هذا الحساب.</td></tr>
+  <tr><td>إنترنت</td><td>القراءة والتحليل يتمان عبر خدمة Claude.</td></tr>
+  <tr><td>أوفيس (اختياري)</td><td>لإخراج نسخة PDF من العرض.</td></tr></table>
+</section>
+<section id="install"><h2>التثبيت</h2>
+  <ol class="steps">
+    <li>نزّل ملف البرنامج المضغوط من مجلد الإدارة الفنية على شيربوينت (يحتاج حساب آفاقي)، وفك الضغط في مجلد ثابت (مثل <code>C:\TenderAnalyzer</code>).</li>
+    <li>شغّل <code>setup.bat</code> بنقرة مزدوجة: يثبّت مكتبات بايثون المطلوبة.</li>
+    <li>عند سؤال «API key» الصق مفتاحك واضغط Enter — يُحفظ في خزنة الويندوز، لا في ملف. (Enter بدون كتابة يحتفظ بالمفتاح المحفوظ سابقًا.)</li>
+    <li>عند ظهور «Setup complete» أغلق النافذة.</li>
+  </ol>
+  <div class="ok">المفتاح شخصي ولا يُوضع في أي ملف داخل البرنامج — لذلك ملف البرنامج نفسه آمن للمشاركة داخل الشركة.</div>
+</section>
+<section id="run"><h2>التشغيل لأول مرة</h2>
+  <ol class="steps">
+    <li>افتح <code>TenderAnalyzer.pyw</code> أو <code>run.bat</code>. تفتح نافذة البرنامج (لا شاشة سوداء).</li>
+    <li>عند أول فتح يطلب توقيعك (الاسم والمنصب) ليظهر على كل الملفات، وينشئ اختصارًا باسم «محلل المناقصات» على سطح المكتب وقائمة ابدأ.</li>
+    <li>لغة الواجهة عربية أو إنجليزية — تتبدل من رأس النافذة.</li>
+  </ol>
+</section>
+<section id="use"><h2>تحليل منافسة</h2>
+  <ol class="steps">
+    <li>ضع ملفات المنافسة في فولدر واحد.</li>
+    <li>اسحب الفولدر على النافذة. قبل أي تكلفة يفحص البرنامج المفتاح بطلب صغير، ويعرض تقدير التكلفة — وينبّه إن تجاوز حد التحليل الواحد.</li>
+    <li>يقرأ كل ملف مرة واحدة، ثم يستخرج البيانات، ثم يراجع العرض الفني إن وُجد، ثم يكتب الدراسة ويترجمها.</li>
+    <li>كل خطوة مكتملة تُحفظ داخل المنافسة في <code>_analysis</code> — إن توقف التشغيل وأعدته يكمل من حيث توقف بلا تكلفة إضافية.</li>
+  </ol>
+  <div class="note">إذا وُجد تصنيف أمني مثل «سري للغاية» في المستندات، يتوقف البرنامج ويطلب موافقتك قبل الإرسال — أو يمنعه حسب الإعداد <code>classified_policy</code>.</div>
+</section>
+<section id="out"><h2>المخرجات</h2>
+  <h3>داخل فولدر المنافسة</h3>
+  <p>عرض الدراسة (الغلاف بتوقيعك، النطاق، المواعيد على خط زمني، التقييم والترسية، الالتزامات المالية، المشاكل، التوصية، القرار المطلوب)، وإكسل الدراسة (الملخص، مصفوفة المطابقة مع الإثبات من مكتبة آفاقي، التقييم الفني، المخاطر، أسئلة الاستيضاح)، وملف مواعيد يُضاف للتقويم بتذكير قبل كل موعد بيومين.</p>
+  <h3>بجانب البرنامج</h3>
+  <p>سجل المنافسات <code>AFAQY_Tenders_Register.xlsx</code> يُحدَّث بعد كل تحليل. عمودا «الحالة» و«ملاحظات القرار» للفريق ولا يغيرهما البرنامج، والنتائج المسجلة فيه (ترسية أو عدمها وسببها) يقرؤها في توصيات المنافسات التالية.</p>
+  <div class="note">إذا كان أحد ملفات المخرجات مفتوحًا في أوفيس، لا يتوقف التحليل: يحفظ نسخة جديدة بجواره باسمه ووقت الحفظ.</div>
+</section>
+<section id="offer"><h2>ملف العرض</h2>
+  <p>زر «إعداد ملف العرض» يختار جهازًا لكل بند في جدول الكميات، ويبحث عن المنتجات بمواصفاتها وصورها مفضّلًا شركاء آفاقي، ويبني العرض الفني (بند في كل صفحة) والمالي، ويتوقف عند التكلفة بالدولار والريال — والربح تضيفه أنت لكل بند. البند الذي يحقق أكثر من ٧٠٪ من المواصفات المطلوبة يُعرض كقطعة مختارة بمواصفاتها وصورتها.</p>
+</section>
+<section id="chat"><h2>اسأل ووجّه</h2>
+  <p>رابط «اسأل ووجّه» يفتح محادثة عن المنافسة المختارة. الإجابات من ملفاتها فقط، ومع كل معلومة مصدرها (الملف ورقم الصفحة)، وما لا يرد في الملفات يُقال إنه لم يرد. اكتب قاعدة أو تصحيحًا واضغط «احفظ كتوجيه»، فيُطبَّق في كل مرة تضغط «إعداد ملف العرض».</p>
+</section>
+<section id="restart"><h2>البدء من جديد</h2>
+  <table><tr><th>اختيارك</th><th>ما يحدث</th></tr>
+  <tr><td>نعم</td><td>يُعاد كل شيء: قراءة الملفات، والدراسة، والعرض.</td></tr>
+  <tr><td>لا</td><td>ملف العرض فقط (الأجهزة والبحث والأسعار)، مع الإبقاء على القراءة والدراسة — وهو الأوفر.</td></tr>
+  <tr><td>إلغاء</td><td>لا شيء. ملفات المنافسة نفسها لا تُمس أبدًا.</td></tr></table>
+</section>
+<section id="settings"><h2>الإعدادات</h2>
+  <p>في <code>settings.txt</code> بجانب البرنامج، قيمة في كل سطر:</p>
+  <table><tr><th>الإعداد</th><th>المعنى</th></tr>
+  <tr><td><code>ui_lang</code></td><td>لغة الواجهة: ar أو en.</td></tr>
+  <tr><td><code>english</code></td><td>off = الدراسة والإكسل بالعربية فقط.</td></tr>
+  <tr><td><code>work_model</code> / <code>judge_model</code></td><td>نموذج القراءة والاستخراج والترجمة / نموذج المخاطر والدراسة (sonnet أو opus).</td></tr>
+  <tr><td><code>parallel</code></td><td>عدد الطلبات المتزامنة (١–٨) — قلّله إن ظهرت رسالة حدود الاستخدام.</td></tr>
+  <tr><td><code>max_cost_per_run</code></td><td>تنبيه قبل تحليل يتجاوز هذا المبلغ بالدولار (٠ = بلا حد).</td></tr>
+  <tr><td><code>monthly_budget</code></td><td>تنبيه عند تجاوز ميزانية الشهر (٠ = بلا حد).</td></tr>
+  <tr><td><code>classified_policy</code></td><td>ask / block / off — التعامل مع الملفات ذات التصنيف الأمني.</td></tr>
+  <tr><td><code>shared_dir</code></td><td>مجلد فريق مشترك (مثل مكتبة شيربوينت متزامنة).</td></tr>
+  <tr><td><code>proposal_model</code>، <code>proposal_max_items</code>، <code>proposal_searches_per_item</code></td><td>نموذج كتابة العرض، وأقصى عدد بنود، وعدد عمليات البحث لكل منتج.</td></tr></table>
+</section>
+<section id="cost"><h2>الأمان والتكلفة</h2>
+  <p>المفتاح في خزنة الويندوز. حد أقصى لتكلفة التحليل الواحد وميزانية شهرية اختيارية، والتنبيه يظهر قبل البدء. علامة «للاستخدام الداخلي» في تذييل كل ملف. والشات يرسل ملفات المنافسة مرة واحدة فتكون الأسئلة التالية أرخص، وتظهر تكلفته أسفل النافذة.</p>
+</section>
+<section id="team"><h2>العمل كفريق</h2>
+  <p>ضع مسار مجلد مشترك في <code>shared_dir</code>: تُقرأ منه مكتبة آفاقي والتصنيفات والمسرد والهوية، ويُحفظ فيه الأرشيف وسجلات المنافسات — لكل مستخدم سجله دون تعارض. والتوقيع شخصي ولا يُحفظ في المجلد المشترك.</p>
+</section>
+<section id="trouble"><h2>حل المشكلات</h2>
+  <table><tr><th>المشكلة</th><th>الحل</th></tr>
+  <tr><td>«Python is not installed or not on PATH»</td><td>ثبّت بايثون 3.10+ مع علامة «Add Python to PATH»، ثم شغّل <code>setup.bat</code> مرة أخرى.</td></tr>
+  <tr><td>البرنامج لا يقبل المفتاح</td><td>شغّل <code>setup.bat</code> والصق مفتاحًا صحيحًا من <code>platform.claude.com</code> وتأكد أن الحساب فيه رصيد.</td></tr>
+  <tr><td>رسالة حدود الاستخدام</td><td>قلّل <code>parallel</code> في الإعدادات.</td></tr>
+  <tr><td>تريد التحليل من الصفر</td><td>«ابدأ من جديد» في الواجهة، أو احذف مجلد <code>_analysis</code> داخل المنافسة.</td></tr></table>
+</section>
+</main></div>
+<footer>آفاقي — الإدارة الفنية للمنطقة الغربية · للاستخدام الداخلي</footer>
+</body></html>

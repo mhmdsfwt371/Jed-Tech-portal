@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v8.42 — 2026-10-31
+
+- التقرير للإدارة أوضح للتقييم: تقييم عام لكل مهندس (يفوق التوقعات · يحقق · يحقق جزئيًّا · دون التوقعات) بمؤشر من ١٠٠، وكل رقم مقابل متوسط الفريق، ومصفوفة أداء (الحجم × الجودة)، وتوزيع التقييمات، وتوصيات. وعبء العمل بمسميات الشركة (متوازن · مرتفع — يُتابَع · حرج — يتطلب إجراء)، ومن في إجازة لا يُقيَّم.
+- دليل استخدام «محلل المناقصات» صفحة في البوابة (في «أدوات أخرى»).
+- إصلاح: عند تحديث الصفحة لم تعد تظهر لثوانٍ بالإنجليزية أو بأسماء الأزرار الخام.
+
+<details><summary>English</summary>
+
+- The management report reads more as an evaluation: an overall rating per engineer (Exceeds · Meets · Partially meets · Below expectations) with a 0–100 gauge, every figure against the team average, a performance matrix (volume × quality), the rating distribution, and recommendations. Workload in company wording (balanced · high — monitor · critical — action required), and anyone on leave is not rated.
+- The Tender Analyzer user manual is a page in the portal (under “Other tools”).
+- Fix: on refresh the page no longer flashes in English or with raw button labels.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- انتظامیہ کی رپورٹ اب جائزے جیسی: ہر انجینئر کا مجموعی درجہ (توقعات سے بڑھ کر · پورا · جزوی · کم) ۱۰۰ کے پیمانے پر، ہر عدد ٹیم اوسط کے مقابلے میں، کارکردگی میٹرکس، درجات کی تقسیم اور سفارشات۔ چھٹی پر کسی کو درجہ نہیں۔
+- «ٹینڈر تجزیہ کار» کی گائیڈ پورٹل میں ایک صفحہ ہے («دیگر ٹولز» میں)۔
+- درستی: صفحہ تازہ کرنے پر اب انگریزی یا خام بٹن نام نظر نہیں آتے۔
+
+</div>
+</details>
+
+
 ## v8.41 — 2026-10-31
 
 - «تقارير للإدارة» في لوحة المؤشرات: اختر الفترة والأشخاص، ثم «تقرير الفريق — PDF» بهوية أفاقي (غلاف، ملخص تنفيذي، مقارنة، وصفحة لكل مهندس بمستواه ومحاوره ونقاطه وإيقاعه وحِمله)، أو «PDF» بجانب أي اسم لتقريره وحده، أو النسخة التفاعلية HTML للإرسال.

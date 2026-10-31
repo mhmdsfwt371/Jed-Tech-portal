@@ -1,21 +1,21 @@
 {
-  "version": "8.41",
+  "version": "8.42",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "«تقارير للإدارة» في لوحة المؤشرات: اختر الفترة والأشخاص، ثم «تقرير الفريق — PDF» بهوية أفاقي (غلاف، ملخص تنفيذي، مقارنة، وصفحة لكل مهندس بمستواه ومحاوره ونقاطه وإيقاعه وحِمله)، أو «PDF» بجانب أي اسم لتقريره وحده، أو النسخة التفاعلية HTML للإرسال.",
-      "صفحة إدارة الروابط تتذكر المفتاح على جهازك وتفتح وحدها.",
-      "كل البطاقات تُرتَّب بالسحب: أدوات الرئيسية، مربعات مؤشراتي، بطاقات الفريق، البطاقات الشهرية، وبطاقات الخطة."
+      "التقرير للإدارة أوضح للتقييم: تقييم عام لكل مهندس (يفوق التوقعات · يحقق · يحقق جزئيًّا · دون التوقعات) بمؤشر من ١٠٠، وكل رقم مقابل متوسط الفريق، ومصفوفة أداء (الحجم × الجودة)، وتوزيع التقييمات، وتوصيات. وعبء العمل بمسميات الشركة (متوازن · مرتفع — يُتابَع · حرج — يتطلب إجراء)، ومن في إجازة لا يُقيَّم.",
+      "دليل استخدام «محلل المناقصات» صفحة في البوابة (في «أدوات أخرى»).",
+      "إصلاح: عند تحديث الصفحة لم تعد تظهر لثوانٍ بالإنجليزية أو بأسماء الأزرار الخام."
     ],
     "en": [
-      "“Reports for management” on the KPI board: choose the period and the people, then “Chosen team report — PDF” in AFAQY’s identity (cover, executive summary, comparison, and a page per engineer with level, axes, points, rhythm and load), “PDF” beside any name for that person alone, or the interactive HTML version to send.",
-      "The links admin page remembers the key on your device and opens by itself.",
-      "Every card list is ordered by drag: home tools, My KPIs tiles, team cards, monthly cards and plan cards."
+      "The management report reads more as an evaluation: an overall rating per engineer (Exceeds · Meets · Partially meets · Below expectations) with a 0–100 gauge, every figure against the team average, a performance matrix (volume × quality), the rating distribution, and recommendations. Workload in company wording (balanced · high — monitor · critical — action required), and anyone on leave is not rated.",
+      "The Tender Analyzer user manual is a page in the portal (under “Other tools”).",
+      "Fix: on refresh the page no longer flashes in English or with raw button labels."
     ],
     "ur": [
-      "اشاریوں کے بورڈ پر «انتظامیہ کے لیے رپورٹس»: مدت اور افراد چنیں، پھر آفاقی کی شناخت میں «منتخب ٹیم کی رپورٹ — PDF»، کسی نام کے ساتھ «PDF» صرف اس کے لیے، یا بھیجنے کے لیے تعاملی HTML ورژن۔",
-      "لنکس کا ایڈمن صفحہ آپ کے آلے پر کلید یاد رکھتا اور خود کھلتا ہے۔",
-      "ہر کارڈ فہرست گھسیٹ کر ترتیب پاتی ہے۔"
+      "انتظامیہ کی رپورٹ اب جائزے جیسی: ہر انجینئر کا مجموعی درجہ (توقعات سے بڑھ کر · پورا · جزوی · کم) ۱۰۰ کے پیمانے پر، ہر عدد ٹیم اوسط کے مقابلے میں، کارکردگی میٹرکس، درجات کی تقسیم اور سفارشات۔ چھٹی پر کسی کو درجہ نہیں۔",
+      "«ٹینڈر تجزیہ کار» کی گائیڈ پورٹل میں ایک صفحہ ہے («دیگر ٹولز» میں)۔",
+      "درستی: صفحہ تازہ کرنے پر اب انگریزی یا خام بٹن نام نظر نہیں آتے۔"
     ]
   }
 }
