@@ -27,3 +27,14 @@ Admin consent for the Outlook connection is pending with IT. Meanwhile the manag
 - Three views: Dashboard (worked → studied → submitted → won with the win rate, value won against the year target, pipeline with a check
   of each slide total against its rows, won by client, submitted, mail activity, requests by type), List (status filters, export with the
   mail header) and Clients. Values and client names never enter the public code.
+
+## Amendment (v8.47) — one card, one workspace, everything editable
+- «أنا» shows one card with the headline numbers; it opens a full layer: Dashboard (each funnel step and value opens the projects behind
+  it as cards; a card opens the edit form), List (status filters incl. lost, drag to order, edit / link to a project / delete per row),
+  Clients, Excel export with the mail header and the reason, and a PDF that places every project under its status.
+- Anything can be added, renamed, re-statused or deleted. An edited mail thread becomes a project linked to that thread; a deleted thread
+  stays hidden in later pulls; linking folds a thread into an existing project. Edits live in the device-only register.
+- "New pull from mail" builds the Claude in Chrome prompt from the last pull's date and lists every collected or set-aside subject to skip;
+  a new file merges into the old one without duplicates.
+- No bookmarklet for Outlook on the web: unlike myafaqy it offers a page no API under the user's session, and reaching its internal token
+  from a bookmarklet would be an exploit that any Microsoft update breaks. Automatic reading waits for IT's consent to the Graph app.

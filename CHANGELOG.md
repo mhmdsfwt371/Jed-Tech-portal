@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v8.47 — 2026-10-31
+
+- «مشاريعي» بطاقة واحدة تفتح طبقة كاملة: لوحة تفتح كل رقم فيها كروتًا للمشاريع خلفه، وقائمة بالسحب والإفلات وتعديل وحذف وربط لكل صف، والعملاء، وتصدير إكسل، وتقرير PDF يضع كل مشروع تحت حالته.
+- أضف مشروعًا جديدًا أو عدّل أي مشروع (الاسم والعميل والحالة والقيمة والتاريخ والملاحظات)، وحالة «خسرناها» جديدة.
+- «سحب جديد من البريد» ينسخ برومبت يبدأ من آخر سحب ويتجاوز ما جُمع، والملف الجديد يُدمج بلا تكرار.
+
+<details><summary>English</summary>
+
+- “My projects” is one card that opens a full layer: a dashboard where every figure opens the projects behind it as cards, a list with drag-and-drop and edit / delete / link per row, the clients, Excel export, and a PDF report that places each project under its status.
+- Add a new project or edit any (name, client, status, value, date, notes); a new “Lost” status.
+- “New pull from mail” copies a prompt that starts after the last pull and skips what is collected; the new file merges without duplicates.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «میرے پروجیکٹس» ایک کارڈ جو پوری تہہ کھولتا ہے: ڈیش بورڈ جس کا ہر عدد اپنے پروجیکٹس کارڈز میں کھولتا ہے، فہرست میں گھسیٹ کر ترتیب اور ہر سطر پر ترمیم / حذف / جوڑ، گاہک، ایکسل برآمد اور PDF رپورٹ۔
+- نیا پروجیکٹ شامل کریں یا کسی میں بھی ترمیم کریں؛ نئی حالت «ہارے»۔
+- «میل سے نئی کھینچ» آخری کھینچ کے بعد سے پرامپٹ کاپی کرتا ہے اور جمع شدہ چھوڑ دیتا ہے؛ نئی فائل بغیر دہرائے ضم ہوتی ہے۔
+
+</div>
+</details>
+
+
 ## v8.46 — 2026-10-31
 
 - «مشاريعي» بثلاث نوافذ: لوحة المعلومات (اشتغلت عليها ← درسناها ← قدّمنا عليها ← كسبناها، مع نسبة الفوز وقيمة المكسوب مقابل هدف السنة والمقدَّم قيد المتابعة) والقائمة (تصفية بالحالة وتصدير بموضوع البريد) والعملاء.

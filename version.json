@@ -1,18 +1,21 @@
 {
-  "version": "8.46",
+  "version": "8.47",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "«مشاريعي» بثلاث نوافذ: لوحة المعلومات (اشتغلت عليها ← درسناها ← قدّمنا عليها ← كسبناها، مع نسبة الفوز وقيمة المكسوب مقابل هدف السنة والمقدَّم قيد المتابعة) والقائمة (تصفية بالحالة وتصدير بموضوع البريد) والعملاء.",
-      "سجل المشاريع ملف يُستورد على جهازك فقط — من عرض الإدارة ولوحة ما قبل البيع — ويُربط بمحادثات البريد تلقائيًّا."
+      "«مشاريعي» بطاقة واحدة تفتح طبقة كاملة: لوحة تفتح كل رقم فيها كروتًا للمشاريع خلفه، وقائمة بالسحب والإفلات وتعديل وحذف وربط لكل صف، والعملاء، وتصدير إكسل، وتقرير PDF يضع كل مشروع تحت حالته.",
+      "أضف مشروعًا جديدًا أو عدّل أي مشروع (الاسم والعميل والحالة والقيمة والتاريخ والملاحظات)، وحالة «خسرناها» جديدة.",
+      "«سحب جديد من البريد» ينسخ برومبت يبدأ من آخر سحب ويتجاوز ما جُمع، والملف الجديد يُدمج بلا تكرار."
     ],
     "en": [
-      "“My projects” has three views: Dashboard (worked on → studied → submitted → won, with the win rate, value won against the year target and the pipeline), List (status filters, export with the mail header) and Clients.",
-      "The projects register is a file imported on your device only — from the management deck and the presales board — and is linked to the mail threads automatically."
+      "“My projects” is one card that opens a full layer: a dashboard where every figure opens the projects behind it as cards, a list with drag-and-drop and edit / delete / link per row, the clients, Excel export, and a PDF report that places each project under its status.",
+      "Add a new project or edit any (name, client, status, value, date, notes); a new “Lost” status.",
+      "“New pull from mail” copies a prompt that starts after the last pull and skips what is collected; the new file merges without duplicates."
     ],
     "ur": [
-      "«میرے پروجیکٹس» تین منظر: ڈیش بورڈ (کام کیا ← مطالعہ ← جمع کرایا ← جیتا، جیت کی شرح اور سال کے ہدف کے ساتھ)، فہرست (حالت فلٹر، میل ہیڈر کے ساتھ برآمد) اور گاہک۔",
-      "پروجیکٹس رجسٹر صرف آپ کے آلے پر درآمد ہونے والی فائل ہے اور خودبخود میل سے جڑتی ہے۔"
+      "«میرے پروجیکٹس» ایک کارڈ جو پوری تہہ کھولتا ہے: ڈیش بورڈ جس کا ہر عدد اپنے پروجیکٹس کارڈز میں کھولتا ہے، فہرست میں گھسیٹ کر ترتیب اور ہر سطر پر ترمیم / حذف / جوڑ، گاہک، ایکسل برآمد اور PDF رپورٹ۔",
+      "نیا پروجیکٹ شامل کریں یا کسی میں بھی ترمیم کریں؛ نئی حالت «ہارے»۔",
+      "«میل سے نئی کھینچ» آخری کھینچ کے بعد سے پرامپٹ کاپی کرتا ہے اور جمع شدہ چھوڑ دیتا ہے؛ نئی فائل بغیر دہرائے ضم ہوتی ہے۔"
     ]
   }
 }
