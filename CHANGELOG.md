@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.52 — 2026-10-31
+
+- ورقة التعريف بالعربية والإنجليزية: «عرض» و«تحميل» يفتحان النسخة بلغة القارئ، والنسخة الأخرى بجانبهما.
+
+<details><summary>English</summary>
+
+- The overview in Arabic and English: “View” and “Download” open the reader’s language, with the other version beside them.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- تعارف عربی اور انگریزی میں: «دیکھیں» اور «ڈاؤن لوڈ» قاری کی زبان کھولتے ہیں، دوسرا ورژن ساتھ میں۔
+
+</div>
+</details>
+
+
 ## v8.51 — 2026-10-31
 
 - «جديد على البوابة؟» — ورقة تعريف في صفحتين بزرّي عرض وتحميل، أعلى الرئيسية و«مؤشراتي» (حيث يفتح رابط الفريق) وفي «الدليل»، ويمكن إخفاؤها.

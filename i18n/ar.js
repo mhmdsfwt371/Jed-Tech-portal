@@ -1057,4 +1057,5 @@ export default {
     intro_dl: 'تحميل',
     intro_hide: 'إخفاء',
     intro_hidden_toast: 'أُخفيت — تجد الورقة دائمًا في «الدليل».',
+    intro_alt: 'English version',
 };

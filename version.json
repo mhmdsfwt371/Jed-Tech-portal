@@ -1,18 +1,15 @@
 {
-  "version": "8.51",
+  "version": "8.52",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "«جديد على البوابة؟» — ورقة تعريف في صفحتين بزرّي عرض وتحميل، أعلى الرئيسية و«مؤشراتي» (حيث يفتح رابط الفريق) وفي «الدليل»، ويمكن إخفاؤها.",
-      "صفحة إدارة الروابط: بعد «حفظ ونشر للجميع» تتابع البوابة الحية وتقول «✓ ظهرت للجميع» لحظة ظهور التعديل، بدل «قد يستغرق دقائق»."
+      "ورقة التعريف بالعربية والإنجليزية: «عرض» و«تحميل» يفتحان النسخة بلغة القارئ، والنسخة الأخرى بجانبهما."
     ],
     "en": [
-      "“New to the portal?” — a two-page overview with View and Download, at the top of Home and My KPIs (where the team link opens) and in the Guide; it can be hidden.",
-      "Manage links: after “Save and publish”, the page watches the live portal and says “✓ Live for everyone” the moment the change appears, instead of “may take minutes”."
+      "The overview in Arabic and English: “View” and “Download” open the reader’s language, with the other version beside them."
     ],
     "ur": [
-      "«پورٹل میں نئے ہیں؟» — دو صفحوں کا تعارف دیکھنے اور ڈاؤن لوڈ کے بٹنوں کے ساتھ، ہوم اور میرے اشاریوں کے اوپر اور گائیڈ میں؛ چھپایا جا سکتا ہے۔",
-      "لنکس کا انتظام: «محفوظ اور شائع» کے بعد صفحہ لائیو پورٹل دیکھتا ہے اور تبدیلی ظاہر ہوتے ہی «✓ سب کے لیے لائیو» بتاتا ہے۔"
+      "تعارف عربی اور انگریزی میں: «دیکھیں» اور «ڈاؤن لوڈ» قاری کی زبان کھولتے ہیں، دوسرا ورژن ساتھ میں۔"
     ]
   }
 }
