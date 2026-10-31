@@ -1,7 +1,7 @@
 {
   "v": 1,
   "schema": "afaqy-weights/v1",
-  "reviewed": "2026-10-30",
+  "reviewed": "2026-10-31",
   "default": 1,
   "tiers": {
     "admin": 1,
