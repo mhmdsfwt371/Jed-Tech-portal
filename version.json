@@ -1,21 +1,24 @@
 {
-  "version": "8.47",
+  "version": "8.48",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "«مشاريعي» بطاقة واحدة تفتح طبقة كاملة: لوحة تفتح كل رقم فيها كروتًا للمشاريع خلفه، وقائمة بالسحب والإفلات وتعديل وحذف وربط لكل صف، والعملاء، وتصدير إكسل، وتقرير PDF يضع كل مشروع تحت حالته.",
-      "أضف مشروعًا جديدًا أو عدّل أي مشروع (الاسم والعميل والحالة والقيمة والتاريخ والملاحظات)، وحالة «خسرناها» جديدة.",
-      "«سحب جديد من البريد» ينسخ برومبت يبدأ من آخر سحب ويتجاوز ما جُمع، والملف الجديد يُدمج بلا تكرار."
+      "«مشاريعي» ثلاث صفحات: «المشاريع من البريد» تراجع فيها كل محادثة (✓ صحيح · ✎ تصحيح · 🔗 ضم · ✕ غلط)، و«قدّمنا عليها» بقيمتها في قسمين: عملاء — عروض تجارية، ومشاريع كبيرة ومناقصات، و«أين أقف»: قدّمنا وكسبنا ومعنا ونفّذنا وخسرنا.",
+      "إكسل حقيقي بأربع أوراق: عدّل فيه واستورده فتُطبَّق التعديلات (واكتب «احذف» في الحالة للحذف).",
+      "ملفات لكل مشروع: العرض الفني والمالي والصور — على جهازك وفي النسخة الاحتياطية.",
+      "حالتان جديدتان بعد الكسب: «معنا — قيد التنفيذ» و«نفّذناه»."
     ],
     "en": [
-      "“My projects” is one card that opens a full layer: a dashboard where every figure opens the projects behind it as cards, a list with drag-and-drop and edit / delete / link per row, the clients, Excel export, and a PDF report that places each project under its status.",
-      "Add a new project or edit any (name, client, status, value, date, notes); a new “Lost” status.",
-      "“New pull from mail” copies a prompt that starts after the last pull and skips what is collected; the new file merges without duplicates."
+      "“My projects” has three pages: “Projects from mail” to review every thread (✓ right · ✎ fix · 🔗 join · ✕ wrong), “What we bid on” with values in two groups — clients (commercial offers) and large projects and tenders — and “Where I stand”: bid, won, with us, delivered, lost.",
+      "A real Excel file with four sheets: edit it and import it back to apply the changes (write “delete” as the status to delete).",
+      "Files per project: technical and financial offers and photos — on your device and in the backup.",
+      "Two new statuses after a win: “with us — in execution” and “delivered”."
     ],
     "ur": [
-      "«میرے پروجیکٹس» ایک کارڈ جو پوری تہہ کھولتا ہے: ڈیش بورڈ جس کا ہر عدد اپنے پروجیکٹس کارڈز میں کھولتا ہے، فہرست میں گھسیٹ کر ترتیب اور ہر سطر پر ترمیم / حذف / جوڑ، گاہک، ایکسل برآمد اور PDF رپورٹ۔",
-      "نیا پروجیکٹ شامل کریں یا کسی میں بھی ترمیم کریں؛ نئی حالت «ہارے»۔",
-      "«میل سے نئی کھینچ» آخری کھینچ کے بعد سے پرامپٹ کاپی کرتا ہے اور جمع شدہ چھوڑ دیتا ہے؛ نئی فائل بغیر دہرائے ضم ہوتی ہے۔"
+      "«میرے پروجیکٹس» تین صفحات: «میل سے پروجیکٹس» ہر گفتگو کا جائزہ (✓ درست · ✎ ترمیم · 🔗 جوڑیں · ✕ غلط)، «جن پر بولی دی» قدر کے ساتھ دو حصوں میں — گاہک اور بڑے پروجیکٹس و ٹینڈرز — اور «میں کہاں کھڑا ہوں»۔",
+      "چار شیٹس والی حقیقی ایکسل فائل: ترمیم کر کے واپس درآمد کریں۔",
+      "ہر پروجیکٹ کی فائلیں: تکنیکی و مالی پیشکش اور تصاویر — آپ کے آلے پر اور بیک اپ میں۔",
+      "جیت کے بعد دو نئی حالتیں: «زیرِ عمل» اور «مکمل»۔"
     ]
   }
 }

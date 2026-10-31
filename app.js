@@ -69,6 +69,8 @@ const store = (() => {
     async putPriv(v) { try { await run('readwrite', (s) => s.put(v, 'privlinks')); } catch { memPriv = v; } },
     async getProjects() { try { return (await run('readonly', (s) => s.get('projects'))) || null; } catch { return memProj; } },
     async putProjects(v) { try { await run('readwrite', (s) => s.put(v, 'projects')); } catch { memProj = v; } },
+    async kvGet(k) { try { return (await run('readonly', (s) => s.get(k))) || null; } catch { return null; } },
+    async kvPut(k, v) { try { await run('readwrite', (s) => (v == null ? s.delete(k) : s.put(v, k))); } catch { /* storage unavailable */ } },
     async getRegister() { try { return (await run('readonly', (s) => s.get('register'))) || null; } catch { return memReg; } },
     async putRegister(v) { try { await run('readwrite', (s) => s.put(v, 'register')); } catch { memReg = v; } },
     async getMail() { try { return (await run('readonly', (s) => s.get('mailrows'))) || []; } catch { return memMail; } },
@@ -419,7 +421,7 @@ function renderSignatures() {
 // ---------- private links: internal addresses (VPN portals, device admin pages) kept on this device, never published (ADR-0026) ----------
 let privLinks = [];
 let myProjects = null;   // the projects-from-mail file, on this device only (ADR-0039)
-let projAll = false, projOnlyMine = false, projQuery = '', projView = 'board', projStatus = '';
+let projAll = false, projOnlyMine = false, projQuery = '', projView = 'summary', projStatus = '';
 let myRegister = null;   // the projects register (won / submitted from the management deck, presales board) — device only
 function cleanPrivLink(x) {
   try { const name = String((x && x.name) || '').trim().slice(0, 80), u = new URL(String((x && x.url) || '').trim());
@@ -779,11 +781,11 @@ function cleanProjects(raw) {
 function cleanRegister(raw) {
   if (!raw || raw.schema !== 'afaqy-projects-register/v1' || !Array.isArray(raw.items)) return null;
   const s = (v, n = 160) => String(v == null ? '' : v).slice(0, n), num = (v) => Math.max(0, Math.round(Number(v) || 0)), arr = (v) => (Array.isArray(v) ? v.map((x) => s(x, 40)).filter(Boolean) : []);
-  const ST = ['won', 'submitted', 'studied', 'worked', 'lost'], KD = ['project', 'commercial', 'tender'];
-  const mail = raw.mail && typeof raw.mail === 'object' ? Object.fromEntries(Object.entries(raw.mail).slice(0, 3000).map(([k, v]) => [s(k, 200), { hide: !!(v && v.hide), item: s(v && v.item, 20) }])) : {};
+  const ST = ['delivered', 'ongoing', 'won', 'submitted', 'studied', 'worked', 'lost'], KD = ['project', 'commercial', 'tender'];
+  const mail = raw.mail && typeof raw.mail === 'object' ? Object.fromEntries(Object.entries(raw.mail).slice(0, 3000).map(([k, v]) => [s(k, 200), { hide: !!(v && v.hide), item: s(v && v.item, 20), name: s(v && v.name, 160), status: ['worked', 'studied', 'seen'].includes(v && v.status) ? v.status : '', ok: !!(v && v.ok) }])) : {};
   return { schema: raw.schema, asOf: s(raw.asOf, 10), mail, sources: arr(raw.sources).map((x) => x), h1: raw.h1 && typeof raw.h1 === 'object' ? Object.fromEntries(Object.entries(raw.h1).map(([k, v]) => [s(k, 30), num(v)])) : {},
     items: raw.items.map((x) => ({ id: s(x.id, 12), name: s(x.name), client: s(x.client, 120), line: s(x.line, 60), value: num(x.value), status: ST.includes(x.status) ? x.status : 'submitted',
-      period: s(x.period, 20), kind: KD.includes(x.kind) ? x.kind : 'commercial', match: arr(x.match).map((m) => m.toLowerCase()), not: arr(x.not), note: s(x.note, 300), source: s(x.source, 120), manual: !!x.manual, date: /^\d{4}-\d{2}-\d{2}$/.test(String(x.date || '')) ? x.date : '' })).filter((x) => x.name),
+      period: s(x.period, 20), kind: KD.includes(x.kind) ? x.kind : 'commercial', match: arr(x.match).map((m) => m.toLowerCase()), not: arr(x.not), note: s(x.note, 300), source: s(x.source, 120), manual: !!x.manual, ok: !!x.ok, files: Math.max(0, Math.round(Number(x.files) || 0)), date: /^\d{4}-\d{2}-\d{2}$/.test(String(x.date || '')) ? x.date : '' })).filter((x) => x.name),
     board: (Array.isArray(raw.board) ? raw.board : []).slice(0, 2000).map((b) => ({ date: /^\d{4}-\d{2}-\d{2}$/.test(String(b.date || '')) ? b.date : '', who: s(b.who, 60), task: s(b.task, 120), client: s(b.client, 80), type: s(b.type, 40), via: s(b.via, 30), done: !!b.done, mine: !!b.mine })) };
 }
 // one model from both files: register items carry the mail threads that match them; the other threads stand alone
@@ -795,108 +797,191 @@ function projectsModel() {
   for (const it of (myRegister ? myRegister.items : [])) {
     const th = live.filter((x) => !taken.has(x.k) && ((ed[x.k] && ed[x.k].item === it.id) || (!(ed[x.k] && ed[x.k].item) && it.match.some((w) => lc(x.p.project).includes(w)) && !it.not.some((w) => lc(x.p.project).includes(w.toLowerCase())))));
     th.forEach((x) => taken.add(x.k));
-    rows.push({ id: `i:${it.id}`, item: it, name: it.name, client: it.client, line: it.line, status: it.status, kind: it.kind, value: it.value, period: it.period || (it.date || '').slice(0, 4), date: it.date, note: it.note, source: it.source, manual: it.manual, threads: th.map((x) => x.p), deck: true });
+    rows.push({ id: `i:${it.id}`, item: it, ok: it.ok, files: it.files || 0, name: it.name, client: it.client, line: it.line, status: it.status, kind: it.kind, value: it.value, period: it.period || (it.date || '').slice(0, 4), date: it.date, note: it.note, source: it.source, manual: it.manual, threads: th.map((x) => x.p), deck: true });
   }
-  for (const x of live) if (!taken.has(x.k)) { const p = x.p; rows.push({ id: `m:${x.k}`, key: x.k, name: p.project, client: '', status: p.kraasa ? 'studied' : p.worked ? 'worked' : 'seen', kind: p.kraasa ? 'tender' : '', value: 0, period: '', threads: [p], deck: false, tender: p.tender }); }
+  for (const x of live) if (!taken.has(x.k)) { const p = x.p, e2 = ed[x.k] || {}; rows.push({ id: `m:${x.k}`, key: x.k, ok: !!e2.ok, files: 0, name: e2.name || p.project, client: '', status: e2.status || (p.kraasa ? 'studied' : p.worked ? 'worked' : 'seen'), kind: p.kraasa ? 'tender' : '', value: 0, period: '', threads: [p], deck: false, tender: p.tender }); }
   for (const r of rows) { const t2 = r.threads; r.first = t2.map((p) => p.first).filter(Boolean).sort()[0] || r.date || ''; r.last = t2.map((p) => p.last).filter(Boolean).sort().pop() || r.date || '';
     r.messages = t2.reduce((x, p) => x + p.messages, 0); r.me = t2.reduce((x, p) => x + p.me, 0); r.akram = t2.reduce((x, p) => x + p.akram, 0); r.shaarawi = t2.reduce((x, p) => x + p.shaarawi, 0);
     r.worked = t2.some((p) => p.worked) || (r.manual && r.status !== 'seen'); r.aibrahim = t2.some((p) => p.aibrahim); r.kraasa = t2.some((p) => p.kraasa); r.rules = [...new Set(t2.flatMap((p) => (p.rules || '').split(',')).filter(Boolean))].sort().join(','); }
   return rows;
 }
-const PROJ_RANK = { won: 5, lost: 4, submitted: 3, studied: 2, worked: 1, seen: 0 };
+const PROJ_RANK = { delivered: 7, ongoing: 6, won: 5, lost: 4, submitted: 3, studied: 2, worked: 1, seen: 0 };
+const WONISH = ['won', 'ongoing', 'delivered'], BIDISH = ['submitted', 'won', 'ongoing', 'delivered', 'lost'];
 const regEnsure = () => { if (!myRegister) myRegister = { schema: 'afaqy-projects-register/v1', asOf: new Date().toISOString().slice(0, 10), sources: [], h1: {}, items: [], board: [], mail: {} }; if (!myRegister.mail) myRegister.mail = {}; return myRegister; };
 const projSave = async () => { await store.putRegister(myRegister); projRefresh(); };
 function projWorkspaceBody() {
-  const up = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return;
+  const up = el('input', { type: 'file', accept: '.json,application/json,.xlsx', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return; e.target.value = '';
+    if (/\.xlsx$/i.test(f.name)) { await projXlsxImport(f); return; }
     try { const j = JSON.parse(await f.text());
-      if (j && j.schema === 'afaqy-projects-register/v1') { const r = cleanRegister(j); if (!r) throw 0; myRegister = r; await store.putRegister(r); toast(t('proj_reg_loaded', { n: r.items.length, b: r.board.length })); }
+      if (j && j.schema === 'afaqy-projects-register/v1') { const r = cleanRegister(j); if (!r) throw 0;
+        if (myRegister) { const have = new Set(myRegister.items.map((x) => x.id)); for (const x of r.items) if (!have.has(x.id)) myRegister.items.push(x); myRegister.board = r.board; myRegister.h1 = r.h1; myRegister.sources = r.sources; myRegister.asOf = r.asOf; }
+        else myRegister = r;
+        await store.putRegister(myRegister); toast(t('proj_reg_loaded', { n: myRegister.items.length, b: myRegister.board.length })); }
       else { const p = cleanProjects(j); if (!p) { toast(t('proj_bad')); return; }
         if (myProjects) { const have = new Map(myProjects.projects.map((x) => [projKey(x.project), x])); let added = 0;
           for (const x of p.projects) { const k = projKey(x.project), o = have.get(k);
             if (!o) { myProjects.projects.push(x); have.set(k, x); added++; }
-            else { o.first = [o.first, x.first].filter(Boolean).sort()[0] || ''; o.last = [o.last, x.last].filter(Boolean).sort().pop() || ''; for (const f of ['messages', 'me', 'akram', 'shaarawi']) o[f] = Math.max(o[f], x[f]); o.worked = o.worked || x.worked; o.aibrahim = o.aibrahim || x.aibrahim; o.kraasa = o.kraasa || x.kraasa; } }
+            else { o.first = [o.first, x.first].filter(Boolean).sort()[0] || ''; o.last = [o.last, x.last].filter(Boolean).sort().pop() || ''; for (const f2 of ['messages', 'me', 'akram', 'shaarawi']) o[f2] = Math.max(o[f2], x[f2]); o.worked = o.worked || x.worked; o.aibrahim = o.aibrahim || x.aibrahim; o.kraasa = o.kraasa || x.kraasa; } }
           const sk = new Set(myProjects.skipped.map((x) => x.subject)); for (const x of p.skipped) if (!sk.has(x.subject)) myProjects.skipped.push(x);
           myProjects.to = [myProjects.to, p.to].sort().pop(); myProjects.importedAt = p.importedAt; toast(t('proj_merged', { n: added })); }
         else { myProjects = p; toast(t('proj_loaded', { n: p.projects.length })); }
         await store.putProjects(myProjects); }
-      projRefresh(); } catch { toast(t('err_json')); } e.target.value = ''; } });
+      projRefresh(); } catch { toast(t('err_json')); } } });
   const head = el('div', { class: 'row', style: 'justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px' }, el('h2', { style: 'margin:0' }, t('proj_h'), helpQ('help_proj')),
     el('div', { class: 'row proj-actions' }, el('button', { type: 'button', class: 'btn primary tiny', text: `＋ ${t('proj_add')}`, onclick: () => projEdit(null) }),
-      el('button', { type: 'button', class: 'btn tiny', text: `⇩ ${t('proj_pull')}`, onclick: projPrompt }), el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('proj_excel')}`, onclick: () => projCsv(projectsModel()) }),
+      el('button', { type: 'button', class: 'btn tiny', text: `⇩ ${t('proj_pull')}`, onclick: projPrompt }), el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('proj_excel')}`, onclick: projXlsx }),
       el('button', { type: 'button', class: 'btn tiny', text: `🖨 ${t('proj_pdf')}`, onclick: projReport }), el('button', { type: 'button', class: 'btn quiet tiny', text: t('proj_import_any'), onclick: () => up.click() }), up));
   if (!myProjects && !myRegister) return el('section', { class: 'proj' }, head, el('div', { class: 'empty', text: t('proj_none') }));
   const year = ((myProjects && myProjects.to) || (myRegister && myRegister.asOf) || '2026').slice(0, 4), y0 = `${year}-01-01`;
-  const inYear = (r) => (r.deck ? (r.period || '').includes(year) : (r.last || '') >= y0);
-  const all = projectsModel(), scope = all.filter((r) => projAll || inYear(r));
-  const sar = (v) => `${Math.round(v).toLocaleString('en-US')} ${t('sar')}`;
-  const count = (st) => scope.filter((r) => PROJ_RANK[r.status] >= PROJ_RANK[st] && (st !== 'worked' || r.worked || r.deck)).length;
-  const funnel = [['worked', scope.filter((r) => r.worked).length], ['studied', scope.filter((r) => r.kraasa || r.status === 'studied').length], ['submitted', count('submitted')], ['won', scope.filter((r) => r.status === 'won').length]];
-  const wonV = scope.filter((r) => r.status === 'won').reduce((x, r) => x + r.value, 0), comV = scope.filter((r) => r.status === 'submitted' && r.kind === 'commercial').reduce((x, r) => x + r.value, 0), tenV = scope.filter((r) => r.status === 'submitted' && r.kind === 'tender').reduce((x, r) => x + r.value, 0);
-  const h1 = (myRegister && myRegister.h1) || {}, target = h1.yearTarget || 0;
-  const bars = (list, f2 = (v) => String(v)) => { const mx = Math.max(1, ...list.map((x) => x.v)); return el('div', { class: 'bars' }, list.map((x) => el('div', { class: 'bar-row', title: `${x.l}: ${f2(x.v)}` }, el('span', { class: 'bar-l', text: x.l }), el('i', {}, el('b', { class: x.c || '', style: `width:${Math.round((x.v / mx) * 100)}%` })), el('span', { class: 'bar-v', text: f2(x.v) })))); };
-  const views = el('div', { class: 'pills' }, [['board', 'sheet_view_board'], ['list', 'sheet_view_list'], ['clients', 'proj_v_clients']].map(([k, l]) =>
+  const all = projectsModel(), inYear = (r) => (r.deck ? ((r.period || '').includes(year) || (r.date || '') >= y0) : (r.last || '') >= y0), scope = all.filter((r) => projAll || inYear(r));
+  const sar = (v) => `${Math.round(v).toLocaleString('en-US')} ${t('sar')}`, sumV = (l) => l.reduce((x, r) => x + r.value, 0);
+  const tabs = el('div', { class: 'pills proj-pages' }, [['mail', 'proj_p_mail'], ['bids', 'proj_p_bids'], ['summary', 'proj_p_summary'], ['clients', 'proj_v_clients']].map(([k, l]) =>
     el('button', { type: 'button', class: `pill-btn${projView === k ? ' on' : ''}`, text: t(l), onclick: () => { projView = k; projRefresh(); } })));
   const period = el('div', { class: 'pills' }, el('button', { type: 'button', class: `pill-btn${projAll ? '' : ' on'}`, text: t('proj_year', { y: year }), onclick: () => { projAll = false; projRefresh(); } }),
     el('button', { type: 'button', class: `pill-btn${projAll ? ' on' : ''}`, text: t('proj_all'), onclick: () => { projAll = true; projRefresh(); } }));
-  const src = el('p', { class: 'hint' }, [myRegister ? t('proj_src_reg', { d: myRegister.asOf, n: myRegister.items.length, b: myRegister.board.length }) : t('proj_src_noreg'), myProjects ? ` · ${t('proj_src', { from: myProjects.from, to: myProjects.to, d: myProjects.importedAt })}` : ` · ${t('proj_src_nomail')}`].join(''));
-  let viewBody;
-  if (projView === 'board') {
-    const won = scope.filter((r) => r.status === 'won').sort((x, y) => y.value - x.value), sub = scope.filter((r) => r.status === 'submitted').sort((x, y) => y.value - x.value);
-    const months = new Map(); for (const r of scope) for (const p of r.threads) { const m = (p.last || '').slice(0, 7); if (m) months.set(m, (months.get(m) || 0) + 1); }
-    const mlist = [...months.entries()].sort((x, y) => (x[0] < y[0] ? -1 : 1)), mmax = Math.max(1, ...mlist.map((m) => m[1]));
-    const board = myRegister ? myRegister.board : [], mine = board.filter((b) => b.mine);
-    const types = [...board.reduce((m, b) => m.set(b.type, (m.get(b.type) || 0) + 1), new Map())].sort((x, y) => y[1] - x[1]).slice(0, 8);
-    const listed = (myRegister ? myRegister.items : []).filter((x) => !x.manual && /slide 9/.test(x.source || '')).reduce((x, y) => x + y.value, 0);
-    viewBody = el('div', {},
-      el('div', { class: 'funnel' }, funnel.map(([k, v]) => el('button', { type: 'button', class: `fn fn-${k}`, onclick: () => projDetail(k, scope) }, el('b', { text: String(v) }), el('span', { text: t(`proj_f_${k}`) }),
-        k === 'worked' ? el('small', { text: t('proj_f_threads', { n: scope.reduce((x, r) => x + r.threads.filter((p) => p.worked).length, 0) }) }) : k === 'won' && funnel[2][1] ? el('small', { text: t('proj_f_rate', { p: Math.round((v / funnel[2][1]) * 100) }) }) : k === 'studied' ? el('small', { text: t('proj_f_mailsrc') }) : k === 'submitted' ? el('small', { text: t('proj_f_decksrc') }) : null))),
-      myRegister ? el('div', { class: 'cmp-grid' },
-        el('button', { type: 'button', class: 'cmp', onclick: () => projDetail('won', scope) }, el('span', { class: 'cmp-k', text: t('proj_v_won') }), el('b', { class: 'cmp-v', text: sar(wonV) }), target ? el('span', { class: 'cmp-k', text: t('proj_v_target', { p: Math.round((wonV / target) * 100), t: sar(target) }) }) : null),
-        el('button', { type: 'button', class: 'cmp', onclick: () => projDetail('commercial', scope) }, el('span', { class: 'cmp-k', text: t('proj_v_com') }), el('b', { class: 'cmp-v', text: sar(comV) }), h1.pipelineCommercial && Math.abs(h1.pipelineCommercial - listed) > 1 ? el('span', { class: 'cmp-k warn-t', text: t('proj_v_mismatch', { deck: sar(h1.pipelineCommercial), rows: sar(listed) }) }) : null),
-        el('button', { type: 'button', class: 'cmp', onclick: () => projDetail('tender', scope) }, el('span', { class: 'cmp-k', text: t('proj_v_ten') }), el('b', { class: 'cmp-v', text: sar(tenV) }))) : null,
-      target ? el('div', { class: 'team-goal' }, el('div', { class: 'tg-row' }, el('span', { text: t('proj_v_goal') }), el('b', { text: `${sar(wonV)} / ${sar(target)}` })), el('i', {}, el('b', { style: `width:${Math.min(100, Math.round((wonV / target) * 100))}%` }))) : null,
-      el('div', { class: 'proj-grid' },
-        won.length ? el('div', { class: 'card' }, el('h3', { text: t('proj_b_won') }), bars(won.map((r) => ({ l: r.client || r.name, v: r.value, c: 'won' })), sar)) : null,
-        sub.length ? el('div', { class: 'card' }, el('h3', { text: t('proj_b_sub') }), bars(sub.map((r) => ({ l: `${r.kind === 'tender' ? '◆ ' : ''}${r.client || r.name}`, v: r.value, c: r.kind === 'tender' ? 'ten' : 'sub' })), sar)) : null,
-        mlist.length ? el('div', { class: 'card' }, el('h3', { text: t('proj_b_mail') }), el('div', { class: 'proj-months' }, mlist.map(([m, v]) => el('div', { class: 'pm', title: `${m}: ${v}` }, el('i', { style: `height:${Math.max(6, Math.round((v / mmax) * 90))}px` }), el('b', { text: String(v) }), el('span', { class: 'ltr', text: m.slice(2) }))))) : null,
-        board.length ? el('div', { class: 'card' }, el('h3', { text: t('proj_b_board', { n: board.length, m: mine.length }) }), bars(types.map(([l, v]) => ({ l, v })))) : null));
-  } else if (projView === 'clients') {
-    const board = myRegister ? myRegister.board : [], map = new Map();
-    for (const b of board) { if (!b.client) continue; const k = b.client; const c = map.get(k) || { client: k, n: 0, types: new Set(), last: '', who: new Set() }; c.n++; c.types.add(b.type); c.who.add(b.who); if (b.date > c.last) c.last = b.date; map.set(k, c); }
-    const statusOf = (c) => { const it = (myRegister ? myRegister.items : []).filter((x) => x.client && (c.toLowerCase().includes(x.client.toLowerCase()) || x.client.toLowerCase().includes(c.toLowerCase()) || x.match.some((w) => c.toLowerCase().includes(w)))); return it.length ? it.sort((x, y) => PROJ_RANK[y.status] - PROJ_RANK[x.status])[0].status : ''; };
-    let list = [...map.values()].map((c) => ({ ...c, st: statusOf(c.client) }));
-    if (projQuery) list = list.filter((c) => c.client.toLowerCase().includes(projQuery.toLowerCase()));
-    list.sort((x, y) => (PROJ_RANK[y.st] || 0) - (PROJ_RANK[x.st] || 0) || y.n - x.n);
-    viewBody = board.length ? el('div', {}, el('input', { type: 'search', class: 'proj-q', placeholder: t('proj_find_client'), value: projQuery, oninput: (e) => { projQuery = e.target.value; clearTimeout(projWorkspaceBody.t); projWorkspaceBody.t = setTimeout(projRefresh, 300); } }),
-      el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, ['proj_c_client', 'proj_c_status', 'proj_c_req', 'proj_c_types', 'proj_c_last'].map((k, n) => el('th', { class: n === 2 ? 'num' : null, text: t(k) })))),
-        el('tbody', {}, list.slice(0, 300).map((c) => el('tr', {}, el('td', { text: c.client }), el('td', {}, c.st ? el('span', { class: `st-pill st-${c.st}`, text: t(`proj_f_${c.st}`) }) : '—'),
-          el('td', { class: 'num', text: String(c.n) }), el('td', { text: [...c.types].join(' · ') }), el('td', { class: 'ltr', text: c.last || '—' }))))))) : el('div', { class: 'empty', text: t('proj_need_reg') });
-  } else {
-    let rows = scope.filter((r) => (!projOnlyMine || r.worked || r.deck) && (!projStatus || r.status === projStatus));
-    if (projQuery) rows = rows.filter((r) => `${r.name} ${r.client} ${r.tender || ''}`.toLowerCase().includes(projQuery.toLowerCase()));
-    rows = [...rows].sort((x, y) => PROJ_RANK[y.status] - PROJ_RANK[x.status] || (y.last || '').localeCompare(x.last || '') || y.value - x.value);
-    { const ids = sortByOrder(rows.map((r) => r.id), 'proj'); const pos = new Map(ids.map((id, n) => [id, n])); rows.sort((x, y) => pos.get(x.id) - pos.get(y.id)); }
-    viewBody = el('div', {},
-      el('div', { class: 'row proj-tools' },
-        el('div', { class: 'pills' }, [['', 'proj_st_all'], ['won', 'proj_f_won'], ['submitted', 'proj_f_submitted'], ['lost', 'proj_f_lost'], ['studied', 'proj_f_studied'], ['worked', 'proj_f_worked']].map(([k, l]) =>
-          el('button', { type: 'button', class: `pill-btn${projStatus === k ? ' on' : ''}`, text: t(l), onclick: () => { projStatus = k; projRefresh(); } })),
-          el('button', { type: 'button', class: `pill-btn${projOnlyMine ? ' on' : ''}`, text: t('proj_only_mine'), onclick: () => { projOnlyMine = !projOnlyMine; projRefresh(); } })),
-        el('input', { type: 'search', class: 'proj-q', placeholder: t('proj_find'), value: projQuery, oninput: (e) => { projQuery = e.target.value; clearTimeout(projWorkspaceBody.t); projWorkspaceBody.t = setTimeout(projRefresh, 300); } }),
-        el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('proj_excel')}`, onclick: () => projCsv(rows) })),
-      el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, ['proj_c_name', 'proj_c_status', 'proj_c_value', 'proj_c_last', 'proj_c_msgs', 'proj_c_who', 'proj_c_rules', ''].map((k, n) => el('th', { class: n === 2 || n === 4 ? 'num' : null, text: k ? t(k) : '' })))),
-        makeSortable(el('tbody', {}, rows.map((r) => el('tr', { 'data-id': r.id, class: r.worked ? 'worked' : null },
-          el('td', {}, el('div', { text: r.name }), el('div', { class: 'hint' }, [r.client && r.client !== r.name ? r.client : '', r.tender || '', r.line || '', r.note || '', r.first && r.first < y0 ? t('proj_started', { y: r.first.slice(0, 4) }) : '', r.threads.length > 1 ? t('proj_threads', { n: r.threads.length }) : ''].filter(Boolean).join(' · '))),
-          el('td', {}, el('span', { class: `st-pill st-${r.status}`, text: t(`proj_f_${r.status}`) })),
-          el('td', { class: 'num', text: r.value ? r.value.toLocaleString('en-US') : '—' }), el('td', { class: 'ltr', text: r.last || '—' }), el('td', { class: 'num', text: r.messages ? String(r.messages) : '—' }),
-          el('td', { text: [r.me && t('proj_who_me', { n: r.me }), r.akram && t('proj_who_akram', { n: r.akram }), r.shaarawi && t('proj_who_shaarawi', { n: r.shaarawi })].filter(Boolean).join(' · ') || '—' }),
-          el('td', { text: projWhy(r) }),
-          el('td', { class: 'row-acts' }, el('button', { type: 'button', class: 'icon-btn', title: t('proj_edit'), text: '✎', onclick: () => projEdit(r) }),
-            !r.deck ? el('button', { type: 'button', class: 'icon-btn', title: t('proj_attach'), text: '🔗', onclick: () => projAttach(r) }) : null,
-            el('button', { type: 'button', class: 'icon-btn', title: t('proj_delete'), text: '✕', onclick: () => projDelete(r) }))))), 'proj'))),
+  const search = (ph) => el('input', { type: 'search', class: 'proj-q', placeholder: ph, value: projQuery, oninput: (e) => { projQuery = e.target.value; clearTimeout(projWorkspaceBody.t); projWorkspaceBody.t = setTimeout(projRefresh, 300); } });
+  const q = (r) => !projQuery || `${r.name} ${r.client} ${r.tender || ''} ${r.threads.map((p) => p.project).join(' ')}`.toLowerCase().includes(projQuery.toLowerCase());
+  const pill = (st) => el('span', { class: `st-pill st-${st}`, text: t(`proj_f_${st}`) });
+  const acts = (r, { attach = false } = {}) => el('td', { class: 'row-acts' },
+    el('button', { type: 'button', class: `icon-btn${r.ok ? ' on' : ''}`, title: t('proj_ok'), text: '✓', onclick: () => projToggleOk(r) }),
+    el('button', { type: 'button', class: 'icon-btn', title: t('proj_edit'), text: '✎', onclick: () => projEdit(r) }),
+    el('button', { type: 'button', class: 'icon-btn', title: t('proj_files'), text: r.files ? `📎${r.files}` : '📎', onclick: () => projFiles(r) }),
+    attach ? el('button', { type: 'button', class: 'icon-btn', title: t('proj_attach'), text: '🔗', onclick: () => projAttach(r) }) : null,
+    el('button', { type: 'button', class: 'icon-btn', title: t('proj_delete'), text: '✕', onclick: () => projDelete(r) }));
+  const ordered = (rows, key) => { const ids = sortByOrder(rows.map((r) => r.id), key); const pos = new Map(ids.map((id, n) => [id, n])); return [...rows].sort((x, y) => pos.get(x.id) - pos.get(y.id)); };
+  let page;
+  if (projView === 'mail') {
+    // page 1 — every project thread from the mail, each in its row, with the project it belongs to
+    const rows = [];
+    for (const r of scope) for (const p of r.threads) rows.push({ r, p });
+    const shown = rows.filter(({ r, p }) => (!projOnlyMine || p.worked) && (!projQuery || `${r.name} ${p.project}`.toLowerCase().includes(projQuery.toLowerCase())))
+      .sort((x, y) => (y.p.last || '').localeCompare(x.p.last || ''));
+    page = el('div', {},
+      el('p', { class: 'hint', text: t('proj_p_mail_hint', { n: rows.length, w: rows.filter((x) => x.p.worked).length, ok: rows.filter((x) => x.r.ok).length }) }),
+      el('div', { class: 'row proj-tools' }, el('button', { type: 'button', class: `pill-btn${projOnlyMine ? ' on' : ''}`, text: t('proj_only_mine'), onclick: () => { projOnlyMine = !projOnlyMine; projRefresh(); } }), search(t('proj_find'))),
+      el('div', { class: 'table-wrap' }, el('table', { class: 'proj-tbl' }, el('thead', {}, el('tr', {}, ['proj_c_subject', 'proj_c_belongs', 'proj_c_status', 'proj_c_last', 'proj_c_msgs', 'proj_c_who', 'proj_c_why', ''].map((k, n) => el('th', { class: n === 4 ? 'num' : null, text: k ? t(k) : '' })))),
+        el('tbody', {}, shown.map(({ r, p }) => el('tr', { class: `${p.worked ? 'worked' : ''}${r.ok ? ' ok' : ''}` },
+          el('td', {}, el('div', { text: r.deck ? p.project : r.name }), r.deck || r.name === p.project ? null : el('div', { class: 'hint', text: p.project })),
+          el('td', { text: r.deck ? r.name : '—' }), el('td', {}, pill(r.status)), el('td', { class: 'ltr', text: p.last || '—' }), el('td', { class: 'num', text: String(p.messages) }),
+          el('td', { text: [p.me && t('proj_who_me', { n: p.me }), p.akram && t('proj_who_akram', { n: p.akram }), p.shaarawi && t('proj_who_shaarawi', { n: p.shaarawi })].filter(Boolean).join(' · ') || '—' }),
+          el('td', { text: projWhy({ ...r, deck: false, manual: false, aibrahim: p.aibrahim, kraasa: p.kraasa, rules: p.rules }) }), acts(r, { attach: !r.deck })))))),
       myProjects && myProjects.skipped.length ? el('details', { class: 'tucked' }, el('summary', { text: t('proj_skipped', { n: myProjects.skipped.length }) }),
         el('ul', { class: 'proj-skip' }, myProjects.skipped.map((x) => el('li', {}, el('b', { text: x.subject }), el('span', { class: 'hint', text: ` — ${x.reason}` }))))) : null);
+  } else if (projView === 'bids') {
+    // page 2 — what we bid on, with the money, in two groups: clients and large projects & tenders
+    const bids = scope.filter((r) => BIDISH.includes(r.status) && q(r));
+    const group = (key, label, list) => el('section', { class: 'bid-group' },
+      el('div', { class: 'bg-head' }, el('h3', { text: label }), el('span', { class: 'hint', text: t('proj_bg_tot', { n: list.length, v: sar(sumV(list)), w: list.filter((r) => WONISH.includes(r.status)).length }) })),
+      list.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'proj-tbl' }, el('thead', {}, el('tr', {}, ['proj_c_name', 'proj_c_client', 'proj_c_status', 'proj_c_value', 'proj_c_date', 'proj_c_note', ''].map((k, n) => el('th', { class: n === 3 ? 'num' : null, text: k ? t(k) : '' })))),
+        makeSortable(el('tbody', {}, ordered(list, key).map((r) => el('tr', { 'data-id': r.id, class: r.ok ? 'ok' : null },
+          el('td', {}, el('div', { text: r.name }), el('div', { class: 'hint', text: [r.line, r.threads.length ? t('proj_threads', { n: r.threads.length }) : '', r.source && !r.manual ? r.source.replace(/^.*— /, '') : ''].filter(Boolean).join(' · ') })),
+          el('td', { text: r.client && r.client !== r.name ? r.client : '—' }), el('td', {}, pill(r.status)), el('td', { class: 'num', text: r.value ? r.value.toLocaleString('en-US') : '—' }),
+          el('td', { class: 'ltr', text: r.date || r.period || r.last || '—' }), el('td', { class: 'note-c', text: r.note || '' }), acts(r)))), key))) : el('div', { class: 'empty', text: t('proj_bg_none') }));
+    page = el('div', {}, el('div', { class: 'row proj-tools' }, el('div', { class: 'pills' }, [['', 'proj_st_all'], ['submitted', 'proj_f_submitted'], ['won', 'proj_f_won'], ['ongoing', 'proj_f_ongoing'], ['delivered', 'proj_f_delivered'], ['lost', 'proj_f_lost']].map(([k, l]) =>
+        el('button', { type: 'button', class: `pill-btn${projStatus === k ? ' on' : ''}`, text: t(l), onclick: () => { projStatus = k; projRefresh(); } }))), search(t('proj_find'))),
+      group('bids-c', t('proj_g_clients'), bids.filter((r) => r.kind === 'commercial' && (!projStatus || r.status === projStatus))),
+      group('bids-p', t('proj_g_big'), bids.filter((r) => r.kind !== 'commercial' && (!projStatus || r.status === projStatus))));
+  } else if (projView === 'clients') {
+    const board = myRegister ? myRegister.board : [], map = new Map();
+    for (const b of board) { if (!b.client) continue; const c = map.get(b.client) || { client: b.client, n: 0, types: new Set(), last: '' }; c.n++; c.types.add(b.type); if (b.date > c.last) c.last = b.date; map.set(b.client, c); }
+    const statusOf = (c) => { const lc = c.toLowerCase(); const it = all.filter((r) => r.deck && r.client && (lc.includes(r.client.toLowerCase()) || r.client.toLowerCase().includes(lc))); return it.length ? it.sort((x, y) => PROJ_RANK[y.status] - PROJ_RANK[x.status])[0].status : ''; };
+    let list = [...map.values()].map((c) => ({ ...c, st: statusOf(c.client) })).filter((c) => !projQuery || c.client.toLowerCase().includes(projQuery.toLowerCase()));
+    list.sort((x, y) => (PROJ_RANK[y.st] || 0) - (PROJ_RANK[x.st] || 0) || y.n - x.n);
+    page = board.length ? el('div', {}, search(t('proj_find_client')),
+      el('div', { class: 'table-wrap' }, el('table', { class: 'proj-tbl' }, el('thead', {}, el('tr', {}, ['proj_c_client', 'proj_c_status', 'proj_c_req', 'proj_c_types', 'proj_c_last'].map((k, n) => el('th', { class: n === 2 ? 'num' : null, text: t(k) })))),
+        el('tbody', {}, list.slice(0, 300).map((c) => el('tr', {}, el('td', { text: c.client }), el('td', {}, c.st ? pill(c.st) : '—'), el('td', { class: 'num', text: String(c.n) }), el('td', { text: [...c.types].join(' · ') }), el('td', { class: 'ltr', text: c.last || '—' }))))))) : el('div', { class: 'empty', text: t('proj_need_reg') });
+  } else {
+    // page 3 — where I stand: bid, won, with us now, delivered, lost — counts and money, each opens its projects
+    const bid = scope.filter((r) => BIDISH.includes(r.status)), by = (st) => scope.filter((r) => r.status === st), wonAll = scope.filter((r) => WONISH.includes(r.status));
+    const decided = wonAll.length + by('lost').length, h1 = (myRegister && myRegister.h1) || {}, target = h1.yearTarget || 0;
+    const tile = (k, list, cls = '') => el('button', { type: 'button', class: `sm-tile ${cls}`, onclick: () => projDetail(k, scope) }, el('span', { text: t(k === 'bid' ? 'proj_s_bid' : k === 'wonall' ? 'proj_s_won' : `proj_f_${k}`) }), el('b', { text: String(list.length) }), el('small', { text: list.some((r) => r.value) ? sar(sumV(list)) : '' }));
+    const split = (kindTest) => { const l = bid.filter(kindTest); return [l.length, l.filter((r) => WONISH.includes(r.status)).length, sumV(l.filter((r) => WONISH.includes(r.status)))]; };
+    const [cN, cW, cV] = split((r) => r.kind === 'commercial'), [pN, pW, pV] = split((r) => r.kind !== 'commercial');
+    page = el('div', {},
+      el('div', { class: 'sm-grid' }, tile('bid', bid, 'big'), tile('wonall', wonAll, 'won'), tile('ongoing', by('ongoing')), tile('delivered', by('delivered')), tile('submitted', by('submitted')), tile('lost', by('lost'), 'lost')),
+      el('div', { class: 'sm-row' },
+        el('div', { class: 'sm-card' }, el('span', { text: t('proj_s_rate') }), el('b', { text: decided ? `${Math.round((wonAll.length / decided) * 100)}%` : '—' }), el('small', { text: t('proj_s_rate_n', { w: wonAll.length, d: decided }) })),
+        el('div', { class: 'sm-card' }, el('span', { text: t('proj_s_worked') }), el('b', { text: String(scope.filter((r) => r.worked).length) }), el('small', { text: t('proj_f_threads', { n: scope.reduce((x, r) => x + r.threads.filter((p) => p.worked).length, 0) }) })),
+        el('div', { class: 'sm-card' }, el('span', { text: t('proj_f_studied') }), el('b', { text: String(scope.filter((r) => r.kraasa || r.status === 'studied').length) }), el('small', { text: t('proj_f_mailsrc') }))),
+      target ? el('div', { class: 'team-goal' }, el('div', { class: 'tg-row' }, el('span', { text: t('proj_v_goal') }), el('b', { text: `${sar(sumV(wonAll))} / ${sar(target)} · ${Math.round((sumV(wonAll) / target) * 100)}%` })), el('i', {}, el('b', { style: `width:${Math.min(100, Math.round((sumV(wonAll) / target) * 100))}%` }))) : null,
+      el('table', { class: 'proj-tbl sm-split' }, el('thead', {}, el('tr', {}, ['', 'proj_s_c_bid', 'proj_s_c_won', 'proj_s_c_val'].map((k) => el('th', { text: k ? t(k) : '' })))),
+        el('tbody', {}, el('tr', {}, el('td', { text: t('proj_g_clients') }), el('td', { text: String(cN) }), el('td', { text: String(cW) }), el('td', { class: 'num', text: sar(cV) })),
+          el('tr', {}, el('td', { text: t('proj_g_big') }), el('td', { text: String(pN) }), el('td', { text: String(pW) }), el('td', { class: 'num', text: sar(pV) })),
+          el('tr', { class: 'tot' }, el('td', { text: t('proj_s_total') }), el('td', { text: String(cN + pN) }), el('td', { text: String(cW + pW) }), el('td', { class: 'num', text: sar(cV + pV) })))),
+      el('p', { class: 'hint', text: t('proj_s_note') }));
   }
-  return el('section', { class: 'proj' }, head, src, el('div', { class: 'row proj-tools' }, views, period), viewBody);
+  const src = el('p', { class: 'hint' }, [myRegister ? t('proj_src_reg', { d: myRegister.asOf, n: myRegister.items.length, b: myRegister.board.length }) : t('proj_src_noreg'), myProjects ? ` · ${t('proj_src', { from: myProjects.from, to: myProjects.to, d: myProjects.importedAt })}` : ` · ${t('proj_src_nomail')}`].join(''));
+  return el('section', { class: 'proj' }, head, src, el('div', { class: 'row proj-tools' }, tabs, period), page);
+}
+async function projFilesExport() {
+  const out = {}; for (const it of (myRegister ? myRegister.items : [])) { if (!it.files) continue; const files = (await store.kvGet(`pf:${it.id}`)) || [];
+    out[it.id] = await Promise.all(files.map((f) => new Promise((res) => { const fr = new FileReader(); fr.onload = () => res({ name: f.name, type: f.type, size: f.size, kind: f.kind, at: f.at, data: fr.result }); fr.onerror = () => res(null); fr.readAsDataURL(f.blob); }))).then((l) => l.filter(Boolean)); }
+  return out;
+}
+async function projFilesImport(map) {
+  for (const [id, list] of Object.entries(map)) { if (!Array.isArray(list) || (await store.kvGet(`pf:${id}`))) continue;
+    const files = []; for (const f of list.slice(0, 50)) { try { const m = /^data:([^;,]*)(;base64)?,(.*)$/s.exec(String(f.data)); if (!m) continue; const bin = m[2] ? atob(m[3]) : decodeURIComponent(m[3]); const u8 = new Uint8Array(bin.length); for (let q = 0; q < bin.length; q++) u8[q] = bin.charCodeAt(q); const blob = new Blob([u8], { type: m[1] || 'application/octet-stream' }); files.push({ name: String(f.name).slice(0, 160), type: String(f.type || blob.type), size: blob.size, kind: ['technical', 'financial', 'photo', 'other'].includes(f.kind) ? f.kind : 'other', at: String(f.at || '').slice(0, 10), blob }); } catch { /* skip a broken file */ } }
+    if (files.length) await store.kvPut(`pf:${id}`, files); }
+}
+async function projToggleOk(r) {
+  const R = regEnsure(); if (r.item) r.item.ok = !r.item.ok; else if (r.key) R.mail[r.key] = { ...(R.mail[r.key] || {}), ok: !r.ok };
+  await projSave();
+}
+// files on a project: technical and financial offers, photos — kept on this device, in the full backup
+async function projFiles(r) {
+  let it = r.item;
+  if (!it) { const R = regEnsure(), id = `U${Date.now().toString(36)}`; it = { id, name: r.name, client: '', line: '', kind: 'commercial', status: r.status === 'seen' ? 'worked' : r.status, value: 0, date: r.last || '', period: (r.last || '').slice(0, 4), note: '', match: [], not: [], source: t('proj_why_manual'), manual: true, ok: r.ok, files: 0 };
+    R.items.push(it); if (r.key) R.mail[r.key] = { ...(R.mail[r.key] || {}), item: id }; await store.putRegister(R); }
+  const key = `pf:${it.id}`; let files = (await store.kvGet(key)) || [];
+  const dlg = el('dialog', { class: 'proj-edit' }); const list = el('div', { class: 'pf-list' });
+  const save = async () => { await store.kvPut(key, files.length ? files : null); it.files = files.length; await store.putRegister(myRegister); paint(); projRefresh(); };
+  const paint = () => set(list, files.length ? files.map((f, n) => el('div', { class: 'pf-item' },
+    f.type.startsWith('image/') ? el('img', { src: URL.createObjectURL(f.blob), alt: f.name }) : el('span', { class: 'pf-ico', text: /pdf/.test(f.type) ? 'PDF' : /sheet|excel/.test(f.type) ? 'XLS' : /word/.test(f.type) ? 'DOC' : /presentation|powerpoint/.test(f.type) ? 'PPT' : 'FILE' }),
+    el('div', { class: 'pf-meta' }, el('b', { text: f.name }), el('span', { class: 'hint', text: `${t(`proj_fk_${f.kind}`)} · ${Math.max(1, Math.round(f.size / 1024)).toLocaleString('en-US')} KB · ${f.at}` })),
+    el('a', { class: 'icon-btn', href: URL.createObjectURL(f.blob), download: f.name, text: '⬇', title: t('proj_f_dl') }),
+    el('button', { type: 'button', class: 'icon-btn', text: '✕', title: t('proj_delete'), onclick: async () => { if (!confirm(t('proj_f_del_q', { n: f.name }))) return; files.splice(n, 1); await save(); } }))) : el('div', { class: 'empty', text: t('proj_f_none') }));
+  let kind = 'technical';
+  const pick = el('input', { type: 'file', multiple: '', hidden: true, onchange: async (e) => { for (const f of e.target.files) { if (f.size > 25 * 1024 * 1024) { toast(t('proj_f_big', { n: f.name })); continue; } files.push({ name: f.name.slice(0, 160), type: f.type || 'application/octet-stream', size: f.size, kind, at: new Date().toISOString().slice(0, 10), blob: f }); } e.target.value = ''; await save(); toast(t('proj_saved')); } });
+  dlg.append(el('h2', { text: t('proj_files_h') }), el('p', { class: 'hint', text: it.name }),
+    el('div', { class: 'row', style: 'gap:6px;flex-wrap:wrap' }, ['technical', 'financial', 'photo', 'other'].map((k) => el('button', { type: 'button', class: 'btn tiny', text: `＋ ${t(`proj_fk_${k}`)}`, onclick: () => { kind = k; pick.accept = k === 'photo' ? 'image/*' : ''; pick.click(); } })), pick),
+    list, el('p', { class: 'hint', text: t('proj_f_note') }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() })));
+  paint(); dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
+}
+// Excel: four sheets (from mail, bids — clients, bids — large projects, summary); edit it and import it back by its ID column
+async function loadXlsx() {
+  if (window.XLSX) return window.XLSX;
+  await new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = res; s.onerror = rej; document.head.append(s); });
+  return window.XLSX;
+}
+async function projXlsx() {
+  let X; try { X = await loadXlsx(); } catch { toast(t('proj_x_fail')); projCsv(projectsModel()); return; }
+  const rows = projectsModel(), wb = X.utils.book_new(), st = (s) => t(`proj_f_${s}`);
+  const mail = []; for (const r of rows) for (const p of r.threads) mail.push({ ID: r.id, [t('proj_c_subject')]: p.project, [t('proj_c_name')]: r.name, [t('proj_c_status')]: st(r.status), [t('proj_c_first')]: p.first, [t('proj_c_last')]: p.last, [t('proj_c_msgs')]: p.messages, [t('proj_c_me')]: p.me, [t('proj_c_akram')]: p.akram, [t('proj_c_shaarawi')]: p.shaarawi, [t('proj_c_why')]: projWhy({ aibrahim: p.aibrahim, kraasa: p.kraasa, rules: p.rules }), [t('proj_ok')]: r.ok ? '✓' : '' });
+  const bidRow = (r) => ({ ID: r.id, [t('proj_c_name')]: r.name, [t('proj_c_client')]: r.client, [t('proj_c_status')]: st(r.status), [t('proj_c_value')]: r.value || 0, [t('proj_c_date')]: r.date || '', [t('proj_c_period')]: r.period || '', [t('proj_c_line')]: r.line || '', [t('proj_c_note')]: r.note || '', [t('proj_c_threads')]: r.threads.length, [t('proj_files')]: r.files || 0, [t('proj_ok')]: r.ok ? '✓' : '' });
+  const bids = rows.filter((r) => BIDISH.includes(r.status));
+  const add = (data, name) => { const ws = X.utils.json_to_sheet(data.length ? data : [{ ID: '' }]); ws['!cols'] = Object.keys(data[0] || { ID: 1 }).map((k) => ({ wch: k === 'ID' ? 8 : Math.min(60, Math.max(12, ...data.map((d) => String(d[k] ?? '').length))) })); ws['!views'] = [{ RTL: lang !== 'en' }]; X.utils.book_append_sheet(wb, ws, name.slice(0, 31)); };
+  add(mail, t('proj_p_mail')); add(bids.filter((r) => r.kind === 'commercial').map(bidRow), `${t('proj_p_bids')} — ${t('proj_g_clients_s')}`); add(bids.filter((r) => r.kind !== 'commercial').map(bidRow), `${t('proj_p_bids')} — ${t('proj_g_big_s')}`);
+  const cnt = (f) => rows.filter(f).length, val = (f) => rows.filter(f).reduce((x, r) => x + r.value, 0);
+  add([['proj_s_bid', (r) => BIDISH.includes(r.status)], ['proj_s_won', (r) => WONISH.includes(r.status)], ['proj_f_ongoing', (r) => r.status === 'ongoing'], ['proj_f_delivered', (r) => r.status === 'delivered'], ['proj_f_submitted', (r) => r.status === 'submitted'], ['proj_f_lost', (r) => r.status === 'lost'], ['proj_s_worked', (r) => r.worked]]
+    .map(([k, f]) => ({ [t('proj_c_item')]: t(k), [t('proj_c_count')]: cnt(f), [t('proj_c_value')]: val(f) })), t('proj_p_summary'));
+  X.writeFile(wb, `AFAQY-projects-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  toast(t('proj_x_done'));
+}
+async function projXlsxImport(file) {
+  let X; try { X = await loadXlsx(); } catch { toast(t('proj_x_fail')); return; }
+  const wb = X.read(new Uint8Array(await file.arrayBuffer()), { type: 'array' }), R = regEnsure(), stOf = new Map(Object.keys(PROJ_RANK).map((s) => [t(`proj_f_${s}`), s]));
+  let n = 0, del = 0; const seen = new Set();
+  for (const name of wb.SheetNames.slice(0, 3)) for (const row of X.utils.sheet_to_json(wb.Sheets[name], { defval: '' })) {
+    const id = String(row.ID || ''); if (!id || seen.has(id)) continue; seen.add(id);
+    const g = (k) => row[t(k)];
+    if (String(g('proj_c_status') || '').trim() === t('proj_x_delete')) { const r = projectsModel().find((x) => x.id === id); if (r) { if (r.item) R.items = R.items.filter((x) => x.id !== r.item.id); else if (r.key) R.mail[r.key] = { hide: true }; del++; } continue; }
+    if (id.startsWith('i:')) { const it = R.items.find((x) => `i:${x.id}` === id); if (!it) continue;
+      const nm = g('proj_c_name'), cl = g('proj_c_client'), s2 = stOf.get(String(g('proj_c_status') || '').trim()), v = Number(g('proj_c_value')), nt = g('proj_c_note'), dt = String(g('proj_c_date') || '');
+      if (nm) it.name = String(nm).slice(0, 160); if (cl !== undefined) it.client = String(cl).slice(0, 120); if (s2) it.status = s2; if (!Number.isNaN(v) && g('proj_c_value') !== undefined) it.value = Math.max(0, Math.round(v));
+      if (nt !== undefined) it.note = String(nt).slice(0, 300); if (/^\d{4}-\d{2}-\d{2}$/.test(dt)) it.date = dt; it.ok = String(g('proj_ok') || '').trim() === '✓'; n++; }
+    else if (id.startsWith('m:')) { const k = id.slice(2), nm = g('proj_c_name'), s2 = stOf.get(String(g('proj_c_status') || '').trim());
+      R.mail[k] = { ...(R.mail[k] || {}), ...(nm ? { name: String(nm).slice(0, 160) } : {}), ...(['worked', 'studied', 'seen'].includes(s2) ? { status: s2 } : {}), ok: String(g('proj_ok') || '').trim() === '✓' }; n++; } }
+  await store.putRegister(R); toast(t('proj_x_imported', { n, d: del })); projRefresh();
 }
 
 function projWhy(r) {
@@ -910,11 +995,11 @@ function projCsv(rows) {
 }
 // the card on «أنا»: the headline numbers — the whole workspace opens in its own layer
 function projectsCard() {
-  const rows = (myProjects || myRegister) ? projectsModel() : [], won = rows.filter((r) => r.status === 'won');
+  const rows = (myProjects || myRegister) ? projectsModel() : [], won = rows.filter((r) => WONISH.includes(r.status));
   const n = (st) => rows.filter((r) => r.status === st).length;
   return el('button', { type: 'button', class: 'proj-card', onclick: projOpen },
     el('div', { class: 'pc-head' }, el('b', { text: t('proj_h') }), el('span', { class: 'pc-open', text: `${t('proj_open')} ↗` })),
-    rows.length ? el('div', { class: 'pc-nums' }, [['worked', rows.filter((r) => r.worked).length], ['submitted', n('submitted') + n('won') + n('lost')], ['won', won.length]].map(([k, v]) => el('div', {}, el('b', { text: String(v) }), el('span', { text: t(`proj_f_${k}`) }))),
+    rows.length ? el('div', { class: 'pc-nums' }, [['proj_s_worked', rows.filter((r) => r.worked).length], ['proj_s_bid', rows.filter((r) => BIDISH.includes(r.status)).length], ['proj_s_won', rows.filter((r) => WONISH.includes(r.status)).length], ['proj_f_ongoing', n('ongoing')]].map(([k, v]) => el('div', {}, el('b', { text: String(v) }), el('span', { text: t(k) }))),
       el('div', { class: 'pc-val' }, el('b', { text: won.reduce((x, r) => x + r.value, 0).toLocaleString('en-US') }), el('span', { text: `${t('sar')} · ${t('proj_v_won')}` })))
       : el('p', { class: 'hint', text: t('proj_card_empty') }));
 }
@@ -926,10 +1011,10 @@ function projOpen() {
 function projRefresh() { const dlg = $('proj-dlg'); if (dlg && dlg.open) { const b = dlg.querySelector('.pl-body'); if (b) set(b, projWorkspaceBody()); } else renderMe(); }
 // details as cards: click a funnel step or a value and see each project behind it
 function projDetail(k, scope) {
-  const list = scope.filter((r) => (k === 'worked' ? r.worked : k === 'studied' ? (r.kraasa || r.status === 'studied') : k === 'submitted' ? PROJ_RANK[r.status] >= 3 : k === 'commercial' ? r.status === 'submitted' && r.kind === 'commercial' : k === 'tender' ? r.status === 'submitted' && r.kind === 'tender' : r.status === k))
+  const list = scope.filter((r) => (k === 'bid' ? BIDISH.includes(r.status) : k === 'wonall' ? WONISH.includes(r.status) : k === 'worked' ? r.worked : k === 'studied' ? (r.kraasa || r.status === 'studied') : k === 'submitted' ? PROJ_RANK[r.status] >= 3 : k === 'commercial' ? r.status === 'submitted' && r.kind === 'commercial' : k === 'tender' ? r.status === 'submitted' && r.kind === 'tender' : r.status === k))
     .sort((x, y) => y.value - x.value || (y.last || '').localeCompare(x.last || ''));
   const dlg = el('dialog', { class: 'proj-detail' });
-  dlg.append(el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, el('h2', { style: 'margin:0', text: `${t(k === 'commercial' ? 'proj_v_com' : k === 'tender' ? 'proj_v_ten' : `proj_f_${k}`)} — ${list.length}` }),
+  dlg.append(el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, el('h2', { style: 'margin:0', text: `${t(k === 'commercial' ? 'proj_v_com' : k === 'tender' ? 'proj_v_ten' : k === 'bid' ? 'proj_s_bid' : k === 'wonall' ? 'proj_s_won' : `proj_f_${k}`)} — ${list.length}` }),
       el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() })),
     el('div', { class: 'pd-grid' }, list.map((r) => el('button', { type: 'button', class: `pd-card st-b-${r.status}`, onclick: () => { dlg.close(); projEdit(r); } },
       el('span', { class: `st-pill st-${r.status}`, text: t(`proj_f_${r.status}`) }), el('b', { text: r.name }), r.client && r.client !== r.name ? el('span', { class: 'hint', text: r.client }) : null,
@@ -950,13 +1035,14 @@ function projEdit(r) {
     const R = regEnsure(); const rec = { name: f.name.trim().slice(0, 160), client: f.client.trim().slice(0, 120), line: f.line.trim().slice(0, 60), kind: f.kind, status: f.status, value: Math.max(0, Math.round(Number(f.value) || 0)),
       date: /^\d{4}-\d{2}-\d{2}$/.test(f.date) ? f.date : '', period: f.period.trim().slice(0, 20) || (f.date || '').slice(0, 4), note: f.note.trim().slice(0, 300), match: f.match.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean).slice(0, 12) };
     if (it) Object.assign(it, rec);
+    else if (r && r.key && ['worked', 'studied'].includes(rec.status) && !rec.value && !rec.client) { R.mail[r.key] = { ...(R.mail[r.key] || {}), name: rec.name, status: rec.status }; }
     else { const id = `U${Date.now().toString(36)}`; R.items.push({ id, ...rec, not: [], source: t('proj_why_manual'), manual: true }); if (r && r.key) R.mail[r.key] = { item: id }; }
     dlg.close(); toast(t('proj_saved')); await projSave(); };
   dlg.append(el('h2', { text: r ? t('proj_edit_h') : t('proj_add_h') }),
     r && r.threads && r.threads.length ? el('p', { class: 'hint', text: t('proj_edit_threads', { n: r.threads.length, s: r.threads.slice(0, 2).map((p) => p.project).join(' | ') }) }) : null,
     el('div', { class: 'form-grid' },
       el('label', {}, el('span', { text: t('proj_c_name') }), inp('name')), el('label', {}, el('span', { text: t('proj_c_client') }), inp('client')),
-      el('label', {}, el('span', { text: t('proj_c_status') }), sel('status', ['worked', 'studied', 'submitted', 'won', 'lost'].map((s) => [s, t(`proj_f_${s}`)]))),
+      el('label', {}, el('span', { text: t('proj_c_status') }), sel('status', ['worked', 'studied', 'submitted', 'won', 'ongoing', 'delivered', 'lost'].map((s) => [s, t(`proj_f_${s}`)]))),
       el('label', {}, el('span', { text: t('proj_c_kind') }), sel('kind', ['project', 'commercial', 'tender'].map((s) => [s, t(`proj_k_${s}`)]))),
       el('label', {}, el('span', { text: t('proj_c_value') }), inp('value', 'number', { min: '0', step: '1' })), el('label', {}, el('span', { text: t('proj_c_date') }), inp('date', 'date')),
       el('label', {}, el('span', { text: t('proj_c_line') }), inp('line')), el('label', {}, el('span', { text: t('proj_c_period') }), inp('period', 'text', { placeholder: 'H2 2026' })),
@@ -1023,8 +1109,8 @@ function projReport() {
   const rows = projectsModel(), esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const logo = logoDataUrl(), rtl = lang !== 'en', fontUrl = (f) => new URL(`assets/fonts/${f}`, location.href).href, sum = (l) => l.reduce((x, r) => x + r.value, 0), f0 = (v) => v.toLocaleString('en-US');
   const by = (st) => rows.filter((r) => r.status === st).sort((x, y) => y.value - x.value || (y.last || '').localeCompare(x.last || ''));
-  const groups = ['won', 'submitted', 'lost', 'studied', 'worked'].map((st) => ({ st, list: by(st) })).filter((g) => g.list.length);
-  const kpi = [['worked', rows.filter((r) => r.worked).length], ['studied', rows.filter((r) => r.kraasa || r.status === 'studied').length], ['submitted', rows.filter((r) => PROJ_RANK[r.status] >= 3).length], ['won', by('won').length]];
+  const groups = ['delivered', 'ongoing', 'won', 'submitted', 'lost', 'studied', 'worked'].map((st) => ({ st, list: by(st) })).filter((g) => g.list.length);
+  const kpi = [['s_worked', rows.filter((r) => r.worked).length], ['s_bid', rows.filter((r) => BIDISH.includes(r.status)).length], ['s_won', rows.filter((r) => WONISH.includes(r.status)).length], ['f_delivered', by('delivered').length]];
   const table = (list) => `<table><thead><tr><th>${esc(t('proj_c_name'))}</th><th>${esc(t('proj_c_client'))}</th><th>${esc(t('proj_c_kind'))}</th><th>${esc(t('proj_c_value'))}</th><th>${esc(t('proj_c_last'))}</th><th>${esc(t('proj_c_why'))}</th></tr></thead><tbody>${list.map((r) => `<tr><td>${esc(r.name)}${r.note ? `<div class="n">${esc(r.note)}</div>` : ''}</td><td>${esc(r.client && r.client !== r.name ? r.client : '')}</td><td>${esc(r.kind ? t(`proj_k_${r.kind}`) : '')}</td><td class="v">${r.value ? f0(r.value) : '—'}</td><td class="d">${esc(r.last || '—')}</td><td>${esc(projWhy(r))}</td></tr>`).join('')}</tbody></table>`;
   const html = `<!doctype html><html lang="${lang}" dir="${rtl ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>${esc(t('proj_pdf_title'))}</title><style>
   @font-face{font-family:NS;src:url('${fontUrl('NotoSansArabic-Regular.ttf')}')}@font-face{font-family:NS;font-weight:700;src:url('${fontUrl('NotoSansArabic-Bold.ttf')}')}
@@ -1035,8 +1121,8 @@ function projReport() {
   table{width:100%;border-collapse:collapse;font-size:11.5px}th{background:#1C1E3D;color:#FFFFFF;padding:6px;text-align:start}td{padding:5px 6px;border-bottom:1px solid #E3EAF0;vertical-align:top}tr:nth-child(even) td{background:#F1F5F8}.v{text-align:end;white-space:nowrap;font-weight:700}.d{white-space:nowrap}.n{color:#5A6B78;font-size:10.5px}
   footer{margin-top:14px;font-size:9.5px;color:#8797A3}@page{size:A4;margin:0}</style></head><body>
   <section class="page"><header><img src="${logo}" alt="AFAQY"><div><h1>${esc(t('proj_pdf_title'))}</h1><div>${esc(new Date().toISOString().slice(0, 10))}</div></div></header>
-  <div class="k">${kpi.map(([k, v]) => `<div class="${k === 'won' ? 'w' : ''}"><b>${v}</b>${esc(t(`proj_f_${k}`))}</div>`).join('')}</div>
-  <div class="v4"><div>${esc(t('proj_v_won'))}<b>${f0(sum(by('won')))} ${esc(t('sar'))}</b></div><div>${esc(t('proj_v_com'))}<b>${f0(sum(by('submitted').filter((r) => r.kind === 'commercial')))} ${esc(t('sar'))}</b></div><div>${esc(t('proj_v_ten'))}<b>${f0(sum(by('submitted').filter((r) => r.kind === 'tender')))} ${esc(t('sar'))}</b></div></div>
+  <div class="k">${kpi.map(([k, v]) => `<div class="${k === 's_won' ? 'w' : ''}"><b>${v}</b>${esc(t(`proj_${k}`))}</div>`).join('')}</div>
+  <div class="v4"><div>${esc(t('proj_v_won'))}<b>${f0(sum(rows.filter((r) => WONISH.includes(r.status))))} ${esc(t('sar'))}</b></div><div>${esc(t('proj_v_com'))}<b>${f0(sum(by('submitted').filter((r) => r.kind === 'commercial')))} ${esc(t('sar'))}</b></div><div>${esc(t('proj_v_ten'))}<b>${f0(sum(by('submitted').filter((r) => r.kind === 'tender')))} ${esc(t('sar'))}</b></div></div>
   ${groups.map((g) => `<h2>${esc(t(`proj_f_${g.st}`))} — ${g.list.length}${sum(g.list) ? ` · ${f0(sum(g.list))} ${esc(t('sar'))}` : ''}</h2>${table(g.list)}`).join('')}
   <footer>${esc(t('proj_pdf_foot'))}</footer></section></body></html>`;
   openReport(html, 'pdf', 'AFAQY-my-projects');
@@ -2359,7 +2445,7 @@ $('file-in').addEventListener('change', async (e) => { for (const f of e.target.
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
 $('export-btn').addEventListener('click', async () => {
   const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION,
-    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister };
+    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projfiles: await projFilesExport() };
   download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(all, null, 1));
 });
 $('import-in').addEventListener('change', async (e) => {
@@ -2382,6 +2468,7 @@ $('import-in').addEventListener('change', async (e) => {
       await store.putRepairs(repairs);
       const known = new Set(privLinks.map((x) => x.url));
       for (const x of Array.isArray(j.privlinks) ? j.privlinks : []) { const v = cleanPrivLink(x); if (v && !known.has(v.url)) privLinks.push(v); }
+      if (j.projfiles && typeof j.projfiles === 'object') await projFilesImport(j.projfiles);
       if (j.register && !myRegister) { const r = cleanRegister(j.register); if (r) { myRegister = r; await store.putRegister(r); } }
       if (j.projects && !myProjects) { const p = cleanProjects(j.projects); if (p) { myProjects = p; await store.putProjects(myProjects); } }
       if (Array.isArray(j.pending)) { const have = new Set(pendingList().map((x) => x.name.toLowerCase())); localStorage.setItem(PENDING_KEY, JSON.stringify([...pendingList(), ...j.pending.map(cleanPending).filter((x) => x && !have.has(x.name.toLowerCase()))])); }

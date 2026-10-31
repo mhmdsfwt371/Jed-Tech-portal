@@ -17,6 +17,35 @@
 
 <!-- releases -->
 
+## v8.48 — 2026-10-31
+
+- «مشاريعي» ثلاث صفحات: «المشاريع من البريد» تراجع فيها كل محادثة (✓ صحيح · ✎ تصحيح · 🔗 ضم · ✕ غلط)، و«قدّمنا عليها» بقيمتها في قسمين: عملاء — عروض تجارية، ومشاريع كبيرة ومناقصات، و«أين أقف»: قدّمنا وكسبنا ومعنا ونفّذنا وخسرنا.
+- إكسل حقيقي بأربع أوراق: عدّل فيه واستورده فتُطبَّق التعديلات (واكتب «احذف» في الحالة للحذف).
+- ملفات لكل مشروع: العرض الفني والمالي والصور — على جهازك وفي النسخة الاحتياطية.
+- حالتان جديدتان بعد الكسب: «معنا — قيد التنفيذ» و«نفّذناه».
+
+<details><summary>English</summary>
+
+- “My projects” has three pages: “Projects from mail” to review every thread (✓ right · ✎ fix · 🔗 join · ✕ wrong), “What we bid on” with values in two groups — clients (commercial offers) and large projects and tenders — and “Where I stand”: bid, won, with us, delivered, lost.
+- A real Excel file with four sheets: edit it and import it back to apply the changes (write “delete” as the status to delete).
+- Files per project: technical and financial offers and photos — on your device and in the backup.
+- Two new statuses after a win: “with us — in execution” and “delivered”.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «میرے پروجیکٹس» تین صفحات: «میل سے پروجیکٹس» ہر گفتگو کا جائزہ (✓ درست · ✎ ترمیم · 🔗 جوڑیں · ✕ غلط)، «جن پر بولی دی» قدر کے ساتھ دو حصوں میں — گاہک اور بڑے پروجیکٹس و ٹینڈرز — اور «میں کہاں کھڑا ہوں»۔
+- چار شیٹس والی حقیقی ایکسل فائل: ترمیم کر کے واپس درآمد کریں۔
+- ہر پروجیکٹ کی فائلیں: تکنیکی و مالی پیشکش اور تصاویر — آپ کے آلے پر اور بیک اپ میں۔
+- جیت کے بعد دو نئی حالتیں: «زیرِ عمل» اور «مکمل»۔
+
+</div>
+</details>
+
+
 ## v8.47 — 2026-10-31
 
 - «مشاريعي» بطاقة واحدة تفتح طبقة كاملة: لوحة تفتح كل رقم فيها كروتًا للمشاريع خلفه، وقائمة بالسحب والإفلات وتعديل وحذف وربط لكل صف، والعملاء، وتصدير إكسل، وتقرير PDF يضع كل مشروع تحت حالته.

@@ -38,3 +38,14 @@ Admin consent for the Outlook connection is pending with IT. Meanwhile the manag
   a new file merges into the old one without duplicates.
 - No bookmarklet for Outlook on the web: unlike myafaqy it offers a page no API under the user's session, and reaching its internal token
   from a bookmarklet would be an exploit that any Microsoft update breaks. Automatic reading waits for IT's consent to the Graph app.
+
+## Amendment (v8.48) — three pages, Excel round trip, project files
+- Pages: "Projects from mail" (every project thread; ✓ reviewed, ✎ rename or re-status in place, 🔗 join to a project, ✕ wrong),
+  "What we bid on" (two groups: clients — commercial offers; large projects and tenders — with value, status, date, notes, files),
+  "Where I stand" (bid, won, with us, delivered, pending, lost; win rate over decided bids only; split by the two groups; each tile opens
+  its projects). Clients stays as a fourth page.
+- Statuses after a win: won → with us (in execution) → delivered. The deck's 11 H1 projects are delivered.
+- Excel (.xlsx, four sheets, SheetJS from cdnjs on demand; CSV if it cannot load). Each row carries an ID; editing name, client, status,
+  value, date, notes or the reviewed mark — or writing "delete" as the status — and importing the file applies the changes.
+- Files per project (technical offer, financial offer, photos, other; up to 25 MB each) stay in IndexedDB on the device and ride in the
+  full backup as data; adding a file to a mail thread makes it a project of its own.
