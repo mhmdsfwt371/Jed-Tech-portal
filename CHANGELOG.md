@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.55 — 2026-11-01
+
+- حُذف رابط «Mardam Makkah» المكرر من أنظمة أفاقي، ويبقى «Makkah Mardam» في المشاريع ونسك.
+- ورقة تعريف الفريق بلا صفحات المدير: ست صفحات، ومعها مؤشرات «مؤشراتي» الستة.
+
+<details><summary>English</summary>
+
+- The duplicate “Mardam Makkah” link was removed from AFAQY systems; “Makkah Mardam” stays under Projects and Nusuk.
+- The team overview leaves out the manager pages: six pages, plus the six indicators of My KPIs.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- دہرا «Mardam Makkah» لنک آفاقی سسٹمز سے ہٹا دیا؛ «Makkah Mardam» پروجیکٹس اور نسک میں رہتا ہے۔
+- ٹیم تعارف میں مینیجر کے صفحات نہیں: چھ صفحات، اور میرے اشاریوں کے چھ اشاریے۔
+
+</div>
+</details>
+
+
 ## v8.54 — 2026-10-31
 
 - أسرع: الحسابات الثقيلة (المستويات وعبء العمل وبطاقات الشهر) تُحسب مرة وتُحفظ حتى تتغير البيانات — بداتا سنة: إعادة فتح التطوير من ٠٫٦٥ ثانية إلى لحظي، ولوحة المؤشرات من ٠٫٣٩ إلى ٠٫١٦.
