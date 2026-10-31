@@ -51,7 +51,7 @@ function toast(msg) {
 
 // ---------- storage: IndexedDB, with an in-memory fallback where it is unavailable ----------
 const store = (() => {
-  let mem = []; let memProj = null; let memMe = null; let memRep = []; let memRoster = null; let memWeights = null; let memCards = {}; let memMeet = {}; let memRepairs = []; let memPriv = []; let memMail = [];
+  let mem = []; let memProj = null; let memReg = null; let memMe = null; let memRep = []; let memRoster = null; let memWeights = null; let memCards = {}; let memMeet = {}; let memRepairs = []; let memPriv = []; let memMail = [];
   const open = () => new Promise((res, rej) => {
     if (!('indexedDB' in window)) return rej(new Error('no idb'));
     const r = indexedDB.open('afaqy-portal', 1);
@@ -69,6 +69,8 @@ const store = (() => {
     async putPriv(v) { try { await run('readwrite', (s) => s.put(v, 'privlinks')); } catch { memPriv = v; } },
     async getProjects() { try { return (await run('readonly', (s) => s.get('projects'))) || null; } catch { return memProj; } },
     async putProjects(v) { try { await run('readwrite', (s) => s.put(v, 'projects')); } catch { memProj = v; } },
+    async getRegister() { try { return (await run('readonly', (s) => s.get('register'))) || null; } catch { return memReg; } },
+    async putRegister(v) { try { await run('readwrite', (s) => s.put(v, 'register')); } catch { memReg = v; } },
     async getMail() { try { return (await run('readonly', (s) => s.get('mailrows'))) || []; } catch { return memMail; } },
     async putMail(v) { try { await run('readwrite', (s) => s.put(v, 'mailrows')); } catch { memMail = v; } },
     async getRepairs() { try { return (await run('readonly', (s) => s.get('repairs'))) || []; } catch { return memRepairs; } },
@@ -417,7 +419,8 @@ function renderSignatures() {
 // ---------- private links: internal addresses (VPN portals, device admin pages) kept on this device, never published (ADR-0026) ----------
 let privLinks = [];
 let myProjects = null;   // the projects-from-mail file, on this device only (ADR-0039)
-let projAll = false, projOnlyMine = false, projQuery = '';
+let projAll = false, projOnlyMine = false, projQuery = '', projView = 'board', projStatus = '';
+let myRegister = null;   // the projects register (won / submitted from the management deck, presales board) — device only
 function cleanPrivLink(x) {
   try { const name = String((x && x.name) || '').trim().slice(0, 80), u = new URL(String((x && x.url) || '').trim());
     if (!name || !['http:', 'https:'].includes(u.protocol) || u.username || u.password) return null; return { name, url: u.href }; } catch { return null; }
@@ -773,43 +776,112 @@ function cleanProjects(raw) {
       rules: s(p.matched_rules, 20), worked: !!p.worked_on })).filter((p) => p.project),
     skipped: (Array.isArray(raw.skipped) ? raw.skipped : []).map((x) => ({ subject: s(x.subject), reason: s(x.reason, 120) })) };
 }
+function cleanRegister(raw) {
+  if (!raw || raw.schema !== 'afaqy-projects-register/v1' || !Array.isArray(raw.items)) return null;
+  const s = (v, n = 160) => String(v == null ? '' : v).slice(0, n), num = (v) => Math.max(0, Math.round(Number(v) || 0)), arr = (v) => (Array.isArray(v) ? v.map((x) => s(x, 40)).filter(Boolean) : []);
+  const ST = ['won', 'submitted'], KD = ['project', 'commercial', 'tender'];
+  return { schema: raw.schema, asOf: s(raw.asOf, 10), sources: arr(raw.sources).map((x) => x), h1: raw.h1 && typeof raw.h1 === 'object' ? Object.fromEntries(Object.entries(raw.h1).map(([k, v]) => [s(k, 30), num(v)])) : {},
+    items: raw.items.map((x) => ({ id: s(x.id, 12), name: s(x.name), client: s(x.client, 120), line: s(x.line, 60), value: num(x.value), status: ST.includes(x.status) ? x.status : 'submitted',
+      period: s(x.period, 20), kind: KD.includes(x.kind) ? x.kind : 'commercial', match: arr(x.match).map((m) => m.toLowerCase()), not: arr(x.not), note: s(x.note, 120), source: s(x.source, 120) })).filter((x) => x.name),
+    board: (Array.isArray(raw.board) ? raw.board : []).slice(0, 2000).map((b) => ({ date: /^\d{4}-\d{2}-\d{2}$/.test(String(b.date || '')) ? b.date : '', who: s(b.who, 60), task: s(b.task, 120), client: s(b.client, 80), type: s(b.type, 40), via: s(b.via, 30), done: !!b.done, mine: !!b.mine })) };
+}
+// one model from both files: register items carry the mail threads that match them; the other threads stand alone
+function projectsModel() {
+  const rows = [], used = new Set(), mail = (myProjects && myProjects.projects) || [];
+  const lc = (x) => (x || '').toLowerCase();
+  for (const it of (myRegister ? myRegister.items : [])) {
+    const th = mail.filter((p, k) => !used.has(k) && it.match.some((w) => lc(p.project).includes(w)) && !it.not.some((w) => lc(p.project).includes(w.toLowerCase())));
+    th.forEach((p) => used.add(mail.indexOf(p)));
+    rows.push({ name: it.name, client: it.client, line: it.line, status: it.status, kind: it.kind, value: it.value, period: it.period, note: it.note, source: it.source, threads: th, deck: true });
+  }
+  mail.forEach((p, k) => { if (!used.has(k)) rows.push({ name: p.project, client: '', status: p.kraasa ? 'studied' : p.worked ? 'worked' : 'seen', kind: p.kraasa ? 'tender' : '', value: 0, period: '', threads: [p], deck: false, tender: p.tender }); });
+  for (const r of rows) { const t2 = r.threads; r.first = t2.map((p) => p.first).filter(Boolean).sort()[0] || ''; r.last = t2.map((p) => p.last).filter(Boolean).sort().pop() || '';
+    r.messages = t2.reduce((x, p) => x + p.messages, 0); r.me = t2.reduce((x, p) => x + p.me, 0); r.akram = t2.reduce((x, p) => x + p.akram, 0); r.shaarawi = t2.reduce((x, p) => x + p.shaarawi, 0);
+    r.worked = t2.some((p) => p.worked); r.aibrahim = t2.some((p) => p.aibrahim); r.kraasa = t2.some((p) => p.kraasa); r.rules = [...new Set(t2.flatMap((p) => (p.rules || '').split(',')).filter(Boolean))].sort().join(','); }
+  return rows;
+}
+const PROJ_RANK = { won: 4, submitted: 3, studied: 2, worked: 1, seen: 0 };
 function projectsSection() {
   const up = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return;
-    try { const p = cleanProjects(JSON.parse(await f.text())); if (!p) { toast(t('proj_bad')); return; } myProjects = p; await store.putProjects(p); toast(t('proj_loaded', { n: p.projects.length })); renderMe(); } catch { toast(t('err_json')); } e.target.value = ''; } });
-  const head = el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, el('h2', { style: 'margin:0' }, t('proj_h'), helpQ('help_proj')),
-    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny', text: myProjects ? t('proj_replace') : t('proj_import'), onclick: () => up.click() }), up));
-  if (!myProjects) return el('section', { class: 'proj' }, head, el('div', { class: 'empty', text: t('proj_none') }));
-  const year = (myProjects.to || '2026').slice(0, 4);
-  const all = myProjects.projects, inYear = (p) => (p.last || '') >= `${year}-01-01`;
-  let rows = all.filter((p) => (projAll || inYear(p)) && (!projOnlyMine || p.worked));
-  if (projQuery) rows = rows.filter((p) => `${p.project} ${p.tender}`.toLowerCase().includes(projQuery.toLowerCase()));
-  rows = [...rows].sort((a, b) => (b.last || '').localeCompare(a.last || ''));
-  const scope = all.filter((p) => projAll || inYear(p));
-  const sum = (f) => scope.reduce((s, p) => s + f(p), 0);
-  const tiles = [['proj_t_all', scope.length], ['proj_t_mine', scope.filter((p) => p.worked).length], ['proj_t_ai', scope.filter((p) => p.aibrahim).length], ['proj_t_kraasa', scope.filter((p) => p.kraasa).length], ['proj_t_msgs', sum((p) => p.me + p.akram + p.shaarawi)]];
-  const months = new Map(); for (const p of scope) { const m = (p.last || '').slice(0, 7); if (m) months.set(m, (months.get(m) || 0) + 1); }
-  const mlist = [...months.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)), max = Math.max(1, ...mlist.map((m) => m[1]));
-  const csv = () => { const esc = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
-    const lines = [[t('proj_c_name'), t('proj_c_tender'), t('proj_c_first'), t('proj_c_last'), t('proj_c_msgs'), t('proj_c_me'), t('proj_c_akram'), t('proj_c_shaarawi'), t('proj_c_rules'), t('proj_c_worked')], ...rows.map((p) => [p.project, p.tender, p.first, p.last, p.messages, p.me, p.akram, p.shaarawi, p.rules, p.worked ? '✓' : ''])];
-    const a2 = el('a', { href: URL.createObjectURL(new Blob(['\ufeff' + lines.map((r) => r.map(esc).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' })), download: `AFAQY-projects-${year}.csv` }); document.body.append(a2); a2.click(); a2.remove(); };
-  return el('section', { class: 'proj' }, head,
-    el('p', { class: 'hint' }, t('proj_src', { from: myProjects.from, to: myProjects.to, d: myProjects.importedAt })),
-    el('div', { class: 'cmp-grid' }, tiles.map(([k, v]) => el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: t(k) }), el('b', { class: 'cmp-v', text: String(v) })))),
-    mlist.length ? el('div', { class: 'proj-months' }, mlist.map(([m, v]) => el('div', { class: 'pm', title: `${m}: ${v}` }, el('i', { style: `height:${Math.max(6, Math.round((v / max) * 90))}px` }), el('b', { text: String(v) }), el('span', { class: 'ltr', text: m.slice(2) })))) : null,
-    el('div', { class: 'row proj-tools' },
-      el('div', { class: 'pills' }, el('button', { type: 'button', class: `pill-btn${projAll ? '' : ' on'}`, text: t('proj_year', { y: year }), onclick: () => { projAll = false; renderMe(); } }),
-        el('button', { type: 'button', class: `pill-btn${projAll ? ' on' : ''}`, text: t('proj_all'), onclick: () => { projAll = true; renderMe(); } }),
-        el('button', { type: 'button', class: `pill-btn${projOnlyMine ? ' on' : ''}`, text: t('proj_only_mine'), onclick: () => { projOnlyMine = !projOnlyMine; renderMe(); } })),
-      el('input', { type: 'search', class: 'proj-q', placeholder: t('proj_find'), value: projQuery, oninput: (e) => { projQuery = e.target.value; clearTimeout(projectsSection.t); projectsSection.t = setTimeout(renderMe, 300); } }),
-      el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('sheet_export')}`, onclick: csv })),
-    el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, ['proj_c_name', 'proj_c_last', 'proj_c_msgs', 'proj_c_who', 'proj_c_rules'].map((k, i) => el('th', { class: i === 2 ? 'num' : null, text: t(k) })))),
-      el('tbody', {}, rows.map((p) => el('tr', { class: p.worked ? 'worked' : null },
-        el('td', {}, el('div', { text: p.project }), el('div', { class: 'hint' }, p.tender ? `${p.tender} · ` : '', (p.first || '') < `${year}-01-01` && p.first ? t('proj_started', { y: p.first.slice(0, 4) }) : '', p.worked ? el('span', { class: 'proj-badge', text: t('proj_worked') }) : null)),
-        el('td', { class: 'ltr', text: p.last || '—' }), el('td', { class: 'num', text: String(p.messages) }),
-        el('td', { text: [p.me && t('proj_who_me', { n: p.me }), p.akram && t('proj_who_akram', { n: p.akram }), p.shaarawi && t('proj_who_shaarawi', { n: p.shaarawi })].filter(Boolean).join(' · ') || '—' }),
-        el('td', { text: [p.aibrahim && 'a.ibrahim', p.kraasa && t('proj_kraasa'), (p.rules || '').includes('R2') && t('proj_subject')].filter(Boolean).join(' · ') })))))),
-    myProjects.skipped.length ? el('details', { class: 'tucked' }, el('summary', { text: t('proj_skipped', { n: myProjects.skipped.length }) }),
-      el('ul', { class: 'proj-skip' }, myProjects.skipped.map((x) => el('li', {}, el('b', { text: x.subject }), el('span', { class: 'hint', text: ` — ${x.reason}` }))))) : null);
+    try { const j = JSON.parse(await f.text());
+      if (j && j.schema === 'afaqy-projects-register/v1') { const r = cleanRegister(j); if (!r) throw 0; myRegister = r; await store.putRegister(r); toast(t('proj_reg_loaded', { n: r.items.length, b: r.board.length })); }
+      else { const p = cleanProjects(j); if (!p) { toast(t('proj_bad')); return; } myProjects = p; await store.putProjects(p); toast(t('proj_loaded', { n: p.projects.length })); }
+      renderMe(); } catch { toast(t('err_json')); } e.target.value = ''; } });
+  const head = el('div', { class: 'row', style: 'justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px' }, el('h2', { style: 'margin:0' }, t('proj_h'), helpQ('help_proj')),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny', text: t('proj_import_any'), onclick: () => up.click() }), up));
+  if (!myProjects && !myRegister) return el('section', { class: 'proj' }, head, el('div', { class: 'empty', text: t('proj_none') }));
+  const year = ((myProjects && myProjects.to) || (myRegister && myRegister.asOf) || '2026').slice(0, 4), y0 = `${year}-01-01`;
+  const inYear = (r) => (r.deck ? (r.period || '').includes(year) : (r.last || '') >= y0);
+  const all = projectsModel(), scope = all.filter((r) => projAll || inYear(r));
+  const sar = (v) => `${Math.round(v).toLocaleString('en-US')} ${t('sar')}`;
+  const count = (st) => scope.filter((r) => PROJ_RANK[r.status] >= PROJ_RANK[st] && (st !== 'worked' || r.worked || r.deck)).length;
+  const funnel = [['worked', scope.filter((r) => r.worked).length], ['studied', scope.filter((r) => r.kraasa || r.status === 'studied').length], ['submitted', count('submitted')], ['won', scope.filter((r) => r.status === 'won').length]];
+  const wonV = scope.filter((r) => r.status === 'won').reduce((x, r) => x + r.value, 0), comV = scope.filter((r) => r.status === 'submitted' && r.kind === 'commercial').reduce((x, r) => x + r.value, 0), tenV = scope.filter((r) => r.status === 'submitted' && r.kind === 'tender').reduce((x, r) => x + r.value, 0);
+  const h1 = (myRegister && myRegister.h1) || {}, target = h1.yearTarget || 0;
+  const bars = (list, f2 = (v) => String(v)) => { const mx = Math.max(1, ...list.map((x) => x.v)); return el('div', { class: 'bars' }, list.map((x) => el('div', { class: 'bar-row', title: `${x.l}: ${f2(x.v)}` }, el('span', { class: 'bar-l', text: x.l }), el('i', {}, el('b', { class: x.c || '', style: `width:${Math.round((x.v / mx) * 100)}%` })), el('span', { class: 'bar-v', text: f2(x.v) })))); };
+  const views = el('div', { class: 'pills' }, [['board', 'sheet_view_board'], ['list', 'sheet_view_list'], ['clients', 'proj_v_clients']].map(([k, l]) =>
+    el('button', { type: 'button', class: `pill-btn${projView === k ? ' on' : ''}`, text: t(l), onclick: () => { projView = k; renderMe(); } })));
+  const period = el('div', { class: 'pills' }, el('button', { type: 'button', class: `pill-btn${projAll ? '' : ' on'}`, text: t('proj_year', { y: year }), onclick: () => { projAll = false; renderMe(); } }),
+    el('button', { type: 'button', class: `pill-btn${projAll ? ' on' : ''}`, text: t('proj_all'), onclick: () => { projAll = true; renderMe(); } }));
+  const src = el('p', { class: 'hint' }, [myRegister ? t('proj_src_reg', { d: myRegister.asOf, n: myRegister.items.length, b: myRegister.board.length }) : t('proj_src_noreg'), myProjects ? ` · ${t('proj_src', { from: myProjects.from, to: myProjects.to, d: myProjects.importedAt })}` : ` · ${t('proj_src_nomail')}`].join(''));
+  let viewBody;
+  if (projView === 'board') {
+    const won = scope.filter((r) => r.status === 'won').sort((x, y) => y.value - x.value), sub = scope.filter((r) => r.status === 'submitted').sort((x, y) => y.value - x.value);
+    const months = new Map(); for (const r of scope) for (const p of r.threads) { const m = (p.last || '').slice(0, 7); if (m) months.set(m, (months.get(m) || 0) + 1); }
+    const mlist = [...months.entries()].sort((x, y) => (x[0] < y[0] ? -1 : 1)), mmax = Math.max(1, ...mlist.map((m) => m[1]));
+    const board = myRegister ? myRegister.board : [], mine = board.filter((b) => b.mine);
+    const types = [...board.reduce((m, b) => m.set(b.type, (m.get(b.type) || 0) + 1), new Map())].sort((x, y) => y[1] - x[1]).slice(0, 8);
+    const listed = (myRegister ? myRegister.items : []).filter((x) => x.kind === 'commercial' && x.status === 'submitted').reduce((x, y) => x + y.value, 0);
+    viewBody = el('div', {},
+      el('div', { class: 'funnel' }, funnel.map(([k, v]) => el('div', { class: `fn fn-${k}` }, el('b', { text: String(v) }), el('span', { text: t(`proj_f_${k}`) }),
+        k === 'worked' ? el('small', { text: t('proj_f_threads', { n: scope.reduce((x, r) => x + r.threads.filter((p) => p.worked).length, 0) }) }) : k === 'won' && funnel[2][1] ? el('small', { text: t('proj_f_rate', { p: Math.round((v / funnel[2][1]) * 100) }) }) : k === 'studied' ? el('small', { text: t('proj_f_mailsrc') }) : k === 'submitted' ? el('small', { text: t('proj_f_decksrc') }) : null))),
+      myRegister ? el('div', { class: 'cmp-grid' },
+        el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: t('proj_v_won') }), el('b', { class: 'cmp-v', text: sar(wonV) }), target ? el('span', { class: 'cmp-k', text: t('proj_v_target', { p: Math.round((wonV / target) * 100), t: sar(target) }) }) : null),
+        el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: t('proj_v_com') }), el('b', { class: 'cmp-v', text: sar(comV) }), h1.pipelineCommercial && Math.abs(h1.pipelineCommercial - listed) > 1 ? el('span', { class: 'cmp-k warn-t', text: t('proj_v_mismatch', { deck: sar(h1.pipelineCommercial), rows: sar(listed) }) }) : null),
+        el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: t('proj_v_ten') }), el('b', { class: 'cmp-v', text: sar(tenV) }))) : null,
+      target ? el('div', { class: 'team-goal' }, el('div', { class: 'tg-row' }, el('span', { text: t('proj_v_goal') }), el('b', { text: `${sar(wonV)} / ${sar(target)}` })), el('i', {}, el('b', { style: `width:${Math.min(100, Math.round((wonV / target) * 100))}%` }))) : null,
+      el('div', { class: 'proj-grid' },
+        won.length ? el('div', { class: 'card' }, el('h3', { text: t('proj_b_won') }), bars(won.map((r) => ({ l: r.client || r.name, v: r.value, c: 'won' })), sar)) : null,
+        sub.length ? el('div', { class: 'card' }, el('h3', { text: t('proj_b_sub') }), bars(sub.map((r) => ({ l: `${r.kind === 'tender' ? '◆ ' : ''}${r.client || r.name}`, v: r.value, c: r.kind === 'tender' ? 'ten' : 'sub' })), sar)) : null,
+        mlist.length ? el('div', { class: 'card' }, el('h3', { text: t('proj_b_mail') }), el('div', { class: 'proj-months' }, mlist.map(([m, v]) => el('div', { class: 'pm', title: `${m}: ${v}` }, el('i', { style: `height:${Math.max(6, Math.round((v / mmax) * 90))}px` }), el('b', { text: String(v) }), el('span', { class: 'ltr', text: m.slice(2) }))))) : null,
+        board.length ? el('div', { class: 'card' }, el('h3', { text: t('proj_b_board', { n: board.length, m: mine.length }) }), bars(types.map(([l, v]) => ({ l, v })))) : null));
+  } else if (projView === 'clients') {
+    const board = myRegister ? myRegister.board : [], map = new Map();
+    for (const b of board) { if (!b.client) continue; const k = b.client; const c = map.get(k) || { client: k, n: 0, types: new Set(), last: '', who: new Set() }; c.n++; c.types.add(b.type); c.who.add(b.who); if (b.date > c.last) c.last = b.date; map.set(k, c); }
+    const statusOf = (c) => { const it = (myRegister ? myRegister.items : []).filter((x) => x.client && (c.toLowerCase().includes(x.client.toLowerCase()) || x.client.toLowerCase().includes(c.toLowerCase()) || x.match.some((w) => c.toLowerCase().includes(w)))); return it.length ? it.sort((x, y) => PROJ_RANK[y.status] - PROJ_RANK[x.status])[0].status : ''; };
+    let list = [...map.values()].map((c) => ({ ...c, st: statusOf(c.client) }));
+    if (projQuery) list = list.filter((c) => c.client.toLowerCase().includes(projQuery.toLowerCase()));
+    list.sort((x, y) => (PROJ_RANK[y.st] || 0) - (PROJ_RANK[x.st] || 0) || y.n - x.n);
+    viewBody = board.length ? el('div', {}, el('input', { type: 'search', class: 'proj-q', placeholder: t('proj_find_client'), value: projQuery, oninput: (e) => { projQuery = e.target.value; clearTimeout(projectsSection.t); projectsSection.t = setTimeout(renderMe, 300); } }),
+      el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, ['proj_c_client', 'proj_c_status', 'proj_c_req', 'proj_c_types', 'proj_c_last'].map((k, n) => el('th', { class: n === 2 ? 'num' : null, text: t(k) })))),
+        el('tbody', {}, list.slice(0, 300).map((c) => el('tr', {}, el('td', { text: c.client }), el('td', {}, c.st ? el('span', { class: `st-pill st-${c.st}`, text: t(`proj_f_${c.st}`) }) : '—'),
+          el('td', { class: 'num', text: String(c.n) }), el('td', { text: [...c.types].join(' · ') }), el('td', { class: 'ltr', text: c.last || '—' }))))))) : el('div', { class: 'empty', text: t('proj_need_reg') });
+  } else {
+    let rows = scope.filter((r) => (!projOnlyMine || r.worked || r.deck) && (!projStatus || r.status === projStatus));
+    if (projQuery) rows = rows.filter((r) => `${r.name} ${r.client} ${r.tender || ''}`.toLowerCase().includes(projQuery.toLowerCase()));
+    rows = [...rows].sort((x, y) => PROJ_RANK[y.status] - PROJ_RANK[x.status] || (y.last || '').localeCompare(x.last || '') || y.value - x.value);
+    const csv = () => { const esc = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+      const cols = ['proj_c_name', 'proj_c_client', 'proj_c_status', 'proj_c_kind', 'proj_c_value', 'proj_c_period', 'proj_c_src', 'proj_c_subjects', 'proj_c_first', 'proj_c_last', 'proj_c_msgs', 'proj_c_me', 'proj_c_akram', 'proj_c_shaarawi', 'proj_c_ai', 'proj_c_kr', 'proj_c_rules'];
+      const lines = [cols.map((k) => t(k)), ...rows.map((r) => [r.name, r.client, t(`proj_f_${r.status}`), r.kind ? t(`proj_k_${r.kind}`) : '', r.value || '', r.period, r.deck ? r.source : t('proj_src_mail'), r.threads.map((p) => p.project).join(' | '), r.first, r.last, r.messages, r.me, r.akram, r.shaarawi, r.aibrahim ? '✓' : '', r.kraasa ? '✓' : '', r.rules])];
+      const a2 = el('a', { href: URL.createObjectURL(new Blob(['\ufeff' + lines.map((l) => l.map(esc).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' })), download: `AFAQY-projects-${projAll ? 'all' : year}.csv` }); document.body.append(a2); a2.click(); a2.remove(); };
+    viewBody = el('div', {},
+      el('div', { class: 'row proj-tools' },
+        el('div', { class: 'pills' }, [['', 'proj_st_all'], ['won', 'proj_f_won'], ['submitted', 'proj_f_submitted'], ['studied', 'proj_f_studied'], ['worked', 'proj_f_worked']].map(([k, l]) =>
+          el('button', { type: 'button', class: `pill-btn${projStatus === k ? ' on' : ''}`, text: t(l), onclick: () => { projStatus = k; renderMe(); } })),
+          el('button', { type: 'button', class: `pill-btn${projOnlyMine ? ' on' : ''}`, text: t('proj_only_mine'), onclick: () => { projOnlyMine = !projOnlyMine; renderMe(); } })),
+        el('input', { type: 'search', class: 'proj-q', placeholder: t('proj_find'), value: projQuery, oninput: (e) => { projQuery = e.target.value; clearTimeout(projectsSection.t); projectsSection.t = setTimeout(renderMe, 300); } }),
+        el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('proj_export_mail')}`, onclick: csv })),
+      el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, ['proj_c_name', 'proj_c_status', 'proj_c_value', 'proj_c_last', 'proj_c_msgs', 'proj_c_who', 'proj_c_rules'].map((k, n) => el('th', { class: n === 2 || n === 4 ? 'num' : null, text: t(k) })))),
+        el('tbody', {}, rows.map((r) => el('tr', { class: r.worked ? 'worked' : null },
+          el('td', {}, el('div', { text: r.name }), el('div', { class: 'hint' }, [r.client && r.client !== r.name ? r.client : '', r.tender || '', r.line || '', r.note || '', r.first && r.first < y0 ? t('proj_started', { y: r.first.slice(0, 4) }) : '', r.threads.length > 1 ? t('proj_threads', { n: r.threads.length }) : ''].filter(Boolean).join(' · '))),
+          el('td', {}, el('span', { class: `st-pill st-${r.status}`, text: t(`proj_f_${r.status}`) })),
+          el('td', { class: 'num', text: r.value ? r.value.toLocaleString('en-US') : '—' }), el('td', { class: 'ltr', text: r.last || '—' }), el('td', { class: 'num', text: r.messages ? String(r.messages) : '—' }),
+          el('td', { text: [r.me && t('proj_who_me', { n: r.me }), r.akram && t('proj_who_akram', { n: r.akram }), r.shaarawi && t('proj_who_shaarawi', { n: r.shaarawi })].filter(Boolean).join(' · ') || '—' }),
+          el('td', { text: [r.deck && t('proj_why_deck'), r.aibrahim && 'a.ibrahim', r.kraasa && t('proj_kraasa'), (r.rules || '').includes('R2') && t('proj_subject')].filter(Boolean).join(' · ') })))))),
+      myProjects && myProjects.skipped.length ? el('details', { class: 'tucked' }, el('summary', { text: t('proj_skipped', { n: myProjects.skipped.length }) }),
+        el('ul', { class: 'proj-skip' }, myProjects.skipped.map((x) => el('li', {}, el('b', { text: x.subject }), el('span', { class: 'hint', text: ` — ${x.reason}` }))))) : null);
+  }
+  return el('section', { class: 'proj' }, head, src, el('div', { class: 'row proj-tools' }, views, period), viewBody);
 }
 function meDashboard(body, pm, { nm, arrow }) {
   const win = pm.windows.this, prev = pm.windows.last, wt = weights();
@@ -2129,7 +2201,7 @@ $('file-in').addEventListener('change', async (e) => { for (const f of e.target.
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
 $('export-btn').addEventListener('click', async () => {
   const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION,
-    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null, names: nameFixes(), pending: pendingList(), projects: myProjects };
+    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister };
   download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(all, null, 1));
 });
 $('import-in').addEventListener('change', async (e) => {
@@ -2152,6 +2224,7 @@ $('import-in').addEventListener('change', async (e) => {
       await store.putRepairs(repairs);
       const known = new Set(privLinks.map((x) => x.url));
       for (const x of Array.isArray(j.privlinks) ? j.privlinks : []) { const v = cleanPrivLink(x); if (v && !known.has(v.url)) privLinks.push(v); }
+      if (j.register && !myRegister) { const r = cleanRegister(j.register); if (r) { myRegister = r; await store.putRegister(r); } }
       if (j.projects && !myProjects) { const p = cleanProjects(j.projects); if (p) { myProjects = p; await store.putProjects(myProjects); } }
       if (Array.isArray(j.pending)) { const have = new Set(pendingList().map((x) => x.name.toLowerCase())); localStorage.setItem(PENDING_KEY, JSON.stringify([...pendingList(), ...j.pending.map(cleanPending).filter((x) => x && !have.has(x.name.toLowerCase()))])); }
       if (j.names && typeof j.names === 'object') { const fx = nameFixes(); for (const [id, v] of Object.entries(j.names)) if (/^\d+$/.test(id) && v && typeof v === 'object' && !fx[id]) fx[id] = { ar: String(v.ar || '').slice(0, 80), en: String(v.en || '').slice(0, 80) }; localStorage.setItem(NAME_KEY, JSON.stringify(fx)); }
@@ -2201,6 +2274,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   privLinks = (await store.getPriv()) || [];
   mailRows = (await store.getMail()) || [];
   myProjects = await store.getProjects();
+  myRegister = await store.getRegister();
   await refreshOfficialWeights();
   try { const r = await fetch('./systems.json', { cache: 'no-store' }); const data = r.ok && validateSystems(await r.json()); if (data) { SYSTEMS = data.systems; SYSTEM_CATEGORIES = data.categories; } } catch { /* retain built-in links when unavailable */ }
   await loadStrings(['ar', lang]);   // Arabic is every key's fallback; the reader's language besides

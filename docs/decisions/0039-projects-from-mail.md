@@ -18,3 +18,12 @@ Admin consent for the Outlook connection is pending with IT. Meanwhile the manag
 - «مؤشراتي ← أنا» shows tiles, activity per month, filters (the year / whole period / only mine), search, a table with who sent and
   why it counts, CSV export, and the set-aside threads for review. Not shown on the team link.
 - When IT grants consent, the same rules move into the Outlook reader so the file is no longer needed.
+
+## Amendment (v8.46) — the projects register
+- A second device-only file, `afaqy-projects-register/v1`, built from the management deck (won H1 2026, commercial offers and tenders
+  in follow-up, H1 headline numbers) and the Presales Board (each request with its client; a `mine` flag instead of a name in code).
+- One model joins the two: each register item carries the mail threads that match its words (1448 threads go to the Nusuk 1448 tender,
+  not to the won 1447 MINA project); the other threads stand alone as worked on or studied (kraasa).
+- Three views: Dashboard (worked → studied → submitted → won with the win rate, value won against the year target, pipeline with a check
+  of each slide total against its rows, won by client, submitted, mail activity, requests by type), List (status filters, export with the
+  mail header) and Clients. Values and client names never enter the public code.

@@ -1,15 +1,18 @@
 {
-  "version": "8.45",
+  "version": "8.46",
   "date": "2026-10-31",
   "notes": {
     "ar": [
-      "«مشاريعي من البريد» في «مؤشراتي ← أنا»: استورد الملف الذي يُخرجه كلود في كروم من أوتلوك، فترى عدد المشاريع واللي اشتغلت عليها، ونشاطها شهريًّا، وبحثًا وتصفية وتصديرًا — على جهازك فقط."
+      "«مشاريعي» بثلاث نوافذ: لوحة المعلومات (اشتغلت عليها ← درسناها ← قدّمنا عليها ← كسبناها، مع نسبة الفوز وقيمة المكسوب مقابل هدف السنة والمقدَّم قيد المتابعة) والقائمة (تصفية بالحالة وتصدير بموضوع البريد) والعملاء.",
+      "سجل المشاريع ملف يُستورد على جهازك فقط — من عرض الإدارة ولوحة ما قبل البيع — ويُربط بمحادثات البريد تلقائيًّا."
     ],
     "en": [
-      "“My projects from email” under My KPIs → Me: import the file Claude in Chrome builds from Outlook to see the projects and those you worked on, activity per month, search, filters and export — on your device only."
+      "“My projects” has three views: Dashboard (worked on → studied → submitted → won, with the win rate, value won against the year target and the pipeline), List (status filters, export with the mail header) and Clients.",
+      "The projects register is a file imported on your device only — from the management deck and the presales board — and is linked to the mail threads automatically."
     ],
     "ur": [
-      "«میرے اشاریے ← میں» میں «ای میل سے میرے پروجیکٹس»: کروم میں کلاڈ کی آؤٹ لک سے بنائی فائل درآمد کریں — پروجیکٹس، جن پر کام کیا، ماہانہ سرگرمی، تلاش، فلٹر اور برآمد — صرف آپ کے آلے پر۔"
+      "«میرے پروجیکٹس» تین منظر: ڈیش بورڈ (کام کیا ← مطالعہ ← جمع کرایا ← جیتا، جیت کی شرح اور سال کے ہدف کے ساتھ)، فہرست (حالت فلٹر، میل ہیڈر کے ساتھ برآمد) اور گاہک۔",
+      "پروجیکٹس رجسٹر صرف آپ کے آلے پر درآمد ہونے والی فائل ہے اور خودبخود میل سے جڑتی ہے۔"
     ]
   }
 }

@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.46 — 2026-10-31
+
+- «مشاريعي» بثلاث نوافذ: لوحة المعلومات (اشتغلت عليها ← درسناها ← قدّمنا عليها ← كسبناها، مع نسبة الفوز وقيمة المكسوب مقابل هدف السنة والمقدَّم قيد المتابعة) والقائمة (تصفية بالحالة وتصدير بموضوع البريد) والعملاء.
+- سجل المشاريع ملف يُستورد على جهازك فقط — من عرض الإدارة ولوحة ما قبل البيع — ويُربط بمحادثات البريد تلقائيًّا.
+
+<details><summary>English</summary>
+
+- “My projects” has three views: Dashboard (worked on → studied → submitted → won, with the win rate, value won against the year target and the pipeline), List (status filters, export with the mail header) and Clients.
+- The projects register is a file imported on your device only — from the management deck and the presales board — and is linked to the mail threads automatically.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «میرے پروجیکٹس» تین منظر: ڈیش بورڈ (کام کیا ← مطالعہ ← جمع کرایا ← جیتا، جیت کی شرح اور سال کے ہدف کے ساتھ)، فہرست (حالت فلٹر، میل ہیڈر کے ساتھ برآمد) اور گاہک۔
+- پروجیکٹس رجسٹر صرف آپ کے آلے پر درآمد ہونے والی فائل ہے اور خودبخود میل سے جڑتی ہے۔
+
+</div>
+</details>
+
+
 ## v8.45 — 2026-10-31
 
 - «مشاريعي من البريد» في «مؤشراتي ← أنا»: استورد الملف الذي يُخرجه كلود في كروم من أوتلوك، فترى عدد المشاريع واللي اشتغلت عليها، ونشاطها شهريًّا، وبحثًا وتصفية وتصديرًا — على جهازك فقط.
