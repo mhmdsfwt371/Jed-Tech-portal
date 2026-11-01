@@ -1001,7 +1001,7 @@ export function parseWeights(raw) {
     const w = num(x && typeof x === 'object' ? x.w : x); if (w == null) continue;
     const o = { w, tier: TIERS.includes(x && x.tier) ? x.tier : null, team: ['aftersales', 'rd', 'both', 'general'].includes(x && x.team) ? x.team : null };
     if (x && Array.isArray(x.f) && x.f.length === 4 && x.f.every((v) => [0, 1, 2].includes(Number(v)))) o.f = x.f.map(Number);
-    if (x && POINT_MODES.includes(x.mode)) o.mode = x.mode;
+    { const md = x && x.mode === 'time' ? 'compare' : x && x.mode; if (POINT_MODES.includes(md)) o.mode = md; }
     if (x && Number(x.std) > 0 && Number(x.std) <= 400) o.std = Number(x.std);
     if (x && ['oct', 'est', 'set'].includes(x.stdSrc)) o.stdSrc = x.stdSrc;
     out.tasks[typeKey(k)] = o;
@@ -1032,21 +1032,22 @@ export function typeLabel(name, lang = 'ar') {
 // Base 1–5 from four stated factors (technical depth, outside party, field work, business impact — each 0, 1 or 2; sum of 8),
 // times the method: "done" (the base on closing, time ignored), "speed" (×1.5 when closed within the type's standard time)
 // or "time" (× working hours ÷ standard, between ×0.5 and ×2 — never rewarding slowness beyond twice the standard).
-export const POINT_MODES = ['done', 'speed', 'time'];
+export const POINT_MODES = ['done', 'speed', 'compare'];   // ADR-0048: on completion, by speed, against the usual time (steps); the old «time» reads as «compare»
 export const FACTORS = ['tech', 'outside', 'field', 'impact'];
 // The scoring rules (ADR-0045) — published with the weights, editable by the weights admin. The defaults reproduce the original
 // fixed engine exactly: equal factors, cut points 1/3/5/6 on the 0–8 sum, speed ×1.5, time between ×0.5 and ×2, no extras.
 // Extra rules (ADR-0047): each rule has conditions joined by AND or OR, and a percentage; several matching rules add up or the highest wins, under a cap.
 export const EXTRA_CONDS = ['email', 'after', 'weekend', 'fast', 'field', 'gov', 'impact'];
-export const DEFAULT_RULES = Object.freeze({ fw: Object.freeze({ tech: 1, outside: 1, field: 1, impact: 1 }), cuts: Object.freeze([1, 3, 5, 6]), speedX: 1.5, timeMin: 0.5, timeMax: 2, extras: Object.freeze([]), stack: 'sum', capPct: 100 });
+export const DEFAULT_RULES = Object.freeze({ fw: Object.freeze({ tech: 1, outside: 1, field: 1, impact: 1 }), cuts: Object.freeze([1, 3, 5, 6]), speedX: 1.5, cmpFast: 0.5, cmpSlow: 2, cmpFastX: 1.5, cmpSlowX: 0.5, extras: Object.freeze([]), stack: 'sum', capPct: 100 });
 export function parseRules(r) {
-  const d = DEFAULT_RULES, o = { fw: { ...d.fw }, cuts: [...d.cuts], speedX: d.speedX, timeMin: d.timeMin, timeMax: d.timeMax, extras: [], stack: d.stack, capPct: d.capPct };
+  const d = DEFAULT_RULES, o = { fw: { ...d.fw }, cuts: [...d.cuts], speedX: d.speedX, cmpFast: d.cmpFast, cmpSlow: d.cmpSlow, cmpFastX: d.cmpFastX, cmpSlowX: d.cmpSlowX, extras: [], stack: d.stack, capPct: d.capPct };
   if (!r || typeof r !== 'object') return o;
   const n = (v, lo, hi) => { const x = Number(v); return v !== '' && v != null && Number.isFinite(x) && x >= lo && x <= hi ? x : null; };
   for (const k of FACTORS) { const v = n(r.fw && r.fw[k], 0, 3); if (v != null) o.fw[k] = v; }
   if (Array.isArray(r.cuts) && r.cuts.length === 4) { const cc = r.cuts.map((v) => n(v, 0, 24)); if (cc.every((v) => v != null) && cc.every((v, i) => i === 0 || v > cc[i - 1])) o.cuts = cc; }
   const s = n(r.speedX, 1, 3); if (s != null) o.speedX = s;
-  const lo = n(r.timeMin, 0.1, 1), hi = n(r.timeMax, 1, 5); if (lo != null) o.timeMin = lo; if (hi != null) o.timeMax = hi;
+  const cf = n(r.cmpFast, 0.1, 1), cs = n(r.cmpSlow, 1, 10), cfx = n(r.cmpFastX, 1, 3), csx = n(r.cmpSlowX, 0, 1);
+  if (cf != null) o.cmpFast = cf; if (cs != null) o.cmpSlow = cs; if (cfx != null) o.cmpFastX = cfx; if (csx != null) o.cmpSlowX = csx;
   // the two fixed extras of v8.61 (email, outside hours) read as single-condition rules
   const src = Array.isArray(r.extras) ? r.extras : [...(n(r.bonusEmail, 0, 100) ? [{ when: ['email'], pct: r.bonusEmail }] : []), ...(n(r.bonusAfter, 0, 100) ? [{ when: ['after'], pct: r.bonusAfter }] : [])];
   for (const x of src.slice(0, 12)) {
@@ -1090,7 +1091,7 @@ export function pointsDetail(wt, typeName, hours, flags = {}) {
   let mult = 1, why = 'done';
   if (x && x.mode && x.mode !== 'done' && x.std && hours != null) {
     if (x.mode === 'speed') { mult = hours <= x.std ? r.speedX : 1; why = hours <= x.std ? 'speed_in' : 'speed_out'; }
-    else { mult = Math.min(r.timeMax, Math.max(r.timeMin, hours / x.std)); why = 'time'; }
+    else { const q = hours / x.std; mult = q <= r.cmpFast ? r.cmpFastX : q <= r.cmpSlow ? 1 : r.cmpSlowX; why = q <= r.cmpFast ? 'cmp_fast' : q <= r.cmpSlow ? 'cmp_ok' : 'cmp_slow'; }   // three steps against the usual time
   }
   const cond = { email: !!flags.email, after: !!flags.after, weekend: !!flags.weekend, fast: !!(x && x.std && hours != null && hours <= x.std),
     field: !!(x && x.f && x.f[2] === 2), gov: !!(x && x.f && x.f[1] === 2), impact: !!(x && x.f && x.f[3] === 2) };

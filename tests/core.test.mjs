@@ -740,9 +740,9 @@ test('points basis: factors → base; working hours Sun–Thu 8–17 Saudi; done
   const T = (type, from, to) => ({ type, createdAt: from, completedAt: to, state: 'done' });
   assert.equal(C.taskPoints(wt, T('Email Customer Activity', '2026-10-28T06:00:00Z', '2026-10-28T07:00:00Z')), 3, 'within 2h → ×1.5');
   assert.equal(C.taskPoints(wt, T('Email Customer Activity', '2026-10-28T06:00:00Z', '2026-10-28T10:00:00Z')), 2, 'beyond → the base');
-  assert.equal(C.taskPoints(wt, T('TSU Request', '2026-10-25T05:00:00Z', '2026-10-26T14:00:00Z')), 8, 'two full working days = 18h ÷ 9 = ×2');
-  assert.equal(C.taskPoints(wt, T('TSU Request', '2026-10-25T05:00:00Z', '2026-11-05T14:00:00Z')), 8, 'never more than ×2');
-  assert.equal(C.taskPoints(wt, T('TSU Request', '2026-10-25T05:00:00Z', '2026-10-25T06:00:00Z')), 2, 'never less than ×0.5');
+  assert.equal(C.taskPoints(wt, T('TSU Request', '2026-10-25T05:00:00Z', '2026-10-26T14:00:00Z')), 4, 'two working days = 18h, exactly twice the usual 9h → ×1 (ADR-0048: the old time method reads as «compare»)');
+  assert.equal(C.taskPoints(wt, T('TSU Request', '2026-10-25T05:00:00Z', '2026-11-05T14:00:00Z')), 2, 'far beyond twice the usual → ×0.5');
+  assert.equal(C.taskPoints(wt, T('TSU Request', '2026-10-25T05:00:00Z', '2026-10-25T06:00:00Z')), 6, 'within half the usual → ×1.5');
   assert.equal(C.taskPoints(wt, T('View Units', '2026-10-25T05:00:00Z', '2026-11-25T06:00:00Z')), 1, 'on completion: time does not count');
 });
 
@@ -840,24 +840,24 @@ test('default rules reproduce the old base for all 81 factor combinations', () =
   for (const a of [0, 1, 2]) for (const b of [0, 1, 2]) for (const c of [0, 1, 2]) for (const d of [0, 1, 2]) { assert.equal(core.baseFromFactors([a, b, c, d], R), old([a, b, c, d])); assert.equal(core.baseFromFactors([a, b, c, d]), old([a, b, c, d])); n++; }
   assert.equal(n, 81);
 });
-test('default rules reproduce the old points for done, speed and time at many durations', () => {
+test('default rules reproduce the old points for done and speed at many durations', () => {
   const oldPts = (x, task) => { const base = x.w; if (!x.mode || x.mode === 'done' || !x.std) return base; const h = core.businessHours(task.createdAt, task.completedAt);
     if (x.mode === 'speed') return h <= x.std ? Math.round(base * 1.5 * 10) / 10 : base; return Math.round(base * Math.min(2, Math.max(0.5, h / x.std)) * 10) / 10; };
-  const wt = core.parseWeights({ tasks: { 'a': { w: 3, mode: 'done' }, 'b': { w: 4, mode: 'speed', std: 6 }, 'c': { w: 2, mode: 'time', std: 5 } } });
+  const wt = core.parseWeights({ tasks: { 'a': { w: 3, mode: 'done' }, 'b': { w: 4, mode: 'speed', std: 6 } } });
   let n = 0;
-  for (const ty of ['a', 'b', 'c']) for (const hrs of [1, 3, 5.5, 6, 9, 14, 30, 60]) {
+  for (const ty of ['a', 'b']) for (const hrs of [1, 3, 5.5, 6, 9, 14, 30, 60]) {
     const start = '2026-10-04T05:00:00.000Z', end = new Date(Date.parse(start) + hrs * 3600000).toISOString(), task = { type: ty, createdAt: start, completedAt: end, state: 'done' };
     assert.equal(core.taskPoints(wt, task), oldPts(wt.tasks[ty], task), `${ty} ${hrs}h`); n++;
   }
-  assert.equal(n, 24);
+  assert.equal(n, 16);
 });
 test('factor importance, cut points, speed, time limits and extras change the points as set', () => {
   const R = core.parseRules({ fw: { impact: 2 } }); assert.equal(core.factorScore([0, 0, 0, 2], R), 4); assert.equal(core.baseFromFactors([0, 0, 0, 2], R), 3);
   assert.equal(core.baseFromFactors([2, 2, 0, 0], core.parseRules({ cuts: [0, 1, 2, 3] })), 5);
-  const wt = core.parseWeights({ tasks: { s: { w: 4, mode: 'speed', std: 8 }, t: { w: 2, mode: 'time', std: 2 } }, rules: { speedX: 2, timeMax: 3, bonusEmail: 25, bonusAfter: 50 } });
+  const wt = core.parseWeights({ tasks: { s: { w: 4, mode: 'speed', std: 8 }, t: { w: 2, mode: 'time', std: 2 } }, rules: { speedX: 2, bonusEmail: 25, bonusAfter: 50 } });
   const sun = '2026-10-04T05:00:00.000Z', plus = (h) => new Date(Date.parse(sun) + h * 3600000).toISOString();
   assert.equal(core.taskPoints(wt, { type: 's', createdAt: sun, completedAt: plus(2) }), 8);
-  assert.equal(core.taskPoints(wt, { type: 't', createdAt: sun, completedAt: plus(7) }), 6);
+  assert.equal(core.taskPoints(wt, { type: 't', createdAt: sun, completedAt: plus(7) }), 1);   // the old «time» now reads as «compare»: 7 h of a 2 h usual time is over twice → ×0.5
   assert.equal(core.taskPoints(wt, { type: 's', createdAt: sun, completedAt: plus(2), fromEmail: true }), 10);
   assert.equal(core.taskPoints(wt, { type: 's', createdAt: sun, completedAt: '2026-10-04T16:30:00.000Z' }), 6);
 });
@@ -882,5 +882,15 @@ test('extra rules: one condition, AND, OR, stacking by sum or highest, and the c
   assert.equal(core.taskPoints(mk({ extras: two, capPct: 30 }), { type: 'v', createdAt: sun, completedAt: plus(2), fromEmail: true }), 5.2);
   const legacy = core.parseRules({ bonusEmail: 25 }); assert.deepEqual(legacy.extras, [{ when: ['email'], join: 'and', pct: 25 }]);
   assert.equal(core.parseRules({ extras: [{ when: ['nonsense'], pct: 20 }, { when: ['email'], pct: 0 }] }).extras.length, 0);
+});
+test('«against the usual time» in three steps, adjustable, and the old «time» reads as it', () => {
+  const sun = '2026-10-04T05:00:00.000Z', plus = (h) => new Date(Date.parse(sun) + h * 3600000).toISOString();
+  const wt = core.parseWeights({ tasks: { c: { w: 2, mode: 'compare', std: 4 }, old: { w: 2, mode: 'time', std: 4 } } });
+  assert.equal(wt.tasks.old.mode, 'compare'); assert.deepEqual(core.POINT_MODES, ['done', 'speed', 'compare']);
+  const p = (ty, h, w = wt) => core.taskPoints(w, { type: ty, createdAt: sun, completedAt: plus(h) });
+  assert.equal(p('c', 1), 3); assert.equal(p('c', 2), 3); assert.equal(p('c', 4), 2); assert.equal(p('c', 8), 2); assert.equal(p('c', 9), 1); assert.equal(p('old', 9), 1);
+  const w2 = core.parseWeights({ tasks: { c: { w: 2, mode: 'compare', std: 4 } }, rules: { cmpFast: 0.25, cmpSlow: 1.5, cmpFastX: 2, cmpSlowX: 0 } });
+  assert.equal(p('c', 1, w2), 4); assert.equal(p('c', 2, w2), 2); assert.equal(p('c', 7, w2), 0);
+  assert.equal(core.pointsDetail(wt, 'c', 9).why, 'cmp_slow');
 });
 console.log(`core.test.mjs: ${tests.length} passed`);

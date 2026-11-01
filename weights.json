@@ -266,7 +266,7 @@
         2,
         2
       ],
-      "mode": "time",
+      "mode": "compare",
       "std": 45,
       "stdSrc": "oct"
     },
@@ -280,7 +280,7 @@
         2,
         2
       ],
-      "mode": "time",
+      "mode": "compare",
       "std": 36,
       "stdSrc": "oct"
     },
@@ -320,7 +320,7 @@
         1,
         1
       ],
-      "mode": "time",
+      "mode": "compare",
       "std": 4,
       "stdSrc": "est"
     },
@@ -334,7 +334,7 @@
         1,
         1
       ],
-      "mode": "time",
+      "mode": "compare",
       "std": 4,
       "stdSrc": "est"
     },
@@ -362,7 +362,7 @@
         0,
         2
       ],
-      "mode": "time",
+      "mode": "compare",
       "std": 27,
       "stdSrc": "est"
     },

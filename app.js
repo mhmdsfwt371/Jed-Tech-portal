@@ -6,7 +6,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
   mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
@@ -2079,7 +2079,7 @@ function pointsRulesBox(wt, admin) {
   const steps = el('div', { class: 'pr-steps' },
     step(1, t('pr_s1'), el('ul', {}, FACTORS.map((k) => el('li', {}, el('span', { text: t(`factor_${k}`) }), el('em', { text: ` ×${fmtN(R.fw[k])}` }))))),
     step(2, t('pr_s2', { m: fmtN(maxScore) }), el('div', { class: 'pr-cuts' }, [1, 2, 3, 4, 5].map((b, i) => el('span', { text: t('pr_cut', { r: i < 4 ? `≤ ${fmtN(R.cuts[i])}` : `> ${fmtN(R.cuts[3])}`, b }) })))),
-    step(3, t('pr_s3'), el('ul', {}, el('li', { text: t('pr_m_done') }), el('li', { text: t('pr_m_speed', { x: fmtN(R.speedX) }) }), el('li', { text: t('pr_m_time', { a: fmtN(R.timeMin), b: fmtN(R.timeMax) }) }))),
+    step(3, t('pr_s3'), el('ul', {}, el('li', { text: t('pr_m_done') }), el('li', { text: t('pr_m_speed', { x: fmtN(R.speedX) }) }), el('li', { text: t('pr_m_cmp', { a: String(Math.round(R.cmpFast * 100)), fx: fmtN(R.cmpFastX), b: String(Math.round(R.cmpSlow * 100)), sx: fmtN(R.cmpSlowX) }) }))),
     step(4, t('pr_s4'), R.extras.length ? el('ul', {}, R.extras.map((e) => el('li', { text: ruleText(e) })), el('li', { class: 'hint', text: t(R.stack === 'max' ? 'pr_stack_max_d' : 'pr_stack_sum_d', { c: R.capPct }) })) : el('p', { class: 'hint', text: t('pr_x_none') })));
   // the calculator — the same function the engine uses, so what it shows is what a task earns
   const clean = (s) => String(s).replace(/[\u2066-\u2069]/g, '');
@@ -2089,7 +2089,7 @@ function pointsRulesBox(wt, admin) {
   const out = el('div', { class: 'pr-out' });
   const calc = () => { const h = Number(hrs.value), d = pointsDetail(wt, sel.value, Number.isFinite(h) ? h : null, { email: cbE.checked, after: cbA.checked, weekend: cbW.checked });
     const lines = [d.f ? t('pr_c_base', { e: FACTORS.map((k, i) => `${t(`factor_short_${k}`)} ${d.f[i]}×${fmtN(R.fw[k])}`).join(' + '), s: d.score, b: d.base }) : t('pr_c_set', { b: d.base }),
-      d.why === 'speed_in' ? t('pr_c_speed_in', { h, s: d.std, x: fmtN(d.mult) }) : d.why === 'speed_out' ? t('pr_c_speed_out', { h, s: d.std }) : d.why === 'time' ? t('pr_c_time', { h, s: d.std, x: fmtN(d.mult) }) : t('pr_c_done'),
+      d.why === 'speed_in' ? t('pr_c_speed_in', { h, s: d.std, x: fmtN(d.mult) }) : d.why === 'speed_out' ? t('pr_c_speed_out', { h, s: d.std }) : d.why.startsWith('cmp_') ? t(`pr_c_${d.why}`, { h, s: d.std, x: fmtN(d.mult) }) : t('pr_c_done'),
       d.hit.length ? t('pr_c_rules', { r: d.hit.map(ruleText).join(' · '), p: d.extra }) : ''].filter(Boolean);
     set(out, ...lines.map((l) => el('div', { text: l })), el('b', { class: 'pr-total', text: t('pr_c_total', { p: d.total }) })); };
   [sel, hrs, cbE, cbA, cbW].forEach((x) => x.addEventListener('input', calc)); calc();
@@ -2101,7 +2101,7 @@ function pointsRulesBox(wt, admin) {
   if (admin) {
     const num = (v, mn, mx, st) => el('input', { type: 'number', class: 'pr-in', min: String(mn), max: String(mx), step: String(st), value: String(v) });
     const fwIn = Object.fromEntries(FACTORS.map((k) => [k, num(R.fw[k], 0, 3, 0.5)])), cutIn = R.cuts.map((v) => num(v, 0, 24, 0.5));
-    const spIn = num(R.speedX, 1, 3, 0.1), tmin = num(R.timeMin, 0.1, 1, 0.1), tmax = num(R.timeMax, 1, 5, 0.5);
+    const spIn = num(R.speedX, 1, 3, 0.1), cf = num(Math.round(R.cmpFast * 100), 10, 100, 5), cs = num(Math.round(R.cmpSlow * 100), 100, 1000, 10), cfx = num(R.cmpFastX, 1, 3, 0.1), csx = num(R.cmpSlowX, 0, 1, 0.1);
     // extra rules: conditions as toggles, joined by «كل الشروط (و)» or «أي شرط (أو)», each with its percentage
     const ex = R.extras.map((e) => ({ ...e, when: [...e.when] }));
     const stackSel = el('select', { class: 'pr-in wide' }, [['sum', t('pr_stack_sum')], ['max', t('pr_stack_max')]].map(([v, l]) => el('option', { value: v, selected: R.stack === v ? '' : null, text: l })));
@@ -2115,7 +2115,7 @@ function pointsRulesBox(wt, admin) {
       el('button', { type: 'button', class: 'btn tiny pr-ex-add', text: `+ ${t('pr_ex_add')}`, onclick: () => { ex.push({ when: ['email'], join: 'and', pct: 10 }); drawEx(); } }));
     drawEx();
     const read = () => { const raw = cutIn.map((i) => Number(i.value)); if (!raw.every((v, i) => Number.isFinite(v) && (i === 0 || v > raw[i - 1]))) { toast(t('pr_bad_cuts')); return null; }
-      return parseRules({ fw: Object.fromEntries(FACTORS.map((k) => [k, fwIn[k].value])), cuts: raw, speedX: spIn.value, timeMin: tmin.value, timeMax: tmax.value, extras: ex.filter((e) => e.when.length), stack: stackSel.value, capPct: capIn.value }); };
+      return parseRules({ fw: Object.fromEntries(FACTORS.map((k) => [k, fwIn[k].value])), cuts: raw, speedX: spIn.value, cmpFast: Number(cf.value) / 100, cmpSlow: Number(cs.value) / 100, cmpFastX: cfx.value, cmpSlowX: csx.value, extras: ex.filter((e) => e.when.length), stack: stackSel.value, capPct: capIn.value }); };
     const plan = (nr) => { const patch = {}; for (const [k, x] of Object.entries(wt.tasks)) { if (!x.f || x.w !== baseFromFactors(x.f, R)) continue;   // a weight set by hand stays as it is
       const w = baseFromFactors(x.f, nr); if (w !== x.w) patch[k] = { ...x, w, ...(x.tier === tierFromBase(x.w) ? { tier: tierFromBase(w) } : {}) }; } return patch; };
     const preview = el('div', { class: 'pr-preview' });
@@ -2129,7 +2129,7 @@ function pointsRulesBox(wt, admin) {
     editor = el('div', { class: 'pr-rules' },
       el('div', { class: 'pr-grid' }, FACTORS.map((k) => el('label', {}, el('span', { text: `${t('pr_fw')} — ${t(`factor_short_${k}`)}` }), fwIn[k])),
         ...cutIn.map((inp, i) => el('label', {}, el('span', { text: t('pr_cut_in', { b: i + 1 }) }), inp)),
-        el('label', {}, el('span', { text: t('pr_speedx') }), spIn), el('label', {}, el('span', { text: t('pr_tmin') }), tmin), el('label', {}, el('span', { text: t('pr_tmax') }), tmax),
+        el('label', {}, el('span', { text: t('pr_speedx') }), spIn), el('label', {}, el('span', { text: t('pr_cf') }), cf), el('label', {}, el('span', { text: t('pr_cfx') }), cfx), el('label', {}, el('span', { text: t('pr_cs') }), cs), el('label', {}, el('span', { text: t('pr_csx') }), csx),
       ),
       el('h4', { class: 'pr-ex-h', text: t('pr_ex_h') }), el('p', { class: 'hint', text: t('pr_ex_hint') }), exBox,
       el('div', { class: 'pr-grid' }, el('label', {}, el('span', { text: t('pr_stack') }), stackSel), el('label', {}, el('span', { text: t('pr_cap') }), capIn)),
@@ -2427,6 +2427,11 @@ function renderKpiDonuts(ds, f, team) {
 }
 
 // ---------- the Weights page: points per task type and per activity category, with their tier and reason ----------
+function typeMedians() {
+  return memoTasks(allTasks(), ['medians'], () => { const by = new Map();
+    for (const x of allTasks()) { if (x.state !== 'done' || !x.createdAt || !x.completedAt) continue; const k = typeKey(x.type); if (!k) continue; (by.get(k) || by.set(k, []).get(k)).push(businessHours(x.createdAt, x.completedAt)); }
+    const out = new Map(); for (const [k, hs] of by) { hs.sort((p, q) => p - q); const m = hs.length % 2 ? hs[(hs.length - 1) / 2] : (hs[hs.length / 2 - 1] + hs[hs.length / 2]) / 2; out.set(k, { med: m, n: hs.length }); } return out; });
+}
 function renderWeights() {
   const body = $('weights-body'); if (!body) return;
   const wt = weights();
@@ -2451,6 +2456,9 @@ function renderWeights() {
   const save = async (patch) => { weightsDevice = { ...(weightsDevice || {}), tasks: { ...((weightsDevice || {}).tasks || {}), ...(patch.tasks || {}) }, activities: { ...((weightsDevice || {}).activities || {}), ...(patch.activities || {}) }, editors: { ...((weightsDevice || {}).editors || {}) , ...(patch.editors || {}) } }; await store.putWeights(weightsDevice); renderWeights(); renderKpi(); renderMe(); };
   const stepSel = (cur, on, enabled) => el('select', { class: 'w-sel', ...(enabled ? {} : { disabled: '' }), onchange: (e) => on(Number(e.target.value)) }, WEIGHT_STEPS.map((w) => el('option', { value: String(w), selected: w === cur, text: String(w) })));
   const tierName = (tr) => (tr ? t(`tier_${tr}`) : t('tier_none'));
+  const RR = rulesOf(wt), pctN = (v) => String(Math.round(v * 100)), fx = (v) => String(Math.round(v * 100) / 100);
+  const modeDesc = (m) => (m === 'speed' ? t('mode_d_speed', { x: fx(RR.speedX) }) : m === 'compare' ? t('mode_d_compare', { a: pctN(RR.cmpFast), fx: fx(RR.cmpFastX), b: pctN(RR.cmpSlow), sx: fx(RR.cmpSlowX) }) : t('mode_d_done'));
+  const medHint = (k) => { const m = typeMedians().get(k); return m ? el('div', { class: 'hint med-hint', text: t('std_med', { h: formatHours(m.med, lang), n: m.n }) }) : null; };
   const pretty = (k) => k.replace(/(^|\s)([a-z])/g, (m, sp, c) => sp + c.toUpperCase());
   // the scope's people, for the admin to hand out editing rights
   const scopePeople = scoped(peopleOf(datasets)).concat(me ? me.people.filter((p) => inScope(roster(), p.id) && !peopleOf(datasets).some((q) => q.id === p.id)) : []);
@@ -2478,17 +2486,17 @@ function renderWeights() {
   const basisCells = (r, g) => {
     const x = r.x || { w: wt.default, f: [0, 0, 0, 0], mode: 'done' }; const f = x.f || [0, 0, 0, 0]; const can = mayEdit(r.key);
     const put = (patch) => { const nf = patch.f || f, b = baseFromFactors(nf, rulesOf(weights())), mode = patch.mode || x.mode || 'done';
-      const std = mode === 'done' ? undefined : (patch.std != null ? patch.std : x.std || 2);
+      const md0 = typeMedians().get(r.key), std = mode === 'done' ? undefined : (patch.std != null ? patch.std : x.std || (md0 ? Math.max(0.25, Math.round(md0.med * 4) / 4) : 2));   // a first value from the data — marked an estimate for the manager to set
       save({ tasks: { [r.key]: { w: b, tier: tierFromBase(b), team: x.team || g.id, f: nf, mode, ...(std ? { std, stdSrc: patch.std != null ? 'set' : (x.stdSrc || 'est') } : {}) } } }); };
     const fsel = (i) => el('select', { class: 'w-sel f-sel', title: t(`factor_${FACTORS[i]}`), 'aria-label': t(`factor_${FACTORS[i]}`), ...(can ? {} : { disabled: '' }),
       onchange: (e) => { const nf = [...f]; nf[i] = Number(e.target.value); put({ f: nf }); } }, [0, 1, 2].map((v) => el('option', { value: String(v), selected: v === f[i], text: String(v) })));
     return [
       el('td', { class: 'factors' }, el('div', { class: 'f-row' }, FACTORS.map((k, i) => el('label', {}, el('span', { text: t(`factor_short_${k}`) }), fsel(i))))),
       el('td', { class: 'num' }, el('b', { class: 'base', text: String(x.w) }), el('div', { class: 'hint', text: tierName(x.tier) })),
-      el('td', {}, el('select', { class: 'w-sel', ...(can ? {} : { disabled: '' }), onchange: (e) => put({ mode: e.target.value }) }, POINT_MODES.map((m) => el('option', { value: m, selected: m === (x.mode || 'done'), text: t(`mode_${m}`) })))),
-      el('td', { class: 'num' }, (x.mode || 'done') === 'done' ? el('span', { class: 'hint', text: '—' }) : [
+      el('td', {}, el('select', { class: 'w-sel', ...(can ? {} : { disabled: '' }), onchange: (e) => put({ mode: e.target.value }) }, POINT_MODES.map((m) => el('option', { value: m, selected: m === (x.mode || 'done'), text: t(`mode_${m}`) }))), el('div', { class: 'hint', text: modeDesc(x.mode || 'done') })),
+      el('td', { class: 'num' }, (x.mode || 'done') === 'done' ? [el('span', { class: 'hint', text: '—' }), medHint(r.key)] : [
         el('input', { type: 'number', min: '0.25', max: '400', step: '0.25', class: 'std-in', value: String(x.std || ''), ...(can ? {} : { disabled: '' }), onchange: (e) => { const v = Number(e.target.value); if (v > 0 && v <= 400) put({ std: v }); } }),
-        el('div', { class: 'hint', text: x.stdSrc === 'est' ? t('std_est') : x.stdSrc === 'oct' ? t('std_oct') : t('std_set') })]),
+        el('div', { class: 'hint', text: x.stdSrc === 'est' ? t('std_est') : x.stdSrc === 'oct' ? t('std_oct') : t('std_set') }), medHint(r.key)]),
     ];
   };
   const table = (g) => {

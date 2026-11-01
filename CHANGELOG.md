@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v8.64 — 2026-11-02
+
+- لكل نوع مهمة ثلاث طرق واضحة: «بالإنجاز» (النقطة كاملة عند الإغلاق)، و«بالسرعة» (×١٫٥ في الوقت المعتاد)، و«بالمقارنة بالمعتاد» بثلاث خطوات: حتى نصف الوقت المعتاد ×١٫٥، حتى ضعفه ×١، أكثر ×٠٫٥ — وتحت كل طريقة جملة تشرحها.
+- الوقت المعتاد تحدده لكل نوع، وبجانبه كم أخذ نصف مهامه فعلًا.
+- طريقة «الوقت المبذول» أُلغيت لأنها تكافئ التأخير، وأنواعها الخمسة صارت «بالمقارنة بالمعتاد».
+
+<details><summary>English</summary>
+
+- Each task type has three clear methods: “On completion” (the full point on closing), “By speed” (×1.5 within the usual time), and “Against the usual time” in three steps: up to half the usual ×1.5, up to twice ×1, more ×0.5 — with a sentence under each explaining it.
+- You set the usual time per type, and beside it how long half its tasks really took.
+- The “time spent” method is retired because it rewards delay; its five types now use “against the usual time”.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ہر قسم کے لیے تین واضح طریقے: «تکمیل پر»، «رفتار سے»، اور «معمول کے وقت سے موازنہ» تین مراحل میں۔
+- معمول کا وقت آپ ہر قسم کے لیے طے کرتے ہیں، اور ساتھ دکھایا جاتا ہے کہ اس کے آدھے کام اصل میں کتنے وقت میں ہوئے۔
+- «صرف شدہ وقت» کا طریقہ ختم؛ اس کی پانچ اقسام اب «موازنہ» استعمال کرتی ہیں۔
+
+</div>
+</details>
+
+
 ## v8.63 — 2026-11-02
 
 - قواعد الإضافة في النقاط صارت بـ«و» و«أو»: كل قاعدة شرط أو أكثر (من البريد، خارج الدوام، يوم إجازة، في الوقت المعياري، شغل ميداني، جهة حكومية أو منصة، أثر تعاقدي) — «كل الشروط مع بعض» أو «أي شرط منها» — ونسبتها. لو انطبقت أكثر من قاعدة: تُجمع أو الأعلى فقط، بحد أقصى.

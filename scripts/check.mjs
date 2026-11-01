@@ -309,8 +309,8 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
       else { const n = x.f.reduce((a, b) => a + b, 0), base = n <= 1 ? 1 : n <= 3 ? 2 : n <= 5 ? 3 : n === 6 ? 4 : 5;
         if (x.w !== base) note(`weights.json: task "${k}" — weight ${x.w} does not follow its factors (they give ${base})`); }
     }
-    if (x && x.mode !== undefined && !['done', 'speed', 'time'].includes(x.mode)) note(`weights.json: task "${k}" — mode must be done, speed or time`);
-    if (x && ['speed', 'time'].includes(x.mode) && !(x.std > 0 && x.std <= 400)) note(`weights.json: task "${k}" — ${x.mode} needs a standard time (hours, 0–400)`);
+    if (x && x.mode !== undefined && !['done', 'speed', 'compare', 'time'].includes(x.mode)) note(`weights.json: task "${k}" — mode must be done, speed or compare`);
+    if (x && ['speed', 'compare', 'time'].includes(x.mode) && !(x.std > 0 && x.std <= 400)) note(`weights.json: task "${k}" — ${x.mode} needs a standard time (hours, 0–400)`);
     if (x && x.stdSrc !== undefined && !['oct', 'est', 'set'].includes(x.stdSrc)) note(`weights.json: task "${k}" — stdSrc must be oct, est or set`);
   }
   for (const [k, w] of Object.entries(wj.activities || {})) if (!(typeof w === 'number' && w >= 0 && w <= 20)) note(`weights.json: activity "${k}" needs a weight 0–20`);
