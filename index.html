@@ -89,7 +89,7 @@
   .nav-group-toggle { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; border: 0; border-radius: 6px; background: transparent;
                       font: inherit; font-size: .78rem; font-weight: 700; color: var(--slate-light); padding: 10px; text-align: start; cursor: pointer; }
   /* the reference sets group names in spaced capitals; spacing would break Arabic joining, so it applies to English only */
-  html[dir="ltr"] .nav-group-toggle { font-family: var(--mono); font-size: .64rem; font-weight: 400; letter-spacing: .16em; text-transform: uppercase; }
+  html[dir="ltr"] .nav-group-toggle { font-family: var(--mono); font-size: .72rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }   /* the reference's spaced capitals, a size larger to read on a phone */
   .nav-group-toggle:hover { background: var(--ink-soft); color: #FFFFFF; }
   .nav-section[data-active="true"] .nav-group-toggle { color: #FFFFFF; }
   .nav-chevron { width: 8px; height: 8px; margin-inline-end: 3px; border-inline-end: 2px solid currentColor; border-block-end: 2px solid currentColor;
@@ -560,6 +560,11 @@
   .pr-out { margin-top: 10px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--bg); display: grid; gap: 4px; font-size: 13.5px; } .pr-total { font-size: 1.1rem; color: var(--accent); }
   .pr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 10px; } .pr-preview { margin: 10px 0; } .pr-preview ul { margin: 6px 0; font-size: 13px; } .pr-pts { font-weight: 700; }
   @media (max-width: 900px) { .pr-steps { grid-template-columns: 1fr 1fr; } } @media (max-width: 560px) { .pr-steps { grid-template-columns: 1fr; } }
+  /* easy to tap and read on a phone (ADR-0046): every control at least 32px tall, no text under 12px */
+  .help-q { min-width: 32px; min-height: 32px; } .ic-alt, .ic-x { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 8px; }
+  .team-list label { display: flex; align-items: center; gap: 8px; min-height: 36px; } .team-list input[type=checkbox] { width: 20px; height: 20px; }
+  .btn.tiny { min-height: 32px; } #view-weights input[type=number], #view-weights input[type=text], .pr-in { min-height: 34px; } .pr-calc label.cb input { width: 20px; height: 20px; } .pr-calc label.cb, #view-weights label:has(> input[type=checkbox]) { min-height: 36px; }
+  .points-unmapped, .f-row label, .sig, .t-tile small, .st-pill, .dc-load, .dev-weak, .pm span, .proj-badge { font-size: 12px !important; }
   .row-acts { white-space: nowrap; } .icon-btn { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px; padding: 2px 7px; cursor: pointer; margin-inline-start: 3px; } .icon-btn:hover { border-color: var(--accent); } @media (max-width: 760px) { .funnel { grid-template-columns: repeat(2, 1fr); } } .proj-months { display: flex; align-items: flex-end; gap: 6px; height: 128px; margin: 12px 0; padding: 0 2px; overflow-x: auto; }
   .pm { display: grid; justify-items: center; gap: 2px; min-width: 34px; } .pm i { display: block; width: 22px; background: var(--accent); border-radius: 4px 4px 0 0; } .pm b { font-size: 12px; } .pm span { font-size: 10.5px; color: var(--slate); }
   .proj-tools { gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0 8px; } .proj-q { flex: 1; min-width: 220px; font: inherit; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }

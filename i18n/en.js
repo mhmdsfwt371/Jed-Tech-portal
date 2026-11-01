@@ -1100,7 +1100,7 @@ export default {
     cr_jobs_h: 'Shortcuts',
     cr_job_reports: 'Management reports',
     cr_job_viewas: 'View as a team member',
-    nav_tools_mgr: 'Team tools',
+    nav_tools_mgr: 'All tools and systems',
     g_home_h: 'Control room — the manager’s first page',
     g_home_b: 'The first page the manager link opens. At the top, data freshness: its last day, the number of tasks, when it was pulled, and a button to pull again — it turns amber when the last day is more than two days old. Then this month against last month: done, points, open now and team size. Then “Needs your attention”: critical workload, no agreed plan for next quarter, tasks open over seven days, and pending names — each item opens the page that handles it. At the bottom, shortcuts to the main tasks. Not shown on the team link.',
     pf_title: 'Person file',

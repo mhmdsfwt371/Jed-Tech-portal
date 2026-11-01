@@ -1927,7 +1927,7 @@ function meCardSection(pm, who, nm) { const ymNow = cardMonth; const team = pm.s
         const bodyRows = el('tbody', {}, ids.map((id) => el('tr', {}, el('td', { text: id === me.user.id ? who : nm(id) }), months.map((m) => cellOf(id, m)))));
         return el('div', { class: 'table-wrap' }, el('table', { class: 'path' }, head, bodyRows)); };
       return [withMeet(renderCard(own, who, { showRank: false, showSuggestions: false }), me.user.id, who, false),
-        below.length ? [el('h3', { class: 'card-team-h', text: t('card_team_h', { n: below.length }) }),
+        below.length && (isTeamPortal || viewAs) ? [el('h3', { class: 'card-team-h', text: t('card_team_h', { n: below.length }) }),   // the manager's own page carries his card only — the team's live in the person file
           makeSortable(el('div', { class: 'cards-grid' }, sortByOrder(below, 'monthcards').map((id) => { const c = withMeet(renderCard((monthCards[ymNow] && monthCards[ymNow][id]) || monthCard(ctx, id, ymNow), nm(id), { showRank: true, showSuggestions: true, compact: true }), id, nm(id), true); if (c) c.dataset.id = id; return c; })), 'monthcards')] : null,
         el('div', { class: 'row', style: 'margin-top:8px' }, el('button', { type: 'button', class: 'btn', text: t('card_print'), onclick: () => window.print() }),
           below.length && !viewAs ? [el('button', { type: 'button', class: 'btn quiet', text: t('meet_export'), onclick: exportMeet }), el('button', { type: 'button', class: 'btn quiet', text: t('meet_import'), onclick: () => imp.click() }), imp] : null),
@@ -2195,7 +2195,7 @@ function renderDev() {
   set(body, el('div', { class: 'row dev-head' }, qPick, el('div', { class: 'row' },
       el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('proj_excel')}`, onclick: () => devXlsx(team, nm, qPlan) }), el('span', { class: 'hint', text: t('dev_base_from', { q: qBase.label }) }))),
     cards, devPanel(devSel, (devCtx = { tasks, wt, nm, team, levels, load, qPlan, qBase, peopleById })),
-    el('details', { class: 'tucked', open: '' }, el('summary', { text: t('dev_month_h') }), kpiMapPlanSection(ds, team, peopleById)));
+    el('details', { class: 'tucked' }, el('summary', { text: t('dev_month_h') }), kpiMapPlanSection(ds, team, peopleById)));   // folded: each person's plan is in their file
 }
 function devPanel(id, ctx) {
   if (!id) return null;

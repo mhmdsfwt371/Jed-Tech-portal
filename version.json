@@ -1,21 +1,21 @@
 {
-  "version": "8.61",
+  "version": "8.62",
   "date": "2026-11-02",
   "notes": {
     "ar": [
-      "«مؤشراتي» على رابط المدير صارت بياناتك فقط — بلا «فريقي» ولا التنبيهات (مكانها غرفة المتابعة واللوحة وملف الموظف) — وتُبنى من سحب الفريق إن لم يوجد اختصار، فتعمل على الجوال.",
-      "صفحة الأوزان تبدأ بـ«كيف تُحسب النقاط»: الخطوات الأربع بالقيم الحالية، وحاسبة تجرّب عليها أي نوع مهمة.",
-      "قواعد النقاط صارت قابلة للتعديل وتُنشر مع الأوزان: أهمية كل عامل، وحدود الأساس ١–٥، ومضاعف السرعة، وحدود الوقت، وإضافات اختيارية لمهام البريد وخارج الدوام — مع معاينة الأثر قبل التطبيق. القواعد الأصلية تعطي نفس الأرقام تمامًا."
+      "على الجوال: «مؤشراتي» للمدير صارت ٨ شاشات بدل ٢٥ (كروت الفريق خرجت منها إلى «التطوير» وملف الموظف)، و«التطوير» ٧ بدل ٢٣ (الاقتراحات والخريطة مطوية).",
+      "كل زر ومربع اختيار صار سهل اللمس (٣٢ بكسل على الأقل)، ولا نص أصغر من ١٢ بكسل.",
+      "صفحة الأدوات على رابط المدير اسمها «كل الأدوات والأنظمة» حتى لا تختلط بمجموعة «أدوات الفريق الفنية»، وأسماء المجموعات بالإنجليزية أوضح."
     ],
     "en": [
-      "My KPIs on the manager link is now your data only — no team or alerts tabs (they live in the control room, the board and the person file) — and is drawn from the team pulls when there is no bookmark, so it works on a phone.",
-      "The weights page opens with “How points are counted”: the four steps with the current values, and a calculator to try any task type.",
-      "The scoring rules are now editable and publish with the weights: each factor’s importance, the base 1–5 limits, the speed multiplier, the time limits, and optional extras for email tasks and work outside hours — with a preview before applying. The original rules give exactly the same numbers."
+      "On phones: the manager’s My KPIs is now 8 screens instead of 25 (the team’s cards moved to Development and the person file), and Development 7 instead of 23 (suggestions and the map are folded).",
+      "Every button and checkbox is easy to tap (at least 32px), and no text is under 12px.",
+      "On the manager link the tools page is “All tools and systems” so it is not confused with the “Team engineering tools” group, and English group names read more easily."
     ],
     "ur": [
-      "مینیجر لنک پر میرے اشاریے اب صرف آپ کا ڈیٹا ہے، اور بُک مارک نہ ہو تو ٹیم کے ڈیٹا سے بنتا ہے۔",
-      "اوزان کا صفحہ «پوائنٹس کیسے گنے جاتے ہیں» سے شروع ہوتا ہے، ایک کیلکولیٹر کے ساتھ۔",
-      "پوائنٹس کے قواعد اب قابل تدوین ہیں اور اوزان کے ساتھ شائع ہوتے ہیں — لاگو کرنے سے پہلے اثر کا جائزہ۔ اصل قواعد بالکل وہی اعداد دیتے ہیں۔"
+      "فون پر: مینیجر کے میرے اشاریے اب ۲۵ کے بجائے ۸ اسکرینیں، اور ترقی ۲۳ کے بجائے ۷۔",
+      "ہر بٹن اور چیک باکس چھونے میں آسان (کم از کم ۳۲ پکسل)، اور کوئی متن ۱۲ پکسل سے چھوٹا نہیں۔",
+      "مینیجر لنک پر ٹولز کا صفحہ «تمام ٹولز اور سسٹمز»۔"
     ]
   }
 }

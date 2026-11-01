@@ -60,6 +60,7 @@
 | `docs/decisions/0043-control-room.md` | «غرفة المتابعة» — the manager's first page |
 | `docs/decisions/0044-person-file.md` | «ملف الموظف» — everything about one person in one place |
 | `docs/decisions/0045-points-rules-and-my-page.md` | Editable scoring rules; the manager's «مؤشراتي» is his own |
+| `docs/decisions/0046-clarity-and-phone.md` | Clarity and phone pass, measured |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |
