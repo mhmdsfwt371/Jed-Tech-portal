@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.58 — 2026-11-01
+
+- كل صفحة فيها الآن سطر ظاهر تحت عنوانها يقول ما هي وماذا تفعل فيها — بدل الاكتفاء بزر «؟».
+- جملة صفحة الفريق صارت واضحة: هذا هو الطلب الوحيد الذي تكتبه البوابة في ماي أفاقي.
+
+<details><summary>English</summary>
+
+- Every page now shows a line under its title saying what it is and what to do there — instead of relying on the “?” button alone.
+- The Team page sentence is now clear: this is the only request the portal writes to MyAFAQY.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اب ہر صفحے کے عنوان کے نیچے ایک سطر ہے جو بتاتی ہے کہ یہ کیا ہے اور یہاں کیا کرنا ہے۔
+- ٹیم صفحے کا جملہ واضح: یہ واحد درخواست ہے جو پورٹل مائی آفاقی میں لکھتا ہے۔
+
+</div>
+</details>
+
+
 ## v8.57 — 2026-11-01
 
 - «اعرض كـ» في «مؤشراتي» (رابط المدير): اختر موظفًا فترى صفحته كما يراها هو — بطاقة اليوم والمؤشرات الستة وشغله المفتوح — للقراءة فقط، مع شريط يوضح صفحة من وزر خروج. قائد الفريق يظهر بعرض فريقه.

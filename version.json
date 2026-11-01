@@ -1,15 +1,18 @@
 {
-  "version": "8.57",
+  "version": "8.58",
   "date": "2026-11-01",
   "notes": {
     "ar": [
-      "«اعرض كـ» في «مؤشراتي» (رابط المدير): اختر موظفًا فترى صفحته كما يراها هو — بطاقة اليوم والمؤشرات الستة وشغله المفتوح — للقراءة فقط، مع شريط يوضح صفحة من وزر خروج. قائد الفريق يظهر بعرض فريقه."
+      "كل صفحة فيها الآن سطر ظاهر تحت عنوانها يقول ما هي وماذا تفعل فيها — بدل الاكتفاء بزر «؟».",
+      "جملة صفحة الفريق صارت واضحة: هذا هو الطلب الوحيد الذي تكتبه البوابة في ماي أفاقي."
     ],
     "en": [
-      "“View as” in My KPIs (manager link): pick a team member to see their page exactly as they see it — the Today card, the six indicators and their open work — read only, with a banner naming whose page it is and an exit. A team leader shows with his team view."
+      "Every page now shows a line under its title saying what it is and what to do there — instead of relying on the “?” button alone.",
+      "The Team page sentence is now clear: this is the only request the portal writes to MyAFAQY."
     ],
     "ur": [
-      "«بطور دیکھیں» میرے اشاریوں میں (مینیجر لنک): کسی رکن کو منتخب کریں اور ان کا صفحہ ویسے ہی دیکھیں جیسا وہ دیکھتے ہیں — صرف پڑھنے کے لیے، اوپر پٹی اور باہر نکلنے کا بٹن۔"
+      "اب ہر صفحے کے عنوان کے نیچے ایک سطر ہے جو بتاتی ہے کہ یہ کیا ہے اور یہاں کیا کرنا ہے۔",
+      "ٹیم صفحے کا جملہ واضح: یہ واحد درخواست ہے جو پورٹل مائی آفاقی میں لکھتا ہے۔"
     ]
   }
 }
