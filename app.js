@@ -2141,7 +2141,10 @@ function pointsRulesBox(wt, admin) {
   return el('details', { class: 'pr-box', open: '' }, el('summary', { text: t('pr_h') }), steps, calcBox, el('h3', { text: t('pr_rules_h') }), editor);
 }
 { const withRules = (fn) => function weightsWithRules(...args) { const out = fn.apply(this, args);
-    try { const body = $('weights-body'), wt = weights(), uid = (me && me.user ? me.user.id : null) || (!isTeamPortal ? managerIdOf() : null); if (body && wt) body.prepend(pointsRulesBox(wt, isWeightsAdmin(wt, uid))); } catch (e) { console.error(e); }
+    try { const body = $('weights-body'), wt = weights(), uid = (me && me.user ? me.user.id : null) || (!isTeamPortal ? managerIdOf() : null); if (body && wt) body.prepend(pointsRulesBox(wt, isWeightsAdmin(wt, uid)));
+      // each cell carries its column's name, so on a phone a row reads as a card: the type on top, every field named under it (ADR-0049)
+      if (body) body.querySelectorAll('table').forEach((tb) => { const hs = [...tb.querySelectorAll('thead th')].map((th) => th.textContent.trim()); tb.classList.add('w-cards');
+        tb.querySelectorAll('tbody tr').forEach((tr) => [...tr.children].forEach((td, i) => { if (hs[i]) td.dataset.label = hs[i]; })); }); } catch (e) { console.error(e); }
     return out; };
   renderWeights = withRules(renderWeights); }
 function renderHome() {

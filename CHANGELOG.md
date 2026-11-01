@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.65 — 2026-11-02
+
+- صفحة الأوزان على الجوال: كل نوع مهمة صار بطاقة — اسمه كاملًا في الأعلى، وتحته العوامل والوزن والطريقة وشرحها والوقت المعتاد والعدد والنقاط، كلٌّ باسمه — بلا تمرير جانبي ولا أسماء مقطوعة.
+
+<details><summary>English</summary>
+
+- The weights page on a phone: each task type is now a card — its full name on top, then the factors, weight, method with its explanation, usual time, count and points, each labelled — no sideways scrolling, no cut names.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- فون پر اوزان کا صفحہ: ہر قسم اب ایک کارڈ ہے — اوپر پورا نام، نیچے ہر خانہ اپنے نام کے ساتھ — نہ سائیڈ اسکرول، نہ کٹے نام۔
+
+</div>
+</details>
+
+
 ## v8.64 — 2026-11-02
 
 - لكل نوع مهمة ثلاث طرق واضحة: «بالإنجاز» (النقطة كاملة عند الإغلاق)، و«بالسرعة» (×١٫٥ في الوقت المعتاد)، و«بالمقارنة بالمعتاد» بثلاث خطوات: حتى نصف الوقت المعتاد ×١٫٥، حتى ضعفه ×١، أكثر ×٠٫٥ — وتحت كل طريقة جملة تشرحها.

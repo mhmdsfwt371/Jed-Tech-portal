@@ -63,6 +63,7 @@
 | `docs/decisions/0046-clarity-and-phone.md` | Clarity and phone pass, measured |
 | `docs/decisions/0047-extra-rules-and-or.md` | Extra rules with AND / OR |
 | `docs/decisions/0048-three-methods.md` | Three clear methods per task type; «against the usual time» in steps |
+| `docs/decisions/0049-weights-cards-on-phone.md` | Weights tables as cards on a phone |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

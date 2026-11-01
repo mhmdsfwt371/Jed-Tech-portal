@@ -568,6 +568,16 @@
   .pr-ex-h { margin: 12px 0 2px; } .pr-extras { display: grid; gap: 8px; margin: 8px 0; } .pr-ex { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px; display: grid; gap: 8px; }
   .pr-chips { display: flex; flex-wrap: wrap; gap: 6px; } .pr-chip { font: inherit; font-size: 13px; min-height: 32px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); cursor: pointer; }
   .pr-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; } .pr-ex-add { justify-self: start; }
+  /* the weights tables become cards on a phone (ADR-0049): no sideways scrolling, every field named */
+  @media (max-width: 820px) {
+    #weights-body .table-wrap:has(> table.w-cards) { overflow: visible; border: 0; background: none; }
+    table.w-cards, table.w-cards tbody, table.w-cards tr, table.w-cards td { display: block; width: 100%; } table.w-cards { table-layout: auto; min-width: 0 !important; } table.w-cards thead, table.w-cards colgroup { display: none; }
+    table.w-cards tr { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 10px; background: var(--card); }
+    table.w-cards td { border: 0 !important; padding: 5px 0 !important; text-align: start !important; white-space: normal; }
+    table.w-cards td[data-label]::before { content: attr(data-label); display: block; font-size: 12px; color: var(--slate); margin-bottom: 3px; font-weight: 600; }
+    table.w-cards td:first-child { font-weight: 800; font-size: 1.02rem; color: var(--title); border-bottom: 1px solid var(--line) !important; padding-bottom: 8px !important; margin-bottom: 4px; } table.w-cards td:first-child::before { display: none; }
+    table.w-cards td:empty { display: none; } table.w-cards .f-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; } table.w-cards select, table.w-cards input.std-in { max-width: 100%; }
+  }
   .row-acts { white-space: nowrap; } .icon-btn { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px; padding: 2px 7px; cursor: pointer; margin-inline-start: 3px; } .icon-btn:hover { border-color: var(--accent); } @media (max-width: 760px) { .funnel { grid-template-columns: repeat(2, 1fr); } } .proj-months { display: flex; align-items: flex-end; gap: 6px; height: 128px; margin: 12px 0; padding: 0 2px; overflow-x: auto; }
   .pm { display: grid; justify-items: center; gap: 2px; min-width: 34px; } .pm i { display: block; width: 22px; background: var(--accent); border-radius: 4px 4px 0 0; } .pm b { font-size: 12px; } .pm span { font-size: 10.5px; color: var(--slate); }
   .proj-tools { gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0 8px; } .proj-q { flex: 1; min-width: 220px; font: inherit; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }

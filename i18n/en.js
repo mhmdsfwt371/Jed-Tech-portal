@@ -646,7 +646,7 @@ export default {
     help_level: 'Each quarter, every engineer gets four axes against peers under the same leader: volume (points), difficulty (integration and multi-stage share, plus the hard-email share on the manager’s device), speed (median time to complete, plus first-reply time), reliability (completion of what was assigned). The score is their average. Level: 4 Reference from 80 with difficulty 60+, 3 Specialist from 60, 2 Practitioner from 35, 1 Starter. Leaders are not levelled here. Only the manager sees the development plan.',
     w_col_factors: 'Basis: technical · outside · field · impact',
     w_col_mode: 'Method',
-    w_col_std: 'Standard time (working hours)',
+    w_col_std: 'Usual time (working hours)',
     factor_tech: 'Technical depth: 0 a procedure · 1 a simple check · 2 diagnosis or configuration',
     factor_outside: 'Outside party: 0 internal · 1 the customer · 2 a government body or platform',
     factor_field: 'Field work: 0 desk · 2 a visit or devices',
