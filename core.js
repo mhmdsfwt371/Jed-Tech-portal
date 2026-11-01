@@ -991,8 +991,9 @@ export function typeKey(name) {
   return latin.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 export function parseWeights(raw) {
-  const out = { v: 1, schema: WEIGHTS_SCHEMA, reviewed: '', default: 1, tasks: {}, activities: {}, editors: {} };
+  const out = { v: 1, schema: WEIGHTS_SCHEMA, reviewed: '', default: 1, tasks: {}, activities: {}, editors: {}, rules: parseRules(null) };
   if (!raw || typeof raw !== 'object') return out;
+  out.rules = parseRules(raw.rules);
   const num = (w) => { const n = Number(w); return Number.isFinite(n) && n >= 0 && n <= 20 ? n : null; };
   out.reviewed = String(raw.reviewed || '').slice(0, 10);
   if (num(raw.default) != null) out.default = num(raw.default);
@@ -1014,7 +1015,7 @@ export function parseWeights(raw) {
 /** The device's own entries win over the repository's, type by type. */
 export function mergeWeights(repo, device) {
   const a = parseWeights(repo), b = parseWeights(device);
-  return { ...a, default: device && device.default != null ? b.default : a.default, tasks: { ...a.tasks, ...b.tasks }, activities: { ...a.activities, ...b.activities }, editors: { ...a.editors, ...b.editors }, card: { ...a.card, ...b.card }, reviewed: b.reviewed || a.reviewed };
+  return { ...a, rules: device && device.rules ? b.rules : a.rules, default: device && device.default != null ? b.default : a.default, tasks: { ...a.tasks, ...b.tasks }, activities: { ...a.activities, ...b.activities }, editors: { ...a.editors, ...b.editors }, card: { ...a.card, ...b.card }, reviewed: b.reviewed || a.reviewed };
 }
 /** Editing rights: editors[userId] = ['*'] or a list of type keys; nobody else may change a weight on the page. */
 export const canEditWeight = (wt, userId, key) => { const e = wt && wt.editors && wt.editors[String(userId)]; return !!(e && (e.includes('*') || e.includes(typeKey(key)) || e.includes(String(key).toLowerCase()))); };
@@ -1033,7 +1034,29 @@ export function typeLabel(name, lang = 'ar') {
 // or "time" (× working hours ÷ standard, between ×0.5 and ×2 — never rewarding slowness beyond twice the standard).
 export const POINT_MODES = ['done', 'speed', 'time'];
 export const FACTORS = ['tech', 'outside', 'field', 'impact'];
-export const baseFromFactors = (f) => { const n = (f || []).reduce((a, b) => a + Number(b || 0), 0); return n <= 1 ? 1 : n <= 3 ? 2 : n <= 5 ? 3 : n === 6 ? 4 : 5; };
+// The scoring rules (ADR-0045) — published with the weights, editable by the weights admin. The defaults reproduce the original
+// fixed engine exactly: equal factors, cut points 1/3/5/6 on the 0–8 sum, speed ×1.5, time between ×0.5 and ×2, no extras.
+export const DEFAULT_RULES = Object.freeze({ fw: Object.freeze({ tech: 1, outside: 1, field: 1, impact: 1 }), cuts: Object.freeze([1, 3, 5, 6]), speedX: 1.5, timeMin: 0.5, timeMax: 2, bonusEmail: 0, bonusAfter: 0 });
+export function parseRules(r) {
+  const d = DEFAULT_RULES, o = { fw: { ...d.fw }, cuts: [...d.cuts], speedX: d.speedX, timeMin: d.timeMin, timeMax: d.timeMax, bonusEmail: d.bonusEmail, bonusAfter: d.bonusAfter };
+  if (!r || typeof r !== 'object') return o;
+  const n = (v, lo, hi) => { const x = Number(v); return v !== '' && v != null && Number.isFinite(x) && x >= lo && x <= hi ? x : null; };
+  for (const k of FACTORS) { const v = n(r.fw && r.fw[k], 0, 3); if (v != null) o.fw[k] = v; }
+  if (Array.isArray(r.cuts) && r.cuts.length === 4) { const cc = r.cuts.map((v) => n(v, 0, 24)); if (cc.every((v) => v != null) && cc.every((v, i) => i === 0 || v > cc[i - 1])) o.cuts = cc; }
+  const s = n(r.speedX, 1, 3); if (s != null) o.speedX = s;
+  const lo = n(r.timeMin, 0.1, 1), hi = n(r.timeMax, 1, 5); if (lo != null) o.timeMin = lo; if (hi != null) o.timeMax = hi;
+  const e = n(r.bonusEmail, 0, 100); if (e != null) o.bonusEmail = e;
+  const a = n(r.bonusAfter, 0, 100); if (a != null) o.bonusAfter = a;
+  return o;
+}
+export const rulesOf = (wt) => (wt && wt.rules) || parseRules(null);
+export const rulesAreDefault = (r) => JSON.stringify(parseRules(r)) === JSON.stringify(parseRules(null));
+/** The weighted factor score — each factor's 0/1/2 times its importance. */
+const rulesIn = (r) => (r && r.fw && Array.isArray(r.cuts) ? r : DEFAULT_RULES);   // anything that is not a rules object (e.g. an index from .map) means the defaults
+export const factorScore = (f, rules) => FACTORS.reduce((s, k, i) => s + Number((f || [])[i] || 0) * rulesIn(rules).fw[k], 0);
+export const baseFromFactors = (f, rules) => { const n = factorScore(f, rules), c = rulesIn(rules).cuts; return n <= c[0] ? 1 : n <= c[1] ? 2 : n <= c[2] ? 3 : n <= c[3] ? 4 : 5; };
+/** Outside working time in Saudi Arabia: Friday, Saturday, or before 08:00 / from 17:00. */
+export const afterHours = (iso) => { const d = new Date(Date.parse(iso) + 3 * 3600000), dow = d.getUTCDay(), h = d.getUTCHours() + d.getUTCMinutes() / 60; return dow === 5 || dow === 6 || h < 8 || h >= 17; };
 export const tierFromBase = (b) => (b >= 4 ? 'multistage' : b === 3 ? 'integration' : b === 2 ? 'customer' : 'admin');
 /** Working hours between two instants: Sunday–Thursday, 08:00–17:00 Saudi time. */
 export function businessHours(fromIso, toIso) {
@@ -1048,11 +1071,20 @@ export function businessHours(fromIso, toIso) {
 }
 /** One task's points: its type's base, by its method. */
 export function taskPoints(wt, task) {
-  const x = wt && wt.tasks[typeKey(task && task.type)]; const base = x ? x.w : (wt ? wt.default : 1);
-  if (!x || !x.mode || x.mode === 'done' || !x.std || !task.createdAt || !task.completedAt) return base;
-  const h = businessHours(task.createdAt, task.completedAt);
-  if (x.mode === 'speed') return h <= x.std ? Math.round(base * 1.5 * 10) / 10 : base;
-  return Math.round(base * Math.min(2, Math.max(0.5, h / x.std)) * 10) / 10;
+  const r = rulesOf(wt), h = task && task.createdAt && task.completedAt ? businessHours(task.createdAt, task.completedAt) : null;
+  return pointsDetail(wt, task && task.type, h, { email: !!(task && task.fromEmail === true), after: !!(r.bonusAfter && task && task.completedAt && afterHours(task.completedAt)) }).total;
+}
+/** How a task's points are made, step by step — the engine itself (taskPoints) and the calculator on the weights page. */
+export function pointsDetail(wt, typeName, hours, flags = {}) {
+  const x = wt && wt.tasks[typeKey(typeName)], base = x ? x.w : (wt ? wt.default : 1), r = rulesOf(wt);
+  let mult = 1, why = 'done';
+  if (x && x.mode && x.mode !== 'done' && x.std && hours != null) {
+    if (x.mode === 'speed') { mult = hours <= x.std ? r.speedX : 1; why = hours <= x.std ? 'speed_in' : 'speed_out'; }
+    else { mult = Math.min(r.timeMax, Math.max(r.timeMin, hours / x.std)); why = 'time'; }
+  }
+  const extra = (flags.email ? r.bonusEmail : 0) + (flags.after ? r.bonusAfter : 0), p = base * mult * (1 + extra / 100);
+  return { base, mult: Math.round(mult * 100) / 100, extra, mode: (x && x.mode) || 'done', std: (x && x.std) || null, why, f: (x && x.f) || null,
+    score: x && x.f ? Math.round(factorScore(x.f, r) * 10) / 10 : null, total: p === base ? base : Math.round(p * 10) / 10 };
 }
 export const taskWeight = (wt, typeName) => { const x = wt && wt.tasks[typeKey(typeName)]; return x ? x.w : (wt ? wt.default : 1); };
 export const activityWeight = (wt, category) => { const x = wt && wt.activities[String(category || '').toLowerCase().trim()]; return x != null ? x : (wt ? wt.default : 1); };
@@ -1096,13 +1128,14 @@ export function weightPublishDiff(repoWeights, draft) {
     return [...keys].filter((key) => different(normalize(a && a[key]), normalize(b && b[key]))).sort();
   };
   const tasks = changed(base.tasks, proposed.tasks);
+  const rulesChanged = different(base.rules, proposed.rules);   // the scoring rules publish with the weights (ADR-0045)
   const activities = changed(base.activities, proposed.activities);
   const editors = changed(base.editors, proposed.editors, (v) => (v || []).slice().sort());
   const card = changed(base.card, proposed.card);
   const defaults = base.default !== proposed.default ? 1 : 0;
   return {
-    tasks, activities, editors, card, defaults,
-    count: tasks.length + activities.length + editors.length + card.length + defaults,
+    tasks, activities, editors, card, defaults, rules: rulesChanged ? 1 : 0,
+    count: tasks.length + activities.length + editors.length + card.length + defaults + (rulesChanged ? 1 : 0),
   };
 }
 

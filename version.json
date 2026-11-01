@@ -1,18 +1,21 @@
 {
-  "version": "8.60",
-  "date": "2026-11-01",
+  "version": "8.61",
+  "date": "2026-11-02",
   "notes": {
     "ar": [
-      "«ملف الموظف»: صفحة واحدة لكل موظف تجمع ما كان موزعًا على أربع صفحات — وظيفته ومن يتبع، وأداؤه هذا الشهر مقابل الماضي، ومستواه ومحاوره، وعبؤه ونصيبه من نقاط الفريق، وخطته للربعين، واجتماعاته، وشغله المفتوح — مع «اعرض صفحته كما يراها» وخطته وتقريره.",
-      "اسم أي موظف في لوحة المؤشرات وصفحة الفريق صار رابطًا لملفه: الجداول تبقى للمقارنة، والتفاصيل في مكان واحد."
+      "«مؤشراتي» على رابط المدير صارت بياناتك فقط — بلا «فريقي» ولا التنبيهات (مكانها غرفة المتابعة واللوحة وملف الموظف) — وتُبنى من سحب الفريق إن لم يوجد اختصار، فتعمل على الجوال.",
+      "صفحة الأوزان تبدأ بـ«كيف تُحسب النقاط»: الخطوات الأربع بالقيم الحالية، وحاسبة تجرّب عليها أي نوع مهمة.",
+      "قواعد النقاط صارت قابلة للتعديل وتُنشر مع الأوزان: أهمية كل عامل، وحدود الأساس ١–٥، ومضاعف السرعة، وحدود الوقت، وإضافات اختيارية لمهام البريد وخارج الدوام — مع معاينة الأثر قبل التطبيق. القواعد الأصلية تعطي نفس الأرقام تمامًا."
     ],
     "en": [
-      "“Person file”: one page per person gathering what was spread over four pages — role and leader, this month against last, level and axes, workload and share of the team’s points, both quarters’ plans, meetings and open work — with “View their page as they see it”, their plan and their report.",
-      "Every person’s name on the KPI board and the team page now links to their file: the tables stay for comparing, the details live in one place."
+      "My KPIs on the manager link is now your data only — no team or alerts tabs (they live in the control room, the board and the person file) — and is drawn from the team pulls when there is no bookmark, so it works on a phone.",
+      "The weights page opens with “How points are counted”: the four steps with the current values, and a calculator to try any task type.",
+      "The scoring rules are now editable and publish with the weights: each factor’s importance, the base 1–5 limits, the speed multiplier, the time limits, and optional extras for email tasks and work outside hours — with a preview before applying. The original rules give exactly the same numbers."
     ],
     "ur": [
-      "«فرد کی فائل»: ہر فرد کے لیے ایک صفحہ جو چار صفحوں پر بکھری چیزیں جمع کرتا ہے — عہدہ، کارکردگی، سطح، بوجھ، منصوبے، ملاقاتیں اور کھلا کام۔",
-      "اشاریوں کے بورڈ اور ٹیم صفحے پر ہر نام اب اس کی فائل کا لنک ہے: جدولیں موازنے کے لیے، تفصیل ایک جگہ۔"
+      "مینیجر لنک پر میرے اشاریے اب صرف آپ کا ڈیٹا ہے، اور بُک مارک نہ ہو تو ٹیم کے ڈیٹا سے بنتا ہے۔",
+      "اوزان کا صفحہ «پوائنٹس کیسے گنے جاتے ہیں» سے شروع ہوتا ہے، ایک کیلکولیٹر کے ساتھ۔",
+      "پوائنٹس کے قواعد اب قابل تدوین ہیں اور اوزان کے ساتھ شائع ہوتے ہیں — لاگو کرنے سے پہلے اثر کا جائزہ۔ اصل قواعد بالکل وہی اعداد دیتے ہیں۔"
     ]
   }
 }

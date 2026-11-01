@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v8.61 — 2026-11-02
+
+- «مؤشراتي» على رابط المدير صارت بياناتك فقط — بلا «فريقي» ولا التنبيهات (مكانها غرفة المتابعة واللوحة وملف الموظف) — وتُبنى من سحب الفريق إن لم يوجد اختصار، فتعمل على الجوال.
+- صفحة الأوزان تبدأ بـ«كيف تُحسب النقاط»: الخطوات الأربع بالقيم الحالية، وحاسبة تجرّب عليها أي نوع مهمة.
+- قواعد النقاط صارت قابلة للتعديل وتُنشر مع الأوزان: أهمية كل عامل، وحدود الأساس ١–٥، ومضاعف السرعة، وحدود الوقت، وإضافات اختيارية لمهام البريد وخارج الدوام — مع معاينة الأثر قبل التطبيق. القواعد الأصلية تعطي نفس الأرقام تمامًا.
+
+<details><summary>English</summary>
+
+- My KPIs on the manager link is now your data only — no team or alerts tabs (they live in the control room, the board and the person file) — and is drawn from the team pulls when there is no bookmark, so it works on a phone.
+- The weights page opens with “How points are counted”: the four steps with the current values, and a calculator to try any task type.
+- The scoring rules are now editable and publish with the weights: each factor’s importance, the base 1–5 limits, the speed multiplier, the time limits, and optional extras for email tasks and work outside hours — with a preview before applying. The original rules give exactly the same numbers.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- مینیجر لنک پر میرے اشاریے اب صرف آپ کا ڈیٹا ہے، اور بُک مارک نہ ہو تو ٹیم کے ڈیٹا سے بنتا ہے۔
+- اوزان کا صفحہ «پوائنٹس کیسے گنے جاتے ہیں» سے شروع ہوتا ہے، ایک کیلکولیٹر کے ساتھ۔
+- پوائنٹس کے قواعد اب قابل تدوین ہیں اور اوزان کے ساتھ شائع ہوتے ہیں — لاگو کرنے سے پہلے اثر کا جائزہ۔ اصل قواعد بالکل وہی اعداد دیتے ہیں۔
+
+</div>
+</details>
+
+
 ## v8.60 — 2026-11-01
 
 - «ملف الموظف»: صفحة واحدة لكل موظف تجمع ما كان موزعًا على أربع صفحات — وظيفته ومن يتبع، وأداؤه هذا الشهر مقابل الماضي، ومستواه ومحاوره، وعبؤه ونصيبه من نقاط الفريق، وخطته للربعين، واجتماعاته، وشغله المفتوح — مع «اعرض صفحته كما يراها» وخطته وتقريره.

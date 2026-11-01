@@ -6,7 +6,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
   mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
@@ -219,14 +219,19 @@ $('me-tour').addEventListener('close', () => $('me-tour-open').focus());
 let me = null;
 // «اعرض كـ» (ADR-0042): the manager sees one person's «مؤشراتي» exactly as it is drawn for them, from the manager's own pulls.
 // Read only — the real profile is put aside and restored; nothing is written while viewing.
-let viewAs = null, realMe = null;
-function startViewAs(id) {
+let viewAs = null, realMe = null, meDerived = false;
+function meFromPulls(id) {
   const ppl = peopleOf(datasets), when = datasets.map((d) => d.range && d.range.to).filter(Boolean).sort().pop();
   const since = datasets.map((d) => d.range && d.range.from).filter(Boolean).sort()[0];
   const person = ppl.find((p) => p.id === id) || { id };
-  const fake = upgradeMe({ schema: 'afaqy-me/v2', user: { id, name: nameOf(person, 'en') || id }, people: ppl,
+  return upgradeMe({ schema: 'afaqy-me/v2', user: { id, name: nameOf(person, 'en') || id }, people: ppl,
     extractedAt: when ? `${when}T23:59:00.000Z` : new Date().toISOString(), since: since ? `${since}T00:00:00.000Z` : undefined,
     tasks: allTasks().map((x) => ({ ...x, own: x.assigneeId === id })) });
+}
+// the manager: the team-file entry that covers departments (ADR-0045)
+const managerIdOf = () => { const e = Object.entries(roster().people || {}).find(([, p]) => Array.isArray(p.covers) && p.covers.length); return e ? e[0] : null; };
+function startViewAs(id) {
+  const fake = meFromPulls(id);
   if (!fake) return;
   if (!viewAs) realMe = me;
   viewAs = id; me = fake; document.body.classList.add('viewing-as');
@@ -637,12 +642,15 @@ function renderMe(waiting = false) {
     el('details', { class: 'me-phones' }, el('summary', { text: t('me_phones') }), el('p', { class: 'hint', text: t('me_android') }), el('p', { class: 'hint', text: t('me_ios') })),
   ];
   if (waiting) { set(body, el('div', { class: 'empty', text: t('me_wait') })); return; }
+  if (meDerived && !viewAs) { me = null; meDerived = false; }
+  if (!me && !isTeamPortal && datasets.length) { const mid = managerIdOf(); if (mid) { const m = meFromPulls(mid); if (m) { me = m; meDerived = true; } } }
   const vaBar = (() => {
     if (isTeamPortal || !datasets.length) return null;
     if (viewAs) { const ppl = peopleOf(datasets), nmV = nameOf(ppl.find((p) => p.id === viewAs) || {}, lang) || viewAs;
       return el('div', { class: 'va-banner', role: 'status' }, el('span', { class: 'va-eye', 'aria-hidden': 'true', text: '👁' }),
         el('div', {}, el('b', { text: t('va_now', { n: nmV }) }), el('span', { text: t('va_note', { d: (me.extractedAt || '').slice(0, 10) }) })),
         el('button', { type: 'button', class: 'btn', text: `✕ ${t('va_exit')}`, onclick: () => endViewAs() })); }
+    return null;
     const ppl = peopleOf(datasets), self = me && me.user ? me.user.id : null;
     const team = currentTeam(scoped(ppl), allTasks()).filter((id) => id !== self)
       .map((id) => ({ id, n: nameOf(ppl.find((p) => p.id === id) || {}, lang) || id })).sort((x, y) => x.n.localeCompare(y.n, lang));
@@ -743,7 +751,7 @@ function renderMe(waiting = false) {
       })))),
     el('h2', { text: t('definitions') }), el('ul', { class: 'defs' }, DEFINITIONS.map((k) => el('li', { text: t(k) }))),
     el('details', { class: 'team' }, el('summary', { text: t('me_refresh_h') }), el('p', { class: 'hint', text: t('me_refresh') }), ...setup,
-      el('button', { type: 'button', class: 'btn va-hide', text: t('me_forget'), onclick: async () => { if (viewAs) return; me = null; await store.putMe(null); renderMe(); } })));
+      el('button', { type: 'button', class: 'btn va-hide', text: t('me_forget'), onclick: async () => { if (viewAs || meDerived) return; me = null; await store.putMe(null); renderMe(); } })));
   meDashboard(body, pm, { nm, arrow });
 }
 // ---------- My KPIs as a dashboard (ADR-0034): openable tiles, a collapsible block for me and one for my team, tabs for a leader ----------
@@ -1267,13 +1275,14 @@ function meDashboard(body, pm, { nm, arrow }) {
   const bar = el('div', { class: 'tabs', role: 'tablist' }, [['me', t('tab_me')], ['team', t('tab_team')], ['alerts', nAlerts ? `${t('tab_alerts')} (${nAlerts})` : t('tab_alerts')]].map(([k, label]) =>
     el('button', { type: 'button', role: 'tab', 'data-k': k, class: `tab${meTab === k ? ' on' : ''}`, 'aria-selected': String(meTab === k), text: label, onclick: () => { meTab = k; for (const [p, el2] of Object.entries(panels)) el2.hidden = p !== k; for (const b of bar.children) { const on = b.getAttribute('data-k') === k; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); } } })));
   for (const [p, el2] of Object.entries(panels)) el2.hidden = p !== meTab;
+  if (!isTeamPortal && !viewAs) { (card || body.firstChild).after(panels.me); return; }   // the manager's own page: his data only
   (card || body.firstChild).after(bar, panels.me, panels.team, panels.alerts);
 }
 async function receiveMe(fragment) {
   const r = await parseMe(fragment);
   history.replaceState(null, '', '#me');            // the data never stays in the address or the history
   if (r.error) { toast(t(r.error, r.vars || {})); renderMe(); return; }
-  endViewAs(false); me = r.me; await store.putMe(me); await refreshOfficialWeights();
+  endViewAs(false); meDerived = false; me = r.me; await store.putMe(me); await refreshOfficialWeights();
   toast(t('me_loaded', { n: me.tasks.length })); renderMe(); renderMeTour();
 }
 // The bookmark hands the data over by message (ADR-0014): accepted only from myafaqy itself and only in our shape.
@@ -1288,7 +1297,7 @@ window.addEventListener('message', async (e) => {
   meReceived = stamp;
   const r = parseMePayload(e.data.payload);
   if (r.error) { toast(t(r.error, r.vars || {})); return; }
-  endViewAs(false); me = r.me; await store.putMe(me); await refreshOfficialWeights();
+  endViewAs(false); meDerived = false; me = r.me; await store.putMe(me); await refreshOfficialWeights();
   if (location.hash !== '#me') history.replaceState(null, '', '#me');
   route(); toast(t('me_loaded', { n: me.tasks.length })); renderMe(); renderMeTour();
 });
@@ -2062,6 +2071,64 @@ function renderPerson() {
     try { if (datasets.length) { const ppl = peopleOf(datasets), team = currentTeam(scoped(ppl), allTasks()); linkNames($(viewId), team, (x) => nameOf(ppl.find((p) => p.id === x) || {}, lang) || x); } } catch { /* a table without names */ }
     return out; };
   renderKpi = withNames(renderKpi, 'view-kpi'); renderTeam = withNames(renderTeam, 'view-team'); }
+// ---------- how points are made, and the rules behind them (ADR-0045) — on top of the weights page ----------
+function pointsRulesBox(wt, admin) {
+  const R = rulesOf(wt), fmtN = (v) => String(Math.round(v * 100) / 100), maxScore = 2 * FACTORS.reduce((s, k) => s + R.fw[k], 0);
+  const step = (n, title, ...kids) => el('div', { class: 'pr-step' }, el('span', { class: 'pr-n', text: String(n) }), el('div', {}, el('b', { text: title }), ...kids));
+  const steps = el('div', { class: 'pr-steps' },
+    step(1, t('pr_s1'), el('ul', {}, FACTORS.map((k) => el('li', {}, el('span', { text: t(`factor_${k}`) }), el('em', { text: ` ×${fmtN(R.fw[k])}` }))))),
+    step(2, t('pr_s2', { m: fmtN(maxScore) }), el('div', { class: 'pr-cuts' }, [1, 2, 3, 4, 5].map((b, i) => el('span', { text: t('pr_cut', { r: i < 4 ? `≤ ${fmtN(R.cuts[i])}` : `> ${fmtN(R.cuts[3])}`, b }) })))),
+    step(3, t('pr_s3'), el('ul', {}, el('li', { text: t('pr_m_done') }), el('li', { text: t('pr_m_speed', { x: fmtN(R.speedX) }) }), el('li', { text: t('pr_m_time', { a: fmtN(R.timeMin), b: fmtN(R.timeMax) }) }))),
+    step(4, t('pr_s4'), el('p', { class: 'hint', text: R.bonusEmail || R.bonusAfter ? [R.bonusEmail ? t('pr_x_email', { p: R.bonusEmail }) : '', R.bonusAfter ? t('pr_x_after', { p: R.bonusAfter }) : ''].filter(Boolean).join(' · ') : t('pr_x_none') })));
+  // the calculator — the same function the engine uses, so what it shows is what a task earns
+  const clean = (s) => String(s).replace(/[\u2066-\u2069]/g, '');
+  const types = Object.keys(wt.tasks).map((k) => ({ k, n: clean(typeLabel(k, lang)) })).sort((x, y) => x.n.localeCompare(y.n, lang));
+  const sel = el('select', { class: 'pr-in wide' }, types.map((x) => el('option', { value: x.k, text: x.n })));
+  const hrs = el('input', { type: 'number', class: 'pr-in', min: '0', step: '0.5', value: '4' }), cbE = el('input', { type: 'checkbox' }), cbA = el('input', { type: 'checkbox' });
+  const out = el('div', { class: 'pr-out' });
+  const calc = () => { const h = Number(hrs.value), d = pointsDetail(wt, sel.value, Number.isFinite(h) ? h : null, { email: cbE.checked, after: cbA.checked });
+    const lines = [d.f ? t('pr_c_base', { e: FACTORS.map((k, i) => `${t(`factor_short_${k}`)} ${d.f[i]}×${fmtN(R.fw[k])}`).join(' + '), s: d.score, b: d.base }) : t('pr_c_set', { b: d.base }),
+      d.why === 'speed_in' ? t('pr_c_speed_in', { h, s: d.std, x: fmtN(d.mult) }) : d.why === 'speed_out' ? t('pr_c_speed_out', { h, s: d.std }) : d.why === 'time' ? t('pr_c_time', { h, s: d.std, x: fmtN(d.mult) }) : t('pr_c_done'),
+      d.extra ? t('pr_c_extra', { p: d.extra }) : ''].filter(Boolean);
+    set(out, ...lines.map((l) => el('div', { text: l })), el('b', { class: 'pr-total', text: t('pr_c_total', { p: d.total }) })); };
+  [sel, hrs, cbE, cbA].forEach((x) => x.addEventListener('input', calc)); calc();
+  const calcBox = el('div', { class: 'pr-calc' }, el('h3', { text: t('pr_calc_h') }),
+    el('div', { class: 'row' }, el('label', {}, el('span', { text: t('pr_calc_type') }), sel), el('label', {}, el('span', { text: t('pr_calc_hours') }), hrs),
+      el('label', { class: 'cb' }, cbE, el('span', { text: t('pr_calc_email') })), el('label', { class: 'cb' }, cbA, el('span', { text: t('pr_calc_after') }))), out);
+  // the rules editor — admin only; a preview shows what changes before anything is applied
+  let editor = el('p', { class: 'hint', text: t('pr_rules_ro') });
+  if (admin) {
+    const num = (v, mn, mx, st) => el('input', { type: 'number', class: 'pr-in', min: String(mn), max: String(mx), step: String(st), value: String(v) });
+    const fwIn = Object.fromEntries(FACTORS.map((k) => [k, num(R.fw[k], 0, 3, 0.5)])), cutIn = R.cuts.map((v) => num(v, 0, 24, 0.5));
+    const spIn = num(R.speedX, 1, 3, 0.1), tmin = num(R.timeMin, 0.1, 1, 0.1), tmax = num(R.timeMax, 1, 5, 0.5), beIn = num(R.bonusEmail, 0, 100, 5), baIn = num(R.bonusAfter, 0, 100, 5);
+    const read = () => { const raw = cutIn.map((i) => Number(i.value)); if (!raw.every((v, i) => Number.isFinite(v) && (i === 0 || v > raw[i - 1]))) { toast(t('pr_bad_cuts')); return null; }
+      return parseRules({ fw: Object.fromEntries(FACTORS.map((k) => [k, fwIn[k].value])), cuts: raw, speedX: spIn.value, timeMin: tmin.value, timeMax: tmax.value, bonusEmail: beIn.value, bonusAfter: baIn.value }); };
+    const plan = (nr) => { const patch = {}; for (const [k, x] of Object.entries(wt.tasks)) { if (!x.f || x.w !== baseFromFactors(x.f, R)) continue;   // a weight set by hand stays as it is
+      const w = baseFromFactors(x.f, nr); if (w !== x.w) patch[k] = { ...x, w, ...(x.tier === tierFromBase(x.w) ? { tier: tierFromBase(w) } : {}) }; } return patch; };
+    const preview = el('div', { class: 'pr-preview' });
+    const show = (nr) => { const patch = plan(nr), wNew = { ...wt, rules: nr, tasks: { ...wt.tasks, ...patch } }, ds = [...datasets].sort((x, y) => (y.range.to || '').localeCompare(x.range.to || ''))[0];
+      const ch = Object.entries(patch).map(([k, x]) => el('li', { text: t('pr_prev_type', { n: clean(typeLabel(k, lang)), a: wt.tasks[k].w, b: x.w }) }));
+      let pts = null; if (ds) { const ppl = peopleOf(datasets), team = currentTeam(scoped(ppl), allTasks()), done = ds.tasks.filter((x) => x.state === 'done' && team.includes(x.assigneeId));
+        pts = t('pr_prev_pts', { a: Math.round(done.reduce((s, x) => s + taskPoints(wt, x), 0)), b: Math.round(done.reduce((s, x) => s + taskPoints(wNew, x), 0)), n: done.length, f: ds.range.from, to: ds.range.to }); }
+      set(preview, el('b', { text: t('pr_prev_h') }), ch.length ? el('ul', {}, ch.slice(0, 12)) : el('p', { class: 'hint', text: t('pr_prev_none') }), pts ? el('p', { class: 'pr-pts', text: pts }) : null,
+        el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: t('pr_apply'), onclick: async () => {
+          weightsDevice = { ...(weightsDevice || {}), rules: nr, tasks: { ...((weightsDevice || {}).tasks || {}), ...patch } }; await store.putWeights(weightsDevice); toast(t('pr_applied')); renderWeights(); } }))); };
+    editor = el('div', { class: 'pr-rules' },
+      el('div', { class: 'pr-grid' }, FACTORS.map((k) => el('label', {}, el('span', { text: `${t('pr_fw')} — ${t(`factor_short_${k}`)}` }), fwIn[k])),
+        ...cutIn.map((inp, i) => el('label', {}, el('span', { text: t('pr_cut_in', { b: i + 1 }) }), inp)),
+        el('label', {}, el('span', { text: t('pr_speedx') }), spIn), el('label', {}, el('span', { text: t('pr_tmin') }), tmin), el('label', {}, el('span', { text: t('pr_tmax') }), tmax),
+        el('label', {}, el('span', { text: t('pr_bemail') }), beIn), el('label', {}, el('span', { text: t('pr_bafter') }), baIn)),
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: t('pr_preview'), onclick: () => { const nr = read(); if (nr) show(nr); } }),
+        el('button', { type: 'button', class: 'btn quiet', text: t('pr_reset'), onclick: () => show(parseRules(null)) }),
+        rulesAreDefault(R) ? null : el('span', { class: 'hint', text: t('pr_not_default') })),
+      preview, el('p', { class: 'hint', text: t('pr_publish_note') }));
+  }
+  return el('details', { class: 'pr-box', open: '' }, el('summary', { text: t('pr_h') }), steps, calcBox, el('h3', { text: t('pr_rules_h') }), editor);
+}
+{ const withRules = (fn) => function weightsWithRules(...args) { const out = fn.apply(this, args);
+    try { const body = $('weights-body'), wt = weights(), uid = (me && me.user ? me.user.id : null) || (!isTeamPortal ? managerIdOf() : null); if (body && wt) body.prepend(pointsRulesBox(wt, isWeightsAdmin(wt, uid))); } catch (e) { console.error(e); }
+    return out; };
+  renderWeights = withRules(renderWeights); }
 function renderHome() {
   const body = $('home-body'); if (!body) return;
   if (!datasets.length) { set(body, el('div', { class: 'cr-start' }, el('h2', { text: t('cr_start_h') }), el('p', { text: t('cr_start_b') }), el('a', { class: 'btn primary', href: '#data', text: `${t('cr_pull')} ↗` }))); return; }
@@ -2103,7 +2170,7 @@ function renderHome() {
       : el('div', { class: 'cr-calm', text: t('cr_att_none') }),
     el('h2', { class: 'cr-h', text: t('cr_jobs_h') }),
     el('div', { class: 'cr-jobs' }, job(t('kpi_board'), '#kpi', () => { kpiTab = 'overview'; }), job(t('nav_dev'), '#dev'), job(t('nav_team'), '#team'),
-      job(t('cr_job_reports'), '#kpi', () => { kpiTab = 'reports'; }), job(t('cr_job_viewas'), '#me')));
+      job(t('cr_job_reports'), '#kpi', () => { kpiTab = 'reports'; }), job(t('cr_job_viewas'), '#person')));
 }
 function renderDev() {
   const body = $('dev-body'); if (!body) return;
@@ -2352,7 +2419,7 @@ function renderWeights() {
   const seen = new Map();
   if (ds) for (const x of ds.tasks) { const k = typeKey(x.type); if (!k) continue; const v = seen.get(k) || { name: x.type, n: 0 }; v.n++; seen.set(k, v); }
   // who is looking: the person whose profile is on this device; rights come from the weights file
-  const uid = me && me.user ? me.user.id : null;
+  const uid = (me && me.user ? me.user.id : null) || (!isTeamPortal ? managerIdOf() : null);   // on a phone with no bookmark profile, the manager is known from the team file
   const admin = isWeightsAdmin(wt, uid);
   const mayEdit = (k) => canEditWeight(wt, uid, k);
   // the groups: linked types as myafaqy lists them per team (from the latest file), else the weights file's own tags
@@ -2395,7 +2462,7 @@ function renderWeights() {
   const pointsOfType = (k) => doneTasks.filter((x) => typeKey(x.type) === k).reduce((s, x) => s + taskPoints(wt, x), 0);
   const basisCells = (r, g) => {
     const x = r.x || { w: wt.default, f: [0, 0, 0, 0], mode: 'done' }; const f = x.f || [0, 0, 0, 0]; const can = mayEdit(r.key);
-    const put = (patch) => { const nf = patch.f || f, b = baseFromFactors(nf), mode = patch.mode || x.mode || 'done';
+    const put = (patch) => { const nf = patch.f || f, b = baseFromFactors(nf, rulesOf(weights())), mode = patch.mode || x.mode || 'done';
       const std = mode === 'done' ? undefined : (patch.std != null ? patch.std : x.std || 2);
       save({ tasks: { [r.key]: { w: b, tier: tierFromBase(b), team: x.team || g.id, f: nf, mode, ...(std ? { std, stdSrc: patch.std != null ? 'set' : (x.stdSrc || 'est') } : {}) } } }); };
     const fsel = (i) => el('select', { class: 'w-sel f-sel', title: t(`factor_${FACTORS[i]}`), 'aria-label': t(`factor_${FACTORS[i]}`), ...(can ? {} : { disabled: '' }),
@@ -2731,6 +2798,7 @@ function route() {
   if (v === 'weights') renderWeights();
   if (v === 'dev') renderDev();
   if (v === 'home') renderHome();
+  if (v === 'me' && !isTeamPortal && !viewAs && (!me || meDerived)) renderMe();   // the manager's page drawn from his pulls is redrawn on opening — the router does not redraw «مؤشراتي» otherwise
   if (v === 'person') renderPerson();
 }
 
@@ -2749,7 +2817,7 @@ $('file-in').addEventListener('change', async (e) => { for (const f of e.target.
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
 $('export-btn').addEventListener('click', async () => {
   const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION,
-    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: (viewAs ? realMe : me) || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projfiles: await projFilesExport(), devplans: devPlans };
+    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: (viewAs ? (meDerived ? null : realMe) : (meDerived ? null : me)) || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projfiles: await projFilesExport(), devplans: devPlans };
   download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(all, null, 1));
 });
 $('import-in').addEventListener('change', async (e) => {

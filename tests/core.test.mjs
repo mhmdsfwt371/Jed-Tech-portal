@@ -833,4 +833,38 @@ test('suggested goals stretch the baseline and aim at the weakest axes', () => {
   const s = core.suggestQuarterGoals(b, { axes: { volume: 80, difficulty: 60, speed: 20, reliability: 40 } });
   const sp = s.find((g) => g.metric === 'avgHours'); assert.equal(sp.target, 13.6); assert.ok(sp.weak); assert.ok(s.some((g) => g.metric === 'type'));
 });
+// ---- the scoring rules (ADR-0045): defaults must reproduce the original fixed engine exactly ----
+test('default rules reproduce the old base for all 81 factor combinations', () => {
+  const old = (f) => { const n = f.reduce((a, b) => a + b, 0); return n <= 1 ? 1 : n <= 3 ? 2 : n <= 5 ? 3 : n === 6 ? 4 : 5; };
+  const R = core.parseRules(null); let n = 0;
+  for (const a of [0, 1, 2]) for (const b of [0, 1, 2]) for (const c of [0, 1, 2]) for (const d of [0, 1, 2]) { assert.equal(core.baseFromFactors([a, b, c, d], R), old([a, b, c, d])); assert.equal(core.baseFromFactors([a, b, c, d]), old([a, b, c, d])); n++; }
+  assert.equal(n, 81);
+});
+test('default rules reproduce the old points for done, speed and time at many durations', () => {
+  const oldPts = (x, task) => { const base = x.w; if (!x.mode || x.mode === 'done' || !x.std) return base; const h = core.businessHours(task.createdAt, task.completedAt);
+    if (x.mode === 'speed') return h <= x.std ? Math.round(base * 1.5 * 10) / 10 : base; return Math.round(base * Math.min(2, Math.max(0.5, h / x.std)) * 10) / 10; };
+  const wt = core.parseWeights({ tasks: { 'a': { w: 3, mode: 'done' }, 'b': { w: 4, mode: 'speed', std: 6 }, 'c': { w: 2, mode: 'time', std: 5 } } });
+  let n = 0;
+  for (const ty of ['a', 'b', 'c']) for (const hrs of [1, 3, 5.5, 6, 9, 14, 30, 60]) {
+    const start = '2026-10-04T05:00:00.000Z', end = new Date(Date.parse(start) + hrs * 3600000).toISOString(), task = { type: ty, createdAt: start, completedAt: end, state: 'done' };
+    assert.equal(core.taskPoints(wt, task), oldPts(wt.tasks[ty], task), `${ty} ${hrs}h`); n++;
+  }
+  assert.equal(n, 24);
+});
+test('factor importance, cut points, speed, time limits and extras change the points as set', () => {
+  const R = core.parseRules({ fw: { impact: 2 } }); assert.equal(core.factorScore([0, 0, 0, 2], R), 4); assert.equal(core.baseFromFactors([0, 0, 0, 2], R), 3);
+  assert.equal(core.baseFromFactors([2, 2, 0, 0], core.parseRules({ cuts: [0, 1, 2, 3] })), 5);
+  const wt = core.parseWeights({ tasks: { s: { w: 4, mode: 'speed', std: 8 }, t: { w: 2, mode: 'time', std: 2 } }, rules: { speedX: 2, timeMax: 3, bonusEmail: 25, bonusAfter: 50 } });
+  const sun = '2026-10-04T05:00:00.000Z', plus = (h) => new Date(Date.parse(sun) + h * 3600000).toISOString();
+  assert.equal(core.taskPoints(wt, { type: 's', createdAt: sun, completedAt: plus(2) }), 8);
+  assert.equal(core.taskPoints(wt, { type: 't', createdAt: sun, completedAt: plus(7) }), 6);
+  assert.equal(core.taskPoints(wt, { type: 's', createdAt: sun, completedAt: plus(2), fromEmail: true }), 10);
+  assert.equal(core.taskPoints(wt, { type: 's', createdAt: sun, completedAt: '2026-10-04T16:30:00.000Z' }), 6);
+});
+test('invalid rules fall back to the defaults, and the weights carry and merge the rules', () => {
+  const R = core.parseRules({ cuts: [5, 3, 6, 7], speedX: 9, fw: { tech: -1 }, bonusEmail: 'x' });
+  assert.deepEqual(R.cuts, [1, 3, 5, 6]); assert.equal(R.speedX, 1.5); assert.equal(R.fw.tech, 1); assert.equal(R.bonusEmail, 0); assert.ok(core.rulesAreDefault(R));
+  const m = core.mergeWeights({ rules: { speedX: 1.2 } }, { rules: { speedX: 2 } }); assert.equal(m.rules.speedX, 2);
+  assert.equal(core.mergeWeights({ rules: { speedX: 1.2 } }, {}).rules.speedX, 1.2);
+});
 console.log(`core.test.mjs: ${tests.length} passed`);
