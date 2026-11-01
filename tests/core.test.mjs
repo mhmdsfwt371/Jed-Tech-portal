@@ -863,8 +863,24 @@ test('factor importance, cut points, speed, time limits and extras change the po
 });
 test('invalid rules fall back to the defaults, and the weights carry and merge the rules', () => {
   const R = core.parseRules({ cuts: [5, 3, 6, 7], speedX: 9, fw: { tech: -1 }, bonusEmail: 'x' });
-  assert.deepEqual(R.cuts, [1, 3, 5, 6]); assert.equal(R.speedX, 1.5); assert.equal(R.fw.tech, 1); assert.equal(R.bonusEmail, 0); assert.ok(core.rulesAreDefault(R));
+  assert.deepEqual(R.cuts, [1, 3, 5, 6]); assert.equal(R.speedX, 1.5); assert.equal(R.fw.tech, 1); assert.equal(R.extras.length, 0); assert.ok(core.rulesAreDefault(R));
   const m = core.mergeWeights({ rules: { speedX: 1.2 } }, { rules: { speedX: 2 } }); assert.equal(m.rules.speedX, 2);
   assert.equal(core.mergeWeights({ rules: { speedX: 1.2 } }, {}).rules.speedX, 1.2);
+});
+test('extra rules: one condition, AND, OR, stacking by sum or highest, and the cap', () => {
+  const sun = '2026-10-04T05:00:00.000Z', late = '2026-10-04T15:30:00.000Z', plus = (h) => new Date(Date.parse(sun) + h * 3600000).toISOString();
+  const mk = (rules) => core.parseWeights({ tasks: { d: { w: 4, mode: 'done' }, v: { w: 4, mode: 'done', f: [1, 0, 2, 0] } }, rules });
+  const AND = mk({ extras: [{ when: ['email', 'after'], join: 'and', pct: 50 }] }), OR = mk({ extras: [{ when: ['email', 'after'], join: 'or', pct: 50 }] });
+  assert.equal(core.taskPoints(AND, { type: 'd', createdAt: sun, completedAt: plus(2), fromEmail: true }), 4);
+  assert.equal(core.taskPoints(AND, { type: 'd', createdAt: sun, completedAt: late, fromEmail: true }), 6);
+  assert.equal(core.taskPoints(OR, { type: 'd', createdAt: sun, completedAt: plus(2), fromEmail: true }), 6);
+  assert.equal(core.taskPoints(OR, { type: 'd', createdAt: sun, completedAt: late }), 6);
+  assert.equal(core.taskPoints(OR, { type: 'd', createdAt: sun, completedAt: plus(2) }), 4);
+  const two = [{ when: ['email'], pct: 25 }, { when: ['field'], pct: 50 }];
+  assert.equal(core.taskPoints(mk({ extras: two }), { type: 'v', createdAt: sun, completedAt: plus(2), fromEmail: true }), 7);
+  assert.equal(core.taskPoints(mk({ extras: two, stack: 'max' }), { type: 'v', createdAt: sun, completedAt: plus(2), fromEmail: true }), 6);
+  assert.equal(core.taskPoints(mk({ extras: two, capPct: 30 }), { type: 'v', createdAt: sun, completedAt: plus(2), fromEmail: true }), 5.2);
+  const legacy = core.parseRules({ bonusEmail: 25 }); assert.deepEqual(legacy.extras, [{ when: ['email'], join: 'and', pct: 25 }]);
+  assert.equal(core.parseRules({ extras: [{ when: ['nonsense'], pct: 20 }, { when: ['email'], pct: 0 }] }).extras.length, 0);
 });
 console.log(`core.test.mjs: ${tests.length} passed`);

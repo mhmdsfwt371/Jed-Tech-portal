@@ -1036,17 +1036,25 @@ export const POINT_MODES = ['done', 'speed', 'time'];
 export const FACTORS = ['tech', 'outside', 'field', 'impact'];
 // The scoring rules (ADR-0045) — published with the weights, editable by the weights admin. The defaults reproduce the original
 // fixed engine exactly: equal factors, cut points 1/3/5/6 on the 0–8 sum, speed ×1.5, time between ×0.5 and ×2, no extras.
-export const DEFAULT_RULES = Object.freeze({ fw: Object.freeze({ tech: 1, outside: 1, field: 1, impact: 1 }), cuts: Object.freeze([1, 3, 5, 6]), speedX: 1.5, timeMin: 0.5, timeMax: 2, bonusEmail: 0, bonusAfter: 0 });
+// Extra rules (ADR-0047): each rule has conditions joined by AND or OR, and a percentage; several matching rules add up or the highest wins, under a cap.
+export const EXTRA_CONDS = ['email', 'after', 'weekend', 'fast', 'field', 'gov', 'impact'];
+export const DEFAULT_RULES = Object.freeze({ fw: Object.freeze({ tech: 1, outside: 1, field: 1, impact: 1 }), cuts: Object.freeze([1, 3, 5, 6]), speedX: 1.5, timeMin: 0.5, timeMax: 2, extras: Object.freeze([]), stack: 'sum', capPct: 100 });
 export function parseRules(r) {
-  const d = DEFAULT_RULES, o = { fw: { ...d.fw }, cuts: [...d.cuts], speedX: d.speedX, timeMin: d.timeMin, timeMax: d.timeMax, bonusEmail: d.bonusEmail, bonusAfter: d.bonusAfter };
+  const d = DEFAULT_RULES, o = { fw: { ...d.fw }, cuts: [...d.cuts], speedX: d.speedX, timeMin: d.timeMin, timeMax: d.timeMax, extras: [], stack: d.stack, capPct: d.capPct };
   if (!r || typeof r !== 'object') return o;
   const n = (v, lo, hi) => { const x = Number(v); return v !== '' && v != null && Number.isFinite(x) && x >= lo && x <= hi ? x : null; };
   for (const k of FACTORS) { const v = n(r.fw && r.fw[k], 0, 3); if (v != null) o.fw[k] = v; }
   if (Array.isArray(r.cuts) && r.cuts.length === 4) { const cc = r.cuts.map((v) => n(v, 0, 24)); if (cc.every((v) => v != null) && cc.every((v, i) => i === 0 || v > cc[i - 1])) o.cuts = cc; }
   const s = n(r.speedX, 1, 3); if (s != null) o.speedX = s;
   const lo = n(r.timeMin, 0.1, 1), hi = n(r.timeMax, 1, 5); if (lo != null) o.timeMin = lo; if (hi != null) o.timeMax = hi;
-  const e = n(r.bonusEmail, 0, 100); if (e != null) o.bonusEmail = e;
-  const a = n(r.bonusAfter, 0, 100); if (a != null) o.bonusAfter = a;
+  // the two fixed extras of v8.61 (email, outside hours) read as single-condition rules
+  const src = Array.isArray(r.extras) ? r.extras : [...(n(r.bonusEmail, 0, 100) ? [{ when: ['email'], pct: r.bonusEmail }] : []), ...(n(r.bonusAfter, 0, 100) ? [{ when: ['after'], pct: r.bonusAfter }] : [])];
+  for (const x of src.slice(0, 12)) {
+    const when = [...new Set((x && Array.isArray(x.when) ? x.when : []).filter((k) => EXTRA_CONDS.includes(k)))], pct = n(x && x.pct, 0, 100);
+    if (when.length && pct) o.extras.push({ when, join: x.join === 'or' ? 'or' : 'and', pct });
+  }
+  o.stack = r.stack === 'max' ? 'max' : 'sum';
+  const cap = n(r.capPct, 0, 300); if (cap != null) o.capPct = cap;
   return o;
 }
 export const rulesOf = (wt) => (wt && wt.rules) || parseRules(null);
@@ -1056,6 +1064,7 @@ const rulesIn = (r) => (r && r.fw && Array.isArray(r.cuts) ? r : DEFAULT_RULES);
 export const factorScore = (f, rules) => FACTORS.reduce((s, k, i) => s + Number((f || [])[i] || 0) * rulesIn(rules).fw[k], 0);
 export const baseFromFactors = (f, rules) => { const n = factorScore(f, rules), c = rulesIn(rules).cuts; return n <= c[0] ? 1 : n <= c[1] ? 2 : n <= c[2] ? 3 : n <= c[3] ? 4 : 5; };
 /** Outside working time in Saudi Arabia: Friday, Saturday, or before 08:00 / from 17:00. */
+export const isWeekend = (iso) => { const dow = new Date(Date.parse(iso) + 3 * 3600000).getUTCDay(); return dow === 5 || dow === 6; };
 export const afterHours = (iso) => { const d = new Date(Date.parse(iso) + 3 * 3600000), dow = d.getUTCDay(), h = d.getUTCHours() + d.getUTCMinutes() / 60; return dow === 5 || dow === 6 || h < 8 || h >= 17; };
 export const tierFromBase = (b) => (b >= 4 ? 'multistage' : b === 3 ? 'integration' : b === 2 ? 'customer' : 'admin');
 /** Working hours between two instants: Sunday–Thursday, 08:00–17:00 Saudi time. */
@@ -1072,7 +1081,8 @@ export function businessHours(fromIso, toIso) {
 /** One task's points: its type's base, by its method. */
 export function taskPoints(wt, task) {
   const r = rulesOf(wt), h = task && task.createdAt && task.completedAt ? businessHours(task.createdAt, task.completedAt) : null;
-  return pointsDetail(wt, task && task.type, h, { email: !!(task && task.fromEmail === true), after: !!(r.bonusAfter && task && task.completedAt && afterHours(task.completedAt)) }).total;
+  const done = task && task.completedAt, uses = (k) => r.extras.some((e) => e.when.includes(k));
+  return pointsDetail(wt, task && task.type, h, { email: !!(task && task.fromEmail === true), after: !!(done && uses('after') && afterHours(task.completedAt)), weekend: !!(done && uses('weekend') && isWeekend(task.completedAt)) }).total;
 }
 /** How a task's points are made, step by step — the engine itself (taskPoints) and the calculator on the weights page. */
 export function pointsDetail(wt, typeName, hours, flags = {}) {
@@ -1082,8 +1092,11 @@ export function pointsDetail(wt, typeName, hours, flags = {}) {
     if (x.mode === 'speed') { mult = hours <= x.std ? r.speedX : 1; why = hours <= x.std ? 'speed_in' : 'speed_out'; }
     else { mult = Math.min(r.timeMax, Math.max(r.timeMin, hours / x.std)); why = 'time'; }
   }
-  const extra = (flags.email ? r.bonusEmail : 0) + (flags.after ? r.bonusAfter : 0), p = base * mult * (1 + extra / 100);
-  return { base, mult: Math.round(mult * 100) / 100, extra, mode: (x && x.mode) || 'done', std: (x && x.std) || null, why, f: (x && x.f) || null,
+  const cond = { email: !!flags.email, after: !!flags.after, weekend: !!flags.weekend, fast: !!(x && x.std && hours != null && hours <= x.std),
+    field: !!(x && x.f && x.f[2] === 2), gov: !!(x && x.f && x.f[1] === 2), impact: !!(x && x.f && x.f[3] === 2) };
+  const hit = r.extras.filter((e) => (e.join === 'or' ? e.when.some((k) => cond[k]) : e.when.every((k) => cond[k])));
+  const extra = Math.min(r.capPct, hit.length ? (r.stack === 'max' ? Math.max(...hit.map((e) => e.pct)) : hit.reduce((s, e) => s + e.pct, 0)) : 0), p = base * mult * (1 + extra / 100);
+  return { base, mult: Math.round(mult * 100) / 100, extra, hit, cond, mode: (x && x.mode) || 'done', std: (x && x.std) || null, why, f: (x && x.f) || null,
     score: x && x.f ? Math.round(factorScore(x.f, r) * 10) / 10 : null, total: p === base ? base : Math.round(p * 10) / 10 };
 }
 export const taskWeight = (wt, typeName) => { const x = wt && wt.tasks[typeKey(typeName)]; return x ? x.w : (wt ? wt.default : 1); };

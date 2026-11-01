@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.63 — 2026-11-02
+
+- قواعد الإضافة في النقاط صارت بـ«و» و«أو»: كل قاعدة شرط أو أكثر (من البريد، خارج الدوام، يوم إجازة، في الوقت المعياري، شغل ميداني، جهة حكومية أو منصة، أثر تعاقدي) — «كل الشروط مع بعض» أو «أي شرط منها» — ونسبتها. لو انطبقت أكثر من قاعدة: تُجمع أو الأعلى فقط، بحد أقصى.
+
+<details><summary>English</summary>
+
+- Points extras now use AND and OR: each rule has one or more conditions (from email, outside hours, weekend, within standard time, field work, government or platform, contract impact) — “all together” or “any one” — and its percentage. When several match: add up or highest only, under a cap.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- پوائنٹس کے اضافے اب «اور» اور «یا» کے ساتھ: ہر قاعدے میں ایک یا زیادہ شرائط — «تمام ایک ساتھ» یا «کوئی ایک» — اور اس کی شرح۔
+
+</div>
+</details>
+
+
 ## v8.62 — 2026-11-02
 
 - على الجوال: «مؤشراتي» للمدير صارت ٨ شاشات بدل ٢٥ (كروت الفريق خرجت منها إلى «التطوير» وملف الموظف)، و«التطوير» ٧ بدل ٢٣ (الاقتراحات والخريطة مطوية).

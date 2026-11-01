@@ -1,21 +1,15 @@
 {
-  "version": "8.62",
+  "version": "8.63",
   "date": "2026-11-02",
   "notes": {
     "ar": [
-      "على الجوال: «مؤشراتي» للمدير صارت ٨ شاشات بدل ٢٥ (كروت الفريق خرجت منها إلى «التطوير» وملف الموظف)، و«التطوير» ٧ بدل ٢٣ (الاقتراحات والخريطة مطوية).",
-      "كل زر ومربع اختيار صار سهل اللمس (٣٢ بكسل على الأقل)، ولا نص أصغر من ١٢ بكسل.",
-      "صفحة الأدوات على رابط المدير اسمها «كل الأدوات والأنظمة» حتى لا تختلط بمجموعة «أدوات الفريق الفنية»، وأسماء المجموعات بالإنجليزية أوضح."
+      "قواعد الإضافة في النقاط صارت بـ«و» و«أو»: كل قاعدة شرط أو أكثر (من البريد، خارج الدوام، يوم إجازة، في الوقت المعياري، شغل ميداني، جهة حكومية أو منصة، أثر تعاقدي) — «كل الشروط مع بعض» أو «أي شرط منها» — ونسبتها. لو انطبقت أكثر من قاعدة: تُجمع أو الأعلى فقط، بحد أقصى."
     ],
     "en": [
-      "On phones: the manager’s My KPIs is now 8 screens instead of 25 (the team’s cards moved to Development and the person file), and Development 7 instead of 23 (suggestions and the map are folded).",
-      "Every button and checkbox is easy to tap (at least 32px), and no text is under 12px.",
-      "On the manager link the tools page is “All tools and systems” so it is not confused with the “Team engineering tools” group, and English group names read more easily."
+      "Points extras now use AND and OR: each rule has one or more conditions (from email, outside hours, weekend, within standard time, field work, government or platform, contract impact) — “all together” or “any one” — and its percentage. When several match: add up or highest only, under a cap."
     ],
     "ur": [
-      "فون پر: مینیجر کے میرے اشاریے اب ۲۵ کے بجائے ۸ اسکرینیں، اور ترقی ۲۳ کے بجائے ۷۔",
-      "ہر بٹن اور چیک باکس چھونے میں آسان (کم از کم ۳۲ پکسل)، اور کوئی متن ۱۲ پکسل سے چھوٹا نہیں۔",
-      "مینیجر لنک پر ٹولز کا صفحہ «تمام ٹولز اور سسٹمز»۔"
+      "پوائنٹس کے اضافے اب «اور» اور «یا» کے ساتھ: ہر قاعدے میں ایک یا زیادہ شرائط — «تمام ایک ساتھ» یا «کوئی ایک» — اور اس کی شرح۔"
     ]
   }
 }
