@@ -893,4 +893,16 @@ test('«against the usual time» in three steps, adjustable, and the old «time�
   assert.equal(p('c', 1, w2), 4); assert.equal(p('c', 2, w2), 2); assert.equal(p('c', 7, w2), 0);
   assert.equal(core.pointsDetail(wt, 'c', 9).why, 'cmp_slow');
 });
+test('the manager’s own methods: steps against the usual time, flat, missing, and validation', () => {
+  const sun = '2026-10-04T05:00:00.000Z', plus = (h) => new Date(Date.parse(sun) + h * 3600000).toISOString();
+  const rules = { methods: [{ id: 'm_veryfast', name: 'سريعة جدًا', steps: [{ upTo: 30, x: 2 }, { upTo: 100, x: 1.2 }], beyond: 0.5 }, { id: 'm_flat01', name: 'ثابتة', steps: [], beyond: 1 }] };
+  const wt = core.parseWeights({ tasks: { a: { w: 2, mode: 'm_veryfast', std: 1 }, b: { w: 2, mode: 'm_flat01' }, c: { w: 2, mode: 'm_gone99', std: 1 } }, rules });
+  const p = (ty, h) => core.taskPoints(wt, { type: ty, createdAt: sun, completedAt: plus(h) });
+  assert.equal(p('a', 0.2), 4); assert.equal(p('a', 0.8), 2.4); assert.equal(p('a', 1), 2.4); assert.equal(p('a', 2), 1);
+  assert.equal(p('b', 9), 2); assert.equal(p('c', 0.1), 2);
+  assert.equal(core.pointsDetail(wt, 'a', 0.2).method, 'سريعة جدًا'); assert.equal(core.pointsDetail(wt, 'c', 0.1).why, 'custom_missing');
+  const R = core.parseRules({ methods: [{ id: 'bad id', name: 'x', steps: [] }, { id: 'm_abc', name: '', steps: [] }, { id: 'm_ok1', name: 'ok', steps: [{ upTo: 50, x: 2 }, { upTo: 40, x: 1 }, { upTo: 80, x: 9 }], beyond: 7 }] });
+  assert.equal(R.methods.length, 1); assert.deepEqual(R.methods[0].steps, [{ upTo: 50, x: 2 }]); assert.equal(R.methods[0].beyond, 1);
+  assert.ok(core.isCustomMode('m_ok1')); assert.ok(!core.isCustomMode('speed'));
+});
 console.log(`core.test.mjs: ${tests.length} passed`);

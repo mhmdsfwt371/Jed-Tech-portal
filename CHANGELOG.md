@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.66 — 2026-11-02
+
+- «طرقك الخاصة» في قواعد النقاط: اعمل طريقة حساب باسمك — خطوات بالنسبة للوقت المعتاد («لحد X% ← ×Y» بالترتيب) ثم «أكثر ← ×Z» — وتظهر في قائمة الطريقة لكل نوع بجانب الطرق الثلاث، مع شرح خطواتها.
+- لو حذفت طريقة مستخدمة، المعاينة تذكر الأنواع التي ستُحسب «بالإنجاز» قبل التطبيق.
+
+<details><summary>English</summary>
+
+- “Your own methods” in the scoring rules: make a calculation method with your own name — steps against the usual time (“up to X% → ×Y” in order) then “more → ×Z” — and it appears in each type’s method list beside the three, with its steps explained.
+- Removing a method in use: the preview names the types that will count “on completion” before you apply.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- پوائنٹس کے قواعد میں «آپ کے اپنے طریقے»: اپنے نام سے حساب کا طریقہ بنائیں — معمول کے وقت کے لحاظ سے مراحل — اور یہ ہر قسم کی فہرست میں نظر آتا ہے۔
+- استعمال شدہ طریقہ حذف کرنے پر جائزہ بتاتا ہے کہ کون سی اقسام «تکمیل پر» شمار ہوں گی۔
+
+</div>
+</details>
+
+
 ## v8.65 — 2026-11-02
 
 - صفحة الأوزان على الجوال: كل نوع مهمة صار بطاقة — اسمه كاملًا في الأعلى، وتحته العوامل والوزن والطريقة وشرحها والوقت المعتاد والعدد والنقاط، كلٌّ باسمه — بلا تمرير جانبي ولا أسماء مقطوعة.

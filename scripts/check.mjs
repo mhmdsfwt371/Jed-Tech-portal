@@ -306,10 +306,14 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
     if (x && x.f !== undefined) {
       const okF = Array.isArray(x.f) && x.f.length === 4 && x.f.every((v) => [0, 1, 2].includes(v));
       if (!okF) note(`weights.json: task "${k}" — f must be four factors, each 0, 1 or 2`);
-      else { const n = x.f.reduce((a, b) => a + b, 0), base = n <= 1 ? 1 : n <= 3 ? 2 : n <= 5 ? 3 : n === 6 ? 4 : 5;
+      else { // ADR-0050: the base follows the file's own scoring rules (factor importance and cut points), defaulting to the original
+        const R = wj.rules || {}, fw = R.fw || {}, cu = Array.isArray(R.cuts) && R.cuts.length === 4 ? R.cuts.map(Number) : [1, 3, 5, 6];
+        const n = ['tech', 'outside', 'field', 'impact'].reduce((a, k, i) => a + x.f[i] * (Number.isFinite(Number(fw[k])) && fw[k] !== '' && fw[k] != null ? Number(fw[k]) : 1), 0);
+        const base = n <= cu[0] ? 1 : n <= cu[1] ? 2 : n <= cu[2] ? 3 : n <= cu[3] ? 4 : 5;
         if (x.w !== base) note(`weights.json: task "${k}" — weight ${x.w} does not follow its factors (they give ${base})`); }
     }
-    if (x && x.mode !== undefined && !['done', 'speed', 'compare', 'time'].includes(x.mode)) note(`weights.json: task "${k}" — mode must be done, speed or compare`);
+    if (x && x.mode !== undefined && !['done', 'speed', 'compare', 'time'].includes(x.mode) && !/^m_[a-z0-9]{3,12}$/.test(String(x.mode))) note(`weights.json: task "${k}" — mode must be done, speed, compare or one of the manager's methods (m_…)`);
+    if (x && /^m_[a-z0-9]{3,12}$/.test(String(x.mode || '')) && !((wj.rules && Array.isArray(wj.rules.methods) ? wj.rules.methods : []).some((m) => m && m.id === x.mode))) note(`weights.json: task "${k}" — method ${x.mode} is not defined in rules.methods`);
     if (x && ['speed', 'compare', 'time'].includes(x.mode) && !(x.std > 0 && x.std <= 400)) note(`weights.json: task "${k}" — ${x.mode} needs a standard time (hours, 0–400)`);
     if (x && x.stdSrc !== undefined && !['oct', 'est', 'set'].includes(x.stdSrc)) note(`weights.json: task "${k}" — stdSrc must be oct, est or set`);
   }

@@ -1001,7 +1001,7 @@ export function parseWeights(raw) {
     const w = num(x && typeof x === 'object' ? x.w : x); if (w == null) continue;
     const o = { w, tier: TIERS.includes(x && x.tier) ? x.tier : null, team: ['aftersales', 'rd', 'both', 'general'].includes(x && x.team) ? x.team : null };
     if (x && Array.isArray(x.f) && x.f.length === 4 && x.f.every((v) => [0, 1, 2].includes(Number(v)))) o.f = x.f.map(Number);
-    { const md = x && x.mode === 'time' ? 'compare' : x && x.mode; if (POINT_MODES.includes(md)) o.mode = md; }
+    { const md = x && x.mode === 'time' ? 'compare' : x && x.mode; if (POINT_MODES.includes(md) || isCustomMode(md)) o.mode = md; }
     if (x && Number(x.std) > 0 && Number(x.std) <= 400) o.std = Number(x.std);
     if (x && ['oct', 'est', 'set'].includes(x.stdSrc)) o.stdSrc = x.stdSrc;
     out.tasks[typeKey(k)] = o;
@@ -1038,9 +1038,11 @@ export const FACTORS = ['tech', 'outside', 'field', 'impact'];
 // fixed engine exactly: equal factors, cut points 1/3/5/6 on the 0–8 sum, speed ×1.5, time between ×0.5 and ×2, no extras.
 // Extra rules (ADR-0047): each rule has conditions joined by AND or OR, and a percentage; several matching rules add up or the highest wins, under a cap.
 export const EXTRA_CONDS = ['email', 'after', 'weekend', 'fast', 'field', 'gov', 'impact'];
-export const DEFAULT_RULES = Object.freeze({ fw: Object.freeze({ tech: 1, outside: 1, field: 1, impact: 1 }), cuts: Object.freeze([1, 3, 5, 6]), speedX: 1.5, cmpFast: 0.5, cmpSlow: 2, cmpFastX: 1.5, cmpSlowX: 0.5, extras: Object.freeze([]), stack: 'sum', capPct: 100 });
+export const DEFAULT_RULES = Object.freeze({ fw: Object.freeze({ tech: 1, outside: 1, field: 1, impact: 1 }), cuts: Object.freeze([1, 3, 5, 6]), speedX: 1.5, cmpFast: 0.5, cmpSlow: 2, cmpFastX: 1.5, cmpSlowX: 0.5, extras: Object.freeze([]), stack: 'sum', capPct: 100, methods: Object.freeze([]) });
+// the manager's own methods (ADR-0050): a name and steps against the usual time — «up to X% → ×Y», then «more → ×Z»; no steps = the point as it is
+export const isCustomMode = (m) => /^m_[a-z0-9]{3,12}$/.test(String(m || ''));
 export function parseRules(r) {
-  const d = DEFAULT_RULES, o = { fw: { ...d.fw }, cuts: [...d.cuts], speedX: d.speedX, cmpFast: d.cmpFast, cmpSlow: d.cmpSlow, cmpFastX: d.cmpFastX, cmpSlowX: d.cmpSlowX, extras: [], stack: d.stack, capPct: d.capPct };
+  const d = DEFAULT_RULES, o = { fw: { ...d.fw }, cuts: [...d.cuts], speedX: d.speedX, cmpFast: d.cmpFast, cmpSlow: d.cmpSlow, cmpFastX: d.cmpFastX, cmpSlowX: d.cmpSlowX, extras: [], stack: d.stack, capPct: d.capPct, methods: [] };
   if (!r || typeof r !== 'object') return o;
   const n = (v, lo, hi) => { const x = Number(v); return v !== '' && v != null && Number.isFinite(x) && x >= lo && x <= hi ? x : null; };
   for (const k of FACTORS) { const v = n(r.fw && r.fw[k], 0, 3); if (v != null) o.fw[k] = v; }
@@ -1053,6 +1055,12 @@ export function parseRules(r) {
   for (const x of src.slice(0, 12)) {
     const when = [...new Set((x && Array.isArray(x.when) ? x.when : []).filter((k) => EXTRA_CONDS.includes(k)))], pct = n(x && x.pct, 0, 100);
     if (when.length && pct) o.extras.push({ when, join: x.join === 'or' ? 'or' : 'and', pct });
+  }
+  for (const m of (Array.isArray(r.methods) ? r.methods : []).slice(0, 12)) {
+    if (!m || !isCustomMode(m.id) || o.methods.some((x) => x.id === m.id)) continue;
+    const name = String(m.name || '').trim().slice(0, 40); if (!name) continue;
+    const steps = []; for (const s of (Array.isArray(m.steps) ? m.steps : []).slice(0, 5)) { const up = n(s && s.upTo, 1, 1000), x = n(s && s.x, 0, 5); if (up != null && x != null && (!steps.length || up > steps[steps.length - 1].upTo)) steps.push({ upTo: up, x }); }
+    const beyond = n(m.beyond, 0, 5); o.methods.push({ id: m.id, name, steps, beyond: beyond == null ? 1 : beyond });
   }
   o.stack = r.stack === 'max' ? 'max' : 'sum';
   const cap = n(r.capPct, 0, 300); if (cap != null) o.capPct = cap;
@@ -1088,8 +1096,14 @@ export function taskPoints(wt, task) {
 /** How a task's points are made, step by step — the engine itself (taskPoints) and the calculator on the weights page. */
 export function pointsDetail(wt, typeName, hours, flags = {}) {
   const x = wt && wt.tasks[typeKey(typeName)], base = x ? x.w : (wt ? wt.default : 1), r = rulesOf(wt);
-  let mult = 1, why = 'done';
-  if (x && x.mode && x.mode !== 'done' && x.std && hours != null) {
+  let mult = 1, why = 'done', method = null, stepAt = null;
+  const cm = x && isCustomMode(x.mode) ? r.methods.find((m) => m.id === x.mode) : null;
+  if (cm) {                                          // one of the manager's methods
+    method = cm.name;
+    if (cm.steps.length && x.std && hours != null) { const pct = (hours / x.std) * 100, i = cm.steps.findIndex((s) => pct <= s.upTo); mult = i >= 0 ? cm.steps[i].x : cm.beyond; stepAt = i >= 0 ? cm.steps[i].upTo : null; why = i >= 0 ? 'custom_step' : 'custom_beyond'; }
+    else why = cm.steps.length ? 'custom_notime' : 'custom_flat';
+  } else if (x && isCustomMode(x.mode)) why = 'custom_missing';   // a method that no longer exists counts as «on completion»
+  else if (x && x.mode && x.mode !== 'done' && x.std && hours != null) {
     if (x.mode === 'speed') { mult = hours <= x.std ? r.speedX : 1; why = hours <= x.std ? 'speed_in' : 'speed_out'; }
     else { const q = hours / x.std; mult = q <= r.cmpFast ? r.cmpFastX : q <= r.cmpSlow ? 1 : r.cmpSlowX; why = q <= r.cmpFast ? 'cmp_fast' : q <= r.cmpSlow ? 'cmp_ok' : 'cmp_slow'; }   // three steps against the usual time
   }
@@ -1097,7 +1111,7 @@ export function pointsDetail(wt, typeName, hours, flags = {}) {
     field: !!(x && x.f && x.f[2] === 2), gov: !!(x && x.f && x.f[1] === 2), impact: !!(x && x.f && x.f[3] === 2) };
   const hit = r.extras.filter((e) => (e.join === 'or' ? e.when.some((k) => cond[k]) : e.when.every((k) => cond[k])));
   const extra = Math.min(r.capPct, hit.length ? (r.stack === 'max' ? Math.max(...hit.map((e) => e.pct)) : hit.reduce((s, e) => s + e.pct, 0)) : 0), p = base * mult * (1 + extra / 100);
-  return { base, mult: Math.round(mult * 100) / 100, extra, hit, cond, mode: (x && x.mode) || 'done', std: (x && x.std) || null, why, f: (x && x.f) || null,
+  return { base, mult: Math.round(mult * 100) / 100, extra, hit, cond, method, stepAt, mode: (x && x.mode) || 'done', std: (x && x.std) || null, why, f: (x && x.f) || null,
     score: x && x.f ? Math.round(factorScore(x.f, r) * 10) / 10 : null, total: p === base ? base : Math.round(p * 10) / 10 };
 }
 export const taskWeight = (wt, typeName) => { const x = wt && wt.tasks[typeKey(typeName)]; return x ? x.w : (wt ? wt.default : 1); };

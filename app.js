@@ -6,7 +6,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
   mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
@@ -2074,12 +2074,13 @@ function renderPerson() {
 // ---------- how points are made, and the rules behind them (ADR-0045) — on top of the weights page ----------
 function pointsRulesBox(wt, admin) {
   const R = rulesOf(wt), fmtN = (v) => String(Math.round(v * 100) / 100), maxScore = 2 * FACTORS.reduce((s, k) => s + R.fw[k], 0);
+  const stepsText = (m) => (m.steps.length ? [...m.steps.map((s) => t('pr_mstep', { p: s.upTo, x: fmtN(s.x) })), t('pr_mstep_more', { x: fmtN(m.beyond) })].join(' · ') : t('pr_mflat'));
   const ruleText = (e) => t('pr_rule', { w: e.when.map((k) => t(`pr_c_${k}`)).join(e.join === 'or' ? ` ${t('pr_or')} ` : ` ${t('pr_and')} `), p: e.pct });
   const step = (n, title, ...kids) => el('div', { class: 'pr-step' }, el('span', { class: 'pr-n', text: String(n) }), el('div', {}, el('b', { text: title }), ...kids));
   const steps = el('div', { class: 'pr-steps' },
     step(1, t('pr_s1'), el('ul', {}, FACTORS.map((k) => el('li', {}, el('span', { text: t(`factor_${k}`) }), el('em', { text: ` ×${fmtN(R.fw[k])}` }))))),
     step(2, t('pr_s2', { m: fmtN(maxScore) }), el('div', { class: 'pr-cuts' }, [1, 2, 3, 4, 5].map((b, i) => el('span', { text: t('pr_cut', { r: i < 4 ? `≤ ${fmtN(R.cuts[i])}` : `> ${fmtN(R.cuts[3])}`, b }) })))),
-    step(3, t('pr_s3'), el('ul', {}, el('li', { text: t('pr_m_done') }), el('li', { text: t('pr_m_speed', { x: fmtN(R.speedX) }) }), el('li', { text: t('pr_m_cmp', { a: String(Math.round(R.cmpFast * 100)), fx: fmtN(R.cmpFastX), b: String(Math.round(R.cmpSlow * 100)), sx: fmtN(R.cmpSlowX) }) }))),
+    step(3, t('pr_s3'), el('ul', {}, el('li', { text: t('pr_m_done') }), el('li', { text: t('pr_m_speed', { x: fmtN(R.speedX) }) }), el('li', { text: t('pr_m_cmp', { a: String(Math.round(R.cmpFast * 100)), fx: fmtN(R.cmpFastX), b: String(Math.round(R.cmpSlow * 100)), sx: fmtN(R.cmpSlowX) }) }), ...R.methods.map((m) => el('li', { text: `${m.name}: ${stepsText(m)}` })))),
     step(4, t('pr_s4'), R.extras.length ? el('ul', {}, R.extras.map((e) => el('li', { text: ruleText(e) })), el('li', { class: 'hint', text: t(R.stack === 'max' ? 'pr_stack_max_d' : 'pr_stack_sum_d', { c: R.capPct }) })) : el('p', { class: 'hint', text: t('pr_x_none') })));
   // the calculator — the same function the engine uses, so what it shows is what a task earns
   const clean = (s) => String(s).replace(/[\u2066-\u2069]/g, '');
@@ -2089,7 +2090,7 @@ function pointsRulesBox(wt, admin) {
   const out = el('div', { class: 'pr-out' });
   const calc = () => { const h = Number(hrs.value), d = pointsDetail(wt, sel.value, Number.isFinite(h) ? h : null, { email: cbE.checked, after: cbA.checked, weekend: cbW.checked });
     const lines = [d.f ? t('pr_c_base', { e: FACTORS.map((k, i) => `${t(`factor_short_${k}`)} ${d.f[i]}×${fmtN(R.fw[k])}`).join(' + '), s: d.score, b: d.base }) : t('pr_c_set', { b: d.base }),
-      d.why === 'speed_in' ? t('pr_c_speed_in', { h, s: d.std, x: fmtN(d.mult) }) : d.why === 'speed_out' ? t('pr_c_speed_out', { h, s: d.std }) : d.why.startsWith('cmp_') ? t(`pr_c_${d.why}`, { h, s: d.std, x: fmtN(d.mult) }) : t('pr_c_done'),
+      d.why === 'speed_in' ? t('pr_c_speed_in', { h, s: d.std, x: fmtN(d.mult) }) : d.why === 'speed_out' ? t('pr_c_speed_out', { h, s: d.std }) : d.why.startsWith('cmp_') ? t(`pr_c_${d.why}`, { h, s: d.std, x: fmtN(d.mult) }) : d.why.startsWith('custom_') ? t(`pr_c_${d.why}`, { n: d.method || '', h, s: d.std, p: d.stepAt, x: fmtN(d.mult) }) : t('pr_c_done'),
       d.hit.length ? t('pr_c_rules', { r: d.hit.map(ruleText).join(' · '), p: d.extra }) : ''].filter(Boolean);
     set(out, ...lines.map((l) => el('div', { text: l })), el('b', { class: 'pr-total', text: t('pr_c_total', { p: d.total }) })); };
   [sel, hrs, cbE, cbA, cbW].forEach((x) => x.addEventListener('input', calc)); calc();
@@ -2114,13 +2115,30 @@ function pointsRulesBox(wt, admin) {
           el('label', {}, el('span', { text: t('pr_pct') }), pct), el('button', { type: 'button', class: 'btn quiet tiny', text: `✕ ${t('pr_ex_del')}`, onclick: () => { ex.splice(i, 1); drawEx(); } }))); }),
       el('button', { type: 'button', class: 'btn tiny pr-ex-add', text: `+ ${t('pr_ex_add')}`, onclick: () => { ex.push({ when: ['email'], join: 'and', pct: 10 }); drawEx(); } }));
     drawEx();
+    const ms = R.methods.map((m) => ({ ...m, steps: m.steps.map((s) => ({ ...s })) })), mBox = el('div', { class: 'pr-extras' });
+    const newId = () => `m_${Math.random().toString(36).slice(2, 8).replace(/[^a-z0-9]/g, 'x').padEnd(6, '0')}`;
+    const drawM = () => set(mBox, ...ms.map((m, i) => {
+      const nameIn = el('input', { type: 'text', class: 'pr-in wide', value: m.name, maxlength: '40', placeholder: t('pr_m_name') }); nameIn.oninput = (e) => { m.name = e.target.value; };
+      const by = num(m.beyond, 0, 5, 0.1); by.oninput = (e) => { m.beyond = Number(e.target.value); };
+      return el('div', { class: 'pr-ex pr-method' }, el('label', {}, el('span', { text: t('pr_m_name') }), nameIn),
+        ...m.steps.map((s, j) => { const up = num(s.upTo, 1, 1000, 5), mx = num(s.x, 0, 5, 0.1); up.oninput = (e) => { s.upTo = Number(e.target.value); }; mx.oninput = (e) => { s.x = Number(e.target.value); };
+          return el('div', { class: 'row' }, el('label', {}, el('span', { text: t('pr_m_upto') }), up), el('label', {}, el('span', { text: t('pr_m_x') }), mx),
+            el('button', { type: 'button', class: 'btn quiet tiny', text: '✕', 'aria-label': t('pr_ex_del'), onclick: () => { m.steps.splice(j, 1); drawM(); } })); }),
+        el('div', { class: 'row' }, m.steps.length < 5 ? el('button', { type: 'button', class: 'btn tiny', text: `+ ${t('pr_m_step_add')}`, onclick: () => { const last = m.steps[m.steps.length - 1]; m.steps.push({ upTo: last ? Math.min(1000, last.upTo * 2) : 50, x: 1 }); drawM(); } }) : null,
+          el('label', {}, el('span', { text: t('pr_m_beyond') }), by), el('button', { type: 'button', class: 'btn quiet tiny', text: `✕ ${t('pr_m_del')}`, onclick: () => { ms.splice(i, 1); drawM(); } }))); }),
+      ms.length < 12 ? el('button', { type: 'button', class: 'btn tiny pr-ex-add pr-m-add', text: `+ ${t('pr_m_add')}`, onclick: () => { ms.push({ id: newId(), name: '', steps: [{ upTo: 50, x: 1.5 }], beyond: 1 }); drawM(); } }) : null);
+    drawM();
     const read = () => { const raw = cutIn.map((i) => Number(i.value)); if (!raw.every((v, i) => Number.isFinite(v) && (i === 0 || v > raw[i - 1]))) { toast(t('pr_bad_cuts')); return null; }
-      return parseRules({ fw: Object.fromEntries(FACTORS.map((k) => [k, fwIn[k].value])), cuts: raw, speedX: spIn.value, cmpFast: Number(cf.value) / 100, cmpSlow: Number(cs.value) / 100, cmpFastX: cfx.value, cmpSlowX: csx.value, extras: ex.filter((e) => e.when.length), stack: stackSel.value, capPct: capIn.value }); };
+      if (ms.some((m) => !String(m.name).trim())) { toast(t('pr_m_noname')); return null; }
+      if (ms.some((m) => m.steps.some((s, i) => i && !(s.upTo > m.steps[i - 1].upTo)))) { toast(t('pr_m_order')); return null; }
+      return parseRules({ fw: Object.fromEntries(FACTORS.map((k) => [k, fwIn[k].value])), cuts: raw, speedX: spIn.value, cmpFast: Number(cf.value) / 100, cmpSlow: Number(cs.value) / 100, cmpFastX: cfx.value, cmpSlowX: csx.value, extras: ex.filter((e) => e.when.length), stack: stackSel.value, capPct: capIn.value, methods: ms }); };
     const plan = (nr) => { const patch = {}; for (const [k, x] of Object.entries(wt.tasks)) { if (!x.f || x.w !== baseFromFactors(x.f, R)) continue;   // a weight set by hand stays as it is
-      const w = baseFromFactors(x.f, nr); if (w !== x.w) patch[k] = { ...x, w, ...(x.tier === tierFromBase(x.w) ? { tier: tierFromBase(w) } : {}) }; } return patch; };
+      const w = baseFromFactors(x.f, nr); if (w !== x.w) patch[k] = { ...x, w, ...(x.tier === tierFromBase(x.w) ? { tier: tierFromBase(w) } : {}) }; }
+      for (const [k, x] of Object.entries(wt.tasks)) if (isCustomMode(x.mode) && !nr.methods.some((m) => m.id === x.mode)) patch[k] = { ...(patch[k] || x), mode: 'done' };   // a removed method: its types count «on completion», openly
+      return patch; };
     const preview = el('div', { class: 'pr-preview' });
     const show = (nr) => { const patch = plan(nr), wNew = { ...wt, rules: nr, tasks: { ...wt.tasks, ...patch } }, ds = [...datasets].sort((x, y) => (y.range.to || '').localeCompare(x.range.to || ''))[0];
-      const ch = Object.entries(patch).map(([k, x]) => el('li', { text: t('pr_prev_type', { n: clean(typeLabel(k, lang)), a: wt.tasks[k].w, b: x.w }) }));
+      const ch = Object.entries(patch).map(([k, x]) => el('li', { text: x.mode === 'done' && isCustomMode(wt.tasks[k].mode) ? t('pr_prev_gone', { n: clean(typeLabel(k, lang)), m: (R.methods.find((m) => m.id === wt.tasks[k].mode) || {}).name || wt.tasks[k].mode }) : t('pr_prev_type', { n: clean(typeLabel(k, lang)), a: wt.tasks[k].w, b: x.w }) }));
       let pts = null; if (ds) { const ppl = peopleOf(datasets), team = currentTeam(scoped(ppl), allTasks()), done = ds.tasks.filter((x) => x.state === 'done' && team.includes(x.assigneeId));
         pts = t('pr_prev_pts', { a: Math.round(done.reduce((s, x) => s + taskPoints(wt, x), 0)), b: Math.round(done.reduce((s, x) => s + taskPoints(wNew, x), 0)), n: done.length, f: ds.range.from, to: ds.range.to }); }
       set(preview, el('b', { text: t('pr_prev_h') }), ch.length ? el('ul', {}, ch.slice(0, 12)) : el('p', { class: 'hint', text: t('pr_prev_none') }), pts ? el('p', { class: 'pr-pts', text: pts }) : null,
@@ -2133,6 +2151,7 @@ function pointsRulesBox(wt, admin) {
       ),
       el('h4', { class: 'pr-ex-h', text: t('pr_ex_h') }), el('p', { class: 'hint', text: t('pr_ex_hint') }), exBox,
       el('div', { class: 'pr-grid' }, el('label', {}, el('span', { text: t('pr_stack') }), stackSel), el('label', {}, el('span', { text: t('pr_cap') }), capIn)),
+      el('h4', { class: 'pr-ex-h', text: t('pr_m_h') }), el('p', { class: 'hint', text: t('pr_m_hint') }), mBox,
       el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: t('pr_preview'), onclick: () => { const nr = read(); if (nr) show(nr); } }),
         el('button', { type: 'button', class: 'btn quiet', text: t('pr_reset'), onclick: () => show(parseRules(null)) }),
         rulesAreDefault(R) ? null : el('span', { class: 'hint', text: t('pr_not_default') })),
@@ -2460,7 +2479,8 @@ function renderWeights() {
   const stepSel = (cur, on, enabled) => el('select', { class: 'w-sel', ...(enabled ? {} : { disabled: '' }), onchange: (e) => on(Number(e.target.value)) }, WEIGHT_STEPS.map((w) => el('option', { value: String(w), selected: w === cur, text: String(w) })));
   const tierName = (tr) => (tr ? t(`tier_${tr}`) : t('tier_none'));
   const RR = rulesOf(wt), pctN = (v) => String(Math.round(v * 100)), fx = (v) => String(Math.round(v * 100) / 100);
-  const modeDesc = (m) => (m === 'speed' ? t('mode_d_speed', { x: fx(RR.speedX) }) : m === 'compare' ? t('mode_d_compare', { a: pctN(RR.cmpFast), fx: fx(RR.cmpFastX), b: pctN(RR.cmpSlow), sx: fx(RR.cmpSlowX) }) : t('mode_d_done'));
+  const customDesc = (m) => { const cm = RR.methods.find((q) => q.id === m); return !cm ? t('mode_d_gone') : cm.steps.length ? [...cm.steps.map((s) => t('pr_mstep', { p: s.upTo, x: fx(s.x) })), t('pr_mstep_more', { x: fx(cm.beyond) })].join(' · ') : t('mode_d_done'); };
+  const modeDesc = (m) => (isCustomMode(m) ? customDesc(m) : m === 'speed' ? t('mode_d_speed', { x: fx(RR.speedX) }) : m === 'compare' ? t('mode_d_compare', { a: pctN(RR.cmpFast), fx: fx(RR.cmpFastX), b: pctN(RR.cmpSlow), sx: fx(RR.cmpSlowX) }) : t('mode_d_done'));
   const medHint = (k) => { const m = typeMedians().get(k); return m ? el('div', { class: 'hint med-hint', text: t('std_med', { h: formatHours(m.med, lang), n: m.n }) }) : null; };
   const pretty = (k) => k.replace(/(^|\s)([a-z])/g, (m, sp, c) => sp + c.toUpperCase());
   // the scope's people, for the admin to hand out editing rights
@@ -2496,7 +2516,7 @@ function renderWeights() {
     return [
       el('td', { class: 'factors' }, el('div', { class: 'f-row' }, FACTORS.map((k, i) => el('label', {}, el('span', { text: t(`factor_short_${k}`) }), fsel(i))))),
       el('td', { class: 'num' }, el('b', { class: 'base', text: String(x.w) }), el('div', { class: 'hint', text: tierName(x.tier) })),
-      el('td', {}, el('select', { class: 'w-sel', ...(can ? {} : { disabled: '' }), onchange: (e) => put({ mode: e.target.value }) }, POINT_MODES.map((m) => el('option', { value: m, selected: m === (x.mode || 'done'), text: t(`mode_${m}`) }))), el('div', { class: 'hint', text: modeDesc(x.mode || 'done') })),
+      el('td', {}, el('select', { class: 'w-sel', ...(can ? {} : { disabled: '' }), onchange: (e) => put({ mode: e.target.value }) }, [...POINT_MODES.map((m) => [m, t(`mode_${m}`)]), ...RR.methods.map((m) => [m.id, m.name]), ...(isCustomMode(x.mode) && !RR.methods.some((m) => m.id === x.mode) ? [[x.mode, t('mode_gone')]] : [])].map(([m, label]) => el('option', { value: m, selected: m === (x.mode || 'done'), text: label }))), el('div', { class: 'hint', text: modeDesc(x.mode || 'done') })),
       el('td', { class: 'num' }, (x.mode || 'done') === 'done' ? [el('span', { class: 'hint', text: '—' }), medHint(r.key)] : [
         el('input', { type: 'number', min: '0.25', max: '400', step: '0.25', class: 'std-in', value: String(x.std || ''), ...(can ? {} : { disabled: '' }), onchange: (e) => { const v = Number(e.target.value); if (v > 0 && v <= 400) put({ std: v }); } }),
         el('div', { class: 'hint', text: x.stdSrc === 'est' ? t('std_est') : x.stdSrc === 'oct' ? t('std_oct') : t('std_set') }), medHint(r.key)]),
