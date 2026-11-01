@@ -43,6 +43,10 @@
 
 اختر الربع (الجاي افتراضيًّا)، ثم الموظف من البطاقات. «خط الأساس» من الربع السابق للربع المختار. «اقترح من شغله» يملأ أهدافًا: النقاط والمنجزة بزيادة ١٠٪ (٢٠٪ إن كان الحجم أضعف محاوره)، ومتوسط المدة أقل ١٠٪ (٢٠٪ إن كانت السرعة أضعفها)، ونسبة الإنجاز ٩٠٪ على الأقل، وأكثر نوع مهام يعمله. عدّل المستهدف والوزن (١–٥)، والتقدم يُحسب من شغله الفعلي في الربع. الأهداف المخصصة تحدد تقدمها بنفسك. الاجتماعات الشهرية لشهور الربع هنا، واقتراحات الشهر في الأسفل. كل شيء على جهازك ويدخل النسخة الاحتياطية.
 
+### ملف الموظف — كل ما يخص موظفًا في مكان واحد
+
+صفحة واحدة لكل موظف تجمع ما كان موزعًا على أربع صفحات: رأس فيه وظيفته ومن يتبع ومن في إجازة، وأداؤه هذا الشهر مقابل الماضي (المنجز والنقاط ونسبة الإنجاز ومتوسط المدة)، ومستواه ومحاوره الأربعة، وعبؤه ونصيبه من نقاط الفريق، وخطته للربع الحالي والقادم بتقدمها، واجتماعاته الشهرية لآخر ثلاثة أشهر للقراءة، وشغله المفتوح بعناوينه. في أعلاها: «اعرض صفحته كما يراها»، و«خطته في التطوير»، و«تقرير بي دي إف». تصل إليها من القائمة، أو بالضغط على اسم أي موظف في لوحة المؤشرات وصفحة الفريق — الجداول نفسها تبقى للمقارنة بين الناس. لا تظهر على رابط الفريق.
+
 ### إشارة المدير — سحب كل شيء بضغطة
 
 في صفحة البيانات، إشارة واحدة للمدير تقرأ من داخل ماي أفاقي كل ما يقرأه الأمران: مهام الفترة كلها، وطابور البحث والتطوير، ونقاط الفنيين، وتذاكر ما بعد البيع — وتحفظها ملفين (مهام وتقارير) تُرفعان في البوابة. تعمل بدخول المدير نفسه، للقراءة فقط، بالطلبات الستة المسموحة نفسها، ولا يغادر رمز الدخول صفحة ماي أفاقي. هي بديل أسرع عن نسخ الأمرين وتشغيلهما في كلود كروم؛ وتبقى طريقة كلود كروم متاحة لمن يفضّلها. في صفحة البيانات فيه اختياران واضحان جنب بعض: «شبه أوتوماتيكي» و«الطريقة اليدوية». السحب المباشر يشتغل كإشارة من داخل ماي أفاقي بحساب المدير، ويفتح نافذة بوابة إدارة جديدة مرتبطة بعملية واحدة برمز مؤقت. بعد ما يقرأ المهام والتقارير يبعتهما للبوابة نفسها في المتصفح، وتتحقق البوابة من مصدر البيانات وفترة الملفين وتخزنهما وتفتح لوحة المؤشرات. لا تُرسل البيانات لخادم ولا يغادر رمز الدخول صفحة ماي أفاقي. لو متصفحك منع فتح النافذة أو التواصل معها، تنزّل الإشارة الملفين تلقائيًا. الإشارة اليدوية القديمة، ورفع الملفات، وأوامر كلود كروم، كلها ما زالت موجودة كما هي. نقل بيانات مهندس من جهازه لجهاز المدير تلقائيًا غير موجود؛ المدير يسحب ما يسمح به حسابه بنفسه.
@@ -119,6 +123,10 @@ Each task type in myafaqy has a weight, and so does each category of activity wi
 
 Pick the quarter (next by default), then the person from the cards. The baseline is the quarter before the chosen one. “Suggest from their work” fills goals: points and done +10% (+20% if volume is the weakest axis), average duration −10% (−20% if speed is the weakest), completion rate at least 90%, and their most frequent task type. Edit target and weight (1–5); progress is computed from their actual work in the quarter. Custom goals take a percentage you set. The quarter’s monthly meetings are here, and this month’s suggestions below. Everything stays on your device and rides in the backup.
 
+### Person file — everything about one person in one place
+
+One page per person gathering what was spread over four pages: a head with their role, who they report to and whether they are on leave; this month against last (done, points, completion rate, average duration); their level and four axes; workload and share of the team’s points; their plan for this and next quarter with progress; the last three months’ meetings, read only; and their open work with titles. At the top: “View their page as they see it”, “Their plan in Development” and “PDF report”. Reach it from the menu or by clicking any person’s name on the KPI board or the team page — those tables stay for comparing people. Not on the team link.
+
 ### The manager bookmark — everything in one press
 
 On the Data page, one manager bookmark reads from inside myafaqy everything the two prompts read: all of the period’s tasks, the R&D queue, technician points and after-sales tickets — and saves them as two files (tasks and reports) to upload in the portal. It runs with the manager’s own sign-in, read-only, through the same six allowed requests, and the sign-in token never leaves the myafaqy page. It is a faster alternative to copying the two prompts and running them in Claude in Chrome; the Claude in Chrome way stays available for whoever prefers it. The Data page now offers two clear methods: semi-automatic direct import and the existing manual workflow. Direct import runs as a bookmark on myafaqy under the manager's account and opens a fresh admin portal tab paired to that single pull with a temporary code. It sends the collected tasks and reports to that browser tab, which verifies their origin and matching date ranges, saves them locally and opens the KPI dashboard. No CRM sign-in token leaves myafaqy, and nothing is uploaded to an application server. If the browser blocks the new tab or messaging, the bookmark downloads the two files instead. The original manual bookmark, file uploads and Claude in Chrome prompts remain available. An employee's own device never syncs its private KPI data to the manager automatically; the manager pulls only what their account authorizes.
@@ -194,6 +202,10 @@ On this device and in this browser only; nothing is sent anywhere. To move it to
 ### ترقی — ہر فرد کا سہ ماہی منصوبہ
 
 سہ ماہی منتخب کریں (پہلے سے اگلی)، پھر کارڈ سے فرد۔ «بنیاد» منتخب سہ ماہی سے پہلے والی سہ ماہی ہے۔ «اس کے کام سے تجویز» اہداف بھرتا ہے: پوائنٹس اور مکمل کام ۱۰٪ زیادہ (اگر حجم کمزور ترین محور ہو تو ۲۰٪)، اوسط مدت ۱۰٪ کم (اگر رفتار کمزور ترین ہو تو ۲۰٪)، تکمیل کی شرح کم از کم ۹۰٪، اور اس کی سب سے زیادہ کی جانے والی کام کی قسم۔ ہدف اور وزن (۱–۵) بدلیں؛ پیش رفت سہ ماہی میں اس کے اصل کام سے حساب ہوتی ہے۔ مخصوص اہداف کی پیش رفت آپ خود طے کرتے ہیں۔ سہ ماہی کے مہینوں کی ماہانہ ملاقاتیں یہیں ہیں اور اس ماہ کی تجاویز نیچے۔ سب کچھ آپ کے آلے پر اور بیک اپ میں۔
+
+### فرد کی فائل — ایک فرد کے بارے میں سب کچھ ایک جگہ
+
+ہر فرد کے لیے ایک صفحہ جو چار صفحوں پر بکھری چیزیں جمع کرتا ہے: عہدہ، کس کو رپورٹ کرتے ہیں اور چھٹی؛ اس ماہ بمقابلہ پچھلا ماہ (مکمل، پوائنٹس، تکمیل کی شرح، اوسط مدت)؛ سطح اور چار محور؛ کام کا بوجھ اور ٹیم کے پوائنٹس میں حصہ؛ موجودہ اور اگلی سہ ماہی کا منصوبہ پیش رفت کے ساتھ؛ پچھلے تین ماہ کی ملاقاتیں صرف پڑھنے کے لیے؛ اور عنوانات کے ساتھ کھلا کام۔ اوپر: «ان کا صفحہ ویسے ہی دیکھیں»، «ترقی میں ان کا منصوبہ» اور «پی ڈی ایف رپورٹ»۔ مینو سے یا اشاریوں کے بورڈ اور ٹیم صفحے پر کسی کے نام پر کلک کر کے پہنچیں — وہ جدولیں لوگوں کے موازنے کے لیے رہتی ہیں۔ ٹیم لنک پر نہیں۔
 
 ### مینیجر بک مارک — ایک دباؤ میں سب کچھ
 

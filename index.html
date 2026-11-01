@@ -541,6 +541,14 @@
   .cr-jobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; } .cr-job { font: inherit; color: inherit; cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--card); }
   .cr-job:hover { border-color: var(--accent); transform: translateY(-1px); } .cr-job span { color: var(--accent); }
   @media (max-width: 760px) { .cr-nums { grid-template-columns: repeat(2, 1fr); } }
+  .person-link { cursor: pointer; color: var(--accent); text-decoration: underline dotted; text-underline-offset: 3px; } .person-link:hover { text-decoration-style: solid; }
+  .pf-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); border-inline-start: 6px solid var(--accent); margin-bottom: 12px; }
+  .pf-head h2 { margin: 0 0 4px; } .pf-head p { margin: 0; } .pf-acts { gap: 6px; flex-wrap: wrap; align-items: center; } .pf-acts select { font: inherit; padding: 5px 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }
+  .pf-sec { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; background: var(--card); margin-bottom: 12px; } .pf-sec h3 { margin: 0 0 10px; font-size: 15px; }
+  .pf-level { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; margin-top: 12px; } .pf-load { font-weight: 700; margin: 0 0 4px; } .pf-load.s-red { color: var(--fail, #B42318); } .pf-load.s-amber { color: var(--warn); } .pf-load.s-green { color: var(--accent); }
+  .pf-plans { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; } .pf-plan { display: flex; gap: 10px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); } .pf-plan b { display: block; }
+  .pf-open { margin: 0; padding-inline-start: 18px; display: grid; gap: 4px; } .pf-open li { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; }
+  @media (max-width: 760px) { .pf-plans, .pf-level { grid-template-columns: 1fr; } }
   .row-acts { white-space: nowrap; } .icon-btn { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px; padding: 2px 7px; cursor: pointer; margin-inline-start: 3px; } .icon-btn:hover { border-color: var(--accent); } @media (max-width: 760px) { .funnel { grid-template-columns: repeat(2, 1fr); } } .proj-months { display: flex; align-items: flex-end; gap: 6px; height: 128px; margin: 12px 0; padding: 0 2px; overflow-x: auto; }
   .pm { display: grid; justify-items: center; gap: 2px; min-width: 34px; } .pm i { display: block; width: 22px; background: var(--accent); border-radius: 4px 4px 0 0; } .pm b { font-size: 12px; } .pm span { font-size: 10.5px; color: var(--slate); }
   .proj-tools { gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0 8px; } .proj-q { flex: 1; min-width: 220px; font: inherit; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }
@@ -767,6 +775,7 @@
         <a href="#kpi" class="sub" data-view="kpi" data-t="kpi_board">لوحة المؤشرات</a>
         <a href="#dev" class="sub" data-view="dev" data-t="nav_dev">التطوير</a>
         <a href="#team" class="sub" data-view="team" data-t="nav_team">الفريق</a>
+        <a href="#person" class="sub" data-view="person" data-t="pf_title">ملف الموظف</a>
         <a href="#data" class="sub" data-view="data" data-t="nav_data">البيانات</a>
         <a href="#weights" class="sub" data-view="weights" data-t="nav_weights">الأوزان</a>
       </div>
@@ -834,6 +843,11 @@
   <section id="view-home" hidden>
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="cr_title">غرفة المتابعة</h1><button type="button" class="help-q" data-help="g_home_b" data-help-t="cr_title" aria-label="?">?</button></div><p class="lead" data-t="lead_home"></p></div>
     <div id="home-body"></div>
+  </section>
+
+  <section id="view-person" hidden>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="pf_title">ملف الموظف</h1><button type="button" class="help-q" data-help="g_person_b" data-help-t="pf_title" aria-label="?">?</button></div><p class="lead" data-t="lead_person"></p></div>
+    <div id="person-body"></div>
   </section>
 
   <section id="view-dev" hidden>

@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.60 — 2026-11-01
+
+- «ملف الموظف»: صفحة واحدة لكل موظف تجمع ما كان موزعًا على أربع صفحات — وظيفته ومن يتبع، وأداؤه هذا الشهر مقابل الماضي، ومستواه ومحاوره، وعبؤه ونصيبه من نقاط الفريق، وخطته للربعين، واجتماعاته، وشغله المفتوح — مع «اعرض صفحته كما يراها» وخطته وتقريره.
+- اسم أي موظف في لوحة المؤشرات وصفحة الفريق صار رابطًا لملفه: الجداول تبقى للمقارنة، والتفاصيل في مكان واحد.
+
+<details><summary>English</summary>
+
+- “Person file”: one page per person gathering what was spread over four pages — role and leader, this month against last, level and axes, workload and share of the team’s points, both quarters’ plans, meetings and open work — with “View their page as they see it”, their plan and their report.
+- Every person’s name on the KPI board and the team page now links to their file: the tables stay for comparing, the details live in one place.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «فرد کی فائل»: ہر فرد کے لیے ایک صفحہ جو چار صفحوں پر بکھری چیزیں جمع کرتا ہے — عہدہ، کارکردگی، سطح، بوجھ، منصوبے، ملاقاتیں اور کھلا کام۔
+- اشاریوں کے بورڈ اور ٹیم صفحے پر ہر نام اب اس کی فائل کا لنک ہے: جدولیں موازنے کے لیے، تفصیل ایک جگہ۔
+
+</div>
+</details>
+
+
 ## v8.59 — 2026-11-01
 
 - «غرفة المتابعة» أول صفحة لرابط المدير: حداثة البيانات وزر سحب، وأرقام الشهر مقابل الماضي، و«محتاج انتباهك» (عبء حرج، خطط الربع القادم غير المعتمدة، المهام المفتوحة أكثر من ٧ أيام، الأسماء المنتظرة) — كل بند يفتح صفحته — واختصارات للمهام الأساسية.

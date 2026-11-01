@@ -230,7 +230,7 @@ function startViewAs(id) {
   if (!fake) return;
   if (!viewAs) realMe = me;
   viewAs = id; me = fake; document.body.classList.add('viewing-as');
-  if (location.hash !== '#me') location.hash = '#me'; else renderMe();
+  renderMe(); if (location.hash !== '#me') location.hash = '#me';   // the router does not redraw «مؤشراتي», so draw it before going there
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 function endViewAs(redraw = true) {
@@ -2006,6 +2006,62 @@ function devRefresh() {
 }
 function devPlanOf(qKey, id) { devPlans[qKey] = devPlans[qKey] || {}; return devPlans[qKey][id] || (devPlans[qKey][id] = { goals: [], buddy: '', actions: '', note: '', status: 'draft' }); }
 // ---------- «غرفة المتابعة» (ADR-0043): the manager's first page — where the team stands, what needs attention, the way to each task ----------
+// ---------- «ملف الموظف» (ADR-0044): one page per person — everything about them that was spread over four pages ----------
+let personSel = pref('personsel') || null;
+function openPerson(id) { personSel = id; pref('personsel', id); if (location.hash === '#person') renderPerson(); else location.hash = '#person'; }
+// every comparison table keeps its rows; a person's name in it opens their file instead of repeating their details
+function linkNames(root, ids, nm) {
+  if (!root || isTeamPortal) return; const ppl = peopleOf(datasets), byName = new Map();
+  for (const id of ids) { const pp = ppl.find((x) => x.id === id) || {}; for (const n of [nm(id), nameOf(pp, 'ar'), nameOf(pp, 'en')]) if (n && !byName.has(n.trim())) byName.set(n.trim(), id); }
+  root.querySelectorAll('td, th[scope="row"], .person-name, td span, td b, td div, td strong').forEach((c) => { if (c.children.length || c.classList.contains('person-link') || c.closest('button, a, select')) return; const id = byName.get(c.textContent.trim()); if (!id) return;
+    c.classList.add('person-link'); c.tabIndex = 0; c.title = t('pf_open_file'); c.onclick = (e) => { e.stopPropagation(); openPerson(id); }; c.onkeydown = (e) => { if (e.key === 'Enter') openPerson(id); }; });
+}
+function renderPerson() {
+  const body = $('person-body'); if (!body) return;
+  if (!datasets.length) { set(body, el('div', { class: 'empty' }, t('dev_no_data'), ' ', el('a', { href: '#data', text: t('nav_data') }))); return; }
+  const tasks = allTasks(), wt = weights(), today = saudiDay(new Date().toISOString()), ro = roster().people || {};
+  const ppl = peopleOf(datasets), peopleById = new Map(ppl.map((p) => [p.id, p])), team = currentTeam(scoped(ppl), tasks);
+  const nm = (id) => nameOf(peopleById.get(id), lang) || id;
+  if (!personSel || !team.includes(personSel)) personSel = team[0];
+  const id = personSel, r = ro[id] || {}, ds = datasets.find((d) => d.key === kpiKey) || datasets[0];
+  const mStart = `${today.slice(0, 7)}-01`, prevEnd = new Date(Date.parse(mStart) - 86400000).toISOString().slice(0, 10), prevStart = `${prevEnd.slice(0, 7)}-01`;
+  const now = quarterBaseline(tasks, wt, id, { from: mStart, to: today }), before = quarterBaseline(tasks, wt, id, { from: prevStart, to: prevEnd });
+  const teamPts = team.reduce((s, x) => s + quarterBaseline(tasks, wt, x, { from: mStart, to: today }).points, 0);
+  const { levels } = levelsFor(tasks, team, today, mailRows), lv = levels[id];
+  const load = {}; for (const pool of levelPools(team)) { const act = pool.filter((x) => !(ro[x] && ro[x].onLeave)); if (act.length) Object.assign(load, loadFor(tasks, act, today).people); } const L2 = load[id];
+  const fmt = (m, v) => (v == null ? '—' : m === 'rate' ? `${Math.round(v * 100)}%` : m === 'avgHours' ? formatHours(v, lang) : String(v));
+  const pick = el('select', { 'aria-label': t('pf_pick'), onchange: (e) => openPerson(e.target.value) }, team.map((x) => ({ x, n: nm(x) })).sort((p, q) => p.n.localeCompare(q.n, lang)).map(({ x, n }) => el('option', { value: x, selected: x === id ? '' : null, text: n })));
+  const kpi = (m) => el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: t(`dev_m_${m}`) }), el('b', { class: 'cmp-v', text: fmt(m, now[m]) }), el('span', { class: 'cmp-was', text: `${t('pf_last')}: ${fmt(m, before[m])}` }));
+  const planOf = (q) => { const p = (devPlans[q.key] || {})[id]; if (!p || !p.goals.length) return el('div', { class: 'pf-plan' }, el('b', { text: q.label }), el('span', { class: 'hint', text: t('dev_no_plan') }));
+    const pct = planProgress(quarterGoalProgress(tasks, wt, id, q, p.goals)); return el('div', { class: 'pf-plan' }, el('div', { class: 'ring', style: `--p:${pct || 0}` }, el('b', { text: `${pct || 0}%` })), el('div', {}, el('b', { text: q.label }), el('span', { class: 'hint', text: `${t('dev_goals_n', { n: p.goals.length })} · ${p.status === 'agreed' ? t('dev_agreed') : t('dev_draft')}` }))); };
+  const months = [0, 1, 2].map((k) => { const d = new Date(Date.parse(mStart)); d.setUTCMonth(d.getUTCMonth() - k); return d.toISOString().slice(0, 7); });
+  const typeOpts = Object.keys(wt.tasks || {}).map((k) => [k, typeLabel(k, lang) || k]);
+  const meets = months.map((ym) => { const b = meetBlock(ym, id, tasks, false, nm(id), typeOpts); return b ? el('div', { class: 'dev-month' }, el('h4', { text: monthLabel(ym) }), b) : null; }).filter(Boolean);
+  const open = openTasks(tasks, id).slice(0, 12);
+  set(body,
+    el('div', { class: 'pf-head' },
+      el('div', {}, el('h2', { text: nm(id) }), el('p', { class: 'hint', text: [(lang === 'ar' ? r.position : r.positionEn || r.position) || (peopleById.get(id) || {}).position || '', r.leaderId ? `${t('pf_leader')} ${nm(String(r.leaderId))}` : '', r.onLeave ? t('card_on_leave') : ''].filter(Boolean).join(' · ') })),
+      el('div', { class: 'row pf-acts' }, pick,
+        el('button', { type: 'button', class: 'btn primary tiny', text: `👁 ${t('pf_viewas')}`, onclick: () => startViewAs(id) }),
+        el('button', { type: 'button', class: 'btn tiny', text: `${t('pf_plan')} ↗`, onclick: () => { devSel = id; pref('devsel', id); location.hash = '#dev'; } }),
+        el('button', { type: 'button', class: 'btn tiny', text: `🖨 ${t('pf_pdf')}`, onclick: () => openReport(reportHtml(reportData(ds, [id], peopleById), { single: true }), 'pdf', `AFAQY-${nm(id).replace(/\s+/g, '-')}`) }))),
+    el('section', { class: 'pf-sec' }, el('h3', { text: `${t('pf_perf')} — ${t('pf_month')}` }), el('div', { class: 'cmp-grid' }, ['done', 'points', 'rate', 'avgHours'].map(kpi)),
+      lv && lv.axes ? el('div', { class: 'pf-level' }, lv.level ? el('span', { class: `level-pill l${lv.level}`, text: `${lv.level} · ${t(`lvl_${LEVELS[lv.level - 1].k}`)}` }) : el('span', { class: 'hint', text: t('lvl_early') }),
+        el('div', { class: 'dev-axes' }, AXES.map((k) => el('div', {}, el('span', { text: t(`axis_${k}`) }), el('i', {}, el('b', { style: `width:${lv.axes[k] || 0}%` })), el('small', { text: lv.axes[k] == null ? '—' : String(lv.axes[k]) }))))) : el('p', { class: 'hint', text: t('lvl_early') })),
+    el('section', { class: 'pf-sec' }, el('h3', { text: t('pf_load') }),
+      el('p', { class: `pf-load s-${L2 ? L2.status : 'quiet'}`, text: t(`rep_load_${L2 ? L2.status : (r.onLeave ? 'leave' : 'quiet')}`) }),
+      L2 && L2.signals && L2.signals.length ? el('p', { class: 'hint', text: L2.signals.map((s) => t(`load_sig_${s.k}`, { v: s.v })).join(' · ') }) : null,
+      el('p', { class: 'hint', text: t('pf_share', { p: teamPts ? Math.round((now.points / teamPts) * 100) : 0 }) })),
+    el('section', { class: 'pf-sec' }, el('h3', { text: t('pf_plans') }), el('div', { class: 'pf-plans' }, planOf(quarterOf(today, 0)), planOf(quarterOf(today, 1))),
+      meets.length ? el('div', { class: 'dev-months' }, meets) : el('p', { class: 'hint', text: t('dev_month_none') })),
+    el('section', { class: 'pf-sec' }, el('h3', { text: `${t('pf_open')} — ${openTasks(tasks, id).length}` }),
+      open.length ? el('ul', { class: 'pf-open' }, open.map((x) => el('li', {}, el('span', { text: x.title || typeLabel(x.type || '', lang) || '—' }), el('small', { class: 'hint', text: x.ageHours == null ? '' : t(x.ageHours < 48 ? 'hours' : 'days', { n: Math.round(x.ageHours < 48 ? x.ageHours : x.ageHours / 24) }) })))) : el('p', { class: 'hint', text: t('pf_none') })));
+}
+// the board and the team page keep their comparison tables; after each redraw, names in them link to the person's file
+{ const withNames = (fn, viewId) => function linkedRender(...args) { const out = fn.apply(this, args);
+    try { if (datasets.length) { const ppl = peopleOf(datasets), team = currentTeam(scoped(ppl), allTasks()); linkNames($(viewId), team, (x) => nameOf(ppl.find((p) => p.id === x) || {}, lang) || x); } } catch { /* a table without names */ }
+    return out; };
+  renderKpi = withNames(renderKpi, 'view-kpi'); renderTeam = withNames(renderTeam, 'view-team'); }
 function renderHome() {
   const body = $('home-body'); if (!body) return;
   if (!datasets.length) { set(body, el('div', { class: 'cr-start' }, el('h2', { text: t('cr_start_h') }), el('p', { text: t('cr_start_b') }), el('a', { class: 'btn primary', href: '#data', text: `${t('cr_pull')} ↗` }))); return; }
@@ -2101,7 +2157,8 @@ function devPanel(id, ctx) {
     el('div', { class: 'dp-head' }, el('div', {}, el('h2', { style: 'margin:0', text: nm(id) }), el('span', { class: 'hint', text: t('dev_plan_for', { q: qPlan.label, b: qBase.label }) })),
       el('div', { class: 'row' }, el('div', { class: 'ring big', style: `--p:${total == null ? 0 : total}` }, el('b', { text: total == null ? '—' : `${total}%` })),
         el('button', { type: 'button', class: `btn tiny${plan.status === 'agreed' ? ' primary' : ''}`, text: plan.status === 'agreed' ? `✓ ${t('dev_agreed')}` : t('dev_mark_agreed'), onclick: async () => { plan.status = plan.status === 'agreed' ? 'draft' : 'agreed'; plan.agreedAt = plan.status === 'agreed' ? today0() : ''; await save(); } }),
-        el('button', { type: 'button', class: 'btn tiny', text: `🖨 ${t('proj_pdf')}`, onclick: () => devPdf(id, ctx) }))),
+        el('button', { type: 'button', class: 'btn tiny', text: `🖨 ${t('proj_pdf')}`, onclick: () => devPdf(id, ctx) }),
+        el('button', { type: 'button', class: 'btn tiny', text: `${t('pf_title')} ↗`, onclick: () => openPerson(id) }))),
     el('div', { class: 'dp-grid' },
       el('div', { class: 'card' }, el('h3', { text: t('dev_base_h', { q: qBase.label }) }),
         el('div', { class: 'cmp-grid' }, [['dev_m_done', base.done], ['dev_m_points', base.points], ['dev_m_avgHours', fmt('avgHours', base.avgHours)], ['dev_m_rate', fmt('rate', base.rate)]].map(([k, v]) => el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: t(k) }), el('b', { class: 'cmp-v', text: String(v) })))),
@@ -2637,7 +2694,7 @@ function applyTheme() {
   paintThemeButton();
 }
 function route() {
-  const views = ['home', 'tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'guide'];
+  const views = ['home', 'tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'person', 'guide'];
   const requested = location.hash.slice(1);
   let hash = portalRoute(requested, isTeamPortal);
   if (requested !== hash) history.replaceState(null, '', '#' + hash);
@@ -2655,7 +2712,7 @@ function route() {
   for (const id of [...views, 'module']) $(`view-${id}`).hidden = id !== v;
   document.body.classList.toggle('in-module', v === 'module');
   if (mod) openModule(mod);
-  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', dev: 'nav_dev', home: 'cr_title', guide: 'nav_guide' }[v]); currentModule = null; }
+  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', dev: 'nav_dev', home: 'cr_title', person: 'pf_title', guide: 'nav_guide' }[v]); currentModule = null; }
   $('module-open').hidden = v !== 'module';
   // one item in the menu is current — the open module, or the page — and its group is the open one
   let current = null;
@@ -2674,6 +2731,7 @@ function route() {
   if (v === 'weights') renderWeights();
   if (v === 'dev') renderDev();
   if (v === 'home') renderHome();
+  if (v === 'person') renderPerson();
 }
 
 // ---------- wiring ----------
