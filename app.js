@@ -215,6 +215,27 @@ $('tour-next').addEventListener('click', () => {
 $('me-tour').addEventListener('close', () => $('me-tour-open').focus());
 
 let me = null;
+// «اعرض كـ» (ADR-0042): the manager sees one person's «مؤشراتي» exactly as it is drawn for them, from the manager's own pulls.
+// Read only — the real profile is put aside and restored; nothing is written while viewing.
+let viewAs = null, realMe = null;
+function startViewAs(id) {
+  const ppl = peopleOf(datasets), when = datasets.map((d) => d.range && d.range.to).filter(Boolean).sort().pop();
+  const since = datasets.map((d) => d.range && d.range.from).filter(Boolean).sort()[0];
+  const person = ppl.find((p) => p.id === id) || { id };
+  const fake = upgradeMe({ schema: 'afaqy-me/v2', user: { id, name: nameOf(person, 'en') || id }, people: ppl,
+    extractedAt: when ? `${when}T23:59:00.000Z` : new Date().toISOString(), since: since ? `${since}T00:00:00.000Z` : undefined,
+    tasks: allTasks().map((x) => ({ ...x, own: x.assigneeId === id })) });
+  if (!fake) return;
+  if (!viewAs) realMe = me;
+  viewAs = id; me = fake; document.body.classList.add('viewing-as');
+  if (location.hash !== '#me') location.hash = '#me'; else renderMe();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+function endViewAs(redraw = true) {
+  if (!viewAs) return;
+  me = realMe; realMe = null; viewAs = null; document.body.classList.remove('viewing-as');
+  if (redraw) renderMe();
+}
 let storageKept = null;   // true when the browser promised to keep this site's data
 // a "?" beside a heading: what it is and how to use it, in the reader's language
 const helpQ = (key, titleKey) => el('button', { type: 'button', class: 'help-q', 'data-help': key, 'data-help-title': titleKey || '', 'aria-label': '?', text: '?' });
@@ -605,7 +626,7 @@ function renderMe(waiting = false) {
   applyPending().then((changed) => { if (changed) { renderTeam(); renderKpi(); renderMe(); } });
   const body = $('me-body');
   const bm = buildBookmarklet(portalHome(), lang);
-  const link = el('a', { class: 'btn primary bm', href: bm, draggable: 'true', text: `📊 ${t('me_bm')}`,
+  const link = el('a', { class: 'btn primary bm va-hide', href: bm, draggable: 'true', text: `📊 ${t('me_bm')}`,
     onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } });
   const setup = [
     el('p', { class: 'hint', text: t('me_step1') }), el('div', { class: 'row' }, link,
@@ -614,7 +635,22 @@ function renderMe(waiting = false) {
     el('details', { class: 'me-phones' }, el('summary', { text: t('me_phones') }), el('p', { class: 'hint', text: t('me_android') }), el('p', { class: 'hint', text: t('me_ios') })),
   ];
   if (waiting) { set(body, el('div', { class: 'empty', text: t('me_wait') })); return; }
-  if (!me) { set(body, el('div', { class: 'step me-setup' }, el('span', { class: 'n', text: '١' }), el('div', {}, el('h3', { text: t('me_how_h') }), ...setup))); return; }
+  const vaBar = (() => {
+    if (isTeamPortal || !datasets.length) return null;
+    if (viewAs) { const ppl = peopleOf(datasets), nmV = nameOf(ppl.find((p) => p.id === viewAs) || {}, lang) || viewAs;
+      return el('div', { class: 'va-banner', role: 'status' }, el('span', { class: 'va-eye', 'aria-hidden': 'true', text: '👁' }),
+        el('div', {}, el('b', { text: t('va_now', { n: nmV }) }), el('span', { text: t('va_note', { d: (me.extractedAt || '').slice(0, 10) }) })),
+        el('button', { type: 'button', class: 'btn', text: `✕ ${t('va_exit')}`, onclick: () => endViewAs() })); }
+    const ppl = peopleOf(datasets), self = me && me.user ? me.user.id : null;
+    const team = currentTeam(scoped(ppl), allTasks()).filter((id) => id !== self)
+      .map((id) => ({ id, n: nameOf(ppl.find((p) => p.id === id) || {}, lang) || id })).sort((x, y) => x.n.localeCompare(y.n, lang));
+    if (!team.length) return null;
+    const sel = el('select', { 'aria-label': t('va_pick') }, [el('option', { value: '', text: t('va_pick') }), ...team.map((x) => el('option', { value: x.id, text: x.n }))]);
+    return el('div', { class: 'va-picker' }, el('span', { text: `👁 ${t('va_label')}` }), sel,
+      el('button', { type: 'button', class: 'btn tiny', text: t('va_go'), onclick: () => { if (sel.value) startViewAs(sel.value); else toast(t('va_pick')); } }),
+      el('span', { class: 'hint', text: t('va_hint') }));
+  })();
+  if (!me) { set(body, vaBar, el('div', { class: 'step me-setup' }, el('span', { class: 'n', text: '١' }), el('div', {}, el('h3', { text: t('me_how_h') }), ...setup))); return; }
   const qs = myProfile(me);
   const pm = profileMonths(me, new Date(), roster(), meKind);
   const fmtDate = (iso) => (iso ? `\u2066${iso.slice(0, 10)}\u2069` : '');
@@ -647,10 +683,10 @@ function renderMe(waiting = false) {
   const whyText = (w) => (w.k === 'rate' ? t('why_rate', { r: formatRate(w.v) }) : w.k === 'open' ? t('why_open', { n: w.v }) : t('why_median', { h: formatHours(w.v, lang) }));
   const maxDone = Math.max(1, ...pm.below.map((r) => r.this.done));
   const bar = (v, max) => el('div', { class: 'bar-cell' }, el('b', { text: String(v) }), el('i', {}, el('span', { style: `width:${Math.round((v / max) * 100)}%` })));
-  set(body,
+  set(body, vaBar,
     el('div', { class: 'row', style: 'justify-content:space-between;margin-bottom:12px' },
-      el('details', { class: 'me-again' }, el('summary', { text: t('me_setup_again') }), ...setup),
-      el('a', { class: 'btn primary', href: 'https://myafaqy.com/', target: '_blank', rel: 'noopener', text: `↻ ${t('me_update')}`, onclick: () => toast(t('me_refresh_hint')) })),
+      el('details', { class: 'me-again va-hide' }, el('summary', { text: t('me_setup_again') }), ...setup),
+      el('a', { class: 'btn primary va-hide', href: 'https://myafaqy.com/', target: '_blank', rel: 'noopener', text: `↻ ${t('me_update')}`, onclick: () => toast(t('me_refresh_hint')) })),
     el('div', { class: 'me-card' },
       el('div', {}, el('h2', { class: 'me-name', text: who }),
         positionOf(roster(), me.user.id, lang) ? el('p', { class: 'me-pos', text: positionOf(roster(), me.user.id, lang) }) : null,
@@ -705,7 +741,7 @@ function renderMe(waiting = false) {
       })))),
     el('h2', { text: t('definitions') }), el('ul', { class: 'defs' }, DEFINITIONS.map((k) => el('li', { text: t(k) }))),
     el('details', { class: 'team' }, el('summary', { text: t('me_refresh_h') }), el('p', { class: 'hint', text: t('me_refresh') }), ...setup,
-      el('button', { type: 'button', class: 'btn', text: t('me_forget'), onclick: async () => { me = null; await store.putMe(null); renderMe(); } })));
+      el('button', { type: 'button', class: 'btn va-hide', text: t('me_forget'), onclick: async () => { if (viewAs) return; me = null; await store.putMe(null); renderMe(); } })));
   meDashboard(body, pm, { nm, arrow });
 }
 // ---------- My KPIs as a dashboard (ADR-0034): openable tiles, a collapsible block for me and one for my team, tabs for a leader ----------
@@ -715,6 +751,7 @@ const ORDER_KEY = 'afaqy.order';
 const orders = () => { try { return JSON.parse(localStorage.getItem(ORDER_KEY) || '{}') || {}; } catch { return {}; } };
 function sortByOrder(ids, key) { const o = orders()[key]; if (!Array.isArray(o)) return ids; const pos = new Map(o.map((id, i) => [id, i])); return [...ids].sort((x, y) => (pos.has(x) ? pos.get(x) : 1e9) - (pos.has(y) ? pos.get(y) : 1e9)); }
 function makeSortable(box, key) {
+  if (viewAs) return box;   // viewing someone else's page must not reorder the manager's own layout
   if (!box) return box; let dragged = null;
   for (const c of box.children) { if (!c.dataset.id) continue; c.draggable = true; c.classList.add('sortable');
     c.addEventListener('dragstart', (e) => { dragged = c; c.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', c.dataset.id); });
@@ -1222,7 +1259,7 @@ function meDashboard(body, pm, { nm, arrow }) {
   const after = []; let n = card ? card.nextElementSibling : null; while (n) { after.push(n); n = n.nextElementSibling; }
   for (const x of after) { const tab = x.getAttribute('data-tab'); (panels[tab] || panels.me).append(x); }
   panels.me.prepend(todayCard(pm, nm));
-  if (!isTeamPortal) panels.me.append(projectsCard());
+  if (!isTeamPortal && !viewAs) panels.me.append(projectsCard());
   if (!panels.alerts.children.length) panels.alerts.append(el('div', { class: 'empty', text: t('alerts_none') }));
   const nAlerts = panels.alerts.querySelectorAll('.alert').length;
   const bar = el('div', { class: 'tabs', role: 'tablist' }, [['me', t('tab_me')], ['team', t('tab_team')], ['alerts', nAlerts ? `${t('tab_alerts')} (${nAlerts})` : t('tab_alerts')]].map(([k, label]) =>
@@ -1234,7 +1271,7 @@ async function receiveMe(fragment) {
   const r = await parseMe(fragment);
   history.replaceState(null, '', '#me');            // the data never stays in the address or the history
   if (r.error) { toast(t(r.error, r.vars || {})); renderMe(); return; }
-  me = r.me; await store.putMe(me); await refreshOfficialWeights();
+  endViewAs(false); me = r.me; await store.putMe(me); await refreshOfficialWeights();
   toast(t('me_loaded', { n: me.tasks.length })); renderMe(); renderMeTour();
 }
 // The bookmark hands the data over by message (ADR-0014): accepted only from myafaqy itself and only in our shape.
@@ -1249,7 +1286,7 @@ window.addEventListener('message', async (e) => {
   meReceived = stamp;
   const r = parseMePayload(e.data.payload);
   if (r.error) { toast(t(r.error, r.vars || {})); return; }
-  me = r.me; await store.putMe(me); await refreshOfficialWeights();
+  endViewAs(false); me = r.me; await store.putMe(me); await refreshOfficialWeights();
   if (location.hash !== '#me') history.replaceState(null, '', '#me');
   route(); toast(t('me_loaded', { n: me.tasks.length })); renderMe(); renderMeTour();
 });
@@ -1870,7 +1907,7 @@ function meCardSection(pm, who, nm) { const ymNow = cardMonth; const team = pm.s
       const own = (monthCards[ymNow] && monthCards[ymNow][me.user.id]) || monthCard(ctx, me.user.id, ymNow);
       const below = pm.below.map((r) => r.id);
       const typeChoices = Object.entries(weights().tasks).filter(([, x]) => x.team !== 'general').map(([k]) => [k, k.replace(/(^|\s)([a-z])/g, (mm, sp, ch) => sp + ch.toUpperCase())]);
-      const withMeet = (cardEl, id, name, editable) => { if (cardEl) { if (!isTeamPortal && editable && datasets.length) { cardEl.append(el('a', { class: 'moved-link', href: '#dev', onclick: () => { devSel = id; pref('devsel', id); }, text: `${t('dev_meet_moved')} ↗` })); return cardEl; } const b = meetBlock(ymNow, id, me.tasks, editable, name, typeChoices); if (b) cardEl.append(b); } return cardEl; };
+      const withMeet = (cardEl, id, name, editable) => { if (cardEl && viewAs) return cardEl; if (cardEl) { if (!isTeamPortal && editable && datasets.length) { cardEl.append(el('a', { class: 'moved-link', href: '#dev', onclick: () => { devSel = id; pref('devsel', id); }, text: `${t('dev_meet_moved')} ↗` })); return cardEl; } const b = meetBlock(ymNow, id, me.tasks, editable, name, typeChoices); if (b) cardEl.append(b); } return cardEl; };
       const imp = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: (e) => { if (e.target.files[0]) importMeet(e.target.files[0]); e.target.value = ''; } });
       const path = (id) => patternPath(monthCards, id);
       const pathTable = (ids) => { const months = [...new Set(ids.flatMap((id) => path(id).map((p) => p.month)))].sort(); if (months.length < 2) return el('p', { class: 'hint', text: t('path_soon') });
@@ -1882,7 +1919,7 @@ function meCardSection(pm, who, nm) { const ymNow = cardMonth; const team = pm.s
         below.length ? [el('h3', { class: 'card-team-h', text: t('card_team_h', { n: below.length }) }),
           makeSortable(el('div', { class: 'cards-grid' }, sortByOrder(below, 'monthcards').map((id) => { const c = withMeet(renderCard((monthCards[ymNow] && monthCards[ymNow][id]) || monthCard(ctx, id, ymNow), nm(id), { showRank: true, showSuggestions: true, compact: true }), id, nm(id), true); if (c) c.dataset.id = id; return c; })), 'monthcards')] : null,
         el('div', { class: 'row', style: 'margin-top:8px' }, el('button', { type: 'button', class: 'btn', text: t('card_print'), onclick: () => window.print() }),
-          below.length ? [el('button', { type: 'button', class: 'btn quiet', text: t('meet_export'), onclick: exportMeet }), el('button', { type: 'button', class: 'btn quiet', text: t('meet_import'), onclick: () => imp.click() }), imp] : null),
+          below.length && !viewAs ? [el('button', { type: 'button', class: 'btn quiet', text: t('meet_export'), onclick: exportMeet }), el('button', { type: 'button', class: 'btn quiet', text: t('meet_import'), onclick: () => imp.click() }), imp] : null),
         el('h2', {}, t('path_h'), helpQ('help_path')), pathTable([me.user.id, ...below])]; }
 // ---------- the board's sections, each its own function (ADR-0023) ----------
 // the manager's view of each person's slice of the team's work — day / week / month / quarter
@@ -2558,6 +2595,7 @@ function route() {
   const requested = location.hash.slice(1);
   let hash = portalRoute(requested, isTeamPortal);
   if (requested !== hash) history.replaceState(null, '', '#' + hash);
+  if (viewAs && hash !== 'me') endViewAs(true);   // leaving «مؤشراتي» ends the view and redraws the manager's own page behind (the router does not redraw it)
   if (hash.startsWith('me-')) {
     if (hash === 'me-wait') {
       hash = 'me'; setTimeout(() => renderMe(true));
@@ -2606,7 +2644,7 @@ $('file-in').addEventListener('change', async (e) => { for (const f of e.target.
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
 $('export-btn').addEventListener('click', async () => {
   const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION,
-    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: me || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projfiles: await projFilesExport(), devplans: devPlans };
+    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: (viewAs ? realMe : me) || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projfiles: await projFilesExport(), devplans: devPlans };
   download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(all, null, 1));
 });
 $('import-in').addEventListener('change', async (e) => {
@@ -2641,6 +2679,7 @@ $('import-in').addEventListener('change', async (e) => {
       await store.putMail(mailRows);
       if (j.weights && !weightsDevice) { weightsDevice = j.weights; await store.putWeights(weightsDevice); }
       if (j.roster && !(rosterDevice && Object.keys(rosterDevice.people || {}).length)) { rosterDevice = parseRoster(j.roster); await store.putRoster(rosterDevice); }
+      if (viewAs) endViewAs(false);
       if (j.me && !me) { const m = upgradeMe(j.me); if (m) { me = m; await store.putMe(me); } }
     }
     renderDatasets(); renderBlocks(); renderKpi(); renderMe(); renderTeam(); renderWeights(); renderPrivLinks();

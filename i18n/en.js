@@ -1060,4 +1060,11 @@ export default {
     intro_alt: 'النسخة العربية',
     rows_more: 'Show {n} more — {left} left',
     rows_total: '{n} rows',
+    va_label: 'View as',
+    va_pick: 'Choose a person',
+    va_go: 'View',
+    va_hint: 'See their page exactly as they see it — read only',
+    va_now: 'You are viewing {n}’s page as they see it',
+    va_note: 'Read only — from your pulls up to {d}. What they keep on their own device (private links, their mail reading) does not show here.',
+    va_exit: 'Exit',
 };

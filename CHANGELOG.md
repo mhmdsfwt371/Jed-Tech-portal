@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.57 — 2026-11-01
+
+- «اعرض كـ» في «مؤشراتي» (رابط المدير): اختر موظفًا فترى صفحته كما يراها هو — بطاقة اليوم والمؤشرات الستة وشغله المفتوح — للقراءة فقط، مع شريط يوضح صفحة من وزر خروج. قائد الفريق يظهر بعرض فريقه.
+
+<details><summary>English</summary>
+
+- “View as” in My KPIs (manager link): pick a team member to see their page exactly as they see it — the Today card, the six indicators and their open work — read only, with a banner naming whose page it is and an exit. A team leader shows with his team view.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «بطور دیکھیں» میرے اشاریوں میں (مینیجر لنک): کسی رکن کو منتخب کریں اور ان کا صفحہ ویسے ہی دیکھیں جیسا وہ دیکھتے ہیں — صرف پڑھنے کے لیے، اوپر پٹی اور باہر نکلنے کا بٹن۔
+
+</div>
+</details>
+
+
 ## v8.56 — 2026-11-01
 
 - على الجوال (خاصة الآيفون): القائمة الجانبية تتمرر وحدها حتى آخرها — اللغة والوضع وتثبيت التطبيق — والصفحة خلفها ثابتة، وعند إغلاقها تعود الصفحة لمكانها.

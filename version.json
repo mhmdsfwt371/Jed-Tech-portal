@@ -1,15 +1,15 @@
 {
-  "version": "8.56",
+  "version": "8.57",
   "date": "2026-11-01",
   "notes": {
     "ar": [
-      "على الجوال (خاصة الآيفون): القائمة الجانبية تتمرر وحدها حتى آخرها — اللغة والوضع وتثبيت التطبيق — والصفحة خلفها ثابتة، وعند إغلاقها تعود الصفحة لمكانها."
+      "«اعرض كـ» في «مؤشراتي» (رابط المدير): اختر موظفًا فترى صفحته كما يراها هو — بطاقة اليوم والمؤشرات الستة وشغله المفتوح — للقراءة فقط، مع شريط يوضح صفحة من وزر خروج. قائد الفريق يظهر بعرض فريقه."
     ],
     "en": [
-      "On phones (especially iPhone): the side menu scrolls on its own to the bottom — language, theme and install — while the page behind stays still, and closing it returns the page to where it was."
+      "“View as” in My KPIs (manager link): pick a team member to see their page exactly as they see it — the Today card, the six indicators and their open work — read only, with a banner naming whose page it is and an exit. A team leader shows with his team view."
     ],
     "ur": [
-      "فون پر (خاص طور پر آئی فون): سائیڈ مینو خود نیچے تک اسکرول ہوتا ہے — زبان، تھیم اور انسٹال — پیچھے کا صفحہ رکا رہتا ہے، اور بند کرنے پر صفحہ اپنی جگہ لوٹ آتا ہے۔"
+      "«بطور دیکھیں» میرے اشاریوں میں (مینیجر لنک): کسی رکن کو منتخب کریں اور ان کا صفحہ ویسے ہی دیکھیں جیسا وہ دیکھتے ہیں — صرف پڑھنے کے لیے، اوپر پٹی اور باہر نکلنے کا بٹن۔"
     ]
   }
 }
