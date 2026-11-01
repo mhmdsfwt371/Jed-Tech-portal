@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.68 — 2026-11-02
+
+- للمهندس في «مؤشراتي»: بطاقة «مكانك وتقدمك» — ترتيبه في فريقه هذا الشهر («المركز ٣ من ٩») وكم نقطة يتبقى ليتخطى من قبله، وأرقامه القياسية، وإنجازاته، ومستواه وأقرب طريق للتحسن. لا تظهر أسماء الزملاء ولا أرقامهم.
+
+<details><summary>English</summary>
+
+- For the engineer in My KPIs: a “Where you stand” card — his rank in his team this month (“Rank 3 of 9”) and how many points to pass the one above, his records, achievements, and level with the shortest way up. Colleagues’ names and numbers are never shown.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- انجینئر کے لیے «میرے اشاریے» میں «آپ کہاں کھڑے ہیں» کارڈ — ٹیم میں اس ماہ کا نمبر، ریکارڈ، کامیابیاں اور سطح۔ ساتھیوں کے نام اور اعداد کبھی نہیں دکھائے جاتے۔
+
+</div>
+</details>
+
+
 ## v8.67 — 2026-11-02
 
 - «كل الأدوات والأنظمة»: قف بالماوس على أي نظام أو أداة تظهر رسالة تقول ماذا يفعل — وعلى الجوال اضغط ⓘ بجانبه.

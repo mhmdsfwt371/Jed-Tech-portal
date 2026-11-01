@@ -798,6 +798,66 @@ function sheet(title, views, csv) {
   dlg.showModal();
 }
 // ---------- the "Today" card (ADR-0038): a greeting, a streak, yesterday against your own average, what to start with, and the team's weekly bar ----------
+// ---------- «مكانك وتقدمك» (ADR-0052): the engineer's rank among his team (no names, no one else's numbers), records, achievements, level ----------
+function progressCard(pm) {
+  const wt = weights(), uid = me.user.id, today = saudiDay(new Date().toISOString()), ymNow = today.slice(0, 7);
+  // his team: those under the same team leader in the team file (not everyone in the pull), on duty, whose work is in this pull
+  const ro = roster().people || {}, lead = ro[uid] && ro[uid].leaderId;
+  const scope = lead ? Object.keys(ro).filter((k) => k === uid || (ro[k].leaderId === lead && !ro[k].onLeave)) : [...new Set([uid, ...((pm.scope && pm.scope.visible) || [])])];
+  const present = scope.filter((id) => id === uid || me.tasks.some((x) => x.assigneeId === id));
+  const ymShift = (ym, k) => { const d = new Date(Date.parse(`${ym}-01T00:00:00Z`)); d.setUTCMonth(d.getUTCMonth() + k); return d.toISOString().slice(0, 7); };
+  const monthEnd = (ym) => { const d = new Date(Date.parse(`${ymShift(ym, 1)}-01T00:00:00Z`)); d.setUTCDate(0); return d.toISOString().slice(0, 10); };
+  const rankIn = (ym) => memoTasks(me.tasks, ['rank', ym, present.join(','), ym === ymNow ? today : ''], () => {
+    const pts = present.map((id) => ({ id, p: quarterBaseline(me.tasks, wt, id, { from: `${ym}-01`, to: ym === ymNow ? today : monthEnd(ym) }).points }));
+    const mine = pts.find((x) => x.id === uid) || { p: 0 }, above = pts.filter((x) => x.p > mine.p).map((x) => x.p), below = pts.filter((x) => x.id !== uid && x.p <= mine.p).map((x) => x.p);
+    return { r: 1 + above.length, n: pts.length, p: mine.p, gap: above.length ? Math.round((Math.min(...above) - mine.p) * 10) / 10 : null, lead: !above.length && below.length ? Math.round((mine.p - Math.max(...below)) * 10) / 10 : null };
+  });
+  // the rank
+  let rankBox;
+  if (present.length < 2) rankBox = el('div', { class: 'pg-rank' }, el('p', { class: 'hint', text: t('pg_rank_need') }));
+  else { const now = rankIn(ymNow), before = rankIn(ymShift(ymNow, -1));
+    const move = before.p > 0 ? (before.r > now.r ? el('span', { class: 'delta good', text: `▲ ${t('pg_up', { a: before.r })}` }) : before.r < now.r ? el('span', { class: 'delta bad', text: `▼ ${t('pg_down', { a: before.r })}` }) : el('span', { class: 'delta same', text: t('pg_same') })) : null;
+    rankBox = el('div', { class: 'pg-rank' }, el('b', { class: 'pg-big', text: t('pg_rank', { r: now.r, n: now.n }) }), el('span', { class: 'hint', text: t('pg_rank_sub') }),
+      el('div', { class: 'pg-gap', text: now.gap != null ? t('pg_gap', { g: now.gap }) : now.lead != null ? t('pg_lead', { g: now.lead }) : '' }), move); }
+  // records — none of them repeat the Today card (current streak, yesterday, this week)
+  const mine = me.tasks.filter((x) => x.assigneeId === uid && x.state === 'done' && x.completedAt), byMonth = new Map(), byDay = new Map();
+  for (const x of mine) { const d = saudiDay(x.completedAt), m = d.slice(0, 7); byDay.set(d, (byDay.get(d) || 0) + 1);
+    const v = byMonth.get(m) || { p: 0, n: 0, fast: 0 }; v.p += taskPoints(wt, x); v.n++; const k = wt.tasks[typeKey(x.type)];
+    if (k && k.std && x.createdAt && businessHours(x.createdAt, x.completedAt) <= k.std) v.fast++; byMonth.set(m, v); }
+  const months = [...byMonth.keys()].sort(), bestM = months.reduce((b, m) => (!b || byMonth.get(m).p > byMonth.get(b).p ? m : b), null);
+  const isWork = (s) => ![5, 6].includes(new Date(Date.parse(`${s}T00:00:00Z`)).getUTCDay());
+  const nextWork = (s) => { const d = new Date(Date.parse(`${s}T00:00:00Z`)); do d.setUTCDate(d.getUTCDate() + 1); while ([5, 6].includes(d.getUTCDay())); return d.toISOString().slice(0, 10); };
+  let longest = 0, run = 0, prev = null; for (const s of [...byDay.keys()].sort()) { if (!isWork(s)) continue; run = prev && nextWork(prev) === s ? run + 1 : 1; longest = Math.max(longest, run); prev = s; }
+  const mostDay = Math.max(0, ...byDay.values());
+  const recs = el('ul', { class: 'pg-recs' }, bestM ? el('li', { text: t('pg_rec_month', { m: monthLabel(bestM), p: Math.round(byMonth.get(bestM).p * 10) / 10 }) }) : null,
+    el('li', { text: t('pg_rec_streak', { n: longest }) }), el('li', { text: t('pg_rec_day', { n: mostDay }) }));
+  // achievements — each from his own work
+  const weekOf = (s) => { const dt = new Date(Date.parse(`${s}T00:00:00Z`)); dt.setUTCDate(dt.getUTCDate() - dt.getUTCDay()); return dt.toISOString().slice(0, 10); };
+  const weeks = new Map(); for (const s of byDay.keys()) if (isWork(s)) weeks.set(weekOf(s), (weeks.get(weekOf(s)) || 0) + 1);
+  const firstMonth = (f) => months.find(f) || null, maxOf = (k) => Math.max(0, ...months.map((m) => byMonth.get(m)[k]));
+  const ach = [
+    { k: 'week5', ok: [...weeks.values()].some((n) => n >= 5) },
+    { k: 'm50', at: firstMonth((m) => byMonth.get(m).n >= 50), prog: [maxOf('n'), 50] },
+    { k: 'fast10', at: firstMonth((m) => byMonth.get(m).fast >= 10), prog: [maxOf('fast'), 10] },
+    { k: 'up20', at: firstMonth((m) => { const pv = byMonth.get(ymShift(m, -1)); return pv && pv.p >= 5 && byMonth.get(m).p >= 1.2 * pv.p; }) },
+    { k: 'top', at: present.length >= 2 ? firstMonth((m) => rankIn(m).r === 1) : null },
+    { k: 'streak10', ok: longest >= 10, prog: [longest, 10] },
+  ].map((x) => ({ ...x, ok: x.ok != null ? x.ok : !!x.at }));
+  const achBox = el('div', { class: 'pg-ach' }, ach.map((x) => el('div', { class: `pg-badge${x.ok ? ' on' : ''}` }, el('span', { class: 'pg-ico', 'aria-hidden': 'true', text: x.ok ? '★' : '☆' }),
+    el('div', {}, el('b', { text: t(`ach_${x.k}`) }), el('small', { text: x.ok ? (x.at ? monthLabel(x.at) : t('ach_done')) : x.prog ? t('ach_prog', { a: Math.min(x.prog[0], x.prog[1]), b: x.prog[1] }) : t('ach_locked') })))));
+  // the level and the shortest way up
+  const { levels } = levelsFor(me.tasks, present, today, mailRows), lv = levels[uid];
+  let lvlBox;
+  if (!lv || lv.level == null || lv.score == null) lvlBox = el('p', { class: 'hint', text: t('pg_lvl_early') });
+  else { const nx = [35, 60, 80][lv.level - 1], weak = Object.entries(lv.axes || {}).filter(([, v]) => v != null).sort((p, q) => p[1] - q[1])[0];
+    lvlBox = el('div', { class: 'pg-lvl' }, el('span', { class: `level-pill l${lv.level}`, text: `${lv.level} · ${t(`lvl_${LEVELS[lv.level - 1].k}`)}` }),
+      nx ? el('div', { class: 'pg-bar' }, el('i', { style: `width:${Math.min(100, Math.round((lv.score / nx) * 100))}%` })) : null,
+      el('small', { text: nx ? `${t('pg_lvl_next', { s: lv.score, nx, name: t(`lvl_${LEVELS[lv.level].k}`) })}${lv.level === 3 ? t('pg_lvl_next4') : ''}` : t('pg_lvl_top') }),
+      weak ? el('small', { class: 'pg-tip', text: t('pg_tip', { t: t(`pg_tip_${weak[0]}`) }) }) : null); }
+  return el('section', { class: 'pg-card' }, el('h2', { text: t('pg_h') }),
+    el('div', { class: 'pg-grid' }, rankBox, el('div', {}, el('h3', { text: t('pg_lvl_h') }), lvlBox), el('div', {}, el('h3', { text: t('pg_rec_h') }), recs)),
+    el('h3', { text: t('pg_ach_h') }), achBox, el('p', { class: 'hint pg-private', text: t('pg_private') }));
+}
 function todayCard(pm, nm) {
   const wt = weights(), uid = me.user.id, now = new Date(), day = (d) => saudiDay(d.toISOString());
   const hour = new Date(now.getTime() + 3 * 3600000).getUTCHours();
@@ -1251,7 +1311,8 @@ function meDashboard(body, pm, { nm, arrow }) {
   if (old) { const dates = old.previousElementSibling, headRow = dates && dates.previousElementSibling;
     const box = el('details', { class: 'tile-block', open: '' }, el('summary', { text: t('tiles_mine') }));
     old.before(box); if (headRow) box.append(headRow); if (dates) box.append(dates); box.append(mine); old.remove(); }
-  if (!pm.below.length) { const box = body.querySelector('details.tile-block'); if (box) box.before(todayCard(pm, nm)); return; }
+  const pgCard = () => { if (!(isTeamPortal || viewAs)) return null; try { return progressCard(pm); } catch (e) { console.error(e); return null; } };   // the engineer's page (and the manager's view of it)
+  if (!pm.below.length) { const box = body.querySelector('details.tile-block'); if (box) { const tc = todayCard(pm, nm), pc = pgCard(); box.before(tc); if (pc) tc.after(pc); } return; }
   const ids = pm.below.map((r) => r.id);
   const people = makeSortable(el('div', { class: 'people-grid' }, (() => { const rows = sortByOrder(ids.map((id) => ({ id, s: stats([id], win) })).sort((p, q) => q.s.points - p.s.points).map((r) => r.id), 'people').map((id) => ({ id, s: stats([id], win) })); const max = Math.max(1, ...rows.map((r) => r.s.points));
     return rows.map(({ id, s }) => el('button', { type: 'button', class: 'person-card', 'data-id': id, onclick: () => {
@@ -1268,7 +1329,7 @@ function meDashboard(body, pm, { nm, arrow }) {
   const card = body.querySelector('.me-card');
   const after = []; let n = card ? card.nextElementSibling : null; while (n) { after.push(n); n = n.nextElementSibling; }
   for (const x of after) { const tab = x.getAttribute('data-tab'); (panels[tab] || panels.me).append(x); }
-  panels.me.prepend(todayCard(pm, nm));
+  { const tc = todayCard(pm, nm), pc = pgCard(); panels.me.prepend(tc); if (pc) tc.after(pc); }
   if (!isTeamPortal && !viewAs) panels.me.append(projectsCard());
   if (!panels.alerts.children.length) panels.alerts.append(el('div', { class: 'empty', text: t('alerts_none') }));
   const nAlerts = panels.alerts.querySelectorAll('.alert').length;
