@@ -126,6 +126,8 @@ function renderTools() {
     cards.forEach((c) => { c.hidden = pref('intro_hidden') === '1'; const x = c.querySelector('.intro-hide'); if (x) x.onclick = hide; }); }
   makeSortable($('primary'), 'tools');
   $('manage-systems').hidden = isTeamPortal;
+  { const navHome = $('nav-home-mgr'); if (navHome) navHome.hidden = isTeamPortal;   // the control room is the manager's; on his link «الرئيسية» names the tools page
+    if (!isTeamPortal) { const lbl = document.querySelector('.nav a[href="#tools"] [data-t="nav_home"], .nav a[href="#tools"] [data-t="nav_tools_mgr"]'); if (lbl) { lbl.dataset.t = 'nav_tools_mgr'; lbl.textContent = t('nav_tools_mgr'); } const top = document.querySelector('.topbar-home'); if (top) top.setAttribute('href', '#home'); } }
   set($('systems'), SYSTEM_CATEGORIES.map((c) => el('section', { class: 'systems-category' }, el('h3', { text: L(c.name, lang) }), el('div', { class: 'row' }, SYSTEMS.filter((x) => x.category === c.id).map((x) => el('a', { class: 'chip', href: x.url, target: '_blank', rel: 'noopener', text: L(x.name, lang) }))))));
   set($('more'), MORE.filter((x) => !x.module).map((x) => (x.status === 'live'
     ? moduleLink(x, 'chip', L(x.name, lang))
@@ -2003,6 +2005,50 @@ function devRefresh() {
   if (hint) hint.textContent = [w ? t('dev_weak', { a: t(`axis_${w[0]}`) }) : '', p ? t('dev_goals_n', { n: p.goals.length }) : t('dev_no_plan'), p && p.status === 'agreed' ? t('dev_agreed') : ''].filter(Boolean).join(' · ');
 }
 function devPlanOf(qKey, id) { devPlans[qKey] = devPlans[qKey] || {}; return devPlans[qKey][id] || (devPlans[qKey][id] = { goals: [], buddy: '', actions: '', note: '', status: 'draft' }); }
+// ---------- «غرفة المتابعة» (ADR-0043): the manager's first page — where the team stands, what needs attention, the way to each task ----------
+function renderHome() {
+  const body = $('home-body'); if (!body) return;
+  if (!datasets.length) { set(body, el('div', { class: 'cr-start' }, el('h2', { text: t('cr_start_h') }), el('p', { text: t('cr_start_b') }), el('a', { class: 'btn primary', href: '#data', text: `${t('cr_pull')} ↗` }))); return; }
+  const tasks = allTasks(), wt = weights(), today = saudiDay(new Date().toISOString()), ro = roster().people || {};
+  const ppl = peopleOf(datasets), team = currentTeam(scoped(ppl), tasks), nm = (id) => nameOf(ppl.find((p) => p.id === id) || {}, lang) || id;
+  const latest = [...datasets].sort((x, y) => (y.range.to || '').localeCompare(x.range.to || ''))[0];
+  const ageDays = Math.max(0, Math.round((Date.parse(today) - Date.parse(latest.range.to)) / 86400000)), fresh = ageDays <= 2;
+  const inTeam = (x) => team.includes(x.assigneeId), mStart = `${today.slice(0, 7)}-01`;
+  const prev = new Date(Date.parse(mStart) - 86400000).toISOString().slice(0, 10), pStart = `${prev.slice(0, 7)}-01`;
+  const doneIn = (a2, b2) => tasks.filter((x) => inTeam(x) && x.state === 'done' && x.completedAt && saudiDay(x.completedAt) >= a2 && saudiDay(x.completedAt) <= b2);
+  const doneM = doneIn(mStart, today), doneP = doneIn(pStart, prev), openNow = tasks.filter((x) => inTeam(x) && x.state === 'open');
+  const load = {}; for (const pool of levelPools(team)) { const act = pool.filter((id) => !(ro[id] && ro[id].onLeave)); if (act.length) Object.assign(load, loadFor(tasks, act, today).people); }
+  const red = team.filter((id) => load[id] && load[id].status === 'red');
+  const qNext = quarterOf(today, 1), plans = devPlans[qNext.key] || {}, active = team.filter((id) => !(ro[id] && ro[id].onLeave));
+  const noPlan = active.filter((id) => !(plans[id] && plans[id].status === 'agreed'));
+  const old = openNow.filter((x) => x.createdAt && Date.now() - Date.parse(x.createdAt) > 7 * 86400000);
+  const oldBy = [...old.reduce((m, x) => m.set(x.assigneeId, (m.get(x.assigneeId) || 0) + 1), new Map())].sort((x, y) => y[1] - x[1]);
+  const pending = pendingList().length;
+  const names = (ids) => ids.slice(0, 4).map(nm).join('، ') + (ids.length > 4 ? ` +${ids.length - 4}` : '');
+  const go = (hash, prep) => () => { if (prep) prep(); location.hash = hash; };
+  const att = [
+    red.length && { k: 'red', title: t('cr_att_red', { n: red.length }), detail: names(red), href: '#kpi', prep: () => { kpiTab = 'team'; } },
+    noPlan.length && { k: 'plan', title: t('cr_att_plan', { n: noPlan.length, m: active.length, q: qNext.label }), detail: names(noPlan), href: '#dev', prep: () => { devQ = 'next'; pref('devq', 'next'); } },
+    old.length && { k: 'old', title: t('cr_att_old', { n: old.length }), detail: oldBy.slice(0, 3).map(([id, n]) => `${nm(id)} ${n}`).join('، '), href: '#kpi', prep: () => { kpiTab = 'team'; } },
+    pending && { k: 'pending', title: t('cr_att_pending', { n: pending }), detail: '', href: '#team' },
+  ].filter(Boolean);
+  const num = (k, v, sub) => el('div', { class: 'cr-num' }, el('span', { text: t(k) }), el('b', { text: String(v) }), sub ? el('small', { text: sub }) : null);
+  const job = (label, hash, prep) => el('button', { type: 'button', class: 'cr-job', onclick: go(hash, prep) }, el('b', { text: label }), el('span', { text: '↗' }));
+  set(body,
+    el('div', { class: `cr-fresh ${fresh ? 'ok' : 'old'}` },
+      el('div', {}, el('span', { class: 'cr-k', text: t('cr_fresh_h') }), el('b', { text: fresh ? t('cr_fresh_ok', { to: latest.range.to }) : t('cr_fresh_old', { to: latest.range.to, n: ageDays }) }),
+        el('small', { text: t('cr_fresh_meta', { n: tasks.length.toLocaleString('en-US'), d: (latest.extractedAt || '').slice(0, 10) }) })),
+      el('a', { class: `btn${fresh ? '' : ' primary'}`, href: '#data', text: `${t('cr_pull_again')} ↗` })),
+    el('div', { class: 'cr-nums' }, num('cr_nums_done', doneM.length, t('cr_nums_last', { n: doneP.length })), num('cr_nums_points', Math.round(doneM.reduce((s, x) => s + taskPoints(wt, x), 0)), t('cr_nums_last', { n: Math.round(doneP.reduce((s, x) => s + taskPoints(wt, x), 0)) })),
+      num('cr_nums_open', openNow.length, old.length ? t('cr_nums_old', { n: old.length }) : ''), num('cr_nums_team', team.length, '')),
+    el('h2', { class: 'cr-h', text: t('cr_att_h') }),
+    att.length ? el('div', { class: 'cr-att' }, att.map((x) => el('button', { type: 'button', class: `cr-item k-${x.k}`, onclick: go(x.href, x.prep) },
+      el('div', {}, el('b', { text: x.title }), x.detail ? el('span', { text: x.detail }) : null), el('span', { class: 'cr-go', text: `${t('cr_go')} ↗` }))))
+      : el('div', { class: 'cr-calm', text: t('cr_att_none') }),
+    el('h2', { class: 'cr-h', text: t('cr_jobs_h') }),
+    el('div', { class: 'cr-jobs' }, job(t('kpi_board'), '#kpi', () => { kpiTab = 'overview'; }), job(t('nav_dev'), '#dev'), job(t('nav_team'), '#team'),
+      job(t('cr_job_reports'), '#kpi', () => { kpiTab = 'reports'; }), job(t('cr_job_viewas'), '#me')));
+}
 function renderDev() {
   const body = $('dev-body'); if (!body) return;
   if (!datasets.length) { set(body, el('div', { class: 'empty' }, t('dev_no_data'), ' ', el('a', { href: '#data', text: t('nav_data') }))); return; }
@@ -2591,7 +2637,7 @@ function applyTheme() {
   paintThemeButton();
 }
 function route() {
-  const views = ['tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'guide'];
+  const views = ['home', 'tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'guide'];
   const requested = location.hash.slice(1);
   let hash = portalRoute(requested, isTeamPortal);
   if (requested !== hash) history.replaceState(null, '', '#' + hash);
@@ -2605,11 +2651,11 @@ function route() {
     else { const payload = hash.slice(3); hash = 'me'; receiveMe(payload); }
   }
   const mod = hash.startsWith('m-') ? hash.slice(2) : null;
-  const v = mod ? 'module' : views.includes(hash) ? hash : 'tools';
+  const v = mod ? 'module' : views.includes(hash) ? hash : (!hash && !isTeamPortal ? 'home' : 'tools');   // the manager link opens on the control room
   for (const id of [...views, 'module']) $(`view-${id}`).hidden = id !== v;
   document.body.classList.toggle('in-module', v === 'module');
   if (mod) openModule(mod);
-  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', dev: 'nav_dev', guide: 'nav_guide' }[v]); currentModule = null; }
+  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', dev: 'nav_dev', home: 'cr_title', guide: 'nav_guide' }[v]); currentModule = null; }
   $('module-open').hidden = v !== 'module';
   // one item in the menu is current — the open module, or the page — and its group is the open one
   let current = null;
@@ -2627,6 +2673,7 @@ function route() {
   if (v === 'team') renderTeam();
   if (v === 'weights') renderWeights();
   if (v === 'dev') renderDev();
+  if (v === 'home') renderHome();
 }
 
 // ---------- wiring ----------

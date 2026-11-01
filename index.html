@@ -529,6 +529,18 @@
   .va-banner { position: sticky; top: 0; z-index: 15; display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; margin: 0 0 14px; padding: 12px 14px; border-radius: var(--radius); background: var(--title); color: var(--card); box-shadow: 0 6px 18px rgba(0,0,0,.18); }
   .va-banner b { display: block; font-size: 1rem; } .va-banner span { font-size: 12.5px; opacity: .9; } .va-banner .va-eye { font-size: 22px; } .va-banner .btn { background: var(--card); color: var(--title); border-color: var(--card); }
   body.viewing-as .va-hide, body.viewing-as #intro-card-me { display: none !important; }
+  .cr-start { padding: 24px; border: 1px dashed var(--line-strong); border-radius: var(--radius); text-align: center; } .cr-start h2 { margin: 0 0 8px; }
+  .cr-fresh { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--card); border-inline-start: 6px solid var(--accent); margin-bottom: 12px; }
+  .cr-fresh.old { border-inline-start-color: var(--warn); } .cr-fresh .cr-k { display: block; font-size: 12px; color: var(--slate); } .cr-fresh b { display: block; font-size: 1.05rem; } .cr-fresh small { color: var(--slate); }
+  .cr-nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 6px; } .cr-num { padding: 12px 14px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--card); display: grid; gap: 2px; }
+  .cr-num span { font-size: 12.5px; color: var(--slate); } .cr-num b { font-size: 28px; color: var(--title); line-height: 1.1; } .cr-num small { font-size: 12px; color: var(--slate); }
+  .cr-h { margin: 18px 0 8px; font-size: 1.05rem; } .cr-att { display: grid; gap: 8px; }
+  .cr-item { font: inherit; color: inherit; text-align: start; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--card); border-inline-start: 5px solid var(--warn); }
+  .cr-item:hover { border-color: var(--accent); } .cr-item.k-red { border-inline-start-color: var(--fail, #B42318); } .cr-item.k-plan { border-inline-start-color: var(--accent); } .cr-item b { display: block; } .cr-item span { font-size: 13px; color: var(--slate); } .cr-go { color: var(--accent) !important; white-space: nowrap; }
+  .cr-calm { padding: 14px 16px; border-radius: var(--radius); background: var(--accent-wash); color: var(--accent); font-weight: 700; }
+  .cr-jobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; } .cr-job { font: inherit; color: inherit; cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--card); }
+  .cr-job:hover { border-color: var(--accent); transform: translateY(-1px); } .cr-job span { color: var(--accent); }
+  @media (max-width: 760px) { .cr-nums { grid-template-columns: repeat(2, 1fr); } }
   .row-acts { white-space: nowrap; } .icon-btn { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px; padding: 2px 7px; cursor: pointer; margin-inline-start: 3px; } .icon-btn:hover { border-color: var(--accent); } @media (max-width: 760px) { .funnel { grid-template-columns: repeat(2, 1fr); } } .proj-months { display: flex; align-items: flex-end; gap: 6px; height: 128px; margin: 12px 0; padding: 0 2px; overflow-x: auto; }
   .pm { display: grid; justify-items: center; gap: 2px; min-width: 34px; } .pm i { display: block; width: 22px; background: var(--accent); border-radius: 4px 4px 0 0; } .pm b { font-size: 12px; } .pm span { font-size: 10.5px; color: var(--slate); }
   .proj-tools { gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0 8px; } .proj-q { flex: 1; min-width: 220px; font: inherit; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--card); color: var(--text); }
@@ -738,6 +750,7 @@
     <span class="brand-name" data-t="portal">بوابة الفريق التقني — جدة</span>
   </div>
   <nav class="nav" aria-label="primary">
+    <a href="#home" data-view="home" id="nav-home-mgr"><span class="nav-item-icon" aria-hidden="true">◎</span><span data-t="cr_title">غرفة المتابعة</span></a>
     <a href="#tools" data-view="tools"><span class="nav-item-icon" aria-hidden="true">⌂</span><span data-t="nav_home">الرئيسية</span></a>
     <a href="#me" data-view="me"><span class="nav-item-icon" aria-hidden="true">★</span><span data-t="nav_me">مؤشراتي</span></a>
     <div class="nav-section" data-nav-section="modules">
@@ -751,11 +764,11 @@
         <span class="nav-group-label"><span class="nav-item-icon" aria-hidden="true">▣</span><span data-t="nav_kpi">المؤشرات</span></span><span class="nav-chevron" aria-hidden="true"></span>
       </button>
       <div class="nav-group-panel" id="nav-kpi">
-        <a href="#data" class="sub" data-view="data" data-t="nav_data">البيانات</a>
         <a href="#kpi" class="sub" data-view="kpi" data-t="kpi_board">لوحة المؤشرات</a>
-        <a href="#team" class="sub" data-view="team" data-t="nav_team">الفريق</a>
-        <a href="#weights" class="sub" data-view="weights" data-t="nav_weights">الأوزان</a>
         <a href="#dev" class="sub" data-view="dev" data-t="nav_dev">التطوير</a>
+        <a href="#team" class="sub" data-view="team" data-t="nav_team">الفريق</a>
+        <a href="#data" class="sub" data-view="data" data-t="nav_data">البيانات</a>
+        <a href="#weights" class="sub" data-view="weights" data-t="nav_weights">الأوزان</a>
       </div>
     </div>
     <div class="nav-section" data-nav-section="systems">
@@ -816,6 +829,11 @@
   <section id="view-team" hidden>
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_team">الفريق</h1><button type="button" class="help-q" data-help="g_team_b" data-help-title="nav_team" aria-label="?">?</button></div><p class="lead" data-t="lead_team"></p></div>
     <div id="team-body"></div>
+  </section>
+
+  <section id="view-home" hidden>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="cr_title">غرفة المتابعة</h1><button type="button" class="help-q" data-help="g_home_b" data-help-t="cr_title" aria-label="?">?</button></div><p class="lead" data-t="lead_home"></p></div>
+    <div id="home-body"></div>
   </section>
 
   <section id="view-dev" hidden>

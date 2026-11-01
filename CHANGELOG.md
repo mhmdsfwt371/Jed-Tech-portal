@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.59 — 2026-11-01
+
+- «غرفة المتابعة» أول صفحة لرابط المدير: حداثة البيانات وزر سحب، وأرقام الشهر مقابل الماضي، و«محتاج انتباهك» (عبء حرج، خطط الربع القادم غير المعتمدة، المهام المفتوحة أكثر من ٧ أيام، الأسماء المنتظرة) — كل بند يفتح صفحته — واختصارات للمهام الأساسية.
+- قائمة «المؤشرات» مرتبة حسب الشغل: لوحة المؤشرات، التطوير، الفريق، ثم البيانات والأوزان.
+
+<details><summary>English</summary>
+
+- “Control room” is the manager link’s first page: data freshness with a pull button, this month against last month, “Needs your attention” (critical workload, next quarter’s plans not agreed, tasks open over 7 days, pending names) — each item opens its page — and shortcuts to the main tasks.
+- The indicators menu follows the work: KPI board, Development, Team, then Data and Weights.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «کنٹرول روم» مینیجر لنک کا پہلا صفحہ: ڈیٹا کی تازگی اور کھینچنے کا بٹن، اس ماہ بمقابلہ پچھلا ماہ، «آپ کی توجہ درکار» — ہر نکتہ اپنا صفحہ کھولتا ہے — اور اہم کاموں کے شارٹ کٹس۔
+- اشاریوں کا مینو کام کی ترتیب میں: بورڈ، ترقی، ٹیم، پھر ڈیٹا اور اوزان۔
+
+</div>
+</details>
+
+
 ## v8.58 — 2026-11-01
 
 - كل صفحة فيها الآن سطر ظاهر تحت عنوانها يقول ما هي وماذا تفعل فيها — بدل الاكتفاء بزر «؟».

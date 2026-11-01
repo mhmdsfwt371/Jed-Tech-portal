@@ -1,18 +1,18 @@
 {
-  "version": "8.58",
+  "version": "8.59",
   "date": "2026-11-01",
   "notes": {
     "ar": [
-      "كل صفحة فيها الآن سطر ظاهر تحت عنوانها يقول ما هي وماذا تفعل فيها — بدل الاكتفاء بزر «؟».",
-      "جملة صفحة الفريق صارت واضحة: هذا هو الطلب الوحيد الذي تكتبه البوابة في ماي أفاقي."
+      "«غرفة المتابعة» أول صفحة لرابط المدير: حداثة البيانات وزر سحب، وأرقام الشهر مقابل الماضي، و«محتاج انتباهك» (عبء حرج، خطط الربع القادم غير المعتمدة، المهام المفتوحة أكثر من ٧ أيام، الأسماء المنتظرة) — كل بند يفتح صفحته — واختصارات للمهام الأساسية.",
+      "قائمة «المؤشرات» مرتبة حسب الشغل: لوحة المؤشرات، التطوير، الفريق، ثم البيانات والأوزان."
     ],
     "en": [
-      "Every page now shows a line under its title saying what it is and what to do there — instead of relying on the “?” button alone.",
-      "The Team page sentence is now clear: this is the only request the portal writes to MyAFAQY."
+      "“Control room” is the manager link’s first page: data freshness with a pull button, this month against last month, “Needs your attention” (critical workload, next quarter’s plans not agreed, tasks open over 7 days, pending names) — each item opens its page — and shortcuts to the main tasks.",
+      "The indicators menu follows the work: KPI board, Development, Team, then Data and Weights."
     ],
     "ur": [
-      "اب ہر صفحے کے عنوان کے نیچے ایک سطر ہے جو بتاتی ہے کہ یہ کیا ہے اور یہاں کیا کرنا ہے۔",
-      "ٹیم صفحے کا جملہ واضح: یہ واحد درخواست ہے جو پورٹل مائی آفاقی میں لکھتا ہے۔"
+      "«کنٹرول روم» مینیجر لنک کا پہلا صفحہ: ڈیٹا کی تازگی اور کھینچنے کا بٹن، اس ماہ بمقابلہ پچھلا ماہ، «آپ کی توجہ درکار» — ہر نکتہ اپنا صفحہ کھولتا ہے — اور اہم کاموں کے شارٹ کٹس۔",
+      "اشاریوں کا مینو کام کی ترتیب میں: بورڈ، ترقی، ٹیم، پھر ڈیٹا اور اوزان۔"
     ]
   }
 }

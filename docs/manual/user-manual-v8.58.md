@@ -19,6 +19,10 @@
 - كل صفحة فيها الآن سطر ظاهر تحت عنوانها يقول ما هي وماذا تفعل فيها — بدل الاكتفاء بزر «؟».
 - جملة صفحة الفريق صارت واضحة: هذا هو الطلب الوحيد الذي تكتبه البوابة في ماي أفاقي.
 
+### غرفة المتابعة — أول صفحة للمدير
+
+أول ما يفتحه رابط المدير. في أعلاها حداثة البيانات: آخر يوم فيها، وعدد المهام، ومتى سُحبت، وزر للسحب من جديد — وتصير برتقالية إذا مر على آخر يوم أكثر من يومين. ثم أرقام الشهر الحالي مقابل الماضي: المنجز، والنقاط، والمفتوح الآن، وعدد الفريق. ثم «محتاج انتباهك»: من عبؤه حرج، ومن ليس له خطة معتمدة للربع القادم، والمهام المفتوحة منذ أكثر من سبعة أيام، والأسماء المنتظرة — وكل بند يفتح الصفحة التي تعالجه. وفي الأسفل اختصارات لأهم المهام. لا تظهر على رابط الفريق.
+
 ### الأدوات
 
 القائمة الجانبية فيها كل شيء: «الرئيسية»، ثم مجموعة «أدوات الفريق الفنية» — مخطط توزيع الحساسات، ومساعد الإنتجريشن، وكانفال، وقارئات أفاقي — ثم مجموعة «المؤشرات» بصفحتي البيانات ولوحة المؤشرات، ثم «أنظمة الشركة»، ثم «الدليل». المجموعة تُفتح وتُطوى بالضغط على اسمها، وتُفتح وحدها حين تكون فيها. اضغط وحدة فتفتح تحت الشريط العلوي وتبقى مفتوحة على حالها حين تنتقل لغيرها؛ و«فتح في نافذة مستقلة» في الشريط يفتحها وحدها. كل أداة تطلب الدخول بحسابها المعتاد. روابط الأنظمة مرتبة حسب أنظمة أفاقي والمشاريع ورافد والموردين والعمل والتعلم والدعم، وتفتح في نافذة جديدة. اللغة والوضع الداكن أسفل القائمة، وعلى الجوال تفتح القائمة من الزر أعلى الشاشة. في البوابة رابطان: الرابط الحالي للإدارة بكل الصفحات، ورابط الفريق يفتح «مؤشراتي» ويعرض الأدوات وأفاقي برو والدليل فقط؛ كل موظف يسحب ما يسمح به حسابه في ماي أفاقي. الرابطان لا يفرضان تسجيل دخول أو حماية وصول جديدة. يدير المدير روابط الأنظمة من «إدارة روابط الأنظمة».
@@ -91,6 +95,10 @@ This guide is for version v8.58 — 2026-11-01
 - Every page now shows a line under its title saying what it is and what to do there — instead of relying on the “?” button alone.
 - The Team page sentence is now clear: this is the only request the portal writes to MyAFAQY.
 
+### Control room — the manager’s first page
+
+The first page the manager link opens. At the top, data freshness: its last day, the number of tasks, when it was pulled, and a button to pull again — it turns amber when the last day is more than two days old. Then this month against last month: done, points, open now and team size. Then “Needs your attention”: critical workload, no agreed plan for next quarter, tasks open over seven days, and pending names — each item opens the page that handles it. At the bottom, shortcuts to the main tasks. Not shown on the team link.
+
 ### Tools
 
 The side menu holds everything: “Home”, then the “Team engineering tools” group — the sensor displacement tool, the API helper, canval and Afaqy readers — then the “KPIs” group with the Data page and the KPI board, then “Company systems”, then “Guide”. A group opens and folds when you press its name, and opens by itself when you are in it. Press a module and it opens under the top bar, staying open as it was while you move to another; “Open in its own tab” in the bar opens it on its own. Each tool asks for its usual sign-in. System links are grouped into Afaqy systems, projects, Rafed, vendors, and work, learning and support; they open in a new tab. Language and dark mode are at the foot of the menu; on a phone the menu opens from the button at the top of the screen. The portal has two links: the existing URL keeps every management page, while the team link opens “My KPIs” and shows only the tools, Afaqy PRO and Guide. Each person reads only the data available to their myafaqy account. These links do not add authentication or secure access control. The manager maintains the system links from “Manage system links”.
@@ -162,6 +170,10 @@ On this device and in this browser only; nothing is sent anywhere. To move it to
 
 - اب ہر صفحے کے عنوان کے نیچے ایک سطر ہے جو بتاتی ہے کہ یہ کیا ہے اور یہاں کیا کرنا ہے۔
 - ٹیم صفحے کا جملہ واضح: یہ واحد درخواست ہے جو پورٹل مائی آفاقی میں لکھتا ہے۔
+
+### کنٹرول روم — مینیجر کا پہلا صفحہ
+
+مینیجر لنک پر کھلنے والا پہلا صفحہ۔ اوپر ڈیٹا کی تازگی: آخری دن، کاموں کی تعداد، کب کھینچا گیا، اور دوبارہ کھینچنے کا بٹن — آخری دن دو دن سے پرانا ہو تو نارنجی ہو جاتا ہے۔ پھر اس ماہ بمقابلہ پچھلے ماہ: مکمل، پوائنٹس، ابھی کھلے اور ٹیم کا حجم۔ پھر «آپ کی توجہ درکار»: شدید بوجھ، اگلی سہ ماہی کا منظور شدہ منصوبہ نہیں، سات دن سے زیادہ کھلے کام، اور منتظر نام — ہر نکتہ اسی صفحے کو کھولتا ہے جو اسے سنبھالتا ہے۔ نیچے اہم کاموں کے شارٹ کٹس۔ ٹیم لنک پر نظر نہیں آتا۔
 
 ### ٹولز
 

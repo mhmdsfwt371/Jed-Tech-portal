@@ -57,6 +57,7 @@
 | `docs/decisions/0040-development-page.md` | «التطوير» — quarter development plans in one page |
 | `docs/decisions/0041-performance.md` | Performance: remembered results, partial redraws, paged lists, WOFF2 |
 | `docs/decisions/0042-view-as.md` | «اعرض كـ» — the manager sees one person's page as they see it |
+| `docs/decisions/0043-control-room.md` | «غرفة المتابعة» — the manager's first page |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |
