@@ -59,6 +59,10 @@
         "ar": "MyAFAQY",
         "en": "MyAFAQY",
         "ur": "MyAFAQY"
+      },
+      "desc": {
+        "ar": "نظام المهام والعملاء الداخلي: طلبات العملاء والمهام وتعيينها للفريق.",
+        "en": "The internal tasks and customers system: customer requests, tasks and assigning them to the team."
       }
     },
     {
@@ -69,6 +73,10 @@
         "ar": "AFAQY PRO",
         "en": "AFAQY PRO",
         "ur": "AFAQY PRO"
+      },
+      "desc": {
+        "ar": "منصة أفاقي لتتبع المركبات وإدارة الأساطيل التي يستخدمها العملاء.",
+        "en": "AFAQY’s vehicle tracking and fleet management platform used by customers."
       }
     },
     {
@@ -89,6 +97,10 @@
         "ar": "AFAQY API Documentation",
         "en": "AFAQY API Documentation",
         "ur": "AFAQY API Documentation"
+      },
+      "desc": {
+        "ar": "توثيق واجهات أفاقي البرمجية لربط الأنظمة.",
+        "en": "Documentation of AFAQY’s APIs for integrations."
       }
     },
     {
@@ -99,6 +111,10 @@
         "ar": "New VSS",
         "en": "New VSS",
         "ur": "New VSS"
+      },
+      "desc": {
+        "ar": "منصة الفيديو والكاميرات — الإصدار الجديد.",
+        "en": "The video and cameras platform — new version."
       }
     },
     {
@@ -109,6 +125,10 @@
         "ar": "VSS Old",
         "en": "VSS Old",
         "ur": "VSS Old"
+      },
+      "desc": {
+        "ar": "منصة الفيديو والكاميرات — الإصدار القديم.",
+        "en": "The video and cameras platform — old version."
       }
     },
     {
@@ -159,6 +179,10 @@
         "ar": "Nusuk Card",
         "en": "Nusuk Card",
         "ur": "Nusuk Card"
+      },
+      "desc": {
+        "ar": "منصة بطاقة نسك لمشروع الحج.",
+        "en": "The Nusuk Card platform for the Hajj project."
       }
     },
     {
@@ -169,6 +193,10 @@
         "ar": "Nusuk Card — Live Feed",
         "en": "Nusuk Card — Live Feed",
         "ur": "Nusuk Card — Live Feed"
+      },
+      "desc": {
+        "ar": "البث المباشر لقراءات بطاقة نسك.",
+        "en": "Live feed of Nusuk Card readings."
       }
     },
     {
@@ -179,6 +207,10 @@
         "ar": "Nusuk Card — Test",
         "en": "Nusuk Card — Test",
         "ur": "Nusuk Card — Test"
+      },
+      "desc": {
+        "ar": "بيئة الاختبار لمنصة بطاقة نسك.",
+        "en": "Test environment of the Nusuk Card platform."
       }
     },
     {
@@ -189,6 +221,10 @@
         "ar": "Nusuk Readers",
         "en": "Nusuk Readers",
         "ur": "Nusuk Readers"
+      },
+      "desc": {
+        "ar": "متابعة قارئات نسك في المشاعر.",
+        "en": "Monitoring the Nusuk readers at the holy sites."
       }
     },
     {
@@ -199,6 +235,10 @@
         "ar": "سيرفر VPN مايل سايت — نسك",
         "en": "Milesight VPN server — Nusuk",
         "ur": "مائل سائٹ VPN سرور — نسک"
+      },
+      "desc": {
+        "ar": "خادم الشبكة الخاصة لراوترات ميلسايت في مشروع نسك.",
+        "en": "The VPN server for the Milesight routers of the Nusuk project."
       }
     },
     {
@@ -249,6 +289,10 @@
         "ar": "Teltonika FOTA",
         "en": "Teltonika FOTA",
         "ur": "Teltonika FOTA"
+      },
+      "desc": {
+        "ar": "تحديث برمجيات وإعدادات أجهزة تيلتونيكا عن بُعد.",
+        "en": "Remote firmware and configuration updates for Teltonika devices."
       }
     },
     {
@@ -259,6 +303,10 @@
         "ar": "Teltonika Partners",
         "en": "Teltonika Partners",
         "ur": "Teltonika Partners"
+      },
+      "desc": {
+        "ar": "بوابة شركاء تيلتونيكا: الدعم والمستندات.",
+        "en": "Teltonika partner portal: support and documents."
       }
     },
     {
@@ -269,6 +317,10 @@
         "ar": "Milesight Enterprise",
         "en": "Milesight Enterprise",
         "ur": "Milesight Enterprise"
+      },
+      "desc": {
+        "ar": "حساب ميلسايت لإدارة أجهزة وراوترات ميلسايت.",
+        "en": "Milesight account for managing Milesight devices and routers."
       }
     },
     {
@@ -299,6 +351,10 @@
         "ar": "AFAQY Learn",
         "en": "AFAQY Learn",
         "ur": "AFAQY Learn"
+      },
+      "desc": {
+        "ar": "منصة أفاقي للتدريب والتعلم.",
+        "en": "AFAQY’s training and learning platform."
       }
     },
     {
@@ -309,6 +365,10 @@
         "ar": "AFAQY Service Desk",
         "en": "AFAQY Service Desk",
         "ur": "AFAQY Service Desk"
+      },
+      "desc": {
+        "ar": "بوابة طلبات الدعم الداخلي في أفاقي.",
+        "en": "AFAQY’s internal support request portal."
       }
     },
     {
@@ -319,6 +379,10 @@
         "ar": "Outlook",
         "en": "Outlook",
         "ur": "Outlook"
+      },
+      "desc": {
+        "ar": "بريد العمل.",
+        "en": "Work email."
       }
     },
     {
@@ -329,6 +393,10 @@
         "ar": "OneDrive",
         "en": "OneDrive",
         "ur": "OneDrive"
+      },
+      "desc": {
+        "ar": "ملفات العمل على السحابة.",
+        "en": "Work files in the cloud."
       }
     }
   ]

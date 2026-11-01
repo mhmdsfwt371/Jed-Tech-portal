@@ -65,6 +65,7 @@
 | `docs/decisions/0048-three-methods.md` | Three clear methods per task type; «against the usual time» in steps |
 | `docs/decisions/0049-weights-cards-on-phone.md` | Weights tables as cards on a phone |
 | `docs/decisions/0050-own-methods.md` | The manager's own calculation methods |
+| `docs/decisions/0051-tool-descriptions.md` | Tool descriptions on hover |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

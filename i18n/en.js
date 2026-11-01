@@ -1227,4 +1227,6 @@ export default {
     pr_prev_gone: '{n}: method “{m}” removed → on completion',
     mode_gone: 'Removed method',
     mode_d_gone: 'The method was removed — counts on completion until you pick another.',
+    tip_none: 'No description yet — from “{c}” · {d}',
+    tip_what: 'What does it do?',
 };

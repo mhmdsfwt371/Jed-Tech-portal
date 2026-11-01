@@ -2166,6 +2166,33 @@ function pointsRulesBox(wt, admin) {
         tb.querySelectorAll('tbody tr').forEach((tr) => [...tr.children].forEach((td, i) => { if (hs[i]) td.dataset.label = hs[i]; })); }); } catch (e) { console.error(e); }
     return out; };
   renderWeights = withRules(renderWeights); }
+// ---------- what each tool does: a popup on hover, an ⓘ to tap on a phone (ADR-0051) ----------
+const tipEl = () => document.getElementById('tool-tip') || document.body.appendChild(el('div', { id: 'tool-tip', role: 'tooltip', hidden: '' }));
+function showTip(target, text) {
+  const tp = tipEl(); tp.textContent = text; tp.hidden = false; tp.style.maxWidth = `${Math.min(320, innerWidth - 16)}px`;
+  const r = target.getBoundingClientRect(), tr = tp.getBoundingClientRect();
+  const left = Math.max(8, Math.min(innerWidth - tr.width - 8, r.left + r.width / 2 - tr.width / 2)); let top = r.bottom + 8; if (top + tr.height > innerHeight - 8) top = r.top - tr.height - 8;
+  tp.style.left = `${left}px`; tp.style.top = `${Math.max(8, top)}px`;
+}
+const hideTip = () => { const tp = document.getElementById('tool-tip'); if (tp) { tp.hidden = true; tp.dataset.for = ''; } };
+document.addEventListener('click', (e) => { if (!e.target.closest('.tip-i')) hideTip(); }); window.addEventListener('scroll', hideTip, { passive: true });
+function attachTip(a, text, withButton = true) {
+  if (!a || !text || a.dataset.tip) return; a.dataset.tip = text;
+  a.addEventListener('mouseenter', () => { if (matchMedia('(hover: hover)').matches) showTip(a, text); }); a.addEventListener('mouseleave', hideTip);
+  a.addEventListener('focus', () => showTip(a, text)); a.addEventListener('blur', hideTip);
+  const key = a.getAttribute('href') || '';
+  if (!withButton) return;   // a card that already shows its description needs no ⓘ
+  a.after(el('button', { type: 'button', class: 'tip-i', 'aria-label': t('tip_what'), text: 'ⓘ', onclick: (e) => { e.preventDefault(); e.stopPropagation(); const tp = tipEl(); if (!tp.hidden && tp.dataset.for === key) hideTip(); else { showTip(e.currentTarget, text); tipEl().dataset.for = key; } } }));
+}
+function addTips() {
+  const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } };
+  const sysTip = new Map(SYSTEMS.map((x) => { const d = x.desc ? (x.desc[lang] || x.desc.en || x.desc.ar) : ''; const c = SYSTEM_CATEGORIES.find((k) => k.id === x.category);
+    return [x.url, d || t('tip_none', { c: c ? L(c.name, lang) : '', d: `\u2066${host(x.url)}\u2069` })]; }));
+  document.querySelectorAll('#systems a[href]').forEach((a) => attachTip(a, sysTip.get(a.getAttribute('href'))));
+  for (const x of [...PRIMARY, ...MORE]) { const text = x.helps ? L(x.helps, lang) : x.desc ? L(x.desc, lang) : ''; if (!text) continue;
+    document.querySelectorAll(`#view-tools a[href="#m-${x.id}"]${x.url ? `, #view-tools a[href="${x.url}"]` : ''}`).forEach((a) => attachTip(a, text, !a.closest('#primary'))); }
+}
+{ const withTips = (fn) => function toolsWithTips(...args) { const out = fn.apply(this, args); try { addTips(); } catch (e) { console.error(e); } return out; }; renderTools = withTips(renderTools); }
 function renderHome() {
   const body = $('home-body'); if (!body) return;
   if (!datasets.length) { set(body, el('div', { class: 'cr-start' }, el('h2', { text: t('cr_start_h') }), el('p', { text: t('cr_start_b') }), el('a', { class: 'btn primary', href: '#data', text: `${t('cr_pull')} ↗` }))); return; }

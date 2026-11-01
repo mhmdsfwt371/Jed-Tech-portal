@@ -11,6 +11,8 @@ export function validateSystems(data) {
   for (const x of data.systems) {
     if (!x || typeof x.id !== 'string' || !/^[a-z0-9_-]{1,64}$/.test(x.id) || entries.has(x.id) || !ids.has(x.category) || !validName(x.name) || typeof x.url !== 'string' || x.url.length > 2048) return null;
     try { const u = new URL(x.url); if (!['http:', 'https:'].includes(u.protocol) || u.username || u.password) return null; } catch { return null; }
+    // ADR-0051: an optional description shown when hovering the link — Arabic and/or English, up to 300 characters each
+    if (x.desc != null && (typeof x.desc !== 'object' || Array.isArray(x.desc) || Object.keys(x.desc).some((l) => !['ar', 'en', 'ur'].includes(l) || typeof x.desc[l] !== 'string' || x.desc[l].length > 300))) return null;
     entries.add(x.id);
   }
   return data;

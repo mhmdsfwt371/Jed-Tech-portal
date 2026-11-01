@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.67 — 2026-11-02
+
+- «كل الأدوات والأنظمة»: قف بالماوس على أي نظام أو أداة تظهر رسالة تقول ماذا يفعل — وعلى الجوال اضغط ⓘ بجانبه.
+- صفحة إدارة الروابط فيها خانة وصف (عربي وإنجليزي) لكل رابط؛ كُتب وصف ١٧ نظامًا، والباقي ينتظر وصفك.
+
+<details><summary>English</summary>
+
+- “All tools and systems”: hover over any system or tool to see what it does — on a phone, tap the ⓘ beside it.
+- The admin links page has a description field (Arabic and English) per link; 17 systems are described, the rest await your description.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «تمام ٹولز اور سسٹمز»: کسی بھی سسٹم پر ماؤس رکھیں تو پیغام بتاتا ہے کہ وہ کیا کرتا ہے — فون پر ساتھ والے ⓘ کو دبائیں۔
+- لنکس کے انتظامی صفحے میں ہر لنک کے لیے تفصیل کا خانہ۔
+
+</div>
+</details>
+
+
 ## v8.66 — 2026-11-02
 
 - «طرقك الخاصة» في قواعد النقاط: اعمل طريقة حساب باسمك — خطوات بالنسبة للوقت المعتاد («لحد X% ← ×Y» بالترتيب) ثم «أكثر ← ×Z» — وتظهر في قائمة الطريقة لكل نوع بجانب الطرق الثلاث، مع شرح خطواتها.
