@@ -2316,7 +2316,7 @@ function pointsRulesBox(wt, admin) {
   return el('details', { class: 'pr-box', open: '' }, el('summary', { text: t('pr_h') }), steps, calcBox, el('h3', { text: t('pr_rules_h') }), editor);
 }
 { const withRules = (fn) => function weightsWithRules(...args) { const out = fn.apply(this, args);
-    try { const body = $('weights-body'), wt = weights(), uid = (me && me.user ? me.user.id : null) || (!isTeamPortal ? managerIdOf() : null); if (body && wt) { body.prepend(pointsRulesBox(wt, isWeightsAdmin(wt, uid))); if (!isTeamPortal) body.querySelector('.pr-box').after(typesBox(wt)); }
+    try { const body = $('weights-body'), wt = weights(), uid = (me && me.user ? me.user.id : null) || (!isTeamPortal ? managerIdOf() : null); if (body && wt) { const top = body.querySelector('.w-adv-top') || body; top.prepend(pointsRulesBox(wt, isWeightsAdmin(wt, uid))); if (!isTeamPortal) top.querySelector('.pr-box').after(typesBox(wt)); }
       // each cell carries its column's name, so on a phone a row reads as a card: the type on top, every field named under it (ADR-0049)
       if (body) body.querySelectorAll('table').forEach((tb) => { const hs = [...tb.querySelectorAll('thead th')].map((th) => th.textContent.trim()); tb.classList.add('w-cards');
         tb.querySelectorAll('tbody tr').forEach((tr) => [...tr.children].forEach((td, i) => { if (hs[i]) td.dataset.label = hs[i]; })); }); } catch (e) { console.error(e); }
@@ -2641,6 +2641,7 @@ function typeMedians() {
 }
 function renderWeights() {
   const body = $('weights-body'); if (!body) return;
+  const advOpen = !!(body.querySelector('.w-adv') && body.querySelector('.w-adv').open);   // the advanced part stays open across redraws
   const wt = weights();
   const ds = datasets[0];
   const seen = new Map();
@@ -2699,7 +2700,7 @@ function renderWeights() {
     const fsel = (i) => el('select', { class: 'w-sel f-sel', title: t(`factor_${FACTORS[i]}`), 'aria-label': t(`factor_${FACTORS[i]}`), ...(can ? {} : { disabled: '' }),
       onchange: (e) => { const nf = [...f]; nf[i] = Number(e.target.value); put({ f: nf }); } }, [0, 1, 2].map((v) => el('option', { value: String(v), selected: v === f[i], text: String(v) })));
     return [
-      el('td', { class: 'factors' }, el('div', { class: 'f-row' }, FACTORS.map((k, i) => el('label', {}, el('span', { text: t(`factor_short_${k}`) }), fsel(i))))),
+      r.x && !r.x.f ? el('td', { class: 'hint', text: t('w_direct') }) : el('td', { class: 'factors' }, el('div', { class: 'f-row' }, FACTORS.map((k, i) => el('label', {}, el('span', { text: t(`factor_short_${k}`) }), fsel(i))))),
       el('td', { class: 'num' }, el('b', { class: 'base', text: String(x.w) }), el('div', { class: 'hint', text: tierName(x.tier) })),
       el('td', {}, el('select', { class: 'w-sel', ...(can ? {} : { disabled: '' }), onchange: (e) => put({ mode: e.target.value }) }, [...POINT_MODES.map((m) => [m, t(`mode_${m}`)]), ...RR.methods.map((m) => [m.id, m.name]), ...(isCustomMode(x.mode) && !RR.methods.some((m) => m.id === x.mode) ? [[x.mode, t('mode_gone')]] : [])].map(([m, label]) => el('option', { value: m, selected: m === (x.mode || 'done'), text: label }))), el('div', { class: 'hint', text: modeDesc(x.mode || 'done') })),
       el('td', { class: 'num' }, (x.mode || 'done') === 'done' ? [el('span', { class: 'hint', text: '—' }), medHint(r.key)] : [
@@ -2718,6 +2719,26 @@ function renderWeights() {
           ...basisCells(r, g), el('td', { class: 'num', text: String(r.n) }),
           el('td', { class: 'num', text: String(Math.round(pointsOfType(r.key) * 10) / 10) }), editorsCell(r.key))))))];
   };
+  // ADR-0056: the plain page — the type, its points typed directly, how many in the data, and one grey line on how it counts
+  const RRs = rulesOf(wt), fmtN = (v) => String(Math.round(v * 100) / 100);
+  const methodLine = (x) => { const m = (x && x.mode) || 'done', h = x && x.std ? fmtN(x.std) : '';
+    if (m === 'speed') return t('w_m_speed', { x: fmtN(RRs.speedX), h }); if (m === 'compare') return t('w_m_compare', { h });
+    if (isCustomMode(m)) { const cm = (RRs.methods || []).find((q) => q.id === m); return cm ? t('w_m_own', { n: cm.name }) : t('w_m_done'); } return t('w_m_done'); };
+  const simpleTable = (g) => {
+    const rows = g.rows.map((r) => { const x = wt.tasks[r.key]; return { ...r, x, n: (seen.get(r.key) || {}).n || 0, w: x ? x.w : wt.default }; }).sort((p, q) => q.w - p.w || q.n - p.n || p.key.localeCompare(q.key));
+    if (!rows.length) return null;
+    return [el('h2', {}, g.title, el('span', { class: 'hint', text: ` — ${t('w_types_n', { n: rows.length })}` })),
+      el('div', { class: 'table-wrap' }, el('table', { class: 'w-cards w-simple' },
+        el('thead', {}, el('tr', {}, ['w_col_type', 'w_col_pts', 'w_col_n', 'w_col_how'].map((k, i) => el('th', { class: i === 1 || i === 2 ? 'num' : null, text: t(k) })))),
+        el('tbody', {}, rows.map((r) => { const can = mayEdit(r.key);
+          const inp = el('input', { type: 'number', class: 'w-pts', min: '0.5', max: '10', step: '0.5', value: String(r.w), 'aria-label': t('w_col_pts'), ...(can ? {} : { disabled: '' }),
+            onchange: (e) => { const v = Number(e.target.value); if (!(v >= 0.5 && v <= 10)) { e.target.value = String(r.w); toast(t('w_pts_bad')); return; }
+              const x = r.x || {}; save({ tasks: { [r.key]: { w: v, tier: tierFromBase(Math.round(v)), team: x.team || g.id, mode: x.mode || 'done', ...(x.std ? { std: x.std, stdSrc: x.stdSrc || 'set' } : {}) } } }); } });   // typed directly: no factors behind it
+          return el('tr', { class: r.x ? null : 'unweighted' },
+            el('td', {}, el('div', { text: r.name || pretty(r.key) }), r.x ? null : el('div', { class: 'hint warn-text', text: t('w_new_type') })),
+            el('td', { class: 'num', 'data-label': t('w_col_pts') }, inp), el('td', { class: 'num', 'data-label': t('w_col_n') }, String(r.n)),
+            el('td', { class: 'hint', 'data-label': t('w_col_how') }, methodLine(r.x))); }))))];
+  };
   const diff = weightPublishDiff(weightsRepo, weightsDevice);
   const approvedJson = () => JSON.stringify(publishableWeights(weightsRepo, weightsDevice, ymd(new Date())), null, 2) + '\n';
   const download = () => {
@@ -2730,22 +2751,24 @@ function renderWeights() {
   const upload = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const file = e.target.files[0]; if (!file) return; try { weightsDevice = parseWeights(JSON.parse(await file.text())); await store.putWeights(weightsDevice); toast(t('weights_loaded')); renderWeights(); renderKpi(); renderMe(); } catch { toast(t('err_json')); } e.target.value = ''; } });
   const myRights = uid ? (admin ? t('w_you_admin') : (Object.keys(wt.tasks).filter(mayEdit).length ? t('w_you_some', { n: Object.keys(wt.tasks).filter(mayEdit).length }) : t('w_you_none'))) : t('w_you_unknown');
   set(body,
-    el('div', { class: 'tiers' }, TIERS.map((tr) => el('div', { class: 'tier' }, el('b', { text: String((weightsRepo && weightsRepo.tiers && weightsRepo.tiers[tr]) || { admin: 1, customer: 2, integration: 3, multistage: 5 }[tr]) }), el('div', {}, el('strong', { text: t(`tier_${tr}`) }), el('p', { text: t(`tier_${tr}_why`) }))))),
     el('p', { class: 'note', text: myRights }),
     admin ? el('p', { class: diff.count ? 'note' : 'hint',
       text: diff.count ? t('weights_draft_notice', { n: diff.count }) : t('weights_official_notice') }) : null,
+    groups.map(simpleTable),
+    el('h2', {}, t('weights_acts_h'), helpQ('help_weights_acts')),
+    el('div', { class: 'table-wrap' }, el('table', {},
+      el('thead', {}, el('tr', {}, ['w_col_category', 'w_col_weight'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+      el('tbody', {}, Object.entries(wt.activities).map(([k, w]) => el('tr', {}, el('td', { text: pretty(k) }), el('td', { class: 'num' }, stepSel(w, (nw) => save({ activities: { [k]: nw } }), admin || mayEdit(k)))))))),
     el('div', { class: 'row', style: 'margin:12px 0' },
       admin ? el('button', { type: 'button', class: 'btn primary', text: `⇪ ${t('weights_publish_team')}`, onclick: () => { localStorage.setItem('afaqy.weights.publish', approvedJson()); window.open('./manage-systems.html#weights', '_blank', 'noopener'); toast(t('weights_publish_opened')); } }) : null,
       el('button', { type: 'button', class: 'btn', text: t('weights_download'), onclick: download }),
       admin ? el('button', { type: 'button', class: 'btn', text: t('weights_upload'), onclick: () => upload.click() }) : null, upload,
       weightsDevice ? el('button', { type: 'button', class: 'btn quiet', text: t('weights_reset'), onclick: async () => { weightsDevice = null; await store.putWeights(null); renderWeights(); renderKpi(); renderMe(); } }) : null,
       el('span', { class: 'hint', text: wt.reviewed ? t('weights_reviewed', { d: wt.reviewed }) : '' })),
-    groups.map(table),
-    el('h2', {}, t('weights_acts_h'), helpQ('help_weights_acts')),
-    el('div', { class: 'table-wrap' }, el('table', {},
-      el('thead', {}, el('tr', {}, ['w_col_category', 'w_col_weight'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
-      el('tbody', {}, Object.entries(wt.activities).map(([k, w]) => el('tr', {}, el('td', { text: pretty(k) }), el('td', { class: 'num' }, stepSel(w, (nw) => save({ activities: { [k]: nw } }), admin || mayEdit(k)))))))),
-    el('p', { class: 'hint', text: t('weights_seen_note', { range: ds ? `${ds.range.from} → ${ds.range.to}` : '—' }) }));
+    el('details', { class: 'w-adv', ...(advOpen ? { open: '' } : {}) }, el('summary', { text: t('w_adv') }), el('p', { class: 'hint', text: t('w_adv_lead') }), el('div', { class: 'w-adv-top' }),
+      el('div', { class: 'tiers' }, TIERS.map((tr) => el('div', { class: 'tier' }, el('b', { text: String((weightsRepo && weightsRepo.tiers && weightsRepo.tiers[tr]) || { admin: 1, customer: 2, integration: 3, multistage: 5 }[tr]) }), el('div', {}, el('strong', { text: t(`tier_${tr}`) }), el('p', { text: t(`tier_${tr}_why`) }))))),
+      groups.map(table),
+      el('p', { class: 'hint', text: t('weights_seen_note', { range: ds ? `${ds.range.from} → ${ds.range.to}` : '—' }) })));
 }
 
 // ---------- the Team page: positions and leaders by myafaqy id, kept on this device and exportable as team.json ----------

@@ -1,18 +1,18 @@
 {
-  "version": "8.72",
-  "date": "2026-11-02",
+  "version": "8.73",
+  "date": "2026-11-03",
   "notes": {
     "ar": [
-      "صفحة البيانات أبسط: الفترة وخطوتان وآخر سحب في صندوق واحد، وكل الطرق الأخرى والنسخ الاحتياطي تحت «طرق أخرى ونسخ احتياطي» تفتحها عند الحاجة.",
-      "إعداد «مؤشراتي» خطوتان بجملة واحدة لكل خطوة؛ الجوال ونسخ الرمز تحت «على الجوال»."
+      "صفحة الأوزان أبسط بكثير: لكل نوع رقم تكتبه مباشرة، وعدد مهامه في البيانات، وسطر واحد عن طريقة حسابه. العوامل والطرق والإضافات والقواعد والحاسبة كلها تحت «إعدادات متقدمة» مغلقة.",
+      "النوع الذي تكتب نقاطه مباشرة لم يعد مربوطًا بالعوامل الأربعة، ويظهر في الجدول المتقدم «نقاط محددة مباشرة»."
     ],
     "en": [
-      "A simpler data page: the period, two steps and the last pull in one box; every other way and the backup under “Other ways and backup”, opened when needed.",
-      "The My KPIs setup is two one-sentence steps; phone notes and the copy-code under “On a phone”."
+      "A far simpler weights page: per type, a number you type directly, how many of it in the data, and one line on how it counts. Factors, methods, extras, rules and the calculator sit under a closed “Advanced settings”.",
+      "A type whose points you type directly is no longer tied to the four factors; the advanced table shows “points set directly”."
     ],
     "ur": [
-      "ڈیٹا کا صفحہ آسان: مدت، دو قدم اور آخری ڈیٹا ایک ڈبے میں؛ باقی طریقے اور بیک اپ «دوسرے طریقے اور بیک اپ» کے نیچے۔",
-      "«میرے اشاریے» کی ترتیب دو قدم، ہر قدم ایک جملہ۔"
+      "اوزان کا صفحہ بہت آسان: ہر قسم کے لیے عدد براہِ راست لکھیں؛ باقی سب «اعلیٰ ترتیبات» کے نیچے۔",
+      "براہِ راست لکھے پوائنٹس والی قسم اب چار عوامل سے بندھی نہیں۔"
     ]
   }
 }

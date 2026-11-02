@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.73 — 2026-11-03
+
+- صفحة الأوزان أبسط بكثير: لكل نوع رقم تكتبه مباشرة، وعدد مهامه في البيانات، وسطر واحد عن طريقة حسابه. العوامل والطرق والإضافات والقواعد والحاسبة كلها تحت «إعدادات متقدمة» مغلقة.
+- النوع الذي تكتب نقاطه مباشرة لم يعد مربوطًا بالعوامل الأربعة، ويظهر في الجدول المتقدم «نقاط محددة مباشرة».
+
+<details><summary>English</summary>
+
+- A far simpler weights page: per type, a number you type directly, how many of it in the data, and one line on how it counts. Factors, methods, extras, rules and the calculator sit under a closed “Advanced settings”.
+- A type whose points you type directly is no longer tied to the four factors; the advanced table shows “points set directly”.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اوزان کا صفحہ بہت آسان: ہر قسم کے لیے عدد براہِ راست لکھیں؛ باقی سب «اعلیٰ ترتیبات» کے نیچے۔
+- براہِ راست لکھے پوائنٹس والی قسم اب چار عوامل سے بندھی نہیں۔
+
+</div>
+</details>
+
+
 ## v8.72 — 2026-11-02
 
 - صفحة البيانات أبسط: الفترة وخطوتان وآخر سحب في صندوق واحد، وكل الطرق الأخرى والنسخ الاحتياطي تحت «طرق أخرى ونسخ احتياطي» تفتحها عند الحاجة.
