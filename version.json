@@ -1,18 +1,18 @@
 {
-  "version": "8.71",
+  "version": "8.72",
   "date": "2026-11-02",
   "notes": {
     "ar": [
-      "رابط المركز الشخصي يحمل المستوى أيضًا — نفس مستوى ملف الموظف — فيظهر للمهندس الذي لا يرى مهام زملائه مستواه وشريط التقدم وأقرب طريق للصعود، مكتوبًا «من مديرك».",
-      "قبل وصول الرابط يقول مربع المستوى السبب الحقيقي بدل «بعد أول 10 نقاط»."
+      "صفحة البيانات أبسط: الفترة وخطوتان وآخر سحب في صندوق واحد، وكل الطرق الأخرى والنسخ الاحتياطي تحت «طرق أخرى ونسخ احتياطي» تفتحها عند الحاجة.",
+      "إعداد «مؤشراتي» خطوتان بجملة واحدة لكل خطوة؛ الجوال ونسخ الرمز تحت «على الجوال»."
     ],
     "en": [
-      "The personal rank link now carries the level too — the person file’s level — so an engineer who cannot see his colleagues’ tasks sees his level, the progress bar and the shortest way up, marked “from your manager”.",
-      "Before a link arrives, the level box gives the real reason instead of “after the first 10 points”."
+      "A simpler data page: the period, two steps and the last pull in one box; every other way and the backup under “Other ways and backup”, opened when needed.",
+      "The My KPIs setup is two one-sentence steps; phone notes and the copy-code under “On a phone”."
     ],
     "ur": [
-      "ذاتی نمبر کا لنک اب سطح بھی لاتا ہے — ملازم کی فائل والی سطح — «آپ کے مینیجر سے» کے ساتھ۔",
-      "لنک آنے سے پہلے سطح کا خانہ اصل وجہ بتاتا ہے۔"
+      "ڈیٹا کا صفحہ آسان: مدت، دو قدم اور آخری ڈیٹا ایک ڈبے میں؛ باقی طریقے اور بیک اپ «دوسرے طریقے اور بیک اپ» کے نیچے۔",
+      "«میرے اشاریے» کی ترتیب دو قدم، ہر قدم ایک جملہ۔"
     ]
   }
 }

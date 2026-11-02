@@ -588,6 +588,15 @@
   .pg-badge { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px dashed var(--line-strong); color: var(--slate); }
   .pg-badge.on { border-style: solid; border-color: var(--accent); background: var(--accent-wash); color: var(--text); } .pg-badge b { display: block; font-size: 13px; } .pg-badge small { font-size: 12px; } .pg-ico { font-size: 20px; color: var(--accent); }
   .pg-private { margin-top: 10px; } @media (max-width: 900px) { .pg-grid { grid-template-columns: 1fr; } }
+  .dt-quick { border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); padding: 14px 18px 12px; margin-bottom: 18px; border-inline-start: 5px solid var(--accent); }
+  .dt-quick h2 { margin: 0 0 8px; font-size: 15px; }
+  .dt-steps { margin: 14px 0 6px; padding: 0; list-style: none; counter-reset: dt; display: grid; gap: 12px; }
+  .dt-steps li { counter-increment: dt; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 15px; font-weight: 600; }
+  .dt-steps li::before { content: counter(dt); flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; }
+  .dt-inline { display: inline-flex; gap: 8px; } .dt-last { margin: 8px 0 0; color: var(--muted); font-weight: 600; }
+  .dt-more { margin-top: 22px; } .dt-more > summary { cursor: pointer; font-weight: 700; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); list-style: none; }
+  .dt-more > summary::before { content: '▸ '; } .dt-more[open] > summary::before { content: '▾ '; } .dt-more > summary::-webkit-details-marker { display: none; }
+  .dt-more[open] > summary { margin-bottom: 14px; }
   .tt-box { border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); padding: 12px 16px; margin-bottom: 16px; border-inline-start: 5px solid var(--accent); }
   .tt-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; } .tt-head small { display: block; } .tt-new { margin: 10px 0 0; font-weight: 700; color: var(--warn); }
   .tt-steps { margin: 10px 0 0; padding-inline-start: 20px; display: grid; gap: 8px; font-size: 13.5px; } .tt-steps .btn { vertical-align: middle; }
@@ -909,21 +918,28 @@
 
   <section id="view-data" hidden>
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="data_title">بيانات المؤشرات</h1><button type="button" class="help-q" data-help="g_data_b" data-help-title="data_title" aria-label="?">?</button></div><p class="lead" data-t="lead_data"></p></div>
-    <section class="mgr-period-box"><h2 data-t="mgr_p_h">فترة السحب</h2><div id="mgr-period"></div></section>
-    <div class="mgr-methods">
-      <section class="mgr-method" aria-labelledby="mgr-auto-title">
-        <h2 id="mgr-auto-title" data-t="mgr_auto_h">شبه أوتوماتيكي — بدون تنزيل ملفات</h2>
-        <p class="hint" data-t="mgr_auto_desc"></p>
-        <div class="row" id="mgr-auto-row"></div>
-        <p class="msg" id="mgr-auto-status" role="status" aria-live="polite"></p>
-      </section>
+    <section class="dt-quick">
+      <h2 data-t="mgr_p_h">الفترة</h2><div id="mgr-period"></div>
+      <ol class="dt-steps">
+        <li><span data-t="dt_s1"></span> <span class="row dt-inline" id="mgr-auto-row"></span></li>
+        <li data-t="dt_s2"></li>
+      </ol>
+      <p class="msg" id="mgr-auto-status" role="status" aria-live="polite"></p>
+      <p class="dt-last" id="dt-last"></p>
+    </section>
+    <h2 data-t="datasets">البيانات المرفوعة</h2>
+    <div class="datasets" id="datasets"></div>
+    <p id="storage-note" class="note info no-print"></p>
+    <details class="dt-more">
+      <summary data-t="dt_more">طرق أخرى ونسخ احتياطي</summary>
       <section class="mgr-method" aria-labelledby="mgr-manual-title">
-        <h2 id="mgr-manual-title" data-t="mgr_manual_h">الطريقة اليدوية — تنزيل ورفع الملفات</h2>
+        <h2 id="mgr-manual-title" data-t="mgr_manual_h">الطريقة اليدوية — تنزيل الملفين</h2>
         <p class="hint" data-t="mgr_manual_desc"></p>
         <div class="row" id="mgr-row"></div>
+        <p class="hint" data-t="dt_copy_auto"></p>
+        <div class="row" id="mgr-auto-copy"></div>
       </section>
-    </div>
-    <h2 data-t="mgr_manual_more_h">الطريقة اليدوية بالأوامر ورفع الملفات</h2>
+      <h2 data-t="mgr_manual_more_h">الطريقة اليدوية بالأوامر ورفع الملفات</h2>
     <div class="steps">
       <div class="step"><span class="n">١</span><div>
         <h3 data-t="step1">اختر الفترة</h3>
@@ -950,15 +966,14 @@
         <p class="msg" id="read-msg" role="status"></p>
       </div></div>
     </div>
-    <h2 data-t="datasets">البيانات المرفوعة</h2>
-    <div class="datasets" id="datasets"></div>
+      <h2 data-t="dt_backup_h">نسخة احتياطية</h2>
     <div class="row no-print" style="margin-top:12px">
-      <p id="storage-note" class="note info" style="flex-basis:100%"></p>
       <button type="button" class="btn" id="export-btn" data-t="export_all">تصدير نسخة احتياطية</button>
       <label class="btn" style="display:inline-flex" for="import-in"><span data-t="import_all">استعادة نسخة</span></label>
       <input type="file" id="import-in" accept=".json,application/json" hidden>
       <button type="button" class="btn quiet" id="sample-btn" data-t="sample">تحميل بيانات تجريبية</button>
     </div>
+    </details>
   </section>
 
   <section id="view-module" class="module-view" hidden>

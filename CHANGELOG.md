@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.72 — 2026-11-02
+
+- صفحة البيانات أبسط: الفترة وخطوتان وآخر سحب في صندوق واحد، وكل الطرق الأخرى والنسخ الاحتياطي تحت «طرق أخرى ونسخ احتياطي» تفتحها عند الحاجة.
+- إعداد «مؤشراتي» خطوتان بجملة واحدة لكل خطوة؛ الجوال ونسخ الرمز تحت «على الجوال».
+
+<details><summary>English</summary>
+
+- A simpler data page: the period, two steps and the last pull in one box; every other way and the backup under “Other ways and backup”, opened when needed.
+- The My KPIs setup is two one-sentence steps; phone notes and the copy-code under “On a phone”.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ڈیٹا کا صفحہ آسان: مدت، دو قدم اور آخری ڈیٹا ایک ڈبے میں؛ باقی طریقے اور بیک اپ «دوسرے طریقے اور بیک اپ» کے نیچے۔
+- «میرے اشاریے» کی ترتیب دو قدم، ہر قدم ایک جملہ۔
+
+</div>
+</details>
+
+
 ## v8.71 — 2026-11-02
 
 - رابط المركز الشخصي يحمل المستوى أيضًا — نفس مستوى ملف الموظف — فيظهر للمهندس الذي لا يرى مهام زملائه مستواه وشريط التقدم وأقرب طريق للصعود، مكتوبًا «من مديرك».

@@ -69,6 +69,7 @@
 | `docs/decisions/0052-where-you-stand.md` | The engineer's rank, records, achievements and level |
 | `docs/decisions/0053-team-types-bookmark.md` | «أنواع الفرق» — update the task-type list from myafaqy |
 | `docs/decisions/0054-personal-rank-links.md` | Personal rank links — each engineer's rank sent by his manager |
+| `docs/decisions/0055-simpler-data-page.md` | A simpler data page and KPI setup |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

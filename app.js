@@ -636,10 +636,10 @@ function renderMe(waiting = false) {
   const link = el('a', { class: 'btn primary bm va-hide', href: bm, draggable: 'true', text: `📊 ${t('me_bm')}`,
     onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } });
   const setup = [
-    el('p', { class: 'hint', text: t('me_step1') }), el('div', { class: 'row' }, link,
-      el('button', { type: 'button', class: 'btn', text: t('me_copy'), onclick: async () => { try { await navigator.clipboard.writeText(decodeURIComponent(bm)); toast(t('me_copied')); } catch { toast(t('me_copy_fail')); } } })),
-    el('p', { class: 'hint', text: t('me_step2') }),
-    el('details', { class: 'me-phones' }, el('summary', { text: t('me_phones') }), el('p', { class: 'hint', text: t('me_android') }), el('p', { class: 'hint', text: t('me_ios') })),
+    el('ol', { class: 'dt-steps' }, el('li', {}, el('span', { text: t('me_step1') }), link), el('li', { text: t('me_step2') })),
+    el('details', { class: 'me-phones' }, el('summary', { text: t('me_phones') }),
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: t('me_copy'), onclick: async () => { try { await navigator.clipboard.writeText(decodeURIComponent(bm)); toast(t('me_copied')); } catch { toast(t('me_copy_fail')); } } })),
+      el('p', { class: 'hint', text: t('me_android') }), el('p', { class: 'hint', text: t('me_ios') })),
   ];
   if (waiting) { set(body, el('div', { class: 'empty', text: t('me_wait') })); return; }
   if (meDerived && !viewAs) { me = null; meDerived = false; }
@@ -660,7 +660,7 @@ function renderMe(waiting = false) {
       el('button', { type: 'button', class: 'btn tiny', text: t('va_go'), onclick: () => { if (sel.value) startViewAs(sel.value); else toast(t('va_pick')); } }),
       el('span', { class: 'hint', text: t('va_hint') }));
   })();
-  if (!me) { set(body, vaBar, el('div', { class: 'step me-setup' }, el('span', { class: 'n', text: '١' }), el('div', {}, el('h3', { text: t('me_how_h') }), ...setup))); return; }
+  if (!me) { set(body, vaBar, el('section', { class: 'dt-quick me-setup' }, ...setup)); return; }   // the two steps carry their own numbers
   const qs = myProfile(me);
   const pm = profileMonths(me, new Date(), roster(), meKind);
   const fmtDate = (iso) => (iso ? `\u2066${iso.slice(0, 10)}\u2069` : '');
@@ -1721,6 +1721,8 @@ function storageNote() {
   n.textContent = storageKept === true ? t('storage_kept') : storageKept === false ? t('storage_not_kept') : t('storage_unknown');
 }
 function renderDatasets() {
+  if ($('dt-last')) { const d = [...datasets].sort((x, y) => String(y.extractedAt || '').localeCompare(String(x.extractedAt || '')))[0];
+    $('dt-last').textContent = d ? t('dt_last', { d: saudiDay(d.extractedAt || new Date().toISOString()), n: (d.tasks || []).length }) : t('dt_last_none'); }
   storageNote();
   if (!datasets.length && !reports.length) { set($('datasets'), el('div', { class: 'empty', text: t('none_yet') })); return; }
   const reportRows = reports.map((r) => el('div', { class: 'ds' },
@@ -1821,7 +1823,8 @@ function renderMgr() {
         catch { toast(t('me_copy_fail')); }
       } }),
   ];
-  set(direct, auto ? controls(auto, `↪ ${t('mgr_auto_bm', { from: q.from, to: q.to })}`, true) : el('p', { class: 'hint', text: t('mgr_auto_unsafe') }));
+  set(direct, auto ? controls(auto, `↪ ${t('mgr_auto_bm', { from: q.from, to: q.to })}`, true)[0] : el('p', { class: 'hint', text: t('mgr_auto_unsafe') }));
+  if ($('mgr-auto-copy')) set($('mgr-auto-copy'), auto ? controls(auto, '', true)[1] : null);   // the code itself, for a phone bookmark, lives with the other ways
   set(row, controls(bm, `⬇ ${t('mgr_bm', { from: q.from, to: q.to })}`, false));
 }
 // ---------- My KPIs: the month's card, the team's cards with one-to-ones, and the pattern's path ----------
