@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.70 — 2026-11-02
+
+- روابط المراكز الشخصية: في لوحة المؤشرات (تبويب الفريق) وملف الموظف، تنسخ لكل مهندس رسالة فيها رابط بمركزه هو فقط في فريقه، فيظهر في «مكانك وتقدمك» حتى لو لم يرَ مهام زملائه في ماي أفاقي.
+- الرابط لا يحمل أسماء ولا أرقام غيره، ويُمسح من شريط العنوان فور فتحه، ولا يُنشر شيء.
+
+<details><summary>English</summary>
+
+- Personal rank links: from the KPI board (team tab) and the person file, copy each engineer a message with a link holding only his own rank in his team, so it shows in “Where you stand” even when he cannot see his colleagues’ tasks in MyAFAQY.
+- The link carries no one else’s names or numbers, leaves the address bar as soon as it opens, and nothing is published.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ذاتی نمبر کے لنکس: کے پی آئی بورڈ (ٹیم ٹیب) اور ملازم کی فائل سے ہر انجینئر کو صرف اس کے اپنے نمبر والا لنک بھیجیں۔
+- لنک میں کسی اور کا نام یا عدد نہیں، کھلتے ہی ایڈریس بار سے ہٹ جاتا ہے، اور کچھ شائع نہیں ہوتا۔
+
+</div>
+</details>
+
+
 ## v8.69 — 2026-11-02
 
 - «حدّث قائمة الأنواع» في صفحة الأوزان: اختصار خفيف «أنواع الفرق» تضغطه في ماي أفاقي فتعود قائمة أنواع فريقي ما بعد البيع والبحث والتطوير إلى البوابة خلال ثوانٍ — يقرأ الفرق وأنواعها فقط.

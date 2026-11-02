@@ -1,18 +1,18 @@
 {
-  "version": "8.69",
+  "version": "8.70",
   "date": "2026-11-02",
   "notes": {
     "ar": [
-      "«حدّث قائمة الأنواع» في صفحة الأوزان: اختصار خفيف «أنواع الفرق» تضغطه في ماي أفاقي فتعود قائمة أنواع فريقي ما بعد البيع والبحث والتطوير إلى البوابة خلال ثوانٍ — يقرأ الفرق وأنواعها فقط.",
-      "الأنواع الجديدة التي لا وزن لها تظهر بأسمائها في الأوزان وفي «غرفة المتابعة»."
+      "روابط المراكز الشخصية: في لوحة المؤشرات (تبويب الفريق) وملف الموظف، تنسخ لكل مهندس رسالة فيها رابط بمركزه هو فقط في فريقه، فيظهر في «مكانك وتقدمك» حتى لو لم يرَ مهام زملائه في ماي أفاقي.",
+      "الرابط لا يحمل أسماء ولا أرقام غيره، ويُمسح من شريط العنوان فور فتحه، ولا يُنشر شيء."
     ],
     "en": [
-      "“Update the type list” on the weights page: a light “Team types” bookmark you press in MyAFAQY brings the after-sales and R&D type list back to the portal in seconds — it reads only the teams and their types.",
-      "New types without a weight are named on the weights page and in the control room."
+      "Personal rank links: from the KPI board (team tab) and the person file, copy each engineer a message with a link holding only his own rank in his team, so it shows in “Where you stand” even when he cannot see his colleagues’ tasks in MyAFAQY.",
+      "The link carries no one else’s names or numbers, leaves the address bar as soon as it opens, and nothing is published."
     ],
     "ur": [
-      "اوزان کے صفحے پر «اقسام کی فہرست تازہ کریں»: مائی آفاقی میں «ٹیم کی اقسام» دبائیں اور فہرست چند سیکنڈ میں پورٹل پر واپس آ جاتی ہے۔",
-      "بغیر وزن کی نئی اقسام اوزان اور کنٹرول روم میں ناموں کے ساتھ نظر آتی ہیں۔"
+      "ذاتی نمبر کے لنکس: کے پی آئی بورڈ (ٹیم ٹیب) اور ملازم کی فائل سے ہر انجینئر کو صرف اس کے اپنے نمبر والا لنک بھیجیں۔",
+      "لنک میں کسی اور کا نام یا عدد نہیں، کھلتے ہی ایڈریس بار سے ہٹ جاتا ہے، اور کچھ شائع نہیں ہوتا۔"
     ]
   }
 }

@@ -799,6 +799,53 @@ function sheet(title, views, csv) {
 }
 // ---------- the "Today" card (ADR-0038): a greeting, a streak, yesterday against your own average, what to start with, and the team's weekly bar ----------
 // ---------- «مكانك وتقدمك» (ADR-0052): the engineer's rank among his team (no names, no one else's numbers), records, achievements, level ----------
+// ---------- personal rank links (ADR-0054): the manager sends each engineer his own rank — nothing is published ----------
+let rankSnaps = {};
+const b64u = { enc: (o) => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''),
+  dec: (s) => JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/'))))) };
+const ymPrev = (ym) => { const d = new Date(Date.parse(`${ym}-01T00:00:00Z`)); d.setUTCMonth(d.getUTCMonth() - 1); return d.toISOString().slice(0, 7); };
+const rankMonthDefault = () => { const today = saudiDay(new Date().toISOString()); return Number(today.slice(8, 10)) <= 7 ? ymPrev(today.slice(0, 7)) : today.slice(0, 7); };
+function rankFor(id, ym) {   // his team: the same team leader in the team file, on duty — the same rule as the engineer's own card
+  const tasks = allTasks(), wt = weights(), ro = roster().people || {}, lead = ro[id] && ro[id].leaderId, today = saudiDay(new Date().toISOString());
+  const end = (() => { const d = new Date(Date.parse(`${ym}-01T00:00:00Z`)); d.setUTCMonth(d.getUTCMonth() + 1); d.setUTCDate(0); return d.toISOString().slice(0, 10); })(), to = ym === today.slice(0, 7) ? today : end;
+  const peers = lead ? Object.keys(ro).filter((k) => k === id || (ro[k].leaderId === lead && !ro[k].onLeave)) : [id];
+  const pts = peers.map((k) => ({ k, p: quarterBaseline(tasks, wt, k, { from: `${ym}-01`, to }).points }));
+  const mine = pts.find((x) => x.k === id) || { p: 0 }, above = pts.filter((x) => x.p > mine.p).map((x) => x.p), below = pts.filter((x) => x.k !== id && x.p <= mine.p).map((x) => x.p);
+  return { v: 1, id, ym, r: 1 + above.length, n: pts.length, gap: above.length ? Math.round((Math.min(...above) - mine.p) * 10) / 10 : null,
+    lead: !above.length && below.length ? Math.round((mine.p - Math.max(...below)) * 10) / 10 : null, at: to, partial: ym === today.slice(0, 7) };
+}
+const rankLink = (snap) => `${location.origin}${location.pathname.replace(/[^/]*$/, '')}?portal=team#rank=${b64u.enc(snap)}`;
+function parseRankSnap(o) {   // only his own numbers; anything else is refused
+  if (!o || o.v !== 1 || typeof o.id !== 'string' || !/^[0-9A-Za-z_-]{1,20}$/.test(o.id) || !/^\d{4}-\d{2}$/.test(o.ym) || !Number.isInteger(o.r) || !Number.isInteger(o.n) || o.r < 1 || o.n < 1 || o.r > o.n || o.n > 200) return null;
+  const num = (v) => (v == null ? null : Number.isFinite(Number(v)) ? Math.round(Number(v) * 10) / 10 : null);
+  return { v: 1, id: o.id, ym: o.ym, r: o.r, n: o.n, gap: num(o.gap), lead: num(o.lead), at: /^\d{4}-\d{2}-\d{2}$/.test(o.at || '') ? o.at : null, partial: !!o.partial };
+}
+async function takeRankLink(redraw = false) {   // at start the page is drawn after loading; on an open portal it is redrawn here (the router does not redraw)
+  if (!location.hash.startsWith('#rank=')) return;
+  let snap = null; try { snap = parseRankSnap(b64u.dec(location.hash.slice(6))); } catch { snap = null; }
+  history.replaceState(null, '', `${location.pathname}${location.search}#me`);   // the numbers leave the address bar at once
+  if (!snap) { setTimeout(() => toast(t('rk_bad')), 700); return; }
+  rankSnaps[snap.id] = snap; await store.kvPut('rankcards', rankSnaps);
+  if (redraw && me) renderMe();
+  setTimeout(() => toast(t('rk_got', { r: snap.r, n: snap.n })), 700);
+}
+function copyRankMessage(id, ym, nm) {
+  const snap = rankFor(id, ym), text = t('rk_msg', { name: (nm(id) || '').split(' ')[0], m: monthLabel(ym), r: snap.r, n: snap.n, link: rankLink(snap) });
+  (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject(new Error('no clipboard'))).then(() => toast(t('rk_copied', { name: nm(id) })), () => window.prompt(t('rk_copy_manual'), text));
+}
+function rankLinksSection() {
+  if (isTeamPortal || !datasets.length) return null;
+  const ppl = peopleOf(datasets), nm = (id) => nameOf(ppl.find((p) => p.id === id) || {}, lang) || id, ro = roster().people || {};
+  const cur = saudiDay(new Date().toISOString()).slice(0, 7); let ym = rankMonthDefault();
+  const team = currentTeam(scoped(ppl), allTasks()).filter((id) => ro[id] && ro[id].leaderId && !ro[id].onLeave), body = el('tbody', {});
+  const draw = () => set(body, ...team.map((id) => ({ id, s: rankFor(id, ym) })).sort((p, q) => String(ro[p.id].leaderId).localeCompare(String(ro[q.id].leaderId)) || p.s.r - q.s.r).map(({ id, s }) => el('tr', {},
+    el('td', { text: nm(id) }), el('td', { class: 'num', text: t('pg_rank', { r: s.r, n: s.n }) }), el('td', { text: s.gap != null ? t('pg_gap', { g: s.gap }) : s.lead != null ? t('pg_lead', { g: s.lead }) : '—' }),
+    el('td', {}, el('button', { type: 'button', class: 'btn tiny rk-copy', text: `📋 ${t('rk_copy')}`, onclick: () => copyRankMessage(id, ym, nm) })))));
+  const sel = el('select', { class: 'rk-month', onchange: (e) => { ym = e.target.value; draw(); } }, [[cur, t('rk_cur', { m: monthLabel(cur) })], [ymPrev(cur), monthLabel(ymPrev(cur))]].map(([v, l]) => el('option', { value: v, selected: v === ym ? '' : null, text: l })));
+  draw();
+  return el('section', { class: 'rk-sec', id: 'k-ranks' }, el('h2', { text: t('rk_h') }), el('p', { class: 'hint', text: t('rk_lead') }), el('div', { class: 'row' }, el('span', { text: t('rk_month') }), sel),
+    el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('col_person'), t('rk_col_rank'), t('rk_col_gap'), ''].map((x) => el('th', { text: x })))), body)));
+}
 function progressCard(pm) {
   const wt = weights(), uid = me.user.id, today = saudiDay(new Date().toISOString()), ymNow = today.slice(0, 7);
   // his team: those under the same team leader in the team file (not everyone in the pull), on duty, whose work is in this pull
@@ -814,7 +861,10 @@ function progressCard(pm) {
   });
   // the rank
   let rankBox;
-  if (present.length < 2) rankBox = el('div', { class: 'pg-rank' }, el('p', { class: 'hint', text: t('pg_rank_need') }));
+  const snap = rankSnaps[uid];
+  if (present.length < 2) rankBox = snap ? el('div', { class: 'pg-rank' }, el('b', { class: 'pg-big', text: t('pg_rank', { r: snap.r, n: snap.n }) }), el('span', { class: 'hint', text: t(snap.partial ? 'rk_from_partial' : 'rk_from', { m: monthLabel(snap.ym), d: snap.at || '' }) }),
+      el('div', { class: 'pg-gap', text: snap.gap != null ? t('pg_gap', { g: snap.gap }) : snap.lead != null ? t('pg_lead', { g: snap.lead }) : '' }))
+    : el('div', { class: 'pg-rank' }, el('p', { class: 'hint', text: t('pg_rank_need') }), el('p', { class: 'hint', text: t('rk_ask') }));
   else { const now = rankIn(ymNow), before = rankIn(ymShift(ymNow, -1));
     const move = before.p > 0 ? (before.r > now.r ? el('span', { class: 'delta good', text: `▲ ${t('pg_up', { a: before.r })}` }) : before.r < now.r ? el('span', { class: 'delta bad', text: `▼ ${t('pg_down', { a: before.r })}` }) : el('span', { class: 'delta same', text: t('pg_same') })) : null;
     rankBox = el('div', { class: 'pg-rank' }, el('b', { class: 'pg-big', text: t('pg_rank', { r: now.r, n: now.n }) }), el('span', { class: 'hint', text: t('pg_rank_sub') }),
@@ -840,7 +890,7 @@ function progressCard(pm) {
     { k: 'm50', at: firstMonth((m) => byMonth.get(m).n >= 50), prog: [maxOf('n'), 50] },
     { k: 'fast10', at: firstMonth((m) => byMonth.get(m).fast >= 10), prog: [maxOf('fast'), 10] },
     { k: 'up20', at: firstMonth((m) => { const pv = byMonth.get(ymShift(m, -1)); return pv && pv.p >= 5 && byMonth.get(m).p >= 1.2 * pv.p; }) },
-    { k: 'top', at: present.length >= 2 ? firstMonth((m) => rankIn(m).r === 1) : null },
+    { k: 'top', at: present.length >= 2 ? firstMonth((m) => rankIn(m).r === 1) : (snap && snap.r === 1 && !snap.partial ? snap.ym : null) },
     { k: 'streak10', ok: longest >= 10, prog: [longest, 10] },
   ].map((x) => ({ ...x, ok: x.ok != null ? x.ok : !!x.at }));
   const achBox = el('div', { class: 'pg-ach' }, ach.map((x) => el('div', { class: `pg-badge${x.ok ? ' on' : ''}` }, el('span', { class: 'pg-ico', 'aria-hidden': 'true', text: x.ok ? '★' : '☆' }),
@@ -2147,6 +2197,7 @@ function renderPerson() {
       el('div', {}, el('h2', { text: nm(id) }), el('p', { class: 'hint', text: [(lang === 'ar' ? r.position : r.positionEn || r.position) || (peopleById.get(id) || {}).position || '', r.leaderId ? `${t('pf_leader')} ${nm(String(r.leaderId))}` : '', r.onLeave ? t('card_on_leave') : ''].filter(Boolean).join(' · ') })),
       el('div', { class: 'row pf-acts' }, pick,
         el('button', { type: 'button', class: 'btn primary tiny', text: `👁 ${t('pf_viewas')}`, onclick: () => startViewAs(id) }),
+        el('button', { type: 'button', class: 'btn tiny', text: `📋 ${t('rk_copy')}`, onclick: () => copyRankMessage(id, rankMonthDefault(), nm) }),
         el('button', { type: 'button', class: 'btn tiny', text: `${t('pf_plan')} ↗`, onclick: () => { devSel = id; pref('devsel', id); location.hash = '#dev'; } }),
         el('button', { type: 'button', class: 'btn tiny', text: `🖨 ${t('pf_pdf')}`, onclick: () => openReport(reportHtml(reportData(ds, [id], peopleById), { single: true }), 'pdf', `AFAQY-${nm(id).replace(/\s+/g, '-')}`) }))),
     el('section', { class: 'pf-sec' }, el('h3', { text: `${t('pf_perf')} — ${t('pf_month')}` }), el('div', { class: 'cmp-grid' }, ['done', 'points', 'rate', 'avgHours'].map(kpi)),
@@ -2548,6 +2599,7 @@ function kpiTabs(body) {
   const bar = el('div', { class: 'tabs', role: 'tablist' }, [['overview', 'ktab_overview'], ['team', 'ktab_team'], ['mail', 'ktab_mail'], ['reports', 'ktab_reports']].map(([k, label]) =>
     el('button', { type: 'button', role: 'tab', 'data-k': k, class: `tab${kpiTab === k ? ' on' : ''}`, 'aria-selected': String(kpiTab === k), text: t(label), onclick: () => { kpiTab = k; for (const [p, el2] of Object.entries(panels)) el2.hidden = p !== k; for (const b of bar.children) { const on = b.getAttribute('data-k') === k; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); } } })));
   for (const [p, el2] of Object.entries(panels)) el2.hidden = p !== kpiTab;
+  { const rk = rankLinksSection(); if (rk) panels.team.append(rk); }
   body.append(bar, panels.overview, panels.team, panels.mail, panels.reports);
 }
 
@@ -2930,6 +2982,7 @@ function applyTheme() {
   paintThemeButton();
 }
 function route() {
+  if (location.hash.startsWith('#rank=')) { takeRankLink(true).then(route); return; }   // a rank link can arrive while the portal is already open (only the hash changes)
   const views = ['home', 'tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'person', 'guide'];
   const requested = location.hash.slice(1);
   let hash = portalRoute(requested, isTeamPortal);
@@ -3065,6 +3118,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   myRegister = await store.getRegister();
   devPlans = (await store.kvGet('devplans')) || {};
   teamTypesLive = (await store.kvGet('teamtypes')) || null;
+  rankSnaps = (await store.kvGet('rankcards')) || {}; await takeRankLink();
   await refreshOfficialWeights();
   try { const r = await fetch('./systems.json', { cache: 'no-store' }); const data = r.ok && validateSystems(await r.json()); if (data) { SYSTEMS = data.systems; SYSTEM_CATEGORIES = data.categories; } } catch { /* retain built-in links when unavailable */ }
   await loadStrings(['ar', lang]);   // Arabic is every key's fallback; the reader's language besides
