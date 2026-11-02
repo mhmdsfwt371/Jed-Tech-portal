@@ -811,14 +811,18 @@ function rankFor(id, ym) {   // his team: the same team leader in the team file,
   const peers = lead ? Object.keys(ro).filter((k) => k === id || (ro[k].leaderId === lead && !ro[k].onLeave)) : [id];
   const pts = peers.map((k) => ({ k, p: quarterBaseline(tasks, wt, k, { from: `${ym}-01`, to }).points }));
   const mine = pts.find((x) => x.k === id) || { p: 0 }, above = pts.filter((x) => x.p > mine.p).map((x) => x.p), below = pts.filter((x) => x.k !== id && x.p <= mine.p).map((x) => x.p);
+  const team = currentTeam(scoped(peopleOf(datasets)), tasks), L = levelsFor(tasks, team, today, mailRows).levels[id];   // the same call as the person file
+  const lv = L && L.level != null && L.score != null ? { l: L.level, s: Math.round(L.score), ax: Object.fromEntries(Object.entries(L.axes || {}).filter(([, v]) => v != null).map(([k, v]) => [k, Math.round(v)])) } : null;
   return { v: 1, id, ym, r: 1 + above.length, n: pts.length, gap: above.length ? Math.round((Math.min(...above) - mine.p) * 10) / 10 : null,
-    lead: !above.length && below.length ? Math.round((mine.p - Math.max(...below)) * 10) / 10 : null, at: to, partial: ym === today.slice(0, 7) };
+    lead: !above.length && below.length ? Math.round((mine.p - Math.max(...below)) * 10) / 10 : null, at: to, partial: ym === today.slice(0, 7), ...(lv ? { lv } : {}) };
 }
 const rankLink = (snap) => `${location.origin}${location.pathname.replace(/[^/]*$/, '')}?portal=team#rank=${b64u.enc(snap)}`;
 function parseRankSnap(o) {   // only his own numbers; anything else is refused
   if (!o || o.v !== 1 || typeof o.id !== 'string' || !/^[0-9A-Za-z_-]{1,20}$/.test(o.id) || !/^\d{4}-\d{2}$/.test(o.ym) || !Number.isInteger(o.r) || !Number.isInteger(o.n) || o.r < 1 || o.n < 1 || o.r > o.n || o.n > 200) return null;
   const num = (v) => (v == null ? null : Number.isFinite(Number(v)) ? Math.round(Number(v) * 10) / 10 : null);
-  return { v: 1, id: o.id, ym: o.ym, r: o.r, n: o.n, gap: num(o.gap), lead: num(o.lead), at: /^\d{4}-\d{2}-\d{2}$/.test(o.at || '') ? o.at : null, partial: !!o.partial };
+  const lv = o.lv && Number.isInteger(o.lv.l) && o.lv.l >= 1 && o.lv.l <= LEVELS.length && Number.isFinite(Number(o.lv.s))
+    ? { l: o.lv.l, s: Math.max(0, Math.min(100, Math.round(Number(o.lv.s)))), ax: Object.fromEntries(Object.entries(o.lv.ax && typeof o.lv.ax === 'object' ? o.lv.ax : {}).filter(([k, v]) => /^[a-zA-Z]{1,16}$/.test(k) && Number.isFinite(Number(v))).slice(0, 8).map(([k, v]) => [k, Math.max(0, Math.min(100, Math.round(Number(v))))])) } : null;
+  return { v: 1, id: o.id, ym: o.ym, r: o.r, n: o.n, gap: num(o.gap), lead: num(o.lead), at: /^\d{4}-\d{2}-\d{2}$/.test(o.at || '') ? o.at : null, partial: !!o.partial, ...(lv ? { lv } : {}) };
 }
 async function takeRankLink(redraw = false) {   // at start the page is drawn after loading; on an open portal it is redrawn here (the router does not redraw)
   if (!location.hash.startsWith('#rank=')) return;
@@ -830,7 +834,8 @@ async function takeRankLink(redraw = false) {   // at start the page is drawn af
   setTimeout(() => toast(t('rk_got', { r: snap.r, n: snap.n })), 700);
 }
 function copyRankMessage(id, ym, nm) {
-  const snap = rankFor(id, ym), text = t('rk_msg', { name: (nm(id) || '').split(' ')[0], m: monthLabel(ym), r: snap.r, n: snap.n, link: rankLink(snap) });
+  const snap = rankFor(id, ym), lvtxt = snap.lv ? t('rk_msg_lv', { lv: `${snap.lv.l} · ${t(`lvl_${LEVELS[snap.lv.l - 1].k}`)}` }) : '';
+  const text = t('rk_msg', { name: (nm(id) || '').split(' ')[0], m: monthLabel(ym), r: snap.r, n: snap.n, lvtxt, link: rankLink(snap) });
   (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject(new Error('no clipboard'))).then(() => toast(t('rk_copied', { name: nm(id) })), () => window.prompt(t('rk_copy_manual'), text));
 }
 function rankLinksSection() {
@@ -896,14 +901,16 @@ function progressCard(pm) {
   const achBox = el('div', { class: 'pg-ach' }, ach.map((x) => el('div', { class: `pg-badge${x.ok ? ' on' : ''}` }, el('span', { class: 'pg-ico', 'aria-hidden': 'true', text: x.ok ? '★' : '☆' }),
     el('div', {}, el('b', { text: t(`ach_${x.k}`) }), el('small', { text: x.ok ? (x.at ? monthLabel(x.at) : t('ach_done')) : x.prog ? t('ach_prog', { a: Math.min(x.prog[0], x.prog[1]), b: x.prog[1] }) : t('ach_locked') })))));
   // the level and the shortest way up
-  const { levels } = levelsFor(me.tasks, present, today, mailRows), lv = levels[uid];
+  const { levels } = levelsFor(me.tasks, present, today, mailRows), fromMgr = present.length < 2 && snap && snap.lv;
+  const lv = fromMgr ? { level: snap.lv.l, score: snap.lv.s, axes: snap.lv.ax || {} } : levels[uid];   // without colleagues in his pull, the level his manager computed
   let lvlBox;
-  if (!lv || lv.level == null || lv.score == null) lvlBox = el('p', { class: 'hint', text: t('pg_lvl_early') });
+  if (!lv || lv.level == null || lv.score == null) lvlBox = el('p', { class: 'hint', text: t(present.length < 2 ? 'rk_lv_need' : 'pg_lvl_early') });
   else { const nx = [35, 60, 80][lv.level - 1], weak = Object.entries(lv.axes || {}).filter(([, v]) => v != null).sort((p, q) => p[1] - q[1])[0];
     lvlBox = el('div', { class: 'pg-lvl' }, el('span', { class: `level-pill l${lv.level}`, text: `${lv.level} · ${t(`lvl_${LEVELS[lv.level - 1].k}`)}` }),
       nx ? el('div', { class: 'pg-bar' }, el('i', { style: `width:${Math.min(100, Math.round((lv.score / nx) * 100))}%` })) : null,
       el('small', { text: nx ? `${t('pg_lvl_next', { s: lv.score, nx, name: t(`lvl_${LEVELS[lv.level].k}`) })}${lv.level === 3 ? t('pg_lvl_next4') : ''}` : t('pg_lvl_top') }),
-      weak ? el('small', { class: 'pg-tip', text: t('pg_tip', { t: t(`pg_tip_${weak[0]}`) }) }) : null); }
+      weak ? el('small', { class: 'pg-tip', text: t('pg_tip', { t: t(`pg_tip_${weak[0]}`) }) }) : null,
+      fromMgr ? el('small', { class: 'hint pg-lv-from', text: t('rk_lv_from', { d: snap.at || '' }) }) : null); }
   return el('section', { class: 'pg-card' }, el('h2', { text: t('pg_h') }),
     el('div', { class: 'pg-grid' }, rankBox, el('div', {}, el('h3', { text: t('pg_lvl_h') }), lvlBox), el('div', {}, el('h3', { text: t('pg_rec_h') }), recs)),
     el('h3', { text: t('pg_ach_h') }), achBox, el('p', { class: 'hint pg-private', text: t('pg_private') }));

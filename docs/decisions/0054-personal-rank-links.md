@@ -20,6 +20,9 @@ team, but the portal is served from a public repository: anything published ther
   is refused. First place in a finished month unlocks the achievement.
 - The link is taken at start and whenever only the hash changes on an open portal; on an open portal My KPIs is redrawn (the router
   does not redraw pages).
+- v8.71: the link also carries the level — the same `levelsFor` call as the person file (level, score, axis scores, bounded on
+  arrival). Without colleagues in his pull, the engineer's card shows that level «من مديرك» with the bar to the next level and the
+  shortest way up; before a link arrives, the level box says why it cannot be computed. The message names the level.
 - Forging a link fools only its holder (nobody else sees that rank). Forwarding a link shows that engineer's rank to whoever opens it, so
   it is sent to him personally.
 - Later: once IT approves file access for the Azure app, the manager can keep the ranks in a private SharePoint folder that each engineer

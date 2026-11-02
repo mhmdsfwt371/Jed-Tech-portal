@@ -1,18 +1,18 @@
 {
-  "version": "8.70",
+  "version": "8.71",
   "date": "2026-11-02",
   "notes": {
     "ar": [
-      "روابط المراكز الشخصية: في لوحة المؤشرات (تبويب الفريق) وملف الموظف، تنسخ لكل مهندس رسالة فيها رابط بمركزه هو فقط في فريقه، فيظهر في «مكانك وتقدمك» حتى لو لم يرَ مهام زملائه في ماي أفاقي.",
-      "الرابط لا يحمل أسماء ولا أرقام غيره، ويُمسح من شريط العنوان فور فتحه، ولا يُنشر شيء."
+      "رابط المركز الشخصي يحمل المستوى أيضًا — نفس مستوى ملف الموظف — فيظهر للمهندس الذي لا يرى مهام زملائه مستواه وشريط التقدم وأقرب طريق للصعود، مكتوبًا «من مديرك».",
+      "قبل وصول الرابط يقول مربع المستوى السبب الحقيقي بدل «بعد أول 10 نقاط»."
     ],
     "en": [
-      "Personal rank links: from the KPI board (team tab) and the person file, copy each engineer a message with a link holding only his own rank in his team, so it shows in “Where you stand” even when he cannot see his colleagues’ tasks in MyAFAQY.",
-      "The link carries no one else’s names or numbers, leaves the address bar as soon as it opens, and nothing is published."
+      "The personal rank link now carries the level too — the person file’s level — so an engineer who cannot see his colleagues’ tasks sees his level, the progress bar and the shortest way up, marked “from your manager”.",
+      "Before a link arrives, the level box gives the real reason instead of “after the first 10 points”."
     ],
     "ur": [
-      "ذاتی نمبر کے لنکس: کے پی آئی بورڈ (ٹیم ٹیب) اور ملازم کی فائل سے ہر انجینئر کو صرف اس کے اپنے نمبر والا لنک بھیجیں۔",
-      "لنک میں کسی اور کا نام یا عدد نہیں، کھلتے ہی ایڈریس بار سے ہٹ جاتا ہے، اور کچھ شائع نہیں ہوتا۔"
+      "ذاتی نمبر کا لنک اب سطح بھی لاتا ہے — ملازم کی فائل والی سطح — «آپ کے مینیجر سے» کے ساتھ۔",
+      "لنک آنے سے پہلے سطح کا خانہ اصل وجہ بتاتا ہے۔"
     ]
   }
 }

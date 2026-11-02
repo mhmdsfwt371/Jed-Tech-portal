@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.71 — 2026-11-02
+
+- رابط المركز الشخصي يحمل المستوى أيضًا — نفس مستوى ملف الموظف — فيظهر للمهندس الذي لا يرى مهام زملائه مستواه وشريط التقدم وأقرب طريق للصعود، مكتوبًا «من مديرك».
+- قبل وصول الرابط يقول مربع المستوى السبب الحقيقي بدل «بعد أول 10 نقاط».
+
+<details><summary>English</summary>
+
+- The personal rank link now carries the level too — the person file’s level — so an engineer who cannot see his colleagues’ tasks sees his level, the progress bar and the shortest way up, marked “from your manager”.
+- Before a link arrives, the level box gives the real reason instead of “after the first 10 points”.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ذاتی نمبر کا لنک اب سطح بھی لاتا ہے — ملازم کی فائل والی سطح — «آپ کے مینیجر سے» کے ساتھ۔
+- لنک آنے سے پہلے سطح کا خانہ اصل وجہ بتاتا ہے۔
+
+</div>
+</details>
+
+
 ## v8.70 — 2026-11-02
 
 - روابط المراكز الشخصية: في لوحة المؤشرات (تبويب الفريق) وملف الموظف، تنسخ لكل مهندس رسالة فيها رابط بمركزه هو فقط في فريقه، فيظهر في «مكانك وتقدمك» حتى لو لم يرَ مهام زملائه في ماي أفاقي.
