@@ -44,7 +44,7 @@ if (!/^\d{4}-\d{2}-\d{2}$/.test(vj.date || '')) note('version.json: date must be
 // The Claude prompt and the my-KPIs bookmark both run on myafaqy's page, not in the portal; they have their own rules (9, 17).
 // The Afaqy PRO page is the one exception in the portal itself (ADR-0011) — it has its own rule (18); everything else holds.
 const appWithoutPro = app.replace(/\/\/ ---------- AFAQY PRO inside the portal[\s\S]*?\/\/ ---------- the side menu ----------/, '').replace(/\/\/ ---------- Outlook inside the portal \(ADR-0029\)[\s\S]*?\/\/ ---------- end Outlook ----------/, '');
-const coreWithoutPrompt = core.replace(/export function buildPrompt[\s\S]*?\n}\n/, '').replace(/export function buildBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildReportsPrompt[\s\S]*?\n}\n/, '').replace(/export function buildManagerBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildAssignBookmarklet[\s\S]*?\n}\n/, '');
+const coreWithoutPrompt = core.replace(/export function buildPrompt[\s\S]*?\n}\n/, '').replace(/export function buildBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildReportsPrompt[\s\S]*?\n}\n/, '').replace(/export function buildManagerBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildAssignBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildTypesBookmarklet[\s\S]*?\n}\n/, '');
 for (const [name, src] of [['index.html', html], ['app.js', appWithoutPro], ['core.js', coreWithoutPrompt], ['config.js', cfg]]) {
   if (/firebase/i.test(src)) note(`${name}: Firebase is referenced — the portal runs without it`);
   if (/afaqy\.sa|afaqy\.pro\/|crmbackend/.test((name === 'config.js' ? src.replace(/https:\/\/[^\s"']+/g, '') : src.replace(/https:\/\/afaqy\.pro\/'/g, '')))) note(`${name}: an Afaqy API address appeared — the portal never calls an Afaqy API`);
@@ -404,4 +404,15 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
 }
 
 if (problems.length) { console.error(`check.mjs: ${problems.length} problem(s)\n- ${problems.join('\n- ')}`); process.exit(1); }
+// ADR-0053: the «أنواع الفرق» bookmark talks only to crmbackend.afaqy.sa and the portal, reads only the teams, and never hands the token over.
+{
+  const { buildTypesBookmarklet } = await import(new URL('core.js', root));
+  const code = decodeURIComponent(buildTypesBookmarklet('https://example.org/portal/').replace(/^javascript:/, ''));
+  const hosts = [...code.matchAll(/https:\/\/([a-z0-9.-]+)/g)].map((m) => m[1]).filter((h) => !['example.org', 'crmbackend.afaqy.sa'].includes(h));
+  if (hosts.length) note(`types bookmark: talks to ${[...new Set(hosts)].join(', ')} — only crmbackend.afaqy.sa`);
+  const reads = [...new Set([...code.matchAll(/(?:post|get)\('([A-Za-z]+\/[A-Za-z]+)/g)].map((m) => m[1]))];
+  if (reads.some((r) => !['Teams/GetAllTeams', 'Teams/GetTeamById'].includes(r))) note(`types bookmark: reads ${reads.join(', ')} — only the teams`);
+  if (/const packet=\{[^}]*\btk\b/.test(code) || /packet[^;]*Authorization/.test(code)) note('types bookmark: the hand-over must never carry the sign-in token');
+}
+
 console.log(`check.mjs: all checks passed (v${version})`);

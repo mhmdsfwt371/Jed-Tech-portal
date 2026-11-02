@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.69 — 2026-11-02
+
+- «حدّث قائمة الأنواع» في صفحة الأوزان: اختصار خفيف «أنواع الفرق» تضغطه في ماي أفاقي فتعود قائمة أنواع فريقي ما بعد البيع والبحث والتطوير إلى البوابة خلال ثوانٍ — يقرأ الفرق وأنواعها فقط.
+- الأنواع الجديدة التي لا وزن لها تظهر بأسمائها في الأوزان وفي «غرفة المتابعة».
+
+<details><summary>English</summary>
+
+- “Update the type list” on the weights page: a light “Team types” bookmark you press in MyAFAQY brings the after-sales and R&D type list back to the portal in seconds — it reads only the teams and their types.
+- New types without a weight are named on the weights page and in the control room.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اوزان کے صفحے پر «اقسام کی فہرست تازہ کریں»: مائی آفاقی میں «ٹیم کی اقسام» دبائیں اور فہرست چند سیکنڈ میں پورٹل پر واپس آ جاتی ہے۔
+- بغیر وزن کی نئی اقسام اوزان اور کنٹرول روم میں ناموں کے ساتھ نظر آتی ہیں۔
+
+</div>
+</details>
+
+
 ## v8.68 — 2026-11-02
 
 - للمهندس في «مؤشراتي»: بطاقة «مكانك وتقدمك» — ترتيبه في فريقه هذا الشهر («المركز ٣ من ٩») وكم نقطة يتبقى ليتخطى من قبله، وأرقامه القياسية، وإنجازاته، ومستواه وأقرب طريق للتحسن. لا تظهر أسماء الزملاء ولا أرقامهم.

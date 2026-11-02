@@ -6,7 +6,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
   mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
@@ -1560,6 +1560,40 @@ function managerImportStatus(key, vars = {}, failure = false) {
   output.className = failure ? 'msg err' : 'msg';
   output.textContent = t(key, vars);
 }
+// «أنواع الفرق» (ADR-0053): the team types arrive by the same hand-over as a data pull — this tab's nonce, myafaqy's origin, its opener
+let teamTypesLive = null;
+const liveTeamTypes = () => {
+  const ds = [...datasets].sort((x, y) => String(y.extractedAt || '').localeCompare(String(x.extractedAt || '')))[0];
+  const fromPull = ds && ds.teamTypes && Object.keys(ds.teamTypes).length ? { extractedAt: ds.extractedAt || '', teamTypes: ds.teamTypes, from: 'pull' } : null;
+  return teamTypesLive && (!fromPull || String(teamTypesLive.extractedAt) > String(fromPull.extractedAt)) ? { ...teamTypesLive, from: 'types' } : fromPull;
+};
+const newTypes = (wt) => { const live = liveTeamTypes(); if (!live) return [];
+  const linked = Object.entries(live.teamTypes).filter(([n]) => /after\s*-?\s*sales|r\s*&\s*d/i.test(n)).flatMap(([, v]) => v);
+  return [...new Map(linked.map((x) => [typeKey(x.nameEn || x.nameAr), x])).entries()].filter(([k]) => k && !wt.tasks[k]).map(([, x]) => (lang === 'en' ? x.nameEn || x.nameAr : x.nameAr || x.nameEn)); };
+window.addEventListener('message', async (e) => {
+  if (!managerImportNonce || isTeamPortal || e.origin !== MYAFAQY_ORIGIN || e.source !== window.opener || !e.data || e.data.type !== TEAMTYPES_AUTO_SCHEMA || e.data.nonce !== managerImportNonce) return;
+  const r = parseTeamTypesTransfer(e.data);
+  if (r.error) { managerImportAck(e, false); toast(t(r.error)); return; }
+  teamTypesLive = { extractedAt: r.extractedAt, teamTypes: r.teamTypes }; await store.kvPut('teamtypes', teamTypesLive);
+  managerImportAck(e, true);
+  const n = Object.values(r.teamTypes).reduce((s, v) => s + v.length, 0), fresh = newTypes(weights()).length;
+  toast(fresh ? t('tt_got_new', { n, f: fresh }) : t('tt_got', { n }));
+  if (location.hash !== '#weights') location.hash = '#weights'; else renderWeights();
+});
+function typesBox(wt) {
+  const live = liveTeamTypes(), fresh = newTypes(wt), linked = live ? Object.entries(live.teamTypes).filter(([n]) => /after\s*-?\s*sales|r\s*&\s*d/i.test(n)).reduce((s, [, v]) => s + v.length, 0) : 0;
+  const bm = buildTypesBookmarklet(portalHome(), undefined, lang);
+  const steps = el('ol', { class: 'tt-steps', hidden: '' },
+    el('li', {}, el('span', { text: t('tt_s1') }), ' ', el('a', { class: 'btn tiny bm', href: bm, draggable: 'true', text: `📋 ${t('tt_bm')}`, onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } })),
+    el('li', {}, el('span', { text: t('tt_s2') }), ' ', el('a', { class: 'btn tiny', href: 'https://myafaqy.com/', target: '_blank', rel: 'noopener', text: `${t('tt_open')} ↗` })),
+    el('li', { text: t('tt_s3') }));
+  return el('section', { class: 'tt-box' },
+    el('div', { class: 'tt-head' }, el('div', {}, el('b', { text: t('tt_h') }),
+      el('small', { class: 'hint', text: live ? t('tt_when', { d: String(live.extractedAt || '').slice(0, 10), s: t(live.from === 'types' ? 'tt_src_types' : 'tt_src_pull'), n: linked }) : t('tt_never') })),
+      el('button', { type: 'button', class: 'btn primary', text: `↻ ${t('tt_update')}`, onclick: () => { steps.hidden = !steps.hidden; } })),
+    fresh.length ? el('p', { class: 'tt-new', text: t('tt_new', { n: fresh.length, list: fresh.slice(0, 6).join('، ') + (fresh.length > 6 ? ' …' : '') }) }) : el('p', { class: 'hint', text: live ? t('tt_all_set') : '' }),
+    steps);
+}
 function managerImportAck(e, ok) {
   try {
     e.source.postMessage({ type: 'afaqy-manager-ack/v1', nonce: managerImportNonce, ok }, e.origin);
@@ -2221,7 +2255,7 @@ function pointsRulesBox(wt, admin) {
   return el('details', { class: 'pr-box', open: '' }, el('summary', { text: t('pr_h') }), steps, calcBox, el('h3', { text: t('pr_rules_h') }), editor);
 }
 { const withRules = (fn) => function weightsWithRules(...args) { const out = fn.apply(this, args);
-    try { const body = $('weights-body'), wt = weights(), uid = (me && me.user ? me.user.id : null) || (!isTeamPortal ? managerIdOf() : null); if (body && wt) body.prepend(pointsRulesBox(wt, isWeightsAdmin(wt, uid)));
+    try { const body = $('weights-body'), wt = weights(), uid = (me && me.user ? me.user.id : null) || (!isTeamPortal ? managerIdOf() : null); if (body && wt) { body.prepend(pointsRulesBox(wt, isWeightsAdmin(wt, uid))); if (!isTeamPortal) body.querySelector('.pr-box').after(typesBox(wt)); }
       // each cell carries its column's name, so on a phone a row reads as a card: the type on top, every field named under it (ADR-0049)
       if (body) body.querySelectorAll('table').forEach((tb) => { const hs = [...tb.querySelectorAll('thead th')].map((th) => th.textContent.trim()); tb.classList.add('w-cards');
         tb.querySelectorAll('tbody tr').forEach((tr) => [...tr.children].forEach((td, i) => { if (hs[i]) td.dataset.label = hs[i]; })); }); } catch (e) { console.error(e); }
@@ -2279,6 +2313,7 @@ function renderHome() {
     noPlan.length && { k: 'plan', title: t('cr_att_plan', { n: noPlan.length, m: active.length, q: qNext.label }), detail: names(noPlan), href: '#dev', prep: () => { devQ = 'next'; pref('devq', 'next'); } },
     old.length && { k: 'old', title: t('cr_att_old', { n: old.length }), detail: oldBy.slice(0, 3).map(([id, n]) => `${nm(id)} ${n}`).join('، '), href: '#kpi', prep: () => { kpiTab = 'team'; } },
     pending && { k: 'pending', title: t('cr_att_pending', { n: pending }), detail: '', href: '#team' },
+    (() => { const f = newTypes(wt); return f.length ? { k: 'types', title: t('cr_att_types', { n: f.length }), detail: f.slice(0, 4).join('، '), href: '#weights' } : null; })(),
   ].filter(Boolean);
   const num = (k, v, sub) => el('div', { class: 'cr-num' }, el('span', { text: t(k) }), el('b', { text: String(v) }), sub ? el('small', { text: sub }) : null);
   const job = (label, hash, prep) => el('button', { type: 'button', class: 'cr-job', onclick: go(hash, prep) }, el('b', { text: label }), el('span', { text: '↗' }));
@@ -2553,7 +2588,7 @@ function renderWeights() {
   const admin = isWeightsAdmin(wt, uid);
   const mayEdit = (k) => canEditWeight(wt, uid, k);
   // the groups: linked types as myafaqy lists them per team (from the latest file), else the weights file's own tags
-  const tt = (ds && ds.teamTypes) || {};
+  const ttLive = liveTeamTypes(), tt = (ttLive && ttLive.teamTypes) || {};   // the newest list: from «أنواع الفرق» or from the latest pull
   const findTeam = (re) => Object.entries(tt).find(([n]) => re.test(n));
   const asTeam = findTeam(/jeddah.*after\s*-?\s*sales/i), rdTeam = findTeam(/jeddah.*r\s*&\s*d/i);
   const fromFile = (team) => Object.entries(wt.tasks).filter(([, x]) => x.team === team || (team === 'aftersales' && x.team === 'both') || (team === 'rd' && x.team === 'both')).map(([k]) => k);
@@ -3029,6 +3064,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   myProjects = await store.getProjects();
   myRegister = await store.getRegister();
   devPlans = (await store.kvGet('devplans')) || {};
+  teamTypesLive = (await store.kvGet('teamtypes')) || null;
   await refreshOfficialWeights();
   try { const r = await fetch('./systems.json', { cache: 'no-store' }); const data = r.ok && validateSystems(await r.json()); if (data) { SYSTEMS = data.systems; SYSTEM_CATEGORIES = data.categories; } } catch { /* retain built-in links when unavailable */ }
   await loadStrings(['ar', lang]);   // Arabic is every key's fallback; the reader's language besides

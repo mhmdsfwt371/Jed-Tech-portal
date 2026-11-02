@@ -1,15 +1,18 @@
 {
-  "version": "8.68",
+  "version": "8.69",
   "date": "2026-11-02",
   "notes": {
     "ar": [
-      "للمهندس في «مؤشراتي»: بطاقة «مكانك وتقدمك» — ترتيبه في فريقه هذا الشهر («المركز ٣ من ٩») وكم نقطة يتبقى ليتخطى من قبله، وأرقامه القياسية، وإنجازاته، ومستواه وأقرب طريق للتحسن. لا تظهر أسماء الزملاء ولا أرقامهم."
+      "«حدّث قائمة الأنواع» في صفحة الأوزان: اختصار خفيف «أنواع الفرق» تضغطه في ماي أفاقي فتعود قائمة أنواع فريقي ما بعد البيع والبحث والتطوير إلى البوابة خلال ثوانٍ — يقرأ الفرق وأنواعها فقط.",
+      "الأنواع الجديدة التي لا وزن لها تظهر بأسمائها في الأوزان وفي «غرفة المتابعة»."
     ],
     "en": [
-      "For the engineer in My KPIs: a “Where you stand” card — his rank in his team this month (“Rank 3 of 9”) and how many points to pass the one above, his records, achievements, and level with the shortest way up. Colleagues’ names and numbers are never shown."
+      "“Update the type list” on the weights page: a light “Team types” bookmark you press in MyAFAQY brings the after-sales and R&D type list back to the portal in seconds — it reads only the teams and their types.",
+      "New types without a weight are named on the weights page and in the control room."
     ],
     "ur": [
-      "انجینئر کے لیے «میرے اشاریے» میں «آپ کہاں کھڑے ہیں» کارڈ — ٹیم میں اس ماہ کا نمبر، ریکارڈ، کامیابیاں اور سطح۔ ساتھیوں کے نام اور اعداد کبھی نہیں دکھائے جاتے۔"
+      "اوزان کے صفحے پر «اقسام کی فہرست تازہ کریں»: مائی آفاقی میں «ٹیم کی اقسام» دبائیں اور فہرست چند سیکنڈ میں پورٹل پر واپس آ جاتی ہے۔",
+      "بغیر وزن کی نئی اقسام اوزان اور کنٹرول روم میں ناموں کے ساتھ نظر آتی ہیں۔"
     ]
   }
 }

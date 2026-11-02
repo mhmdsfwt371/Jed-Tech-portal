@@ -905,4 +905,13 @@ test('the manager’s own methods: steps against the usual time, flat, missing, 
   assert.equal(R.methods.length, 1); assert.deepEqual(R.methods[0].steps, [{ upTo: 50, x: 2 }]); assert.equal(R.methods[0].beyond, 1);
   assert.ok(core.isCustomMode('m_ok1')); assert.ok(!core.isCustomMode('speed'));
 });
+test('the «أنواع الفرق» bookmark reads only the teams, talks only to crmbackend and the portal, and its hand-over is checked', () => {
+  const code = decodeURIComponent(core.buildTypesBookmarklet('https://example.org/portal/').replace(/^javascript:/, ''));
+  assert.ok(code.includes("post('Teams/GetAllTeams'") && code.includes("get('Teams/GetTeamById/'") && !code.includes('Task/GetMyTasksGrid') && !code.includes('TechnicianReport'));
+  assert.ok(code.includes("dest.hash='weights'") && code.includes(core.TEAMTYPES_AUTO_SCHEMA) && !/const packet=\{[^}]*\btk\b/.test(code));
+  assert.throws(() => core.buildTypesBookmarklet('http://evil.example/'));
+  const ok = core.parseTeamTypesTransfer({ type: core.TEAMTYPES_AUTO_SCHEMA, extractedAt: '2026-11-02T08:00:00Z', teamTypes: { 'Jeddah After sales Team': [{ id: 5, nameEn: 'New Type', nameAr: 'نوع' }, { junk: 1 }] } });
+  assert.equal(ok.teamTypes['Jeddah After sales Team'].length, 1); assert.equal(ok.extractedAt, '2026-11-02T08:00:00.000Z');
+  assert.equal(core.parseTeamTypesTransfer({ type: 'other', teamTypes: {} }).error, 'tt_bad'); assert.equal(core.parseTeamTypesTransfer({ type: core.TEAMTYPES_AUTO_SCHEMA, teamTypes: { a: [] } }).error, 'tt_empty');
+});
 console.log(`core.test.mjs: ${tests.length} passed`);

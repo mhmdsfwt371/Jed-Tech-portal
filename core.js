@@ -791,6 +791,68 @@ setTimeout(()=>box.remove(),14000);
  * after-sales engineers, see the Jeddah coverage, pilot on ten accounts, then apply to the rest. The only write in the
  * whole portal: POST AfterSales/AssignAfterSales, ADD mode (existing ∪ chosen), branchCode "2" only, by a button press.
  */
+/**
+ * «أنواع الفرق» (ADR-0053): a light bookmark that reads only the teams and their linked task types from myafaqy and hands them to the
+ * portal by the same secured hand-over as the data pull (a fresh nonce, the portal's own origin, an acknowledgement). No tasks, no
+ * reports, and the sign-in token never leaves myafaqy. The reading and hand-over below are taken verbatim from the manager bookmark.
+ */
+export const TEAMTYPES_AUTO_SCHEMA = 'afaqy-teamtypes-import/v1';
+export function buildTypesBookmarklet(portalUrl, branch = JEDDAH_BRANCH, lang = 'ar') {
+  const targetUrl = new URL(portalUrl);
+  if (!safePortalUrl(targetUrl)) throw new Error('invalid portal URL');
+  const msg = {
+    ar: ['افتح ماي أفاقي أولًا ثم اضغط الإشارة من هناك', 'سجّل دخولك في ماي أفاقي أولًا', 'جارٍ قراءة أنواع الفرق… ', 'تعذّرت القراءة: ', '', 'وصلت قائمة الأنواع للبوابة ✓', 'لم تصل القائمة للبوابة — افتحها من زر «حدّث قائمة الأنواع» ثم اضغط الإشارة مرة أخرى', 'جارٍ إرسال القائمة للبوابة…'],
+    en: ['Open myafaqy first, then press the bookmark there', 'Sign in to myafaqy first', 'Reading the team task types… ', 'Could not read: ', '', 'The type list reached the portal ✓', 'The list did not reach the portal — open it from “Update the type list” and press the bookmark again', 'Sending the list to the portal…'],
+    ur: ['پہلے مائی آفاقی کھولیں، پھر وہاں بک مارک دبائیں', 'پہلے مائی آفاقی میں لاگ اِن کریں', 'ٹیموں کی کام کی اقسام پڑھی جا رہی ہیں… ', 'پڑھا نہیں جا سکا: ', '', 'اقسام کی فہرست پورٹل تک پہنچ گئی ✓', 'فہرست پورٹل تک نہیں پہنچی — «اقسام کی فہرست تازہ کریں» سے کھولیں اور بک مارک دوبارہ دبائیں', 'فہرست پورٹل کو بھیجی جا رہی ہے…'],
+  }[['en', 'ur'].includes(lang) ? lang : 'ar'];
+  const code = `(async()=>{const M=${JSON.stringify(msg)},BR=${JSON.stringify(String(branch))},DEL='auto',PORTAL=${JSON.stringify(targetUrl.origin + targetUrl.pathname)},PACKET=${JSON.stringify(TEAMTYPES_AUTO_SCHEMA)};
+if(location.hostname!=='myafaqy.com'){alert(M[0]);return}
+const tk=localStorage.getItem('token');if(!tk){alert(M[1]);return}
+let sink=null,nonce='',ready=false,acked=null,receiver=null;let targetOrigin='';
+if(DEL==='auto'){
+  try{
+    nonce=Array.from(crypto.getRandomValues(new Uint32Array(4))).map(n=>n.toString(16).padStart(8,'0')).join('');
+    const dest=new URL(PORTAL);targetOrigin=dest.origin;dest.searchParams.set('mgrImport',nonce);dest.hash='weights';
+    sink=window.open(dest.href,'_blank');
+    if(sink){receiver=e=>{if(e.origin!==targetOrigin||e.source!==sink||!e.data||e.data.nonce!==nonce)return;
+      if(e.data.type==='afaqy-manager-ready/v1')ready=true;
+      if(e.data.type==='afaqy-manager-ack/v1')acked=e.data.ok===true?'ok':'failed';};
+      window.addEventListener('message',receiver);
+    }
+  }catch(_){sink=null;}
+}/* popup setup finished */
+const box=document.createElement('div');box.style.cssText='position:fixed;inset:auto 16px 16px auto;z-index:2147483647;background:#0F2231;color:#fff;padding:12px 16px;border-radius:10px;font:14px system-ui;max-width:320px';box.textContent=M[2];document.body.append(box);
+const H={'Authorization':'Bearer '+tk,'Content-Type':'application/json','X-Timezone-Offset':'-180','X-Client-Id':localStorage.getItem('browser_client_id')||'','lang':'en'};
+const say=t=>{box.textContent=t};const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const post=async(path,body)=>{const r=await fetch('https://crmbackend.afaqy.sa/'+path,{method:'POST',headers:H,body:JSON.stringify(body)});if(!r.ok)throw new Error(path+' HTTP '+r.status);const j=await r.json();if(j&&j.success===false)throw new Error(j.message||path+' refused');return j};
+const get=async(path)=>{const r=await fetch('https://crmbackend.afaqy.sa/'+path,{headers:H});if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()};
+try{
+const uname={};const teamsSeen={};
+for(let pg=0;;pg++){const T=await post('Teams/GetAllTeams',{isSearchFilter:false,searchKey:'',search:{},pageSize:50,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const arr=(T.data&&(T.data.data||T.data))||[];for(const t of arr)teamsSeen[String(t.id)]=t;const tot=(T.data&&T.data.totalPages)||1;if(pg+1>=tot||!arr.length)break;await wait(200)}
+const teamOf={};const teamTypes={};for(const id of Object.keys(teamsSeen)){const d=await get('Teams/GetTeamById/'+id);const td=(d&&d.data)||{};const bc=td.branchCode==null?null:String(td.branchCode);const jed=bc==='${branch}'||/jeddah/i.test(String(td.nameEn||td.name||''));if(jed){const tn=td.nameEn||td.name||id;for(const[k,v]of Object.entries(td))if(k!=='groupUsersDto'&&Array.isArray(v)&&v.length&&v.every(x=>x&&typeof x==='object'&&(x.nameEn||x.name)&&x.userId==null)){teamTypes[tn]=v.map(x=>({id:x.id??x.taskSettingId??null,nameEn:String(x.nameEn||x.name||''),nameAr:String(x.nameAr||'')}))}}for(const g of td.groupUsersDto||[]){const uid=String(g.userId);(teamOf[uid]=teamOf[uid]||{teams:[],branchCode:null,jeddah:false}).teams.push(td.nameEn||td.name||id);if(bc)teamOf[uid].branchCode=bc;if(jed)teamOf[uid].jeddah=true;if(!uname[uid]&&(g.nameEn||g.nameAr))uname[uid]={nameEn:g.nameEn,nameAr:g.nameAr}}await wait(150)}
+const nTypes=Object.values(teamTypes).reduce((s,v)=>s+v.length,0);
+if(sink){say(M[7]);for(let k=0;k<40&&!ready;k++)await wait(500);
+  if(ready){const packet={type:PACKET,nonce,teamTypes,extractedAt:new Date().toISOString()};
+    for(let k=0;k<3&&!acked;k++){try{sink.postMessage(packet,targetOrigin)}catch(_){break}for(let w=0;w<15&&!acked;w++)await wait(500)}}
+  if(acked==='ok'){if(receiver)window.removeEventListener('message',receiver);box.style.background='#0A5F67';say(M[5]+' ('+Object.keys(teamTypes).length+' / '+nTypes+')');setTimeout(()=>box.remove(),12000);return}
+}
+if(receiver)window.removeEventListener('message',receiver);box.style.background='#7d5f15';say(M[6]);setTimeout(()=>box.remove(),14000);
+}catch(e){if(receiver)window.removeEventListener('message',receiver);box.style.background='#7a1f1f';say(M[3]+e.message);setTimeout(()=>box.remove(),12000)}})();`;
+  return 'javascript:' + encodeURIComponent(code.replace(/\n/g, ''));
+}
+/** Check a team-types hand-over before anything is stored: an object of team → [{ id, nameEn, nameAr }], bounded. */
+export function parseTeamTypesTransfer(m) {
+  if (!m || m.type !== TEAMTYPES_AUTO_SCHEMA || !m.teamTypes || typeof m.teamTypes !== 'object' || Array.isArray(m.teamTypes)) return { error: 'tt_bad' };
+  const out = {};
+  for (const [team, list] of Object.entries(m.teamTypes).slice(0, 40)) {
+    if (!Array.isArray(list)) continue;
+    const rows = list.slice(0, 400).filter((x) => x && typeof x === 'object' && (x.nameEn || x.nameAr)).map((x) => ({ id: x.id ?? null, nameEn: String(x.nameEn || '').slice(0, 200), nameAr: String(x.nameAr || '').slice(0, 200) }));
+    if (rows.length) out[String(team).slice(0, 120)] = rows;
+  }
+  if (!Object.keys(out).length) return { error: 'tt_empty' };
+  const at = Date.parse(m.extractedAt); return { teamTypes: out, extractedAt: Number.isFinite(at) ? new Date(at).toISOString() : new Date().toISOString() };
+}
+
 export function buildAssignBookmarklet(lang = 'ar', defaultNames = []) {
   const M = {
     ar: { only: 'افتح ماي أفاقي أولًا ثم اضغط الإشارة من هناك', login: 'سجّل دخولك في ماي أفاقي أولًا', title: 'تعيين ما بعد البيع على حسابات جدة', pick: 'اختر المهندسين الذين يكونون على كل حساب', loading: 'جارٍ قراءة الحسابات…',
