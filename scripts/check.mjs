@@ -44,7 +44,7 @@ if (!/^\d{4}-\d{2}-\d{2}$/.test(vj.date || '')) note('version.json: date must be
 // The Claude prompt and the my-KPIs bookmark both run on myafaqy's page, not in the portal; they have their own rules (9, 17).
 // The Afaqy PRO page is the one exception in the portal itself (ADR-0011) — it has its own rule (18); everything else holds.
 const appWithoutPro = app.replace(/\/\/ ---------- AFAQY PRO inside the portal[\s\S]*?\/\/ ---------- the side menu ----------/, '').replace(/\/\/ ---------- Outlook inside the portal \(ADR-0029\)[\s\S]*?\/\/ ---------- end Outlook ----------/, '');
-const coreWithoutPrompt = core.replace(/export function buildPrompt[\s\S]*?\n}\n/, '').replace(/export function buildBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildReportsPrompt[\s\S]*?\n}\n/, '').replace(/export function buildManagerBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildAssignBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildTypesBookmarklet[\s\S]*?\n}\n/, '');
+const coreWithoutPrompt = core.replace(/export function buildPrompt[\s\S]*?\n}\n/, '').replace(/export function buildBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildReportsPrompt[\s\S]*?\n}\n/, '').replace(/export function buildManagerBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildAssignBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildTypesBookmarklet[\s\S]*?\n}\n/, '').replace(/export const MANAGER_PULL_BODY = `[\s\S]*?`;\n/, '');
 for (const [name, src] of [['index.html', html], ['app.js', appWithoutPro], ['core.js', coreWithoutPrompt], ['config.js', cfg]]) {
   if (/firebase/i.test(src)) note(`${name}: Firebase is referenced — the portal runs without it`);
   if (/afaqy\.sa|afaqy\.pro\/|crmbackend/.test((name === 'config.js' ? src.replace(/https:\/\/[^\s"']+/g, '') : src.replace(/https:\/\/afaqy\.pro\/'/g, '')))) note(`${name}: an Afaqy API address appeared — the portal never calls an Afaqy API`);
@@ -229,7 +229,8 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   {
     const { buildManagerBookmarklet: mb } = await import(new URL('core.js', root));
     const past = decodeURIComponent(mb('2026-01-01', '2026-01-31').replace(/^javascript:/, ''));
-    if (!/c>='[^']+'&&c<'[^']+'\)tasks\.push/.test(past)) note('manager bookmark: tasks done after the period are kept only if created inside it');
+    const { managerPullRecipe: mrp, MANAGER_PULL_BODY: mbody } = await import(new URL('core.js', root));   // ADR-0062: the values sit in the recipe, the body reads them
+    if (!(mrp('2026-01-01', '2026-01-31').LATER === true && past.includes('"LATER":true') && /if\(LATER\)\{[^}]*c>=FZ&&c<TZ\)tasks\.push/.test(mbody))) note('manager bookmark: tasks done after the period are kept only if created inside it');
   }
   if (/\/(add|edit|delete|remove|save|assign|close|complete|approve|update|create|sync|send)\b/i.test(mg)) note('manager bookmark: a write-like path appeared');
   if (/location\.href=[^;]*(tk|token)|\.href='[^']*'\+tk/.test(mg) || /dl\([^)]*tk\b/.test(mg)) note('manager bookmark: the sign-in token must never leave the page');
@@ -414,6 +415,14 @@ if (problems.length) { console.error(`check.mjs: ${problems.length} problem(s)\n
   const reads = [...new Set([...code.matchAll(/(?:post|get)\('([A-Za-z]+\/[A-Za-z]+)/g)].map((m) => m[1]))];
   if (reads.some((r) => !['Teams/GetAllTeams', 'Teams/GetTeamById'].includes(r))) note(`types bookmark: reads ${reads.join(', ')} — only the teams`);
   if (/const packet=\{[^}]*\btk\b/.test(code) || /packet[^;]*Authorization/.test(code)) note('types bookmark: the hand-over must never carry the sign-in token');
+}
+
+// ADR-0062: the extension carries exactly the core's pull, and the download holds the current files.
+{
+  const { extensionPullScript } = await import(new URL('core.js', root));
+  if (!exists('extension/pull.js') || read('extension/pull.js') !== extensionPullScript()) note('extension/pull.js is out of date — run node scripts/build-extension.mjs');
+  if (!exists('assets/afaqy-sync-extension.zip')) note('assets/afaqy-sync-extension.zip is missing — zip the extension folder');
+  for (const f of ['extension/myafaqy.js', 'extension/portal.js']) if (exists(f) && /eval\(|new Function|innerHTML|document\.write|createElement\(['"]script/.test(read(f))) note(`${f}: the extension must never run text as code`);
 }
 
 console.log(`check.mjs: all checks passed (v${version})`);

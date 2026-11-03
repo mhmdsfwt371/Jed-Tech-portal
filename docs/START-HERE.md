@@ -76,6 +76,7 @@
 | `docs/decisions/0059-easier-portal-clearer-numbers.md` | An easier portal and clearer numbers (study results) |
 | `docs/decisions/0060-team-from-myafaqy-hierarchy.md` | The team from MyAFAQY's own hierarchy (employee list) |
 | `docs/decisions/0061-branch-from-the-account.md` | The pull's branch from the manager's own MyAFAQY row |
+| `docs/decisions/0062-sync-extension.md` | The sync extension: the same pull as the bookmark, by itself or in one click |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

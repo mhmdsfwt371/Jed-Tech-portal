@@ -394,8 +394,8 @@ test('manual manager bookmark remains downloadable and auto transfer uses one ex
   const args = ['2026-10-01', '2026-10-31', '2', 'ar'];
   const manual = decodeURIComponent(buildManagerBookmarklet(...args));
   const auto = decodeURIComponent(buildManagerBookmarklet(...args, 'auto', 'https://mhmdsfwt371.github.io/Jed-Tech-portal/'));
-  assert.match(manual, /DEL="download"/);
-  assert.match(auto, /DEL="auto"/);
+  assert.match(manual, /"DEL":"download"/);
+  assert.match(auto, /"DEL":"auto"/);
   assert.match(auto, /window.open\(dest.href/);
   assert.match(auto, /sink.postMessage\(packet,targetOrigin\)/);
   assert.match(auto, /'afaqy-manager-ready\/v1'/);
@@ -940,11 +940,21 @@ test('the hierarchy from the employee list: eight safe fields only, tied to peop
 });
 test('the pull filters teams by the branch it is given; the Jeddah name rule applies only to Jeddah; the hierarchy gives a manager his branch', () => {
   const dec = (b) => decodeURIComponent(core.buildManagerBookmarklet('2026-10-01', '2026-10-29', b, 'en', 'auto', 'https://example.org/portal/').replace(/^javascript:/, ''));
-  assert.ok(dec('1').includes("bc==='1'||(false&&/jeddah/i") && dec('1').includes('BR="1"'));
-  assert.ok(dec(core.JEDDAH_BRANCH).includes(`bc==='${core.JEDDAH_BRANCH}'||(true&&/jeddah/i`));
+  assert.ok(dec('1').includes('"BR":"1"') && dec('1').includes('"JED":false') && dec('1').includes('bc===BR||(JED&&/jeddah/i'));
+  assert.ok(dec(core.JEDDAH_BRANCH).includes(`"BR":"${core.JEDDAH_BRANCH}"`) && dec(core.JEDDAH_BRANCH).includes('"JED":true'));
   const ty = decodeURIComponent(core.buildTypesBookmarklet('https://example.org/portal/', '1').replace(/^javascript:/, ''));
   assert.ok(ty.includes("bc==='1'||(false&&/jeddah/i"));
   const org = core.buildOrg(core.parseEmployees([{ nameEn: 'Alpha Boss', manager: 'Zulu Head', branch: 'Riyadh', branchCode: '1' }, { nameEn: 'Bravo Eng', manager: 'Alpha Boss', branch: 'Riyadh', branchCode: '1' }]), [{ id: '1', nameEn: 'Alpha Boss' }, { id: '2', nameEn: 'Bravo Eng' }]);
   assert.deepEqual(org.branchOf('1'), { code: '1', name: 'Riyadh' }); assert.equal(org.branchOf('99'), null);
+});
+test('the pull is one recipe plus one body: the bookmark and the extension run the same text; «ext» hands the result to the extension', () => {
+  const R = core.managerPullRecipe('2026-09-01', '2026-11-30', '2', 'ar', 'ext');
+  assert.deepEqual(Object.keys(R), core.MANAGER_PULL_KEYS); assert.equal(R.DEL, 'ext'); assert.equal(R.PORTAL, ''); assert.equal(R.LATER, false);
+  assert.ok(!core.MANAGER_PULL_BODY.includes('${'), 'no value is woven into the body');
+  assert.ok(core.MANAGER_PULL_BODY.includes("if(DEL==='ext'){window.postMessage({type:PACKET,ext:true,tasks:tasksFile,reports:repFile},location.origin)"));
+  assert.ok(core.MANAGER_PULL_BODY.includes('range:{from:FROM,to:RTO}'), 'a period that runs past today is recorded as ending today');
+  const bm = decodeURIComponent(core.buildManagerBookmarklet('2026-10-01', '2026-10-29', '2', 'ar').replace(/^javascript:/, ''));
+  assert.ok(bm.includes(core.MANAGER_PULL_BODY.replace(/\n/g, '')), 'the bookmark carries exactly the same body');
+  assert.throws(() => core.managerPullRecipe('2026-11-30', '2026-09-01'));
 });
 console.log(`core.test.mjs: ${tests.length} passed`);

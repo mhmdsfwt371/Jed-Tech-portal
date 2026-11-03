@@ -6,7 +6,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
   mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
@@ -1752,7 +1752,8 @@ function storageNote() {
   n.textContent = storageKept === true ? t('storage_kept') : storageKept === false ? t('storage_not_kept') : t('storage_unknown');
 }
 function renderDatasets() {
-  if ($('dt-branch')) { const b = pullBranch(); if (b.code !== renderDatasets.lastBranch) { renderDatasets.lastBranch = b.code; renderMgr(); }   // a new branch rebuilds the pull buttons
+  if ($('dt-branch')) { const b = pullBranch(); if (b.code !== renderDatasets.lastBranch) { renderDatasets.lastBranch = b.code; renderMgr(); extSend(false); }   // a new branch rebuilds the pull buttons
+    renderExtBox();   // drawn with the page, so it follows the language and the data
     $('dt-branch').textContent = b.from === 'myafaqy' ? t('dt_branch_org', { name: b.name || b.code, code: b.code }) : t('dt_branch_default'); }
   if ($('dt-last')) { const d = [...datasets].sort((x, y) => String(y.extractedAt || '').localeCompare(String(x.extractedAt || '')))[0];
     $('dt-last').textContent = d ? t('dt_last', { d: saudiDay(d.extractedAt || new Date().toISOString()), n: (d.tasks || []).length }) : t('dt_last_none'); }
@@ -2891,6 +2892,38 @@ function orgCheckBox() {
     !fileApplies && !lines.length ? el('p', { class: 'hint org-nofile', text: t('org_nofile') }) : el('details', { class: 'org-diffs', ...(lines.length ? { open: '' } : {}) }, el('summary', { text: t('org_diff_h', { n: lines.length }) }),
       lines.length ? el('ul', {}, lines.map((x) => el('li', { text: x }))) : el('p', { class: 'hint', text: t('org_none_diff') }), el('p', { class: 'hint', text: t('org_note_match') })));
 }
+// ---------- the sync extension (ADR-0062): the same pull, run by the browser when myafaqy opens — or by one click ----------
+const extOn = () => !isTeamPortal && !!document.documentElement.dataset.afaqyExt;
+let extState = null, extLastAt = null;
+const monthLast = (ym) => { const d = new Date(Date.parse(`${ym}-01T00:00:00Z`)); d.setUTCMonth(d.getUTCMonth() + 1); d.setUTCDate(0); return d.toISOString().slice(0, 10); };
+const extRecipe = () => { const ym = saudiDay(new Date().toISOString()).slice(0, 7); return managerPullRecipe(`${ymPrev(ym)}-01`, monthLast(ym), pullBranch().code, lang, 'ext'); };
+const extSend = (now) => { if (extOn()) window.postMessage({ type: 'afaqy-ext-recipe', recipe: extRecipe(), now: !!now }, location.origin); };
+window.addEventListener('message', async (e) => {
+  if (!extOn() || e.source !== window || e.origin !== location.origin || !e.data) return;
+  if (e.data.type === 'afaqy-ext-state') { extState = e.data; renderExtBox(); }
+  if (e.data.type === 'afaqy-ext-packet' && e.data.packet && e.data.at !== extLastAt) {
+    extLastAt = e.data.at;   // the same checks as a bookmark pull: both files, their schemas, one period, every row parsed
+    const r = parseManagerTransfer({ type: MANAGER_AUTO_SCHEMA, nonce: 'e'.repeat(32), tasks: e.data.packet.tasks, reports: e.data.packet.reports });
+    if (r.error) { toast(t(r.error)); return; }
+    datasets = mergeDataset(datasets, r.dataset);
+    reports = [...supersede(reports, r.reports).filter((x) => x.key !== r.reports.key), r.reports].sort((p, q) => (p.range.from < q.range.from ? 1 : -1));
+    await store.put(datasets); await store.putReports(reports);
+    setTimeout(closeMonths, 0);
+    renderDatasets(); renderBlocks(); renderKpi(); renderMe(); renderHome(); renderExtBox();
+    window.postMessage({ type: 'afaqy-ext-got' }, location.origin);
+    toast(t('ext_got', { n: r.dataset.tasks.length, from: r.dataset.range.from, to: r.dataset.range.to }));
+  }
+});
+function renderExtBox() {
+  const box = $('ext-box'); if (!box || isTeamPortal) return;
+  if (!extOn()) { set(box, el('p', { class: 'ext-line', text: t('ext_off') }), el('details', { class: 'ext-how' }, el('summary', { text: t('ext_how_h') }),
+    el('ol', {}, ['ext_s1', 'ext_s2', 'ext_s3', 'ext_s4', 'ext_s5'].map((k) => el('li', { text: t(k) }))),
+    el('a', { class: 'btn tiny', href: './assets/afaqy-sync-extension.zip', download: 'afaqy-sync-extension.zip', text: `⬇ ${t('ext_dl')}` }))); return; }
+  const s = extState || {}, when = s.lastAt ? new Date(s.lastAt + 3 * 3600e3).toISOString().replace('T', ' ').slice(0, 16) : null;
+  const msg = s.status === 'pulling' ? t('ext_pulling') : s.status === 'failed' ? t('ext_failed', { e: s.error || '' }) : s.status === 'needs-portal' ? t('ext_month') : when ? t('ext_last', { d: when }) : t('ext_never');
+  set(box, el('p', { class: 'ext-line on', text: `${t('ext_on')} ${msg}` }),
+    el('button', { type: 'button', class: 'btn primary ext-now', text: `↻ ${t('ext_now')}`, onclick: () => { extSend(true); window.open('https://myafaqy.com/#/home', '_blank'); toast(t('ext_now_toast')); } }));
+}
 function renderTeam() {
   applyNameFixes();
   applyPending().then((changed) => { if (changed) { renderTeam(); renderKpi(); renderMe(); } });
@@ -3329,6 +3362,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   teamTypesLive = (await store.kvGet('teamtypes')) || null;
   rankSnaps = (await store.kvGet('rankcards')) || {}; await takeRankLink();
   mfState.rules = (await store.kvGet('mailrules')) || null;
+  if (!isTeamPortal) { extSend(false); window.postMessage({ type: 'afaqy-ext-hello' }, location.origin); renderExtBox(); }   // ADR-0062
   await refreshOfficialWeights();
   try { const r = await fetch('./systems.json', { cache: 'no-store' }); const data = r.ok && validateSystems(await r.json()); if (data) { SYSTEMS = data.systems; SYSTEM_CATEGORIES = data.categories; } } catch { /* retain built-in links when unavailable */ }
   await loadStrings(['ar', lang]);   // Arabic is every key's fallback; the reader's language besides

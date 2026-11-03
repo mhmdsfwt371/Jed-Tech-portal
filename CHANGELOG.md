@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.80 — 2026-11-04
+
+- إضافة المزامنة لكروم: تُسحب البيانات وحدها عندما تفتح ماي أفاقي (مرة كل 12 ساعة على الأكثر)، أو بضغطة «حدّث الآن» في صفحة «البيانات» فتُفتح ماي أفاقي وتُغلق وحدها. البيانات تبقى في متصفحك.
+- الإضافة تشغّل نفس كود زر السحب حرفيًا، وتقرأ فقط ولا تكتب شيئًا في ماي أفاقي. خطوات التثبيت ورابط التنزيل في صفحة «البيانات».
+
+<details><summary>English</summary>
+
+- The sync extension for Chrome: the data is pulled by itself when you open MyAFAQY (at most once every 12 hours), or with one click on «Update now» on the Data page, which opens MyAFAQY and closes it again. The data stays in your browser.
+- The extension runs exactly the same code as the pull button, reads only and writes nothing in MyAFAQY. The install steps and the download are on the Data page.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- کروم کے لیے سنک ایکسٹینشن: مائی آفاقی کھولتے ہی ڈیٹا خود کھنچ جاتا ہے، یا ڈیٹا کے صفحے پر «ابھی تازہ کریں» سے ایک کلک میں۔
+- ایکسٹینشن وہی کوڈ چلاتی ہے جو پل بٹن، صرف پڑھتی ہے۔
+
+</div>
+</details>
+
+
 ## v8.79 — 2026-11-04
 
 - الفرع يأتي من ماي أفاقي: زر السحب و«أنواع الفرق» يأخذان الفرع من صف المدير في قائمة الموظفين، فمدير فرع آخر يسحب فرعه هو. صفحة «البيانات» تذكر الفرع ومصدره.

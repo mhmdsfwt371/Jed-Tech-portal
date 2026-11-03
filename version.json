@@ -1,18 +1,18 @@
 {
-  "version": "8.79",
+  "version": "8.80",
   "date": "2026-11-04",
   "notes": {
     "ar": [
-      "الفرع يأتي من ماي أفاقي: زر السحب و«أنواع الفرق» يأخذان الفرع من صف المدير في قائمة الموظفين، فمدير فرع آخر يسحب فرعه هو. صفحة «البيانات» تذكر الفرع ومصدره.",
-      "إذا تغيّر الفرع بعد السحب، اسحب زر السحب إلى المفضلة من جديد مرة واحدة."
+      "إضافة المزامنة لكروم: تُسحب البيانات وحدها عندما تفتح ماي أفاقي (مرة كل 12 ساعة على الأكثر)، أو بضغطة «حدّث الآن» في صفحة «البيانات» فتُفتح ماي أفاقي وتُغلق وحدها. البيانات تبقى في متصفحك.",
+      "الإضافة تشغّل نفس كود زر السحب حرفيًا، وتقرأ فقط ولا تكتب شيئًا في ماي أفاقي. خطوات التثبيت ورابط التنزيل في صفحة «البيانات»."
     ],
     "en": [
-      "The branch comes from MyAFAQY: the pull button and «Team types» take the branch from the manager’s own row in the employee list, so another branch’s manager pulls his own branch. The Data page states the branch and its source.",
-      "If the branch changes after a pull, drag the pull button to your bookmarks again once."
+      "The sync extension for Chrome: the data is pulled by itself when you open MyAFAQY (at most once every 12 hours), or with one click on «Update now» on the Data page, which opens MyAFAQY and closes it again. The data stays in your browser.",
+      "The extension runs exactly the same code as the pull button, reads only and writes nothing in MyAFAQY. The install steps and the download are on the Data page."
     ],
     "ur": [
-      "برانچ مائی آفاقی سے: پل بٹن اور «ٹیم کی اقسام» مینیجر کی اپنی قطار سے برانچ لیتے ہیں۔",
-      "برانچ بدلے تو بٹن ایک بار پھر گھسیٹیں۔"
+      "کروم کے لیے سنک ایکسٹینشن: مائی آفاقی کھولتے ہی ڈیٹا خود کھنچ جاتا ہے، یا ڈیٹا کے صفحے پر «ابھی تازہ کریں» سے ایک کلک میں۔",
+      "ایکسٹینشن وہی کوڈ چلاتی ہے جو پل بٹن، صرف پڑھتی ہے۔"
     ]
   }
 }

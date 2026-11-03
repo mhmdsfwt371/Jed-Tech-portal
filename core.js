@@ -706,9 +706,10 @@ export function safePortalUrl(u) {
   try { const x = u instanceof URL ? u : new URL(u); if (x.username || x.password) return false;
     return x.protocol === 'https:' || (x.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(x.hostname)); } catch { return false; }
 }
-export function buildManagerBookmarklet(from, to, branch = JEDDAH_BRANCH, lang = 'ar', delivery = 'download', portalUrl = '') {
+/** Every value the manager pull reads (ADR-0062): the bookmark writes them into its header; the browser extension passes them as data. */
+export function managerPullRecipe(from, to, branch = JEDDAH_BRANCH, lang = 'ar', delivery = 'download', portalUrl = '') {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) throw new Error('invalid range');
-  const mode = delivery === 'auto' ? 'auto' : 'download';
+  const mode = delivery === 'auto' ? 'auto' : delivery === 'ext' ? 'ext' : 'download';
   const targetUrl = mode === 'auto' ? new URL(portalUrl) : null;
   if (targetUrl && !safePortalUrl(targetUrl)) throw new Error('invalid portal URL');
   const [fromZ, toZ] = saudiBoundsZ(from, to);
@@ -721,7 +722,14 @@ export function buildManagerBookmarklet(from, to, branch = JEDDAH_BRANCH, lang =
     en: ['Open myafaqy first, then press the bookmark there', 'Sign in to myafaqy first', 'Loading team data… ', 'Could not load: ', 'Done — download both files and upload them in the portal', 'Team data was imported into the admin portal', 'Direct import did not finish; both files were downloaded for manual upload', 'Sending data to the portal…'],
     ur: ['پہلے مائی آفاقی کھولیں، پھر وہاں بک مارک دبائیں', 'پہلے مائی آفاقی میں لاگ اِن کریں', 'ٹیم کا ڈیٹا لوڈ ہو رہا ہے… ', 'لوڈ نہیں ہو سکا: ', 'ہو گیا — دونوں فائلیں ڈاؤن لوڈ کر کے پورٹل میں اپ لوڈ کریں', 'ٹیم کا ڈیٹا انتظامی پورٹل میں محفوظ ہوگیا', 'براہ راست ترسیل مکمل نہیں ہوئی؛ دستی اپ لوڈ کے لیے دونوں فائلیں محفوظ ہوگئیں', 'ڈیٹا پورٹل میں بھیجا جا رہا ہے…'],
   }[lang] || [];
-  const code = `(async()=>{const M=${JSON.stringify(msg)},FROM=${JSON.stringify(from)},TO=${JSON.stringify(to)},BR=${JSON.stringify(String(branch))},DEL=${JSON.stringify(mode)},PORTAL=${JSON.stringify(targetUrl ? targetUrl.origin + targetUrl.pathname : '')},PACKET=${JSON.stringify(MANAGER_AUTO_SCHEMA)};
+    return { M: msg, FROM: from, TO: to, BR: String(branch), DEL: mode, PORTAL: targetUrl ? targetUrl.origin + targetUrl.pathname : '', PACKET: MANAGER_AUTO_SCHEMA,
+    FZ: fromZ, TZ: toZ, NZ: nowZ, LATER: later, JED: String(branch) === String(JEDDAH_BRANCH), SCH: SCHEMA, RSCH: REPORTS_SCHEMA,
+    MMS: months.map((m) => ({ month: m.key, yearId: m.yearId, quarterId: m.quarterId, monthId: m.monthId, rd: m.requestDate })), KEEP: TECH_FIELDS };
+}
+export const MANAGER_PULL_KEYS = ['M', 'FROM', 'TO', 'BR', 'DEL', 'PORTAL', 'PACKET', 'FZ', 'TZ', 'NZ', 'LATER', 'JED', 'SCH', 'RSCH', 'MMS', 'KEEP'];
+/** The pull itself, with no values woven in: it reads only the recipe's names. The bookmark and the extension run this same text. */
+export const MANAGER_PULL_BODY = `const RTO=(()=>{const d=new Date(Date.now()+108e5).toISOString().slice(0,10);return TO>d?d:TO})();
+
 if(location.hostname!=='myafaqy.com'){alert(M[0]);return}
 const tk=localStorage.getItem('token');if(!tk){alert(M[1]);return}
 let sink=null,nonce='',ready=false,acked=null,receiver=null;let targetOrigin='';
@@ -749,26 +757,27 @@ const U=await post('Security/GetAllHierarchyUsersDropDown',{pageSize:1000,pageNu
 const udata=(U.data&&(U.data.data||U.data))||[];const uname={};for(const p of udata)uname[String(p.id)]=p;
 const people=[];const teamsSeen={};
 for(let pg=0;;pg++){const T=await post('Teams/GetAllTeams',{isSearchFilter:false,searchKey:'',search:{},pageSize:50,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const arr=(T.data&&(T.data.data||T.data))||[];for(const t of arr)teamsSeen[String(t.id)]=t;const tot=(T.data&&T.data.totalPages)||1;if(pg+1>=tot||!arr.length)break;await wait(200)}
-const teamOf={};const teamTypes={};for(const id of Object.keys(teamsSeen)){const d=await get('Teams/GetTeamById/'+id);const td=(d&&d.data)||{};const bc=td.branchCode==null?null:String(td.branchCode);const jed=bc==='${branch}'||(${String(branch) === String(JEDDAH_BRANCH)}&&/jeddah/i.test(String(td.nameEn||td.name||'')));if(jed){const tn=td.nameEn||td.name||id;for(const[k,v]of Object.entries(td))if(k!=='groupUsersDto'&&Array.isArray(v)&&v.length&&v.every(x=>x&&typeof x==='object'&&(x.nameEn||x.name)&&x.userId==null)){teamTypes[tn]=v.map(x=>({id:x.id??x.taskSettingId??null,nameEn:String(x.nameEn||x.name||''),nameAr:String(x.nameAr||'')}))}}for(const g of td.groupUsersDto||[]){const uid=String(g.userId);(teamOf[uid]=teamOf[uid]||{teams:[],branchCode:null,jeddah:false}).teams.push(td.nameEn||td.name||id);if(bc)teamOf[uid].branchCode=bc;if(jed)teamOf[uid].jeddah=true;if(!uname[uid]&&(g.nameEn||g.nameAr))uname[uid]={nameEn:g.nameEn,nameAr:g.nameAr}}await wait(150)}
+const teamOf={};const teamTypes={};for(const id of Object.keys(teamsSeen)){const d=await get('Teams/GetTeamById/'+id);const td=(d&&d.data)||{};const bc=td.branchCode==null?null:String(td.branchCode);const jed=bc===BR||(JED&&/jeddah/i.test(String(td.nameEn||td.name||'')));if(jed){const tn=td.nameEn||td.name||id;for(const[k,v]of Object.entries(td))if(k!=='groupUsersDto'&&Array.isArray(v)&&v.length&&v.every(x=>x&&typeof x==='object'&&(x.nameEn||x.name)&&x.userId==null)){teamTypes[tn]=v.map(x=>({id:x.id??x.taskSettingId??null,nameEn:String(x.nameEn||x.name||''),nameAr:String(x.nameAr||'')}))}}for(const g of td.groupUsersDto||[]){const uid=String(g.userId);(teamOf[uid]=teamOf[uid]||{teams:[],branchCode:null,jeddah:false}).teams.push(td.nameEn||td.name||id);if(bc)teamOf[uid].branchCode=bc;if(jed)teamOf[uid].jeddah=true;if(!uname[uid]&&(g.nameEn||g.nameAr))uname[uid]={nameEn:g.nameEn,nameAr:g.nameAr}}await wait(150)}
 const employees=[];try{for(let pg=0;pg<200;pg++){const R=await post('EmployeeIC/GetAllEmployeesGrid',{isSearchFilter:false,searchKey:'',search:{},pageSize:10,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const D=(R&&R.data)||{};for(const e of D.data||[])employees.push({id:e.id==null?null:String(e.id),nameEn:e.nameEn,nameAr:e.nameAr,department:e.department,manager:e.manager,branch:e.branch,branchCode:e.branchCode,status:e.status});if(pg+1>=(D.totalPages||1))break;await wait(150)}}catch(_){}
 const walk=async(grp,co,keepRd,buckets=['done','open','toDo'])=>{const out=[];const rd=[];say(M[2]+(keepRd?'R&D':'tasks'));for(const b of buckets){let size=500,pg=0,total=null;for(;;){const d=((await post('Task/GetMyTasksGrid',taskBody(b,pg,size,co,grp))).data||{})[b];if(!d)break;if(pg===0&&d.pageSize!==size)size=d.pageSize||20;total=d.listCount;for(const x of d.data||[]){if(keepRd){rd.push(String(x.id));continue;}out.push({i:String(x.id),title:x.title,taskType:x.taskType,taskSettingId:x.taskSettingId,statusId:x.statusId,isCancelled:x.isCancelled,createdOn:x.createdOn,closeDate:x.closeDate,createUserId:x.createUserId,assigneeId:x.assigneeId,moduleId:x.moduleId,customerTag:x.customerTag,bucket:b})}pg++;if(!d.data||!d.data.length||pg*size>=total)break;await wait(250)}}return{out,rd}};
-const main=await walk(100001,[FROM&&'${fromZ}'||'',TO&&'${toZ}'||''],false,['done']);let tasks=main.out;const doneTotal=tasks.length;
+const main=await walk(100001,[FROM&&FZ||'',TO&&TZ||''],false,['done']);let tasks=main.out;const doneTotal=tasks.length;
 const opn=await walk(100001,[],false,['open','toDo']);const seenO=new Set(tasks.map(t=>t.i));for(const t of opn.out)if(!seenO.has(t.i)){seenO.add(t.i);tasks.push(t)}const openTotal=opn.out.length;
-${later ? `const late=await walk(100001,['${toZ}','${nowZ}'],false,['done']);const seen=new Set(tasks.map(t=>t.i));for(const t of late.out){const c=t.createdOn?t.createdOn+'Z':'';if(t.bucket==='done'&&!seen.has(t.i)&&c>='${fromZ}'&&c<'${toZ}')tasks.push(t)}` : ''}
-const rdq=await walk(12,[FROM&&'${fromZ}'||'',TO&&'${toZ}'||''],true,['done']);const rdo=await walk(12,[],true,['open','toDo']);const rdIds=[...new Set([...rdq.rd,...rdo.rd])];
+if(LATER){const late=await walk(100001,[TZ,NZ],false,['done']);const seen=new Set(tasks.map(t=>t.i));for(const t of late.out){const c=t.createdOn?t.createdOn+'Z':'';if(t.bucket==='done'&&!seen.has(t.i)&&c>=FZ&&c<TZ)tasks.push(t)}}
+const rdq=await walk(12,[FROM&&FZ||'',TO&&TZ||''],true,['done']);const rdo=await walk(12,[],true,['open','toDo']);const rdIds=[...new Set([...rdq.rd,...rdo.rd])];
 const mapTask=x=>{const uid=String(x.assigneeId||'');const tt=teamOf[uid]||{teams:[],branchCode:null};return{id:String(x.i),title:String(x.title||''),typeId:x.taskSettingId??null,type:String(x.taskType||''),statusId:x.statusId,state:x.isCancelled?'cancelled':x.statusId===3?'done':'open',createdAt:x.createdOn?x.createdOn+'Z':null,createdById:x.createUserId==null?null:String(x.createUserId),assigneeId:uid,completedAt:x.statusId===3&&!x.isCancelled&&x.closeDate?x.closeDate+'Z':null,moduleId:x.moduleId,customer:x.customerTag||null,bucket:x.bucket}};
 const seenId=new Set();const taskRows=[];for(const x of tasks){if(seenId.has(x.i))continue;seenId.add(x.i);taskRows.push(mapTask(x))}
 const pids=new Set();taskRows.forEach(t=>{if(t.assigneeId)pids.add(t.assigneeId);if(t.createdById)pids.add(t.createdById)});for(const[uid,tt]of Object.entries(teamOf))if(tt.jeddah)pids.add(uid);
 for(const id of pids){const u=uname[id]||{};const tt=teamOf[id]||{teams:[],branchCode:null};people.push({id,nameEn:String(u.nameEn||''),nameAr:String(u.nameAr||''),teams:tt.teams,branchCode:tt.branchCode})}
-const tasksFile={schema:'${SCHEMA}',range:{from:FROM,to:TO},extractedAt:new Date().toISOString(),taskGroupId:100001,source:{endpoint:'POST https://crmbackend.afaqy.sa/Task/GetMyTasksGrid',doneInRangeTotal:doneTotal,openTotal:openTotal,pageSize:500},people,tasks:taskRows,rdTaskIds:rdIds,teamTypes,employees,notes:['manager bookmark; times UTC with Z added']};
-say(M[2]+'reports');const techPoints=[];const MM=${JSON.stringify(months.map(m=>({month:m.key,yearId:m.yearId,quarterId:m.quarterId,monthId:m.monthId,rd:m.requestDate})))};
-const KEEP=${JSON.stringify(TECH_FIELDS)};
+const tasksFile={schema:SCH,range:{from:FROM,to:RTO},extractedAt:new Date().toISOString(),taskGroupId:100001,source:{endpoint:'POST https://crmbackend.afaqy.sa/Task/GetMyTasksGrid',doneInRangeTotal:doneTotal,openTotal:openTotal,pageSize:500},people,tasks:taskRows,rdTaskIds:rdIds,teamTypes,employees,notes:['manager bookmark; times UTC with Z added']};
+say(M[2]+'reports');const techPoints=[];const MM=MMS;
+
 for(const mo of MM){const rows=[];for(let pg=1;;pg++){const R=await post('TechnicianReport/GetTechnicianReportStatic',{pageNumber:pg,pageSize:100,searchKey:'',isSearchFilter:true,search:{yearId:mo.yearId,quarterId:mo.quarterId,monthId:mo.monthId,branchIds:BR,userIds:[],requestDate:mo.rd}});const g=(R.data&&R.data.gridResult)||{};const arr=g.data||[];for(const r of arr){const o={technicianId:r.technicianId,employeeId:r.employeeId,nameEn:r.nameEn,nameAr:r.nameAr};for(const f of KEEP)o[f]=r[f]||0;rows.push(o)}const tot=g.totalPages||1;if(pg>=tot||!arr.length)break;await wait(200)}techPoints.push({month:mo.month,listCount:rows.length,rows})}
 say(M[2]+'activity log');const acts=[];for(let pg=0;pg<200;pg++){const R=await post('ActivityLog/GetTicketsGrid',{isSearchFilter:false,searchKey:'',search:{},pageSize:500,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const arr=(R.data&&(R.data.data||R.data))||[];if(!arr.length)break;let older=0;for(const r of arr){const d=String(r.createDate||'').slice(0,10);if(d<FROM){older++;continue}if(d>TO)continue;acts.push({ticketId:r.ticketId,taskId:r.taskId??null,customerId:r.customerId??null,categoryId:r.categoryId??null,category:r.category||'',caseId:r.caseId??null,case:r.case||'',statusId:r.statusId??null,status:r.status||'',createdById:r.createdById??null,createDate:r.createDate?r.createDate+'Z':null})}if(older===arr.length||(R.data&&R.data.totalPages&&pg+1>=R.data.totalPages))break;await wait(250)}
 say(M[2]+'accounts');const ENG=((await post('AfterSales/GetAllAfterSalesEngineers')).data||[]);const byName={};for(const[uid,u]of Object.entries(uname)){const n=String((u&&u.nameEn)||'').trim().toLowerCase();if(n)byName[n]=uid}const emp2uid={};for(const e of ENG){const u=byName[String(e.nameEn||'').trim().toLowerCase()];if(u)emp2uid[String(e.id)]=u}const accts=[];let asz=500;for(let pg=0;pg<60;pg++){const R=await post('AfterSales/GetAfterSalesRequestGrid',{isSearchFilter:false,searchKey:'',search:{},pageSize:asz,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const d=R.data||{};const arr=d.data||[];if(pg===0&&d.pageSize&&d.pageSize<asz)asz=d.pageSize;for(const r of arr)if(String(r.branchCode)===BR)accts.push({c:String(r.customerId??r.id),a:(r.afterSalesManIds||[]).map(String).map(x=>emp2uid[x]||('e'+x)),d:+r.connectedDevices||0,s:r.segmentId??null});if(!arr.length||(pg+1)*asz>=(d.listCount||0))break;await wait(200)}
-const AS=await post('AfterSalesBoardReport/GetAfterSalesAgentsGrid',{categoryId:null,createDate:['${fromZ}','${toZ}'],branch:BR,afterSalesId:null});
+const AS=await post('AfterSalesBoardReport/GetAfterSalesAgentsGrid',{categoryId:null,createDate:[FZ,TZ],branch:BR,afterSalesId:null});
 const asArr=(AS.data&&(AS.data.data||AS.data))||[];const afterSales={rows:asArr.map(r=>({id:r.id,name:r.afterSalesName,open:r.openTickets||0,pending:r.pendingTickets||0,done:r.doneTickets||0,total:r.totalTickets||0}))};
-const repFile={schema:'${REPORTS_SCHEMA}',range:{from:FROM,to:TO},branch:BR,extractedAt:new Date().toISOString(),techPoints,afterSales,activities:{rows:acts},accounts:{rows:accts,unmatched:ENG.filter(e=>!emp2uid[String(e.id)]).length},notes:['manager bookmark']};
+const repFile={schema:RSCH,range:{from:FROM,to:RTO},branch:BR,extractedAt:new Date().toISOString(),techPoints,afterSales,activities:{rows:acts},accounts:{rows:accts,unmatched:ENG.filter(e=>!emp2uid[String(e.id)]).length},notes:['manager bookmark']};
+if(DEL==='ext'){window.postMessage({type:PACKET,ext:true,tasks:tasksFile,reports:repFile},location.origin);box.style.background='#0A5F67';say(M[5]);setTimeout(()=>box.remove(),6000);return}
 if(DEL==='auto'&&sink){
   say(M[7]);
   for(let k=0;k<40&&!ready;k++)await wait(500);
@@ -785,7 +794,10 @@ dl('afaqy-tasks-'+FROM+'_'+TO+'.json',tasksFile);await wait(400);dl('afaqy-repor
 box.style.background=DEL==='auto'?'#7d5f15':'#0A5F67';
 say((DEL==='auto'?M[6]:M[4])+' ('+taskRows.length+' / '+techPoints.reduce((s,m)=>s+m.rows.length,0)+' / '+afterSales.rows.length+' / '+acts.length+' / '+accts.length+')');
 setTimeout(()=>box.remove(),14000);
-}catch(e){if(receiver)window.removeEventListener('message',receiver);box.style.background='#7a1f1f';say(M[3]+e.message);setTimeout(()=>box.remove(),12000)}})();`;
+}catch(e){if(receiver)window.removeEventListener('message',receiver);box.style.background='#7a1f1f';say(M[3]+e.message);setTimeout(()=>box.remove(),12000)}`;
+export function buildManagerBookmarklet(from, to, branch = JEDDAH_BRANCH, lang = 'ar', delivery = 'download', portalUrl = '') {
+  const R = managerPullRecipe(from, to, branch, lang, delivery, portalUrl);
+  const code = `(async()=>{const {${MANAGER_PULL_KEYS.join(',')}}=${JSON.stringify(R)};\n${MANAGER_PULL_BODY}})();`;
   return 'javascript:' + encodeURIComponent(code.replace(/\n/g, ''));
 }
 
@@ -1890,4 +1902,24 @@ export function compareOrg(org, roster, rootPid) {
   }
   for (const id of org.engineersOf(rootPid)) if (!ro[id]) out.missingInFile.push(id);
   return out;
+}
+
+// ===================== the sync extension (ADR-0062) =====================
+// The extension carries the same pull body as the bookmark, as a fixed file that runs inside myafaqy.com. It receives only DATA (the
+// recipe) and never text code, so it works under any page policy. Regenerate extension/pull.js with scripts/build-extension.mjs.
+export const EXT_RUN = 'afaqy-ext-run';
+export function extensionPullScript() {
+  return `// Generated from core.js by scripts/build-extension.mjs — do not edit. The same pull the bookmark runs (ADR-0062).
+(() => {
+  if (document.documentElement.dataset.afaqyPull) return;
+  document.documentElement.dataset.afaqyPull = '1';
+  const RUN = async (R) => { const {${MANAGER_PULL_KEYS.join(',')}} = R;${MANAGER_PULL_BODY.replace(/\n/g, '')}
+  };
+  window.addEventListener('message', (e) => {
+    if (e.source !== window || e.origin !== location.origin || !e.data || e.data.type !== '${EXT_RUN}' || !e.data.recipe || e.data.recipe.DEL !== 'ext') return;
+    RUN(e.data.recipe).catch((err) => window.postMessage({ type: 'afaqy-ext-failed', message: String((err && err.message) || err).slice(0, 200) }, location.origin));
+  });
+  window.postMessage({ type: 'afaqy-ext-pull-ready' }, location.origin);
+})();
+`;
 }

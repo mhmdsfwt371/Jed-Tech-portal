@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "AFAQY Jeddah Portal — Sync",
+  "version": "1.0.0",
+  "description": "Refreshes the AFAQY Jeddah technical portal from myafaqy with your own sign-in. Read-only; the data stays in this browser.",
+  "permissions": [
+    "storage",
+    "unlimitedStorage"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://myafaqy.com/*"
+      ],
+      "js": [
+        "pull.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://myafaqy.com/*"
+      ],
+      "js": [
+        "myafaqy.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://mhmdsfwt371.github.io/Jed-Tech-portal/*"
+      ],
+      "js": [
+        "portal.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
+}
