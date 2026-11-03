@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v8.78 — 2026-11-04
+
+- «الفريق حسب ماي أفاقي»: اختصار السحب يقرأ الآن قائمة الموظفين (الاسم والقسم والمدير والفرع والحالة فقط، لا جوال ولا هوية)، وفي صفحة الفريق ترى من يتبع من حسب ماي أفاقي والفروق عن ملف الفريق، ومعاينة لما سيتغير قبل أن تعتمده.
+- لا يتغير شيء من نفسه: الفريق المحسوب يبقى من ملف الفريق حتى تضغط «اعتمد هيكل ماي أفاقي». مدير بلا ملف فريق يأخذ فريقه من الهيكل مباشرة.
+- الاختصار تغيّر: اسحبه من صفحة «البيانات» مرة واحدة من جديد.
+
+<details><summary>English</summary>
+
+- “Team from MyAFAQY”: the pull shortcut now reads the employee list (name, department, manager, branch and status only — never a phone or identity number). The Team page shows who reports to whom in MyAFAQY, the differences from the team file, and a preview of what would change before you use it.
+- Nothing changes by itself: the counted team stays on the team file until you press “Use MyAFAQY’s hierarchy”. A manager with no team file takes his team from the hierarchy directly.
+- The shortcut changed: drag it from the Data page once more.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «مائی آفاقی کے مطابق ٹیم»: پل شارٹ کٹ اب ملازمین کی فہرست پڑھتا ہے (صرف نام، شعبہ، مینیجر، برانچ اور حیثیت)، اور ٹیم کے صفحے پر فرق اور پیش منظر نظر آتا ہے۔
+- کچھ خود نہیں بدلتا؛ بٹن دبانے تک ٹیم فائل ہی چلتی ہے۔
+- شارٹ کٹ بدل گیا ہے: ڈیٹا کے صفحے سے ایک بار پھر گھسیٹیں۔
+
+</div>
+</details>
+
+
 ## v8.77 — 2026-11-04
 
 - «مؤشراتي» أقصر بالنصف: جملة واحدة بالجواب وبلاطاتك الست في أول شاشة الجوال، والإعداد والتفاصيل مطوية.

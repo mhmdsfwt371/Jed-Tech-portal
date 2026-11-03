@@ -1,21 +1,21 @@
 {
-  "version": "8.77",
+  "version": "8.78",
   "date": "2026-11-04",
   "notes": {
     "ar": [
-      "«مؤشراتي» أقصر بالنصف: جملة واحدة بالجواب وبلاطاتك الست في أول شاشة الجوال، والإعداد والتفاصيل مطوية.",
-      "لوحة المؤشرات أوضح: «أُغلقت في الفترة» و«جديدة في الفترة» ووحدة واحدة للوقت وخمسة أعمدة افتراضيًا. المديرون وقادة الفرق خارج أرقام الفريق افتراضيًا.",
-      "غرفة المتابعة لا تعرض «0» لشهر غير موجود في السحب. صفحة الفريق للقراءة حتى تضغط «تعديل الفريق»، و«البيانات والإعدادات» في قائمة مستقلة."
+      "«الفريق حسب ماي أفاقي»: اختصار السحب يقرأ الآن قائمة الموظفين (الاسم والقسم والمدير والفرع والحالة فقط، لا جوال ولا هوية)، وفي صفحة الفريق ترى من يتبع من حسب ماي أفاقي والفروق عن ملف الفريق، ومعاينة لما سيتغير قبل أن تعتمده.",
+      "لا يتغير شيء من نفسه: الفريق المحسوب يبقى من ملف الفريق حتى تضغط «اعتمد هيكل ماي أفاقي». مدير بلا ملف فريق يأخذ فريقه من الهيكل مباشرة.",
+      "الاختصار تغيّر: اسحبه من صفحة «البيانات» مرة واحدة من جديد."
     ],
     "en": [
-      "My KPIs is half as long: one answer sentence and your six tiles on the first phone screen; setup and details folded.",
-      "A clearer KPI board: “Closed in period” and “New in period”, one time unit, five columns by default. Managers and team leads are out of team figures by default.",
-      "The control room no longer shows “0” for a month the pull does not hold. The Team page reads until you press “Edit team”, and “Data and settings” has its own menu group."
+      "“Team from MyAFAQY”: the pull shortcut now reads the employee list (name, department, manager, branch and status only — never a phone or identity number). The Team page shows who reports to whom in MyAFAQY, the differences from the team file, and a preview of what would change before you use it.",
+      "Nothing changes by itself: the counted team stays on the team file until you press “Use MyAFAQY’s hierarchy”. A manager with no team file takes his team from the hierarchy directly.",
+      "The shortcut changed: drag it from the Data page once more."
     ],
     "ur": [
-      "«میرے اشاریے» آدھا: ایک جملہ اور چھ ٹائلیں فون کی پہلی اسکرین پر۔",
-      "کے پی آئی بورڈ زیادہ واضح؛ مینیجر اور ٹیم لیڈ پہلے سے ٹیم کے اعداد سے باہر۔",
-      "کنٹرول روم غیر موجود مہینے کے لیے «0» نہیں دکھاتا؛ ٹیم کا صفحہ «ٹیم میں ترمیم» تک صرف پڑھنے کے لیے۔"
+      "«مائی آفاقی کے مطابق ٹیم»: پل شارٹ کٹ اب ملازمین کی فہرست پڑھتا ہے (صرف نام، شعبہ، مینیجر، برانچ اور حیثیت)، اور ٹیم کے صفحے پر فرق اور پیش منظر نظر آتا ہے۔",
+      "کچھ خود نہیں بدلتا؛ بٹن دبانے تک ٹیم فائل ہی چلتی ہے۔",
+      "شارٹ کٹ بدل گیا ہے: ڈیٹا کے صفحے سے ایک بار پھر گھسیٹیں۔"
     ]
   }
 }

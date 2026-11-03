@@ -914,4 +914,28 @@ test('the «أنواع الفرق» bookmark reads only the teams, talks only to
   assert.equal(ok.teamTypes['Jeddah After sales Team'].length, 1); assert.equal(ok.extractedAt, '2026-11-02T08:00:00.000Z');
   assert.equal(core.parseTeamTypesTransfer({ type: 'other', teamTypes: {} }).error, 'tt_bad'); assert.equal(core.parseTeamTypesTransfer({ type: core.TEAMTYPES_AUTO_SCHEMA, teamTypes: { a: [] } }).error, 'tt_empty');
 });
+test('the hierarchy from the employee list: eight safe fields only, tied to people by name, descendants without loops, differences from the team file', () => {
+  const raw = [
+    { id: 1, nameEn: 'Alpha Director', nameAr: 'ألفا', phoneNumber: '+966500000001', identityNumber: '1100000001', department: 'Technical', manager: 'Zulu Head', branch: 'Jeddah', branchCode: '2', status: 'Active' },
+    { id: 2, nameEn: 'Bravo Lead', department: 'Technical', manager: 'Alpha Director', branch: 'Jeddah', status: 'Active', phoneNumber: '+966500000002' },
+    { id: 3, nameEn: 'Charlie Team Lead', manager: 'Bravo Lead', status: 'Active' }, { id: 4, nameEn: 'Delta Rnd Lead', manager: 'Alpha Director', status: 'Active' },
+    { id: 5, nameEn: 'Eng One', manager: 'charlie  team lead', status: 'Active' }, { id: 6, nameEn: 'Eng Two', manager: 'Charlie Team Lead', status: 'Active' },
+    { id: 7, nameEn: 'Eng Three', manager: 'Delta Rnd Lead', status: 'Active' }, { id: 8, nameEn: 'Ghost Hire', manager: 'Charlie Team Lead', status: 'Active' },
+    { id: 9, nameEn: 'Left Company', manager: 'Charlie Team Lead', status: 'Inactive' }, { id: 10, nameEn: 'Loop A', manager: 'Loop B' }, { id: 11, nameEn: 'Loop B', manager: 'Loop A' },
+  ];
+  const emps = core.parseEmployees(raw);
+  assert.equal(emps.length, 11); assert.ok(!JSON.stringify(emps).includes('966500000001') && !JSON.stringify(emps).includes('1100000001') && !/phoneNumber|identityNumber/.test(JSON.stringify(emps)));
+  assert.deepEqual(Object.keys(emps[0]).sort(), ['branch', 'branchCode', 'department', 'id', 'manager', 'nameAr', 'nameEn', 'status']);
+  assert.deepEqual(core.parseEmployees(null), []); assert.equal(core.parseEmployees([{ id: 1 }, null, 'x']).length, 0);
+  const people = [['1', 'Alpha Director'], ['2', 'Bravo Lead'], ['3', 'Charlie Team Lead'], ['4', 'Delta Rnd Lead'], ['21', 'Eng One'], ['22', 'Eng Two'], ['23', 'Eng Three'], ['24', 'Left Company'], ['25', 'Not In List']].map(([id, nameEn]) => ({ id, nameEn }));
+  const org = core.buildOrg(emps, people);
+  assert.deepEqual(org.engineersOf('1').sort(), ['21', '22', '23'], 'engineers = matched people with no reports of their own; the inactive one and the unmatched hire are out');
+  assert.deepEqual(org.unmatchedUnder('1'), ['Ghost Hire']); assert.deepEqual(org.managers().map((m) => m.pid).slice(0, 3), ['1', '2', '3']); assert.equal(org.managers()[0].n, 7);
+  assert.deepEqual(org.managerOf('21'), { pid: '3', name: 'Charlie Team Lead' }); assert.equal(org.isManager('3'), true); assert.equal(org.isManager('21'), false); assert.deepEqual(org.under('25'), []);
+  assert.equal(org.under('1').length, 7, 'a loop between two employees ends');
+  const cmp = core.compareOrg(org, { people: { '21': { leaderId: '3' }, '22': { leaderId: '2' }, '24': { leaderId: '3' }, '99': { leaderId: '3', position: 'Gone' } } }, '1');
+  assert.deepEqual(cmp.leader.map((d) => [d.id, d.file, d.orgPid]), [['22', '2', '3']]); assert.deepEqual(cmp.notInOrg, ['99']); assert.deepEqual(cmp.inactive, ['24']); assert.deepEqual(cmp.missingInFile, ['23']); assert.deepEqual(cmp.unmatched, ['Ghost Hire']);
+  const code = decodeURIComponent(core.buildManagerBookmarklet('2026-10-01', '2026-10-29', '2', 'en', 'auto', 'https://example.org/portal/').replace(/^javascript:/, ''));
+  assert.ok(code.includes("post('EmployeeIC/GetAllEmployeesGrid'") && code.includes('employees,notes:') && !/phoneNumber|identityNumber/.test(code));
+});
 console.log(`core.test.mjs: ${tests.length} passed`);

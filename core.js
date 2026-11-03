@@ -301,6 +301,7 @@ export function parseDataset(text) {
       part: typeof raw.part === 'string' ? raw.part : null, sample: raw.sample === true,
       people, tasks: markRd(tasks, raw.rdTaskIds),
       rdKnown: Array.isArray(raw.rdTaskIds),
+      employees: parseEmployees(raw.employees),
       teamTypes: Object.fromEntries(Object.entries(raw.teamTypes && typeof raw.teamTypes === 'object' ? raw.teamTypes : {}).slice(0, 40)
         .map(([tm, arr]) => [String(tm).slice(0, 80), (Array.isArray(arr) ? arr : []).slice(0, 200).filter((x) => x && (x.nameEn || x.nameAr)).map((x) => ({ id: x.id == null ? null : String(x.id), nameEn: String(x.nameEn || '').slice(0, 80), nameAr: String(x.nameAr || '').slice(0, 80) }))])),
     },
@@ -340,6 +341,7 @@ export function mergeDataset(list, incoming) {
       extractedAt: incoming.extractedAt || out[i].extractedAt,
       sample: out[i].sample && incoming.sample,
       teamTypes: incoming.teamTypes && Object.keys(incoming.teamTypes).length ? incoming.teamTypes : out[i].teamTypes,
+      employees: incoming.employees && incoming.employees.length ? incoming.employees : out[i].employees,
       rdKnown: out[i].rdKnown || incoming.rdKnown,
     };
   }
@@ -748,6 +750,7 @@ const udata=(U.data&&(U.data.data||U.data))||[];const uname={};for(const p of ud
 const people=[];const teamsSeen={};
 for(let pg=0;;pg++){const T=await post('Teams/GetAllTeams',{isSearchFilter:false,searchKey:'',search:{},pageSize:50,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const arr=(T.data&&(T.data.data||T.data))||[];for(const t of arr)teamsSeen[String(t.id)]=t;const tot=(T.data&&T.data.totalPages)||1;if(pg+1>=tot||!arr.length)break;await wait(200)}
 const teamOf={};const teamTypes={};for(const id of Object.keys(teamsSeen)){const d=await get('Teams/GetTeamById/'+id);const td=(d&&d.data)||{};const bc=td.branchCode==null?null:String(td.branchCode);const jed=bc==='${branch}'||/jeddah/i.test(String(td.nameEn||td.name||''));if(jed){const tn=td.nameEn||td.name||id;for(const[k,v]of Object.entries(td))if(k!=='groupUsersDto'&&Array.isArray(v)&&v.length&&v.every(x=>x&&typeof x==='object'&&(x.nameEn||x.name)&&x.userId==null)){teamTypes[tn]=v.map(x=>({id:x.id??x.taskSettingId??null,nameEn:String(x.nameEn||x.name||''),nameAr:String(x.nameAr||'')}))}}for(const g of td.groupUsersDto||[]){const uid=String(g.userId);(teamOf[uid]=teamOf[uid]||{teams:[],branchCode:null,jeddah:false}).teams.push(td.nameEn||td.name||id);if(bc)teamOf[uid].branchCode=bc;if(jed)teamOf[uid].jeddah=true;if(!uname[uid]&&(g.nameEn||g.nameAr))uname[uid]={nameEn:g.nameEn,nameAr:g.nameAr}}await wait(150)}
+const employees=[];try{for(let pg=0;pg<200;pg++){const R=await post('EmployeeIC/GetAllEmployeesGrid',{isSearchFilter:false,searchKey:'',search:{},pageSize:10,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const D=(R&&R.data)||{};for(const e of D.data||[])employees.push({id:e.id==null?null:String(e.id),nameEn:e.nameEn,nameAr:e.nameAr,department:e.department,manager:e.manager,branch:e.branch,branchCode:e.branchCode,status:e.status});if(pg+1>=(D.totalPages||1))break;await wait(150)}}catch(_){}
 const walk=async(grp,co,keepRd,buckets=['done','open','toDo'])=>{const out=[];const rd=[];say(M[2]+(keepRd?'R&D':'tasks'));for(const b of buckets){let size=500,pg=0,total=null;for(;;){const d=((await post('Task/GetMyTasksGrid',taskBody(b,pg,size,co,grp))).data||{})[b];if(!d)break;if(pg===0&&d.pageSize!==size)size=d.pageSize||20;total=d.listCount;for(const x of d.data||[]){if(keepRd){rd.push(String(x.id));continue;}out.push({i:String(x.id),title:x.title,taskType:x.taskType,taskSettingId:x.taskSettingId,statusId:x.statusId,isCancelled:x.isCancelled,createdOn:x.createdOn,closeDate:x.closeDate,createUserId:x.createUserId,assigneeId:x.assigneeId,moduleId:x.moduleId,customerTag:x.customerTag,bucket:b})}pg++;if(!d.data||!d.data.length||pg*size>=total)break;await wait(250)}}return{out,rd}};
 const main=await walk(100001,[FROM&&'${fromZ}'||'',TO&&'${toZ}'||''],false,['done']);let tasks=main.out;const doneTotal=tasks.length;
 const opn=await walk(100001,[],false,['open','toDo']);const seenO=new Set(tasks.map(t=>t.i));for(const t of opn.out)if(!seenO.has(t.i)){seenO.add(t.i);tasks.push(t)}const openTotal=opn.out.length;
@@ -757,7 +760,7 @@ const mapTask=x=>{const uid=String(x.assigneeId||'');const tt=teamOf[uid]||{team
 const seenId=new Set();const taskRows=[];for(const x of tasks){if(seenId.has(x.i))continue;seenId.add(x.i);taskRows.push(mapTask(x))}
 const pids=new Set();taskRows.forEach(t=>{if(t.assigneeId)pids.add(t.assigneeId);if(t.createdById)pids.add(t.createdById)});for(const[uid,tt]of Object.entries(teamOf))if(tt.jeddah)pids.add(uid);
 for(const id of pids){const u=uname[id]||{};const tt=teamOf[id]||{teams:[],branchCode:null};people.push({id,nameEn:String(u.nameEn||''),nameAr:String(u.nameAr||''),teams:tt.teams,branchCode:tt.branchCode})}
-const tasksFile={schema:'${SCHEMA}',range:{from:FROM,to:TO},extractedAt:new Date().toISOString(),taskGroupId:100001,source:{endpoint:'POST https://crmbackend.afaqy.sa/Task/GetMyTasksGrid',doneInRangeTotal:doneTotal,openTotal:openTotal,pageSize:500},people,tasks:taskRows,rdTaskIds:rdIds,teamTypes,notes:['manager bookmark; times UTC with Z added']};
+const tasksFile={schema:'${SCHEMA}',range:{from:FROM,to:TO},extractedAt:new Date().toISOString(),taskGroupId:100001,source:{endpoint:'POST https://crmbackend.afaqy.sa/Task/GetMyTasksGrid',doneInRangeTotal:doneTotal,openTotal:openTotal,pageSize:500},people,tasks:taskRows,rdTaskIds:rdIds,teamTypes,employees,notes:['manager bookmark; times UTC with Z added']};
 say(M[2]+'reports');const techPoints=[];const MM=${JSON.stringify(months.map(m=>({month:m.key,yearId:m.yearId,quarterId:m.quarterId,monthId:m.monthId,rd:m.requestDate})))};
 const KEEP=${JSON.stringify(TECH_FIELDS)};
 for(const mo of MM){const rows=[];for(let pg=1;;pg++){const R=await post('TechnicianReport/GetTechnicianReportStatic',{pageNumber:pg,pageSize:100,searchKey:'',isSearchFilter:true,search:{yearId:mo.yearId,quarterId:mo.quarterId,monthId:mo.monthId,branchIds:BR,userIds:[],requestDate:mo.rd}});const g=(R.data&&R.data.gridResult)||{};const arr=g.data||[];for(const r of arr){const o={technicianId:r.technicianId,employeeId:r.employeeId,nameEn:r.nameEn,nameAr:r.nameAr};for(const f of KEEP)o[f]=r[f]||0;rows.push(o)}const tot=g.totalPages||1;if(pg>=tot||!arr.length)break;await wait(200)}techPoints.push({month:mo.month,listCount:rows.length,rows})}
@@ -1831,4 +1834,60 @@ export function sampleDataset(range, seed = 7) {
     source: { endpoint: 'sample', doneInRangeTotal: doneIn, openTotal: tasks.filter((x) => x.state === 'open').length, pageSize: 20 },
     people: people.map(([id, en, ar]) => ({ id, nameEn: en, nameAr: ar, teams: ['Aftersales Jeddah'], branchCode: JEDDAH_BRANCH })),
     tasks, notes: [] };
+}
+
+// ===================== the hierarchy MyAFAQY holds (ADR-0060) =====================
+// The employee list in a pull names each employee's manager. The employee ID No. is not the user id the tasks carry, so employees are
+// tied to the portal's people by NAME. Only eight non-personal fields are ever kept — never a phone number or an identity number.
+const orgNorm = (s) => String(s || '').toLowerCase().normalize('NFKD').replace(/[^\p{L}\p{N} ]+/gu, ' ').replace(/\s+/g, ' ').trim();
+export function parseEmployees(rows) {
+  if (!Array.isArray(rows)) return [];
+  const seen = new Set(), out = [];
+  for (const e of rows.slice(0, 3000)) {
+    if (!e || typeof e !== 'object') continue;
+    const nameEn = String(e.nameEn || '').trim().slice(0, 120), nameAr = String(e.nameAr || '').trim().slice(0, 120);
+    if (!nameEn && !nameAr) continue;
+    const key = orgNorm(nameEn) || orgNorm(nameAr); if (seen.has(key)) continue; seen.add(key);
+    out.push({ id: e.id == null ? null : String(e.id).slice(0, 20), nameEn, nameAr, department: String(e.department || '').slice(0, 80), manager: String(e.manager || '').trim().slice(0, 120),
+      branch: String(e.branch || '').slice(0, 60), branchCode: e.branchCode == null ? '' : String(e.branchCode).slice(0, 12), status: String(e.status || '').slice(0, 24) });
+  }
+  return out;
+}
+export function buildOrg(employees, people) {
+  const emps = Array.isArray(employees) ? employees : [], none = '\u0000';
+  const pidByEn = new Map(), pidByAr = new Map(), keyOfPid = new Map();
+  for (const p of people || []) { const id = String(p.id), en = orgNorm(p.nameEn), ar = orgNorm(p.nameAr);
+    if (en && !pidByEn.has(en)) pidByEn.set(en, id); if (ar && !pidByAr.has(ar)) pidByAr.set(ar, id); keyOfPid.set(id, en || ar); }
+  const isActive = (s) => !String(s || '').trim() || /^active$/i.test(String(s).trim());
+  const nodes = new Map();
+  for (const e of emps) { const key = orgNorm(e.nameEn) || orgNorm(e.nameAr); if (!key || nodes.has(key)) continue;
+    nodes.set(key, { key, pid: pidByEn.get(orgNorm(e.nameEn)) ?? pidByAr.get(orgNorm(e.nameAr)) ?? null, e, mgrKey: orgNorm(e.manager) || null, active: isActive(e.status) }); }
+  const kids = new Map();
+  for (const n of nodes.values()) if (n.mgrKey && n.mgrKey !== n.key) { if (!kids.has(n.mgrKey)) kids.set(n.mgrKey, []); kids.get(n.mgrKey).push(n); }
+  const activeKids = (key) => (kids.get(key) || []).filter((n) => n.active);
+  const under = (pid) => { const root = keyOfPid.get(String(pid)); if (!root) return []; const out = [], seen = new Set([root]), q = [root];
+    while (q.length) { const k = q.shift(); for (const n of activeKids(k)) { if (seen.has(n.key)) continue; seen.add(n.key); out.push(n); q.push(n.key); } } return out; };
+  const rowOf = (pid) => nodes.get(keyOfPid.get(String(pid)) || none);
+  const nameOfNode = (n) => n.e.nameEn || n.e.nameAr;
+  return {
+    size: nodes.size, under, hasRow: (pid) => !!rowOf(pid), isActive: (pid) => { const n = rowOf(pid); return n ? n.active : null; }, isManager: (pid) => activeKids(keyOfPid.get(String(pid)) || none).length > 0,
+    managerOf: (pid) => { const n = rowOf(pid); if (!n || !n.mgrKey) return null; const m = nodes.get(n.mgrKey); return { pid: pidByEn.get(n.mgrKey) ?? (m ? m.pid : null), name: m ? nameOfNode(m) : String(n.e.manager || '') }; },
+    engineersOf: (pid) => under(pid).filter((n) => n.pid != null && !activeKids(n.key).length).map((n) => n.pid),
+    managers: () => (people || []).map((p) => String(p.id)).filter((id) => activeKids(keyOfPid.get(id) || none).length > 0).map((pid) => ({ pid, n: under(pid).length })).sort((a, b) => b.n - a.n),
+    unmatched: () => [...nodes.values()].filter((n) => n.active && n.pid == null).map(nameOfNode),
+    unmatchedUnder: (pid) => under(pid).filter((n) => n.pid == null).map(nameOfNode),
+  };
+}
+/** What differs between MyAFAQY's hierarchy and the team file, for the team under `rootPid`. Nothing changes by itself. */
+export function compareOrg(org, roster, rootPid) {
+  const ro = (roster && roster.people) || {}, out = { leader: [], missingInFile: [], notInOrg: [], inactive: [], unmatched: org.unmatchedUnder(rootPid) };
+  for (const [id, r] of Object.entries(ro)) {
+    if (!r || !(r.leaderId || r.position)) continue;
+    if (!org.hasRow(id)) { out.notInOrg.push(id); continue; }
+    if (org.isActive(id) === false) out.inactive.push(id);
+    if (!r.leaderId) continue;
+    const m = org.managerOf(id); if (!m || String(m.pid) !== String(r.leaderId)) out.leader.push({ id, file: String(r.leaderId), orgPid: m ? m.pid : null, orgName: m ? m.name : '' });
+  }
+  for (const id of org.engineersOf(rootPid)) if (!ro[id]) out.missingInFile.push(id);
+  return out;
 }

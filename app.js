@@ -6,7 +6,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
   mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
@@ -1782,14 +1782,27 @@ let kpiKey = null;
 // people the portal shows: the team file's people when it has any, else everyone in the data
 const scopeOn = (people) => scopeApplies(roster(), people.map((p) => p.id));
 const scoped = (people) => (scopeOn(people) ? people.filter((p) => inScope(roster(), p.id)) : people);
+// ---------- MyAFAQY's own hierarchy (ADR-0060): who reports to whom, from the employee list in the pull ----------
+let orgMemo = null;
+const orgData = () => {
+  const ds = [...datasets].filter((d) => d.employees && d.employees.length).sort((x, y) => String(y.extractedAt || '').localeCompare(String(x.extractedAt || '')))[0];
+  if (!ds) return null; const sig = `${datasets.length}|${ds.extractedAt}|${ds.employees.length}`;
+  if (!orgMemo || orgMemo.sig !== sig) orgMemo = { sig, v: { at: String(ds.extractedAt || '').slice(0, 10), n: ds.employees.length, org: buildOrg(ds.employees, peopleOf(datasets)) } };
+  return orgMemo.v;
+};
+const orgRootId = (od) => { const saved = pref('orgRoot'); if (saved && od.org.under(saved).length) return saved; const mid = managerIdOf(); if (mid && od.org.under(mid).length) return mid; const m = od.org.managers()[0]; return m ? m.pid : null; };
+const orgEngineerSet = () => { const od = orgData(); if (!od) return null; const r = orgRootId(od); return r ? new Set(od.org.engineersOf(r)) : null; };
 let kpiMoreCols = false, teamEdit = false;   // ADR-0059: the board shows five columns until asked for more
-function currentTeam(people, tasks) {
+function currentTeam(people, tasks, force) {   // force: 'org' or 'file' computes that default and ignores a saved manual choice (the preview uses it)
   const allowed = new Set(scoped(people).map((p) => p.id));
-  try { const saved = JSON.parse(pref('team') || 'null'); if (Array.isArray(saved)) { const kept = saved.filter((id) => allowed.has(id)); if (kept.length) return kept; } } catch { /* fall through */ }
+  if (!force) try { const saved = JSON.parse(pref('team') || 'null'); if (Array.isArray(saved)) { const kept = saved.filter((id) => allowed.has(id)); if (kept.length) return kept; } } catch { /* fall through */ }
   const ro = roster().people || {}, leads = new Set(Object.values(ro).map((p) => p && p.leaderId).filter(Boolean));
   const isLead = (id) => leads.has(id) || !!(ro[id] && ro[id].covers);   // ADR-0059: team figures compare engineers with engineers
-  const def = (scopeOn(people) ? [...allowed] : defaultTeam(people, tasks)).filter((id) => !isLead(id));
-  return def.length ? def : (scopeOn(people) ? [...allowed] : defaultTeam(people, tasks));
+  const og = (force ? force === 'org' : pref('orgTeam') === '1') ? orgEngineerSet() : null;   // ADR-0060: the team MyAFAQY's hierarchy gives, once the manager chose it
+  const plain = () => (scopeOn(people) ? [...allowed] : defaultTeam(people, tasks));
+  const base = () => (og ? [...allowed].filter((id) => og.has(id)) : plain());
+  const def = base().filter((id) => !isLead(id));
+  return def.length ? def : plain();
 }
 function renderTeamPicker(people, team) {
   const chosen = new Set(team);
@@ -2410,6 +2423,7 @@ function renderHome() {
     old.length && { k: 'old', title: t('cr_att_old', { n: old.length }), detail: oldBy.slice(0, 3).map(([id, n]) => `${nm(id)} ${n}`).join('، '), href: '#kpi', prep: () => { kpiTab = 'team'; } },
     pending && { k: 'pending', title: t('cr_att_pending', { n: pending }), detail: '', href: '#team' },
     (() => { const f = newTypes(wt); return f.length ? { k: 'types', title: t('cr_att_types', { n: f.length }), detail: f.slice(0, 4).join('، '), href: '#weights' } : null; })(),
+    (() => { const od = orgData(); if (!od) return null; const r = orgRootId(od); if (!r) return null; const fa = Object.keys(roster().people || {}).some((id) => od.org.hasRow(id)), c = fa ? compareOrg(od.org, roster(), r) : { leader: [], missingInFile: [], notInOrg: [], inactive: [], unmatched: od.org.unmatchedUnder(r) }, n = c.leader.length + c.missingInFile.length + c.notInOrg.length + c.inactive.length + c.unmatched.length; return n ? { k: 'org', title: t('cr_att_org', { n }), detail: '', href: '#team' } : null; })(),
   ].filter(Boolean);
   const num = (k, v, sub) => el('div', { class: 'cr-num' }, el('span', { text: t(k) }), el('b', { text: String(v) }), sub ? el('small', { text: sub }) : null);
   const job = (label, hash, prep) => el('button', { type: 'button', class: 'cr-job', onclick: go(hash, prep) }, el('b', { text: label }), el('span', { text: '↗' }));
@@ -2846,6 +2860,33 @@ function applyNameFixes() {
   for (const d of datasets) for (const p of d.people || []) fix(p);
   if (me) for (const p of me.people || []) fix(p);
 }
+function orgCheckBox() {
+  if (isTeamPortal) return null;
+  const od = orgData(), mode = pref('orgTeam') === '1';
+  const head = el('h2', { text: t('org_h') });
+  if (!od) return el('section', { class: 'org-box' }, head, el('p', { class: 'hint', text: t('org_none') }));
+  const ppl = peopleOf(datasets), nm = (id) => nameOf(ppl.find((p) => p.id === id) || {}, lang) || id, root = orgRootId(od), mgrs = od.org.managers();
+  if (!root) return el('section', { class: 'org-box' }, head, el('p', { class: 'hint', text: t('org_nobody', { n: od.n }) }));
+  const tasks = allTasks(), sc = scoped(ppl), cur = currentTeam(sc, tasks), wouldBe = currentTeam(sc, tasks, 'org'), reps = od.org.engineersOf(root);
+  const add = wouldBe.filter((id) => !cur.includes(id)), rm = cur.filter((id) => !wouldBe.includes(id)), names = (ids) => (ids.length ? ids.map(nm).join(lang === 'en' ? ', ' : '، ') : t('org_chg_none'));
+  const fileApplies = Object.keys(roster().people || {}).some((id) => od.org.hasRow(id));   // no team file for this team → nothing to compare against
+  const cmp = fileApplies ? compareOrg(od.org, roster(), root) : { leader: [], missingInFile: [], notInOrg: [], inactive: [], unmatched: od.org.unmatchedUnder(root) };
+  const lines = [...cmp.leader.map((x) => t('org_diff_leader', { name: nm(x.id), org: x.orgPid ? nm(x.orgPid) : (x.orgName || t('org_no_mgr')), file: nm(x.file) })),
+    ...cmp.missingInFile.map((id) => t('org_diff_missing', { name: nm(id), root: nm(root) })), ...cmp.inactive.map((id) => t('org_diff_inactive', { name: nm(id) })), ...cmp.notInOrg.map((id) => t('org_diff_notin', { name: nm(id) })),
+    ...cmp.unmatched.map((n) => t('org_diff_unmatched', { name: n }))];
+  const redraw = () => { renderTeam(); renderKpi(); renderHome(); };
+  const pick = el('select', { 'aria-label': t('org_root'), onchange: (e) => { pref('orgRoot', e.target.value); redraw(); } },
+    mgrs.map(({ pid, n }) => el('option', { value: pid, selected: pid === root ? '' : null, text: `${nm(pid)} — ${n}` })));
+  return el('section', { class: 'org-box' }, head,
+    el('p', { class: 'hint', text: t('org_lead', { n: od.n, m: mgrs.length, d: od.at }) }),
+    el('div', { class: 'row' }, el('label', {}, el('span', { text: `${t('org_root')} ` }), pick), el('span', { class: 'hint', text: t('org_reports', { n: reps.length }) })),
+    el('p', { class: mode ? 'note' : 'org-preview', text: mode ? t('org_state_on', { n: cur.length }) : `${t('org_state_off')} ${t('org_preview', { a: wouldBe.length, b: cur.length, add: names(add), rm: names(rm) })}` }),
+    el('div', { class: 'row' }, mode
+      ? el('button', { type: 'button', class: 'btn', text: t('org_back'), onclick: () => { pref('orgTeam', '0'); toast(t('org_unused')); redraw(); } })
+      : el('button', { type: 'button', class: 'btn primary', text: t('org_use'), onclick: () => { pref('team', ''); pref('orgTeam', '1'); toast(t('org_used')); redraw(); } })),
+    !fileApplies && !lines.length ? el('p', { class: 'hint org-nofile', text: t('org_nofile') }) : el('details', { class: 'org-diffs', ...(lines.length ? { open: '' } : {}) }, el('summary', { text: t('org_diff_h', { n: lines.length }) }),
+      lines.length ? el('ul', {}, lines.map((x) => el('li', { text: x }))) : el('p', { class: 'hint', text: t('org_none_diff') }), el('p', { class: 'hint', text: t('org_note_match') })));
+}
 function renderTeam() {
   applyNameFixes();
   applyPending().then((changed) => { if (changed) { renderTeam(); renderKpi(); renderMe(); } });
@@ -2882,6 +2923,7 @@ function renderTeam() {
   const afterSalesNames = scopeIds(ro).filter((id) => /after-sales/i.test((ro.people[id] || {}).positionEn || '')).map((id) => (known.get(id) || {}).nameEn).filter(Boolean);
   const ab = buildAssignBookmarklet(lang, afterSalesNames);
   set(body,
+    orgCheckBox(),
     el('section', { class: 'assign-box' },
       el('h2', {}, t('assign_h'), helpQ('help_assign')),
       el('ol', { class: 'assign-steps' }, ['assign_s1', 'assign_s2', 'assign_s3', 'assign_s4'].map((k) => el('li', { text: t(k) }))),

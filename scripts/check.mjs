@@ -216,9 +216,10 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   const mg = decodeURIComponent(buildManagerBookmarklet('2026-10-01', '2026-10-29').replace(/^javascript:/, ''));
   const mgHosts = [...mg.matchAll(/https:\/\/([a-z0-9.-]+)/g)].map((m) => m[1]).filter((h) => h !== 'crmbackend.afaqy.sa');
   if (mgHosts.length) note(`manager bookmark: talks to ${[...new Set(mgHosts)].join(', ')} — only crmbackend.afaqy.sa`);
-  const mgPaths = [...mg.matchAll(/'(Security|Teams|Task|TechnicianReport|AfterSalesBoardReport|ActivityLog|AfterSales)[A-Za-z/]*'/g)].map((m) => m[1] === 'Teams' ? m[0].replace(/\/$/, "'") : m[0]);
-  const okPaths = new Set(["'Security/GetAllHierarchyUsersDropDown'", "'Teams/GetAllTeams'", "'Teams/GetTeamById/'", "'Task/GetMyTasksGrid'", "'TechnicianReport/GetTechnicianReportStatic'", "'AfterSalesBoardReport/GetAfterSalesAgentsGrid'", "'ActivityLog/GetTicketsGrid'", "'AfterSales/GetAllAfterSalesEngineers'", "'AfterSales/GetAfterSalesRequestGrid'"]);
-  for (const x of mgPaths) if (!okPaths.has(x)) note(`manager bookmark: calls ${x} — only the nine read endpoints are allowed`);
+  const mgPaths = [...mg.matchAll(/'(Security|Teams|Task|TechnicianReport|AfterSalesBoardReport|ActivityLog|AfterSales|EmployeeIC)[A-Za-z/]*'/g)].map((m) => m[1] === 'Teams' ? m[0].replace(/\/$/, "'") : m[0]);
+  const okPaths = new Set(["'EmployeeIC/GetAllEmployeesGrid'", "'Security/GetAllHierarchyUsersDropDown'", "'Teams/GetAllTeams'", "'Teams/GetTeamById/'", "'Task/GetMyTasksGrid'", "'TechnicianReport/GetTechnicianReportStatic'", "'AfterSalesBoardReport/GetAfterSalesAgentsGrid'", "'ActivityLog/GetTicketsGrid'", "'AfterSales/GetAllAfterSalesEngineers'", "'AfterSales/GetAfterSalesRequestGrid'"]);
+  if (/phoneNumber|identityNumber/.test(mg)) note('manager bookmark: it must never read the employees’ phone or identity numbers (ADR-0060)');
+  for (const x of mgPaths) if (!okPaths.has(x)) note(`manager bookmark: calls ${x} — only the ten read endpoints are allowed`);
   if (/AssignAfterSales/.test(mg)) note('manager bookmark: must never carry the assignment write');
   if (/customerName|salesMan|afterSalesMan[^I]/.test((mg.match(/accts\.push\(\{[^}]*\}/) || [''])[0])) note('manager bookmark: account rows carry ids, devices and segment only — no names');
   if (/description|customerName|salesMan/.test((mg.match(/acts\.push\(\{[^}]*\}/) || [''])[0])) note('manager bookmark: the activity log must not carry descriptions, customer names or sales fields');
