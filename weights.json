@@ -1,7 +1,7 @@
 {
   "v": 1,
   "schema": "afaqy-weights/v1",
-  "reviewed": "2026-10-31",
+  "reviewed": "2026-11-01",
   "default": 1,
   "tiers": {
     "admin": 1,
@@ -266,7 +266,7 @@
         2,
         2
       ],
-      "mode": "compare",
+      "mode": "time",
       "std": 45,
       "stdSrc": "oct"
     },
@@ -280,7 +280,7 @@
         2,
         2
       ],
-      "mode": "compare",
+      "mode": "time",
       "std": 36,
       "stdSrc": "oct"
     },
@@ -320,7 +320,7 @@
         1,
         1
       ],
-      "mode": "compare",
+      "mode": "time",
       "std": 4,
       "stdSrc": "est"
     },
@@ -334,7 +334,7 @@
         1,
         1
       ],
-      "mode": "compare",
+      "mode": "time",
       "std": 4,
       "stdSrc": "est"
     },
@@ -362,7 +362,7 @@
         0,
         2
       ],
-      "mode": "compare",
+      "mode": "time",
       "std": 27,
       "stdSrc": "est"
     },
