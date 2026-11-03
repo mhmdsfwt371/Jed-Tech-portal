@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.75 — 2026-11-03
+
+- صفحة جديدة «البريد من ملف PST» (للمدير): ضع ملف PST من أوتلوك فيُقرأ على جهازك ولا يُرفع — من أرسل كم رسالة، وتصنيف رسائل من تختارهم من عنوانها إلى عادي (وصل) أو متقدم (ربط وتكامل) أو بيع إضافي (طلب أو استفسار أو متطلب جديد).
+- قواعد التصنيف تعدّلها بنفسك، ونتيجة لكل شخص، وقائمة الرسائل بتصنيفها، ونطاق تاريخ، وتصدير CSV.
+
+<details><summary>English</summary>
+
+- A new page, “Mail from a PST file” (manager): drop an Outlook PST and it is read on your device, never uploaded — who sent how many, and the chosen people’s messages sorted by subject into normal (WASL), advanced (integration) or upselling (a new request, inquiry or requirement).
+- Editable classification rules, a result per person, the message list by kind, a date range and a CSV export.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- نیا صفحہ «پی ایس ٹی فائل سے ای میل» (مینیجر): آؤٹ لک کی پی ایس ٹی فائل آپ کے آلے پر پڑھی جاتی ہے — کس نے کتنی بھیجیں اور عنوان سے تین قسمیں۔
+- قابلِ ترمیم قواعد، ہر شخص کا نتیجہ، تاریخ کی حد اور سی ایس وی۔
+
+</div>
+</details>
+
+
 ## v8.74 — 2026-11-03
 
 - كل قراءة تقول مصدرها: صندوق في أعلى «مؤشراتي» يذكر بالخط العريض من أين جاءت الأرقام (سحبك بتاريخه وعدد مهامه)، وما يدخل في الحساب (المهام المكتملة فقط، بأنواعها وعدد كل نوع)، وما لا يدخل.

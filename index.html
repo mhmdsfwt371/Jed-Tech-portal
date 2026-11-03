@@ -603,6 +603,8 @@
   .w-adv > summary::before { content: '▸ '; } .w-adv[open] > summary::before { content: '▾ '; } .w-adv > summary::-webkit-details-marker { display: none; } .w-adv[open] > summary { margin-bottom: 14px; }
   .src-box { border: 1px solid var(--line); border-inline-start: 5px solid var(--accent); border-radius: var(--radius); background: var(--card); padding: 10px 14px; margin: 8px 0 12px; font-size: 13.5px; }
   .src-box p { margin: 4px 0; } .src-box b { color: var(--title); } .src-line { margin: 0 0 10px; font-size: 13.5px; padding: 8px 12px; border-inline-start: 4px solid var(--accent); background: var(--card); border-radius: 6px; }
+  .mf-senders { max-height: 420px; overflow: auto; } .mf-senders tr.on { background: var(--card); font-weight: 700; } .mf-rule { display: flex; gap: 10px; align-items: center; margin: 8px 0; } .mf-rule b { min-width: 90px; } .mf-rule input { flex: 1; min-width: 0; }
+  .mf-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--line); } .mf-pill.upsell { background: var(--accent); color: #fff; } .mf-pill.advanced { background: transparent; border: 1px solid var(--accent); color: var(--accent); } .mf-pill.normal { background: var(--line); } .mf-total td { font-weight: 800; border-top: 2px solid var(--line); }
   .tt-box { border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); padding: 12px 16px; margin-bottom: 16px; border-inline-start: 5px solid var(--accent); }
   .tt-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; } .tt-head small { display: block; } .tt-new { margin: 10px 0 0; font-weight: 700; color: var(--warn); }
   .tt-steps { margin: 10px 0 0; padding-inline-start: 20px; display: grid; gap: 8px; font-size: 13.5px; } .tt-steps .btn { vertical-align: middle; }
@@ -835,6 +837,7 @@
         <a href="#person" class="sub" data-view="person" data-t="pf_title">ملف الموظف</a>
         <a href="#data" class="sub" data-view="data" data-t="nav_data">البيانات</a>
         <a href="#weights" class="sub" data-view="weights" data-t="nav_weights">الأوزان</a>
+        <a href="#mailfile" class="sub" data-view="mailfile" data-t="nav_mailfile">البريد من ملف PST</a>
       </div>
     </div>
     <div class="nav-section" data-nav-section="systems">
@@ -980,6 +983,11 @@
       <button type="button" class="btn quiet" id="sample-btn" data-t="sample">تحميل بيانات تجريبية</button>
     </div>
     </details>
+  </section>
+
+  <section id="view-mailfile" hidden>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_mailfile">البريد من ملف PST</h1><button type="button" class="help-q" data-help="g_mailfile_b" data-help-title="nav_mailfile" aria-label="?">?</button></div><p class="lead" data-t="mf_lead"></p></div>
+    <div id="mailfile-body"></div>
   </section>
 
   <section id="view-module" class="module-view" hidden>

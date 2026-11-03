@@ -3027,9 +3027,83 @@ function applyTheme() {
   if (v === 'light' || v === 'dark') document.documentElement.dataset.theme = v; else delete document.documentElement.dataset.theme;
   paintThemeButton();
 }
+// ---------- «البريد من ملف PST» (ADR-0058): who sent how many, and each subject sorted into three kinds — read on the device, never uploaded ----------
+let mfState = { msgs: null, file: '', picked: new Set(), rules: null, cat: 'all', from: '', to: '' };
+const MF_CATS = ['normal', 'advanced', 'upsell', 'other'];
+const MF_DEFAULT_RULES = () => [
+  { k: 'upsell', words: ['new inquiry', 'inquiry', 'new request', 'new requirement', 'requirement', 'quotation', 'طلب جديد', 'استفسار', 'متطلب', 'عرض سعر'] },
+  { k: 'advanced', words: ['integration', 'api', 'ربط', 'تكامل'] },
+  { k: 'normal', words: ['wasl', 'وصل'] },
+];
+const mfRules = () => mfState.rules || MF_DEFAULT_RULES();
+const mfCategory = (subject, rules) => { const s = String(subject || '').toLowerCase(); for (const r of rules) if (r.words.some((w) => w && s.includes(String(w).toLowerCase()))) return r.k; return 'other'; };
+async function mfLoadLib() { if (window.PSTFile) return;
+  await new Promise((res, rej) => { const sc = el('script', { src: './assets/vendor/pst-extractor.min.js' }); sc.onload = res; sc.onerror = () => rej(new Error('pst lib')); document.head.append(sc); }); }
+function mfParse(buf) {
+  const pst = new window.PSTFile(window.Buffer.from(buf)); const out = []; const seen = new Set();
+  const walk = (f, path) => {
+    if (f.hasSubfolders) for (const c of f.getSubFolders()) walk(c, path ? `${path}/${c.displayName}` : String(c.displayName || ''));
+    if (f.contentCount > 0) { let m = f.getNextChild(), guard = 0;
+      while (m && guard++ < 500000) { const key = m.descriptorNodeId != null ? m.descriptorNodeId : `${path}:${out.length}`;
+        if (!seen.has(key)) { seen.add(key); const d = m.clientSubmitTime || m.messageDeliveryTime;
+          out.push({ id: key, folder: path || '/', subject: String(m.subject || '').slice(0, 300), sender: String(m.senderName || m.senderEmailAddress || '').trim().slice(0, 120), email: String(m.senderEmailAddress || '').slice(0, 160), to: String(m.displayTo || '').slice(0, 300), date: d ? new Date(d).toISOString() : '' }); }
+        m = f.getNextChild(); } } };
+  walk(pst.getRootFolder(), ''); return out;
+}
+function renderMailFile() {
+  const body = $('mailfile-body'); if (!body || isTeamPortal) return;
+  const rulesOpen = !!(body.querySelector('.mf-rules') && body.querySelector('.mf-rules').open);   // the rules box stays open while its words are edited
+  const st = mfState, rules = mfRules(), catName = (k) => t(`mf_cat_${k}`);
+  const status = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite', text: st.msgs ? t('mf_file', { name: st.file, n: st.msgs.length }) : '' });
+  const fileIn = el('input', { type: 'file', accept: '.pst,.ost', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return;
+    status.textContent = t('mf_reading', { name: f.name, mb: Math.max(1, Math.round(f.size / 1048576)) });
+    try { await mfLoadLib(); const buf = await f.arrayBuffer(); await new Promise((r) => setTimeout(r, 30)); st.msgs = mfParse(buf); st.file = f.name;
+      const counts = new Map(); for (const m of st.msgs) counts.set(m.sender, (counts.get(m.sender) || 0) + 1);
+      st.picked = new Set([...counts.entries()].sort((p, q) => q[1] - p[1]).slice(0, 5).map(([k]) => k)); renderMailFile(); toast(t('mf_done', { n: st.msgs.length })); }
+    catch (err) { console.error(err); status.textContent = t('mf_fail'); } e.target.value = ''; } });
+  const top = el('section', { class: 'dt-quick' },
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: `📂 ${t('mf_pick_file')}`, onclick: () => fileIn.click() }), fileIn, el('span', { class: 'hint', text: t('mf_privacy') })), status,
+    el('details', { class: 'me-phones' }, el('summary', { text: t('mf_how_h') }), el('p', { class: 'hint', text: t('mf_how') })));
+  if (!st.msgs) { set(body, top); return; }
+  const inRange = (m) => (!st.from || (m.date || '').slice(0, 10) >= st.from) && (!st.to || (m.date || '').slice(0, 10) <= st.to);
+  const ranged = st.msgs.filter(inRange), counts = new Map(), emails = new Map();
+  for (const m of ranged) { counts.set(m.sender, (counts.get(m.sender) || 0) + 1); if (!emails.has(m.sender) && m.email && !m.email.startsWith('/')) emails.set(m.sender, m.email); }
+  const senders = [...counts.entries()].sort((p, q) => q[1] - p[1]);
+  const dateRow = el('div', { class: 'row mgr-dates' }, el('label', {}, el('span', { text: t('mf_from') }), el('input', { type: 'date', value: st.from, onchange: (e) => { st.from = e.target.value; renderMailFile(); } })),
+    el('label', {}, el('span', { text: t('mf_to') }), el('input', { type: 'date', value: st.to, onchange: (e) => { st.to = e.target.value; renderMailFile(); } })));
+  const sendersBox = el('section', {}, el('h2', { text: t('mf_senders_h') }), el('p', { class: 'hint', text: t('mf_senders_lead') }),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny', text: t('mf_all'), onclick: () => { st.picked = new Set(senders.map(([k]) => k)); renderMailFile(); } }),
+      el('button', { type: 'button', class: 'btn tiny', text: t('mf_none'), onclick: () => { st.picked = new Set(); renderMailFile(); } })),
+    el('div', { class: 'table-wrap mf-senders' }, el('table', {}, el('thead', {}, el('tr', {}, ['', 'mf_col_sender', 'mf_col_email', 'mf_col_n'].map((k, i) => el('th', { class: i === 3 ? 'num' : null, text: k ? t(k) : '' })))),
+      el('tbody', {}, senders.slice(0, 300).map(([s, n]) => el('tr', { class: st.picked.has(s) ? 'on' : null },
+        el('td', {}, el('input', { type: 'checkbox', 'aria-label': s, ...(st.picked.has(s) ? { checked: '' } : {}), onchange: (e) => { if (e.target.checked) st.picked.add(s); else st.picked.delete(s); renderMailFile(); } })),
+        el('td', { text: s || '—' }), el('td', { class: 'ltr hint', text: emails.get(s) || '' }), el('td', { class: 'num', text: String(n) })))))));
+  const saveRules = async (next) => { st.rules = next; await store.kvPut('mailrules', next); renderMailFile(); };
+  const rulesBox = el('details', { class: 'me-phones mf-rules', ...(rulesOpen ? { open: '' } : {}) }, el('summary', { text: t('mf_rules_h') }), el('p', { class: 'hint', text: t('mf_rules_lead') }),
+    ...rules.map((r, i) => el('label', { class: 'mf-rule' }, el('b', { text: catName(r.k) }), el('input', { type: 'text', value: r.words.join('، '), dir: 'auto', onchange: (e) => { const next = rules.map((x) => ({ k: x.k, words: [...x.words] })); next[i].words = e.target.value.split(/[,،]/).map((w) => w.trim()).filter(Boolean).slice(0, 40); saveRules(next); } }))),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny quiet', text: t('mf_rules_reset'), onclick: () => saveRules(null) })));
+  const picked = ranged.filter((m) => st.picked.has(m.sender)).map((m) => ({ ...m, cat: mfCategory(m.subject, rules) }));
+  const perSender = [...st.picked].map((s) => { const list = picked.filter((m) => m.sender === s); const row = { s, total: list.length }; for (const c of MF_CATS) row[c] = list.filter((m) => m.cat === c).length; return row; }).sort((p, q) => q.total - p.total);
+  const tot = { total: picked.length }; for (const c of MF_CATS) tot[c] = picked.filter((m) => m.cat === c).length;
+  const results = el('section', { id: 'mf-results' }, el('h2', { text: t('mf_results_h') }),
+    el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('mf_col_sender'), t('mf_col_total'), ...MF_CATS.map(catName)].map((h, i) => el('th', { class: i ? 'num' : null, text: h })))),
+      el('tbody', {}, perSender.map((r) => el('tr', {}, el('td', { text: r.s || '—' }), el('td', { class: 'num', text: String(r.total) }), ...MF_CATS.map((c) => el('td', { class: 'num', text: String(r[c]) })))),
+        el('tr', { class: 'mf-total' }, el('td', { text: t('mf_col_total') }), el('td', { class: 'num', text: String(tot.total) }), ...MF_CATS.map((c) => el('td', { class: 'num', text: String(tot[c]) })))))));
+  const shown = picked.filter((m) => st.cat === 'all' || m.cat === st.cat).sort((p, q) => (q.date || '').localeCompare(p.date || ''));
+  const csv = () => { const esc = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    const rows = [[t('mf_col_date'), t('mf_col_sender'), t('mf_col_subject'), t('mf_col_cat'), t('mf_col_folder')], ...shown.map((m) => [(m.date || '').slice(0, 10), m.sender, m.subject, catName(m.cat), m.folder])];
+    const blob = new Blob(['\ufeff' + rows.map((r) => r.map(esc).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const link = el('a', { href: URL.createObjectURL(blob), download: 'mail-by-kind.csv' }); document.body.append(link); link.click(); link.remove(); };
+  const { tbody, more } = pagedBody([...shown], (m) => el('tr', {}, el('td', { class: 'ltr', text: (m.date || '').slice(0, 10) }), el('td', { text: m.sender }), el('td', { text: m.subject || '—' }), el('td', {}, el('span', { class: `mf-pill ${m.cat}`, text: catName(m.cat) })), el('td', { class: 'hint', text: m.folder })));
+  const listBox = el('section', { id: 'mf-list' }, el('h2', { text: t('mf_list_h') }),
+    el('div', { class: 'row' }, el('div', { class: 'pills' }, [['all', t('mf_all')], ...MF_CATS.map((c) => [c, `${catName(c)} (${tot[c]})`])].map(([k, l]) => el('button', { type: 'button', class: `pill-btn${st.cat === k ? ' on' : ''}`, text: l, onclick: () => { st.cat = k; renderMailFile(); } }))),
+      el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('mf_export')}`, onclick: csv })),
+    shown.length ? el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('mf_col_date'), t('mf_col_sender'), t('mf_col_subject'), t('mf_col_cat'), t('mf_col_folder')].map((h) => el('th', { text: h })))), tbody), more) : el('div', { class: 'empty', text: t('mf_empty') }));
+  set(body, top, dateRow, sendersBox, rulesBox, results, listBox);
+}
 function route() {
   if (location.hash.startsWith('#rank=')) { takeRankLink(true).then(route); return; }   // a rank link can arrive while the portal is already open (only the hash changes)
-  const views = ['home', 'tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'person', 'guide'];
+  const views = ['home', 'tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'person', 'guide', 'mailfile'];
   const requested = location.hash.slice(1);
   let hash = portalRoute(requested, isTeamPortal);
   if (requested !== hash) history.replaceState(null, '', '#' + hash);
@@ -3061,6 +3135,7 @@ function route() {
   if (holder) setGroup(holder, true);
   setMenu(false);
   if (v === 'kpi') renderKpi();
+  if (v === 'mailfile') renderMailFile();
   if (v === 'pro' && proToken.get() && !proUnits && !proBusy) proLoad();
   if (v === 'team') renderTeam();
   if (v === 'weights') renderWeights();
@@ -3165,6 +3240,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   devPlans = (await store.kvGet('devplans')) || {};
   teamTypesLive = (await store.kvGet('teamtypes')) || null;
   rankSnaps = (await store.kvGet('rankcards')) || {}; await takeRankLink();
+  mfState.rules = (await store.kvGet('mailrules')) || null;
   await refreshOfficialWeights();
   try { const r = await fetch('./systems.json', { cache: 'no-store' }); const data = r.ok && validateSystems(await r.json()); if (data) { SYSTEMS = data.systems; SYSTEM_CATEGORIES = data.categories; } } catch { /* retain built-in links when unavailable */ }
   await loadStrings(['ar', lang]);   // Arabic is every key's fallback; the reader's language besides
