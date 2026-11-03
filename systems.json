@@ -398,6 +398,20 @@
         "ar": "ملفات العمل على السحابة.",
         "en": "Work files in the cloud."
       }
+    },
+    {
+      "id": "custom_08d9e958ea44406294d6855402e9d755",
+      "category": "vendors",
+      "url": "https://fota-service.jimicloud.com/",
+      "name": {
+        "ar": "Jimi Fota",
+        "en": "Jimi Fota",
+        "ur": "Jimi Fota"
+      },
+      "desc": {
+        "ar": "فوتا  JIMI",
+        "en": "Jimi Fota"
+      }
     }
   ]
 }
