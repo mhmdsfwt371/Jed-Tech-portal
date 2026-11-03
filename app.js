@@ -6,7 +6,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
   mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
@@ -1670,7 +1670,7 @@ window.addEventListener('message', async (e) => {
 });
 function typesBox(wt) {
   const live = liveTeamTypes(), fresh = newTypes(wt), linked = live ? Object.entries(live.teamTypes).filter(([n]) => /after\s*-?\s*sales|r\s*&\s*d/i.test(n)).reduce((s, [, v]) => s + v.length, 0) : 0;
-  const bm = buildTypesBookmarklet(portalHome(), undefined, lang);
+  const bm = buildTypesBookmarklet(portalHome(), pullBranch().code, lang);
   const steps = el('ol', { class: 'tt-steps', hidden: '' },
     el('li', {}, el('span', { text: t('tt_s1') }), ' ', el('a', { class: 'btn tiny bm', href: bm, draggable: 'true', text: `📋 ${t('tt_bm')}`, onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } })),
     el('li', {}, el('span', { text: t('tt_s2') }), ' ', el('a', { class: 'btn tiny', href: 'https://myafaqy.com/', target: '_blank', rel: 'noopener', text: `${t('tt_open')} ↗` })),
@@ -1752,6 +1752,8 @@ function storageNote() {
   n.textContent = storageKept === true ? t('storage_kept') : storageKept === false ? t('storage_not_kept') : t('storage_unknown');
 }
 function renderDatasets() {
+  if ($('dt-branch')) { const b = pullBranch(); if (b.code !== renderDatasets.lastBranch) { renderDatasets.lastBranch = b.code; renderMgr(); }   // a new branch rebuilds the pull buttons
+    $('dt-branch').textContent = b.from === 'myafaqy' ? t('dt_branch_org', { name: b.name || b.code, code: b.code }) : t('dt_branch_default'); }
   if ($('dt-last')) { const d = [...datasets].sort((x, y) => String(y.extractedAt || '').localeCompare(String(x.extractedAt || '')))[0];
     $('dt-last').textContent = d ? t('dt_last', { d: saudiDay(d.extractedAt || new Date().toISOString()), n: (d.tasks || []).length }) : t('dt_last_none'); }
   storageNote();
@@ -1791,6 +1793,8 @@ const orgData = () => {
   return orgMemo.v;
 };
 const orgRootId = (od) => { const saved = pref('orgRoot'); if (saved && od.org.under(saved).length) return saved; const mid = managerIdOf(); if (mid && od.org.under(mid).length) return mid; const m = od.org.managers()[0]; return m ? m.pid : null; };
+// ADR-0061: the branch a pull filters teams by — the chosen manager's own row in MyAFAQY, Jeddah until a list exists
+const pullBranch = () => { const od = orgData(); const r = od && orgRootId(od), b = r && od.org.branchOf(r); return b ? { ...b, from: 'myafaqy' } : { code: JEDDAH_BRANCH, name: '', from: 'default' }; };
 const orgEngineerSet = () => { const od = orgData(); if (!od) return null; const r = orgRootId(od); return r ? new Set(od.org.engineersOf(r)) : null; };
 let kpiMoreCols = false, teamEdit = false;   // ADR-0059: the board shows five columns until asked for more
 function currentTeam(people, tasks, force) {   // force: 'org' or 'file' computes that default and ignores a saved manual choice (the preview uses it)
@@ -1858,9 +1862,9 @@ function renderMgr() {
   const row = $('mgr-row'), direct = $('mgr-auto-row'); if (!row || !direct) return;
   renderMgrPeriod();
   const q = mgrPick || currentBlocks()[0];
-  const bm = buildManagerBookmarklet(q.from, q.to, undefined, lang);
+  const bm = buildManagerBookmarklet(q.from, q.to, pullBranch().code, lang);
   // on an unsafe address (a preview, a file) the direct method is simply not offered — the page never breaks over it
-  const auto = safePortalUrl(portalHome()) ? buildManagerBookmarklet(q.from, q.to, undefined, lang, 'auto', portalHome()) : null;
+  const auto = safePortalUrl(portalHome()) ? buildManagerBookmarklet(q.from, q.to, pullBranch().code, lang, 'auto', portalHome()) : null;
   const controls = (link, label, primary) => [
     el('a', { class: `btn ${primary ? 'primary ' : ''}bm`, href: link, draggable: 'true',
       text: label, onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } }),

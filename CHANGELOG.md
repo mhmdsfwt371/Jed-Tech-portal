@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.79 — 2026-11-04
+
+- الفرع يأتي من ماي أفاقي: زر السحب و«أنواع الفرق» يأخذان الفرع من صف المدير في قائمة الموظفين، فمدير فرع آخر يسحب فرعه هو. صفحة «البيانات» تذكر الفرع ومصدره.
+- إذا تغيّر الفرع بعد السحب، اسحب زر السحب إلى المفضلة من جديد مرة واحدة.
+
+<details><summary>English</summary>
+
+- The branch comes from MyAFAQY: the pull button and «Team types» take the branch from the manager’s own row in the employee list, so another branch’s manager pulls his own branch. The Data page states the branch and its source.
+- If the branch changes after a pull, drag the pull button to your bookmarks again once.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- برانچ مائی آفاقی سے: پل بٹن اور «ٹیم کی اقسام» مینیجر کی اپنی قطار سے برانچ لیتے ہیں۔
+- برانچ بدلے تو بٹن ایک بار پھر گھسیٹیں۔
+
+</div>
+</details>
+
+
 ## v8.78 — 2026-11-04
 
 - «الفريق حسب ماي أفاقي»: اختصار السحب يقرأ الآن قائمة الموظفين (الاسم والقسم والمدير والفرع والحالة فقط، لا جوال ولا هوية)، وفي صفحة الفريق ترى من يتبع من حسب ماي أفاقي والفروق عن ملف الفريق، ومعاينة لما سيتغير قبل أن تعتمده.

@@ -938,4 +938,13 @@ test('the hierarchy from the employee list: eight safe fields only, tied to peop
   const code = decodeURIComponent(core.buildManagerBookmarklet('2026-10-01', '2026-10-29', '2', 'en', 'auto', 'https://example.org/portal/').replace(/^javascript:/, ''));
   assert.ok(code.includes("post('EmployeeIC/GetAllEmployeesGrid'") && code.includes('employees,notes:') && !/phoneNumber|identityNumber/.test(code));
 });
+test('the pull filters teams by the branch it is given; the Jeddah name rule applies only to Jeddah; the hierarchy gives a manager his branch', () => {
+  const dec = (b) => decodeURIComponent(core.buildManagerBookmarklet('2026-10-01', '2026-10-29', b, 'en', 'auto', 'https://example.org/portal/').replace(/^javascript:/, ''));
+  assert.ok(dec('1').includes("bc==='1'||(false&&/jeddah/i") && dec('1').includes('BR="1"'));
+  assert.ok(dec(core.JEDDAH_BRANCH).includes(`bc==='${core.JEDDAH_BRANCH}'||(true&&/jeddah/i`));
+  const ty = decodeURIComponent(core.buildTypesBookmarklet('https://example.org/portal/', '1').replace(/^javascript:/, ''));
+  assert.ok(ty.includes("bc==='1'||(false&&/jeddah/i"));
+  const org = core.buildOrg(core.parseEmployees([{ nameEn: 'Alpha Boss', manager: 'Zulu Head', branch: 'Riyadh', branchCode: '1' }, { nameEn: 'Bravo Eng', manager: 'Alpha Boss', branch: 'Riyadh', branchCode: '1' }]), [{ id: '1', nameEn: 'Alpha Boss' }, { id: '2', nameEn: 'Bravo Eng' }]);
+  assert.deepEqual(org.branchOf('1'), { code: '1', name: 'Riyadh' }); assert.equal(org.branchOf('99'), null);
+});
 console.log(`core.test.mjs: ${tests.length} passed`);

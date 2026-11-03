@@ -1420,4 +1420,6 @@ export default {
     cr_att_org: '{n} differences between MyAFAQY and the team file',
     org_diff_inactive: '{name} is inactive in MyAFAQY but still in the team file.',
     org_nofile: 'There is no team file for this team, so MyAFAQY’s hierarchy is the source.',
+    dt_branch_org: 'Branch: {name} ({code}) — from the manager’s own row in MyAFAQY. If the branch changes, drag the pull button to your bookmarks again once.',
+    dt_branch_default: 'Branch: Jeddah (default). After the first pull that carries the employee list, the branch comes from the manager’s own row in MyAFAQY.',
 };
