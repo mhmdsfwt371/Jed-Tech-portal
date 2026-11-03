@@ -1,7 +1,7 @@
 {
   "v": 1,
   "schema": "afaqy-weights/v1",
-  "reviewed": "2026-11-01",
+  "reviewed": "2026-11-03",
   "default": 1,
   "tiers": {
     "admin": 1,
@@ -266,7 +266,7 @@
         2,
         2
       ],
-      "mode": "time",
+      "mode": "compare",
       "std": 45,
       "stdSrc": "oct"
     },
@@ -280,7 +280,7 @@
         2,
         2
       ],
-      "mode": "time",
+      "mode": "compare",
       "std": 36,
       "stdSrc": "oct"
     },
@@ -320,7 +320,7 @@
         1,
         1
       ],
-      "mode": "time",
+      "mode": "compare",
       "std": 4,
       "stdSrc": "est"
     },
@@ -334,7 +334,7 @@
         1,
         1
       ],
-      "mode": "time",
+      "mode": "compare",
       "std": 4,
       "stdSrc": "est"
     },
@@ -362,7 +362,7 @@
         0,
         2
       ],
-      "mode": "time",
+      "mode": "compare",
       "std": 27,
       "stdSrc": "est"
     },
@@ -390,7 +390,9 @@
         0,
         1
       ],
-      "mode": "done"
+      "mode": "speed",
+      "std": 2,
+      "stdSrc": "est"
     }
   },
   "activities": {
@@ -413,5 +415,28 @@
     "rate": 0.85,
     "minPoints": 10,
     "tierIdx": 1.3
+  },
+  "rules": {
+    "fw": {
+      "tech": 1,
+      "outside": 1,
+      "field": 1,
+      "impact": 1
+    },
+    "cuts": [
+      1,
+      3,
+      5,
+      6
+    ],
+    "speedX": 1.5,
+    "cmpFast": 0.5,
+    "cmpSlow": 2,
+    "cmpFastX": 1.5,
+    "cmpSlowX": 0.5,
+    "extras": [],
+    "stack": "sum",
+    "capPct": 100,
+    "methods": []
   }
 }
