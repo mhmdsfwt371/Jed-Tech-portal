@@ -1,18 +1,18 @@
 {
-  "version": "8.75",
+  "version": "8.76",
   "date": "2026-11-03",
   "notes": {
     "ar": [
-      "صفحة جديدة «البريد من ملف PST» (للمدير): ضع ملف PST من أوتلوك فيُقرأ على جهازك ولا يُرفع — من أرسل كم رسالة، وتصنيف رسائل من تختارهم من عنوانها إلى عادي (وصل) أو متقدم (ربط وتكامل) أو بيع إضافي (طلب أو استفسار أو متطلب جديد).",
-      "قواعد التصنيف تعدّلها بنفسك، ونتيجة لكل شخص، وقائمة الرسائل بتصنيفها، ونطاق تاريخ، وتصدير CSV."
+      "صفحة «البيانات» فيها الآن صندوق واضح «بريد أوتلوك — ملف PST» بزر «ارفع ملف PST»: يُقرأ الملف على جهازك وتفتح نتيجة البريد وحدها.",
+      "صندوق المصدر في «مؤشراتي» أدق: العدد في السحب هو كل ما يظهر لك في ماي أفاقي، والمؤشرات تُحسب من مهامك أنت فقط."
     ],
     "en": [
-      "A new page, “Mail from a PST file” (manager): drop an Outlook PST and it is read on your device, never uploaded — who sent how many, and the chosen people’s messages sorted by subject into normal (WASL), advanced (integration) or upselling (a new request, inquiry or requirement).",
-      "Editable classification rules, a result per person, the message list by kind, a date range and a CSV export."
+      "The Data page now has a clear “Outlook mail — PST file” box with “Upload a PST file”: the file is read on your device and the mail result opens by itself.",
+      "The source box on My KPIs is more precise: the count in the pull is everything MyAFAQY shows you, and the KPIs count your own tasks only."
     ],
     "ur": [
-      "نیا صفحہ «پی ایس ٹی فائل سے ای میل» (مینیجر): آؤٹ لک کی پی ایس ٹی فائل آپ کے آلے پر پڑھی جاتی ہے — کس نے کتنی بھیجیں اور عنوان سے تین قسمیں۔",
-      "قابلِ ترمیم قواعد، ہر شخص کا نتیجہ، تاریخ کی حد اور سی ایس وی۔"
+      "ڈیٹا کے صفحے پر اب «آؤٹ لک ای میل — پی ایس ٹی فائل» کا واضح ڈبہ ہے؛ فائل آپ کے آلے پر پڑھی جاتی ہے اور نتیجہ خود کھلتا ہے۔",
+      "ماخذ کا ڈبہ زیادہ درست: اشاریے صرف آپ کے اپنے کاموں سے۔"
     ]
   }
 }

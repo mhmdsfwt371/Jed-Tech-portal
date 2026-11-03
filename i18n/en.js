@@ -1317,7 +1317,7 @@ export default {
     w_adv: 'Advanced settings: factors, methods, extras and rules',
     w_adv_lead: 'Everything here is optional. The basis: every completed task is worth its type’s points.',
     src_h: 'Source',
-    src_pull_self: 'These numbers come from your tasks in MyAFAQY — you pulled them yourself on {d} ({n} tasks).',
+    src_pull_self: 'These numbers come from the MyAFAQY tasks you can see — you pulled them yourself on {d} ({n} tasks in the pull; the KPIs count your own tasks only).',
     src_pull_mgr_view: 'These numbers come from your manager’s pull of the team’s data on {d}.',
     src_pull_mgr: 'These numbers come from your pull of the team’s data on {d}.',
     src_counted: 'Counted: completed tasks only.',
@@ -1370,4 +1370,8 @@ export default {
     mf_empty: 'No matching messages.',
     g_mailfile_h: 'Mail from a PST file',
     g_mailfile_b: 'Export a PST from Outlook for a folder and period and drop it on this page: it is read in the browser and never uploaded. The senders appear with their counts; tick the ones you want. Their messages are then sorted by subject with rules you can edit: “upselling” for a new request, inquiry or requirement, “advanced” for integration, “normal” for WASL, and the rest “other”. The result is a table per person, the message list by kind, and a CSV export.',
+    dt_pst_h: 'Outlook mail — PST file',
+    dt_pst_lead: 'Export a PST from Outlook for a folder and period and upload it here: it is read on your device and sent nowhere, then the result opens — who sent how many, sorted into normal, advanced or upselling.',
+    dt_pst_btn: '📂 Upload a PST file',
+    dt_pst_open: 'Open the mail result',
 };

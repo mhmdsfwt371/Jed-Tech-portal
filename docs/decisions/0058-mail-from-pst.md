@@ -20,6 +20,8 @@ WASL work is normal, integration is advanced, and a new inquiry, request or requ
   wins: «بيع إضافي» (new inquiry, inquiry, new request, new requirement, requirement, quotation, طلب جديد, استفسار, متطلب, عرض سعر),
   «متقدم» (integration, api, ربط, تكامل), «عادي» (wasl, وصل), else «أخرى». So «WASL integration» counts as advanced.
 - Result: a table per person (total and the four kinds) with a totals row; the message list filtered by kind; CSV export.
+- v8.76: the Data page carries a visible box «بريد أوتلوك — ملف PST» with «ارفع ملف PST»; the file is read by the same loader and the
+  result page opens by itself. The page in the «المؤشرات» menu stays for working on the result.
 - Very large files (over about 1 GB) do not fit in a browser; the page says so and the how-to shows Outlook's export filter.
 - Tested in the browser on the library's public test mailbox (71 messages, 41 senders) against an independent count in Node:
   classification with custom words, a date range, filtering, the export, and that nothing of the file is stored.

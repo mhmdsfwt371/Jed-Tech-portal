@@ -3050,17 +3050,20 @@ function mfParse(buf) {
         m = f.getNextChild(); } } };
   walk(pst.getRootFolder(), ''); return out;
 }
+async function mfLoadFile(f, say) {   // read a PST on the device; the same path from the mail page and the data page
+  say(t('mf_reading', { name: f.name, mb: Math.max(1, Math.round(f.size / 1048576)) }));
+  try { await mfLoadLib(); const buf = await f.arrayBuffer(); await new Promise((r) => setTimeout(r, 30)); mfState.msgs = mfParse(buf); mfState.file = f.name;
+    const counts = new Map(); for (const m of mfState.msgs) counts.set(m.sender, (counts.get(m.sender) || 0) + 1);
+    mfState.picked = new Set([...counts.entries()].sort((p, q) => q[1] - p[1]).slice(0, 5).map(([k]) => k)); toast(t('mf_done', { n: mfState.msgs.length })); return true; }
+  catch (err) { console.error(err); say(t('mf_fail')); return false; }
+}
 function renderMailFile() {
   const body = $('mailfile-body'); if (!body || isTeamPortal) return;
   const rulesOpen = !!(body.querySelector('.mf-rules') && body.querySelector('.mf-rules').open);   // the rules box stays open while its words are edited
   const st = mfState, rules = mfRules(), catName = (k) => t(`mf_cat_${k}`);
   const status = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite', text: st.msgs ? t('mf_file', { name: st.file, n: st.msgs.length }) : '' });
   const fileIn = el('input', { type: 'file', accept: '.pst,.ost', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return;
-    status.textContent = t('mf_reading', { name: f.name, mb: Math.max(1, Math.round(f.size / 1048576)) });
-    try { await mfLoadLib(); const buf = await f.arrayBuffer(); await new Promise((r) => setTimeout(r, 30)); st.msgs = mfParse(buf); st.file = f.name;
-      const counts = new Map(); for (const m of st.msgs) counts.set(m.sender, (counts.get(m.sender) || 0) + 1);
-      st.picked = new Set([...counts.entries()].sort((p, q) => q[1] - p[1]).slice(0, 5).map(([k]) => k)); renderMailFile(); toast(t('mf_done', { n: st.msgs.length })); }
-    catch (err) { console.error(err); status.textContent = t('mf_fail'); } e.target.value = ''; } });
+    if (await mfLoadFile(f, (s) => { status.textContent = s; })) renderMailFile(); e.target.value = ''; } });
   const top = el('section', { class: 'dt-quick' },
     el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: `📂 ${t('mf_pick_file')}`, onclick: () => fileIn.click() }), fileIn, el('span', { class: 'hint', text: t('mf_privacy') })), status,
     el('details', { class: 'me-phones' }, el('summary', { text: t('mf_how_h') }), el('p', { class: 'hint', text: t('mf_how') })));
@@ -3155,6 +3158,8 @@ $('theme-btn').addEventListener('click', () => {
 });
 ['block-size', 'block-count'].forEach((id) => $(id).addEventListener('input', () => { renderBlocks(); renderMgr(); }));
 $('read-text').addEventListener('click', async () => { if (await ingest($('paste').value)) $('paste').value = ''; });
+if ($('pst-in')) $('pst-in').addEventListener('change', async (e) => { const f = e.target.files[0]; if (!f) return;
+  if (await mfLoadFile(f, (s) => { $('pst-status').textContent = s; })) { $('pst-status').textContent = ''; location.hash = '#mailfile'; } e.target.value = ''; });
 $('file-in').addEventListener('change', async (e) => { for (const f of e.target.files) await ingest(await f.text()); e.target.value = ''; });
 // The device backup carries EVERYTHING this device holds — data, reports, closed month cards, one-to-ones, the repair list,
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).

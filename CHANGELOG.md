@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.76 — 2026-11-03
+
+- صفحة «البيانات» فيها الآن صندوق واضح «بريد أوتلوك — ملف PST» بزر «ارفع ملف PST»: يُقرأ الملف على جهازك وتفتح نتيجة البريد وحدها.
+- صندوق المصدر في «مؤشراتي» أدق: العدد في السحب هو كل ما يظهر لك في ماي أفاقي، والمؤشرات تُحسب من مهامك أنت فقط.
+
+<details><summary>English</summary>
+
+- The Data page now has a clear “Outlook mail — PST file” box with “Upload a PST file”: the file is read on your device and the mail result opens by itself.
+- The source box on My KPIs is more precise: the count in the pull is everything MyAFAQY shows you, and the KPIs count your own tasks only.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ڈیٹا کے صفحے پر اب «آؤٹ لک ای میل — پی ایس ٹی فائل» کا واضح ڈبہ ہے؛ فائل آپ کے آلے پر پڑھی جاتی ہے اور نتیجہ خود کھلتا ہے۔
+- ماخذ کا ڈبہ زیادہ درست: اشاریے صرف آپ کے اپنے کاموں سے۔
+
+</div>
+</details>
+
+
 ## v8.75 — 2026-11-03
 
 - صفحة جديدة «البريد من ملف PST» (للمدير): ضع ملف PST من أوتلوك فيُقرأ على جهازك ولا يُرفع — من أرسل كم رسالة، وتصنيف رسائل من تختارهم من عنوانها إلى عادي (وصل) أو متقدم (ربط وتكامل) أو بيع إضافي (طلب أو استفسار أو متطلب جديد).
