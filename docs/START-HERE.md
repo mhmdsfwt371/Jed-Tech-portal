@@ -71,6 +71,7 @@
 | `docs/decisions/0054-personal-rank-links.md` | Personal rank links — each engineer's rank sent by his manager |
 | `docs/decisions/0055-simpler-data-page.md` | A simpler data page and KPI setup |
 | `docs/decisions/0056-plain-weights-page.md` | A plain weights page — points typed directly |
+| `docs/decisions/0057-reading-sources.md` | Every reading says where it comes from |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

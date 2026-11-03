@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.74 — 2026-11-03
+
+- كل قراءة تقول مصدرها: صندوق في أعلى «مؤشراتي» يذكر بالخط العريض من أين جاءت الأرقام (سحبك بتاريخه وعدد مهامه)، وما يدخل في الحساب (المهام المكتملة فقط، بأنواعها وعدد كل نوع)، وما لا يدخل.
+- كل بلاطة تفتح بسطر «المصدر:» يصف قراءتها بدقة: المهام التي أُغلقت بين تاريخين، النقاط من الأوزان المنشورة، المعدل، متوسط الساعات، المفتوحة الآن، الواردة من البريد.
+
+<details><summary>English</summary>
+
+- Every reading states its source: a box at the top of My KPIs says in bold where the numbers came from (your pull, its date and task count), what counts (completed tasks only, by type with counts), and what does not.
+- Every tile opens with a “Source:” line describing its reading exactly: tasks closed between two dates, points from the published weights, the rate, average hours, open now, from email.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ہر پڑھائی اپنا ماخذ بتاتی ہے: «میرے اشاریے» کے اوپر ایک ڈبہ جلی حروف میں بتاتا ہے کہ اعداد کہاں سے آئے، کیا شمار ہوتا ہے اور کیا نہیں۔
+- ہر ٹائل «ماخذ:» کی سطر کے ساتھ کھلتی ہے۔
+
+</div>
+</details>
+
+
 ## v8.73 — 2026-11-03
 
 - صفحة الأوزان أبسط بكثير: لكل نوع رقم تكتبه مباشرة، وعدد مهامه في البيانات، وسطر واحد عن طريقة حسابه. العوامل والطرق والإضافات والقواعد والحاسبة كلها تحت «إعدادات متقدمة» مغلقة.

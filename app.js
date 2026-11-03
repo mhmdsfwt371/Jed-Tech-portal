@@ -1334,6 +1334,19 @@ function meDashboard(body, pm, { nm, arrow }) {
     return { done: done.length, points: Math.round((done.reduce((s, x) => s + ptsOf(x), 0) + actPts(actsFor(ids, w))) * 10) / 10, rate: asg.length ? asg.filter((x) => x.state === 'done').length / asg.length : null,
       avgHours: h.length ? h.reduce((s, v) => s + v, 0) / h.length : null, open: listFor(ids, 'open', w).length, fromEmail: listFor(ids, 'fromEmail', w).length }; };
   const show = (k, r) => (!r || r[k] == null ? '—' : k === 'rate' ? formatRate(r[k]) : k === 'avgHours' ? formatHours(r[k], lang) : String(r[k]));
+  // ADR-0057: every reading says where it comes from — the pull, the state and dates it counts, and the types behind it
+  const srcTypes = (list) => { const m = new Map(); for (const x of list) { const l = typeOf(x) ? typeLabel(typeOf(x), lang) : t('type_unknown'); m.set(l, (m.get(l) || 0) + 1); }
+    return [...m.entries()].sort((p, q) => q[1] - p[1]).map(([l, n]) => `${l} (${n})`); };
+  const typesText = (types, max = 12) => (types.length ? t('src_types', { k: types.length, list: types.slice(0, max).join('، ') + (types.length > max ? ' …' : '') }) : '');
+  const pullText = () => { const d = saudiDay(me.extractedAt || new Date().toISOString());
+    return viewAs ? t('src_pull_mgr_view', { d }) : meDerived ? t('src_pull_mgr', { d }) : t('src_pull_self', { d, n: me.tasks.length }); };
+  const srcLine = (k, ids, w) => { const list = listFor(ids, k, w), acts = k === 'points' ? actsFor(ids, w) : [];
+    return el('p', { class: 'src-line' }, el('b', { text: `${t('src_h')}: ` }), el('span', { text: `${t(`src_k_${k}`, { from: w.from, to: w.to, n: list.length })} ` }),
+      k === 'rate' ? null : el('span', { text: typesText(srcTypes(k === 'rate' ? list : list), 8) }), acts.length ? el('span', { text: ` ${t('src_with_acts', { n: acts.length })}` }) : null); };
+  const srcBox = (ids, w) => { const done = listFor(ids, 'done', w), acts = actsFor(ids, w);
+    return el('div', { class: 'src-box' }, el('p', {}, el('b', { text: pullText() })),
+      el('p', {}, el('b', { text: `${t('src_counted')} ` }), el('span', { text: `${t('src_period', { from: w.from, to: w.to })} ${done.length ? typesText(srcTypes(done)) : t('src_none_yet')}` })),
+      el('p', { class: 'hint', text: `${t('src_excl')} ${acts.length ? t('src_with_acts', { n: acts.length }) : t('src_no_acts')}` })); };
   const fmtH = (v) => (v == null ? '' : Math.round(v * 10) / 10);
   const csvOf = (list) => [[t('col_person'), 'ID', t('col_type'), t('col_state'), t('col_created'), t('col_completed'), t('col_hours'), t('col_points')],
     ...list.map((x) => [nm(x.assigneeId), x.id, typeOf(x).split('|')[lang === 'en' ? 0 : 1] || typeOf(x), t(`state_${x.state}`), (x.createdAt || '').slice(0, 16).replace('T', ' '), (x.completedAt || '').slice(0, 16).replace('T', ' '), fmtH(hrs(x)), x.state === 'done' ? ptsOf(x) : ''])];
@@ -1356,18 +1369,18 @@ function meDashboard(body, pm, { nm, arrow }) {
         done.length || (k === 'points' && actsOf.length) ? bars(t('sheet_points_by_type'), [...group(done, (x) => (typeOf(x) ? typeLabel(typeOf(x), lang) : t('type_unknown')), ptsOf), ...group(actsOf, (x) => `${t('activity')}: ${x.category || '—'}`, (x) => activityWeight(wt, x.category))].sort((p, q) => q.v - p.v).slice(0, 14)) : null,
         bars(t('sheet_by_week'), group(list.filter((x) => x.createdAt), (x) => weekOf(x.state === 'done' && x.completedAt ? x.completedAt : x.createdAt), () => 1).sort((p, q) => (p.l < q.l ? -1 : 1)).map((r) => ({ ...r, l: r.l.slice(5) })))));
   };
-  const open = (title, list, perPerson, k, actsOf = []) => sheet(title, [{ k: 'board', label: t('sheet_view_board'), node: board(list, perPerson, k, actsOf) }, { k: 'list', label: t('sheet_view_list'), node: table(list) }], csvOf(list));
+  const open = (title, list, perPerson, k, actsOf = [], src = null) => sheet(title, [{ k: 'board', label: t('sheet_view_board'), node: src ? el('div', {}, src, board(list, perPerson, k, actsOf)) : board(list, perPerson, k, actsOf) }, { k: 'list', label: t('sheet_view_list'), node: table(list) }], csvOf(list));
   const grid = (ids, isTeam) => { const now = stats(ids, win), before = stats(ids, prev);
     return makeSortable(el('div', { class: 'cmp-grid' }, sortByOrder(DASH.map((d) => d[0]), isTeam ? 'tiles-team' : 'tiles-me').map((k) => DASH.find((d) => d[0] === k)).map(([k, label]) => el('div', { class: 'cmp tile-open', 'data-id': k, tabIndex: 0, onclick: () => {
         const per = isTeam ? ids.map((id) => { const s = stats([id], win); return { l: nm(id), v: k === 'rate' ? Math.round((s.rate || 0) * 100) : k === 'avgHours' ? Math.round((s.avgHours || 0) * 10) / 10 : s[k], t: show(k, s) }; }).sort((p, q) => q.v - p.v) : null;
-        open(`${t(label)} — ${isTeam ? t('tiles_team') : t('tiles_mine')} — ${k === 'open' ? t('sheet_now') : `${win.from} → ${win.to}`}`, listFor(ids, k, win), per, k, k === 'points' ? actsFor(ids, win) : []); } },
+        open(`${t(label)} — ${isTeam ? t('tiles_team') : t('tiles_mine')} — ${k === 'open' ? t('sheet_now') : `${win.from} → ${win.to}`}`, listFor(ids, k, win), per, k, k === 'points' ? actsFor(ids, win) : [], srcLine(k, ids, win)); } },
       el('span', { class: 'cmp-k', text: t(label) }), el('b', { class: 'cmp-v', text: `\u2068${show(k, now)}\u2069` }),
       el('span', { class: 'cmp-was', text: k === 'open' ? t('sheet_now') : `${t('me_last_period')}: \u2068${show(k, before)}\u2069` }), k === 'open' ? el('span', { class: 'delta same', text: ' ' }) : arrow(k, now, before)))), isTeam ? 'tiles-team' : 'tiles-me'); };
   // my block replaces the page's first tile grid; the heading row and the dates line fold with it
   const old = body.querySelector('.cmp-grid'); const mine = grid([me.user.id], false);
   if (old) { const dates = old.previousElementSibling, headRow = dates && dates.previousElementSibling;
     const box = el('details', { class: 'tile-block', open: '' }, el('summary', { text: t('tiles_mine') }));
-    old.before(box); if (headRow) box.append(headRow); if (dates) box.append(dates); box.append(mine); old.remove(); }
+    old.before(box); box.append(srcBox([me.user.id], win)); if (headRow) box.append(headRow); if (dates) box.append(dates); box.append(mine); old.remove(); }
   const pgCard = () => { if (!(isTeamPortal || viewAs)) return null; try { return progressCard(pm); } catch (e) { console.error(e); return null; } };   // the engineer's page (and the manager's view of it)
   if (!pm.below.length) { const box = body.querySelector('details.tile-block'); if (box) { const tc = todayCard(pm, nm), pc = pgCard(); box.before(tc); if (pc) tc.after(pc); } return; }
   const ids = pm.below.map((r) => r.id);

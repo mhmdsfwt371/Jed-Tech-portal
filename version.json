@@ -1,18 +1,18 @@
 {
-  "version": "8.73",
+  "version": "8.74",
   "date": "2026-11-03",
   "notes": {
     "ar": [
-      "صفحة الأوزان أبسط بكثير: لكل نوع رقم تكتبه مباشرة، وعدد مهامه في البيانات، وسطر واحد عن طريقة حسابه. العوامل والطرق والإضافات والقواعد والحاسبة كلها تحت «إعدادات متقدمة» مغلقة.",
-      "النوع الذي تكتب نقاطه مباشرة لم يعد مربوطًا بالعوامل الأربعة، ويظهر في الجدول المتقدم «نقاط محددة مباشرة»."
+      "كل قراءة تقول مصدرها: صندوق في أعلى «مؤشراتي» يذكر بالخط العريض من أين جاءت الأرقام (سحبك بتاريخه وعدد مهامه)، وما يدخل في الحساب (المهام المكتملة فقط، بأنواعها وعدد كل نوع)، وما لا يدخل.",
+      "كل بلاطة تفتح بسطر «المصدر:» يصف قراءتها بدقة: المهام التي أُغلقت بين تاريخين، النقاط من الأوزان المنشورة، المعدل، متوسط الساعات، المفتوحة الآن، الواردة من البريد."
     ],
     "en": [
-      "A far simpler weights page: per type, a number you type directly, how many of it in the data, and one line on how it counts. Factors, methods, extras, rules and the calculator sit under a closed “Advanced settings”.",
-      "A type whose points you type directly is no longer tied to the four factors; the advanced table shows “points set directly”."
+      "Every reading states its source: a box at the top of My KPIs says in bold where the numbers came from (your pull, its date and task count), what counts (completed tasks only, by type with counts), and what does not.",
+      "Every tile opens with a “Source:” line describing its reading exactly: tasks closed between two dates, points from the published weights, the rate, average hours, open now, from email."
     ],
     "ur": [
-      "اوزان کا صفحہ بہت آسان: ہر قسم کے لیے عدد براہِ راست لکھیں؛ باقی سب «اعلیٰ ترتیبات» کے نیچے۔",
-      "براہِ راست لکھے پوائنٹس والی قسم اب چار عوامل سے بندھی نہیں۔"
+      "ہر پڑھائی اپنا ماخذ بتاتی ہے: «میرے اشاریے» کے اوپر ایک ڈبہ جلی حروف میں بتاتا ہے کہ اعداد کہاں سے آئے، کیا شمار ہوتا ہے اور کیا نہیں۔",
+      "ہر ٹائل «ماخذ:» کی سطر کے ساتھ کھلتی ہے۔"
     ]
   }
 }
