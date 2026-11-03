@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v8.77 — 2026-11-04
+
+- «مؤشراتي» أقصر بالنصف: جملة واحدة بالجواب وبلاطاتك الست في أول شاشة الجوال، والإعداد والتفاصيل مطوية.
+- لوحة المؤشرات أوضح: «أُغلقت في الفترة» و«جديدة في الفترة» ووحدة واحدة للوقت وخمسة أعمدة افتراضيًا. المديرون وقادة الفرق خارج أرقام الفريق افتراضيًا.
+- غرفة المتابعة لا تعرض «0» لشهر غير موجود في السحب. صفحة الفريق للقراءة حتى تضغط «تعديل الفريق»، و«البيانات والإعدادات» في قائمة مستقلة.
+
+<details><summary>English</summary>
+
+- My KPIs is half as long: one answer sentence and your six tiles on the first phone screen; setup and details folded.
+- A clearer KPI board: “Closed in period” and “New in period”, one time unit, five columns by default. Managers and team leads are out of team figures by default.
+- The control room no longer shows “0” for a month the pull does not hold. The Team page reads until you press “Edit team”, and “Data and settings” has its own menu group.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «میرے اشاریے» آدھا: ایک جملہ اور چھ ٹائلیں فون کی پہلی اسکرین پر۔
+- کے پی آئی بورڈ زیادہ واضح؛ مینیجر اور ٹیم لیڈ پہلے سے ٹیم کے اعداد سے باہر۔
+- کنٹرول روم غیر موجود مہینے کے لیے «0» نہیں دکھاتا؛ ٹیم کا صفحہ «ٹیم میں ترمیم» تک صرف پڑھنے کے لیے۔
+
+</div>
+</details>
+
+
 ## v8.76 — 2026-11-03
 
 - صفحة «البيانات» فيها الآن صندوق واضح «بريد أوتلوك — ملف PST» بزر «ارفع ملف PST»: يُقرأ الملف على جهازك وتفتح نتيجة البريد وحدها.

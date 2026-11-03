@@ -628,6 +628,24 @@ function donut(title, parts, { size = 120, fmt = (v) => String(v) } = {}) {
       el('span', { text: p.label }), el('b', { text: `${fmt(p.value)} · ${Math.round(p.share * 100)}%` }))))));
 }
 const portalHome = () => location.origin + location.pathname.replace(/[^/]*$/, '') + (isTeamPortal ? '?portal=team' : '');
+const tOld = (o) => t(o.n === 1 ? 'today_oldest_1' : 'today_oldest', o);
+// ADR-0059: My KPIs answer-first — one plain sentence and the period's numbers on top; setup, profile and the overview folded at the end
+function answerFirst(body, box, s) {
+  const setupRow = body.querySelector('.me-again') ? body.querySelector('.me-again').parentElement : null, card = body.querySelector('.me-card');
+  const upd = setupRow ? setupRow.querySelector('a.btn.primary') : null, ic = $('intro-card-me');
+  const line = el('div', { class: 'me-answer' }, el('p', { class: 'answer-line', text: t('me_answer', { d: s.done || 0, p: Math.round((s.points || 0) * 10) / 10, o: s.open || 0 }) }), upd);
+  box.before(line);
+  const fold = el('details', { class: 'me-fold va-hide' }, el('summary', { text: t('me_fold') }));
+  if (setupRow) fold.append(setupRow); if (card) fold.append(card);
+  if (ic && !ic.hidden) { ic.hidden = true; fold.append(el('button', { type: 'button', class: 'btn tiny quiet', text: t('me_fold_intro'), onclick: () => { ic.hidden = false; ic.scrollIntoView({ behavior: 'smooth', block: 'start' }); } })); }
+  // the essentials stay open; the month's card, level details, history and definitions fold into one section
+  const keep = new Set([line, box, fold, ...body.querySelectorAll(':scope > section.today, :scope > section.pg-card, :scope > div.worklist, :scope > .va-banner, :scope > .va-picker')]);
+  const wl = body.querySelector(':scope > div.worklist'); if (wl && wl.previousElementSibling && wl.previousElementSibling.tagName === 'H2') keep.add(wl.previousElementSibling);
+  const more = el('details', { class: 'me-more' }, el('summary', { text: t('me_more') }));
+  for (const n of [...body.children]) if (!keep.has(n) && !n.classList.contains('va-banner') && !n.classList.contains('va-picker')) more.append(n);
+  if (more.children.length > 1) body.append(more);
+  body.append(fold);
+}
 function renderMe(waiting = false) {
   applyNameFixes();
   applyPending().then((changed) => { if (changed) { renderTeam(); renderKpi(); renderMe(); } });
@@ -705,7 +723,7 @@ function renderMe(waiting = false) {
         leaderOf(roster(), me.user.id) ? el('p', { class: 'me-teams', text: t('me_leader', { name: nm(leaderOf(roster(), me.user.id)) }) }) : null),
       el('div', { class: 'me-facts' },
         el('span', { text: t('me_updated', { date: fmtDate(me.extractedAt) }) }),
-        el('span', { text: t('me_scope', { n: pm.scope.visible.length }) }))),
+        el('span', { text: t(pm.scope.visible.length === 1 ? 'me_scope_1' : 'me_scope', { n: pm.scope.visible.length }) }))),
     el('div', { class: 'row', style: 'justify-content:space-between;align-items:flex-end' },
       el('h2', { style: 'margin:0', text: t(`me_cmp_h_${meKind}`, { d: pm.windows.day }) }),
       pills(meKind, [['month', t('me_period_month')], ['quarter', t('me_period_quarter')], ['half', t('me_period_half')]], (k) => { meKind = k; renderMe(); })),
@@ -941,7 +959,7 @@ function todayCard(pm, nm) {
       el('div', { class: `t-tile${streak >= 5 ? ' hot' : ''}` }, el('b', { text: String(streak) }), el('span', { text: t('today_streak') }), el('small', { text: streak ? t('today_streak_keep') : t('today_streak_start') })),
       el('div', { class: 't-tile' }, el('b', { text: String(yesterday) }), el('span', { text: t('today_yesterday') }), el('small', { text: t('today_avg', { n: avg }) })),
       el('div', { class: 't-tile' }, el('b', { text: String(thisWeek) }), el('span', { text: t('today_week') }), el('small', { text: thisWeek >= best && best ? t('today_best_now') : t('today_best', { n: best }) })),
-      el('div', { class: 't-tile' }, el('b', { text: String(open.length) }), el('span', { text: t('today_open') }), oldest ? el('small', { class: 'ltr-dates', text: t('today_oldest', { n: Math.max(1, Math.round((oldest.ageHours || 0) / 24)), title: oldest.title || typeLabel(oldest.type || '', lang) || '' }) }) : el('small', { text: t('today_clear') }))),
+      el('div', { class: 't-tile' }, el('b', { text: String(open.length) }), el('span', { text: t('today_open') }), oldest ? el('small', { class: 'ltr-dates', text: tOld({ n: Math.max(1, Math.round((oldest.ageHours || 0) / 24)), title: oldest.title || typeLabel(oldest.type || '', lang) || '' }) }) : el('small', { text: t('today_clear') }))),
     team.length > 1 ? el('div', { class: 'team-goal' }, el('div', { class: 'tg-row' }, el('span', { text: t('today_team_goal') }), el('b', { text: `${cur} / ${goal}` })),
       el('i', {}, el('b', { style: `width:${Math.min(100, Math.round((cur / goal) * 100))}%` })), el('small', { text: cur >= goal ? t('today_team_done') : t('today_team_left', { n: goal - cur }) })) : null);
 }
@@ -1380,9 +1398,9 @@ function meDashboard(body, pm, { nm, arrow }) {
   const old = body.querySelector('.cmp-grid'); const mine = grid([me.user.id], false);
   if (old) { const dates = old.previousElementSibling, headRow = dates && dates.previousElementSibling;
     const box = el('details', { class: 'tile-block', open: '' }, el('summary', { text: t('tiles_mine') }));
-    old.before(box); box.append(srcBox([me.user.id], win)); if (headRow) box.append(headRow); if (dates) box.append(dates); box.append(mine); old.remove(); }
+    old.before(box); box.append(mine); if (headRow) box.append(headRow); if (dates) box.append(dates); box.append(srcBox([me.user.id], win)); old.remove(); }   // ADR-0059: the numbers first, then the period and the source
   const pgCard = () => { if (!(isTeamPortal || viewAs)) return null; try { return progressCard(pm); } catch (e) { console.error(e); return null; } };   // the engineer's page (and the manager's view of it)
-  if (!pm.below.length) { const box = body.querySelector('details.tile-block'); if (box) { const tc = todayCard(pm, nm), pc = pgCard(); box.before(tc); if (pc) tc.after(pc); } return; }
+  if (!pm.below.length) { const box = body.querySelector('details.tile-block'); if (box) { const tc = todayCard(pm, nm), pc = pgCard(); box.after(tc); if (pc) tc.after(pc); answerFirst(body, box, stats([me.user.id], win)); } return; }
   const ids = pm.below.map((r) => r.id);
   const people = makeSortable(el('div', { class: 'people-grid' }, (() => { const rows = sortByOrder(ids.map((id) => ({ id, s: stats([id], win) })).sort((p, q) => q.s.points - p.s.points).map((r) => r.id), 'people').map((id) => ({ id, s: stats([id], win) })); const max = Math.max(1, ...rows.map((r) => r.s.points));
     return rows.map(({ id, s }) => el('button', { type: 'button', class: 'person-card', 'data-id': id, onclick: () => {
@@ -1539,7 +1557,7 @@ function renderPro() {
 const iconOf = (x) => ({ sensor: 'heatmap', apihelper: 'api', canval: 'can', nusuk: 'survey' }[x.id] || x.icon || 'system');
 const svg = (name) => { const s = el('span', { 'aria-hidden': 'true', style: 'display:contents' }); s.innerHTML = ICONS[name] || ''; return s; };
 function renderSide() {
-  if (isTeamPortal) $('nav-kpi').closest('[data-nav-section]').hidden = true;
+  if (isTeamPortal) { $('nav-kpi').closest('[data-nav-section]').hidden = true; if ($('nav-inputs')) $('nav-inputs').closest('[data-nav-section]').hidden = true; }
   set($('nav-modules'), MODULES.map((m) => el('a', { href: `#m-${m.id}`, class: 'sub', 'data-module': m.id, title: [m.desc && L(m.desc, lang), m.helps && `${t('tool_helps')}: ${L(m.helps, lang)}`].filter(Boolean).join('\n'), text: L(m.name, lang) })));
   // company systems: one fold-away sub-group per category (closed by default, one open at a time), then a link to the full grid
   set($('nav-systems'), [...SYSTEM_CATEGORIES.map((c) => { const items = SYSTEMS.filter((x) => x.category === c.id); if (!items.length) return null;
@@ -1764,11 +1782,14 @@ let kpiKey = null;
 // people the portal shows: the team file's people when it has any, else everyone in the data
 const scopeOn = (people) => scopeApplies(roster(), people.map((p) => p.id));
 const scoped = (people) => (scopeOn(people) ? people.filter((p) => inScope(roster(), p.id)) : people);
+let kpiMoreCols = false, teamEdit = false;   // ADR-0059: the board shows five columns until asked for more
 function currentTeam(people, tasks) {
   const allowed = new Set(scoped(people).map((p) => p.id));
   try { const saved = JSON.parse(pref('team') || 'null'); if (Array.isArray(saved)) { const kept = saved.filter((id) => allowed.has(id)); if (kept.length) return kept; } } catch { /* fall through */ }
-  const def = scopeOn(people) ? [...allowed] : defaultTeam(people, tasks);
-  return def;
+  const ro = roster().people || {}, leads = new Set(Object.values(ro).map((p) => p && p.leaderId).filter(Boolean));
+  const isLead = (id) => leads.has(id) || !!(ro[id] && ro[id].covers);   // ADR-0059: team figures compare engineers with engineers
+  const def = (scopeOn(people) ? [...allowed] : defaultTeam(people, tasks)).filter((id) => !isLead(id));
+  return def.length ? def : (scopeOn(people) ? [...allowed] : defaultTeam(people, tasks));
 }
 function renderTeamPicker(people, team) {
   const chosen = new Set(team);
@@ -2197,17 +2218,17 @@ function renderPerson() {
   const body = $('person-body'); if (!body) return;
   if (!datasets.length) { set(body, el('div', { class: 'empty' }, t('dev_no_data'), ' ', el('a', { href: '#data', text: t('nav_data') }))); return; }
   const tasks = allTasks(), wt = weights(), today = saudiDay(new Date().toISOString()), ro = roster().people || {};
-  const ppl = peopleOf(datasets), peopleById = new Map(ppl.map((p) => [p.id, p])), team = currentTeam(scoped(ppl), tasks);
+  const ppl = peopleOf(datasets), peopleById = new Map(ppl.map((p) => [p.id, p])), team = currentTeam(scoped(ppl), tasks), everyone = scoped(ppl).map((p) => p.id);   // ADR-0059: every person has a file, leads included
   const nm = (id) => nameOf(peopleById.get(id), lang) || id;
-  if (!personSel || !team.includes(personSel)) personSel = team[0];
+  if (!personSel || !everyone.includes(personSel)) personSel = team[0] || everyone[0];
   const id = personSel, r = ro[id] || {}, ds = datasets.find((d) => d.key === kpiKey) || datasets[0];
   const mStart = `${today.slice(0, 7)}-01`, prevEnd = new Date(Date.parse(mStart) - 86400000).toISOString().slice(0, 10), prevStart = `${prevEnd.slice(0, 7)}-01`;
   const now = quarterBaseline(tasks, wt, id, { from: mStart, to: today }), before = quarterBaseline(tasks, wt, id, { from: prevStart, to: prevEnd });
   const teamPts = team.reduce((s, x) => s + quarterBaseline(tasks, wt, x, { from: mStart, to: today }).points, 0);
-  const { levels } = levelsFor(tasks, team, today, mailRows), lv = levels[id];
-  const load = {}; for (const pool of levelPools(team)) { const act = pool.filter((x) => !(ro[x] && ro[x].onLeave)); if (act.length) Object.assign(load, loadFor(tasks, act, today).people); } const L2 = load[id];
+  const { levels } = levelsFor(tasks, team.includes(id) ? team : [...team, id], today, mailRows), lv = levels[id];
+  const load = {}; for (const pool of levelPools(team.includes(id) ? team : [...team, id])) { const act = pool.filter((x) => !(ro[x] && ro[x].onLeave)); if (act.length) Object.assign(load, loadFor(tasks, act, today).people); } const L2 = load[id];
   const fmt = (m, v) => (v == null ? '—' : m === 'rate' ? `${Math.round(v * 100)}%` : m === 'avgHours' ? formatHours(v, lang) : String(v));
-  const pick = el('select', { 'aria-label': t('pf_pick'), onchange: (e) => openPerson(e.target.value) }, team.map((x) => ({ x, n: nm(x) })).sort((p, q) => p.n.localeCompare(q.n, lang)).map(({ x, n }) => el('option', { value: x, selected: x === id ? '' : null, text: n })));
+  const pick = el('select', { 'aria-label': t('pf_pick'), onchange: (e) => openPerson(e.target.value) }, everyone.map((x) => ({ x, n: nm(x) })).sort((p, q) => p.n.localeCompare(q.n, lang)).map(({ x, n }) => el('option', { value: x, selected: x === id ? '' : null, text: n })));
   const kpi = (m) => el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: t(`dev_m_${m}`) }), el('b', { class: 'cmp-v', text: fmt(m, now[m]) }), el('span', { class: 'cmp-was', text: `${t('pf_last')}: ${fmt(m, before[m])}` }));
   const planOf = (q) => { const p = (devPlans[q.key] || {})[id]; if (!p || !p.goals.length) return el('div', { class: 'pf-plan' }, el('b', { text: q.label }), el('span', { class: 'hint', text: t('dev_no_plan') }));
     const pct = planProgress(quarterGoalProgress(tasks, wt, id, q, p.goals)); return el('div', { class: 'pf-plan' }, el('div', { class: 'ring', style: `--p:${pct || 0}` }, el('b', { text: `${pct || 0}%` })), el('div', {}, el('b', { text: q.label }), el('span', { class: 'hint', text: `${t('dev_goals_n', { n: p.goals.length })} · ${p.status === 'agreed' ? t('dev_agreed') : t('dev_draft')}` }))); };
@@ -2373,6 +2394,7 @@ function renderHome() {
   const prev = new Date(Date.parse(mStart) - 86400000).toISOString().slice(0, 10), pStart = `${prev.slice(0, 7)}-01`;
   const doneIn = (a2, b2) => tasks.filter((x) => inTeam(x) && x.state === 'done' && x.completedAt && saudiDay(x.completedAt) >= a2 && saudiDay(x.completedAt) <= b2);
   const doneM = doneIn(mStart, today), doneP = doneIn(pStart, prev), openNow = tasks.filter((x) => inTeam(x) && x.state === 'open');
+  const hasPrev = datasets.some((d) => d.range && d.range.from <= pStart && d.range.to >= prev);   // ADR-0059: no «0» for a month the pull does not hold
   const load = {}; for (const pool of levelPools(team)) { const act = pool.filter((id) => !(ro[id] && ro[id].onLeave)); if (act.length) Object.assign(load, loadFor(tasks, act, today).people); }
   const red = team.filter((id) => load[id] && load[id].status === 'red');
   const qNext = quarterOf(today, 1), plans = devPlans[qNext.key] || {}, active = team.filter((id) => !(ro[id] && ro[id].onLeave));
@@ -2396,7 +2418,8 @@ function renderHome() {
       el('div', {}, el('span', { class: 'cr-k', text: t('cr_fresh_h') }), el('b', { text: fresh ? t('cr_fresh_ok', { to: latest.range.to }) : t('cr_fresh_old', { to: latest.range.to, n: ageDays }) }),
         el('small', { text: t('cr_fresh_meta', { n: tasks.length.toLocaleString('en-US'), d: (latest.extractedAt || '').slice(0, 10) }) })),
       el('a', { class: `btn${fresh ? '' : ' primary'}`, href: '#data', text: `${t('cr_pull_again')} ↗` })),
-    el('div', { class: 'cr-nums' }, num('cr_nums_done', doneM.length, t('cr_nums_last', { n: doneP.length })), num('cr_nums_points', Math.round(doneM.reduce((s, x) => s + taskPoints(wt, x), 0)), t('cr_nums_last', { n: Math.round(doneP.reduce((s, x) => s + taskPoints(wt, x), 0)) })),
+    el('p', { class: 'answer-line', text: t('cr_answer', { d: doneM.length, p: Math.round(doneM.reduce((s, x) => s + taskPoints(wt, x), 0)), o: openNow.length, old: old.length, n: team.length }) }),
+    el('div', { class: 'cr-nums' }, num('cr_nums_done', doneM.length, hasPrev ? t('cr_nums_last', { n: doneP.length }) : t('cr_nums_nolast')), num('cr_nums_points', Math.round(doneM.reduce((s, x) => s + taskPoints(wt, x), 0)), hasPrev ? t('cr_nums_last', { n: Math.round(doneP.reduce((s, x) => s + taskPoints(wt, x), 0)) }) : t('cr_nums_nolast')),
       num('cr_nums_open', openNow.length, old.length ? t('cr_nums_old', { n: old.length }) : ''), num('cr_nums_team', team.length, '')),
     el('h2', { class: 'cr-h', text: t('cr_att_h') }),
     att.length ? el('div', { class: 'cr-att' }, att.map((x) => el('button', { type: 'button', class: `cr-item k-${x.k}`, onclick: go(x.href, x.prep) },
@@ -2545,20 +2568,23 @@ function renderKpi() {
   const rateCell = (r) => el('span', { class: 'rate' }, el('i', {}, el('b', { style: `width:${Math.round((r || 0) * 100)}%` })), formatRate(r));
   const name = (r) => (r.id === GROUP ? t('group_bucket') : (nameOf(peopleById.get(r.id), lang) || r.name));
   const showCancel = f.team.cancelled > 0, showRd = ds.rdKnown && f.team.rd > 0;
-  const cols = ['col_person', 'col_assigned', 'col_done', 'col_points', 'col_rate', 'col_avg', 'col_open', ...(showCancel ? ['col_cancelled'] : []), 'col_email', 'col_self', ...(showRd ? ['col_rd'] : []), 'col_created'];
+  const hrs = (h) => (h == null ? '—' : t('hours', { n: Math.round(h * 10) / 10 }));   // ADR-0059: one unit down the column
+  const more = kpiMoreCols;
+  const cols = ['col_person', ...(more ? ['kpi_col_new'] : []), 'kpi_col_closed', 'col_points', 'kpi_col_rate', 'kpi_col_avg', ...(more ? ['col_open', ...(showCancel ? ['col_cancelled'] : []), 'col_email', 'col_self', ...(showRd ? ['col_rd'] : []), 'col_created'] : [])];
   const repK = reports.find((r) => r.key === ds.key);
   const wp = weightedPoints(ds.tasks, repK ? repK.activities : [], weights(), { range: ds.range, team });
+  const carried = ds.tasks.filter((x) => team.includes(x.assigneeId) && x.state === 'done' && x.completedAt && x.createdAt && saudiDay(x.completedAt) >= ds.range.from && saudiDay(x.completedAt) <= ds.range.to && saudiDay(x.createdAt) < ds.range.from).length;
   const pts = (id) => (wp.byId.get(id) || { total: 0 }).total;
   const maxDone = Math.max(1, ...f.people.map((r) => r.done));
   const ordered = [...f.people].sort((a, b) => kpiSort === 'points' ? (pts(b.id) - pts(a.id)) : kpiSort === 'median' ? ((b.avgHours ?? -1) - (a.avgHours ?? -1)) : kpiSort === 'open' ? (b.open - a.open) : (b.done - a.done));
   const line = (r, cls) => el('tr', { class: cls },
     el('td', {}, el('div', { text: cls === 'total' ? t('team') : name(r) }), cls || !positionOf(roster(), r.id, lang) ? null : el('div', { class: 'hint', text: positionOf(roster(), r.id, lang) })),
-    el('td', { class: 'num', text: r.assigned }), el('td', { class: 'num' }, cls ? String(r.done) : el('div', { class: 'bar-cell' }, el('b', { text: String(r.done) }), el('i', {}, el('span', { style: `width:${Math.round((r.done / maxDone) * 100)}%` })))),
+    more ? el('td', { class: 'num', text: r.assigned }) : null, el('td', { class: 'num' }, cls ? String(r.done) : el('div', { class: 'bar-cell' }, el('b', { text: String(r.done) }), el('i', {}, el('span', { style: `width:${Math.round((r.done / maxDone) * 100)}%` })))),
     el('td', { class: 'num pts', text: cls === 'total' ? String(wp.total) : cls ? '' : String(pts(r.id)) }),
     el('td', { class: 'num' }, rateCell(r.rate)),
-    el('td', { class: 'num', text: formatHours(r.avgHours, lang) }),
-    el('td', { class: 'num', text: r.open }), showCancel ? el('td', { class: 'num', text: r.cancelled }) : null,
-    el('td', { class: 'num', text: r.fromEmail }), el('td', { class: 'num', text: r.selfLogged }), showRd ? el('td', { class: 'num', text: r.rd }) : null, el('td', { class: 'num', text: r.created }));
+    el('td', { class: 'num', text: hrs(r.avgHours) }),
+    ...(more ? [el('td', { class: 'num', text: r.open }), showCancel ? el('td', { class: 'num', text: r.cancelled }) : null,
+      el('td', { class: 'num', text: r.fromEmail }), el('td', { class: 'num', text: r.selfLogged }), showRd ? el('td', { class: 'num', text: r.rd }) : null, el('td', { class: 'num', text: r.created })] : []));
   const table = el('div', { class: 'table-wrap' }, el('table', {},
     el('thead', {}, el('tr', {}, cols.map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
     el('tbody', {}, ordered.map((r) => line(r)), f.group ? line({ ...f.group, id: GROUP }, 'group') : null, line(f.team, 'total'))));
@@ -2566,11 +2592,11 @@ function renderKpi() {
   // comparison: team totals per uploaded period, oldest to newest
   const trend = [...datasets].reverse().map((d) => ({ d, f: factor1(d.tasks, { range: d.range, team }).team }));
   const trendTable = el('div', { class: 'table-wrap' }, el('table', {},
-    el('thead', {}, el('tr', {}, el('th', { text: t('period') }), ['col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_email'].map((k) => el('th', { class: 'num', text: t(k) })))),
+    el('thead', {}, el('tr', {}, el('th', { text: t('period') }), ['kpi_col_new', 'kpi_col_closed', 'kpi_col_rate', 'kpi_col_avg', 'col_email'].map((k) => el('th', { class: 'num', text: t(k) })))),
     el('tbody', {}, trend.map(({ d, f: x }) => el('tr', { class: d.key === kpiKey ? 'total' : null },
       el('td', { class: 'ltr', text: `${d.range.from} → ${d.range.to}${d.sample ? ' *' : ''}` }),
       el('td', { class: 'num', text: x.assigned }), el('td', { class: 'num', text: x.done }), el('td', { class: 'num', text: formatRate(x.rate) }),
-      el('td', { class: 'num', text: formatHours(x.avgHours, lang) }), el('td', { class: 'num', text: x.fromEmail }))))));
+      el('td', { class: 'num', text: hrs(x.avgHours) }), el('td', { class: 'num', text: x.fromEmail }))))));
 
   // quick links: the board is long on a phone — each jumps to its section (buttons, not hash links: the hash routes pages)
   const jump = (id) => { const n = document.getElementById(id); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
@@ -2579,18 +2605,21 @@ function renderKpi() {
     renderTeamPicker(people, team),
     ds.sample ? el('p', { class: 'note sample', text: t('sample_note') }) : null,
     c.known && !c.complete ? el('p', { class: 'note', text: `${t('data_incomplete_warn')} (${t('incomplete', { got: c.got, want: c.want })})` }) : null,
-    tag('overview', el('div', { class: 'strip six' },
-      el('div', { class: 'lead' }, el('b', { text: f.team.done }), el('span', { text: t('col_done') })),
+    tag('overview', el('p', { class: 'answer-line', text: t('kpi_answer', { c: f.team.done, p: wp.total, n: f.team.assigned, r: formatRate(f.team.rate), o: f.team.open }) })),
+    tag('overview', el('div', { class: 'strip six eight' },
+      el('div', { class: 'lead' }, el('b', { text: f.team.done }), el('span', { text: t('kpi_col_closed') }), carried > 0 ? el('small', { text: t('kpi_carried', { n: carried }) }) : null),
       el('div', {}, el('b', { text: String(wp.total) }), el('span', { text: t('col_points') })),
-      el('div', {}, el('b', { text: f.team.assigned }), el('span', { text: t('col_assigned') })),
-      el('div', {}, el('b', { text: formatRate(f.team.rate) }), el('span', { text: t('col_rate') })),
-      el('div', {}, el('b', { text: formatHours(f.team.avgHours, lang) }), el('span', { text: t('col_avg') })),
+      el('div', {}, el('b', { text: f.team.assigned }), el('span', { text: t('kpi_col_new') })),
+      el('div', {}, el('b', { text: formatRate(f.team.rate) }), el('span', { text: t('kpi_col_rate') })),
+      el('div', {}, el('b', { text: hrs(f.team.avgHours) }), el('span', { text: t('kpi_col_avg') })),
       el('div', {}, el('b', { text: f.team.open }), el('span', { text: t('col_open') })),
-      el('div', {}, el('b', { text: `${f.team.fromEmail} · ${f.team.selfLogged}` }), el('span', { text: `${t('col_email')} · ${t('col_self')}` })))),
+      el('div', {}, el('b', { text: f.team.fromEmail }), el('span', { text: t('col_email') }), el('small', { text: t('kpi_email_def') })),
+      el('div', {}, el('b', { text: f.team.selfLogged }), el('span', { text: t('col_self') }), el('small', { text: t('kpi_self_def') })))),
     el('p', { class: 'strip-note' }, t('kpi_strip_note'), helpQ('help_points')),
     el('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin-bottom:8px' },
       el('div', { class: 'pills' }, [['done', 'kpi_sort_done'], ['points', 'kpi_sort_points'], ['median', 'kpi_sort_median'], ['open', 'kpi_sort_open']].map(([k, label]) =>
-        el('button', { type: 'button', class: `pill-btn${kpiSort === k ? ' on' : ''}`, text: t(label), onclick: () => { kpiSort = k; renderKpi(); } })))),
+        el('button', { type: 'button', class: `pill-btn${kpiSort === k ? ' on' : ''}`, text: t(label), onclick: () => { kpiSort = k; renderKpi(); } }))),
+      el('button', { type: 'button', class: 'btn tiny quiet kpi-more', text: more ? t('kpi_fewer_cols') : t('kpi_more_cols'), onclick: () => { kpiMoreCols = !kpiMoreCols; renderKpi(); } })),
     el('div', { id: 'k-table' }),
     table,
     tag('team', kpiShareSection(team, peopleById)),
@@ -2863,6 +2892,7 @@ function renderTeam() {
     renderSignatures(),
     el('h2', {}, t('team_roster_h'), helpQ('help_roster')),
     el('div', { class: 'row', style: 'margin-bottom:14px' },
+      el('button', { type: 'button', class: `btn${teamEdit ? ' primary' : ''} team-edit-btn`, text: teamEdit ? `✓ ${t('team_edit_done')}` : `✎ ${t('team_edit')}`, onclick: () => { teamEdit = !teamEdit; renderTeam(); } }),
       el('button', { type: 'button', class: 'btn primary', text: t('team_download'), onclick: download }),
       el('button', { type: 'button', class: 'btn', text: t('team_upload'), onclick: () => upload.click() }), upload,
       el('span', { class: 'hint', text: on ? t('team_scope_n', { n: people.length }) : t('team_filled', { n: Object.keys(ro.people).length, m: people.length }) })),
@@ -2896,6 +2926,13 @@ function renderTeam() {
       return el('div', { class: 'row team-add' }, el('b', { text: t('team_add_h') }), idIn, posIn,
         el('button', { type: 'button', class: 'btn tiny', text: t('team_add_btn'), onclick: () => { const id = idIn.value.trim();
           if (!/^\d+$/.test(id) || !posIn.value.trim()) { toast(t('team_add_bad')); return; } save(id, { position: posIn.value.trim() }); } })); })());
+  // ADR-0059: the list reads as text until «Edit team»; editing shows the fields, the ✎ buttons and the file buttons
+  if (!teamEdit) { const tb = body.querySelector('.team-table');
+    if (tb) { for (const c of tb.querySelectorAll('input, select')) c.replaceWith(el('span', { class: 'ro-val', text: c.tagName === 'SELECT' ? (c.selectedOptions[0] && c.value ? c.selectedOptions[0].text : '—') : (c.value || '—') }));
+      for (const b of tb.querySelectorAll('button')) b.remove(); }
+    for (const n of body.querySelectorAll('.team-add, .signs')) n.hidden = true;
+    for (const b of body.querySelectorAll('button')) if (b.textContent.trim() === t('pending_upload')) b.hidden = true;
+    for (const b of body.querySelectorAll('.team-edit-btn ~ .btn, .team-edit-btn ~ input[type=file]')) b.hidden = true; }
 }
 
 // ---------- Factor 2 (technician points) and Factor 3 (after-sales tickets), from the reports file of the same period ----------

@@ -605,6 +605,14 @@
   .src-box p { margin: 4px 0; } .src-box b { color: var(--title); } .src-line { margin: 0 0 10px; font-size: 13.5px; padding: 8px 12px; border-inline-start: 4px solid var(--accent); background: var(--card); border-radius: 6px; }
   .mf-senders { max-height: 420px; overflow: auto; } .mf-senders tr.on { background: var(--card); font-weight: 700; } .mf-rule { display: flex; gap: 10px; align-items: center; margin: 8px 0; } .mf-rule b { min-width: 90px; } .mf-rule input { flex: 1; min-width: 0; }
   .mf-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--line); } .mf-pill.upsell { background: var(--accent); color: #fff; } .mf-pill.advanced { background: transparent; border: 1px solid var(--accent); color: var(--accent); } .mf-pill.normal { background: var(--line); } .mf-total td { font-weight: 800; border-top: 2px solid var(--line); }
+  .strip.eight { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)); } @media (max-width: 820px) { .strip.eight { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .me-answer { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; } .me-answer .answer-line { margin: 0; flex: 1 1 320px; }
+  .me-more, .me-fold { margin-top: 22px; } .me-more > summary { cursor: pointer; font-weight: 700; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); } .me-more[open] > summary { margin-bottom: 12px; }
+  .me-fold { margin-top: 12px; } .me-fold > summary { cursor: pointer; font-weight: 700; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); }
+  .me-fold[open] > summary { margin-bottom: 12px; } .me-fold .me-card { margin-top: 12px; }
+  .ro-val { font-size: 14px; } 
+  .answer-line { font-size: 17px; font-weight: 700; color: var(--title); margin: 4px 0 14px; line-height: 1.6; }
+  .strip small { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.4; } .kpi-more { margin-inline-start: auto; }
   .tt-box { border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); padding: 12px 16px; margin-bottom: 16px; border-inline-start: 5px solid var(--accent); }
   .tt-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; } .tt-head small { display: block; } .tt-new { margin: 10px 0 0; font-weight: 700; color: var(--warn); }
   .tt-steps { margin: 10px 0 0; padding-inline-start: 20px; display: grid; gap: 8px; font-size: 13.5px; } .tt-steps .btn { vertical-align: middle; }
@@ -835,6 +843,13 @@
         <a href="#dev" class="sub" data-view="dev" data-t="nav_dev">التطوير</a>
         <a href="#team" class="sub" data-view="team" data-t="nav_team">الفريق</a>
         <a href="#person" class="sub" data-view="person" data-t="pf_title">ملف الموظف</a>
+      </div>
+    </div>
+    <div class="nav-section" data-nav-section="inputs">
+      <button type="button" class="nav-group-toggle" data-nav-group-toggle aria-expanded="false" aria-controls="nav-inputs">
+        <span class="nav-group-label"><span class="nav-item-icon" aria-hidden="true">⇩</span><span data-t="nav_inputs">البيانات والإعدادات</span></span><span class="nav-chevron" aria-hidden="true"></span>
+      </button>
+      <div class="nav-group-panel" id="nav-inputs">
         <a href="#data" class="sub" data-view="data" data-t="nav_data">البيانات</a>
         <a href="#weights" class="sub" data-view="weights" data-t="nav_weights">الأوزان</a>
         <a href="#mailfile" class="sub" data-view="mailfile" data-t="nav_mailfile">البريد من ملف PST</a>
