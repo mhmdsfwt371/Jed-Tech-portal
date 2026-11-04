@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.82 — 2026-11-04
+
+- الأوزان: عمود «المنجز في الفترة» يعدّ المهام المنجزة فقط في فترة تختارها (كل البيانات، هذا الشهر، الشهر الماضي، من — إلى) ويكتب مصدره. طريقة العدّ والوقت المعتاد صارا خانتين بجانب النقاط، ومعامل السرعة خانة فوق الجدول. أي طريقة جديدة تبدأ بلا وقت معتاد حتى تحدده أنت، والقيم المبدئية معلَّمة.
+- ساعات العمل الإضافي: تشمل الفريق كله مع القادة والمديرين، والأيام التي قُفلت فيها المهام دفعة واحدة معلَّمة لأن ساعاتها أقل من الحقيقة؛ الساعات حد أدنى.
+
+<details><summary>English</summary>
+
+- Weights: «Completed in the period» counts only completed tasks in a period you choose (all data, this month, last month, from — to) and states its source. The method and the usual time are fields next to the points, and the speed bonus is a field above the table. A newly chosen method starts with no usual time until you set it; seeded values are marked.
+- Overtime: covers the whole team including leads and managers; days whose tasks were closed in one batch are marked because their hours are less than the real work; hours are a minimum.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اوزان: «مدت میں مکمل» صرف مکمل کام آپ کی چنی مدت میں گنتا ہے۔ طریقہ اور معمول کا وقت اب خانے ہیں۔
+- اوور ٹائم: پوری ٹیم بشمول لیڈز؛ ایک ساتھ بند دن نشان زد۔
+
+</div>
+</details>
+
+
 ## v8.81 — 2026-11-04
 
 - صفحة «ساعات العمل الإضافي» تحت «المؤشرات»: السبت من أول مهمة إلى آخر مهمة أُغلقت، ومن الأحد إلى الخميس بين السابعة مساءً ومنتصف الليل، لكل شخص وبالتفاصيل يومًا بيوم، مع تنزيل CSV. تقدير من أوقات المهام لأن ماي أفاقي لا يسجّل الساعات.

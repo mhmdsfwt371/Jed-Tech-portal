@@ -25,7 +25,7 @@ for (const x of links) {
     // shows as 5xx or Cloudflare's 52x. Our own tools must answer 200 and carry their title.
     const behindCloudflare = res.status === 403 && /cloudflare/i.test(res.headers.get('server') || '') && res.headers.get('cf-ray');
     if (behindCloudflare && SYSTEMS.includes(x)) { console.log(`✓ ${x.id.padEnd(10)} up — behind Cloudflare, which refuses scripts`); continue; }
-    if (!res.ok) (OUTSIDE_UNCHECKABLE[x.id] ? notes : problems).push(`${x.id}: ${x.url} answered ${res.status}${OUTSIDE_UNCHECKABLE[x.id] ? ` (${OUTSIDE_UNCHECKABLE[x.id]})` : ''}`);
+    if (!res.ok) (OUTSIDE_UNCHECKABLE[x.id] || res.status === 429 ? notes : problems).push(`${x.id}: ${x.url} answered ${res.status}${OUTSIDE_UNCHECKABLE[x.id] ? ` (${OUTSIDE_UNCHECKABLE[x.id]})` : res.status === 429 ? ' (too many requests from the checker — the site is up)' : ''}`);
     else if (EXPECT[x.id] && !title.includes(EXPECT[x.id])) problems.push(`${x.id}: ${x.url} opens "${title}", expected "${EXPECT[x.id]}"`);
     else if (x.module && (/^(deny|sameorigin)$/i.test(res.headers.get('x-frame-options') || '') || /frame-ancestors/i.test(res.headers.get('content-security-policy') || '')))
       problems.push(`${x.id}: now refuses to be shown inside another page — it can no longer open as a module`);

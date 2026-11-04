@@ -2700,6 +2700,7 @@ function typeMedians() {
     for (const x of allTasks()) { if (x.state !== 'done' || !x.createdAt || !x.completedAt) continue; const k = typeKey(x.type); if (!k) continue; (by.get(k) || by.set(k, []).get(k)).push(businessHours(x.createdAt, x.completedAt)); }
     const out = new Map(); for (const [k, hs] of by) { hs.sort((p, q) => p - q); const m = hs.length % 2 ? hs[(hs.length - 1) / 2] : (hs[hs.length / 2 - 1] + hs[hs.length / 2]) / 2; out.set(k, { med: m, n: hs.length }); } return out; });
 }
+let wPer = { k: 'all', from: '', to: '' };   // the period the weights page counts completed tasks in
 function renderWeights() {
   const body = $('weights-body'); if (!body) return;
   const advOpen = !!(body.querySelector('.w-adv') && body.querySelector('.w-adv').open);   // the advanced part stays open across redraws
@@ -2781,16 +2782,33 @@ function renderWeights() {
           el('td', { class: 'num', text: String(Math.round(pointsOfType(r.key) * 10) / 10) }), editorsCell(r.key))))))];
   };
   // ADR-0056: the plain page — the type, its points typed directly, how many in the data, and one grey line on how it counts
+  // ADR-0064: the count is the completed tasks in a period the manager chooses, and the method and the usual time are fields of their own
+  const doneAll = allTasks().filter((x) => x.state === 'done' && x.completedAt), doneDays = doneAll.map((x) => saudiDay(x.completedAt)).sort();
+  const ymNow = saudiDay(new Date().toISOString()).slice(0, 7);
+  const per = wPer.k === 'month' ? [`${ymNow}-01`, monthLast(ymNow)] : wPer.k === 'prev' ? [`${ymPrev(ymNow)}-01`, monthLast(ymPrev(ymNow))] : wPer.k === 'custom' && wPer.from && wPer.to && wPer.from <= wPer.to ? [wPer.from, wPer.to] : [doneDays[0] || '', doneDays[doneDays.length - 1] || ''];
+  const doneN = new Map(); for (const x of doneAll) { const d = saudiDay(x.completedAt); if (d < per[0] || d > per[1]) continue; const k = typeKey(x.type); if (k) doneN.set(k, (doneN.get(k) || 0) + 1); }
+  const perBox = el('div', { class: 'w-per' },
+    el('div', { class: 'pills' }, [['all', t('w_per_all')], ['month', t('w_per_month')], ['prev', t('w_per_prev')], ['custom', t('w_per_custom')]].map(([k2, l]) => el('button', { type: 'button', class: `pill-btn${wPer.k === k2 ? ' on' : ''}`, text: l, onclick: () => { wPer = { ...wPer, k: k2 }; renderWeights(); } }))),
+    wPer.k === 'custom' ? el('div', { class: 'row mgr-dates' }, el('label', {}, el('span', { text: t('mf_from') }), el('input', { type: 'date', value: wPer.from, onchange: (e) => { wPer = { ...wPer, from: e.target.value }; renderWeights(); } })),
+      el('label', {}, el('span', { text: t('mf_to') }), el('input', { type: 'date', value: wPer.to, onchange: (e) => { wPer = { ...wPer, to: e.target.value }; renderWeights(); } }))) : null,
+    el('p', { class: 'hint w-per-src', text: doneAll.length ? t('w_per_src', { from: per[0], to: per[1], n: [...doneN.values()].reduce((s, v) => s + v, 0) }) : t('ot_nodata') }),
+    el('label', { class: 'w-speedx' }, el('span', { text: t('w_speedx') }), el('input', { type: 'number', min: '1', max: '3', step: '0.1', value: String(rulesOf(wt).speedX), ...(admin ? {} : { disabled: '' }),
+      onchange: async (e) => { const v = Number(e.target.value); if (!(v >= 1 && v <= 3)) { e.target.value = String(rulesOf(wt).speedX); return; } weightsDevice = { ...(weightsDevice || {}), rules: parseRules({ ...rulesOf(weights()), speedX: v }) }; await store.putWeights(weightsDevice); toast(t('w_speedx_saved')); renderWeights(); renderKpi(); renderMe(); } })));
   const RRs = rulesOf(wt), fmtN = (v) => String(Math.round(v * 100) / 100);
   const methodLine = (x) => { const m = (x && x.mode) || 'done', h = x && x.std ? fmtN(x.std) : '';
     if (m === 'speed') return t('w_m_speed', { x: fmtN(RRs.speedX), h }); if (m === 'compare') return t('w_m_compare', { h });
     if (isCustomMode(m)) { const cm = (RRs.methods || []).find((q) => q.id === m); return cm ? t('w_m_own', { n: cm.name }) : t('w_m_done'); } return t('w_m_done'); };
+  const putSimple = (r, g, patch) => { const x = r.x || {}, mode = patch.mode || x.mode || 'done', w = x.w != null ? x.w : wt.default;
+    const std = mode === 'done' ? null : patch.std != null ? patch.std : x.std || null;   // never a value the manager did not set: a new method starts with no usual time
+    const next = { ...x, w, tier: x.tier || tierFromBase(Math.round(w)), team: x.team || g.id, mode }; delete next.std; delete next.stdSrc;
+    if (std) { next.std = std; next.stdSrc = patch.std != null ? 'set' : (x.stdSrc || 'set'); }
+    save({ tasks: { [r.key]: next } }); };
   const simpleTable = (g) => {
-    const rows = g.rows.map((r) => { const x = wt.tasks[r.key]; return { ...r, x, n: (seen.get(r.key) || {}).n || 0, w: x ? x.w : wt.default }; }).sort((p, q) => q.w - p.w || q.n - p.n || p.key.localeCompare(q.key));
+    const rows = g.rows.map((r) => { const x = wt.tasks[r.key]; return { ...r, x, n: doneN.get(r.key) || 0, w: x ? x.w : wt.default }; }).sort((p, q) => q.w - p.w || q.n - p.n || p.key.localeCompare(q.key));
     if (!rows.length) return null;
     return [el('h2', {}, g.title, el('span', { class: 'hint', text: ` — ${t('w_types_n', { n: rows.length })}` })),
       el('div', { class: 'table-wrap' }, el('table', { class: 'w-cards w-simple' },
-        el('thead', {}, el('tr', {}, ['w_col_type', 'w_col_pts', 'w_col_n', 'w_col_how'].map((k, i) => el('th', { class: i === 1 || i === 2 ? 'num' : null, text: t(k) })))),
+        el('thead', {}, el('tr', {}, ['w_col_type', 'w_col_pts', 'w_col_n', 'w_col_method', 'w_col_std'].map((k, i) => el('th', { class: i === 1 || i === 2 ? 'num' : null, text: t(k) })))),
         el('tbody', {}, rows.map((r) => { const can = mayEdit(r.key);
           const inp = el('input', { type: 'number', class: 'w-pts', min: '0.5', max: '10', step: '0.5', value: String(r.w), 'aria-label': t('w_col_pts'), ...(can ? {} : { disabled: '' }),
             onchange: (e) => { const v = Number(e.target.value); if (!(v >= 0.5 && v <= 10)) { e.target.value = String(r.w); toast(t('w_pts_bad')); return; }
@@ -2798,7 +2816,12 @@ function renderWeights() {
           return el('tr', { class: r.x ? null : 'unweighted' },
             el('td', {}, el('div', { text: r.name || pretty(r.key) }), r.x ? null : el('div', { class: 'hint warn-text', text: t('w_new_type') })),
             el('td', { class: 'num', 'data-label': t('w_col_pts') }, inp), el('td', { class: 'num', 'data-label': t('w_col_n') }, String(r.n)),
-            el('td', { class: 'hint', 'data-label': t('w_col_how') }, methodLine(r.x))); }))))];
+            el('td', { 'data-label': t('w_col_method') }, el('select', { class: 'w-sel w-mode', 'aria-label': t('w_col_method'), ...(can ? {} : { disabled: '' }), onchange: (e) => putSimple(r, g, { mode: e.target.value }) },
+              [...POINT_MODES.map((m) => [m, t(`mode_${m}`)]), ...(RRs.methods || []).map((m) => [m.id, m.name])].map(([m, label]) => el('option', { value: m, selected: m === ((r.x && r.x.mode) || 'done') ? '' : null, text: label }))),
+              ['speed'].includes((r.x && r.x.mode) || 'done') || isCustomMode((r.x && r.x.mode) || 'done') ? el('div', { class: 'hint', text: methodLine(r.x) }) : null),   // only where the line adds something the fields do not already say
+            el('td', { class: 'num', 'data-label': t('w_col_std') }, ((r.x && r.x.mode) || 'done') === 'done' ? el('span', { class: 'hint', text: '—' }) : [
+              el('input', { type: 'number', min: '0.25', max: '400', step: '0.25', class: 'std-in', value: String((r.x && r.x.std) || ''), 'aria-label': t('w_col_std'), ...(can ? {} : { disabled: '' }), onchange: (e) => { const v = Number(e.target.value); if (v > 0 && v <= 400) putSimple(r, g, { std: v }); else { e.target.value = String((r.x && r.x.std) || ''); toast(t('w_std_bad')); } } }),
+              el('div', { class: `hint${r.x && r.x.std && r.x.stdSrc !== 'set' ? ' warn-text' : ''}`, text: !(r.x && r.x.std) ? t('w_std_need') : r.x.stdSrc === 'est' ? t('std_est') : r.x.stdSrc === 'oct' ? t('std_oct') : t('std_set') })])); }))))];
   };
   const diff = weightPublishDiff(weightsRepo, weightsDevice);
   const approvedJson = () => JSON.stringify(publishableWeights(weightsRepo, weightsDevice, ymd(new Date())), null, 2) + '\n';
@@ -2815,6 +2838,7 @@ function renderWeights() {
     el('p', { class: 'note', text: myRights }),
     admin ? el('p', { class: diff.count ? 'note' : 'hint',
       text: diff.count ? t('weights_draft_notice', { n: diff.count }) : t('weights_official_notice') }) : null,
+    perBox,
     groups.map(simpleTable),
     el('h2', {}, t('weights_acts_h'), helpQ('help_weights_acts')),
     el('div', { class: 'table-wrap' }, el('table', {},
@@ -2947,7 +2971,7 @@ function renderOvertime() {
   if (!otState.month || !months.includes(otState.month)) otState.month = months.includes(now) ? now : months[0];
   const from = `${otState.month}-01`, to = monthLast(otState.month);
   const sys = new Set(ppl.filter((p) => /\bsystem\b|مستخدم النظام/i.test(`${p.nameEn || ''} ${p.nameAr || ''}`)).map((p) => p.id));   // automated accounts are not people (the System User created 1,024 tasks in October)
-  const team = new Set((otState.scope === 'team' ? currentTeam(scoped(ppl), tasks) : ppl.map((p) => p.id)).filter((id) => !sys.has(id)));
+  const team = new Set((otState.scope === 'team' ? scoped(ppl).map((p) => p.id) : ppl.map((p) => p.id)).filter((id) => !sys.has(id)));   // the whole team file, leads and managers included
   const o = overtimeOf(tasks, { from, to, people: team, evening: otState.evening });
   const hm = (h) => { const m = Math.round(h * 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; };
   const tm = (ms) => new Date(ms + 3 * 3600e3).toISOString().slice(11, 16);
@@ -2965,7 +2989,7 @@ function renderOvertime() {
       el('div', { class: 'pills' }, pill('scope', 'team', t('ot_team')), pill('scope', 'all', t('ot_all'))),
       el('div', { class: 'pills' }, pill('evening', 'span', t('ot_eve_span')), pill('evening', 'from', t('ot_eve_from'))),
       o.rows.length ? el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('ot_csv')}`, onclick: csv }) : null),
-    el('p', { class: 'ot-answer', text: o.rows.length ? t('ot_answer', { n: o.people.length, h: hm(tot.t), s: tot.sd, e: tot.ed, m: otState.month }) : t('ot_none') }),
+    el('p', { class: 'ot-answer', text: o.rows.length ? t('ot_answer', { n: o.people.length, h: hm(tot.t), s: tot.sd, e: tot.ed, m: otState.month, b: o.rows.filter((r) => r.batch).length }) : t('ot_none') }),
     o.rows.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'ot-table' },
       el('thead', {}, el('tr', {}, ['ot_c_name', 'ot_c_sat_d', 'ot_c_sat_h', 'ot_c_eve_d', 'ot_c_eve_h', 'ot_c_total'].map((k) => el('th', { text: t(k) })))),
       el('tbody', {}, o.people.map((p) => el('tr', {}, el('td', { text: nm(p.pid) }), el('td', { text: String(p.satDays) }), el('td', { text: hm(p.satHours) }), el('td', { text: String(p.eveDays) }), el('td', { text: hm(p.eveHours) }), el('td', {}, el('strong', { text: hm(p.total) }))))),
@@ -2974,9 +2998,9 @@ function renderOvertime() {
     ...o.people.map((p) => el('details', { class: 'ot-person' }, el('summary', { text: `${nm(p.pid)} — ${hm(p.total)}` }),
       el('div', { class: 'table-wrap' }, el('table', { class: 'ot-table' },
         el('thead', {}, el('tr', {}, ['ot_c_date', 'ot_c_kind', 'ot_c_first', 'ot_c_last', 'ot_c_tasks', 'ot_c_hours'].map((k) => el('th', { text: t(k) })))),
-        el('tbody', {}, o.rows.filter((r) => r.pid === p.pid).map((r) => el('tr', {}, el('td', { text: `${day(r.date)} ${r.date}` }), el('td', { text: t(r.kind === 'sat' ? 'ot_k_sat' : 'ot_k_eve') }),
+        el('tbody', {}, o.rows.filter((r) => r.pid === p.pid).map((r) => el('tr', {}, el('td', { text: `${day(r.date)} ${r.date}` }), el('td', {}, el('span', { text: t(r.kind === 'sat' ? 'ot_k_sat' : 'ot_k_eve') }), r.batch ? el('div', { class: 'warn-text hint', text: `⚠ ${t('ot_batch')}` }) : null),
           el('td', { text: `${tm(r.start)} — ${r.first.title}` }), el('td', { text: `${tm(r.last.at)} — ${r.last.title}` }), el('td', { text: String(r.tasks) }), el('td', {}, el('strong', { text: hm(r.hours) }))))))))),
-    el('details', { class: 'ot-how' }, el('summary', { text: t('ot_how_h') }), el('ul', {}, ['ot_how1', 'ot_how2', 'ot_how3', 'ot_how4', 'ot_how5'].map((k) => el('li', { text: t(k) })))));
+    el('details', { class: 'ot-how' }, el('summary', { text: t('ot_how_h') }), el('ul', {}, ['ot_how1', 'ot_how2', 'ot_how3', 'ot_how4', 'ot_how6', 'ot_how5'].map((k) => el('li', { text: t(k) })))));
 }
 function renderTeam() {
   applyNameFixes();

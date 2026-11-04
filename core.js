@@ -1955,11 +1955,12 @@ export function overtimeOf(tasks, { from = '0000-00-00', to = '9999-12-31', peop
     const closes = g.items.filter((x) => x.what === 'closed'), first = g.items[0], last = closes.length ? closes[closes.length - 1] : g.items[g.items.length - 1];
     const start = g.kind === 'eve' && evening === 'from' ? Date.parse(`${g.date}T${String(eveStart).padStart(2, '0')}:00:00+03:00`) : first.at;
     const end = Math.max(last.at, start);
-    return { pid: g.pid, date: g.date, kind: g.kind, start, end, hours: Math.round(((end - start) / 3600e3) * 100) / 100, first, last, tasks: new Set(g.items.map((x) => x.id)).size };
+    const batch = closes.length >= 3 && closes[closes.length - 1].at - closes[0].at <= 15 * 60e3;   // three or more closed within 15 minutes: the real work was longer than it shows
+    return { pid: g.pid, date: g.date, kind: g.kind, start, end, hours: Math.round(((end - start) / 3600e3) * 100) / 100, first, last, tasks: new Set(g.items.map((x) => x.id)).size, batch };
   }).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.pid < b.pid ? -1 : 1));
   const byPerson = new Map();
-  for (const r of rows) { if (!byPerson.has(r.pid)) byPerson.set(r.pid, { pid: r.pid, satDays: 0, satHours: 0, eveDays: 0, eveHours: 0, total: 0 });
-    const s = byPerson.get(r.pid); if (r.kind === 'sat') { s.satDays++; s.satHours += r.hours; } else { s.eveDays++; s.eveHours += r.hours; } s.total += r.hours; }
+  for (const r of rows) { if (!byPerson.has(r.pid)) byPerson.set(r.pid, { pid: r.pid, satDays: 0, satHours: 0, eveDays: 0, eveHours: 0, total: 0, batchDays: 0 });
+    const s = byPerson.get(r.pid); if (r.batch) s.batchDays++; if (r.kind === 'sat') { s.satDays++; s.satHours += r.hours; } else { s.eveDays++; s.eveHours += r.hours; } s.total += r.hours; }
   for (const s of byPerson.values()) for (const k of ['satHours', 'eveHours', 'total']) s[k] = Math.round(s[k] * 100) / 100;
   return { rows, people: [...byPerson.values()].sort((a, b) => b.total - a.total) };
 }
