@@ -6,7 +6,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, overtimeOf, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, overtimeOf, tasksPerPerson, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
   mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
@@ -3006,6 +3006,46 @@ function renderOvertime() {
           el('td', { text: `${tm(r.start)} — ${r.first.title}` }), el('td', { text: `${tm(r.last.at)} — ${r.last.title}` }), el('td', { text: String(r.tasks) }), el('td', {}, el('strong', { text: hm(r.hours) }))))))))),
     el('details', { class: 'ot-how' }, el('summary', { text: t('ot_how_h') }), el('ul', {}, ['ot_how1', 'ot_how2', 'ot_how3', 'ot_how4', 'ot_how6', 'ot_how5'].map((k) => el('li', { text: t(k) })))));
 }
+// ---------- tasks per person, by month or quarter: count and average closing time (ADR-0066) ----------
+const cntState = { per: null, scope: 'team' };
+function renderCounts() {
+  const body = $('counts-body'); if (!body || isTeamPortal) return;
+  const tasks = allTasks();
+  if (!tasks.length) { set(body, el('p', { class: 'note', text: t('ot_nodata') })); return; }
+  const ppl = peopleOf(datasets), nm = (id) => nameOf(ppl.find((p) => p.id === id) || {}, lang) || id;
+  const months = [...new Set(tasks.map((x) => x.createdAt).filter(Boolean).map((s) => saudiDay(s).slice(0, 7)))].sort().reverse().slice(0, 12);
+  const quarters = [...new Set(months.map((m) => `${m.slice(0, 4)}-Q${Math.ceil(Number(m.slice(5, 7)) / 3)}`))];
+  const now = saudiDay(new Date().toISOString()).slice(0, 7);
+  if (!cntState.per || (![...months, ...quarters].includes(cntState.per))) cntState.per = months.includes(now) ? now : months[0];
+  const p = cntState.per, isQ = p.includes('Q'), qn = isQ ? Number(p.slice(-1)) : 0;
+  const from = isQ ? `${p.slice(0, 4)}-${String(qn * 3 - 2).padStart(2, '0')}-01` : `${p}-01`, to = isQ ? monthLast(`${p.slice(0, 4)}-${String(qn * 3).padStart(2, '0')}`) : monthLast(p);
+  const sys = new Set(ppl.filter((x) => /\bsystem\b|مستخدم النظام/i.test(`${x.nameEn || ''} ${x.nameAr || ''}`)).map((x) => x.id));
+  const who = new Set((cntState.scope === 'team' ? scoped(ppl).map((x) => x.id) : ppl.map((x) => x.id)).filter((id) => !sys.has(id)));
+  const r = tasksPerPerson(tasks, { from, to, people: who });
+  const hm = (h) => (h == null ? '—' : (() => { const m = Math.round(h * 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; })());
+  const cells = (g) => [el('td', { class: 'num', text: String(g.n) }), el('td', { class: 'num', text: hm(g.avg) })];
+  const pill = (val, label) => el('button', { type: 'button', class: `pill-btn${cntState.scope === val ? ' on' : ''}`, text: label, onclick: () => { cntState.scope = val; renderCounts(); } });
+  const csv = () => {
+    const q = (v) => `"${String(v).replace(/"/g, '""')}"`, head = ['name', 'tasks', 'done', 'open', 'manual', 'manual_avg_h', 'email', 'email_avg_h', 'manual_email', 'manual_email_avg_h'];
+    const lines = [head.join(','), ...r.rows.map((x) => [nm(x.pid), x.total, x.done, x.open, x.manual.n, x.manual.avg ?? '', x.email.n, x.email.avg ?? '', x.both.n, x.both.avg ?? ''].map(q).join(','))];
+    const url = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' })); const a2 = el('a', { href: url, download: `tasks-per-person-${p}.csv` }); document.body.append(a2); a2.click(); a2.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+  set(body,
+    el('div', { class: 'ot-controls' },
+      el('label', {}, el('span', { text: t('cnt_period') }), el('select', { onchange: (e) => { cntState.per = e.target.value; renderCounts(); } },
+        el('optgroup', { label: t('cnt_months') }, months.map((m) => el('option', { value: m, selected: m === p ? '' : null, text: m }))),
+        el('optgroup', { label: t('cnt_quarters') }, quarters.map((q) => el('option', { value: q, selected: q === p ? '' : null, text: q }))))),
+      el('div', { class: 'pills' }, pill('team', t('ot_team')), pill('all', t('ot_all'))),
+      r.rows.length ? el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('ot_csv')}`, onclick: csv }) : null),
+    el('p', { class: 'ot-answer', text: t('cnt_answer', { p, from, to, n: r.rows.length, t: r.team.total, d: r.team.done }) }),
+    r.rows.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'ot-table cnt-table' },
+      el('thead', {}, el('tr', {}, el('th', { rowspan: '2', text: t('ot_c_name') }), el('th', { rowspan: '2', class: 'num', text: t('cnt_c_total') }), el('th', { rowspan: '2', class: 'num', text: t('cnt_c_done') }),
+        el('th', { colspan: '2', text: t('cnt_g_manual') }), el('th', { colspan: '2', text: t('cnt_g_email') }), el('th', { colspan: '2', text: t('cnt_g_both') })),
+        el('tr', {}, ...[0, 1, 2].flatMap(() => [el('th', { class: 'num', text: t('cnt_c_n') }), el('th', { class: 'num', text: t('cnt_c_avg') })]))),
+      el('tbody', {}, r.rows.map((x) => el('tr', {}, el('td', { text: nm(x.pid) }), el('td', { class: 'num' }, el('strong', { text: String(x.total) })), el('td', { class: 'num', text: String(x.done) }), ...cells(x.manual), ...cells(x.email), ...cells(x.both)))),
+      el('tfoot', {}, el('tr', {}, el('td', { text: t('ot_c_sum') }), el('td', { class: 'num' }, el('strong', { text: String(r.team.total) })), el('td', { class: 'num', text: String(r.team.done) }), ...cells(r.team.manual), ...cells(r.team.email), ...cells(r.team.both))))) : el('p', { class: 'note', text: t('cnt_none') }),
+    el('details', { class: 'ot-how' }, el('summary', { text: t('ot_how_h') }), el('ul', {}, ['cnt_how1', 'cnt_how2', 'cnt_how3', 'cnt_how4'].map((k) => el('li', { text: t(k) })))));
+}
 function renderTeam() {
   applyNameFixes();
   applyPending().then((changed) => { if (changed) { renderTeam(); renderKpi(); renderMe(); } });
@@ -3304,7 +3344,7 @@ function renderMailFile() {
 }
 function route() {
   if (location.hash.startsWith('#rank=')) { takeRankLink(true).then(route); return; }   // a rank link can arrive while the portal is already open (only the hash changes)
-  const views = ['home', 'tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'person', 'guide', 'mailfile', 'overtime'];
+  const views = ['home', 'tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'person', 'guide', 'mailfile', 'overtime', 'counts'];
   const requested = location.hash.slice(1);
   let hash = portalRoute(requested, isTeamPortal);
   if (requested !== hash) history.replaceState(null, '', '#' + hash);
@@ -3322,7 +3362,7 @@ function route() {
   for (const id of [...views, 'module']) $(`view-${id}`).hidden = id !== v;
   document.body.classList.toggle('in-module', v === 'module');
   if (mod) openModule(mod);
-  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', dev: 'nav_dev', home: 'cr_title', person: 'pf_title', guide: 'nav_guide' , overtime: 'nav_overtime'}[v]); currentModule = null; }
+  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', dev: 'nav_dev', home: 'cr_title', person: 'pf_title', guide: 'nav_guide' , overtime: 'nav_overtime', counts: 'nav_counts'}[v]); currentModule = null; }
   $('module-open').hidden = v !== 'module';
   // one item in the menu is current — the open module, or the page — and its group is the open one
   let current = null;
@@ -3338,6 +3378,7 @@ function route() {
   if (v === 'kpi') renderKpi();
   if (v === 'mailfile') renderMailFile();
   if (v === 'overtime') renderOvertime();
+  if (v === 'counts') renderCounts();
   if (v === 'pro' && proToken.get() && !proUnits && !proBusy) proLoad();
   if (v === 'team') renderTeam();
   if (v === 'weights') renderWeights();

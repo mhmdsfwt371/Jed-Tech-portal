@@ -63,7 +63,7 @@ export async function loadStrings(langs = ['ar', 'en', 'ur']) {
 }
 
 // The user guide: one list, read by the page (Guide tab) and by scripts/build-manual.mjs, so they can never differ.
-export const GUIDE = [['g_home_h', 'g_home_b'], ['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_team_h', 'g_team_b'], ['g_weights_h', 'g_weights_b'], ['g_mailfile_h', 'g_mailfile_b'], ['g_dev_h', 'g_dev_b'], ['g_overtime_h', 'g_overtime_b'], ['g_person_h', 'g_person_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
+export const GUIDE = [['g_home_h', 'g_home_b'], ['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_team_h', 'g_team_b'], ['g_weights_h', 'g_weights_b'], ['g_mailfile_h', 'g_mailfile_b'], ['g_dev_h', 'g_dev_b'], ['g_overtime_h', 'g_overtime_b'], ['g_counts_h', 'g_counts_b'], ['g_person_h', 'g_person_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
 export const DEFINITIONS = ['def_1', 'def_2', 'def_3', 'def_4', 'def_5', 'def_6', 'def_7', 'def_8', 'def_9', 'def_10'];
 
 export function t(lang, key, vars = {}) {
@@ -1963,4 +1963,34 @@ export function overtimeOf(tasks, { from = '0000-00-00', to = '9999-12-31', peop
     const s = byPerson.get(r.pid); if (r.batch) s.batchDays++; if (r.kind === 'sat') { s.satDays++; s.satHours += r.hours; } else { s.eveDays++; s.eveHours += r.hours; } s.total += r.hours; }
   for (const s of byPerson.values()) for (const k of ['satHours', 'eveHours', 'total']) s[k] = Math.round(s[k] * 100) / 100;
   return { rows, people: [...byPerson.values()].sort((a, b) => b.total - a.total) };
+}
+
+// ===================== tasks per person: how many, and how long to close (ADR-0066) =====================
+// Counted by the assignment date — what MyAFAQY's own export filters with «Assigned on» — in Saudi time, every status included.
+// The average is in calendar hours from assignment to close, over the completed tasks of each group.
+// Manual = «Manual Task» and «Manual Task - After Sales»; Email = «Email Customer Activity» (the type names as MyAFAQY exports them).
+const tppType = (ty) => String(ty || '').split('|')[0].trim().toLowerCase();
+export const isManualType = (ty) => /^manual task\b/.test(tppType(ty));
+export const isEmailType = (ty) => tppType(ty) === 'email customer activity';
+export function tasksPerPerson(tasks, { from = '0000-00-00', to = '9999-12-31', people = null } = {}) {
+  const day = (s) => { const ms = Date.parse(s || ''); return Number.isFinite(ms) ? new Date(ms + 3 * 3600e3).toISOString().slice(0, 10) : null; };
+  const grp = () => ({ n: 0, done: 0, sum: 0 }), by = new Map();
+  for (const t of tasks || []) {
+    const pid = String(t.assigneeId || ''); if (!pid || (people && !people.has(pid))) continue;
+    const d = day(t.createdAt); if (!d || d < from || d > to) continue;
+    if (!by.has(pid)) by.set(pid, { pid, total: 0, done: 0, open: 0, cancelled: 0, manual: grp(), email: grp(), both: grp() });
+    const s = by.get(pid); s.total++;
+    const done = t.state === 'done' && !!t.completedAt; if (done) s.done++; else if (t.state === 'cancelled') s.cancelled++; else s.open++;
+    const h = done ? (Date.parse(t.completedAt) - Date.parse(t.createdAt)) / 3600e3 : null;
+    for (const [k, hit] of [['manual', isManualType(t.type)], ['email', isEmailType(t.type)]]) {
+      if (!hit) continue; s[k].n++; s.both.n++;
+      if (h != null && h >= 0) { s[k].done++; s[k].sum += h; s.both.done++; s.both.sum += h; }
+    }
+  }
+  const avg = (g) => (g.done ? Math.round((g.sum / g.done) * 100) / 100 : null);
+  const rows = [...by.values()].map((s) => ({ ...s, manual: { ...s.manual, avg: avg(s.manual) }, email: { ...s.email, avg: avg(s.email) }, both: { ...s.both, avg: avg(s.both) } })).sort((a, b) => b.total - a.total);
+  const team = { total: 0, done: 0, manual: grp(), email: grp(), both: grp() };
+  for (const r of rows) { team.total += r.total; team.done += r.done; for (const k of ['manual', 'email', 'both']) { team[k].n += r[k].n; team[k].done += r[k].done; team[k].sum += r[k].sum; } }
+  for (const k of ['manual', 'email', 'both']) team[k].avg = avg(team[k]);
+  return { rows, team };
 }

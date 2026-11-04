@@ -987,6 +987,21 @@ test('overtime marks a day closed in one batch (three or more closes within 15 m
   assert.equal(o.rows.find((r) => r.pid === 'L').batch, true); assert.equal(o.rows.find((r) => r.pid === 'M').batch, false);
   assert.equal(o.people.find((x) => x.pid === 'L').batchDays, 1); assert.equal(o.people.find((x) => x.pid === 'M').batchDays, 0);
 });
+test('tasks per person: counted by assignment date in Saudi time, every status; manual, email and both with the average hours to close', () => {
+  const T = (id, a, ty, cr, done, st) => ({ id, assigneeId: a, type: ty, createdAt: cr, completedAt: done, state: st || (done ? 'done' : 'open') });
+  const tasks = [T('1', 'H', 'Manual Task', '2026-10-05T07:00:00Z', '2026-10-05T09:00:00Z'), T('2', 'H', 'Manual Task - After Sales', '2026-10-06T07:00:00Z', '2026-10-06T11:00:00Z'),
+    T('3', 'H', 'Email Customer Activity', '2026-10-07T07:00:00Z', '2026-10-08T07:00:00Z'), T('4', 'H', 'WASL Link | الربط مع وصل', '2026-10-08T07:00:00Z', null),
+    T('5', 'H', 'Manual Task', '2026-09-30T21:30:00Z', '2026-10-01T09:00:00Z'), T('6', 'H', 'Manual Task', '2026-09-30T20:30:00Z', '2026-10-01T09:00:00Z'),
+    T('7', 'H', 'Email Customer Activity', '2026-10-09T07:00:00Z', null, 'cancelled'), T('8', 'Z', 'Manual Task', '2026-10-05T07:00:00Z', '2026-10-05T08:00:00Z')];
+  const r = core.tasksPerPerson(tasks, { from: '2026-10-01', to: '2026-10-31', people: new Set(['H']) });
+  const h = r.rows[0];
+  assert.equal(r.rows.length, 1); assert.equal(h.total, 6, 'task 5 was assigned 1 October 00:30 Saudi (counted); task 6 on 30 September 23:30 Saudi (not)');
+  assert.deepEqual([h.done, h.open, h.cancelled], [4, 1, 1]);
+  assert.deepEqual([h.manual.n, h.manual.done, h.manual.avg], [3, 3, 5.83], 'manual: 2 h, 4 h and 11.5 h → 17.5 ÷ 3 = 5.83 h');
+  assert.deepEqual([h.email.n, h.email.done, h.email.avg], [2, 1, 24], 'email: the cancelled one counts in the number, not in the average');
+  assert.deepEqual([h.both.n, h.both.avg], [5, 10.38], 'both: (17.5 + 24) ÷ 4 completed = 10.375 → 10.38');
+  assert.equal(core.isManualType('Manual Task - After Sales'), true); assert.equal(core.isEmailType('Email Customer Activity'), true); assert.equal(core.isEmailType('Email something else'), false);
+});
 // The runner sits after every test() so that each one runs; a test added below this line would be counted without running.
 let failed = 0;
 for (const [name, fn] of tests) {

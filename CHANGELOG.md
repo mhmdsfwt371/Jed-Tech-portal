@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.84 — 2026-11-04
+
+- صفحة «عدد المهام» تحت «المؤشرات»: الفريق تحت بعضه، لكل واحد عدد المهام التي أُسندت له في الشهر أو الربع وكم أنجز، ثم المهام اليدوية (العدد ومتوسط الإغلاق) ومهام الإيميل (العدد ومتوسط الإغلاق) والاثنتان معًا، مع الإجمالي وتنزيل CSV. العدّ بتاريخ الإسناد مثل تصدير ماي أفاقي، وطابق تصدير ماي أفاقي بالدقيقة.
+
+<details><summary>English</summary>
+
+- The «Tasks per person» page under KPIs: the team one under the other; for each person the tasks assigned in the month or quarter and how many were done, then manual tasks (count and average closing time), email tasks (count and average closing time) and both together, with totals and a CSV download. Counted by assignment date like MyAFAQY’s export, and matched against it to the minute.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «فی کس کام» صفحہ: ہر فرد کے مہینے یا سہ ماہی کے کام، مکمل، دستی اور ای میل کاموں کی تعداد اور بند ہونے کا اوسط، اور دونوں ملا کر؛ CSV کے ساتھ۔
+
+</div>
+</details>
+
+
 ## v8.83 — 2026-11-04
 
 - إصلاح مهم في الأرقام: عندما يتداخل سحبان (سنة ثم شهر، أو سحب الإضافة)، كانت المهام المشتركة تُعدّ مرتين في اللوحة وملف الشخص والترتيب والتطوير والساعات والأوزان. الآن كل مهمة تُعدّ مرة واحدة بحالتها الأحدث.

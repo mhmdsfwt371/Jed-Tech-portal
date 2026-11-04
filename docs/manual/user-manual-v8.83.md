@@ -50,6 +50,10 @@
 
 تقدير لساعات العمل خارج الدوام من أوقات المهام في السحب: السبت من أول مهمة اشتغل عليها الشخص إلى آخر مهمة أغلقها، ومن الأحد إلى الخميس ما بين السابعة مساءً ومنتصف الليل. اختر الشهر، والفريق المحسوب أو كل من في السحب، وطريقة حساب المساء (من أول مهمة، أو من السابعة). الجدول يعطي لكل شخص أيام السبت وساعاتها والأمسيات وساعاتها، والتفاصيل تبيّن لكل يوم أول مهمة وآخر مهمة ووقتهما، وزر CSV ينزّل كل شيء. ماي أفاقي لا يسجّل ساعات العمل، فراجع التفاصيل قبل أي قرار.
 
+### عدد المهام
+
+اختر شهرًا أو ربع سنة، والفريق كله أو كل من في السحب. لكل شخص: عدد المهام التي أُسندت له في الفترة (بتاريخ الإسناد مثل تصدير ماي أفاقي)، وكم منها أُنجز، ثم المهام اليدوية (عددها ومتوسط إغلاقها)، ومهام الإيميل (عددها ومتوسط إغلاقها)، والاثنتان معًا. سطر «الإجمالي» يجمع الفريق، والمتوسط فيه مرجّح بعدد المهام. زر CSV ينزّل الجدول.
+
 ### ملف الموظف — كل ما يخص موظفًا في مكان واحد
 
 صفحة واحدة لكل موظف تجمع ما كان موزعًا على أربع صفحات: رأس فيه وظيفته ومن يتبع ومن في إجازة، وأداؤه هذا الشهر مقابل الماضي (المنجز والنقاط ونسبة الإنجاز ومتوسط المدة)، ومستواه ومحاوره الأربعة، وعبؤه ونصيبه من نقاط الفريق، وخطته للربع الحالي والقادم بتقدمها، واجتماعاته الشهرية لآخر ثلاثة أشهر للقراءة، وشغله المفتوح بعناوينه. في أعلاها: «اعرض صفحته كما يراها»، و«خطته في التطوير»، و«تقرير بي دي إف». تصل إليها من القائمة، أو بالضغط على اسم أي موظف في لوحة المؤشرات وصفحة الفريق — الجداول نفسها تبقى للمقارنة بين الناس. لا تظهر على رابط الفريق.
@@ -137,6 +141,10 @@ Pick the quarter (next by default), then the person from the cards. The baseline
 
 An estimate of hours worked outside the working day, from the task times in the pull: Saturday from the first task the person worked on to the last task he closed, and Sunday to Thursday between 7 PM and midnight. Choose the month, the counted team or everyone in the pull, and how evenings are counted (from the first task, or from 7 PM). The table gives each person his Saturdays and their hours and his evenings and their hours; the details show, for each day, the first and last task and their times; the CSV button downloads everything. MyAFAQY records no working hours, so check the details before any decision.
 
+### Tasks per person
+
+Choose a month or a quarter, and the whole team or everyone in the pull. For each person: the tasks assigned in the period (by assignment date, like MyAFAQY’s export), how many were done, then manual tasks (count and average closing time), email tasks (count and average closing time), and both together. The «All» row adds up the team; its average is weighted by the number of tasks. The CSV button downloads the table.
+
 ### Person file — everything about one person in one place
 
 One page per person gathering what was spread over four pages: a head with their role, who they report to and whether they are on leave; this month against last (done, points, completion rate, average duration); their level and four axes; workload and share of the team’s points; their plan for this and next quarter with progress; the last three months’ meetings, read only; and their open work with titles. At the top: “View their page as they see it”, “Their plan in Development” and “PDF report”. Reach it from the menu or by clicking any person’s name on the KPI board or the team page — those tables stay for comparing people. Not on the team link.
@@ -223,6 +231,10 @@ On this device and in this browser only; nothing is sent anywhere. To move it to
 ### اوور ٹائم گھنٹے
 
 پل میں کاموں کے اوقات سے دفتری اوقات سے باہر کے گھنٹوں کا اندازہ: ہفتہ پہلے کام سے آخری بند کام تک، اور اتوار تا جمعرات شام 7 سے آدھی رات تک۔ مہینہ، ٹیم یا سب، اور شام کا طریقہ چنیں۔ جدول ہر فرد کے ہفتے اور شامیں اور ان کے گھنٹے دکھاتا ہے؛ تفصیل میں ہر دن کا پہلا اور آخری کام؛ CSV سب کچھ ڈاؤن لوڈ کرتا ہے۔ مائی آفاقی گھنٹے درج نہیں کرتا، فیصلے سے پہلے تفصیل دیکھیں۔
+
+### فی کس کام
+
+مہینہ یا سہ ماہی چنیں، اور پوری ٹیم یا پل میں موجود سب لوگ۔ ہر فرد کے لیے: اس مدت میں اسے تفویض ہونے والے کام (تفویض کی تاریخ سے، مائی آفاقی کے ایکسپورٹ کی طرح)، ان میں سے کتنے مکمل ہوئے، پھر دستی کام (تعداد اور بند ہونے کا اوسط وقت)، ای میل کام (تعداد اور بند ہونے کا اوسط وقت)، اور دونوں ملا کر۔ «کل میزان» کی قطار پوری ٹیم کو جمع کرتی ہے اور اس کا اوسط کاموں کی تعداد کے حساب سے وزنی ہے۔ CSV کا بٹن جدول ڈاؤن لوڈ کرتا ہے۔
 
 ### فرد کی فائل — ایک فرد کے بارے میں سب کچھ ایک جگہ
 

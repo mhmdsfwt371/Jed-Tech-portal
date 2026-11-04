@@ -80,6 +80,7 @@
 | `docs/decisions/0063-overtime-and-fresh-updates.md` | Overtime from task times; updates fetch fresh files; every unit test runs |
 | `docs/decisions/0064-flexible-weights-and-honest-overtime.md` | Weights as fields with a counting period; overtime for the whole team, marked as a minimum |
 | `docs/decisions/0065-every-task-counts-once.md` | Every task counts once across overlapping pulls |
+| `docs/decisions/0066-tasks-per-person.md` | Tasks per person by month or quarter, with manual and email closing averages |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |
