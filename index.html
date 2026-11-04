@@ -613,6 +613,15 @@
   .ro-val { font-size: 14px; } 
   .answer-line { font-size: 17px; font-weight: 700; color: var(--title); margin: 4px 0 14px; line-height: 1.6; }
   .strip small { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.4; } .kpi-more { margin-inline-start: auto; }
+  .ext-steps { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 8px; }
+  .ext-steps li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); opacity: .6; }
+  .ext-steps li.current { opacity: 1; border-color: var(--accent); background: var(--card); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent); }
+  .ext-steps li.done { opacity: 1; } .ext-steps li.done .ext-dot { background: var(--accent); color: #fff; }
+  .ext-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--accent); display: grid; place-items: center; font-weight: 700; }
+  .ext-steps p { margin: 2px 0 6px; } .ext-how ul { margin: 6px 0; padding-inline-start: 20px; display: grid; gap: 4px; font-size: 14px; }
+  .ot-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 12px; } .ot-controls label { display: grid; gap: 4px; }
+  .ot-answer { font-weight: 700; font-size: 17px; margin: 8px 0 12px; } .ot-table td, .ot-table th { white-space: nowrap; } .ot-h { font-size: 16px; margin: 18px 0 8px; }
+  .ot-person { margin: 6px 0; } .ot-person summary { font-weight: 600; cursor: pointer; } .ot-how { margin-top: 16px; } .ot-how ul { padding-inline-start: 20px; display: grid; gap: 4px; }
   .ext-box { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; } .ext-line { font-weight: 600; margin: 4px 0 8px; } .ext-line.on { color: var(--accent); } .ext-how ol { margin: 8px 0; padding-inline-start: 20px; display: grid; gap: 4px; font-size: 14px; }
   .org-box { border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); padding: 14px 18px 12px; margin-bottom: 18px; border-inline-start: 5px solid var(--accent); }
   .org-box h2 { margin: 0 0 8px; font-size: 16px; } .org-box .row { margin: 8px 0; gap: 10px; align-items: center; } .org-box select { max-width: 340px; }
@@ -845,6 +854,7 @@
       <div class="nav-group-panel" id="nav-kpi">
         <a href="#kpi" class="sub" data-view="kpi" data-t="kpi_board">لوحة المؤشرات</a>
         <a href="#dev" class="sub" data-view="dev" data-t="nav_dev">التطوير</a>
+        <a href="#overtime" class="sub" data-view="overtime" data-t="nav_overtime">ساعات العمل الإضافي</a>
         <a href="#team" class="sub" data-view="team" data-t="nav_team">الفريق</a>
         <a href="#person" class="sub" data-view="person" data-t="pf_title">ملف الموظف</a>
       </div>
@@ -1013,6 +1023,10 @@
     </details>
   </section>
 
+  <section id="view-overtime" hidden>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_overtime">ساعات العمل الإضافي</h1><button type="button" class="help-q" data-help="g_overtime_b" data-help-title="nav_overtime" aria-label="?">?</button></div><p class="lead" data-t="ot_lead"></p></div>
+    <div id="overtime-body"></div>
+  </section>
   <section id="view-mailfile" hidden>
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_mailfile">البريد من ملف PST</h1><button type="button" class="help-q" data-help="g_mailfile_b" data-help-title="nav_mailfile" aria-label="?">?</button></div><p class="lead" data-t="mf_lead"></p></div>
     <div id="mailfile-body"></div>

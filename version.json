@@ -1,18 +1,21 @@
 {
-  "version": "8.80",
+  "version": "8.81",
   "date": "2026-11-04",
   "notes": {
     "ar": [
-      "إضافة المزامنة لكروم: تُسحب البيانات وحدها عندما تفتح ماي أفاقي (مرة كل 12 ساعة على الأكثر)، أو بضغطة «حدّث الآن» في صفحة «البيانات» فتُفتح ماي أفاقي وتُغلق وحدها. البيانات تبقى في متصفحك.",
-      "الإضافة تشغّل نفس كود زر السحب حرفيًا، وتقرأ فقط ولا تكتب شيئًا في ماي أفاقي. خطوات التثبيت ورابط التنزيل في صفحة «البيانات»."
+      "صفحة «ساعات العمل الإضافي» تحت «المؤشرات»: السبت من أول مهمة إلى آخر مهمة أُغلقت، ومن الأحد إلى الخميس بين السابعة مساءً ومنتصف الليل، لكل شخص وبالتفاصيل يومًا بيوم، مع تنزيل CSV. تقدير من أوقات المهام لأن ماي أفاقي لا يسجّل الساعات.",
+      "إعداد إضافة المزامنة صار دليلًا تفاعليًا في صفحة «البيانات»: كل خطوة تتحول إلى علامة صح عند إتمامها، وزر الخطوة الحالية أمامك.",
+      "إصلاح: بعد التحديث كانت بعض النصوص تظهر كأسماء مفاتيح (مثل ext_off) لأن ملف اللغة القديم بقي محفوظًا؛ التحديث يجلب الملفات الجديدة دائمًا الآن."
     ],
     "en": [
-      "The sync extension for Chrome: the data is pulled by itself when you open MyAFAQY (at most once every 12 hours), or with one click on «Update now» on the Data page, which opens MyAFAQY and closes it again. The data stays in your browser.",
-      "The extension runs exactly the same code as the pull button, reads only and writes nothing in MyAFAQY. The install steps and the download are on the Data page."
+      "The «Overtime hours» page under KPIs: Saturday from the first task to the last task closed, and Sunday to Thursday between 7 PM and midnight, per person with day-by-day details and a CSV download. An estimate from task times, since MyAFAQY records no hours.",
+      "Setting up the sync extension is now an interactive guide on the Data page: each step turns green when done, with the current step’s button in front of you.",
+      "Fix: after an update some texts showed as key names (such as ext_off) because the old language file stayed cached; updates now always fetch the new files."
     ],
     "ur": [
-      "کروم کے لیے سنک ایکسٹینشن: مائی آفاقی کھولتے ہی ڈیٹا خود کھنچ جاتا ہے، یا ڈیٹا کے صفحے پر «ابھی تازہ کریں» سے ایک کلک میں۔",
-      "ایکسٹینشن وہی کوڈ چلاتی ہے جو پل بٹن، صرف پڑھتی ہے۔"
+      "«اوور ٹائم گھنٹے» صفحہ: ہفتہ اور اتوار تا جمعرات شام 7 سے آدھی رات، فی فرد اور دن بہ دن، CSV کے ساتھ۔",
+      "سنک ایکسٹینشن کا سیٹ اپ اب انٹرایکٹو گائیڈ ہے۔",
+      "درستی: اپ ڈیٹ کے بعد بعض متن چابی کے ناموں کی صورت دکھتے تھے؛ اب اپ ڈیٹ ہمیشہ نئی فائلیں لاتا ہے۔"
     ]
   }
 }

@@ -805,11 +805,6 @@ test('two presentation links: admin is unchanged and team routes only to non-man
   for (const v of ['', 'data', 'kpi', 'team', 'weights', 'tools']) assert.equal(portalRoute(v, false), v);
 });
 
-let failed = 0;
-for (const [name, fn] of tests) {
-  try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
-}
-if (failed) { console.error(`core.test.mjs: ${failed} failed`); process.exit(1); }
 
 // ---- quarter development plans ----
 test('quarterRange gives the first and last day and the months; quarterOf shifts across the year', () => {
@@ -957,4 +952,37 @@ test('the pull is one recipe plus one body: the bookmark and the extension run t
   assert.ok(bm.includes(core.MANAGER_PULL_BODY.replace(/\n/g, '')), 'the bookmark carries exactly the same body');
   assert.throws(() => core.managerPullRecipe('2026-11-30', '2026-09-01'));
 });
-console.log(`core.test.mjs: ${tests.length} passed`);
+test('overtime from task times: Saturday first-to-last, Sunday–Thursday 19:00–24:00 only, Friday and daytime ignored, Saudi time', () => {
+  const T = (id, a, cr, done, by = null) => ({ id, title: `t${id}`, assigneeId: a, createdById: by, createdAt: cr, completedAt: done, state: done ? 'done' : 'open' });
+  const tasks = [
+    T('1', 'B', '2026-10-03T06:00:00Z', null, 'A'),                       // Sat 09:00 Saudi: A creates a task
+    T('2', 'A', '2026-10-02T08:00:00Z', '2026-10-03T11:30:00Z'),          // created Friday, closed Sat 14:30 by A
+    T('3', 'A', '2026-10-04T12:00:00Z', '2026-10-04T17:30:00Z'),          // Sun: created 15:00, closed 20:30
+    T('4', 'A', '2026-10-04T18:00:00Z', '2026-10-04T19:15:00Z'),          // Sun: created 21:00, closed 22:15
+    T('5', 'B', '2026-10-08T10:00:00Z', '2026-10-08T20:59:00Z'),          // Thu 23:59: still the evening window
+    T('6', 'B', '2026-10-09T10:00:00Z', '2026-10-09T15:00:00Z'),          // Friday: not counted
+    T('7', 'B', '2026-10-05T10:00:00Z', '2026-10-05T15:59:00Z'),          // Mon 18:59: daytime
+    T('8', 'B', '2026-10-05T10:00:00Z', '2026-10-05T21:30:00Z'),          // Tue 00:30: after midnight, not counted
+  ];
+  const o = core.overtimeOf(tasks, { from: '2026-10-01', to: '2026-10-31' });
+  const row = (pid, date) => o.rows.find((r) => r.pid === pid && r.date === date);
+  assert.equal(row('A', '2026-10-03').hours, 5.5, 'Saturday: from the first task (09:00) to the last close (14:30)');
+  assert.equal(row('A', '2026-10-03').kind, 'sat');
+  assert.equal(row('A', '2026-10-04').hours, 1.75, 'evening: first event in the window (20:30) to the last close (22:15)');
+  assert.equal(row('B', '2026-10-08').hours, 0, 'one close with no known start measures zero');
+  assert.equal(o.rows.filter((r) => r.pid === 'B').length, 1, 'B has the Thursday evening only: task 1 on Saturday is A’s creation, not B’s work');
+  assert.ok(!o.rows.some((r) => ['2026-10-09', '2026-10-05', '2026-10-06'].includes(r.date)), 'Friday, daytime and after-midnight are out');
+  const f = core.overtimeOf(tasks, { from: '2026-10-01', to: '2026-10-31', evening: 'from' });
+  assert.equal(f.rows.find((r) => r.pid === 'A' && r.date === '2026-10-04').hours, 3.25, 'from 19:00 to the last close');
+  assert.equal(f.rows.find((r) => r.pid === 'A' && r.date === '2026-10-03').hours, 5.5, 'the evening choice never changes Saturday');
+  const a = o.people.find((p) => p.pid === 'A'); assert.deepEqual([a.satDays, a.satHours, a.eveDays, a.eveHours, a.total], [1, 5.5, 1, 1.75, 7.25]);
+  assert.equal(core.overtimeOf(tasks, { from: '2026-10-01', to: '2026-10-31', people: new Set(['B']) }).rows.every((r) => r.pid === 'B'), true);
+  assert.equal(core.overtimeOf(tasks, { from: '2026-10-04', to: '2026-10-31' }).rows.some((r) => r.date === '2026-10-03'), false);
+});
+// The runner sits after every test() so that each one runs; a test added below this line would be counted without running.
+let failed = 0;
+for (const [name, fn] of tests) {
+  try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
+}
+if (failed) { console.error(`core.test.mjs: ${failed} failed`); process.exit(1); }
+console.log(`core.test.mjs: ${tests.length - failed} passed`);

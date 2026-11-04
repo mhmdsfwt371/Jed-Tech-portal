@@ -6,7 +6,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, overtimeOf, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
   mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
@@ -2916,13 +2916,67 @@ window.addEventListener('message', async (e) => {
 });
 function renderExtBox() {
   const box = $('ext-box'); if (!box || isTeamPortal) return;
-  if (!extOn()) { set(box, el('p', { class: 'ext-line', text: t('ext_off') }), el('details', { class: 'ext-how' }, el('summary', { text: t('ext_how_h') }),
-    el('ol', {}, ['ext_s1', 'ext_s2', 'ext_s3', 'ext_s4', 'ext_s5'].map((k) => el('li', { text: t(k) }))),
-    el('a', { class: 'btn tiny', href: './assets/afaqy-sync-extension.zip', download: 'afaqy-sync-extension.zip', text: `⬇ ${t('ext_dl')}` }))); return; }
-  const s = extState || {}, when = s.lastAt ? new Date(s.lastAt + 3 * 3600e3).toISOString().replace('T', ' ').slice(0, 16) : null;
+  const on = extOn(), st = extState || {}, got = !!st.lastAt;
+  const steps = [
+    ['ext_step1', on, () => el('a', { class: 'btn tiny', href: './assets/afaqy-sync-extension.zip', download: 'afaqy-sync-extension.zip', text: `⬇ ${t('ext_dl')}` })],
+    ['ext_step2', on, () => el('button', { type: 'button', class: 'btn tiny', text: t('ext_copy'), onclick: async () => { try { await navigator.clipboard.writeText('chrome://extensions'); toast(t('ext_copied')); } catch { toast('chrome://extensions'); } } })],
+    ['ext_step3', on, () => el('button', { type: 'button', class: 'btn tiny', text: `↻ ${t('ext_reload')}`, onclick: () => location.reload() })],
+    ['ext_step4', got, () => el('button', { type: 'button', class: 'btn tiny primary', text: t('ext_open'), onclick: () => window.open('https://myafaqy.com/#/home', '_blank') })],
+    ['ext_step5', got, null]];
+  const cur = steps.findIndex((s) => !s[1]);
+  const list = el('ol', { class: 'ext-steps' }, steps.map(([k, done, act], i) => el('li', { class: done ? 'done' : i === cur ? 'current' : 'todo' },
+    el('span', { class: 'ext-dot', text: done ? '✓' : String(i + 1) }),
+    el('div', {}, el('strong', { text: t(`${k}_t`) }), el('p', { class: 'hint', text: t(`${k}_d`) }), !done && i === cur && act ? act() : null))));
+  const how = el('details', { class: 'ext-how' }, el('summary', { text: t('ext_works_h') }), el('ul', {}, ['ext_works1', 'ext_works2', 'ext_works3'].map((k) => el('li', { text: t(k) }))));
+  if (!on || !got) { set(box, el('p', { class: 'ext-line', text: on ? t('ext_almost') : t('ext_off') }), list, how); return; }
+  const s = st, when = s.lastAt ? new Date(s.lastAt + 3 * 3600e3).toISOString().replace('T', ' ').slice(0, 16) : null;
   const msg = s.status === 'pulling' ? t('ext_pulling') : s.status === 'failed' ? t('ext_failed', { e: s.error || '' }) : s.status === 'needs-portal' ? t('ext_month') : when ? t('ext_last', { d: when }) : t('ext_never');
   set(box, el('p', { class: 'ext-line on', text: `${t('ext_on')} ${msg}` }),
-    el('button', { type: 'button', class: 'btn primary ext-now', text: `↻ ${t('ext_now')}`, onclick: () => { extSend(true); window.open('https://myafaqy.com/#/home', '_blank'); toast(t('ext_now_toast')); } }));
+    el('button', { type: 'button', class: 'btn primary ext-now', text: `↻ ${t('ext_now')}`, onclick: () => { extSend(true); window.open('https://myafaqy.com/#/home', '_blank'); toast(t('ext_now_toast')); } }),
+    el('details', { class: 'ext-how' }, el('summary', { text: t('ext_setup_done') }), list), how);
+}
+// ---------- overtime estimated from task times (ADR-0063) ----------
+const otState = { month: null, evening: 'span', scope: 'team' };
+function renderOvertime() {
+  const body = $('overtime-body'); if (!body || isTeamPortal) return;
+  const tasks = allTasks();
+  if (!tasks.length) { set(body, el('p', { class: 'note', text: t('ot_nodata') })); return; }
+  const ppl = peopleOf(datasets), nm = (id) => nameOf(ppl.find((p) => p.id === id) || {}, lang) || id;
+  const months = [...new Set(tasks.flatMap((x) => [x.completedAt, x.createdAt]).filter(Boolean).map((s) => saudiDay(s).slice(0, 7)))].sort().reverse().slice(0, 12);
+  const now = saudiDay(new Date().toISOString()).slice(0, 7);
+  if (!otState.month || !months.includes(otState.month)) otState.month = months.includes(now) ? now : months[0];
+  const from = `${otState.month}-01`, to = monthLast(otState.month);
+  const sys = new Set(ppl.filter((p) => /\bsystem\b|مستخدم النظام/i.test(`${p.nameEn || ''} ${p.nameAr || ''}`)).map((p) => p.id));   // automated accounts are not people (the System User created 1,024 tasks in October)
+  const team = new Set((otState.scope === 'team' ? currentTeam(scoped(ppl), tasks) : ppl.map((p) => p.id)).filter((id) => !sys.has(id)));
+  const o = overtimeOf(tasks, { from, to, people: team, evening: otState.evening });
+  const hm = (h) => { const m = Math.round(h * 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; };
+  const tm = (ms) => new Date(ms + 3 * 3600e3).toISOString().slice(11, 16);
+  const day = (d) => new Intl.DateTimeFormat(lang, { weekday: 'long', timeZone: 'UTC' }).format(new Date(`${d}T12:00:00Z`));
+  const pill = (key, val, label) => el('button', { type: 'button', class: `pill-btn${otState[key] === val ? ' on' : ''}`, text: label, onclick: () => { otState[key] = val; renderOvertime(); } });
+  const csv = () => {
+    const q = (v) => `"${String(v).replace(/"/g, '""')}"`, lines = [['name', 'date', 'day', 'kind', 'first_time', 'first_task', 'last_time', 'last_task', 'tasks', 'hours'].join(',')];
+    for (const r of o.rows) lines.push([nm(r.pid), r.date, day(r.date), r.kind === 'sat' ? 'saturday' : 'evening', tm(r.start), `${r.first.id} ${r.first.title}`, tm(r.last.at), `${r.last.id} ${r.last.title}`, r.tasks, r.hours].map(q).join(','));
+    const url = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' })); const a2 = el('a', { href: url, download: `overtime-${otState.month}.csv` }); document.body.append(a2); a2.click(); a2.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+  const tot = o.people.reduce((s, p) => ({ sd: s.sd + p.satDays, sh: s.sh + p.satHours, ed: s.ed + p.eveDays, eh: s.eh + p.eveHours, t: s.t + p.total }), { sd: 0, sh: 0, ed: 0, eh: 0, t: 0 });
+  set(body,
+    el('div', { class: 'ot-controls' },
+      el('label', {}, el('span', { text: t('ot_month') }), el('select', { onchange: (e) => { otState.month = e.target.value; renderOvertime(); } }, months.map((m) => el('option', { value: m, selected: m === otState.month ? '' : null, text: m })))),
+      el('div', { class: 'pills' }, pill('scope', 'team', t('ot_team')), pill('scope', 'all', t('ot_all'))),
+      el('div', { class: 'pills' }, pill('evening', 'span', t('ot_eve_span')), pill('evening', 'from', t('ot_eve_from'))),
+      o.rows.length ? el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('ot_csv')}`, onclick: csv }) : null),
+    el('p', { class: 'ot-answer', text: o.rows.length ? t('ot_answer', { n: o.people.length, h: hm(tot.t), s: tot.sd, e: tot.ed, m: otState.month }) : t('ot_none') }),
+    o.rows.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'ot-table' },
+      el('thead', {}, el('tr', {}, ['ot_c_name', 'ot_c_sat_d', 'ot_c_sat_h', 'ot_c_eve_d', 'ot_c_eve_h', 'ot_c_total'].map((k) => el('th', { text: t(k) })))),
+      el('tbody', {}, o.people.map((p) => el('tr', {}, el('td', { text: nm(p.pid) }), el('td', { text: String(p.satDays) }), el('td', { text: hm(p.satHours) }), el('td', { text: String(p.eveDays) }), el('td', { text: hm(p.eveHours) }), el('td', {}, el('strong', { text: hm(p.total) }))))),
+      el('tfoot', {}, el('tr', {}, el('td', { text: t('ot_c_sum') }), el('td', { text: String(tot.sd) }), el('td', { text: hm(tot.sh) }), el('td', { text: String(tot.ed) }), el('td', { text: hm(tot.eh) }), el('td', {}, el('strong', { text: hm(tot.t) }))))) ) : null,
+    o.rows.length ? el('h2', { class: 'ot-h', text: t('ot_detail_h') }) : null,
+    ...o.people.map((p) => el('details', { class: 'ot-person' }, el('summary', { text: `${nm(p.pid)} — ${hm(p.total)}` }),
+      el('div', { class: 'table-wrap' }, el('table', { class: 'ot-table' },
+        el('thead', {}, el('tr', {}, ['ot_c_date', 'ot_c_kind', 'ot_c_first', 'ot_c_last', 'ot_c_tasks', 'ot_c_hours'].map((k) => el('th', { text: t(k) })))),
+        el('tbody', {}, o.rows.filter((r) => r.pid === p.pid).map((r) => el('tr', {}, el('td', { text: `${day(r.date)} ${r.date}` }), el('td', { text: t(r.kind === 'sat' ? 'ot_k_sat' : 'ot_k_eve') }),
+          el('td', { text: `${tm(r.start)} — ${r.first.title}` }), el('td', { text: `${tm(r.last.at)} — ${r.last.title}` }), el('td', { text: String(r.tasks) }), el('td', {}, el('strong', { text: hm(r.hours) }))))))))),
+    el('details', { class: 'ot-how' }, el('summary', { text: t('ot_how_h') }), el('ul', {}, ['ot_how1', 'ot_how2', 'ot_how3', 'ot_how4', 'ot_how5'].map((k) => el('li', { text: t(k) })))));
 }
 function renderTeam() {
   applyNameFixes();
@@ -3222,7 +3276,7 @@ function renderMailFile() {
 }
 function route() {
   if (location.hash.startsWith('#rank=')) { takeRankLink(true).then(route); return; }   // a rank link can arrive while the portal is already open (only the hash changes)
-  const views = ['home', 'tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'person', 'guide', 'mailfile'];
+  const views = ['home', 'tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'person', 'guide', 'mailfile', 'overtime'];
   const requested = location.hash.slice(1);
   let hash = portalRoute(requested, isTeamPortal);
   if (requested !== hash) history.replaceState(null, '', '#' + hash);
@@ -3240,7 +3294,7 @@ function route() {
   for (const id of [...views, 'module']) $(`view-${id}`).hidden = id !== v;
   document.body.classList.toggle('in-module', v === 'module');
   if (mod) openModule(mod);
-  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', dev: 'nav_dev', home: 'cr_title', person: 'pf_title', guide: 'nav_guide' }[v]); currentModule = null; }
+  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', dev: 'nav_dev', home: 'cr_title', person: 'pf_title', guide: 'nav_guide' , overtime: 'nav_overtime'}[v]); currentModule = null; }
   $('module-open').hidden = v !== 'module';
   // one item in the menu is current — the open module, or the page — and its group is the open one
   let current = null;
@@ -3255,6 +3309,7 @@ function route() {
   setMenu(false);
   if (v === 'kpi') renderKpi();
   if (v === 'mailfile') renderMailFile();
+  if (v === 'overtime') renderOvertime();
   if (v === 'pro' && proToken.get() && !proUnits && !proBusy) proLoad();
   if (v === 'team') renderTeam();
   if (v === 'weights') renderWeights();

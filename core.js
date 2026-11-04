@@ -63,7 +63,7 @@ export async function loadStrings(langs = ['ar', 'en', 'ur']) {
 }
 
 // The user guide: one list, read by the page (Guide tab) and by scripts/build-manual.mjs, so they can never differ.
-export const GUIDE = [['g_home_h', 'g_home_b'], ['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_team_h', 'g_team_b'], ['g_weights_h', 'g_weights_b'], ['g_mailfile_h', 'g_mailfile_b'], ['g_dev_h', 'g_dev_b'], ['g_person_h', 'g_person_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
+export const GUIDE = [['g_home_h', 'g_home_b'], ['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_team_h', 'g_team_b'], ['g_weights_h', 'g_weights_b'], ['g_mailfile_h', 'g_mailfile_b'], ['g_dev_h', 'g_dev_b'], ['g_overtime_h', 'g_overtime_b'], ['g_person_h', 'g_person_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
 export const DEFINITIONS = ['def_1', 'def_2', 'def_3', 'def_4', 'def_5', 'def_6', 'def_7', 'def_8', 'def_9', 'def_10'];
 
 export function t(lang, key, vars = {}) {
@@ -1922,4 +1922,44 @@ export function extensionPullScript() {
   window.postMessage({ type: 'afaqy-ext-pull-ready' }, location.origin);
 })();
 `;
+}
+
+// ===================== overtime estimated from task times (ADR-0063) =====================
+// MyAFAQY records no working hours, so this is an estimate from what it does record: when a task was created, by whom, and when it was
+// closed. Times are Saudi (UTC+3, no daylight saving). Saturday: from the first task the person worked on to the last task he closed.
+// Sunday–Thursday: only what happens between 19:00 and midnight. Friday is not counted.
+const OT_SA = 3 * 3600e3;
+const otDate = (ms) => new Date(ms + OT_SA).toISOString().slice(0, 10);
+const otMin = (ms) => { const d = new Date(ms + OT_SA); return d.getUTCHours() * 60 + d.getUTCMinutes(); };
+const otDow = (ms) => new Date(ms + OT_SA).getUTCDay();
+export function overtimeOf(tasks, { from = '0000-00-00', to = '9999-12-31', people = null, evening = 'span', eveStart = 19 } = {}) {
+  const groups = new Map();
+  const add = (pid, ms, what, t) => {
+    if (!pid || !Number.isFinite(ms) || (people && !people.has(String(pid)))) return;
+    const date = otDate(ms); if (date < from || date > to) return;
+    const dow = otDow(ms), kind = dow === 6 ? 'sat' : dow <= 4 && otMin(ms) >= eveStart * 60 ? 'eve' : null;
+    if (!kind) return;
+    const k = `${pid}|${date}`; if (!groups.has(k)) groups.set(k, { pid: String(pid), date, kind, items: [] });
+    groups.get(k).items.push({ at: ms, what, id: String(t.id), title: String(t.title || '') });
+  };
+  for (const t of tasks || []) {
+    const c = Date.parse(t.createdAt || ''), d = Date.parse(t.completedAt || '');
+    if (t.state === 'done' && Number.isFinite(d)) {
+      add(t.assigneeId, d, 'closed', t);
+      if (Number.isFinite(c) && c <= d && otDate(c) === otDate(d)) add(t.assigneeId, c, 'started', t);   // created the same day he closed it: work on it began then
+    }
+    if (t.createdById && Number.isFinite(c)) add(t.createdById, c, 'created', t);
+  }
+  const rows = [...groups.values()].map((g) => {
+    g.items.sort((a, b) => a.at - b.at);
+    const closes = g.items.filter((x) => x.what === 'closed'), first = g.items[0], last = closes.length ? closes[closes.length - 1] : g.items[g.items.length - 1];
+    const start = g.kind === 'eve' && evening === 'from' ? Date.parse(`${g.date}T${String(eveStart).padStart(2, '0')}:00:00+03:00`) : first.at;
+    const end = Math.max(last.at, start);
+    return { pid: g.pid, date: g.date, kind: g.kind, start, end, hours: Math.round(((end - start) / 3600e3) * 100) / 100, first, last, tasks: new Set(g.items.map((x) => x.id)).size };
+  }).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.pid < b.pid ? -1 : 1));
+  const byPerson = new Map();
+  for (const r of rows) { if (!byPerson.has(r.pid)) byPerson.set(r.pid, { pid: r.pid, satDays: 0, satHours: 0, eveDays: 0, eveHours: 0, total: 0 });
+    const s = byPerson.get(r.pid); if (r.kind === 'sat') { s.satDays++; s.satHours += r.hours; } else { s.eveDays++; s.eveHours += r.hours; } s.total += r.hours; }
+  for (const s of byPerson.values()) for (const k of ['satHours', 'eveHours', 'total']) s[k] = Math.round(s[k] * 100) / 100;
+  return { rows, people: [...byPerson.values()].sort((a, b) => b.total - a.total) };
 }
