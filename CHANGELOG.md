@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.85 — 2026-11-04
+
+- لوحة «المهام: المصدر ووقت الإنجاز» تحت «المؤشرات»: لكل شخص وللفريق ما عمله لنفسه، وما جاء من الإيميل، وما أسنده له غيره، والكل — العدد ومتوسط وقت الإغلاق والوسيط — برسم تفاعلي (العدد أو الوقت، الترتيب، الضغط على شخص) وجدول وتنزيل CSV. طابقت تصدير ماي أفاقي بالدقيقة.
+- تعريف واحد لمصدر المهمة في كل البوابة ومحرك واحد: أرقام اللوحة واللوحة الجديدة ومؤشراتي متطابقة. ساعات العمل الإضافي تفصل مهامها حسب المصدر، ومؤشراتي فيها مصادر مهامك ووقت إنجازها.
+
+<details><summary>English</summary>
+
+- The «Tasks: source and time to close» dashboard under KPIs: for each person and the team, tasks opened by themselves, from e-mail, assigned by others, and all — count, average time to close and median — with an interactive chart (count or time, sort, click a person), a table and a CSV. Matched MyAFAQY’s export to the minute.
+- One definition of a task’s source across the portal and one engine: the board, the new dashboard and My KPIs agree. Overtime splits its tasks by source, and My KPIs shows where your tasks came from and how long they took.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «کام: ماخذ اور بند ہونے کا وقت» ڈیش بورڈ: ہر فرد اور ٹیم کے خود کھولے، ای میل سے، دوسروں کے دیے، اور سب — تعداد، اوسط اور وسطانیہ؛ انٹرایکٹو چارٹ، جدول اور CSV۔
+- پورے پورٹل میں ماخذ کی ایک تعریف اور ایک انجن؛ اوور ٹائم اور میرے اشاریے میں بھی ماخذ۔
+
+</div>
+</details>
+
+
 ## v8.84 — 2026-11-04
 
 - صفحة «عدد المهام» تحت «المؤشرات»: الفريق تحت بعضه، لكل واحد عدد المهام التي أُسندت له في الشهر أو الربع وكم أنجز، ثم المهام اليدوية (العدد ومتوسط الإغلاق) ومهام الإيميل (العدد ومتوسط الإغلاق) والاثنتان معًا، مع الإجمالي وتنزيل CSV. العدّ بتاريخ الإسناد مثل تصدير ماي أفاقي، وطابق تصدير ماي أفاقي بالدقيقة.

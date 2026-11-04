@@ -615,6 +615,21 @@
   .strip small { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.4; } .kpi-more { margin-inline-start: auto; }
   .w-per { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px; margin: 10px 0 16px; display: grid; gap: 8px; } .w-per-src { margin: 0; } .w-speedx { display: flex; gap: 8px; align-items: center; } .w-speedx input { width: 80px; }
   .w-simple .w-mode { min-width: 150px; } .w-simple .std-in { width: 90px; }
+  .cnt-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 6px 0 14px; }
+  .cnt-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); padding: 12px 14px; border-top: 4px solid var(--ink-soft); }
+  .cnt-card.cnt-self { border-top-color: var(--accent); } .cnt-card.cnt-email { border-top-color: var(--note); } .cnt-card.cnt-other { border-top-color: var(--slate-light); }
+  .cnt-card-h { display: flex; gap: 6px; align-items: center; font-weight: 600; font-size: 14px; } .cnt-big { font-size: 30px; font-weight: 800; line-height: 1.15; margin-top: 6px; } .cnt-unit { font-size: 12px; color: var(--ink-soft); } .cnt-sub { margin-top: 6px; font-size: 13px; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--ink-soft); } .dot-self { background: var(--accent); } .dot-email { background: var(--note); } .dot-other { background: var(--slate-light); }
+  .cnt-chart-box { border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); padding: 12px 14px; margin-bottom: 14px; }
+  .cnt-chart-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 8px; } .cnt-legend { display: flex; gap: 14px; font-size: 13px; } .cnt-legend span { display: inline-flex; gap: 6px; align-items: center; } .cnt-sort { display: flex; gap: 6px; align-items: center; }
+  .cnt-chart { display: grid; gap: 6px; } .cnt-row { display: grid; grid-template-columns: minmax(120px, 190px) 1fr 64px; gap: 10px; align-items: center; width: 100%; background: none; border: 1px solid transparent; border-radius: var(--radius-sm); padding: 4px 6px; cursor: pointer; color: inherit; font: inherit; text-align: start; }
+  .cnt-row:hover { border-color: var(--line); } .cnt-row.on { border-color: var(--accent); background: var(--accent-wash); } .cnt-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .cnt-total { text-align: end; }
+  .cnt-stack { display: flex; height: 22px; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-2); } .seg { display: block; height: 100%; color: var(--on-accent); font-size: 12px; line-height: 22px; text-align: center; overflow: hidden; }
+  .seg-self { background: var(--accent); } .seg-email { background: var(--note); } .seg-other { background: var(--slate-light); }
+  .cnt-avgs { display: grid; gap: 3px; } .avg-line { display: grid; grid-template-columns: 1fr 52px; gap: 6px; align-items: center; } .avg-line .seg { height: 8px; border-radius: 4px; } .avg-line em { font-style: normal; font-size: 12px; text-align: end; } .avg-line.over .seg { background-image: repeating-linear-gradient(90deg, transparent 0 6px, var(--card) 6px 8px); } .cnt-sub2 { margin-top: 4px; font-size: 12px; }
+  .cnt-table tr.on td { background: var(--accent-wash); } .cnt-table tr.grp td { color: var(--ink-soft); font-style: italic; }
+  @media (max-width: 760px) { .cnt-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cnt-row { grid-template-columns: 96px 1fr 48px; } }
+  .me-src { margin: 14px 0; } .me-src h3 { font-size: 15px; margin: 0 0 8px; }
   .cnt-table th[colspan] { text-align: center; border-bottom: 1px solid var(--line); } .cnt-table td.num, .cnt-table th.num { text-align: end; }
   .ext-steps { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 8px; }
   .ext-steps li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); opacity: .6; }
@@ -857,7 +872,7 @@
       <div class="nav-group-panel" id="nav-kpi">
         <a href="#kpi" class="sub" data-view="kpi" data-t="kpi_board">لوحة المؤشرات</a>
         <a href="#dev" class="sub" data-view="dev" data-t="nav_dev">التطوير</a>
-        <a href="#counts" class="sub" data-view="counts" data-t="nav_counts">عدد المهام</a>
+        <a href="#counts" class="sub" data-view="counts" data-t="nav_counts">المهام: المصدر ووقت الإنجاز</a>
         <a href="#overtime" class="sub" data-view="overtime" data-t="nav_overtime">ساعات العمل الإضافي</a>
         <a href="#team" class="sub" data-view="team" data-t="nav_team">الفريق</a>
         <a href="#person" class="sub" data-view="person" data-t="pf_title">ملف الموظف</a>
@@ -1028,7 +1043,7 @@
   </section>
 
   <section id="view-counts" hidden>
-    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_counts">عدد المهام</h1><button type="button" class="help-q" data-help="g_counts_b" data-help-title="nav_counts" aria-label="?">?</button></div><p class="lead" data-t="cnt_lead"></p></div>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_counts">المهام: المصدر ووقت الإنجاز</h1><button type="button" class="help-q" data-help="g_counts_b" data-help-title="nav_counts" aria-label="?">?</button></div><p class="lead" data-t="cnt_lead"></p></div>
     <div id="counts-body"></div>
   </section>
   <section id="view-overtime" hidden>

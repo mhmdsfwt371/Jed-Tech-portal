@@ -6,7 +6,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, overtimeOf, tasksPerPerson, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, overtimeOf, SOURCES, taskSource, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
   mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
@@ -729,6 +729,7 @@ function renderMe(waiting = false) {
       pills(meKind, [['month', t('me_period_month')], ['quarter', t('me_period_quarter')], ['half', t('me_period_half')]], (k) => { meKind = k; renderMe(); })),
     el('p', { class: 'hint', text: t('me_month_sub', { a: pm.windows.this.from, b: pm.windows.this.to, c: pm.windows.last.from, d: pm.windows.last.to }) }),
     cards(pm.mine.this, pm.mine.last, '', t('me_last_period')),
+    pm.mine.this && pm.mine.this.bySource && pm.mine.this.assigned ? el('section', { class: 'me-src' }, el('h3', { text: t('me_src_h') }), srcCards({ received: pm.mine.this.assigned, cohortClosed: pm.mine.this.cohortClosed, cohortAvgHours: pm.mine.this.cohortAvgHours }, pm.mine.this.bySource)) : null,
     (pm.sources.email + pm.sources.self + pm.sources.other) ? el('div', { class: 'donuts' },
       donut(t('me_sources_h'), [{ label: t('src_other'), value: pm.sources.other }, { label: t('src_email'), value: pm.sources.email }, { label: t('src_self'), value: pm.sources.self }])) : null,
     el('h2', { text: t('me_open_h', { n: mine.length }) }),
@@ -2979,6 +2980,11 @@ function renderOvertime() {
   const o = overtimeOf(tasks, { from, to, people: team, evening: otState.evening });
   const hm = (h) => { const m = Math.round(h * 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; };
   const tm = (ms) => new Date(ms + 3 * 3600e3).toISOString().slice(11, 16);
+  const byId = new Map(tasks.map((x) => [String(x.id), x])), tag = (id) => { const x = byId.get(String(id)); return x ? ` · ${t(`src_${taskSource(x)}`)}` : ''; };
+  const otGroup = (list) => { const hs = list.filter((x) => x.state === 'done' && x.completedAt && x.createdAt).map((x) => (Date.parse(x.completedAt) - Date.parse(x.createdAt)) / 3600e3).filter((h) => h >= 0);
+    return { n: list.length, done: hs.length, avgHours: hs.length ? hs.reduce((s2, v) => s2 + v, 0) / hs.length : null }; };
+  const otSrc = o.people.map((pp) => { const list = [...new Set(o.rows.filter((r) => r.pid === pp.pid).flatMap((r) => r.ids))].map((id) => byId.get(String(id))).filter(Boolean);
+    return { pid: pp.pid, all: otGroup(list), by: Object.fromEntries(SOURCES.map((k) => [k, otGroup(list.filter((x) => taskSource(x) === k))])) }; });
   const day = (d) => new Intl.DateTimeFormat(lang, { weekday: 'long', timeZone: 'UTC' }).format(new Date(`${d}T12:00:00Z`));
   const pill = (key, val, label) => el('button', { type: 'button', class: `pill-btn${otState[key] === val ? ' on' : ''}`, text: label, onclick: () => { otState[key] = val; renderOvertime(); } });
   const csv = () => {
@@ -2998,53 +3004,94 @@ function renderOvertime() {
       el('thead', {}, el('tr', {}, ['ot_c_name', 'ot_c_sat_d', 'ot_c_sat_h', 'ot_c_eve_d', 'ot_c_eve_h', 'ot_c_total'].map((k) => el('th', { text: t(k) })))),
       el('tbody', {}, o.people.map((p) => el('tr', {}, el('td', { text: nm(p.pid) }), el('td', { text: String(p.satDays) }), el('td', { text: hm(p.satHours) }), el('td', { text: String(p.eveDays) }), el('td', { text: hm(p.eveHours) }), el('td', {}, el('strong', { text: hm(p.total) }))))),
       el('tfoot', {}, el('tr', {}, el('td', { text: t('ot_c_sum') }), el('td', { text: String(tot.sd) }), el('td', { text: hm(tot.sh) }), el('td', { text: String(tot.ed) }), el('td', { text: hm(tot.eh) }), el('td', {}, el('strong', { text: hm(tot.t) }))))) ) : null,
+    o.rows.length ? el('h2', { class: 'ot-h', text: t('ot_src_h') }) : null,
+    o.rows.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'ot-table cnt-table ot-src' },
+      el('thead', {}, el('tr', {}, el('th', { rowspan: '2', text: t('ot_c_name') }), ...['all', ...SOURCES].map((k) => el('th', { colspan: '2', text: t(`src_${k}`) }))),
+        el('tr', {}, ...[0, 1, 2, 3].flatMap(() => [el('th', { class: 'num', text: t('ot_c_tasks') }), el('th', { class: 'num', text: t('cnt_c_avg') })]))),
+      el('tbody', {}, otSrc.map((s) => el('tr', {}, el('td', { text: nm(s.pid) }), ...[s.all, ...SOURCES.map((k) => s.by[k])].flatMap((g) => [el('td', { class: 'num', text: String(g.n) }), el('td', { class: 'num', text: g.avgHours == null ? '—' : hm(g.avgHours) })])))))) : null,
+    o.rows.length ? el('p', { class: 'hint', text: t('ot_src_note') }) : null,
     o.rows.length ? el('h2', { class: 'ot-h', text: t('ot_detail_h') }) : null,
     ...o.people.map((p) => el('details', { class: 'ot-person' }, el('summary', { text: `${nm(p.pid)} — ${hm(p.total)}` }),
       el('div', { class: 'table-wrap' }, el('table', { class: 'ot-table' },
         el('thead', {}, el('tr', {}, ['ot_c_date', 'ot_c_kind', 'ot_c_first', 'ot_c_last', 'ot_c_tasks', 'ot_c_hours'].map((k) => el('th', { text: t(k) })))),
         el('tbody', {}, o.rows.filter((r) => r.pid === p.pid).map((r) => el('tr', {}, el('td', { text: `${day(r.date)} ${r.date}` }), el('td', {}, el('span', { text: t(r.kind === 'sat' ? 'ot_k_sat' : 'ot_k_eve') }), r.batch ? el('div', { class: 'warn-text hint', text: `⚠ ${t('ot_batch')}` }) : null),
-          el('td', { text: `${tm(r.start)} — ${r.first.title}` }), el('td', { text: `${tm(r.last.at)} — ${r.last.title}` }), el('td', { text: String(r.tasks) }), el('td', {}, el('strong', { text: hm(r.hours) }))))))))),
+          el('td', { text: `${tm(r.start)} — ${r.first.title}${tag(r.first.id)}` }), el('td', { text: `${tm(r.last.at)} — ${r.last.title}${tag(r.last.id)}` }), el('td', { text: String(r.tasks) }), el('td', {}, el('strong', { text: hm(r.hours) }))))))))),
     el('details', { class: 'ot-how' }, el('summary', { text: t('ot_how_h') }), el('ul', {}, ['ot_how1', 'ot_how2', 'ot_how3', 'ot_how4', 'ot_how6', 'ot_how5'].map((k) => el('li', { text: t(k) })))));
 }
-// ---------- tasks per person, by month or quarter: count and average closing time (ADR-0066) ----------
-const cntState = { per: null, scope: 'team' };
+// one way to show a person's or a team's tasks by source (ADR-0067): the same cards wherever they appear
+const srcHm = (h) => (h == null ? '—' : (() => { const m = Math.round(h * 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; })());
+const srcCards = (all, by) => el('div', { class: 'cnt-cards' }, [['all', all], ...SOURCES.map((k) => [k, by[k]])].map(([k, s]) => el('div', { class: `cnt-card cnt-${k}` },
+  el('div', { class: 'cnt-card-h' }, el('i', { class: `dot dot-${k}` }), el('span', { text: t(`src_${k}`) })), el('div', { class: 'cnt-big', text: srcHm(s.cohortAvgHours) }), el('div', { class: 'cnt-unit', text: t('cnt_avg_unit2') }),
+  el('div', { class: 'cnt-sub', text: t('cnt_recv_n', { r: s.received, c: s.cohortClosed }) }))));
+// ---------- tasks: where they came from and how long they took to close (ADR-0067) — one engine: the board's factor1 ----------
+const cntState = { per: null, scope: 'counted', view: 'count', sort: 'done', focus: null };
 function renderCounts() {
   const body = $('counts-body'); if (!body || isTeamPortal) return;
   const tasks = allTasks();
   if (!tasks.length) { set(body, el('p', { class: 'note', text: t('ot_nodata') })); return; }
-  const ppl = peopleOf(datasets), nm = (id) => nameOf(ppl.find((p) => p.id === id) || {}, lang) || id;
-  const months = [...new Set(tasks.map((x) => x.createdAt).filter(Boolean).map((s) => saudiDay(s).slice(0, 7)))].sort().reverse().slice(0, 12);
+  const ppl = peopleOf(datasets), nm = (id) => nameOf(ppl.find((x) => x.id === id) || {}, lang) || id;
+  const months = [...new Set(tasks.flatMap((x) => [x.createdAt, x.completedAt]).filter(Boolean).map((s) => saudiDay(s).slice(0, 7)))].sort().reverse().slice(0, 12);
   const quarters = [...new Set(months.map((m) => `${m.slice(0, 4)}-Q${Math.ceil(Number(m.slice(5, 7)) / 3)}`))];
   const now = saudiDay(new Date().toISOString()).slice(0, 7);
-  if (!cntState.per || (![...months, ...quarters].includes(cntState.per))) cntState.per = months.includes(now) ? now : months[0];
+  if (!cntState.per || ![...months, ...quarters].includes(cntState.per)) cntState.per = months.includes(now) ? now : months[0];
   const p = cntState.per, isQ = p.includes('Q'), qn = isQ ? Number(p.slice(-1)) : 0;
-  const from = isQ ? `${p.slice(0, 4)}-${String(qn * 3 - 2).padStart(2, '0')}-01` : `${p}-01`, to = isQ ? monthLast(`${p.slice(0, 4)}-${String(qn * 3).padStart(2, '0')}`) : monthLast(p);
+  const range = { from: isQ ? `${p.slice(0, 4)}-${String(qn * 3 - 2).padStart(2, '0')}-01` : `${p}-01`, to: isQ ? monthLast(`${p.slice(0, 4)}-${String(qn * 3).padStart(2, '0')}`) : monthLast(p) };
   const sys = new Set(ppl.filter((x) => /\bsystem\b|مستخدم النظام/i.test(`${x.nameEn || ''} ${x.nameAr || ''}`)).map((x) => x.id));
-  const who = new Set((cntState.scope === 'team' ? scoped(ppl).map((x) => x.id) : ppl.map((x) => x.id)).filter((id) => !sys.has(id)));
-  const r = tasksPerPerson(tasks, { from, to, people: who });
+  const sc = scoped(ppl), ids = (cntState.scope === 'counted' ? currentTeam(sc, tasks) : cntState.scope === 'team' ? sc.map((x) => x.id) : ppl.map((x) => x.id)).filter((id) => !sys.has(id));
+  const f = factor1(tasks, { range, team: ids });   // the very engine the board's tiles come from
+  const rows = f.people.filter((r) => r.assigned || r.done);
+  const sorter = { done: (r) => r.assigned, self: (r) => r.bySource.self.received, email: (r) => r.bySource.email.received, avg: (r) => r.cohortAvgHours || 0 }[cntState.sort] || ((r) => r.assigned);
+  rows.sort((x, y) => sorter(y) - sorter(x) || y.done - x.done);
+  if (cntState.focus && !rows.some((r) => r.id === cntState.focus)) cntState.focus = null;
+  const base = cntState.focus ? rows.find((r) => r.id === cntState.focus) : f.team;
   const hm = (h) => (h == null ? '—' : (() => { const m = Math.round(h * 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; })());
-  const cells = (g) => [el('td', { class: 'num', text: String(g.n) }), el('td', { class: 'num', text: hm(g.avg) })];
-  const pill = (val, label) => el('button', { type: 'button', class: `pill-btn${cntState.scope === val ? ' on' : ''}`, text: label, onclick: () => { cntState.scope = val; renderCounts(); } });
+  const src = (k, r) => (k === 'all' ? { received: r.assigned, done: r.done, avgHours: r.avgHours, cohortClosed: r.cohortClosed, cohortAvgHours: r.cohortAvgHours, cohortMedianHours: r.cohortMedianHours } : r.bySource[k]);
+  const pill = (key, val, label) => el('button', { type: 'button', class: `pill-btn${cntState[key] === val ? ' on' : ''}`, text: label, onclick: () => { cntState[key] = val; renderCounts(); } });
+  const card = (k) => { const s = src(k, base), share = k !== 'all' && base.assigned ? Math.round((s.received / base.assigned) * 100) : null;
+    return el('div', { class: `cnt-card cnt-${k}` }, el('div', { class: 'cnt-card-h' }, el('i', { class: `dot dot-${k}` }), el('span', { text: t(`src_${k}`) })),
+      el('div', { class: 'cnt-big', text: hm(s.cohortAvgHours) }), el('div', { class: 'cnt-unit', text: t('cnt_avg_unit2') }),
+      el('div', { class: 'cnt-sub', text: t('cnt_card_sub2', { c: s.cohortClosed, r: s.received, m: hm(s.cohortMedianHours) }) + (share != null ? ` · ${share}%` : '') }),
+      el('div', { class: 'cnt-sub2 hint', text: t('cnt_card_board', { d: s.done, h: hm(s.avgHours) }) })); };
+  const maxDone = Math.max(1, ...rows.map((r) => r.assigned)), avgs = rows.flatMap((r) => SOURCES.map((k) => r.bySource[k].cohortAvgHours || 0)).filter((v) => v > 0).sort((x, y) => x - y);
+  const maxAvg = Math.max(1, avgs.length ? avgs[Math.min(avgs.length - 1, Math.floor(avgs.length * 0.9))] * 1.15 : 1), wpct = (v, mx) => Math.min(100, (v / mx) * 100);
+  const tip = (r) => SOURCES.map((k) => `${t(`src_${k}`)}: ${r.bySource[k].received} — ${hm(r.bySource[k].cohortAvgHours)}`).join('\n') + `\n${t('src_all')}: ${r.assigned} — ${hm(r.cohortAvgHours)}`;
+  const chart = el('div', { class: `cnt-chart view-${cntState.view}` }, rows.map((r) => el('button', { type: 'button', class: `cnt-row${cntState.focus === r.id ? ' on' : ''}`, title: tip(r), 'aria-pressed': cntState.focus === r.id ? 'true' : 'false',
+      onclick: () => { cntState.focus = cntState.focus === r.id ? null : r.id; renderCounts(); } },
+    el('span', { class: 'cnt-name', text: nm(r.id) }),
+    cntState.view === 'count'
+      ? el('span', { class: 'cnt-stack' }, SOURCES.map((k) => (r.bySource[k].received ? el('span', { class: `seg seg-${k}`, style: `width:${(r.bySource[k].received / maxDone) * 100}%`, text: r.bySource[k].received / maxDone >= 0.07 ? String(r.bySource[k].received) : '' }) : null)))
+      : el('span', { class: 'cnt-avgs' }, SOURCES.map((k) => { const v = r.bySource[k].cohortAvgHours || 0; return el('span', { class: `avg-line${v > maxAvg ? ' over' : ''}` }, el('span', { class: `seg seg-${k}`, style: `width:${wpct(v, maxAvg)}%` }), el('em', { text: r.bySource[k].cohortClosed ? hm(r.bySource[k].cohortAvgHours) + (v > maxAvg ? ' ›' : '') : '—' })); })),
+    el('strong', { class: 'cnt-total', text: cntState.view === 'count' ? String(r.assigned) : hm(r.cohortAvgHours) }))));
   const csv = () => {
-    const q = (v) => `"${String(v).replace(/"/g, '""')}"`, head = ['name', 'tasks', 'done', 'open', 'manual', 'manual_avg_h', 'email', 'email_avg_h', 'manual_email', 'manual_email_avg_h'];
-    const lines = [head.join(','), ...r.rows.map((x) => [nm(x.pid), x.total, x.done, x.open, x.manual.n, x.manual.avg ?? '', x.email.n, x.email.avg ?? '', x.both.n, x.both.avg ?? ''].map(q).join(','))];
-    const url = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' })); const a2 = el('a', { href: url, download: `tasks-per-person-${p}.csv` }); document.body.append(a2); a2.click(); a2.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+    const q = (v) => `"${String(v).replace(/"/g, '""')}"`, head = ['name', 'received', 'received_closed', 'received_avg_hours', 'self_received', 'self_avg_hours', 'email_received', 'email_avg_hours', 'other_received', 'other_avg_hours', 'closed_in_period', 'closed_in_period_avg_hours'];
+    const r2 = (h) => (h == null ? '' : Math.round(h * 100) / 100);
+    const lines = [head.join(','), ...rows.map((r) => [nm(r.id), r.assigned, r.cohortClosed, r2(r.cohortAvgHours), r.bySource.self.received, r2(r.bySource.self.cohortAvgHours), r.bySource.email.received, r2(r.bySource.email.cohortAvgHours), r.bySource.other.received, r2(r.bySource.other.cohortAvgHours), r.done, r2(r.avgHours)].map(q).join(','))];
+    const url = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' })); const a2 = el('a', { href: url, download: `tasks-by-source-${p}.csv` }); document.body.append(a2); a2.click(); a2.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
   };
+  const cell2 = (s) => [el('td', { class: 'num', text: String(s.received) }), el('td', { class: 'num', text: hm(s.cohortAvgHours) })];
+  const trow = (r, label, cls) => el('tr', { class: cls || null }, el('td', { text: label }), el('td', { class: 'num' }, el('strong', { text: String(r.assigned) })), el('td', { class: 'num', text: String(r.cohortClosed) }), el('td', { class: 'num' }, el('strong', { text: hm(r.cohortAvgHours) })), ...SOURCES.flatMap((k) => cell2(r.bySource[k])));
+  const T = f.team;
   set(body,
     el('div', { class: 'ot-controls' },
-      el('label', {}, el('span', { text: t('cnt_period') }), el('select', { onchange: (e) => { cntState.per = e.target.value; renderCounts(); } },
+      el('label', {}, el('span', { text: t('cnt_period') }), el('select', { class: 'cnt-per', onchange: (e) => { cntState.per = e.target.value; renderCounts(); } },
         el('optgroup', { label: t('cnt_months') }, months.map((m) => el('option', { value: m, selected: m === p ? '' : null, text: m }))),
         el('optgroup', { label: t('cnt_quarters') }, quarters.map((q) => el('option', { value: q, selected: q === p ? '' : null, text: q }))))),
-      el('div', { class: 'pills' }, pill('team', t('ot_team')), pill('all', t('ot_all'))),
-      r.rows.length ? el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('ot_csv')}`, onclick: csv }) : null),
-    el('p', { class: 'ot-answer', text: t('cnt_answer', { p, from, to, n: r.rows.length, t: r.team.total, d: r.team.done }) }),
-    r.rows.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'ot-table cnt-table' },
-      el('thead', {}, el('tr', {}, el('th', { rowspan: '2', text: t('ot_c_name') }), el('th', { rowspan: '2', class: 'num', text: t('cnt_c_total') }), el('th', { rowspan: '2', class: 'num', text: t('cnt_c_done') }),
-        el('th', { colspan: '2', text: t('cnt_g_manual') }), el('th', { colspan: '2', text: t('cnt_g_email') }), el('th', { colspan: '2', text: t('cnt_g_both') })),
-        el('tr', {}, ...[0, 1, 2].flatMap(() => [el('th', { class: 'num', text: t('cnt_c_n') }), el('th', { class: 'num', text: t('cnt_c_avg') })]))),
-      el('tbody', {}, r.rows.map((x) => el('tr', {}, el('td', { text: nm(x.pid) }), el('td', { class: 'num' }, el('strong', { text: String(x.total) })), el('td', { class: 'num', text: String(x.done) }), ...cells(x.manual), ...cells(x.email), ...cells(x.both)))),
-      el('tfoot', {}, el('tr', {}, el('td', { text: t('ot_c_sum') }), el('td', { class: 'num' }, el('strong', { text: String(r.team.total) })), el('td', { class: 'num', text: String(r.team.done) }), ...cells(r.team.manual), ...cells(r.team.email), ...cells(r.team.both))))) : el('p', { class: 'note', text: t('cnt_none') }),
-    el('details', { class: 'ot-how' }, el('summary', { text: t('ot_how_h') }), el('ul', {}, ['cnt_how1', 'cnt_how2', 'cnt_how3', 'cnt_how4'].map((k) => el('li', { text: t(k) })))));
+      el('div', { class: 'pills' }, pill('scope', 'counted', t('cnt_scope_counted')), pill('scope', 'team', t('ot_team')), pill('scope', 'all', t('ot_all'))),
+      rows.length ? el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('ot_csv')}`, onclick: csv }) : null),
+    el('p', { class: 'ot-answer', text: rows.length ? t('cnt_answer3', { p, n: T.assigned, s: T.bySource.self.received, sh: hm(T.bySource.self.cohortAvgHours), e: T.bySource.email.received, eh: hm(T.bySource.email.cohortAvgHours), o: T.bySource.other.received, oh: hm(T.bySource.other.cohortAvgHours), ah: hm(T.cohortAvgHours) }) : t('cnt_none') }),
+    rows.length ? el('div', { class: 'cnt-cards' }, ['all', ...SOURCES].map(card)) : null,
+    cntState.focus ? el('p', { class: 'hint cnt-focus' }, t('cnt_focus', { n: nm(cntState.focus) }), ' ', el('button', { type: 'button', class: 'btn tiny', text: t('cnt_focus_clear'), onclick: () => { cntState.focus = null; renderCounts(); } })) : null,
+    rows.length ? el('div', { class: 'cnt-chart-box' },
+      el('div', { class: 'cnt-chart-head' }, el('div', { class: 'pills' }, pill('view', 'count', t('cnt_view_count')), pill('view', 'time', t('cnt_view_time'))),
+        el('label', { class: 'cnt-sort' }, el('span', { text: t('cnt_sort') }), el('select', { onchange: (e) => { cntState.sort = e.target.value; renderCounts(); } }, [['done', t('cnt_sort_done')], ['self', t('src_self')], ['email', t('src_email')], ['avg', t('cnt_sort_avg')]].map(([v, l]) => el('option', { value: v, selected: cntState.sort === v ? '' : null, text: l })))),
+        el('div', { class: 'cnt-legend' }, SOURCES.map((k) => el('span', {}, el('i', { class: `dot dot-${k}` }), t(`src_${k}`))))),
+      chart, el('p', { class: 'hint', text: t('cnt_click_hint') })) : null,
+    rows.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'ot-table cnt-table' },
+      el('thead', {}, el('tr', {}, el('th', { rowspan: '2', text: t('ot_c_name') }), el('th', { colspan: '3', text: t('src_all') }), ...SOURCES.map((k) => el('th', { colspan: '2', text: t(`src_${k}`) }))),
+        el('tr', {}, el('th', { class: 'num', text: t('cnt_c_recv') }), el('th', { class: 'num', text: t('cnt_c_closed') }), el('th', { class: 'num', text: t('cnt_c_avg') }), ...[0, 1, 2].flatMap(() => [el('th', { class: 'num', text: t('cnt_c_recv') }), el('th', { class: 'num', text: t('cnt_c_avg') })]))),
+      el('tbody', {}, rows.map((r) => trow(r, nm(r.id), cntState.focus === r.id ? 'on' : null)), f.group && (f.group.assigned || f.group.done) ? trow(f.group, t('cnt_group_row'), 'grp') : null),
+      el('tfoot', {}, trow(T, t('ot_c_sum'))))) : null,
+    el('details', { class: 'ot-how' }, el('summary', { text: t('ot_how_h') }), el('ul', {}, ['cnt_m1', 'cnt_m2b', 'cnt_m3', 'cnt_m6', 'cnt_m4', 'cnt_m5b'].map((k) => el('li', { text: t(k) })))));
 }
 function renderTeam() {
   applyNameFixes();

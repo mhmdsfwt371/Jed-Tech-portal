@@ -50,9 +50,9 @@
 
 تقدير لساعات العمل خارج الدوام من أوقات المهام في السحب: السبت من أول مهمة اشتغل عليها الشخص إلى آخر مهمة أغلقها، ومن الأحد إلى الخميس ما بين السابعة مساءً ومنتصف الليل. اختر الشهر، والفريق المحسوب أو كل من في السحب، وطريقة حساب المساء (من أول مهمة، أو من السابعة). الجدول يعطي لكل شخص أيام السبت وساعاتها والأمسيات وساعاتها، والتفاصيل تبيّن لكل يوم أول مهمة وآخر مهمة ووقتهما، وزر CSV ينزّل كل شيء. ماي أفاقي لا يسجّل ساعات العمل، فراجع التفاصيل قبل أي قرار.
 
-### عدد المهام
+### المهام: المصدر ووقت الإنجاز
 
-اختر شهرًا أو ربع سنة، والفريق كله أو كل من في السحب. لكل شخص: عدد المهام التي أُسندت له في الفترة (بتاريخ الإسناد مثل تصدير ماي أفاقي)، وكم منها أُنجز، ثم المهام اليدوية (عددها ومتوسط إغلاقها)، ومهام الإيميل (عددها ومتوسط إغلاقها)، والاثنتان معًا. سطر «الإجمالي» يجمع الفريق، والمتوسط فيه مرجّح بعدد المهام. زر CSV ينزّل الجدول.
+اختر شهرًا أو ربع سنة. البطاقات الأربع: كل المهام المنجزة، وما عمله الشخص لنفسه، وما جاء من الإيميل، وما أسنده له غيره — الرقم الكبير متوسط وقت الإغلاق وتحته عدد المنجز والوارد. الرسم لكل شخص بالعدد أو بوقت الإغلاق؛ مرّر لترى الأرقام واضغط على شخص لتصير البطاقات له. الجدول يفصّل كل شيء، و«الإجمالي» يطابق لوحة المؤشرات لأن الحساب من محركها نفسه.
 
 ### ملف الموظف — كل ما يخص موظفًا في مكان واحد
 
@@ -141,9 +141,9 @@ Pick the quarter (next by default), then the person from the cards. The baseline
 
 An estimate of hours worked outside the working day, from the task times in the pull: Saturday from the first task the person worked on to the last task he closed, and Sunday to Thursday between 7 PM and midnight. Choose the month, the counted team or everyone in the pull, and how evenings are counted (from the first task, or from 7 PM). The table gives each person his Saturdays and their hours and his evenings and their hours; the details show, for each day, the first and last task and their times; the CSV button downloads everything. MyAFAQY records no working hours, so check the details before any decision.
 
-### Tasks per person
+### Tasks: source and time to close
 
-Choose a month or a quarter, and the whole team or everyone in the pull. For each person: the tasks assigned in the period (by assignment date, like MyAFAQY’s export), how many were done, then manual tasks (count and average closing time), email tasks (count and average closing time), and both together. The «All» row adds up the team; its average is weighted by the number of tasks. The CSV button downloads the table.
+Choose a month or a quarter. The four cards: all completed tasks, those the person opened himself, those from e-mail, and those assigned by others — the big number is the average time to close, with the done and received counts under it. The chart shows each person by count or by time to close; hover for the numbers and click a person to turn the cards to him. The table details everything, and «All» matches the KPI board because it comes from the board’s own engine.
 
 ### Person file — everything about one person in one place
 
@@ -232,9 +232,9 @@ On this device and in this browser only; nothing is sent anywhere. To move it to
 
 پل میں کاموں کے اوقات سے دفتری اوقات سے باہر کے گھنٹوں کا اندازہ: ہفتہ پہلے کام سے آخری بند کام تک، اور اتوار تا جمعرات شام 7 سے آدھی رات تک۔ مہینہ، ٹیم یا سب، اور شام کا طریقہ چنیں۔ جدول ہر فرد کے ہفتے اور شامیں اور ان کے گھنٹے دکھاتا ہے؛ تفصیل میں ہر دن کا پہلا اور آخری کام؛ CSV سب کچھ ڈاؤن لوڈ کرتا ہے۔ مائی آفاقی گھنٹے درج نہیں کرتا، فیصلے سے پہلے تفصیل دیکھیں۔
 
-### فی کس کام
+### کام: ماخذ اور وقت
 
-مہینہ یا سہ ماہی چنیں، اور پوری ٹیم یا پل میں موجود سب لوگ۔ ہر فرد کے لیے: اس مدت میں اسے تفویض ہونے والے کام (تفویض کی تاریخ سے، مائی آفاقی کے ایکسپورٹ کی طرح)، ان میں سے کتنے مکمل ہوئے، پھر دستی کام (تعداد اور بند ہونے کا اوسط وقت)، ای میل کام (تعداد اور بند ہونے کا اوسط وقت)، اور دونوں ملا کر۔ «کل میزان» کی قطار پوری ٹیم کو جمع کرتی ہے اور اس کا اوسط کاموں کی تعداد کے حساب سے وزنی ہے۔ CSV کا بٹن جدول ڈاؤن لوڈ کرتا ہے۔
+مہینہ یا سہ ماہی چنیں۔ چار کارڈ: سب مکمل کام، خود کھولے، ای میل سے، اور دوسروں کے دیے — بڑا عدد بند ہونے کا اوسط وقت، نیچے مکمل اور موصول کی تعداد۔ چارٹ ہر فرد کو تعداد یا وقت سے دکھاتا ہے؛ ماؤس لائیں اعداد کے لیے اور کسی فرد پر کلک کریں۔ جدول سب تفصیل دیتا ہے، اور «کل میزان» لوحہ سے ملتا ہے کیونکہ حساب اسی کے انجن سے ہے۔
 
 ### فرد کی فائل — ایک فرد کے بارے میں سب کچھ ایک جگہ
 

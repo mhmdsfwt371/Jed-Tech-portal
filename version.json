@@ -1,15 +1,18 @@
 {
-  "version": "8.84",
+  "version": "8.85",
   "date": "2026-11-04",
   "notes": {
     "ar": [
-      "صفحة «عدد المهام» تحت «المؤشرات»: الفريق تحت بعضه، لكل واحد عدد المهام التي أُسندت له في الشهر أو الربع وكم أنجز، ثم المهام اليدوية (العدد ومتوسط الإغلاق) ومهام الإيميل (العدد ومتوسط الإغلاق) والاثنتان معًا، مع الإجمالي وتنزيل CSV. العدّ بتاريخ الإسناد مثل تصدير ماي أفاقي، وطابق تصدير ماي أفاقي بالدقيقة."
+      "لوحة «المهام: المصدر ووقت الإنجاز» تحت «المؤشرات»: لكل شخص وللفريق ما عمله لنفسه، وما جاء من الإيميل، وما أسنده له غيره، والكل — العدد ومتوسط وقت الإغلاق والوسيط — برسم تفاعلي (العدد أو الوقت، الترتيب، الضغط على شخص) وجدول وتنزيل CSV. طابقت تصدير ماي أفاقي بالدقيقة.",
+      "تعريف واحد لمصدر المهمة في كل البوابة ومحرك واحد: أرقام اللوحة واللوحة الجديدة ومؤشراتي متطابقة. ساعات العمل الإضافي تفصل مهامها حسب المصدر، ومؤشراتي فيها مصادر مهامك ووقت إنجازها."
     ],
     "en": [
-      "The «Tasks per person» page under KPIs: the team one under the other; for each person the tasks assigned in the month or quarter and how many were done, then manual tasks (count and average closing time), email tasks (count and average closing time) and both together, with totals and a CSV download. Counted by assignment date like MyAFAQY’s export, and matched against it to the minute."
+      "The «Tasks: source and time to close» dashboard under KPIs: for each person and the team, tasks opened by themselves, from e-mail, assigned by others, and all — count, average time to close and median — with an interactive chart (count or time, sort, click a person), a table and a CSV. Matched MyAFAQY’s export to the minute.",
+      "One definition of a task’s source across the portal and one engine: the board, the new dashboard and My KPIs agree. Overtime splits its tasks by source, and My KPIs shows where your tasks came from and how long they took."
     ],
     "ur": [
-      "«فی کس کام» صفحہ: ہر فرد کے مہینے یا سہ ماہی کے کام، مکمل، دستی اور ای میل کاموں کی تعداد اور بند ہونے کا اوسط، اور دونوں ملا کر؛ CSV کے ساتھ۔"
+      "«کام: ماخذ اور بند ہونے کا وقت» ڈیش بورڈ: ہر فرد اور ٹیم کے خود کھولے، ای میل سے، دوسروں کے دیے، اور سب — تعداد، اوسط اور وسطانیہ؛ انٹرایکٹو چارٹ، جدول اور CSV۔",
+      "پورے پورٹل میں ماخذ کی ایک تعریف اور ایک انجن؛ اوور ٹائم اور میرے اشاریے میں بھی ماخذ۔"
     ]
   }
 }

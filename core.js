@@ -414,6 +414,10 @@ export const GROUP = '__group__';
  * From the manager's file: creator id equals assignee id. From «My KPIs»: the bookmark's own flag (it never hands over ids).
  */
 export const isSelfLogged = (x) => x.fromEmail !== true && (x.own === true || (x.createdById != null && x.createdById === x.assigneeId));
+/** ADR-0067 — the one definition of where a task came from: «email» (made by MyAFAQY's e-mail integration), «self» (the person opened
+ * it for himself), «other» (assigned to him by a colleague, a manager, or the system from a request). Every page reads this. */
+export const SOURCES = ['self', 'email', 'other'];
+export const taskSource = (x) => (x.fromEmail === true ? 'email' : isSelfLogged(x) ? 'self' : 'other');
 
 /**
  * Who a task counts for: its assignee. (The v1 format could mark a group task; it then counts for whoever completed
@@ -434,11 +438,12 @@ export function creditOf(task) {
  *   open       open right now (a snapshot at extraction, whatever the creation date)
  * `team` (a list of ids) keeps only those people; without it everyone counts.
  */
+const srcBlank = () => Object.fromEntries(SOURCES.map((k) => [k, { received: 0, done: 0, durations: [], cohort: [] }]));
 export function factor1(tasks, { range = null, team = null } = {}) {
   const keep = team ? new Set(team) : null;
   const rows = new Map();
   const row = (id, name) => {
-    if (!rows.has(id)) rows.set(id, { id, name, assigned: 0, done: 0, cohortDone: 0, open: 0, cancelled: 0, created: 0, fromEmail: 0, selfLogged: 0, rd: 0, durations: [] });
+    if (!rows.has(id)) rows.set(id, { id, name, assigned: 0, done: 0, cohortDone: 0, open: 0, cancelled: 0, created: 0, fromEmail: 0, selfLogged: 0, rd: 0, durations: [], cohort: [], src: srcBlank() });
     const r = rows.get(id);
     if (name && (!r.name || r.name === r.id)) r.name = name;
     return r;
@@ -457,13 +462,17 @@ export function factor1(tasks, { range = null, team = null } = {}) {
       if (x.state === 'cancelled') r.cancelled++;
       if (x.fromEmail === true) r.fromEmail++;
       else if (isSelfLogged(x)) r.selfLogged++;
+      r.src[taskSource(x)].received++;
+      // the received cohort's own closing time (ADR-0067): what MyAFAQY's «Assigned on» export measures — no old backlog in it
+      if (x.state === 'done' && x.completedAt) { const hc = (Date.parse(x.completedAt) - Date.parse(x.createdAt)) / 3600000; if (hc >= 0) { r.cohort.push(hc); r.src[taskSource(x)].cohort.push(hc); } }
     }
     if (doneHere) {
       r.done++;
       if (x.rd === true) r.rd++;
+      const s = r.src[taskSource(x)]; s.done++;
       if (x.completedAt) {
         const h = (Date.parse(x.completedAt) - Date.parse(x.createdAt)) / 3600000;
-        if (h >= 0) r.durations.push(h);
+        if (h >= 0) { r.durations.push(h); s.durations.push(h); }
       }
     }
     if (x.state === 'open') r.open++;
@@ -483,15 +492,21 @@ export function factor1(tasks, { range = null, team = null } = {}) {
       id: r.id, name: r.name, assigned: r.assigned, done: r.done, open: r.open, cancelled: r.cancelled, created: r.created, fromEmail: r.fromEmail, selfLogged: r.selfLogged, rd: r.rd,
       rate: counted > 0 ? r.cohortDone / counted : null,
       avgHours: mean(r.durations), medianHours: median(r.durations), timed: r.durations.length,
+      // per source: received in the period (the cohort), done in the period, and the time to close over the tasks done in the period
+      cohortAvgHours: mean(r.cohort), cohortMedianHours: median(r.cohort), cohortClosed: r.cohort.length,
+      bySource: Object.fromEntries(SOURCES.map((k) => [k, { received: r.src[k].received, done: r.src[k].done, avgHours: mean(r.src[k].durations), medianHours: median(r.src[k].durations), timed: r.src[k].durations.length,
+        cohortClosed: r.src[k].cohort.length, cohortAvgHours: mean(r.src[k].cohort), cohortMedianHours: median(r.src[k].cohort) }])),
     };
   };
   const people = [...rows.values()].filter((r) => r.id !== GROUP && (r.assigned > 0 || r.created > 0 || r.done > 0 || r.open > 0 || (keep && keep.has(r.id)))).map(finish)
     .sort((a, b) => b.done - a.done || b.assigned - a.assigned || String(a.name).localeCompare(String(b.name)));
   const group = rows.has(GROUP) ? finish(rows.get(GROUP)) : null;
-  const all = { id: '__team__', name: '__team__', assigned: 0, done: 0, cohortDone: 0, open: 0, cancelled: 0, created: 0, fromEmail: 0, selfLogged: 0, rd: 0, durations: [] };
+  const all = { id: '__team__', name: '__team__', assigned: 0, done: 0, cohortDone: 0, open: 0, cancelled: 0, created: 0, fromEmail: 0, selfLogged: 0, rd: 0, durations: [], cohort: [], src: srcBlank() };
   for (const r of rows.values()) {
     all.assigned += r.assigned; all.done += r.done; all.cohortDone += r.cohortDone; all.open += r.open; all.cancelled += r.cancelled;
     all.fromEmail += r.fromEmail; all.selfLogged += r.selfLogged; all.rd += r.rd; all.created += r.created; all.durations.push(...r.durations);
+    all.cohort.push(...r.cohort);
+    for (const k of SOURCES) { all.src[k].received += r.src[k].received; all.src[k].done += r.src[k].done; all.src[k].durations.push(...r.src[k].durations); all.src[k].cohort.push(...r.src[k].cohort); }
   }
   return { people, group, team: finish(all) };
 }
@@ -1956,7 +1971,8 @@ export function overtimeOf(tasks, { from = '0000-00-00', to = '9999-12-31', peop
     const start = g.kind === 'eve' && evening === 'from' ? Date.parse(`${g.date}T${String(eveStart).padStart(2, '0')}:00:00+03:00`) : first.at;
     const end = Math.max(last.at, start);
     const batch = closes.length >= 3 && closes[closes.length - 1].at - closes[0].at <= 15 * 60e3;   // three or more closed within 15 minutes: the real work was longer than it shows
-    return { pid: g.pid, date: g.date, kind: g.kind, start, end, hours: Math.round(((end - start) / 3600e3) * 100) / 100, first, last, tasks: new Set(g.items.map((x) => x.id)).size, batch };
+    const ids = [...new Set(g.items.map((x) => x.id))];
+    return { pid: g.pid, date: g.date, kind: g.kind, start, end, hours: Math.round(((end - start) / 3600e3) * 100) / 100, first, last, tasks: ids.length, ids, batch };
   }).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.pid < b.pid ? -1 : 1));
   const byPerson = new Map();
   for (const r of rows) { if (!byPerson.has(r.pid)) byPerson.set(r.pid, { pid: r.pid, satDays: 0, satHours: 0, eveDays: 0, eveHours: 0, total: 0, batchDays: 0 });
@@ -1965,32 +1981,4 @@ export function overtimeOf(tasks, { from = '0000-00-00', to = '9999-12-31', peop
   return { rows, people: [...byPerson.values()].sort((a, b) => b.total - a.total) };
 }
 
-// ===================== tasks per person: how many, and how long to close (ADR-0066) =====================
-// Counted by the assignment date — what MyAFAQY's own export filters with «Assigned on» — in Saudi time, every status included.
-// The average is in calendar hours from assignment to close, over the completed tasks of each group.
-// Manual = «Manual Task» and «Manual Task - After Sales»; Email = «Email Customer Activity» (the type names as MyAFAQY exports them).
-const tppType = (ty) => String(ty || '').split('|')[0].trim().toLowerCase();
-export const isManualType = (ty) => /^manual task\b/.test(tppType(ty));
-export const isEmailType = (ty) => tppType(ty) === 'email customer activity';
-export function tasksPerPerson(tasks, { from = '0000-00-00', to = '9999-12-31', people = null } = {}) {
-  const day = (s) => { const ms = Date.parse(s || ''); return Number.isFinite(ms) ? new Date(ms + 3 * 3600e3).toISOString().slice(0, 10) : null; };
-  const grp = () => ({ n: 0, done: 0, sum: 0 }), by = new Map();
-  for (const t of tasks || []) {
-    const pid = String(t.assigneeId || ''); if (!pid || (people && !people.has(pid))) continue;
-    const d = day(t.createdAt); if (!d || d < from || d > to) continue;
-    if (!by.has(pid)) by.set(pid, { pid, total: 0, done: 0, open: 0, cancelled: 0, manual: grp(), email: grp(), both: grp() });
-    const s = by.get(pid); s.total++;
-    const done = t.state === 'done' && !!t.completedAt; if (done) s.done++; else if (t.state === 'cancelled') s.cancelled++; else s.open++;
-    const h = done ? (Date.parse(t.completedAt) - Date.parse(t.createdAt)) / 3600e3 : null;
-    for (const [k, hit] of [['manual', isManualType(t.type)], ['email', isEmailType(t.type)]]) {
-      if (!hit) continue; s[k].n++; s.both.n++;
-      if (h != null && h >= 0) { s[k].done++; s[k].sum += h; s.both.done++; s.both.sum += h; }
-    }
-  }
-  const avg = (g) => (g.done ? Math.round((g.sum / g.done) * 100) / 100 : null);
-  const rows = [...by.values()].map((s) => ({ ...s, manual: { ...s.manual, avg: avg(s.manual) }, email: { ...s.email, avg: avg(s.email) }, both: { ...s.both, avg: avg(s.both) } })).sort((a, b) => b.total - a.total);
-  const team = { total: 0, done: 0, manual: grp(), email: grp(), both: grp() };
-  for (const r of rows) { team.total += r.total; team.done += r.done; for (const k of ['manual', 'email', 'both']) { team[k].n += r[k].n; team[k].done += r[k].done; team[k].sum += r[k].sum; } }
-  for (const k of ['manual', 'email', 'both']) team[k].avg = avg(team[k]);
-  return { rows, team };
-}
+// ADR-0066's type-based split (Manual Task / Email Customer Activity) was replaced by ADR-0067: one source definition, in factor1.
