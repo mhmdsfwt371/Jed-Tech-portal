@@ -405,7 +405,6 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   if (keys.join(',') !== 'i,t,c,w,k') note(`Outlook: a stored mail row must be exactly { i, t, c, w, k } — found ${keys.join(',')}`);
 }
 
-if (problems.length) { console.error(`check.mjs: ${problems.length} problem(s)\n- ${problems.join('\n- ')}`); process.exit(1); }
 // ADR-0053: the «أنواع الفرق» bookmark talks only to crmbackend.afaqy.sa and the portal, reads only the teams, and never hands the token over.
 {
   const { buildTypesBookmarklet } = await import(new URL('core.js', root));
@@ -432,4 +431,14 @@ if (!/addAll\(SHELL\.map\(\(u\) => new Request\(u, \{ cache: 'reload' \}\)\)\)/.
 { const ut = read('tests/core.test.mjs'), run = ut.indexOf('for (const [name, fn] of tests)'), lastTest = ut.lastIndexOf('\ntest(');
   if (run < 0 || lastTest > run) note('tests/core.test.mjs: a test sits after the runner, so it would never run'); }
 
+// ADR-0068: every page has a name in the top bar — a page missing from the map showed «undefined» (the mail page, from v8.75 to v8.85)
+{ const appSrc = read('app.js'), vm = appSrc.match(/const views = \[([^\]]*)\]/), tm = appSrc.match(/\$\('page-title'\)\.textContent = t\(\{([^}]*)\}/);
+  if (!vm || !tm) note('app.js: the list of pages or the top-bar names could not be read');
+  else { const views = [...vm[1].matchAll(/'([a-z]+)'/g)].map((x) => x[1]), named = new Set([...tm[1].matchAll(/([a-z]+):/g)].map((x) => x[1]));
+    for (const v of views) if (!named.has(v)) note(`app.js: the page «${v}» has no name in the top bar — it would show «undefined»`); } }
+// ADR-0068: one upload place per kind of file — a PST is read by the mail page only
+if ((read('app.js').match(/mfLoadFile\(/g) || []).length !== 2) note('app.js: a PST must be read from one place only (the mail page)');
+
+// The report must stay the LAST thing: a rule written below it would add problems nobody prints (found 2026-11-04: four rules never ran).
+if (problems.length) { console.error(`check.mjs: ${problems.length} problem(s)\n- ${problems.join('\n- ')}`); process.exit(1); }
 console.log(`check.mjs: all checks passed (v${version})`);

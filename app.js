@@ -3335,7 +3335,7 @@ function mfParse(buf) {
         m = f.getNextChild(); } } };
   walk(pst.getRootFolder(), ''); return out;
 }
-async function mfLoadFile(f, say) {   // read a PST on the device; the same path from the mail page and the data page
+async function mfLoadFile(f, say) {   // read a PST on the device — from one place only, the mail page (ADR-0068)
   say(t('mf_reading', { name: f.name, mb: Math.max(1, Math.round(f.size / 1048576)) }));
   try { await mfLoadLib(); const buf = await f.arrayBuffer(); await new Promise((r) => setTimeout(r, 30)); mfState.msgs = mfParse(buf); mfState.file = f.name;
     const counts = new Map(); for (const m of mfState.msgs) counts.set(m.sender, (counts.get(m.sender) || 0) + 1);
@@ -3409,7 +3409,7 @@ function route() {
   for (const id of [...views, 'module']) $(`view-${id}`).hidden = id !== v;
   document.body.classList.toggle('in-module', v === 'module');
   if (mod) openModule(mod);
-  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', dev: 'nav_dev', home: 'cr_title', person: 'pf_title', guide: 'nav_guide' , overtime: 'nav_overtime', counts: 'nav_counts'}[v]); currentModule = null; }
+  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', dev: 'nav_dev', home: 'cr_title', person: 'pf_title', guide: 'nav_guide' , overtime: 'nav_overtime', counts: 'nav_counts', mailfile: 'nav_mailfile' }[v]); currentModule = null; }
   $('module-open').hidden = v !== 'module';
   // one item in the menu is current — the open module, or the page — and its group is the open one
   let current = null;
@@ -3445,8 +3445,6 @@ $('theme-btn').addEventListener('click', () => {
 });
 ['block-size', 'block-count'].forEach((id) => $(id).addEventListener('input', () => { renderBlocks(); renderMgr(); }));
 $('read-text').addEventListener('click', async () => { if (await ingest($('paste').value)) $('paste').value = ''; });
-if ($('pst-in')) $('pst-in').addEventListener('change', async (e) => { const f = e.target.files[0]; if (!f) return;
-  if (await mfLoadFile(f, (s) => { $('pst-status').textContent = s; })) { $('pst-status').textContent = ''; location.hash = '#mailfile'; } e.target.value = ''; });
 $('file-in').addEventListener('change', async (e) => { for (const f of e.target.files) await ingest(await f.text()); e.target.value = ''; });
 // The device backup carries EVERYTHING this device holds — data, reports, closed month cards, one-to-ones, the repair list,
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).

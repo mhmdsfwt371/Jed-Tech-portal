@@ -1371,7 +1371,7 @@ export default {
     g_mailfile_h: 'Mail from a PST file',
     g_mailfile_b: 'Export a PST from Outlook for a folder and period and drop it on this page: it is read in the browser and never uploaded. The senders appear with their counts; tick the ones you want. Their messages are then sorted by subject with rules you can edit: “upselling” for a new request, inquiry or requirement, “advanced” for integration, “normal” for WASL, and the rest “other”. The result is a table per person, the message list by kind, and a CSV export.',
     dt_pst_h: 'Outlook mail — PST file',
-    dt_pst_lead: 'Export a PST from Outlook for a folder and period and upload it here: it is read on your device and sent nowhere, then the result opens — who sent how many, sorted into normal, advanced or upselling.',
+    dt_pst_lead: 'The mail file is read in one place: the «Mail from a PST file» page, where the result appears — who sent how many, sorted into normal, advanced and upselling. It is read on your device and sent nowhere.',
     dt_pst_btn: '📂 Upload a PST file',
     dt_pst_open: 'Open the mail result',
     cr_nums_nolast: 'No data for last month in the pull',
@@ -1559,4 +1559,5 @@ export default {
     cnt_m2b: 'The big number and the whole table are about the tasks that arrived in the period (by assignment date, like MyAFAQY’s «Assigned on» filter): how many arrived, how many of them were closed, and their average time to close. The small line on each card is the KPI board’s number: everything closed in the period, older tasks included.',
     cnt_m6: 'Why two numbers? Closing an old task in the month pushes the «everything closed» average up a lot (a 4-month-old task = 2,900 hours), while the «arrived in the month» average measures speed on new work. The median beside it is not moved by one odd task.',
     cnt_m5b: 'To check in MyAFAQY: export the tasks with the «Assigned on» filter for the same period and count from CreateDate to Close Date; the Creator column shows who opened each task, and e-mail tasks have the type «Email Customer Activity».',
+    dt_pst_go: 'Open «Mail from a PST file»',
 };

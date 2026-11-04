@@ -1,18 +1,18 @@
 {
-  "version": "8.85",
+  "version": "8.86",
   "date": "2026-11-04",
   "notes": {
     "ar": [
-      "لوحة «المهام: المصدر ووقت الإنجاز» تحت «المؤشرات»: لكل شخص وللفريق ما عمله لنفسه، وما جاء من الإيميل، وما أسنده له غيره، والكل — العدد ومتوسط وقت الإغلاق والوسيط — برسم تفاعلي (العدد أو الوقت، الترتيب، الضغط على شخص) وجدول وتنزيل CSV. طابقت تصدير ماي أفاقي بالدقيقة.",
-      "تعريف واحد لمصدر المهمة في كل البوابة ومحرك واحد: أرقام اللوحة واللوحة الجديدة ومؤشراتي متطابقة. ساعات العمل الإضافي تفصل مهامها حسب المصدر، ومؤشراتي فيها مصادر مهامك ووقت إنجازها."
+      "ملف البريد PST يُرفع من مكان واحد: صفحة «البريد من ملف PST». صفحة «البيانات» فيها زر يفتحها، بدل زر رفع ثانٍ يفعل الشيء نفسه.",
+      "إصلاح: شريط العنوان كان يكتب «undefined» في صفحة البريد."
     ],
     "en": [
-      "The «Tasks: source and time to close» dashboard under KPIs: for each person and the team, tasks opened by themselves, from e-mail, assigned by others, and all — count, average time to close and median — with an interactive chart (count or time, sort, click a person), a table and a CSV. Matched MyAFAQY’s export to the minute.",
-      "One definition of a task’s source across the portal and one engine: the board, the new dashboard and My KPIs agree. Overtime splits its tasks by source, and My KPIs shows where your tasks came from and how long they took."
+      "A PST mail file is uploaded in one place: the «Mail from a PST file» page. The Data page has a button that opens it, instead of a second upload button doing the same thing.",
+      "Fix: the top bar read «undefined» on the mail page."
     ],
     "ur": [
-      "«کام: ماخذ اور بند ہونے کا وقت» ڈیش بورڈ: ہر فرد اور ٹیم کے خود کھولے، ای میل سے، دوسروں کے دیے، اور سب — تعداد، اوسط اور وسطانیہ؛ انٹرایکٹو چارٹ، جدول اور CSV۔",
-      "پورے پورٹل میں ماخذ کی ایک تعریف اور ایک انجن؛ اوور ٹائم اور میرے اشاریے میں بھی ماخذ۔"
+      "PST میل فائل ایک ہی جگہ اپ لوڈ ہوتی ہے: «PST فائل سے میل» صفحہ۔",
+      "درستی: میل صفحے پر اوپر «undefined» لکھا آتا تھا۔"
     ]
   }
 }

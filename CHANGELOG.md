@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.86 — 2026-11-04
+
+- ملف البريد PST يُرفع من مكان واحد: صفحة «البريد من ملف PST». صفحة «البيانات» فيها زر يفتحها، بدل زر رفع ثانٍ يفعل الشيء نفسه.
+- إصلاح: شريط العنوان كان يكتب «undefined» في صفحة البريد.
+
+<details><summary>English</summary>
+
+- A PST mail file is uploaded in one place: the «Mail from a PST file» page. The Data page has a button that opens it, instead of a second upload button doing the same thing.
+- Fix: the top bar read «undefined» on the mail page.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- PST میل فائل ایک ہی جگہ اپ لوڈ ہوتی ہے: «PST فائل سے میل» صفحہ۔
+- درستی: میل صفحے پر اوپر «undefined» لکھا آتا تھا۔
+
+</div>
+</details>
+
+
 ## v8.85 — 2026-11-04
 
 - لوحة «المهام: المصدر ووقت الإنجاز» تحت «المؤشرات»: لكل شخص وللفريق ما عمله لنفسه، وما جاء من الإيميل، وما أسنده له غيره، والكل — العدد ومتوسط وقت الإغلاق والوسيط — برسم تفاعلي (العدد أو الوقت، الترتيب، الضغط على شخص) وجدول وتنزيل CSV. طابقت تصدير ماي أفاقي بالدقيقة.
