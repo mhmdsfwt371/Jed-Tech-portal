@@ -83,6 +83,7 @@
 | `docs/decisions/0066-tasks-per-person.md` | Tasks per person by month or quarter, with manual and email closing averages |
 | `docs/decisions/0067-one-source-definition-and-the-task-dashboard.md` | One source definition, one engine, the tasks dashboard, and where each number lives |
 | `docs/decisions/0068-one-pst-place-and-a-guard-that-reports-last.md` | One place to read a PST; every page named; the guard reports last |
+| `docs/decisions/0069-team-table-titles-in-both-languages.md` | The team table: both titles editable, real people only, aligned cells |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.87 — 2026-11-04
+
+- صفحة الفريق: عند «تعديل الفريق» صار لكل شخص خانتا مسمّى، بالعربي وبالإنجليزي، وتُحفظان معًا؛ والصفحة الإنجليزية تعرض المسمّى الإنجليزي.
+- «إضافة» تختار شخصًا حقيقيًا من بيانات السحب بدل كتابة أي رقم، وأي رقم لا يطابق أحدًا يظهر بتنبيه أحمر لتحذفه. أعمدة الجدول صارت مستقيمة.
+
+<details><summary>English</summary>
+
+- Team page: in «Edit team» each person has two title fields, Arabic and English, both saved; the English page shows the English title.
+- «Add» picks a real person from the pulled data instead of any typed number, and a number that matches no one is flagged in red so you can remove it. The table’s columns line up.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹیم صفحہ: ہر فرد کے دو عہدے، عربی اور انگریزی، دونوں محفوظ۔
+- «شامل کریں» کھینچے گئے ڈیٹا سے حقیقی فرد چنتا ہے؛ نامعلوم نمبر سرخ میں۔
+
+</div>
+</details>
+
+
 ## v8.86 — 2026-11-04
 
 - ملف البريد PST يُرفع من مكان واحد: صفحة «البريد من ملف PST». صفحة «البيانات» فيها زر يفتحها، بدل زر رفع ثانٍ يفعل الشيء نفسه.

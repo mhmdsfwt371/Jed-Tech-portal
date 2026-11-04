@@ -456,7 +456,9 @@
   .dash-box h4 { margin: 0 0 8px; font-size: .9rem; } .hbars { display: grid; gap: 6px; } .hbar { display: grid; grid-template-columns: minmax(90px, 40%) minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12.5px; }
   .hb-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .hbar i { display: block; height: 10px; background: var(--card); border-radius: 5px; overflow: hidden; } .hbar i b { display: block; height: 10px; background: var(--accent); }
   .hb-v { font-weight: 600; min-width: 34px; text-align: end; }
-  .row-actions { display: flex; gap: 6px; align-items: center; } .row-actions select { flex: 1; }
+  .row-actions { display: flex; gap: 6px; align-items: center; } .row-actions select { flex: 1; }   /* a div inside the cell — never on the cell itself (ADR-0069) */
+  .pos-pair { display: grid; gap: 4px; } .team-table td { vertical-align: middle; }
+  .team-table td { overflow-wrap: anywhere; } .team-table td .hint, .team-table .name-line { white-space: normal; }
   .tool .helps { display: block; font-size: 12.5px; color: var(--accent-ink, var(--accent)); line-height: 1.6; margin-top: 4px; } .tool .helps b { font-weight: 600; }
   .sortable { cursor: grab; } .sortable.dragging { opacity: .45; } .sortable.drop-before { box-shadow: inset 4px 0 0 var(--accent); } html[dir="rtl"] .sortable.drop-before { box-shadow: inset -4px 0 0 var(--accent); }
   .rep-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; margin: 8px 0 12px; } .rep-person { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 10px; } .rep-person span { flex: 1; } #k-report { scroll-margin-top: 130px; }

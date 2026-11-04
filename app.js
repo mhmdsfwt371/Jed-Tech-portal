@@ -3100,6 +3100,7 @@ function renderTeam() {
   const known = new Map();
   for (const p of peopleOf(datasets)) known.set(p.id, p);
   if (me) for (const p of me.people) if (!known.has(p.id)) known.set(p.id, p);
+  const pulled = new Set(known.keys());   // ADR-0069: a number in the team file that no pull knows is shown as such, never as a silent «5»
   for (const id of Object.keys(roster().people)) if (!known.has(id)) known.set(id, { id, nameEn: '', nameAr: '', teams: [] });
   const ro = roster();
   const everyone = [...known.values()].sort((a, b) => (nameOf(a, lang) || a.id).localeCompare(nameOf(b, lang) || b.id, lang));
@@ -3109,7 +3110,7 @@ function renderTeam() {
   const save = async (id, patch) => {
     rosterDevice = parseRoster(rosterDevice);
     rosterDevice.people[id] = { ...(ro.people[id] || {}), ...(rosterDevice.people[id] || {}), ...patch };
-    if (!rosterDevice.people[id].position && !rosterDevice.people[id].leaderId) delete rosterDevice.people[id];
+    if (!rosterDevice.people[id].position && !rosterDevice.people[id].positionEn && !rosterDevice.people[id].leaderId) delete rosterDevice.people[id];
     await store.putRoster(rosterDevice); renderTeam(); renderMe(); renderKpi();
   };
   const download = () => {
@@ -3153,12 +3154,16 @@ function renderTeam() {
             const key = lang === 'ar' ? 'ar' : 'en'; fx[p.id] = { ...(fx[p.id] || {}), [key]: v.trim() }; if (!v.trim()) delete fx[p.id][key];
             if (fx[p.id] && !fx[p.id].ar && !fx[p.id].en) delete fx[p.id]; localStorage.setItem(NAME_KEY, JSON.stringify(fx));
             if (!v.trim()) location.reload(); else { renderTeam(); renderMe(); renderKpi(); } } })),
-          p.teams && p.teams.length ? el('div', { class: 'hint', text: p.teams.join(' · ') }) : null),
+          p.teams && p.teams.length ? el('div', { class: 'hint', text: p.teams.join(' · ') }) : null,
+          pulled.has(p.id) ? null : el('div', { class: 'hint warn-text', text: t('team_unknown_id') })),
         el('td', { class: 'ltr', text: p.id }),
-        el('td', {}, el('input', { type: 'text', value: positionOf(ro, p.id), placeholder: t('team_pos_ph'), onchange: (e) => save(p.id, { position: e.target.value.trim() }) })),
-        el('td', { class: 'row-actions' }, leaderSelect(p.id), el('button', { type: 'button', class: 'btn quiet tiny', title: t('team_remove'), 'aria-label': t('team_remove'), text: '✕', onclick: async () => {
+        el('td', {}, teamEdit   // both titles are fields while editing; otherwise the title in the page's language
+          ? el('div', { class: 'pos-pair' }, el('input', { type: 'text', lang: 'ar', dir: 'rtl', value: (ro.people[p.id] || {}).position || '', placeholder: t('team_pos_ar_ph'), 'aria-label': t('team_pos_ar_ph'), onchange: (e) => save(p.id, { position: e.target.value.trim() }) }),
+              el('input', { type: 'text', lang: 'en', dir: 'ltr', value: (ro.people[p.id] || {}).positionEn || '', placeholder: t('team_pos_en_ph'), 'aria-label': t('team_pos_en_ph'), onchange: (e) => save(p.id, { positionEn: e.target.value.trim() }) }))
+          : el('span', { class: 'ro-val', text: positionOf(ro, p.id, lang === 'ar' ? 'ar' : 'en') || '—' })),
+        el('td', {}, el('div', { class: 'row-actions' }, leaderSelect(p.id), el('button', { type: 'button', class: 'btn quiet tiny', title: t('team_remove'), 'aria-label': t('team_remove'), text: '✕', onclick: async () => {
           if (!confirm(t('team_remove_q', { who: nameOf(p, lang) || p.id }))) return;
-          rosterDevice = parseRoster(rosterDevice); rosterDevice.people[p.id] = { removed: true }; await store.putRoster(rosterDevice); renderTeam(); renderMe(); renderKpi(); toast(t('team_removed')); } })))))))
+          rosterDevice = parseRoster(rosterDevice); rosterDevice.people[p.id] = { removed: true }; await store.putRoster(rosterDevice); renderTeam(); renderMe(); renderKpi(); toast(t('team_removed')); } }))))))))
       : el('div', { class: 'empty', text: t('team_none') }),
     (() => { const list = pendingList();
       const up = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return;
@@ -3169,11 +3174,12 @@ function renderTeam() {
         list.length ? el('ul', { class: 'pending-list' }, list.map((x) => el('li', {}, el('b', { class: 'ltr', text: x.name }), el('span', { class: 'hint', text: ` — ${lang === 'ar' ? x.position : (x.positionEn || x.position)}${x.onLeave ? ` · ${t('card_on_leave')}` : ''}` }),
           el('button', { type: 'button', class: 'btn quiet tiny', 'aria-label': t('remove'), text: '✕', onclick: () => { localStorage.setItem(PENDING_KEY, JSON.stringify(pendingList().filter((y) => y.name !== x.name))); renderTeam(); } })))) : null,
         el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny', text: t('pending_upload'), onclick: () => up.click() }), up)); })(),
-    (() => { const idIn = el('input', { type: 'text', inputmode: 'numeric', placeholder: t('team_add_id_ph'), class: 'ltr', style: 'max-width:160px' });
-      const posIn = el('input', { type: 'text', placeholder: t('team_pos_ph') });
-      return el('div', { class: 'row team-add' }, el('b', { text: t('team_add_h') }), idIn, posIn,
-        el('button', { type: 'button', class: 'btn tiny', text: t('team_add_btn'), onclick: () => { const id = idIn.value.trim();
-          if (!/^\d+$/.test(id) || !posIn.value.trim()) { toast(t('team_add_bad')); return; } save(id, { position: posIn.value.trim() }); } })); })());
+    (() => { const cand = everyone.filter((x) => pulled.has(x.id) && !ro.people[x.id]);   // only real people from the pull, not yet in the team
+      const pick = el('select', { 'aria-label': t('team_add_pick') }, el('option', { value: '', text: t('team_add_pick') }), cand.map((x) => el('option', { value: x.id, text: `${nameOf(x, lang) || x.id} (${x.id})` })));
+      const posAr = el('input', { type: 'text', lang: 'ar', dir: 'rtl', placeholder: t('team_pos_ar_ph') }), posEn = el('input', { type: 'text', lang: 'en', dir: 'ltr', placeholder: t('team_pos_en_ph') });
+      return el('div', { class: 'row team-add' }, el('b', { text: t('team_add_h') }), pick, posAr, posEn,
+        el('button', { type: 'button', class: 'btn tiny', text: t('team_add_btn'), onclick: () => { const id = pick.value;
+          if (!id || !(posAr.value.trim() || posEn.value.trim())) { toast(t('team_add_bad2')); return; } save(id, { position: posAr.value.trim(), positionEn: posEn.value.trim() }); } })); })());
   // ADR-0059: the list reads as text until «Edit team»; editing shows the fields, the ✎ buttons and the file buttons
   if (!teamEdit) { const tb = body.querySelector('.team-table');
     if (tb) { for (const c of tb.querySelectorAll('input, select')) c.replaceWith(el('span', { class: 'ro-val', text: c.tagName === 'SELECT' ? (c.selectedOptions[0] && c.value ? c.selectedOptions[0].text : '—') : (c.value || '—') }));

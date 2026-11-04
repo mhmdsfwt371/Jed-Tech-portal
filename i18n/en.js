@@ -1560,4 +1560,9 @@ export default {
     cnt_m6: 'Why two numbers? Closing an old task in the month pushes the «everything closed» average up a lot (a 4-month-old task = 2,900 hours), while the «arrived in the month» average measures speed on new work. The median beside it is not moved by one odd task.',
     cnt_m5b: 'To check in MyAFAQY: export the tasks with the «Assigned on» filter for the same period and count from CreateDate to Close Date; the Creator column shows who opened each task, and e-mail tasks have the type «Email Customer Activity».',
     dt_pst_go: 'Open «Mail from a PST file»',
+    team_pos_ar_ph: 'Arabic title',
+    team_pos_en_ph: 'English title',
+    team_unknown_id: 'This number matches no one in the pulled data — remove it or add the right person.',
+    team_add_pick: 'Choose a person from the pulled data',
+    team_add_bad2: 'Choose a person and write a title in Arabic or English.',
 };
