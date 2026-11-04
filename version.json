@@ -1,18 +1,15 @@
 {
-  "version": "8.82",
+  "version": "8.83",
   "date": "2026-11-04",
   "notes": {
     "ar": [
-      "الأوزان: عمود «المنجز في الفترة» يعدّ المهام المنجزة فقط في فترة تختارها (كل البيانات، هذا الشهر، الشهر الماضي، من — إلى) ويكتب مصدره. طريقة العدّ والوقت المعتاد صارا خانتين بجانب النقاط، ومعامل السرعة خانة فوق الجدول. أي طريقة جديدة تبدأ بلا وقت معتاد حتى تحدده أنت، والقيم المبدئية معلَّمة.",
-      "ساعات العمل الإضافي: تشمل الفريق كله مع القادة والمديرين، والأيام التي قُفلت فيها المهام دفعة واحدة معلَّمة لأن ساعاتها أقل من الحقيقة؛ الساعات حد أدنى."
+      "إصلاح مهم في الأرقام: عندما يتداخل سحبان (سنة ثم شهر، أو سحب الإضافة)، كانت المهام المشتركة تُعدّ مرتين في اللوحة وملف الشخص والترتيب والتطوير والساعات والأوزان. الآن كل مهمة تُعدّ مرة واحدة بحالتها الأحدث."
     ],
     "en": [
-      "Weights: «Completed in the period» counts only completed tasks in a period you choose (all data, this month, last month, from — to) and states its source. The method and the usual time are fields next to the points, and the speed bonus is a field above the table. A newly chosen method starts with no usual time until you set it; seeded values are marked.",
-      "Overtime: covers the whole team including leads and managers; days whose tasks were closed in one batch are marked because their hours are less than the real work; hours are a minimum."
+      "An important fix to the numbers: when two pulls overlapped (a year then a month, or the extension's pull), shared tasks were counted twice on the board, the person file, ranks, development, overtime and the weights. Each task now counts once, in its newest status."
     ],
     "ur": [
-      "اوزان: «مدت میں مکمل» صرف مکمل کام آپ کی چنی مدت میں گنتا ہے۔ طریقہ اور معمول کا وقت اب خانے ہیں۔",
-      "اوور ٹائم: پوری ٹیم بشمول لیڈز؛ ایک ساتھ بند دن نشان زد۔"
+      "اہم درستی: دو پل ایک دوسرے پر آئیں تو مشترک کام دو بار گنے جاتے تھے؛ اب ہر کام ایک بار اپنی تازہ حالت میں گنا جاتا ہے۔"
     ]
   }
 }

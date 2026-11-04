@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.83 — 2026-11-04
+
+- إصلاح مهم في الأرقام: عندما يتداخل سحبان (سنة ثم شهر، أو سحب الإضافة)، كانت المهام المشتركة تُعدّ مرتين في اللوحة وملف الشخص والترتيب والتطوير والساعات والأوزان. الآن كل مهمة تُعدّ مرة واحدة بحالتها الأحدث.
+
+<details><summary>English</summary>
+
+- An important fix to the numbers: when two pulls overlapped (a year then a month, or the extension's pull), shared tasks were counted twice on the board, the person file, ranks, development, overtime and the weights. Each task now counts once, in its newest status.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اہم درستی: دو پل ایک دوسرے پر آئیں تو مشترک کام دو بار گنے جاتے تھے؛ اب ہر کام ایک بار اپنی تازہ حالت میں گنا جاتا ہے۔
+
+</div>
+</details>
+
+
 ## v8.82 — 2026-11-04
 
 - الأوزان: عمود «المنجز في الفترة» يعدّ المهام المنجزة فقط في فترة تختارها (كل البيانات، هذا الشهر، الشهر الماضي، من — إلى) ويكتب مصدره. طريقة العدّ والوقت المعتاد صارا خانتين بجانب النقاط، ومعامل السرعة خانة فوق الجدول. أي طريقة جديدة تبدأ بلا وقت معتاد حتى تحدده أنت، والقيم المبدئية معلَّمة.

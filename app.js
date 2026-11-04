@@ -1836,7 +1836,11 @@ function renderTeamPicker(people, team) {
 }
 // The heavy engines keep their results until their inputs change: the tasks, the weights, the team file, the mail rows (ADR-0041).
 let atSig = '', atList = [];
-const allTasks = () => { const sig = datasets.map((d) => `${d.key}:${d.tasks.length}:${d.range ? d.range.to : ''}`).join(','); if (sig !== atSig) { atSig = sig; atList = datasets.flatMap((d) => d.tasks); } return atList; };
+// ADR-0065: every task counts once. Two stored pulls can overlap (a year, then a month or the extension's two months) and the old
+// one stays when the new one does not cover it whole — so a task is kept once, in its copy from the most recent pull (its newest status).
+const allTasks = () => { const sig = datasets.map((d) => `${d.key}:${d.tasks.length}:${d.range ? d.range.to : ''}:${d.extractedAt || ''}`).join(','); if (sig !== atSig) { atSig = sig;
+  const byId = new Map(); for (const d of [...datasets].sort((x, y) => String(x.extractedAt || '').localeCompare(String(y.extractedAt || '')))) for (const x of d.tasks) byId.set(String(x.id), x);
+  atList = [...byId.values()]; } return atList; };
 const hashStr = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return h >>> 0; };
 const MEMO = new WeakMap();
 function memoTasks(tasks, parts, fn) {
