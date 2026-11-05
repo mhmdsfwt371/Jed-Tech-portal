@@ -1120,6 +1120,8 @@ function projectsCard() {
       const bar = el('div', { class: 'dlg-bar' }, el('button', { type: 'button', class: 'dlg-x', 'aria-label': t('close'), text: `✕ ${t('close')}`, onclick: () => this.close() }));
       this.prepend(bar);
     }
+    // the ✕ is made once; its words follow the language each time the window opens (it kept the first language before)
+    const x = this.querySelector(':scope > .dlg-bar .dlg-x'); if (x) { x.textContent = `✕ ${t('close')}`; x.setAttribute('aria-label', t('close')); }
     return open.call(this);
   }; }
 function projOpen() {
@@ -2302,7 +2304,10 @@ function personMonthView({ id, tasks, acts = [], months, ym, head = '', share = 
   const rows = [['src_email', 'email', 'n'], ['src_self', 'self', 'n'], ['src_other', 'other', 'n'], ['km_total', 'total', 'n'], ['km_closed', 'closed', 'h'], ['km_avg', 'avg', 'l'], ['col_points', 'points', 'h']];
   const fmt = (k, v) => (k === 'avg' ? hmOf(v) : String(v ?? '—'));
   const hist = months.slice(0, 6).map((m) => ({ m, x: one(m.ym) }));
-  const open = openTasks(tasks, id);
+  // every open task, newest first — six shown, the rest one fold away (as «My KPIs» always listed them)
+  const open = openTasks(tasks, id).sort((x, y) => String(y.createdAt || '').localeCompare(String(x.createdAt || '')));
+  const item = (x) => el('li', {}, el('span', { text: x.title || typeLabel(x.type || '', lang) || '—' }),
+    el('small', { class: 'hint', text: x.ageHours == null ? '' : t(x.ageHours < 48 ? 'hours' : 'days', { n: Math.round(x.ageHours < 48 ? x.ageHours : x.ageHours / 24) }) }));
   return el('div', { class: 'km-detail' }, head ? el('p', { class: 'hint km-head', text: head }) : null,
     el('div', { class: 'km-cmp' }, el('table', {},
       el('thead', {}, el('tr', {}, el('th', {}), el('th', { class: 'num', text: ml }), el('th', { class: 'num', text: pml }), el('th', { class: 'num', text: t('km_change') }))),
@@ -2311,8 +2316,9 @@ function personMonthView({ id, tasks, acts = [], months, ym, head = '', share = 
       share != null ? el('p', { class: 'hint', text: t('pf_share', { p: share }) }) : null),
     el('div', { class: 'km-side' },
       el('h4', { text: `${t('pf_open')} — ${open.length}` }),
-      open.length ? el('ul', { class: 'pf-open' }, open.slice(0, 6).map((x) => el('li', {}, el('span', { text: x.title || typeLabel(x.type || '', lang) || '—' }),
-        el('small', { class: 'hint', text: x.ageHours == null ? '' : t(x.ageHours < 48 ? 'hours' : 'days', { n: Math.round(x.ageHours < 48 ? x.ageHours : x.ageHours / 24) }) })))) : el('p', { class: 'hint', text: t('pf_none') }),
+      open.length ? [el('ul', { class: 'pf-open' }, open.slice(0, 6).map(item)),
+        open.length > 6 ? el('details', { class: 'more-work' }, el('summary', { text: t('me_open_more', { n: open.length - 6 }) }), el('ul', { class: 'pf-open' }, open.slice(6).map(item))) : null]
+        : el('p', { class: 'hint', text: t('pf_none') }),
       hist.length > 1 ? [el('h4', { text: t('km_hist_h') }), el('table', { class: 'km-hist' },
         el('thead', {}, el('tr', {}, el('th', { text: t('km_month') }), ['km_total', 'km_closed', 'km_avg', 'col_points'].map((k) => el('th', { class: 'num', text: t(k) })))),
         el('tbody', {}, hist.map(({ m, x }) => el('tr', { class: m.ym === ym ? 'on' : null }, el('td', { text: `${monthLabel(m.ym)}${m.whole ? '' : ' *'}` }),
@@ -2349,7 +2355,9 @@ function renderKpi() {
   const tasks = allTasks(), acts = allActivities(), wt = weights();
   const people = scoped(peopleOf(datasets)), peopleById = new Map(peopleOf(datasets).map((p) => [p.id, p]));
   // ADR-0072: «مؤشرات الفريق» is the team without the one using the portal — his own numbers are on «مؤشراتي»
-  const selfId = String((((viewAs ? realMe : me) || {}).user || {}).id || '');
+  // who «me» is, known from the first moment: the profile if built, else (manager link) the one the team file says covers the teams —
+  // the same rule «مؤشراتي» uses; before, he showed until «مؤشراتي» had been built once, then vanished
+  const selfId = String((((viewAs ? realMe : me) || {}).user || {}).id || (!isTeamPortal ? managerIdOf() || '' : ''));
   const team = currentTeam(people, tasks).filter((x) => String(x) !== selfId);
   const f = factor1(tasks, { range, team }), wp = weightedPoints(tasks, acts, wt, { range, team });
   const fp = pcov ? factor1(tasks, { range: prange, team }) : null, wpp = pcov ? weightedPoints(tasks, acts, wt, { range: prange, team }) : null;
@@ -3017,7 +3025,7 @@ function renderPlanner() {
   const sum = plannerSummary(plannerFile.html);
   // inside the sandbox the browser's storage is closed; the page gets an in-memory one, so its features work while it is open
   // (nothing is kept, as the page says) — the frame stays cut off from the portal and its data
-  const SHIM = '<script>(()=>{const mk=()=>{const d=new Map();return{getItem:(k)=>(d.has(String(k))?d.get(String(k)):null),setItem:(k,v)=>{d.set(String(k),String(v));},removeItem:(k)=>{d.delete(String(k));},clear:()=>d.clear(),key:(i)=>[...d.keys()][i]??null,get length(){return d.size;}};};for(const n of [\'localStorage\',\'sessionStorage\']){try{void window[n].length;}catch(e){try{Object.defineProperty(window,n,{value:mk(),configurable:true});}catch(_){}}}})();</script>';
+  const SHIM = '<script>(()=>{const mk=()=>{const d=new Map();return{getItem:(k)=>(d.has(String(k))?d.get(String(k)):null),setItem:(k,v)=>{d.set(String(k),String(v));},removeItem:(k)=>{d.delete(String(k));},clear:()=>d.clear(),key:(i)=>[...d.keys()][i]??null,get length(){return d.size;}};};for(const n of [\'localStorage\',\'sessionStorage\']){try{void window[n].length;}catch(e){try{Object.defineProperty(window,n,{value:mk(),configurable:true});}catch(_){}}}})();<\/script>';   // «<\/script»: the same text, but cannot end an inline <script> (the single-file preview inlines this file)
   const doc = /<head[^>]*>/i.test(plannerFile.html) ? plannerFile.html.replace(/<head[^>]*>/i, (m) => m + SHIM) : SHIM + plannerFile.html;
   const frame = el('iframe', { class: 'pl-frame', title: t('nav_planner'), sandbox: 'allow-scripts allow-downloads allow-popups allow-modals allow-forms', referrerpolicy: 'no-referrer', srcdoc: doc });
   set(body,

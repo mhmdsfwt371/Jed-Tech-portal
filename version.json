@@ -1,21 +1,24 @@
 {
-  "version": "8.89",
+  "version": "8.90",
   "date": "2026-11-05",
   "notes": {
     "ar": [
-      "صفحتين واضحتين: «مؤشراتي» فيها أرقامك انت بس، و«مؤشرات الفريق» فيها الفريق كله من غيرك. ولما تضغط على أي شخص في «مؤشرات الفريق» بيظهرلك نفس العرض بالظبط اللي بيشوفه هو في «مؤشراتي»: الشهر مقابل اللي قبله، وشغله المفتوح، وآخر ٦ شهور، وبنفس الأرقام.",
-      "اتصلّح غلط قديم في تقسيم المصادر: «اعرض صفحته» و«مؤشراتي» بتاعة المدير كانوا بيعدّوا المهام اللي أسندها له غيره على إنها «عملها لنفسه».",
-      "«خطط الفريق»: ترفع ملف الهيكل (صفحة HTML) ويظهر زي ما هو بالظبط، من غير فرز ومن غير ما تختار نفسك. والملف بيفضل على جهازك ومش بيظهر في رابط الفريق."
+      "روابط المعاينة رجعت تشتغل: النسخة اللي بتجمع البوابة في ملف واحد كانت واقفة من 8.88.",
+      "زرار «✕ إغلاق» في كل الحوارات بقى يتبع اللغة الحالية بدل أول لغة اتفتح بيها.",
+      "المدير ما بقاش يظهر في «مؤشرات الفريق» ويختفي بعد شوية: البوابة بقت تعرف مين انت من أول لحظة.",
+      "شغلك المفتوح بيظهر كله تاني، الأحدث الأول: ٦ ظاهرين والباقي في «المزيد»، في «مؤشراتي» وفي صف أي شخص."
     ],
     "en": [
-      "Two clear pages: «My KPIs» holds your numbers only, «Team KPIs» the whole team without you. Clicking anyone on «Team KPIs» shows exactly the view he sees on his «My KPIs»: the month against the one before, his open work and the last six months, with the same numbers.",
-      "An old error in the source split is fixed: «his page as he sees it» and the manager's «My KPIs» counted tasks others assigned as «opened by himself».",
-      "«Team plans»: upload the structure file (an HTML page) and it shows exactly as it is — no cut, no picking yourself. It stays on your device and is not on the team link."
+      "Preview links work again: the single-file build of the portal had stopped since 8.88.",
+      "The «✕ Close» on every window now follows the current language instead of the first one it opened in.",
+      "The manager no longer shows on «Team KPIs» and then vanishes: the portal knows who you are from the first moment.",
+      "Your open work is listed in full again, newest first: six shown and the rest under «More», on «My KPIs» and in anyone's row."
     ],
     "ur": [
-      "دو واضح صفحے: «میرے اشاریے» میں صرف آپ کے اعداد، اور «ٹیم کے اشاریے» میں آپ کے بغیر پوری ٹیم۔ «ٹیم کے اشاریے» میں کسی پر بھی کلک کریں تو بالکل وہی منظر دکھتا ہے جو وہ اپنے «میرے اشاریے» میں دیکھتا ہے: مہینہ پچھلے کے مقابلے میں، اس کا کھلا کام اور آخری چھ مہینے، انہی اعداد کے ساتھ۔",
-      "ذرائع کی تقسیم کی ایک پرانی غلطی درست: «اس کا صفحہ جیسا وہ دیکھتا ہے» اور مینیجر کے «میرے اشاریے» دوسروں کے دیے ہوئے ٹاسک کو «خود کھولے» گنتے تھے۔",
-      "«ٹیم کے منصوبے»: ڈھانچے کی فائل (HTML صفحہ) اپ لوڈ کریں، بالکل جیسی ہے ویسی دکھے گی — نہ کٹائی، نہ خود کو چننا۔ فائل آپ کی ڈیوائس پر رہتی ہے اور ٹیم لنک پر نہیں۔"
+      "پیش نظارہ لنک دوبارہ کام کرتے ہیں: پورٹل کا ایک فائل والا نسخہ 8.88 سے رکا ہوا تھا۔",
+      "ہر ونڈو کا «✕ بند کریں» اب موجودہ زبان کے مطابق ہے، نہ کہ پہلی زبان جس میں کھلا تھا۔",
+      "مینیجر اب «ٹیم کے اشاریے» میں دکھ کر پھر غائب نہیں ہوتا: پورٹل پہلے لمحے سے جانتا ہے آپ کون ہیں۔",
+      "آپ کا کھلا کام دوبارہ پورا دکھتا ہے، نیا پہلے: چھ نظر آتے ہیں اور باقی «مزید» میں، «میرے اشاریے» میں بھی اور کسی کی قطار میں بھی۔"
     ]
   }
 }
