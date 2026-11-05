@@ -848,6 +848,38 @@
   @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
   @media print { .sidebar, .topbar, .scrim, #toast, .update-bar, .no-print { display: none !important; } .content { padding: 0; }
     .content > section:not(#view-guide) { display: none !important; } #view-guide { display: block !important; } .guide section { box-shadow: none; border: 0; } }
+
+  /* ADR-0070: the monthly board */
+  .km-bar{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .km-va{margin-inline-start:auto;display:flex;gap:6px;align-items:center}
+  .km-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:10px 0 12px}
+  .km-tile{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;background:var(--card)}
+  .km-tile b{font-size:1.5rem;line-height:1.1}
+  .km-tile small{font-size:.78rem}
+  .km-dl{font-size:.75rem;margin-inline-start:6px;white-space:nowrap}
+  .km-dl.up{color:var(--ok)}.km-dl.down{color:var(--fail)}.km-dl.nt,.km-dl.eq{color:var(--slate)}
+  .km-table td.num b{font-weight:700}
+  .km-row{cursor:pointer}
+  .km-row:hover,.km-row:focus{background:var(--accent-wash);outline:none}
+  .km-row.on{background:var(--accent-wash)}
+  .km-name{display:flex;gap:6px;align-items:center}
+  .km-name::before{content:'▸';color:var(--slate);width:1em;display:inline-block}   /* drawn by CSS: not part of the name's text */
+  .km-row.on .km-name::before{content:'▾'}
+  .km-open>td{padding:0}
+  .km-detail{display:grid;grid-template-columns:minmax(260px,1fr) minmax(260px,1fr);gap:18px;padding:12px 14px 16px;border-inline-start:3px solid var(--accent)}
+  .km-detail h4{margin:0 0 6px}
+  .km-head{grid-column:1/-1;margin:0}
+  .km-cmp table,.km-hist{width:100%}
+  .km-hist tr.on td{font-weight:700}
+  .km-acts{gap:8px;flex-wrap:wrap;margin-top:10px}
+  .km-more{margin-top:18px}
+  .km-more>summary{cursor:pointer;font-weight:600;padding:8px 0}
+  @media (max-width:720px){.km-detail{grid-template-columns:1fr}}
+  /* ADR-0071: the team planner */
+  .pl-bar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+  .pl-bar .row{gap:8px;flex-wrap:wrap}
+  .pl-frame{display:block;width:100%;height:calc(100vh - 240px);min-height:560px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card)}
+  .pl-empty{padding:18px}
 </style>
 </head>
 <body>
@@ -874,10 +906,9 @@
       <div class="nav-group-panel" id="nav-kpi">
         <a href="#kpi" class="sub" data-view="kpi" data-t="kpi_board">لوحة المؤشرات</a>
         <a href="#dev" class="sub" data-view="dev" data-t="nav_dev">التطوير</a>
-        <a href="#counts" class="sub" data-view="counts" data-t="nav_counts">المهام: المصدر ووقت الإنجاز</a>
         <a href="#overtime" class="sub" data-view="overtime" data-t="nav_overtime">ساعات العمل الإضافي</a>
         <a href="#team" class="sub" data-view="team" data-t="nav_team">الفريق</a>
-        <a href="#person" class="sub" data-view="person" data-t="pf_title">ملف الموظف</a>
+        <a href="#planner" class="sub" data-view="planner" data-t="nav_planner">خطط الفريق</a>
       </div>
     </div>
     <div class="nav-section" data-nav-section="inputs">
@@ -955,10 +986,6 @@
     <div id="home-body"></div>
   </section>
 
-  <section id="view-person" hidden>
-    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="pf_title">ملف الموظف</h1><button type="button" class="help-q" data-help="g_person_b" data-help-t="pf_title" aria-label="?">?</button></div><p class="lead" data-t="lead_person"></p></div>
-    <div id="person-body"></div>
-  </section>
 
   <section id="view-dev" hidden>
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_dev">التطوير</h1><button type="button" class="help-q" data-help="g_dev_b" data-help-t="nav_dev" aria-label="?">?</button></div><p class="lead" data-t="dev_lead"></p></div>
@@ -1042,13 +1069,13 @@
     </details>
   </section>
 
-  <section id="view-counts" hidden>
-    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_counts">المهام: المصدر ووقت الإنجاز</h1><button type="button" class="help-q" data-help="g_counts_b" data-help-title="nav_counts" aria-label="?">?</button></div><p class="lead" data-t="cnt_lead"></p></div>
-    <div id="counts-body"></div>
-  </section>
   <section id="view-overtime" hidden>
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_overtime">ساعات العمل الإضافي</h1><button type="button" class="help-q" data-help="g_overtime_b" data-help-title="nav_overtime" aria-label="?">?</button></div><p class="lead" data-t="ot_lead"></p></div>
     <div id="overtime-body"></div>
+  </section>
+  <section id="view-planner" hidden>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_planner">خطط الفريق</h1><button type="button" class="help-q" data-help="g_planner_b" data-help-title="nav_planner" aria-label="?">?</button></div><p class="lead" data-t="pl_lead"></p></div>
+    <div id="planner-body"></div>
   </section>
   <section id="view-mailfile" hidden>
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_mailfile">البريد من ملف PST</h1><button type="button" class="help-q" data-help="g_mailfile_b" data-help-title="nav_mailfile" aria-label="?">?</button></div><p class="lead" data-t="mf_lead"></p></div>

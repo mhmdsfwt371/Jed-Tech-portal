@@ -17,6 +17,38 @@
 
 <!-- releases -->
 
+## v8.88 — 2026-11-05
+
+- المؤشرات بقت المكان الوحيد لأرقام كل موظف في الشهر: تختار الشهر (سحبة الربع بتطلع ٣ شهور)، وتلاقي لكل موظف المهام اللي جات من الإيميل، واللي عملها لنفسه، واللي أسندها له غيره، والإجمالي، وأُغلق منها كام، ومتوسط وقت الإغلاق، والنقاط، ومقارنة تلقائية بالشهر اللي قبله.
+- اضغط على أي موظف تفتح تفاصيله في مكانها: الشهر مقابل اللي قبله، وشغله المفتوح، وآخر ٦ شهور، وتقريره PDF، وخطته، وصفحته زي ما بيشوفها. صفحة «ملف الموظف» وصفحة «المهام: المصدر ووقت الإنجاز» اتدمجوا في المؤشرات، وروابطهم القديمة بتفتحها.
+- اتشال التكرار: الأرقام بقت من حسبة واحدة في كل مكان، وصندوق Outlook انتقل لصفحة البريد، وحذف السحبات من صفحة البيانات بس، واتصلّح تعريف «من الإيميل» القديم اللي كان ظاهر في مؤشراتي والدليل.
+- صفحة جديدة للمدير بس اسمها «خطط الفريق»: ترفع ملف مخطط الفريق زي ما وصلك، وتختار نفسك مرة واحدة، فيظهر بنفس شكله لكن لقسمك بس (التقني والمشاريع، والبحث والتطوير، وما بعد البيع). الملف بيفضل على جهازك ومش بيتنشر، ولو فضل فيه إيميل أو جوال لحد برّا قسمك بيترفض.
+- في المؤشرات: منتقي واحد يفتح صفحة أي حد زي ما هو شايفها، حتى القادة والمديرين، وتحت اسم الموظف بيظهر بيتبع مين.
+
+<details><summary>English</summary>
+
+- KPIs is now the one place for every employee's month: pick a month (a quarter pull gives three) and see, per employee, the tasks from e-mail, opened by himself and assigned by others, the total, how many closed and how fast, and the points — compared automatically with the month before.
+- Click any employee to open his details in place: this month against the last, his open work, the last six months, his PDF, his plan and his page as he sees it. The person file and the tasks-by-source page are merged into KPIs; their old links open it.
+- Repetition removed: every page reads one calculation, the Outlook box moved to the mail page, pulls are deleted on the Data page only, and the old «from e-mail» definition still shown in My KPIs and the guide is corrected.
+- A new manager-only page, «Team plans»: upload the team planner file as it came, pick yourself once, and it shows as it looks but only your part (Technical & Projects, R&D, After-Sales). The file stays on your device and is not published; it is refused if any e-mail or phone of someone outside your part remains.
+- On KPIs: one picker opens anyone’s page as he sees it, leads and managers included, and an employee’s details show whom he reports to.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اشاریے اب مہینے میں ہر ملازم کے اعداد کی واحد جگہ ہیں: مہینہ چنیں (سہ ماہی کا ڈیٹا تین مہینے دیتا ہے) اور ہر ملازم کے ای میل سے آئے، خود کھولے اور دوسروں کے دیے ہوئے ٹاسک، کل، کتنے بند ہوئے اور کتنی جلدی، اور پوائنٹس دیکھیں — پچھلے مہینے سے خودکار موازنے کے ساتھ۔
+- کسی بھی ملازم پر کلک کریں تو تفصیل وہیں کھلتی ہے: یہ مہینہ پچھلے کے مقابلے میں، کھلا کام، آخری چھ مہینے، PDF، منصوبہ اور اس کا صفحہ جیسا وہ دیکھتا ہے۔ ملازم کی فائل اور ٹاسک بلحاظ ذریعہ والا صفحہ اشاریوں میں ضم ہو گئے؛ پرانے لنک اسے کھولتے ہیں۔
+- تکرار ختم: ہر صفحہ ایک ہی حساب پڑھتا ہے، Outlook باکس میل والے صفحے پر چلا گیا، ڈیٹا صرف «ڈیٹا» صفحے سے حذف ہوتا ہے، اور «ای میل سے» کی پرانی تعریف جو «میرے اشاریے» اور رہنما میں دکھ رہی تھی درست کر دی گئی۔
+- صرف مینیجر کے لیے نیا صفحہ «ٹیم کے منصوبے»: ٹیم پلانر فائل جیسی آئی اپ لوڈ کریں، ایک بار خود کو چنیں، اور وہ اسی شکل میں صرف آپ کے حصے (ٹیکنیکل اینڈ پروجیکٹس، آر اینڈ ڈی، آفٹر سیلز) کے ساتھ دکھے گی۔ فائل آپ کی ڈیوائس پر رہتی ہے اور شائع نہیں ہوتی؛ اگر آپ کے حصے سے باہر کسی کی ای میل یا فون باقی رہے تو رد ہو جاتی ہے۔
+- اشاریوں میں: ایک ہی چناؤ سے کسی کا بھی صفحہ جیسا وہ دیکھتا ہے کھلتا ہے، لیڈز اور مینیجرز سمیت، اور ملازم کی تفصیل میں دکھتا ہے وہ کس کے ماتحت ہے۔
+
+</div>
+</details>
+
+
 ## v8.87 — 2026-11-04
 
 - صفحة الفريق: عند «تعديل الفريق» صار لكل شخص خانتا مسمّى، بالعربي وبالإنجليزي، وتُحفظان معًا؛ والصفحة الإنجليزية تعرض المسمّى الإنجليزي.

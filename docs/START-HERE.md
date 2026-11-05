@@ -58,7 +58,7 @@
 | `docs/decisions/0041-performance.md` | Performance: remembered results, partial redraws, paged lists, WOFF2 |
 | `docs/decisions/0042-view-as.md` | «اعرض كـ» — the manager sees one person's page as they see it |
 | `docs/decisions/0043-control-room.md` | «غرفة المتابعة» — the manager's first page |
-| `docs/decisions/0044-person-file.md` | «ملف الموظف» — everything about one person in one place |
+| `docs/decisions/0044-person-file.md` | «ملف الموظف» — superseded by 0070: a person's month opens in his row on the board |
 | `docs/decisions/0045-points-rules-and-my-page.md` | Editable scoring rules; the manager's «مؤشراتي» is his own |
 | `docs/decisions/0046-clarity-and-phone.md` | Clarity and phone pass, measured |
 | `docs/decisions/0047-extra-rules-and-or.md` | Extra rules with AND / OR |
@@ -84,6 +84,8 @@
 | `docs/decisions/0067-one-source-definition-and-the-task-dashboard.md` | One source definition, one engine, the tasks dashboard, and where each number lives |
 | `docs/decisions/0068-one-pst-place-and-a-guard-that-reports-last.md` | One place to read a PST; every page named; the guard reports last |
 | `docs/decisions/0069-team-table-titles-in-both-languages.md` | The team table: both titles editable, real people only, aligned cells |
+| `docs/decisions/0070-one-monthly-place-for-every-employee.md` | One monthly place for every employee; no number in two places |
+| `docs/decisions/0071-team-planner-on-the-managers-device.md` | «Team plans»: the planner, cut to the manager's part, on his device only |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

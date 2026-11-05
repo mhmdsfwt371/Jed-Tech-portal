@@ -16,7 +16,7 @@ export function tourState(step, device = 'desktop') {
 
 // Team and admin links share code and local storage. This selects visible routes, not access rights.
 export function portalRoute(hash, teamMode = false) {
-  if (!teamMode) return hash;
+  if (!teamMode) return ({ counts: 'kpi', person: 'kpi' })[hash] || hash;   // ADR-0070: the two merged pages' old links open the board
   if (['tools', 'me', 'pro', 'guide'].includes(hash) || hash.startsWith('me-') || hash.startsWith('m-')) return hash;
   return 'me';
 }
@@ -63,7 +63,7 @@ export async function loadStrings(langs = ['ar', 'en', 'ur']) {
 }
 
 // The user guide: one list, read by the page (Guide tab) and by scripts/build-manual.mjs, so they can never differ.
-export const GUIDE = [['g_home_h', 'g_home_b'], ['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_team_h', 'g_team_b'], ['g_weights_h', 'g_weights_b'], ['g_mailfile_h', 'g_mailfile_b'], ['g_dev_h', 'g_dev_b'], ['g_overtime_h', 'g_overtime_b'], ['g_counts_h', 'g_counts_b'], ['g_person_h', 'g_person_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
+export const GUIDE = [['g_home_h', 'g_home_b'], ['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_team_h', 'g_team_b'], ['g_weights_h', 'g_weights_b'], ['g_mailfile_h', 'g_mailfile_b'], ['g_dev_h', 'g_dev_b'], ['g_overtime_h', 'g_overtime_b'], ['g_planner_h', 'g_planner_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
 export const DEFINITIONS = ['def_1', 'def_2', 'def_3', 'def_4', 'def_5', 'def_6', 'def_7', 'def_8', 'def_9', 'def_10'];
 
 export function t(lang, key, vars = {}) {
@@ -1982,3 +1982,64 @@ export function overtimeOf(tasks, { from = '0000-00-00', to = '9999-12-31', peop
 }
 
 // ADR-0066's type-based split (Manual Task / Email Customer Activity) was replaced by ADR-0067: one source definition, in factor1.
+
+// ---------- ADR-0071: the team planner, cut to the technical manager's own part ----------
+// The planner is a single HTML file a colleague builds; it carries every department of the branch, with each person's phone,
+// e-mail and ID. Only the part under the owner — the manager picks himself once, by e-mail, from the largest plan; no name is
+// written in this public code — may be shown, and nothing else may
+// remain anywhere in the file: a plan is kept only when every one of its people sits under him; the built-in default plan
+// becomes his own plan; then the whole file is searched for the e-mail and phone of everyone left out — any hit refuses.
+function jsonSpanAt(text, from) {
+  const a = text.indexOf('{', from); if (a < 0) return null;
+  let depth = 0, inStr = false, esc = false;
+  for (let i = a; i < text.length; i++) {
+    const c = text[i];
+    if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true; else if (c === '{') depth++; else if (c === '}' && --depth === 0) return [a, i + 1];
+  }
+  return null;
+}
+export function plannerFor(html, ownerEmail) {
+  const fail = (code) => ({ error: code });
+  const S = plannerSeed(html); if (!S) return fail('not_planner');
+  const { seed, sp, plans } = S;
+  if (!ownerEmail) return fail('no_owner');
+  const members = plMembers, mail = plMail;
+  const key = (m) => mail(m) || String((m && m.name) || '').trim().toUpperCase().replace(/\s+/g, ' ');
+  const branch = plans.reduce((a, b) => (members(b).length > members(a).length ? b : a));
+  const owner = members(branch).find((m) => mail(m) === String(ownerEmail).toLowerCase());
+  if (!owner) return fail('no_owner');
+  const kids = new Map(); for (const m of members(branch)) { if (!kids.has(m.parent)) kids.set(m.parent, []); kids.get(m.parent).push(m); }
+  const under = new Set(), stack = [owner.id];
+  while (stack.length) { const id = stack.pop(); if (under.has(id)) continue; under.add(id); for (const k of kids.get(id) || []) stack.push(k.id); }
+  const mine = members(branch).filter((m) => under.has(m.id)), keys = new Set(mine.map(key));
+  const keep = plans.filter((p) => p !== branch && members(p).length && members(p).every((m) => keys.has(key(m))));
+  if (!keep.length) return fail('no_plans');
+  const home = keep.find((p) => members(p).some((m) => mail(m) === mail(owner))) || keep.reduce((a, b) => (members(b).length > members(a).length ? b : a));
+  let out = html.slice(0, sp[0]) + JSON.stringify({ ...seed, plans: keep }) + html.slice(sp[1]);
+  const rp = out.indexOf('const REAL_PLAN=');
+  if (rp >= 0) { const r = jsonSpanAt(out, rp); if (!r) return fail('not_planner'); out = out.slice(0, r[0]) + JSON.stringify(home.data) + out.slice(r[1]); }
+  // the guard: nobody left out may remain anywhere in the file
+  const keptPeople = keep.flatMap(members), keptMail = new Set(keptPeople.map(mail).filter(Boolean)), keptPhone = new Set(keptPeople.map((m) => ((m.info || {}).phone || '')).filter(Boolean));
+  const outside = plans.flatMap(members).filter((m) => !keys.has(key(m)));
+  const leak = outside.some((m) => { const e = mail(m), ph = (m.info || {}).phone || ''; return (e && !keptMail.has(e) && out.toLowerCase().includes(e)) || (ph && !keptPhone.has(ph) && out.includes(ph)); });
+  if (leak) return fail('leak');
+  return { html: out, plans: keep.map((p) => ({ name: p.name, people: members(p).length })), people: new Set(keptPeople.map(key)).size, made: seed.made || null };
+}
+
+const plMembers = (p) => ((p && p.data && p.data.members) || []);
+const plMail = (m) => String(((m && m.info) || {}).email || '').trim().toLowerCase();
+function plannerSeed(html) {
+  const seedAt = String(html || '').indexOf('window.__SEED='); if (seedAt < 0) return null;
+  const sp = jsonSpanAt(html, seedAt); if (!sp) return null;
+  let seed; try { seed = JSON.parse(html.slice(sp[0], sp[1])); } catch { return null; }
+  const plans = Array.isArray(seed.plans) ? seed.plans : []; return plans.length ? { seed, sp, plans } : null;
+}
+/** The people who lead someone in the planner's largest plan — the list the manager picks himself from. null: not a planner. */
+export function plannerManagers(html) {
+  const S = plannerSeed(html); if (!S) return null;
+  const branch = S.plans.reduce((a, b) => (plMembers(b).length > plMembers(a).length ? b : a)), M = plMembers(branch);
+  const leads = new Set(M.map((m) => m.parent).filter(Boolean));
+  return M.filter((m) => plMail(m) && (m.mgr || leads.has(m.id))).map((m) => ({ email: plMail(m), name: m.name || '', role: m.role || '', dep: m.dep || '' }))
+    .sort((a, b) => a.dep.localeCompare(b.dep) || a.name.localeCompare(b.name));
+}

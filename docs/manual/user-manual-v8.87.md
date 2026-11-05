@@ -51,13 +51,9 @@
 
 تقدير لساعات العمل خارج الدوام من أوقات المهام في السحب: السبت من أول مهمة اشتغل عليها الشخص إلى آخر مهمة أغلقها، ومن الأحد إلى الخميس ما بين السابعة مساءً ومنتصف الليل. اختر الشهر، والفريق المحسوب أو كل من في السحب، وطريقة حساب المساء (من أول مهمة، أو من السابعة). الجدول يعطي لكل شخص أيام السبت وساعاتها والأمسيات وساعاتها، والتفاصيل تبيّن لكل يوم أول مهمة وآخر مهمة ووقتهما، وزر CSV ينزّل كل شيء. ماي أفاقي لا يسجّل ساعات العمل، فراجع التفاصيل قبل أي قرار.
 
-### المهام: المصدر ووقت الإنجاز
+### خطط الفريق
 
-اختر شهرًا أو ربع سنة. البطاقات الأربع: كل المهام المنجزة، وما عمله الشخص لنفسه، وما جاء من الإيميل، وما أسنده له غيره — الرقم الكبير متوسط وقت الإغلاق وتحته عدد المنجز والوارد. الرسم لكل شخص بالعدد أو بوقت الإغلاق؛ مرّر لترى الأرقام واضغط على شخص لتصير البطاقات له. الجدول يفصّل كل شيء، و«الإجمالي» يطابق لوحة المؤشرات لأن الحساب من محركها نفسه.
-
-### ملف الموظف — كل ما يخص موظفًا في مكان واحد
-
-صفحة واحدة لكل موظف تجمع ما كان موزعًا على أربع صفحات: رأس فيه وظيفته ومن يتبع ومن في إجازة، وأداؤه هذا الشهر مقابل الماضي (المنجز والنقاط ونسبة الإنجاز ومتوسط المدة)، ومستواه ومحاوره الأربعة، وعبؤه ونصيبه من نقاط الفريق، وخطته للربع الحالي والقادم بتقدمها، واجتماعاته الشهرية لآخر ثلاثة أشهر للقراءة، وشغله المفتوح بعناوينه. في أعلاها: «اعرض صفحته كما يراها»، و«خطته في التطوير»، و«تقرير بي دي إف». تصل إليها من القائمة، أو بالضغط على اسم أي موظف في لوحة المؤشرات وصفحة الفريق — الجداول نفسها تبقى للمقارنة بين الناس. لا تظهر على رابط الفريق.
+صفحة المدير وحده: ارفع ملف مخطط الفريق كما وصلك، فيظهر بنفس شكله مقصورًا على قسمك (التقني والمشاريع، والبحث والتطوير، وما بعد البيع). تبقى الخطة التي كل أفرادها تحتك في الهيكل، وتُحذف خطط الإدارات الأخرى وخطة الفرع كله، ويُرفض الملف لو بقي فيه إيميل أو جوال لأحد من خارج قسمك. الملف يبقى على جهازك فقط، ولا يظهر في رابط الفريق، ولا يُحفظ التعديل داخله — للتحديث ارفع النسخة الأحدث.
 
 ### إشارة المدير — سحب كل شيء بضغطة
 
@@ -77,7 +73,7 @@
 
 ### المؤشرات
 
-اختر الفترة من القائمة. المؤشر الأول يعرض لكل موظف ما أُسند إليه وما أنجزه ونسبة الإنجاز ومدة الإنجاز وما هو مفتوح الآن، بأشرطة وترتيب بالمنجزة أو المتوسط أو المفتوحة، ثم إجمالي الفريق والدوائر. تحته تذاكر ما بعد البيع لكل موظف، ثم المؤشر الرابع — سجل الأنشطة: ما سجّله كل مهندس مع العملاء في الفترة، وعدد العملاء، وكم صار مهمة، وتوزيع الحالات والتصنيفات — حين يُرفع ملف التقارير للفترة نفسها. نقاط الفنيين مطوية أسفل الصفحة لمن يحتاجها. الفريق المحسوب يُحدَّد تلقائيًّا من الفرق الفنية في جدة ويمكن تعديله، وإذا رُفعت أكثر من فترة تظهر المقارنة أعمدةً. طريقة حساب كل رقم مكتوبة أسفل الصفحة.
+المكان الوحيد لأرقام كل موظف في الشهر. اختر الشهر من القائمة — الشهور تأتي مما سحبته، فسحبة ربع تعطي ثلاثة أشهر. البطاقات للفريق، والجدول لكل موظف: من الإيميل، وعملها لنفسه، وأسندها له غيره، والإجمالي، وأُغلق منها، ومتوسط الإغلاق، والنقاط، وتحت أهم الأرقام تغيّرها عن الشهر الذي قبله. اضغط على أي موظف تنفتح تفاصيله في مكانه: الشهر مقابل الذي قبله، وشغله المفتوح، وآخر ستة أشهر، وتقريره PDF، وخطته في التطوير، وصفحته كما يراها. وتحت الجدول «المزيد»: الفريق في آخر الأشهر، والأسبوع في لمحة، واستدامة الحمل، وتقارير الإدارة، والتذاكر، والتعريفات.
 
 ### أين تُحفظ البيانات
 
@@ -88,9 +84,9 @@
 - المهمة تُحسب للمسؤول عنها في ماي أفاقي.
 - «المسندة» هي المهام التي أُنشئت داخل الفترة، و«المنجزة» هي التي أُغلقت داخل الفترة حتى لو أُنشئت قبلها — بنفس عدّ ماي أفاقي لفلتر تاريخ الإنجاز.
 - نسبة الإنجاز: من المهام التي أُنشئت في الفترة، كم أُنجز حتى وقت السحب، بلا الملغاة. ومتوسط مدة الإنجاز: من إنشاء المهمة حتى إغلاقها بالساعات الكاملة، لما أُنجز في الفترة — ومهمة طويلة واحدة قد ترفعه، فراجع القائمة إن بدا كبيرًا.
-- «من البريد» هي مهام «نشاط بريد العميل» في ماي أفاقي — لا كل ما أنشأه حساب النظام، لأنه ينشئ مهام أوامر العمل أيضًا.
+- «من الإيميل» هي المهام التي أُنشئت من رسالة في وحدة البريد بماي أفاقي (علامة تكامل البريد في المهمة) — لا كل مهام نوع «نشاط بريد العميل»، ولا كل ما أنشأه حساب النظام.
 - «المفتوحة الآن» صورة لحظة السحب، أيًّا كان تاريخ إنشاء المهمة.
-- «سجّلها لنفسه» من المسندة: مهام فتحها الموظف وأسندها لنفسه، لا من البريد — وهي عند الفريق الطلبات التي تصل بالواتساب أو بالمكالمات. ماي أفاقي يسجّل منشئ المهمة لا قناتها، فلا يُفصل الواتساب عن المكالمة. تُقرأ مع بقية الأعمدة: تُظهر من أين جاء الحمل، لا جودة العمل.
+- «عملها لنفسه» من المسندة: مهام فتحها الموظف وأسندها لنفسه، لا من البريد — وهي عند الفريق الطلبات التي تصل بالواتساب أو بالمكالمات. ماي أفاقي يسجّل منشئ المهمة لا قناتها، فلا يُفصل الواتساب عن المكالمة. تُقرأ مع بقية الأعمدة: تُظهر من أين جاء الحمل، لا جودة العمل.
 - «بحث وتطوير»: من المنجزة في الفترة، ما كان في طابور «مهام البحث والتطوير» في ماي أفاقي. يظهر حين يحمل ملف الفترة قائمة هذا الطابور.
 - المؤشر الثاني ينقل تقرير «نقاط الفنيين» كما يحسبه ماي أفاقي شهرًا شهرًا لفرع جدة، ويجمع أشهر الفترة لكل فني. لا تُنقل منه قيم المكافآت ولا أرقام الهواتف ولا التقييمات.
 - المؤشر الثالث ينقل لوحة «ما بعد البيع» لفرع جدة كما هي: لكل موظف تذاكره المفتوحة والمعلّقة والمنجزة، من التذاكر التي أُنشئت في الفترة.
@@ -143,13 +139,9 @@ Pick the quarter (next by default), then the person from the cards. The baseline
 
 An estimate of hours worked outside the working day, from the task times in the pull: Saturday from the first task the person worked on to the last task he closed, and Sunday to Thursday between 7 PM and midnight. Choose the month, the counted team or everyone in the pull, and how evenings are counted (from the first task, or from 7 PM). The table gives each person his Saturdays and their hours and his evenings and their hours; the details show, for each day, the first and last task and their times; the CSV button downloads everything. MyAFAQY records no working hours, so check the details before any decision.
 
-### Tasks: source and time to close
+### Team plans
 
-Choose a month or a quarter. The four cards: all completed tasks, those the person opened himself, those from e-mail, and those assigned by others — the big number is the average time to close, with the done and received counts under it. The chart shows each person by count or by time to close; hover for the numbers and click a person to turn the cards to him. The table details everything, and «All» matches the KPI board because it comes from the board’s own engine.
-
-### Person file — everything about one person in one place
-
-One page per person gathering what was spread over four pages: a head with their role, who they report to and whether they are on leave; this month against last (done, points, completion rate, average duration); their level and four axes; workload and share of the team’s points; their plan for this and next quarter with progress; the last three months’ meetings, read only; and their open work with titles. At the top: “View their page as they see it”, “Their plan in Development” and “PDF report”. Reach it from the menu or by clicking any person’s name on the KPI board or the team page — those tables stay for comparing people. Not on the team link.
+The manager’s page only: upload the team planner file as it came, and it shows as it looks, limited to your part (Technical & Projects, R&D and After-Sales). A plan stays when all its people sit under you in the structure; the other departments’ plans and the whole-branch plan are removed, and the file is refused if any e-mail or phone of someone outside your part remains. The file stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file.
 
 ### The manager bookmark — everything in one press
 
@@ -169,7 +161,7 @@ If Claude in Chrome splits its reply into parts, upload them all; they merge by 
 
 ### KPIs
 
-Choose the period from the list. Factor 1 shows, per employee, what was assigned, what was completed, the completion rate, the time to complete and what is open now, with bars and ordering by completed, average or open, then the team total and the donuts. Below it come after-sales tickets per employee, then Factor 4 — the activity log: what each engineer logged with customers in the period, the distinct customers, how many became tasks, and the spread by status and category — once the reports file for the same period is uploaded. Technician points are tucked at the bottom for whoever needs them. The team counted is set automatically from Jeddah’s technical teams and can be changed, and with more than one period uploaded the comparison appears as columns. How each figure is calculated is written at the bottom.
+The one place for every employee’s numbers in a month. Pick the month from the list — months come from what you pulled, so a quarter pull gives three months. The tiles are the team; the table is each employee: from e-mail, opened by himself, assigned by others, total, closed of these, average to close and points, with the change from the month before under the main numbers. Click any employee and his details open in place: the month against the one before, his open work, the last six months, his PDF report, his development plan and his page as he sees it. Under the table, «More»: the team over recent months, the week at a glance, workload, management reports, tickets and the definitions.
 
 ### Where the data is kept
 
@@ -180,9 +172,9 @@ On this device and in this browser only; nothing is sent anywhere. To move it to
 - A task counts for its assignee in myafaqy.
 - “Assigned” are the tasks created within the period; “completed” are those closed within it, even if created earlier — the same count myafaqy gives for its completion-date filter.
 - Completion rate: of the tasks created in the period, how many were done by the time of extraction, cancelled ones excluded. Average duration: from creation to closing in calendar hours, over the tasks completed in the period — one long task can lift it, so check the list if it looks high.
-- “From email” are myafaqy’s “Email Customer Activity” tasks — not everything the system account created, because it also creates the work-order tasks.
+- “From e-mail” are the tasks created from a message in myafaqy’s mail module (the mail-integration mark on the task) — not every “Email Customer Activity” task, and not everything the system account created.
 - “Open now” is a snapshot at the moment of extraction, whatever the task’s creation date.
-- “Self-logged”, among the assigned: tasks the employee opened and assigned to himself, not from email — in this team, the requests that arrive by WhatsApp or by phone. myafaqy records who created a task, not its channel, so WhatsApp and calls cannot be separated. Read it with the other columns: it shows where the load came from, not the quality of the work.
+- “Opened by himself”, among the assigned: tasks the employee opened and assigned to himself, not from email — in this team, the requests that arrive by WhatsApp or by phone. myafaqy records who created a task, not its channel, so WhatsApp and calls cannot be separated. Read it with the other columns: it shows where the load came from, not the quality of the work.
 - “R&D”: of the tasks completed in the period, those in myafaqy’s “R&D Tasks” queue. It shows when the period’s file carries that queue’s list.
 - Factor 2 carries myafaqy’s “Technicians Points” report as myafaqy computes it, month by month for the Jeddah branch, and sums the period’s months per technician. Bonus values, phone numbers and evaluations are not carried.
 - Factor 3 carries the Jeddah branch’s “After Sales Board” as it is: per employee, their open, pending and done tickets, among tickets created in the period.
@@ -235,13 +227,9 @@ On this device and in this browser only; nothing is sent anywhere. To move it to
 
 پل میں کاموں کے اوقات سے دفتری اوقات سے باہر کے گھنٹوں کا اندازہ: ہفتہ پہلے کام سے آخری بند کام تک، اور اتوار تا جمعرات شام 7 سے آدھی رات تک۔ مہینہ، ٹیم یا سب، اور شام کا طریقہ چنیں۔ جدول ہر فرد کے ہفتے اور شامیں اور ان کے گھنٹے دکھاتا ہے؛ تفصیل میں ہر دن کا پہلا اور آخری کام؛ CSV سب کچھ ڈاؤن لوڈ کرتا ہے۔ مائی آفاقی گھنٹے درج نہیں کرتا، فیصلے سے پہلے تفصیل دیکھیں۔
 
-### کام: ماخذ اور وقت
+### ٹیم کے منصوبے
 
-مہینہ یا سہ ماہی چنیں۔ چار کارڈ: سب مکمل کام، خود کھولے، ای میل سے، اور دوسروں کے دیے — بڑا عدد بند ہونے کا اوسط وقت، نیچے مکمل اور موصول کی تعداد۔ چارٹ ہر فرد کو تعداد یا وقت سے دکھاتا ہے؛ ماؤس لائیں اعداد کے لیے اور کسی فرد پر کلک کریں۔ جدول سب تفصیل دیتا ہے، اور «کل میزان» لوحہ سے ملتا ہے کیونکہ حساب اسی کے انجن سے ہے۔
-
-### فرد کی فائل — ایک فرد کے بارے میں سب کچھ ایک جگہ
-
-ہر فرد کے لیے ایک صفحہ جو چار صفحوں پر بکھری چیزیں جمع کرتا ہے: عہدہ، کس کو رپورٹ کرتے ہیں اور چھٹی؛ اس ماہ بمقابلہ پچھلا ماہ (مکمل، پوائنٹس، تکمیل کی شرح، اوسط مدت)؛ سطح اور چار محور؛ کام کا بوجھ اور ٹیم کے پوائنٹس میں حصہ؛ موجودہ اور اگلی سہ ماہی کا منصوبہ پیش رفت کے ساتھ؛ پچھلے تین ماہ کی ملاقاتیں صرف پڑھنے کے لیے؛ اور عنوانات کے ساتھ کھلا کام۔ اوپر: «ان کا صفحہ ویسے ہی دیکھیں»، «ترقی میں ان کا منصوبہ» اور «پی ڈی ایف رپورٹ»۔ مینو سے یا اشاریوں کے بورڈ اور ٹیم صفحے پر کسی کے نام پر کلک کر کے پہنچیں — وہ جدولیں لوگوں کے موازنے کے لیے رہتی ہیں۔ ٹیم لنک پر نہیں۔
+صرف مینیجر کا صفحہ: ٹیم پلانر فائل جیسی آئی اپ لوڈ کریں، وہ اسی شکل میں آپ کے حصے تک محدود دکھے گی (ٹیکنیکل اینڈ پروجیکٹس، آر اینڈ ڈی اور آفٹر سیلز)۔ وہ منصوبہ رہتا ہے جس کے سب لوگ ڈھانچے میں آپ کے نیچے ہوں؛ دوسرے شعبوں اور پوری برانچ کے منصوبے ہٹا دیے جاتے ہیں، اور اگر باہر کے کسی کی ای میل یا فون باقی رہے تو فائل رد ہو جاتی ہے۔ فائل صرف آپ کی ڈیوائس پر رہتی ہے، ٹیم لنک پر نہیں، اور اس کے اندر کی ترمیم محفوظ نہیں ہوتی — اپ ڈیٹ کے لیے نئی فائل اپ لوڈ کریں۔
 
 ### مینیجر بک مارک — ایک دباؤ میں سب کچھ
 
@@ -261,7 +249,7 @@ On this device and in this browser only; nothing is sent anywhere. To move it to
 
 ### کارکردگی کے اشاریے
 
-فہرست سے مدت منتخب کریں۔ پہلا اشاریہ ہر ملازم کے لیے دکھاتا ہے کہ اسے کیا تفویض ہوا، اس نے کیا مکمل کیا، تکمیل کی شرح، تکمیل کا وقت اور اس وقت کیا کھلا ہے، بار کے ساتھ اور مکمل، وسط یا کھلے کے مطابق ترتیب، پھر ٹیم کا مجموعہ اور دائرے۔ اس کے نیچے ہر ملازم کے آفٹر سیلز ٹکٹ، پھر چوتھا اشاریہ — سرگرمیوں کا ریکارڈ: ہر انجینئر نے مدت میں گاہکوں کے ساتھ کیا درج کیا، مختلف گاہک، کتنے ٹاسک بنے، اور حالت اور زمرے کی تقسیم — جب اسی مدت کی رپورٹس فائل اپ لوڈ ہو۔ ٹیکنیشن پوائنٹس صفحے کے نیچے سمٹے ہوئے ہیں جسے ضرورت ہو۔ شامل ٹیم جدہ کی تکنیکی ٹیموں سے خود بخود منتخب ہوتی ہے اور بدلی جا سکتی ہے، اور ایک سے زیادہ مدتیں اپ لوڈ ہوں تو موازنہ کالموں کی صورت میں ظاہر ہوتا ہے۔ ہر عدد کا حساب کیسے ہوتا ہے، یہ صفحے کے نیچے لکھا ہے۔
+مہینے میں ہر ملازم کے اعداد کی واحد جگہ۔ فہرست سے مہینہ چنیں — مہینے آپ کے کھینچے ہوئے ڈیٹا سے آتے ہیں، سہ ماہی کا ڈیٹا تین مہینے دیتا ہے۔ کارڈ ٹیم کے ہیں؛ جدول ہر ملازم کا ہے: ای میل سے، خود کھولے، دوسروں نے دیے، کل، ان میں سے بند، بند ہونے کا اوسط اور پوائنٹس، اور اہم اعداد کے نیچے پچھلے مہینے سے تبدیلی۔ کسی بھی ملازم پر کلک کریں تو تفصیل وہیں کھلتی ہے: مہینہ پچھلے کے مقابلے میں، اس کا کھلا کام، آخری چھ مہینے، اس کی PDF رپورٹ، ترقی کا منصوبہ اور اس کا صفحہ جیسا وہ دیکھتا ہے۔ جدول کے نیچے «مزید»: حالیہ مہینوں میں ٹیم، ہفتہ ایک نظر میں، کام کا بوجھ، انتظامی رپورٹس، ٹکٹس اور تعریفیں۔
 
 ### ڈیٹا کہاں محفوظ رہتا ہے
 
@@ -272,9 +260,9 @@ On this device and in this browser only; nothing is sent anywhere. To move it to
 - ٹاسک اسی کے نام شمار ہوتا ہے جسے مائی آفاقی میں تفویض کیا گیا ہو۔
 - «تفویض شدہ» وہ ٹاسک ہیں جو اس مدت میں بنائے گئے؛ «مکمل شدہ» وہ ہیں جو اس مدت میں بند ہوئے، چاہے پہلے بنائے گئے ہوں — بالکل وہی گنتی جو مائی آفاقی اپنے تکمیل کی تاریخ والے فلٹر میں دیتا ہے۔
 - تکمیل کی شرح: اس مدت میں بنائے گئے ٹاسکس میں سے کتنے ڈیٹا نکالنے کے وقت تک مکمل ہو چکے تھے، منسوخ شدہ کے بغیر۔ اوسط مدت: ٹاسک بننے سے بند ہونے تک پورے گھنٹوں میں، اس مدت میں مکمل ہونے والے ٹاسکس پر — ایک لمبا ٹاسک اسے بڑھا سکتا ہے، زیادہ لگے تو فہرست دیکھیں۔
-- «ای میل سے» مائی آفاقی کے «کسٹمر ای میل سرگرمی» والے ٹاسک ہیں — سسٹم اکاؤنٹ کا بنایا ہوا ہر ٹاسک نہیں، کیونکہ وہ ورک آرڈر کے ٹاسک بھی بناتا ہے۔
+- «ای میل سے» وہ ٹاسک ہیں جو مائی آفاقی کے میل ماڈیول کے پیغام سے بنے (ٹاسک پر میل انٹیگریشن کا نشان) — ہر «کسٹمر ای میل سرگرمی» ٹاسک نہیں، اور نہ سسٹم اکاؤنٹ کا بنایا ہوا ہر ٹاسک۔
 - «اس وقت کھلے» ڈیٹا نکالنے کے لمحے کی تصویر ہے، ٹاسک کسی بھی تاریخ کو بنا ہو۔
-- «خود درج کیے»، تفویض شدہ میں سے: وہ ٹاسک جو ملازم نے خود کھولے اور خود کو تفویض کیے، ای میل سے نہیں — اس ٹیم میں وہ درخواستیں جو واٹس ایپ یا کال سے آتی ہیں۔ مائی آفاقی ٹاسک بنانے والے کو درج کرتا ہے، اس کا ذریعہ نہیں، اس لیے واٹس ایپ اور کال کو الگ نہیں کیا جا سکتا۔ اسے باقی کالموں کے ساتھ پڑھیں: یہ بتاتا ہے کہ کام کا بوجھ کہاں سے آیا، کام کا معیار نہیں۔
+- «خود کھولے»، تفویض شدہ میں سے: وہ ٹاسک جو ملازم نے خود کھولے اور خود کو تفویض کیے، ای میل سے نہیں — اس ٹیم میں وہ درخواستیں جو واٹس ایپ یا کال سے آتی ہیں۔ مائی آفاقی ٹاسک بنانے والے کو درج کرتا ہے، اس کا ذریعہ نہیں، اس لیے واٹس ایپ اور کال کو الگ نہیں کیا جا سکتا۔ اسے باقی کالموں کے ساتھ پڑھیں: یہ بتاتا ہے کہ کام کا بوجھ کہاں سے آیا، کام کا معیار نہیں۔
 - «تحقیق و ترقی»: اس مدت میں مکمل ہونے والے ٹاسکس میں سے وہ جو مائی آفاقی کی «R&D Tasks» قطار میں تھے۔ یہ تب دکھائی دیتا ہے جب مدت کی فائل میں اس قطار کی فہرست ہو۔
 - دوسرا اشاریہ مائی آفاقی کی «ٹیکنیشن پوائنٹس» رپورٹ کو ویسے ہی لاتا ہے جیسے مائی آفاقی اسے جدہ برانچ کے لیے مہینہ بہ مہینہ حساب کرتا ہے، اور ہر ٹیکنیشن کے لیے مدت کے مہینے جمع کرتا ہے۔ بونس کی رقمیں، فون نمبر اور تشخیصات نہیں لائی جاتیں۔
 - تیسرا اشاریہ جدہ برانچ کا «آفٹر سیلز بورڈ» جیسا ہے ویسا لاتا ہے: ہر ملازم کے کھلے، زیر التوا اور مکمل ٹکٹ، اس مدت میں بنے ٹکٹس میں سے۔
