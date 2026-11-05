@@ -1,24 +1,15 @@
 {
-  "version": "8.90",
+  "version": "8.91",
   "date": "2026-11-05",
   "notes": {
     "ar": [
-      "روابط المعاينة رجعت تشتغل: النسخة اللي بتجمع البوابة في ملف واحد كانت واقفة من 8.88.",
-      "زرار «✕ إغلاق» في كل الحوارات بقى يتبع اللغة الحالية بدل أول لغة اتفتح بيها.",
-      "المدير ما بقاش يظهر في «مؤشرات الفريق» ويختفي بعد شوية: البوابة بقت تعرف مين انت من أول لحظة.",
-      "شغلك المفتوح بيظهر كله تاني، الأحدث الأول: ٦ ظاهرين والباقي في «المزيد»، في «مؤشراتي» وفي صف أي شخص."
+      "«مؤشراتي» و«مؤشرات الفريق» فيهم زرارين: «شهر» و«ربع». اختار شهر أو ربع، وكل رقم بيتقارن تلقائيًا بالشهر اللي فات أو بالربع اللي فات، ولما تضغط على أي شخص تفاصيله بتمشي على نفس الاختيار."
     ],
     "en": [
-      "Preview links work again: the single-file build of the portal had stopped since 8.88.",
-      "The «✕ Close» on every window now follows the current language instead of the first one it opened in.",
-      "The manager no longer shows on «Team KPIs» and then vanishes: the portal knows who you are from the first moment.",
-      "Your open work is listed in full again, newest first: six shown and the rest under «More», on «My KPIs» and in anyone's row."
+      "«My KPIs» and «Team KPIs» have a «Month | Quarter» switch: pick a month or a quarter and every number is compared with the month or the quarter before; a person's details follow the same choice."
     ],
     "ur": [
-      "پیش نظارہ لنک دوبارہ کام کرتے ہیں: پورٹل کا ایک فائل والا نسخہ 8.88 سے رکا ہوا تھا۔",
-      "ہر ونڈو کا «✕ بند کریں» اب موجودہ زبان کے مطابق ہے، نہ کہ پہلی زبان جس میں کھلا تھا۔",
-      "مینیجر اب «ٹیم کے اشاریے» میں دکھ کر پھر غائب نہیں ہوتا: پورٹل پہلے لمحے سے جانتا ہے آپ کون ہیں۔",
-      "آپ کا کھلا کام دوبارہ پورا دکھتا ہے، نیا پہلے: چھ نظر آتے ہیں اور باقی «مزید» میں، «میرے اشاریے» میں بھی اور کسی کی قطار میں بھی۔"
+      "«میرے اشاریے» اور «ٹیم کے اشاریے» میں «مہینہ | سہ ماہی» کا انتخاب ہے: مہینہ یا سہ ماہی چنیں، ہر عدد کا پچھلے مہینے یا پچھلی سہ ماہی سے موازنہ ہوتا ہے، اور کسی کی تفصیل بھی اسی انتخاب پر چلتی ہے۔"
     ]
   }
 }

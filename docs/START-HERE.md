@@ -88,6 +88,7 @@
 | `docs/decisions/0071-team-planner-on-the-managers-device.md` | «Team plans» on his device only (its cut revised by 0072) |
 | `docs/decisions/0072-my-kpis-and-team-kpis.md` | «My KPIs» = me, «Team KPIs» = the team without me, one personal view; the structure file shown as uploaded |
 | `docs/decisions/0073-sixteen-old-suites-and-what-they-found.md` | The old failing suites: stale vs real; four faults fixed (preview, ✕ language, «me» known late, open work) |
+| `docs/decisions/0074-month-or-quarter-on-both-kpi-pages.md` | Month or quarter on «My KPIs» and «Team KPIs», each compared with the one before |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

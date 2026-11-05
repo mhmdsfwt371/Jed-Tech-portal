@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.91 — 2026-11-05
+
+- «مؤشراتي» و«مؤشرات الفريق» فيهم زرارين: «شهر» و«ربع». اختار شهر أو ربع، وكل رقم بيتقارن تلقائيًا بالشهر اللي فات أو بالربع اللي فات، ولما تضغط على أي شخص تفاصيله بتمشي على نفس الاختيار.
+
+<details><summary>English</summary>
+
+- «My KPIs» and «Team KPIs» have a «Month | Quarter» switch: pick a month or a quarter and every number is compared with the month or the quarter before; a person's details follow the same choice.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «میرے اشاریے» اور «ٹیم کے اشاریے» میں «مہینہ | سہ ماہی» کا انتخاب ہے: مہینہ یا سہ ماہی چنیں، ہر عدد کا پچھلے مہینے یا پچھلی سہ ماہی سے موازنہ ہوتا ہے، اور کسی کی تفصیل بھی اسی انتخاب پر چلتی ہے۔
+
+</div>
+</details>
+
+
 ## v8.90 — 2026-11-05
 
 - روابط المعاينة رجعت تشتغل: النسخة اللي بتجمع البوابة في ملف واحد كانت واقفة من 8.88.

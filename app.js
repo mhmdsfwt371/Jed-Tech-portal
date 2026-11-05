@@ -2279,6 +2279,32 @@ function pulledMonths(ranges = datasets.map((d) => d.range)) {
     return { ym, got, need: Math.max(need, 1), whole: got >= need };
   }).filter((m) => m.got > 0);
 }
+// ---------- ADR-0074: a period is a month (2026-10) or a quarter (2026-Q4); every KPI page compares it with the one before ----------
+let kmKind = pref('kmkind') === 'quarter' ? 'quarter' : 'month';
+const qOf = (ym) => { const [y, m] = ym.split('-').map(Number); return `${y}-Q${Math.ceil(m / 3)}`; };
+const isQ = (k) => /-Q[1-4]$/.test(String(k));
+const periodRangeOf = (k) => { if (!isQ(k)) return monthRangeOf(k); const [y, q] = k.split('-Q').map(Number), m1 = (q - 1) * 3 + 1;
+  return { from: `${y}-${String(m1).padStart(2, '0')}-01`, to: monthLast(`${y}-${String(m1 + 2).padStart(2, '0')}`) }; };
+const prevPeriodOf = (k) => { if (!isQ(k)) return prevMonthOf(k); let [y, q] = k.split('-Q').map(Number); q -= 1; if (!q) { q = 4; y -= 1; } return `${y}-Q${q}`; };
+const periodLabel = (k) => (isQ(k) ? t('km_q_label', { q: k.split('-Q')[1], y: k.split('-Q')[0] }) : monthLabel(k));
+/** The months or the quarters the pulls cover, newest first. A quarter is whole when each of its months up to today is pulled whole. */
+function pulledPeriods(kind = kmKind, ranges = datasets.map((d) => d.range)) {
+  const ms = pulledMonths(ranges); if (kind !== 'quarter') return ms;
+  const today = saudiDay(new Date().toISOString()), by = new Map();
+  for (const m of ms) { const q = qOf(m.ym), x = by.get(q) || { ym: q, got: 0, need: 0, whole: true, seen: new Set() }; x.got += m.got; x.need += m.need; x.whole = x.whole && m.whole; x.seen.add(m.ym); by.set(q, x); }
+  for (const x of by.values()) {
+    const r = periodRangeOf(x.ym);
+    for (let d = new Date(`${r.from}T00:00:00Z`); d.toISOString().slice(0, 10) <= r.to && d.toISOString().slice(0, 10) <= today; d.setUTCMonth(d.getUTCMonth() + 1)) {
+      const ym = d.toISOString().slice(0, 7); if (x.seen.has(ym)) continue;
+      const last = monthLast(ym) < today ? monthLast(ym) : today; x.whole = false; x.need += Number(last.slice(8, 10));   // a month of the quarter nobody pulled
+    }
+    delete x.seen;
+  }
+  return [...by.values()].sort((p, q) => q.ym.localeCompare(p.ym));
+}
+/** The «month | quarter» switch both KPI pages carry; one choice for both, kept on this device. */
+const kindPills = (redraw) => el('div', { class: 'pills km-kind' }, [['month', 'km_kind_month'], ['quarter', 'km_kind_quarter']].map(([k, l]) =>
+  el('button', { type: 'button', class: `pill-btn${kmKind === k ? ' on' : ''}`, 'data-kind': k, text: t(l), onclick: () => { if (kmKind === k) return; kmKind = k; pref('kmkind', k); kpiMonth = null; meMonth = null; redraw(); } })));
 /** One person's (or the team's) month in the numbers this page shows. */
 function monthNumbers(f, wp, id) {
   const r = id === 'team' ? f.team : f.people.find((x) => x.id === id);
@@ -2297,9 +2323,9 @@ function kmDelta(a, b, kind, pml) {
 }
 /** ADR-0072: one person's month — the same view, from the same engine, in a row of «مؤشرات الفريق» and on «مؤشراتي». */
 function personMonthView({ id, tasks, acts = [], months, ym, head = '', share = null, actions = null }) {
-  const wt = weights(), pm = prevMonthOf(ym), hasPrev = months.some((m) => m.ym === pm), ml = monthLabel(ym), pml = monthLabel(pm);
+  const wt = weights(), pm = prevPeriodOf(ym), hasPrev = months.some((m) => m.ym === pm), ml = periodLabel(ym), pml = periodLabel(pm);
   const ZERO = { email: 0, self: 0, other: 0, total: 0, closed: 0, avg: null, points: 0 };
-  const one = (y) => { const r = monthRangeOf(y); return monthNumbers(factor1(tasks, { range: r, team: [id] }), weightedPoints(tasks, acts, wt, { range: r, team: [id] }), id) || ZERO; };
+  const one = (y) => { const r = periodRangeOf(y); return monthNumbers(factor1(tasks, { range: r, team: [id] }), weightedPoints(tasks, acts, wt, { range: r, team: [id] }), id) || ZERO; };
   const n = one(ym), p = hasPrev ? one(pm) : null;
   const rows = [['src_email', 'email', 'n'], ['src_self', 'self', 'n'], ['src_other', 'other', 'n'], ['km_total', 'total', 'n'], ['km_closed', 'closed', 'h'], ['km_avg', 'avg', 'l'], ['col_points', 'points', 'h']];
   const fmt = (k, v) => (k === 'avg' ? hmOf(v) : String(v ?? '—'));
@@ -2321,7 +2347,7 @@ function personMonthView({ id, tasks, acts = [], months, ym, head = '', share = 
         : el('p', { class: 'hint', text: t('pf_none') }),
       hist.length > 1 ? [el('h4', { text: t('km_hist_h') }), el('table', { class: 'km-hist' },
         el('thead', {}, el('tr', {}, el('th', { text: t('km_month') }), ['km_total', 'km_closed', 'km_avg', 'col_points'].map((k) => el('th', { class: 'num', text: t(k) })))),
-        el('tbody', {}, hist.map(({ m, x }) => el('tr', { class: m.ym === ym ? 'on' : null }, el('td', { text: `${monthLabel(m.ym)}${m.whole ? '' : ' *'}` }),
+        el('tbody', {}, hist.map(({ m, x }) => el('tr', { class: m.ym === ym ? 'on' : null }, el('td', { text: `${periodLabel(m.ym)}${m.whole ? '' : ' *'}` }),
           el('td', { class: 'num', text: String(x.total) }), el('td', { class: 'num', text: String(x.closed) }), el('td', { class: 'num', text: hmOf(x.avg) }), el('td', { class: 'num', text: String(x.points) })))))] : null,
       actions ? el('div', { class: 'row km-acts' }, actions) : null));
 }
@@ -2330,15 +2356,16 @@ let meMonth = null;
 function meMonthParts() {
   const uid = String(me.user.id), tasks = me.tasks || [], fromPulls = meDerived || !!viewAs;
   const ranges = fromPulls ? datasets.map((d) => d.range) : [{ from: saudiDay(me.since || me.extractedAt), to: saudiDay(me.extractedAt) }];
-  const months = pulledMonths(ranges);
+  const months = pulledPeriods(kmKind, ranges);
   if (!months.length) return [el('p', { class: 'note', text: t('no_data') })];
   const thisMonth = saudiDay(new Date().toISOString()).slice(0, 7);
-  if (!meMonth || !months.some((m) => m.ym === meMonth)) meMonth = (months.find((m) => m.ym === thisMonth) || months[0]).ym;
-  const cov = months.find((m) => m.ym === meMonth), pm = prevMonthOf(meMonth), hasPrev = months.some((m) => m.ym === pm);
+  const now = kmKind === 'quarter' ? qOf(thisMonth) : thisMonth;
+  if (!meMonth || !months.some((m) => m.ym === meMonth)) meMonth = (months.find((m) => m.ym === now) || months[0]).ym;
+  const cov = months.find((m) => m.ym === meMonth), pm = prevPeriodOf(meMonth), hasPrev = months.some((m) => m.ym === pm);
   return [
-    el('div', { class: 'bar km-bar' }, el('label', {}, el('span', { text: t('km_month') }), el('select', { id: 'me-month', onchange: (e) => { meMonth = e.target.value; renderMe(); } },
-      months.map((m) => el('option', { value: m.ym, selected: m.ym === meMonth, text: `${monthLabel(m.ym)}${m.whole ? '' : ' *'}` })))),
-      el('span', { class: 'hint', text: hasPrev ? t('km_vs', { m: monthLabel(pm) }) : t('km_no_prev', { m: monthLabel(pm) }) })),
+    el('div', { class: 'bar km-bar' }, kindPills(renderMe), el('label', {}, el('span', { text: t(kmKind === 'quarter' ? 'km_kind_quarter' : 'km_month') }), el('select', { id: 'me-month', onchange: (e) => { meMonth = e.target.value; renderMe(); } },
+      months.map((m) => el('option', { value: m.ym, selected: m.ym === meMonth, text: `${periodLabel(m.ym)}${m.whole ? '' : ' *'}` })))),
+      el('span', { class: 'hint', text: hasPrev ? t('km_vs', { m: periodLabel(pm) }) : t('km_no_prev', { m: periodLabel(pm) }) })),
     !cov.whole ? el('p', { class: 'note', text: t('km_partial', { got: cov.got, need: cov.need }) }) : null,
     personMonthView({ id: uid, tasks, acts: fromPulls ? allActivities() : [], months, ym: meMonth })];
 }
@@ -2346,12 +2373,13 @@ function renderKpi() {
   applyNameFixes();
   applyPending().then((changed) => { if (changed) { renderTeam(); renderKpi(); renderMe(); } });
   const body = $('kpi-body');
-  const months = datasets.length ? pulledMonths() : [];
+  const months = datasets.length ? pulledPeriods(kmKind) : [];
   if (!months.length) { set(body, el('div', { class: 'empty', text: t('no_data') })); return; }
   const thisMonth = saudiDay(new Date().toISOString()).slice(0, 7);
-  if (!kpiMonth || !months.some((m) => m.ym === kpiMonth)) kpiMonth = (months.find((m) => m.ym === thisMonth) || months[0]).ym;
-  const ym = kpiMonth, pm = prevMonthOf(ym), cov = months.find((m) => m.ym === ym), pcov = months.find((m) => m.ym === pm);
-  const range = monthRangeOf(ym), prange = monthRangeOf(pm);
+  const nowKey = kmKind === 'quarter' ? qOf(thisMonth) : thisMonth;
+  if (!kpiMonth || !months.some((m) => m.ym === kpiMonth)) kpiMonth = (months.find((m) => m.ym === nowKey) || months[0]).ym;
+  const ym = kpiMonth, pm = prevPeriodOf(ym), cov = months.find((m) => m.ym === ym), pcov = months.find((m) => m.ym === pm);
+  const range = periodRangeOf(ym), prange = periodRangeOf(pm);
   const tasks = allTasks(), acts = allActivities(), wt = weights();
   const people = scoped(peopleOf(datasets)), peopleById = new Map(peopleOf(datasets).map((p) => [p.id, p]));
   // ADR-0072: «مؤشرات الفريق» is the team without the one using the portal — his own numbers are on «مؤشراتي»
@@ -2363,7 +2391,7 @@ function renderKpi() {
   const fp = pcov ? factor1(tasks, { range: prange, team }) : null, wpp = pcov ? weightedPoints(tasks, acts, wt, { range: prange, team }) : null;
   const nm = (id) => (id === GROUP ? t('group_bucket') : (nameOf(peopleById.get(id), lang) || id));
   const now = (id) => monthNumbers(f, wp, id), was = (id) => (fp ? monthNumbers(fp, wpp, id) : null);
-  const ml = monthLabel(ym), pml = monthLabel(pm);
+  const ml = periodLabel(ym), pml = periodLabel(pm);
   // a change beside a number: neutral for what arrived, green or red for what was done and how fast
   const delta = (x, y, kind) => kmDelta(x, y, kind, pml);
   const T = now('team'), P = was('team');
@@ -2410,13 +2438,13 @@ function renderKpi() {
   };
   // what is not «who did what in the month» stays one fold away, each in its one place
   const rep = [...reports].filter((r) => r.range && r.range.from <= range.to && r.range.to >= range.from).sort((a, b) => String(b.extractedAt || '').localeCompare(String(a.extractedAt || '')))[0];
-  const teamMonths = months.slice(0, 6).map((m) => { const r = monthRangeOf(m.ym); return { m, x: monthNumbers(factor1(tasks, { range: r, team }), weightedPoints(tasks, acts, wt, { range: r, team }), 'team') }; });
+  const teamMonths = months.slice(0, 6).map((m) => { const r = periodRangeOf(m.ym); return { m, x: monthNumbers(factor1(tasks, { range: r, team }), weightedPoints(tasks, acts, wt, { range: r, team }), 'team') }; });
   const more = el('details', { class: 'km-more', open: kpiMore || null, ontoggle: (e) => { kpiMore = e.target.open; } },
     el('summary', { text: t('km_more') }),
     el('h2', { text: t('km_team_months') }),
     el('div', { class: 'table-wrap' }, el('table', {},
       el('thead', {}, el('tr', {}, el('th', { text: t('km_month') }), ['src_email', 'src_self', 'src_other', 'km_total', 'km_closed', 'km_avg', 'col_points'].map((k) => el('th', { class: 'num', text: t(k) })))),
-      el('tbody', {}, teamMonths.map(({ m, x }) => el('tr', { class: m.ym === ym ? 'total' : null }, el('td', { text: `${monthLabel(m.ym)}${m.whole ? '' : ' *'}` }),
+      el('tbody', {}, teamMonths.map(({ m, x }) => el('tr', { class: m.ym === ym ? 'total' : null }, el('td', { text: `${periodLabel(m.ym)}${m.whole ? '' : ' *'}` }),
         [x.email, x.self, x.other, x.total, x.closed].map((v) => el('td', { class: 'num', text: String(v) })), el('td', { class: 'num', text: hmOf(x.avg) }), el('td', { class: 'num', text: String(x.points) })))))),
     kpiWeekSection(team, peopleById),
     kpiLoadSection(team, peopleById),
@@ -2426,9 +2454,9 @@ function renderKpi() {
     el('h2', { text: t('definitions') }),
     el('ul', { class: 'defs' }, KM_DEFS.map((k) => el('li', { text: t(k) }))));
   set(body,
-    el('div', { class: 'bar km-bar' },
-      el('label', {}, el('span', { text: t('km_month') }), el('select', { id: 'kpi-month', onchange: (e) => { kpiMonth = e.target.value; pref('kpimonth', kpiMonth); kpiOpen = kpiOpen; renderKpi(); } },
-        months.map((m) => el('option', { value: m.ym, selected: m.ym === ym, text: `${monthLabel(m.ym)}${m.whole ? '' : ' *'}` })))),
+    el('div', { class: 'bar km-bar' }, kindPills(renderKpi),
+      el('label', {}, el('span', { text: t(kmKind === 'quarter' ? 'km_kind_quarter' : 'km_month') }), el('select', { id: 'kpi-month', onchange: (e) => { kpiMonth = e.target.value; if (!isQ(kpiMonth)) pref('kpimonth', kpiMonth); kpiOpen = kpiOpen; renderKpi(); } },
+        months.map((m) => el('option', { value: m.ym, selected: m.ym === ym, text: `${periodLabel(m.ym)}${m.whole ? '' : ' *'}` })))),
       el('span', { class: 'hint', text: P ? t('km_vs', { m: pml }) : t('km_no_prev', { m: pml }) }),
       // anyone's page as he sees it — leads and managers too, who have no row in the counted team
       el('label', { class: 'km-va' }, el('span', { text: `👁 ${t('km_viewas_pick')}` }), el('select', { id: 'kpi-viewas', onchange: (e) => { const v = e.target.value; e.target.value = ''; if (v) startViewAs(v); } },
