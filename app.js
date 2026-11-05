@@ -726,7 +726,9 @@ function renderMe(waiting = false) {
       el('button', { type: 'button', class: 'btn tiny', text: t('va_go'), onclick: () => { if (sel.value) startViewAs(sel.value); else toast(t('va_pick')); } }),
       el('span', { class: 'hint', text: t('va_hint') }));
   })();
-  if (!me) { set(body, vaBar, el('section', { class: 'dt-quick me-setup' }, ...setup)); return; }   // the two steps carry their own numbers
+  if (!me) { const snap = isTeamPortal && mySnapId ? rankSnaps[mySnapId] : null;   // ADR-0078: his numbers as his manager sent them
+    if (snap && snap.m) { set(body, snapView(snap), el('details', { class: 'me-again' }, el('summary', { text: t('ms_full') }), el('section', { class: 'dt-quick me-setup' }, ...setup))); return; }
+    set(body, vaBar, el('section', { class: 'dt-quick me-setup' }, ...setup)); return; }   // the two steps carry their own numbers
   const qs = myProfile(me);
   const pm = profileMonths(me, new Date(), roster(), meKind);
   const fmtDate = (iso) => (iso ? `\u2066${iso.slice(0, 10)}\u2069` : '');
@@ -843,40 +845,92 @@ function rankFor(id, ym) {   // his team: the same team leader in the team file,
   return { v: 1, id, ym, r: 1 + above.length, n: pts.length, gap: above.length ? Math.round((Math.min(...above) - mine.p) * 10) / 10 : null,
     lead: !above.length && below.length ? Math.round((mine.p - Math.max(...below)) * 10) / 10 : null, at: to, partial: ym === today.slice(0, 7), ...(lv ? { lv } : {}) };
 }
+// ---------- ADR-0078: the weekly message, the personal phone link (his month and week), and «this number looks wrong» ----------
+let mySnapId = null;   // the engineer's own snapshot, from the last link he opened on this device
+const SNAP_KEYS = ['email', 'self', 'other', 'total', 'closed', 'avg', 'points'];
+const SNAP_LABEL = { email: 'src_email', self: 'src_self', other: 'src_other', total: 'km_total', closed: 'km_closed', avg: 'km_avg', rd: 'km_rd', points: 'col_points' };
+const SNAP_KIND = { email: 'n', self: 'n', other: 'n', total: 'n', closed: 'h', avg: 'l', rd: 'n', points: 'h' };
+const SNAP_DEF = { email: 'km_def_src', self: 'km_def_src', other: 'km_def_src', total: 'km_def_recv', closed: 'km_def_avg', avg: 'km_def_avg', rd: 'km_def_rd', points: 'km_def_pts' };
+function copyText(text, ok) { (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject(new Error('no clipboard'))).then(() => toast(ok), () => window.prompt(t('rk_copy_manual'), text)); }
+/** «This number looks wrong»: the number with where it comes from, and a note — copied or e-mailed; nothing is kept. */
+function flagNumber(c) {
+  const note = el('textarea', { rows: 3, class: 'fl-note', placeholder: t('fl_note_ph'), dir: 'auto' });
+  const ctx = [['fl_who', c.who], ['fl_period', c.period], ['fl_number', `${c.label} = ${c.value}`], ['fl_prev', c.prev], ['fl_def', c.def], ['fl_asof', c.asOf || '—']];
+  const text = () => [t('fl_h'), ...ctx.map(([k, v]) => `${t(k)}: ${v}`), `${t('fl_note')}: ${note.value.trim() || '—'}`, `— ${t('portal')} v${PORTAL_VERSION}`].join('\n');
+  const dlg = el('dialog', { class: 'fl-dialog', 'aria-labelledby': 'fl-title' }, el('h2', { id: 'fl-title', text: t('fl_h') }),
+    el('dl', { class: 'fl-ctx' }, ctx.flatMap(([k, v]) => [el('dt', { text: t(k) }), el('dd', { text: v })])),
+    el('label', { class: 'fl-label' }, el('span', { text: t('fl_note') }), note),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary fl-copy', text: `📋 ${t('fl_copy')}`, onclick: () => copyText(text(), t('fl_copied')) }),
+      el('a', { class: 'btn fl-mail', href: '#', text: `✉ ${t('fl_mail')}`, onclick: (e) => { e.preventDefault(); location.href = `mailto:?subject=${encodeURIComponent(t('fl_subject', { label: c.label, who: c.who }))}&body=${encodeURIComponent(text())}`; } })));
+  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
+}
+const flagBtn = (c) => el('button', { type: 'button', class: 'km-flag', title: t('fl_btn'), 'aria-label': t('fl_btn'), text: '⚑', onclick: (e) => { e.stopPropagation(); flagNumber(c); } });
+const dataAsOf = () => { const x = [...datasets.map((d) => d.extractedAt), me && me.extractedAt].filter(Boolean).sort().pop(); return x ? saudiDay(x) : '—'; };
+/** A person's numbers for a range, in the snapshot's order; the average in minutes (-1 = none). */
+function numsFor(id, range) { const x = monthNumbers(factor1(allTasks(), { range, team: [id] }), weightedPoints(allTasks(), allActivities(), weights(), { range, team: [id] }), id) || {};
+  return SNAP_KEYS.map((k) => (k === 'avg' ? (x.avg == null ? -1 : Math.round(x.avg * 60)) : Math.round((x[k] || 0) * 10) / 10)); }
+/** The Saudi work week, Sunday to Saturday: off 0 = this week to today, 1 = last week. */
+function weekRange(off = 1, today = saudiDay(new Date().toISOString())) {
+  const d = new Date(`${today}T00:00:00Z`), s = new Date(d); s.setUTCDate(d.getUTCDate() - d.getUTCDay() - 7 * off); const e = new Date(s); e.setUTCDate(s.getUTCDate() + 6);
+  const iso = (x) => x.toISOString().slice(0, 10); return { from: iso(s), to: off === 0 ? today : iso(e) };
+}
+const prevWeekRange = (r) => { const s = new Date(`${r.from}T00:00:00Z`); s.setUTCDate(s.getUTCDate() - 7); const e = new Date(s); e.setUTCDate(s.getUTCDate() + 6); return { from: s.toISOString().slice(0, 10), to: e.toISOString().slice(0, 10) }; };
+/** The personal link's snapshot: his rank (as before) plus his month and his week, each with the one before. Only his own numbers. */
+function personSnap(id, ym, week) {
+  return { ...rankFor(id, ym), v: 2, m: { n: numsFor(id, monthRangeOf(ym)), p: numsFor(id, monthRangeOf(prevMonthOf(ym))) }, w: { f: week.from, t: week.to, n: numsFor(id, week), p: numsFor(id, prevWeekRange(week)) } };
+}
+function copyWeekMessage(id, ym, nm, week) {
+  const s = personSnap(id, ym, week), [e, sf, o, tot, cl, avg, pts] = s.w.n, P = s.w.p;
+  copyText(t('wk_msg', { name: (nm(id) || '').split(' ')[0], a: s.w.f, b: s.w.t, total: tot, email: e, self: sf, other: o, closed: cl, avg: avg < 0 ? '—' : hmOf(avg / 60), points: pts, ptotal: P[3], ppoints: P[6], link: rankLink(s) }), t('wk_copied', { name: nm(id) }));
+}
+/** On a phone with no pull of his own: his numbers as his manager sent them. */
+function snapView(s) {
+  const fv = (k, v) => (k === 'avg' ? (v < 0 ? '—' : hmOf(v / 60)) : String(v)), hv = (k, v) => (k === 'avg' ? (v < 0 ? null : v / 60) : v);
+  const tbl = (label, plabel, n, p) => el('table', { class: 'km-snap' }, el('thead', {}, el('tr', {}, el('th', {}), el('th', { class: 'num', text: label }), el('th', { class: 'num', text: plabel }), el('th', { class: 'num', text: t('km_change') }), el('th', {}))),
+    el('tbody', {}, SNAP_KEYS.map((k, i) => el('tr', {}, el('td', { text: t(SNAP_LABEL[k]) }), el('td', { class: 'num' }, el('b', { text: fv(k, n[i]) })), el('td', { class: 'num', text: fv(k, p[i]) }),
+      el('td', { class: 'num' }, kmDelta(hv(k, n[i]), hv(k, p[i]), SNAP_KIND[k], plabel)), el('td', {}, flagBtn({ who: t('ms_me'), period: label, label: t(SNAP_LABEL[k]), value: fv(k, n[i]), prev: fv(k, p[i]), def: t(SNAP_DEF[k]), asOf: s.at }))))));
+  return el('section', { class: 'me-snap' }, el('h2', { text: t('ms_h') }), el('p', { class: 'hint', text: t('ms_lead', { at: s.at || '—' }) }),
+    el('h3', { text: t('ms_month', { m: monthLabel(s.ym) }) }), el('div', { class: 'table-wrap' }, tbl(monthLabel(s.ym), monthLabel(prevMonthOf(s.ym)), s.m.n, s.m.p)),
+    s.w ? [el('h3', { text: t('ms_week', { a: s.w.f, b: s.w.t }) }), el('div', { class: 'table-wrap' }, tbl(t('ms_this_week'), t('ms_prev_week'), s.w.n, s.w.p))] : null,
+    el('p', { class: 'me-teams', text: t('pg_rank', { r: s.r, n: s.n }) }));
+}
 const rankLink = (snap) => `${location.origin}${location.pathname.replace(/[^/]*$/, '')}?portal=team#rank=${b64u.enc(snap)}`;
 function parseRankSnap(o) {   // only his own numbers; anything else is refused
-  if (!o || o.v !== 1 || typeof o.id !== 'string' || !/^[0-9A-Za-z_-]{1,20}$/.test(o.id) || !/^\d{4}-\d{2}$/.test(o.ym) || !Number.isInteger(o.r) || !Number.isInteger(o.n) || o.r < 1 || o.n < 1 || o.r > o.n || o.n > 200) return null;
+  if (!o || ![1, 2].includes(o.v) || typeof o.id !== 'string' || !/^[0-9A-Za-z_-]{1,20}$/.test(o.id) || !/^\d{4}-\d{2}$/.test(o.ym) || !Number.isInteger(o.r) || !Number.isInteger(o.n) || o.r < 1 || o.n < 1 || o.r > o.n || o.n > 200) return null;
   const num = (v) => (v == null ? null : Number.isFinite(Number(v)) ? Math.round(Number(v) * 10) / 10 : null);
   const lv = o.lv && Number.isInteger(o.lv.l) && o.lv.l >= 1 && o.lv.l <= LEVELS.length && Number.isFinite(Number(o.lv.s))
     ? { l: o.lv.l, s: Math.max(0, Math.min(100, Math.round(Number(o.lv.s)))), ax: Object.fromEntries(Object.entries(o.lv.ax && typeof o.lv.ax === 'object' ? o.lv.ax : {}).filter(([k, v]) => /^[a-zA-Z]{1,16}$/.test(k) && Number.isFinite(Number(v))).slice(0, 8).map(([k, v]) => [k, Math.max(0, Math.min(100, Math.round(Number(v))))])) } : null;
-  return { v: 1, id: o.id, ym: o.ym, r: o.r, n: o.n, gap: num(o.gap), lead: num(o.lead), at: /^\d{4}-\d{2}-\d{2}$/.test(o.at || '') ? o.at : null, partial: !!o.partial, ...(lv ? { lv } : {}) };
+  const arr = (x) => (Array.isArray(x) && x.length === 7 && x.every((y) => Number.isFinite(Number(y)) && Number(y) >= -1 && Number(y) < 1e7) ? x.map(Number) : null), day = (x) => /^\d{4}-\d{2}-\d{2}$/.test(String(x || ''));
+  const m = o.m && arr(o.m.n) && arr(o.m.p) ? { n: arr(o.m.n), p: arr(o.m.p) } : null, w = o.w && day(o.w.f) && day(o.w.t) && arr(o.w.n) && arr(o.w.p) ? { f: o.w.f, t: o.w.t, n: arr(o.w.n), p: arr(o.w.p) } : null;
+  return { v: o.v, ...(m ? { m } : {}), ...(w ? { w } : {}), id: o.id, ym: o.ym, r: o.r, n: o.n, gap: num(o.gap), lead: num(o.lead), at: /^\d{4}-\d{2}-\d{2}$/.test(o.at || '') ? o.at : null, partial: !!o.partial, ...(lv ? { lv } : {}) };
 }
 async function takeRankLink(redraw = false) {   // at start the page is drawn after loading; on an open portal it is redrawn here (the router does not redraw)
   if (!location.hash.startsWith('#rank=')) return;
   let snap = null; try { snap = parseRankSnap(b64u.dec(location.hash.slice(6))); } catch { snap = null; }
   history.replaceState(null, '', `${location.pathname}${location.search}#me`);   // the numbers leave the address bar at once
   if (!snap) { setTimeout(() => toast(t('rk_bad')), 700); return; }
-  rankSnaps[snap.id] = snap; await store.kvPut('rankcards', rankSnaps);
-  if (redraw && me) renderMe();
+  rankSnaps[snap.id] = snap; await store.kvPut('rankcards', rankSnaps); mySnapId = snap.id; await store.kvPut('mysnap', snap.id);
+  if (redraw) renderMe();
   setTimeout(() => toast(t('rk_got', { r: snap.r, n: snap.n })), 700);
 }
-function copyRankMessage(id, ym, nm) {
-  const snap = rankFor(id, ym), lvtxt = snap.lv ? t('rk_msg_lv', { lv: `${snap.lv.l} · ${t(`lvl_${LEVELS[snap.lv.l - 1].k}`)}` }) : '';
+function copyRankMessage(id, ym, nm, week = weekRange(1)) {
+  const snap = personSnap(id, ym, week), lvtxt = snap.lv ? t('rk_msg_lv', { lv: `${snap.lv.l} · ${t(`lvl_${LEVELS[snap.lv.l - 1].k}`)}` }) : '';
   const text = t('rk_msg', { name: (nm(id) || '').split(' ')[0], m: monthLabel(ym), r: snap.r, n: snap.n, lvtxt, link: rankLink(snap) });
   (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject(new Error('no clipboard'))).then(() => toast(t('rk_copied', { name: nm(id) })), () => window.prompt(t('rk_copy_manual'), text));
 }
 function rankLinksSection() {
   if (isTeamPortal || !datasets.length) return null;
   const ppl = peopleOf(datasets), nm = (id) => nameOf(ppl.find((p) => p.id === id) || {}, lang) || id, ro = roster().people || {};
-  const cur = saudiDay(new Date().toISOString()).slice(0, 7); let ym = rankMonthDefault();
+  const cur = saudiDay(new Date().toISOString()).slice(0, 7); let ym = rankMonthDefault(), wk = weekRange(1);
   const team = currentTeam(scoped(ppl), allTasks()).filter((id) => ro[id] && ro[id].leaderId && !ro[id].onLeave), body = el('tbody', {});
   const draw = () => set(body, ...team.map((id) => ({ id, s: rankFor(id, ym) })).sort((p, q) => String(ro[p.id].leaderId).localeCompare(String(ro[q.id].leaderId)) || p.s.r - q.s.r).map(({ id, s }) => el('tr', {},
     el('td', { text: nm(id) }), el('td', { class: 'num', text: t('pg_rank', { r: s.r, n: s.n }) }), el('td', { text: s.gap != null ? t('pg_gap', { g: s.gap }) : s.lead != null ? t('pg_lead', { g: s.lead }) : '—' }),
-    el('td', {}, el('button', { type: 'button', class: 'btn tiny rk-copy', text: `📋 ${t('rk_copy')}`, onclick: () => copyRankMessage(id, ym, nm) })))));
+    (() => { const n = numsFor(id, wk), p = numsFor(id, prevWeekRange(wk)); return el('td', { class: 'wk-cell' }, t('wk_cell', { n: n[3], p: n[6] }), ' ', kmDelta(n[6], p[6], 'h', t('ms_prev_week'))); })(),
+    el('td', {}, el('button', { type: 'button', class: 'btn tiny rk-copy', text: `📋 ${t('rk_copy')}`, onclick: () => copyRankMessage(id, ym, nm, wk) }), ' ', el('button', { type: 'button', class: 'btn tiny wk-copy', text: `🗓 ${t('wk_copy')}`, onclick: () => copyWeekMessage(id, ym, nm, wk) })))));
   const sel = el('select', { class: 'rk-month', onchange: (e) => { ym = e.target.value; draw(); } }, [[cur, t('rk_cur', { m: monthLabel(cur) })], [ymPrev(cur), monthLabel(ymPrev(cur))]].map(([v, l]) => el('option', { value: v, selected: v === ym ? '' : null, text: l })));
   draw();
-  return el('section', { class: 'rk-sec', id: 'k-ranks' }, el('h2', { text: t('rk_h') }), el('p', { class: 'hint', text: t('rk_lead') }), el('div', { class: 'row' }, el('span', { text: t('rk_month') }), sel),
-    el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('col_person'), t('rk_col_rank'), t('rk_col_gap'), ''].map((x) => el('th', { text: x })))), body)));
+  return el('section', { class: 'rk-sec', id: 'k-ranks' }, el('h2', { text: t('rk_h') }), el('p', { class: 'hint', text: t('rk_lead') }), el('div', { class: 'row' }, el('span', { text: t('rk_month') }), sel, el('span', { text: t('wk_week') }), el('select', { class: 'wk-week', onchange: (e) => { wk = weekRange(Number(e.target.value)); draw(); } }, [[1, t('wk_last')], [0, t('wk_this')]].map(([v, l]) => el('option', { value: String(v), text: l })))),
+    el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('col_person'), t('rk_col_rank'), t('rk_col_gap'), t('wk_col'), ''].map((x) => el('th', { text: x })))), body)));
 }
 // ---------- my projects from mail (ADR-0039): imported from the file Claude in Chrome builds from Outlook web — device only ----------
 function cleanProjects(raw) {
@@ -2339,9 +2393,10 @@ function personMonthView({ id, tasks, acts = [], months, ym, head = '', share = 
     el('small', { class: 'hint', text: x.ageHours == null ? '' : t(x.ageHours < 48 ? 'hours' : 'days', { n: Math.round(x.ageHours < 48 ? x.ageHours : x.ageHours / 24) }) }));
   return el('div', { class: 'km-detail' }, head ? el('p', { class: 'hint km-head', text: head }) : null,
     el('div', { class: 'km-cmp' }, el('table', {},
-      el('thead', {}, el('tr', {}, el('th', {}), el('th', { class: 'num', text: ml }), el('th', { class: 'num', text: pml }), el('th', { class: 'num', text: t('km_change') }))),
+      el('thead', {}, el('tr', {}, el('th', {}), el('th', { class: 'num', text: ml }), el('th', { class: 'num', text: pml }), el('th', { class: 'num', text: t('km_change') }), el('th', {}))),
       el('tbody', {}, rows.map(([lab, k, kind]) => el('tr', {}, el('td', { text: t(lab) }), el('td', { class: 'num' }, el('b', { text: fmt(k, n[k]) })),
-        el('td', { class: 'num', text: p ? fmt(k, p[k]) : '—' }), el('td', { class: 'num' }, p ? kmDelta(n[k], p[k], kind, pml) : '—'))))),
+        el('td', { class: 'num', text: p ? fmt(k, p[k]) : '—' }), el('td', { class: 'num' }, p ? kmDelta(n[k], p[k], kind, pml) : '—'),
+        el('td', {}, flagBtn({ who: nameOf(peopleOf(datasets).find((x) => x.id === id) || {}, lang) || (me && me.user && String(me.user.id) === String(id) ? me.user.name : id), period: ml, label: t(lab), value: fmt(k, n[k]), prev: p ? fmt(k, p[k]) : '—', def: t(SNAP_DEF[k]), asOf: dataAsOf() })))))),
       share != null ? el('p', { class: 'hint', text: t('pf_share', { p: share }) }) : null),
     el('div', { class: 'km-side' },
       el('h4', { text: `${t('pf_open')} — ${open.length}` }),
@@ -3315,7 +3370,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   myRegister = await store.getRegister();
   devPlans = (await store.kvGet('devplans')) || {};
   teamTypesLive = (await store.kvGet('teamtypes')) || null;
-  rankSnaps = (await store.kvGet('rankcards')) || {}; await takeRankLink();
+  rankSnaps = (await store.kvGet('rankcards')) || {}; mySnapId = (await store.kvGet('mysnap')) || null; await takeRankLink();
   mfState.rules = cleanMailRules(await store.kvGet('mailrules'));
   if (!isTeamPortal) { extSend(false); window.postMessage({ type: 'afaqy-ext-hello' }, location.origin); renderExtBox(); }   // ADR-0062
   await refreshOfficialWeights();

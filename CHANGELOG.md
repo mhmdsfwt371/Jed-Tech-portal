@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.95 — 2026-11-05
+
+- «رسائل الفريق» تحت «المزيد» في «مؤشرات الفريق»: لكل مهندس رسالة أسبوعه ورسالة مركزه الشهري بنفس الرابط. المهندس بيفتح الرابط مرة من موبايله فيشوف شهره وأسبوعه في «مؤشراتي» من غير أي إعداد.
+- زرار «⚑ الرقم ده شكله غلط» جنب كل رقم شخصي: بيفتح بلاغ فيه الرقم ومصدره وتعريفه وتاريخ البيانات، وخانة لملاحظتك، وتنسخه أو تبعته بالإيميل.
+
+<details><summary>English</summary>
+
+- «Team messages» under «More» on «Team KPIs»: each engineer's week message and month rank message, with the same link. He opens it once on his phone and sees his month and week on «My KPIs» with no setup.
+- «⚑ This number looks wrong» beside every personal number: a report with the number, where it comes from, its definition and the data date, a note, then copy or e-mail it.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «ٹیم کے اشاریے» میں «مزید» کے نیچے «ٹیم کے پیغامات»: ہر انجینئر کا ہفتے کا پیغام اور مہینے کے درجے کا پیغام، ایک ہی لنک کے ساتھ۔ وہ فون پر ایک بار کھولے تو بغیر سیٹ اپ «میرے اشاریے» میں اپنا مہینہ اور ہفتہ دیکھے۔
+- ہر ذاتی عدد کے ساتھ «⚑ یہ عدد غلط لگتا ہے»: عدد، اس کا ماخذ، تعریف اور ڈیٹا کی تاریخ کے ساتھ رپورٹ، ایک نوٹ، پھر کاپی کریں یا ای میل کریں۔
+
+</div>
+</details>
+
+
 ## v8.94 — 2026-11-05
 
 - تصنيفات البريد بقت بتاعتك بالكامل من البوابة: تضيف تصنيف، وتسمّيه، وتكتب كلماته، وترتّب الأولوية بالأسهم، وتحذف. وجدول النتايج بيتبني من تصنيفاتك، والقواعد بقت بتتنقل مع النسخة الاحتياطية.

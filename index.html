@@ -885,6 +885,15 @@
   .mf-rule{display:grid;grid-template-columns:minmax(120px,180px) 1fr auto;gap:8px;align-items:center;margin:6px 0}
   .mf-rule-acts{display:flex;gap:4px}
   @media (max-width:720px){.mf-rule{grid-template-columns:1fr}}
+  /* ADR-0078: the flag, the report window, the phone snapshot */
+  .km-flag{border:0;background:transparent;cursor:pointer;color:var(--slate);opacity:.5;font-size:.9rem;min-width:32px;min-height:32px;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:8px}   /* a finger-sized target, a light mark */
+  .km-flag:hover,.km-flag:focus{opacity:1;background:var(--accent-wash);outline:none}
+  .fl-dialog{max-width:560px;width:calc(100% - 32px)}
+  .fl-ctx{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:8px 0 12px}
+  .fl-ctx dt{color:var(--slate)}.fl-ctx dd{margin:0}
+  .fl-label{display:grid;gap:6px;margin-bottom:12px}.fl-note{width:100%;box-sizing:border-box}
+  .me-snap table{width:100%}.me-snap h3{margin:16px 0 6px}
+  .wk-cell{white-space:nowrap}
 </style>
 </head>
 <body>
