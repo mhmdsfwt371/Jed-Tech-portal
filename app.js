@@ -2,7 +2,7 @@
 import { PRIMARY, SYSTEMS as DEFAULT_SYSTEMS, SYSTEM_CATEGORIES as DEFAULT_SYSTEM_CATEGORIES, MORE, PORTAL_VERSION, MODULE_ALLOW } from './config.js';
 import { mountTourDemo, replayTourDemo } from './tour-demo.js';
 import {
-  t as tr, L, LANGS, dirOf, tourState, TOUR_DEVICES, tourDemoPlan, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1, plannerFor, plannerManagers,
+  t as tr, L, LANGS, dirOf, tourState, TOUR_DEVICES, tourDemoPlan, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1, plannerSummary,
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
@@ -228,7 +228,9 @@ function meFromPulls(id) {
   const person = ppl.find((p) => p.id === id) || { id };
   return upgradeMe({ schema: 'afaqy-me/v2', user: { id, name: nameOf(person, 'en') || id }, people: ppl,
     extractedAt: when ? `${when}T23:59:00.000Z` : new Date().toISOString(), since: since ? `${since}T00:00:00.000Z` : undefined,
-    tasks: allTasks().map((x) => ({ ...x, own: x.assigneeId === id })) });
+    // ADR-0072: «own» means «he opened it himself» (isSelfLogged); it was set to «assigned to him», which turned every task
+    // others assigned him into «self». The pulled tasks already carry who created them — keep them as they are.
+    tasks: allTasks() });
 }
 // the manager: the team-file entry that covers departments (ADR-0045)
 const managerIdOf = () => { const e = Object.entries(roster().people || {}).find(([, p]) => Array.isArray(p.covers) && p.covers.length); return e ? e[0] : null; };
@@ -337,7 +339,6 @@ function cardCtxFromDatasets(team) {
   const tasks = allTasks(); const acts = reports.flatMap((r) => r.activities || []);
   return { tasks, activities: acts, weights: weights(), team, roster: roster(), now: new Date() };
 }
-function cardCtxFromMe(team) { return { tasks: me.tasks, activities: [], weights: weights(), team, roster: roster(), now: new Date() }; }
 // closing months: the first pull after a month ends freezes that month's cards for the scope; they never change afterwards
 async function closeMonths() {
   if (!datasets.length) return;
@@ -380,8 +381,6 @@ function openMeet(ym, id, name, typeChoices) {
       el('button', { type: 'button', class: 'btn', text: t('close'), onclick: () => { dlg.close(); dlg.remove(); } })));
   document.body.append(dlg); dlg.showModal();
 }
-function exportMeet() { const a = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify({ schema: 'afaqy-oneonone/v1', exportedAt: new Date().toISOString(), meet }, null, 2)], { type: 'application/json' })), download: `afaqy-one-to-one-${ymd(new Date())}.json` }); document.body.append(a); a.click(); a.remove(); }
-async function importMeet(file) { try { const j = JSON.parse(await file.text()); if (j.schema !== 'afaqy-oneonone/v1' || typeof j.meet !== 'object') throw 0; for (const [ym, people] of Object.entries(j.meet)) for (const [id, v] of Object.entries(people || {})) meet[ym] = { ...(meet[ym] || {}), [id]: { ...(meet[ym] || {})[id], ...v } }; await store.putMeet(meet); toast(t('meet_imported')); meetRefresh(); } catch { toast(t('err_json')); } }
 // the goals and last month's agreement, shown inside a card
 function meetBlock(ym, id, tasks, editable, name, typeChoices) {
   const m = meetOf(ym, id), prev = meetOf(prevMonth(ym), id);
@@ -630,23 +629,70 @@ function donut(title, parts, { size = 120, fmt = (v) => String(v) } = {}) {
       el('span', { text: p.label }), el('b', { text: `${fmt(p.value)} · ${Math.round(p.share * 100)}%` }))))));
 }
 const portalHome = () => location.origin + location.pathname.replace(/[^/]*$/, '') + (isTeamPortal ? '?portal=team' : '');
-const tOld = (o) => t(o.n === 1 ? 'today_oldest_1' : 'today_oldest', o);
-// ADR-0059: My KPIs answer-first — one plain sentence and the period's numbers on top; setup, profile and the overview folded at the end
-function answerFirst(body, box, s) {
-  const setupRow = body.querySelector('.me-again') ? body.querySelector('.me-again').parentElement : null, card = body.querySelector('.me-card');
-  const upd = setupRow ? setupRow.querySelector('a.btn.primary') : null, ic = $('intro-card-me');
-  const line = el('div', { class: 'me-answer' }, el('p', { class: 'answer-line', text: t('me_answer', { d: s.done || 0, p: Math.round((s.points || 0) * 10) / 10, o: s.open || 0 }) }), upd);
-  box.before(line);
-  const fold = el('details', { class: 'me-fold va-hide' }, el('summary', { text: t('me_fold') }));
-  if (setupRow) fold.append(setupRow); if (card) fold.append(card);
-  if (ic && !ic.hidden) { ic.hidden = true; fold.append(el('button', { type: 'button', class: 'btn tiny quiet', text: t('me_fold_intro'), onclick: () => { ic.hidden = false; ic.scrollIntoView({ behavior: 'smooth', block: 'start' }); } })); }
-  // the essentials stay open; the month's card, level details, history and definitions fold into one section
-  const keep = new Set([line, box, fold, ...body.querySelectorAll(':scope > section.today, :scope > section.pg-card, :scope > div.worklist, :scope > .va-banner, :scope > .va-picker')]);
-  const wl = body.querySelector(':scope > div.worklist'); if (wl && wl.previousElementSibling && wl.previousElementSibling.tagName === 'H2') keep.add(wl.previousElementSibling);
-  const more = el('details', { class: 'me-more' }, el('summary', { text: t('me_more') }));
-  for (const n of [...body.children]) if (!keep.has(n) && !n.classList.contains('va-banner') && !n.classList.contains('va-picker')) more.append(n);
-  if (more.children.length > 1) body.append(more);
-  body.append(fold);
+// ADR-0072: «مؤشراتي» — the person's own month only (header, the shared personal view, his projects, setup)
+function progressCard(pm) {
+  const wt = weights(), uid = me.user.id, today = saudiDay(new Date().toISOString()), ymNow = today.slice(0, 7);
+  // his team: those under the same team leader in the team file (not everyone in the pull), on duty, whose work is in this pull
+  const ro = roster().people || {}, lead = ro[uid] && ro[uid].leaderId;
+  const scope = lead ? Object.keys(ro).filter((k) => k === uid || (ro[k].leaderId === lead && !ro[k].onLeave)) : [...new Set([uid, ...((pm.scope && pm.scope.visible) || [])])];
+  const present = scope.filter((id) => id === uid || me.tasks.some((x) => x.assigneeId === id));
+  const ymShift = (ym, k) => { const d = new Date(Date.parse(`${ym}-01T00:00:00Z`)); d.setUTCMonth(d.getUTCMonth() + k); return d.toISOString().slice(0, 7); };
+  const monthEnd = (ym) => { const d = new Date(Date.parse(`${ymShift(ym, 1)}-01T00:00:00Z`)); d.setUTCDate(0); return d.toISOString().slice(0, 10); };
+  const rankIn = (ym) => memoTasks(me.tasks, ['rank', ym, present.join(','), ym === ymNow ? today : ''], () => {
+    const pts = present.map((id) => ({ id, p: quarterBaseline(me.tasks, wt, id, { from: `${ym}-01`, to: ym === ymNow ? today : monthEnd(ym) }).points }));
+    const mine = pts.find((x) => x.id === uid) || { p: 0 }, above = pts.filter((x) => x.p > mine.p).map((x) => x.p), below = pts.filter((x) => x.id !== uid && x.p <= mine.p).map((x) => x.p);
+    return { r: 1 + above.length, n: pts.length, p: mine.p, gap: above.length ? Math.round((Math.min(...above) - mine.p) * 10) / 10 : null, lead: !above.length && below.length ? Math.round((mine.p - Math.max(...below)) * 10) / 10 : null };
+  });
+  // the rank
+  let rankBox;
+  const snap = rankSnaps[uid];
+  if (present.length < 2) rankBox = snap ? el('div', { class: 'pg-rank' }, el('b', { class: 'pg-big', text: t('pg_rank', { r: snap.r, n: snap.n }) }), el('span', { class: 'hint', text: t(snap.partial ? 'rk_from_partial' : 'rk_from', { m: monthLabel(snap.ym), d: snap.at || '' }) }),
+      el('div', { class: 'pg-gap', text: snap.gap != null ? t('pg_gap', { g: snap.gap }) : snap.lead != null ? t('pg_lead', { g: snap.lead }) : '' }))
+    : el('div', { class: 'pg-rank' }, el('p', { class: 'hint', text: t('pg_rank_need') }), el('p', { class: 'hint', text: t('rk_ask') }));
+  else { const now = rankIn(ymNow), before = rankIn(ymShift(ymNow, -1));
+    const move = before.p > 0 ? (before.r > now.r ? el('span', { class: 'delta good', text: `▲ ${t('pg_up', { a: before.r })}` }) : before.r < now.r ? el('span', { class: 'delta bad', text: `▼ ${t('pg_down', { a: before.r })}` }) : el('span', { class: 'delta same', text: t('pg_same') })) : null;
+    rankBox = el('div', { class: 'pg-rank' }, el('b', { class: 'pg-big', text: t('pg_rank', { r: now.r, n: now.n }) }), el('span', { class: 'hint', text: t('pg_rank_sub') }),
+      el('div', { class: 'pg-gap', text: now.gap != null ? t('pg_gap', { g: now.gap }) : now.lead != null ? t('pg_lead', { g: now.lead }) : '' }), move); }
+  // records — none of them repeat the Today card (current streak, yesterday, this week)
+  const mine = me.tasks.filter((x) => x.assigneeId === uid && x.state === 'done' && x.completedAt), byMonth = new Map(), byDay = new Map();
+  for (const x of mine) { const d = saudiDay(x.completedAt), m = d.slice(0, 7); byDay.set(d, (byDay.get(d) || 0) + 1);
+    const v = byMonth.get(m) || { p: 0, n: 0, fast: 0 }; v.p += taskPoints(wt, x); v.n++; const k = wt.tasks[typeKey(x.type)];
+    if (k && k.std && x.createdAt && businessHours(x.createdAt, x.completedAt) <= k.std) v.fast++; byMonth.set(m, v); }
+  const months = [...byMonth.keys()].sort(), bestM = months.reduce((b, m) => (!b || byMonth.get(m).p > byMonth.get(b).p ? m : b), null);
+  const isWork = (s) => ![5, 6].includes(new Date(Date.parse(`${s}T00:00:00Z`)).getUTCDay());
+  const nextWork = (s) => { const d = new Date(Date.parse(`${s}T00:00:00Z`)); do d.setUTCDate(d.getUTCDate() + 1); while ([5, 6].includes(d.getUTCDay())); return d.toISOString().slice(0, 10); };
+  let longest = 0, run = 0, prev = null; for (const s of [...byDay.keys()].sort()) { if (!isWork(s)) continue; run = prev && nextWork(prev) === s ? run + 1 : 1; longest = Math.max(longest, run); prev = s; }
+  const mostDay = Math.max(0, ...byDay.values());
+  const recs = el('ul', { class: 'pg-recs' }, bestM ? el('li', { text: t('pg_rec_month', { m: monthLabel(bestM), p: Math.round(byMonth.get(bestM).p * 10) / 10 }) }) : null,
+    el('li', { text: t('pg_rec_streak', { n: longest }) }), el('li', { text: t('pg_rec_day', { n: mostDay }) }));
+  // achievements — each from his own work
+  const weekOf = (s) => { const dt = new Date(Date.parse(`${s}T00:00:00Z`)); dt.setUTCDate(dt.getUTCDate() - dt.getUTCDay()); return dt.toISOString().slice(0, 10); };
+  const weeks = new Map(); for (const s of byDay.keys()) if (isWork(s)) weeks.set(weekOf(s), (weeks.get(weekOf(s)) || 0) + 1);
+  const firstMonth = (f) => months.find(f) || null, maxOf = (k) => Math.max(0, ...months.map((m) => byMonth.get(m)[k]));
+  const ach = [
+    { k: 'week5', ok: [...weeks.values()].some((n) => n >= 5) },
+    { k: 'm50', at: firstMonth((m) => byMonth.get(m).n >= 50), prog: [maxOf('n'), 50] },
+    { k: 'fast10', at: firstMonth((m) => byMonth.get(m).fast >= 10), prog: [maxOf('fast'), 10] },
+    { k: 'up20', at: firstMonth((m) => { const pv = byMonth.get(ymShift(m, -1)); return pv && pv.p >= 5 && byMonth.get(m).p >= 1.2 * pv.p; }) },
+    { k: 'top', at: present.length >= 2 ? firstMonth((m) => rankIn(m).r === 1) : (snap && snap.r === 1 && !snap.partial ? snap.ym : null) },
+    { k: 'streak10', ok: longest >= 10, prog: [longest, 10] },
+  ].map((x) => ({ ...x, ok: x.ok != null ? x.ok : !!x.at }));
+  const achBox = el('div', { class: 'pg-ach' }, ach.map((x) => el('div', { class: `pg-badge${x.ok ? ' on' : ''}` }, el('span', { class: 'pg-ico', 'aria-hidden': 'true', text: x.ok ? '★' : '☆' }),
+    el('div', {}, el('b', { text: t(`ach_${x.k}`) }), el('small', { text: x.ok ? (x.at ? monthLabel(x.at) : t('ach_done')) : x.prog ? t('ach_prog', { a: Math.min(x.prog[0], x.prog[1]), b: x.prog[1] }) : t('ach_locked') })))));
+  // the level and the shortest way up
+  const { levels } = levelsFor(me.tasks, present, today, mailRows), fromMgr = present.length < 2 && snap && snap.lv;
+  const lv = fromMgr ? { level: snap.lv.l, score: snap.lv.s, axes: snap.lv.ax || {} } : levels[uid];   // without colleagues in his pull, the level his manager computed
+  let lvlBox;
+  if (!lv || lv.level == null || lv.score == null) lvlBox = el('p', { class: 'hint', text: t(present.length < 2 ? 'rk_lv_need' : 'pg_lvl_early') });
+  else { const nx = [35, 60, 80][lv.level - 1], weak = Object.entries(lv.axes || {}).filter(([, v]) => v != null).sort((p, q) => p[1] - q[1])[0];
+    lvlBox = el('div', { class: 'pg-lvl' }, el('span', { class: `level-pill l${lv.level}`, text: `${lv.level} · ${t(`lvl_${LEVELS[lv.level - 1].k}`)}` }),
+      nx ? el('div', { class: 'pg-bar' }, el('i', { style: `width:${Math.min(100, Math.round((lv.score / nx) * 100))}%` })) : null,
+      el('small', { text: nx ? `${t('pg_lvl_next', { s: lv.score, nx, name: t(`lvl_${LEVELS[lv.level].k}`) })}${lv.level === 3 ? t('pg_lvl_next4') : ''}` : t('pg_lvl_top') }),
+      weak ? el('small', { class: 'pg-tip', text: t('pg_tip', { t: t(`pg_tip_${weak[0]}`) }) }) : null,
+      fromMgr ? el('small', { class: 'hint pg-lv-from', text: t('rk_lv_from', { d: snap.at || '' }) }) : null); }
+  return el('section', { class: 'pg-card' }, el('h2', { text: t('pg_h') }),
+    el('div', { class: 'pg-grid' }, rankBox, el('div', {}, el('h3', { text: t('pg_lvl_h') }), lvlBox), el('div', {}, el('h3', { text: t('pg_rec_h') }), recs)),
+    el('h3', { text: t('pg_ach_h') }), achBox, el('p', { class: 'hint pg-private', text: t('pg_private') }));
 }
 function renderMe(waiting = false) {
   applyNameFixes();
@@ -726,54 +772,14 @@ function renderMe(waiting = false) {
       el('div', { class: 'me-facts' },
         el('span', { text: t('me_updated', { date: fmtDate(me.extractedAt) }) }),
         el('span', { text: t(pm.scope.visible.length === 1 ? 'me_scope_1' : 'me_scope', { n: pm.scope.visible.length }) }))),
-    el('div', { class: 'row', style: 'justify-content:space-between;align-items:flex-end' },
-      el('h2', { style: 'margin:0', text: t(`me_cmp_h_${meKind}`, { d: pm.windows.day }) }),
-      pills(meKind, [['month', t('me_period_month')], ['quarter', t('me_period_quarter')], ['half', t('me_period_half')]], (k) => { meKind = k; renderMe(); })),
-    el('p', { class: 'hint', text: t('me_month_sub', { a: pm.windows.this.from, b: pm.windows.this.to, c: pm.windows.last.from, d: pm.windows.last.to }) }),
-    cards(pm.mine.this, pm.mine.last, '', t('me_last_period')),
-    pm.mine.this && pm.mine.this.bySource && pm.mine.this.assigned ? el('section', { class: 'me-src' }, el('h3', { text: t('me_src_h') }), srcCards({ received: pm.mine.this.assigned, cohortClosed: pm.mine.this.cohortClosed, cohortAvgHours: pm.mine.this.cohortAvgHours }, pm.mine.this.bySource)) : null,
-    (pm.sources.email + pm.sources.self + pm.sources.other) ? el('div', { class: 'donuts' },
-      donut(t('me_sources_h'), [{ label: t('src_other'), value: pm.sources.other }, { label: t('src_email'), value: pm.sources.email }, { label: t('src_self'), value: pm.sources.self }])) : null,
-    el('h2', { text: t('me_open_h', { n: mine.length }) }),
-    mine.length ? [el('div', { class: 'worklist' }, mine.slice(0, 6).map(workCard)),
-      mine.length > 6 ? el('details', { class: 'more-work' }, el('summary', { text: t('me_open_more', { n: mine.length - 6 }) }), el('div', { class: 'worklist' }, mine.slice(6).map(workCard))) : null]
-      : el('div', { class: 'empty', text: t('me_open_none') }),
-    el('h2', { text: t('me_avg_h') }),
-    pm.average ? [ cards(pm.mine.this, pm.average, '', t('me_avg_team'))]
-      : el('p', { class: 'note info', text: t('me_avg_none') }),
-    pm.below.length ? [
-      el('h2', { 'data-tab': 'team', text: t('me_team_h', { n: pm.below.length }) }),
-      el('div', { class: 'table-wrap', 'data-tab': 'team' }, el('table', {},
-        el('thead', {}, el('tr', {}, ...['col_person', 'col_assigned', 'col_done', 'me_vs_last', 'col_rate', 'col_avg', 'col_open'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
-        el('tbody', {}, pm.below.map((r) => el('tr', {},
-          el('td', {}, el('div', { text: nm(r.id) }), positionOf(roster(), r.id, lang) ? el('div', { class: 'hint', text: positionOf(roster(), r.id, lang) }) : null), el('td', { class: 'num', text: String(r.this.assigned) }), el('td', { class: 'num' }, bar(r.this.done, maxDone)),
-          el('td', { class: 'num' }, arrow('done', r.this, r.last)), el('td', { class: 'num', text: formatRate(r.this.rate) }),
-          el('td', { class: 'num', text: r.this.avgHours == null ? '—' : formatHours(r.this.avgHours, lang) }), el('td', { class: 'num', text: String(r.this.open) })))))),
-      (alerts.attention || alerts.improved) ? el('div', { class: 'alerts', 'data-tab': 'alerts' },
-        alerts.attention ? el('div', { class: 'alert warn', text: t('alert_attention', { name: nm(alerts.attention.id), why: alerts.attention.why.map(whyText).join('، ') }) }) : null,
-        alerts.improved ? el('div', { class: 'alert ok', text: t('alert_improved', { name: nm(alerts.improved.id), n: alerts.improved.delta }) }) : null) : null] : null,
-    el('div', { class: 'row', style: 'justify-content:space-between;align-items:flex-end' },
-      el('h2', { style: 'margin:0' }, t('card_h'), helpQ('help_card')),
-      (() => { const months = [...new Set([...Object.keys(monthCards), ymd(new Date()).slice(0, 7)])].sort().reverse(); if (!cardMonth || !months.includes(cardMonth)) cardMonth = months[0];
-        return el('select', { class: 'w-sel', onchange: (e) => { cardMonth = e.target.value; renderMe(); } }, months.map((m) => el('option', { value: m, selected: m === cardMonth, text: `${monthLabel(m)}${monthCards[m] ? '' : ` · ${t('card_live')}`}` }))); })()),
-    meLevelSection(pm, who),
-    meCardSection(pm, who, nm),
-    el('h2', { text: t('me_history_h') }),
-    el('div', { class: 'table-wrap' }, el('table', {},
-      el('thead', {}, el('tr', {}, ...['me_q', 'col_assigned', 'col_done', 'col_rate', 'col_avg', 'col_email', 'col_self', 'col_cancelled'].map((k, i) => el('th', { class: i ? 'num' : '', text: t(k) })))),
-      el('tbody', {}, qs.map((q) => {
-        const r = q.row;
-        return el('tr', {}, el('td', {}, q.label, q.partial ? el('span', { class: 'pill', text: ` ${t('me_partial')}` }) : null),
-          ...(r ? [r.assigned, r.done].map((v) => el('td', { class: 'num', text: String(v) })) : [el('td', { class: 'num', text: '0' }), el('td', { class: 'num', text: '0' })]),
-          el('td', { class: 'num', text: r ? formatRate(r.rate) : '—' }),
-          el('td', { class: 'num', text: r && r.avgHours != null ? formatHours(r.avgHours, lang) : '—' }),
-          el('td', { class: 'num', text: String(r ? r.fromEmail : 0) }), el('td', { class: 'num', text: String(r ? r.selfLogged : 0) }),
-          el('td', { class: 'num', text: String(r ? r.cancelled : 0) }));
-      })))),
-    el('h2', { text: t('definitions') }), el('ul', { class: 'defs' }, DEFINITIONS.map((k) => el('li', { text: t(k) }))),
+    // ADR-0072: «مؤشراتي» is the person's own month — the very view a row opens on «مؤشرات الفريق», from the same engine; no team data
+    ...meMonthParts(),
+    !isTeamPortal && !viewAs ? projectsCard() : null,   // the manager's own projects, on his own page only — as in v8.88
+    // his place and progress — what his rank link carries: his own numbers and level, no colleague (ADR-0072 keeps it)
+    (() => { if (!(isTeamPortal || viewAs)) return null; try { return progressCard(pm); } catch { return null; } })(),
+    el('h2', { text: t('definitions') }), el('ul', { class: 'defs' }, KM_DEFS.map((k) => el('li', { text: t(k) }))),
     el('details', { class: 'team' }, el('summary', { text: t('me_refresh_h') }), el('p', { class: 'hint', text: t('me_refresh') }), ...setup,
       el('button', { type: 'button', class: 'btn va-hide', text: t('me_forget'), onclick: async () => { if (viewAs || meDerived) return; me = null; await store.putMe(null); renderMe(); } })));
-  meDashboard(body, pm, { nm, arrow });
 }
 // ---------- My KPIs as a dashboard (ADR-0034): openable tiles, a collapsible block for me and one for my team, tabs for a leader ----------
 let meTab = 'me';
@@ -871,100 +877,6 @@ function rankLinksSection() {
   draw();
   return el('section', { class: 'rk-sec', id: 'k-ranks' }, el('h2', { text: t('rk_h') }), el('p', { class: 'hint', text: t('rk_lead') }), el('div', { class: 'row' }, el('span', { text: t('rk_month') }), sel),
     el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('col_person'), t('rk_col_rank'), t('rk_col_gap'), ''].map((x) => el('th', { text: x })))), body)));
-}
-function progressCard(pm) {
-  const wt = weights(), uid = me.user.id, today = saudiDay(new Date().toISOString()), ymNow = today.slice(0, 7);
-  // his team: those under the same team leader in the team file (not everyone in the pull), on duty, whose work is in this pull
-  const ro = roster().people || {}, lead = ro[uid] && ro[uid].leaderId;
-  const scope = lead ? Object.keys(ro).filter((k) => k === uid || (ro[k].leaderId === lead && !ro[k].onLeave)) : [...new Set([uid, ...((pm.scope && pm.scope.visible) || [])])];
-  const present = scope.filter((id) => id === uid || me.tasks.some((x) => x.assigneeId === id));
-  const ymShift = (ym, k) => { const d = new Date(Date.parse(`${ym}-01T00:00:00Z`)); d.setUTCMonth(d.getUTCMonth() + k); return d.toISOString().slice(0, 7); };
-  const monthEnd = (ym) => { const d = new Date(Date.parse(`${ymShift(ym, 1)}-01T00:00:00Z`)); d.setUTCDate(0); return d.toISOString().slice(0, 10); };
-  const rankIn = (ym) => memoTasks(me.tasks, ['rank', ym, present.join(','), ym === ymNow ? today : ''], () => {
-    const pts = present.map((id) => ({ id, p: quarterBaseline(me.tasks, wt, id, { from: `${ym}-01`, to: ym === ymNow ? today : monthEnd(ym) }).points }));
-    const mine = pts.find((x) => x.id === uid) || { p: 0 }, above = pts.filter((x) => x.p > mine.p).map((x) => x.p), below = pts.filter((x) => x.id !== uid && x.p <= mine.p).map((x) => x.p);
-    return { r: 1 + above.length, n: pts.length, p: mine.p, gap: above.length ? Math.round((Math.min(...above) - mine.p) * 10) / 10 : null, lead: !above.length && below.length ? Math.round((mine.p - Math.max(...below)) * 10) / 10 : null };
-  });
-  // the rank
-  let rankBox;
-  const snap = rankSnaps[uid];
-  if (present.length < 2) rankBox = snap ? el('div', { class: 'pg-rank' }, el('b', { class: 'pg-big', text: t('pg_rank', { r: snap.r, n: snap.n }) }), el('span', { class: 'hint', text: t(snap.partial ? 'rk_from_partial' : 'rk_from', { m: monthLabel(snap.ym), d: snap.at || '' }) }),
-      el('div', { class: 'pg-gap', text: snap.gap != null ? t('pg_gap', { g: snap.gap }) : snap.lead != null ? t('pg_lead', { g: snap.lead }) : '' }))
-    : el('div', { class: 'pg-rank' }, el('p', { class: 'hint', text: t('pg_rank_need') }), el('p', { class: 'hint', text: t('rk_ask') }));
-  else { const now = rankIn(ymNow), before = rankIn(ymShift(ymNow, -1));
-    const move = before.p > 0 ? (before.r > now.r ? el('span', { class: 'delta good', text: `▲ ${t('pg_up', { a: before.r })}` }) : before.r < now.r ? el('span', { class: 'delta bad', text: `▼ ${t('pg_down', { a: before.r })}` }) : el('span', { class: 'delta same', text: t('pg_same') })) : null;
-    rankBox = el('div', { class: 'pg-rank' }, el('b', { class: 'pg-big', text: t('pg_rank', { r: now.r, n: now.n }) }), el('span', { class: 'hint', text: t('pg_rank_sub') }),
-      el('div', { class: 'pg-gap', text: now.gap != null ? t('pg_gap', { g: now.gap }) : now.lead != null ? t('pg_lead', { g: now.lead }) : '' }), move); }
-  // records — none of them repeat the Today card (current streak, yesterday, this week)
-  const mine = me.tasks.filter((x) => x.assigneeId === uid && x.state === 'done' && x.completedAt), byMonth = new Map(), byDay = new Map();
-  for (const x of mine) { const d = saudiDay(x.completedAt), m = d.slice(0, 7); byDay.set(d, (byDay.get(d) || 0) + 1);
-    const v = byMonth.get(m) || { p: 0, n: 0, fast: 0 }; v.p += taskPoints(wt, x); v.n++; const k = wt.tasks[typeKey(x.type)];
-    if (k && k.std && x.createdAt && businessHours(x.createdAt, x.completedAt) <= k.std) v.fast++; byMonth.set(m, v); }
-  const months = [...byMonth.keys()].sort(), bestM = months.reduce((b, m) => (!b || byMonth.get(m).p > byMonth.get(b).p ? m : b), null);
-  const isWork = (s) => ![5, 6].includes(new Date(Date.parse(`${s}T00:00:00Z`)).getUTCDay());
-  const nextWork = (s) => { const d = new Date(Date.parse(`${s}T00:00:00Z`)); do d.setUTCDate(d.getUTCDate() + 1); while ([5, 6].includes(d.getUTCDay())); return d.toISOString().slice(0, 10); };
-  let longest = 0, run = 0, prev = null; for (const s of [...byDay.keys()].sort()) { if (!isWork(s)) continue; run = prev && nextWork(prev) === s ? run + 1 : 1; longest = Math.max(longest, run); prev = s; }
-  const mostDay = Math.max(0, ...byDay.values());
-  const recs = el('ul', { class: 'pg-recs' }, bestM ? el('li', { text: t('pg_rec_month', { m: monthLabel(bestM), p: Math.round(byMonth.get(bestM).p * 10) / 10 }) }) : null,
-    el('li', { text: t('pg_rec_streak', { n: longest }) }), el('li', { text: t('pg_rec_day', { n: mostDay }) }));
-  // achievements — each from his own work
-  const weekOf = (s) => { const dt = new Date(Date.parse(`${s}T00:00:00Z`)); dt.setUTCDate(dt.getUTCDate() - dt.getUTCDay()); return dt.toISOString().slice(0, 10); };
-  const weeks = new Map(); for (const s of byDay.keys()) if (isWork(s)) weeks.set(weekOf(s), (weeks.get(weekOf(s)) || 0) + 1);
-  const firstMonth = (f) => months.find(f) || null, maxOf = (k) => Math.max(0, ...months.map((m) => byMonth.get(m)[k]));
-  const ach = [
-    { k: 'week5', ok: [...weeks.values()].some((n) => n >= 5) },
-    { k: 'm50', at: firstMonth((m) => byMonth.get(m).n >= 50), prog: [maxOf('n'), 50] },
-    { k: 'fast10', at: firstMonth((m) => byMonth.get(m).fast >= 10), prog: [maxOf('fast'), 10] },
-    { k: 'up20', at: firstMonth((m) => { const pv = byMonth.get(ymShift(m, -1)); return pv && pv.p >= 5 && byMonth.get(m).p >= 1.2 * pv.p; }) },
-    { k: 'top', at: present.length >= 2 ? firstMonth((m) => rankIn(m).r === 1) : (snap && snap.r === 1 && !snap.partial ? snap.ym : null) },
-    { k: 'streak10', ok: longest >= 10, prog: [longest, 10] },
-  ].map((x) => ({ ...x, ok: x.ok != null ? x.ok : !!x.at }));
-  const achBox = el('div', { class: 'pg-ach' }, ach.map((x) => el('div', { class: `pg-badge${x.ok ? ' on' : ''}` }, el('span', { class: 'pg-ico', 'aria-hidden': 'true', text: x.ok ? '★' : '☆' }),
-    el('div', {}, el('b', { text: t(`ach_${x.k}`) }), el('small', { text: x.ok ? (x.at ? monthLabel(x.at) : t('ach_done')) : x.prog ? t('ach_prog', { a: Math.min(x.prog[0], x.prog[1]), b: x.prog[1] }) : t('ach_locked') })))));
-  // the level and the shortest way up
-  const { levels } = levelsFor(me.tasks, present, today, mailRows), fromMgr = present.length < 2 && snap && snap.lv;
-  const lv = fromMgr ? { level: snap.lv.l, score: snap.lv.s, axes: snap.lv.ax || {} } : levels[uid];   // without colleagues in his pull, the level his manager computed
-  let lvlBox;
-  if (!lv || lv.level == null || lv.score == null) lvlBox = el('p', { class: 'hint', text: t(present.length < 2 ? 'rk_lv_need' : 'pg_lvl_early') });
-  else { const nx = [35, 60, 80][lv.level - 1], weak = Object.entries(lv.axes || {}).filter(([, v]) => v != null).sort((p, q) => p[1] - q[1])[0];
-    lvlBox = el('div', { class: 'pg-lvl' }, el('span', { class: `level-pill l${lv.level}`, text: `${lv.level} · ${t(`lvl_${LEVELS[lv.level - 1].k}`)}` }),
-      nx ? el('div', { class: 'pg-bar' }, el('i', { style: `width:${Math.min(100, Math.round((lv.score / nx) * 100))}%` })) : null,
-      el('small', { text: nx ? `${t('pg_lvl_next', { s: lv.score, nx, name: t(`lvl_${LEVELS[lv.level].k}`) })}${lv.level === 3 ? t('pg_lvl_next4') : ''}` : t('pg_lvl_top') }),
-      weak ? el('small', { class: 'pg-tip', text: t('pg_tip', { t: t(`pg_tip_${weak[0]}`) }) }) : null,
-      fromMgr ? el('small', { class: 'hint pg-lv-from', text: t('rk_lv_from', { d: snap.at || '' }) }) : null); }
-  return el('section', { class: 'pg-card' }, el('h2', { text: t('pg_h') }),
-    el('div', { class: 'pg-grid' }, rankBox, el('div', {}, el('h3', { text: t('pg_lvl_h') }), lvlBox), el('div', {}, el('h3', { text: t('pg_rec_h') }), recs)),
-    el('h3', { text: t('pg_ach_h') }), achBox, el('p', { class: 'hint pg-private', text: t('pg_private') }));
-}
-function todayCard(pm, nm) {
-  const wt = weights(), uid = me.user.id, now = new Date(), day = (d) => saudiDay(d.toISOString());
-  const hour = new Date(now.getTime() + 3 * 3600000).getUTCHours();
-  const greet = t(hour < 12 ? 'today_morning' : hour < 17 ? 'today_afternoon' : 'today_evening', { name: (nm(uid) || '').split(' ')[0] });
-  const mine = me.tasks.filter((x) => x.assigneeId === uid);
-  const doneDays = new Set(mine.filter((x) => x.state === 'done' && x.completedAt).map((x) => saudiDay(x.completedAt)));
-  const isWork = (d) => ![5, 6].includes(new Date(Date.parse(d + 'T00:00:00Z')).getUTCDay());
-  let streak = 0, d = new Date(now); if (!doneDays.has(day(d))) d.setUTCDate(d.getUTCDate() - 1);   // today may still be in progress
-  for (let i = 0; i < 400; i++) { const s = day(d); if (!isWork(s)) { d.setUTCDate(d.getUTCDate() - 1); continue; } if (!doneDays.has(s)) break; streak++; d.setUTCDate(d.getUTCDate() - 1); }
-  const since = mine.filter((x) => x.state === 'done' && x.completedAt).map((x) => saudiDay(x.completedAt)).sort();
-  const y = new Date(now); y.setUTCDate(y.getUTCDate() - 1); const yd = day(y), yesterday = since.filter((s) => s === yd).length;
-  const workDays = new Set(since.filter(isWork)).size, avg = workDays ? Math.round((since.length / workDays) * 10) / 10 : 0;
-  const weekOf = (s) => { const dt = new Date(Date.parse(s + 'T00:00:00Z')); dt.setUTCDate(dt.getUTCDate() - dt.getUTCDay()); return dt.toISOString().slice(0, 10); };
-  const weeks = new Map(); for (const s of since) weeks.set(weekOf(s), (weeks.get(weekOf(s)) || 0) + 1);
-  const best = Math.max(0, ...weeks.values()), thisWeek = weeks.get(weekOf(day(now))) || 0;
-  const open = openTasks(me.tasks, uid), oldest = open[open.length - 1];
-  const team = [...new Set([uid, ...(pm.scope.visible || [])])];
-  const wk = weekOf(day(now)), lastWk = weekOf(day(new Date(now.getTime() - 7 * 86400000)));
-  const pts = (w) => me.tasks.filter((x) => team.includes(x.assigneeId) && x.state === 'done' && x.completedAt && weekOf(saudiDay(x.completedAt)) === w).reduce((s, x) => s + taskPoints(wt, x), 0);
-  const cur = Math.round(pts(wk)), goal = Math.max(1, Math.round(pts(lastWk)));
-  return el('section', { class: 'today' },
-    el('div', { class: 'today-head' }, el('h2', { text: greet }), el('span', { class: 'today-date ltr', text: day(now) })),
-    el('div', { class: 'today-grid' },
-      el('div', { class: `t-tile${streak >= 5 ? ' hot' : ''}` }, el('b', { text: String(streak) }), el('span', { text: t('today_streak') }), el('small', { text: streak ? t('today_streak_keep') : t('today_streak_start') })),
-      el('div', { class: 't-tile' }, el('b', { text: String(yesterday) }), el('span', { text: t('today_yesterday') }), el('small', { text: t('today_avg', { n: avg }) })),
-      el('div', { class: 't-tile' }, el('b', { text: String(thisWeek) }), el('span', { text: t('today_week') }), el('small', { text: thisWeek >= best && best ? t('today_best_now') : t('today_best', { n: best }) })),
-      el('div', { class: 't-tile' }, el('b', { text: String(open.length) }), el('span', { text: t('today_open') }), oldest ? el('small', { class: 'ltr-dates', text: tOld({ n: Math.max(1, Math.round((oldest.ageHours || 0) / 24)), title: oldest.title || typeLabel(oldest.type || '', lang) || '' }) }) : el('small', { text: t('today_clear') }))),
-    team.length > 1 ? el('div', { class: 'team-goal' }, el('div', { class: 'tg-row' }, el('span', { text: t('today_team_goal') }), el('b', { text: `${cur} / ${goal}` })),
-      el('i', {}, el('b', { style: `width:${Math.min(100, Math.round((cur / goal) * 100))}%` })), el('small', { text: cur >= goal ? t('today_team_done') : t('today_team_left', { n: goal - cur }) })) : null);
 }
 // ---------- my projects from mail (ADR-0039): imported from the file Claude in Chrome builds from Outlook web — device only ----------
 function cleanProjects(raw) {
@@ -1332,103 +1244,6 @@ function projReport() {
   ${groups.map((g) => `<h2>${esc(t(`proj_f_${g.st}`))} — ${g.list.length}${sum(g.list) ? ` · ${f0(sum(g.list))} ${esc(t('sar'))}` : ''}</h2>${table(g.list)}`).join('')}
   <footer>${esc(t('proj_pdf_foot'))}</footer></section></body></html>`;
   openReport(html, 'pdf', 'AFAQY-my-projects');
-}
-function meDashboard(body, pm, { nm, arrow }) {
-  const win = pm.windows.this, prev = pm.windows.last, wt = weights();
-  // the type: the bookmark now sends it; older pulls get it from the team data on this device
-  const typeById = new Map(); for (const x of allTasks()) if (x.type) typeById.set(x.id, x.type);
-  const typeOf = (x) => x.type || typeById.get(x.id) || '';
-  const inW = (iso, w) => { const d = saudiDay(iso); return d && d >= w.from && d <= w.to; };
-  const hrs = (x) => (x.createdAt && x.completedAt ? Math.max(0, (Date.parse(x.completedAt) - Date.parse(x.createdAt)) / 3600000) : null);
-  const ptsOf = (x) => taskPoints(wt, { ...x, type: typeOf(x) });
-  // activities with customers (the activity log, from the reports on this device) count in the points too — Done only, by their category's weight
-  const seenAct = new Set(); const acts = reports.flatMap((r) => r.activities || []).filter((x) => { const k = x.id || `${x.createdById}|${x.createdAt}|${x.category}`; if (seenAct.has(k)) return false; seenAct.add(k); return true; });
-  const actsFor = (ids, w) => acts.filter((x) => ids.includes(x.createdById) && /^done$/i.test(x.status || '') && inW(x.createdAt, w));
-  const actPts = (list) => list.reduce((s, x) => s + activityWeight(wt, x.category), 0);
-  const DASH = [['done', 'col_done'], ['points', 'col_points'], ['rate', 'col_rate'], ['avgHours', 'col_avg'], ['open', 'col_open'], ['fromEmail', 'col_email']];
-  const listFor = (ids, k, w) => me.tasks.filter((x) => ids.includes(x.assigneeId) && (
-    k === 'open' ? x.state === 'open'
-    : k === 'rate' ? inW(x.createdAt, w) && x.state !== 'cancelled'
-    : k === 'fromEmail' ? x.fromEmail && inW(x.createdAt, w)
-    : x.state === 'done' && inW(x.completedAt, w)));
-  const stats = (ids, w) => { const done = listFor(ids, 'done', w), asg = listFor(ids, 'rate', w), h = done.map(hrs).filter((v) => v != null);
-    return { done: done.length, points: Math.round((done.reduce((s, x) => s + ptsOf(x), 0) + actPts(actsFor(ids, w))) * 10) / 10, rate: asg.length ? asg.filter((x) => x.state === 'done').length / asg.length : null,
-      avgHours: h.length ? h.reduce((s, v) => s + v, 0) / h.length : null, open: listFor(ids, 'open', w).length, fromEmail: listFor(ids, 'fromEmail', w).length }; };
-  const show = (k, r) => (!r || r[k] == null ? '—' : k === 'rate' ? formatRate(r[k]) : k === 'avgHours' ? formatHours(r[k], lang) : String(r[k]));
-  // ADR-0057: every reading says where it comes from — the pull, the state and dates it counts, and the types behind it
-  const srcTypes = (list) => { const m = new Map(); for (const x of list) { const l = typeOf(x) ? typeLabel(typeOf(x), lang) : t('type_unknown'); m.set(l, (m.get(l) || 0) + 1); }
-    return [...m.entries()].sort((p, q) => q[1] - p[1]).map(([l, n]) => `${l} (${n})`); };
-  const typesText = (types, max = 12) => (types.length ? t('src_types', { k: types.length, list: types.slice(0, max).join('، ') + (types.length > max ? ' …' : '') }) : '');
-  const pullText = () => { const d = saudiDay(me.extractedAt || new Date().toISOString());
-    return viewAs ? t('src_pull_mgr_view', { d }) : meDerived ? t('src_pull_mgr', { d }) : t('src_pull_self', { d, n: me.tasks.length }); };
-  const srcLine = (k, ids, w) => { const list = listFor(ids, k, w), acts = k === 'points' ? actsFor(ids, w) : [];
-    return el('p', { class: 'src-line' }, el('b', { text: `${t('src_h')}: ` }), el('span', { text: `${t(`src_k_${k}`, { from: w.from, to: w.to, n: list.length })} ` }),
-      k === 'rate' ? null : el('span', { text: typesText(srcTypes(k === 'rate' ? list : list), 8) }), acts.length ? el('span', { text: ` ${t('src_with_acts', { n: acts.length })}` }) : null); };
-  const srcBox = (ids, w) => { const done = listFor(ids, 'done', w), acts = actsFor(ids, w);
-    return el('div', { class: 'src-box' }, el('p', {}, el('b', { text: pullText() })),
-      el('p', {}, el('b', { text: `${t('src_counted')} ` }), el('span', { text: `${t('src_period', { from: w.from, to: w.to })} ${done.length ? typesText(srcTypes(done)) : t('src_none_yet')}` })),
-      el('p', { class: 'hint', text: `${t('src_excl')} ${acts.length ? t('src_with_acts', { n: acts.length }) : t('src_no_acts')}` })); };
-  const fmtH = (v) => (v == null ? '' : Math.round(v * 10) / 10);
-  const csvOf = (list) => [[t('col_person'), 'ID', t('col_type'), t('col_state'), t('col_created'), t('col_completed'), t('col_hours'), t('col_points')],
-    ...list.map((x) => [nm(x.assigneeId), x.id, typeOf(x).split('|')[lang === 'en' ? 0 : 1] || typeOf(x), t(`state_${x.state}`), (x.createdAt || '').slice(0, 16).replace('T', ' '), (x.completedAt || '').slice(0, 16).replace('T', ' '), fmtH(hrs(x)), x.state === 'done' ? ptsOf(x) : ''])];
-  const table = (list) => { if (!list.length) return el('div', { class: 'empty', text: t('sheet_none') });
-    const { tbody, more } = pagedBody(list, (x) => el('tr', {}, el('td', { text: nm(x.assigneeId) }), el('td', { text: typeOf(x) ? typeLabel(typeOf(x), lang) : '—' }), el('td', { text: t(`state_${x.state}`) }),
-      el('td', { class: 'ltr', text: (x.createdAt || '').slice(0, 10) }), el('td', { class: 'num', text: String(fmtH(hrs(x))) }), el('td', { class: 'num', text: x.state === 'done' ? String(ptsOf(x)) : '—' })));
-    return el('div', {}, el('p', { class: 'hint', text: t('rows_total', { n: list.length }) }), el('div', { class: 'table-wrap' }, el('table', {},
-      el('thead', {}, el('tr', {}, [t('col_person'), t('col_type'), t('col_state'), t('col_created'), t('col_hours'), t('col_points')].map((h, n) => el('th', { class: n >= 4 ? 'num' : null, text: h })))), tbody)), more); };
-  const bars = (title, rows) => rows.length ? el('section', { class: 'dash-box' }, el('h4', { text: title }), el('div', { class: 'hbars' }, (() => { const max = Math.max(1, ...rows.map((r) => r.v));
-      return rows.map((r) => el('div', { class: 'hbar' }, el('span', { class: 'hb-l', title: r.l, text: r.l }), el('i', {}, el('b', { style: `width:${Math.round((r.v / max) * 100)}%` })), el('span', { class: 'hb-v', text: r.t || String(r.v) }))); })())) : null;
-  const group = (list, key, val) => { const m = new Map(); for (const x of list) { const g = key(x); m.set(g, (m.get(g) || 0) + val(x)); } return [...m.entries()].map(([l, v]) => ({ l, v: Math.round(v * 10) / 10 })).sort((p, q) => q.v - p.v); };
-  const weekOf = (iso) => { const d = new Date(Date.parse(iso) + 3 * 3600000); d.setUTCDate(d.getUTCDate() - d.getUTCDay()); return d.toISOString().slice(0, 10); };
-  const board = (list, perPerson, k, actsOf = []) => { const done = list.filter((x) => x.state === 'done'), h = done.map(hrs).filter((v) => v != null);
-    return el('div', { class: 'dash' },
-      el('div', { class: 'dash-nums' }, [[t('sheet_count'), String(list.length)], [t('col_points'), String(Math.round((done.reduce((s, x) => s + ptsOf(x), 0) + actPts(actsOf)) * 10) / 10)],
-        [t('col_avg'), h.length ? formatHours(h.reduce((s, v) => s + v, 0) / h.length, lang) : '—']].map(([l, v]) => el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: l }), el('b', { class: 'cmp-v', text: v })))),
-      el('div', { class: 'dash-grid' },
-        perPerson ? bars(`${t(DASH.find((d) => d[0] === k)[1])} — ${t('sheet_by_person')}`, perPerson) : null,
-        bars(t('sheet_by_type'), group(list, (x) => (typeOf(x) ? typeLabel(typeOf(x), lang) : t('type_unknown')), () => 1).slice(0, 12)),
-        done.length || (k === 'points' && actsOf.length) ? bars(t('sheet_points_by_type'), [...group(done, (x) => (typeOf(x) ? typeLabel(typeOf(x), lang) : t('type_unknown')), ptsOf), ...group(actsOf, (x) => `${t('activity')}: ${x.category || '—'}`, (x) => activityWeight(wt, x.category))].sort((p, q) => q.v - p.v).slice(0, 14)) : null,
-        bars(t('sheet_by_week'), group(list.filter((x) => x.createdAt), (x) => weekOf(x.state === 'done' && x.completedAt ? x.completedAt : x.createdAt), () => 1).sort((p, q) => (p.l < q.l ? -1 : 1)).map((r) => ({ ...r, l: r.l.slice(5) })))));
-  };
-  const open = (title, list, perPerson, k, actsOf = [], src = null) => sheet(title, [{ k: 'board', label: t('sheet_view_board'), node: src ? el('div', {}, src, board(list, perPerson, k, actsOf)) : board(list, perPerson, k, actsOf) }, { k: 'list', label: t('sheet_view_list'), node: table(list) }], csvOf(list));
-  const grid = (ids, isTeam) => { const now = stats(ids, win), before = stats(ids, prev);
-    return makeSortable(el('div', { class: 'cmp-grid' }, sortByOrder(DASH.map((d) => d[0]), isTeam ? 'tiles-team' : 'tiles-me').map((k) => DASH.find((d) => d[0] === k)).map(([k, label]) => el('div', { class: 'cmp tile-open', 'data-id': k, tabIndex: 0, onclick: () => {
-        const per = isTeam ? ids.map((id) => { const s = stats([id], win); return { l: nm(id), v: k === 'rate' ? Math.round((s.rate || 0) * 100) : k === 'avgHours' ? Math.round((s.avgHours || 0) * 10) / 10 : s[k], t: show(k, s) }; }).sort((p, q) => q.v - p.v) : null;
-        open(`${t(label)} — ${isTeam ? t('tiles_team') : t('tiles_mine')} — ${k === 'open' ? t('sheet_now') : `${win.from} → ${win.to}`}`, listFor(ids, k, win), per, k, k === 'points' ? actsFor(ids, win) : [], srcLine(k, ids, win)); } },
-      el('span', { class: 'cmp-k', text: t(label) }), el('b', { class: 'cmp-v', text: `\u2068${show(k, now)}\u2069` }),
-      el('span', { class: 'cmp-was', text: k === 'open' ? t('sheet_now') : `${t('me_last_period')}: \u2068${show(k, before)}\u2069` }), k === 'open' ? el('span', { class: 'delta same', text: ' ' }) : arrow(k, now, before)))), isTeam ? 'tiles-team' : 'tiles-me'); };
-  // my block replaces the page's first tile grid; the heading row and the dates line fold with it
-  const old = body.querySelector('.cmp-grid'); const mine = grid([me.user.id], false);
-  if (old) { const dates = old.previousElementSibling, headRow = dates && dates.previousElementSibling;
-    const box = el('details', { class: 'tile-block', open: '' }, el('summary', { text: t('tiles_mine') }));
-    old.before(box); box.append(mine); if (headRow) box.append(headRow); if (dates) box.append(dates); box.append(srcBox([me.user.id], win)); old.remove(); }   // ADR-0059: the numbers first, then the period and the source
-  const pgCard = () => { if (!(isTeamPortal || viewAs)) return null; try { return progressCard(pm); } catch (e) { console.error(e); return null; } };   // the engineer's page (and the manager's view of it)
-  if (!pm.below.length) { const box = body.querySelector('details.tile-block'); if (box) { const tc = todayCard(pm, nm), pc = pgCard(); box.after(tc); if (pc) tc.after(pc); answerFirst(body, box, stats([me.user.id], win)); } return; }
-  const ids = pm.below.map((r) => r.id);
-  const people = makeSortable(el('div', { class: 'people-grid' }, (() => { const rows = sortByOrder(ids.map((id) => ({ id, s: stats([id], win) })).sort((p, q) => q.s.points - p.s.points).map((r) => r.id), 'people').map((id) => ({ id, s: stats([id], win) })); const max = Math.max(1, ...rows.map((r) => r.s.points));
-    return rows.map(({ id, s }) => el('button', { type: 'button', class: 'person-card', 'data-id': id, onclick: () => {
-        const list = me.tasks.filter((x) => x.assigneeId === id && (x.state === 'open' || (x.state === 'done' && inW(x.completedAt, win))));
-        const tiles = el('div', { class: 'cmp-grid' }, DASH.map(([k, label]) => el('div', { class: 'cmp' }, el('span', { class: 'cmp-k', text: t(label) }), el('b', { class: 'cmp-v', text: `\u2068${show(k, s)}\u2069` }))));
-        sheet(nm(id), [{ k: 'board', label: t('sheet_view_board'), node: el('div', {}, tiles, board(list, null, 'done')) }, { k: 'list', label: t('sheet_view_list'), node: table(list) }], csvOf(list)); } },
-      el('b', { text: nm(id) }), el('span', { class: 'hint', text: positionOf(roster(), id, lang) || '' }),
-      el('i', { class: 'pbar' }, el('span', { style: `width:${Math.round((s.points / max) * 100)}%` })),
-      el('span', { class: 'hint', text: `${s.points} ${t('col_points')} · ${show('done', s)} · ${show('rate', s)}` }))); })()), 'people');
-  const oldOpen = me.tasks.filter((x) => [me.user.id, ...ids].includes(x.assigneeId) && x.state === 'open' && x.createdAt && (Date.now() - Date.parse(x.createdAt)) > 7 * 86400000);
-  const panels = { me: el('div', { class: 'tab-panel' }), team: el('div', { class: 'tab-panel' }), alerts: el('div', { class: 'tab-panel' }) };
-  panels.team.append(el('details', { class: 'tile-block', open: '' }, el('summary', { text: t('tiles_team') }), grid(ids, true)), el('h2', { text: t('me_people_h') }), people);
-  if (oldOpen.length) panels.alerts.append(el('div', { class: 'alert warn tile-open', onclick: () => open(t('alert_old', { n: oldOpen.length }), oldOpen, null, 'open'), text: t('alert_old', { n: oldOpen.length }) }));
-  const card = body.querySelector('.me-card');
-  const after = []; let n = card ? card.nextElementSibling : null; while (n) { after.push(n); n = n.nextElementSibling; }
-  for (const x of after) { const tab = x.getAttribute('data-tab'); (panels[tab] || panels.me).append(x); }
-  { const tc = todayCard(pm, nm), pc = pgCard(); panels.me.prepend(tc); if (pc) tc.after(pc); }
-  if (!isTeamPortal && !viewAs) panels.me.append(projectsCard());
-  if (!panels.alerts.children.length) panels.alerts.append(el('div', { class: 'empty', text: t('alerts_none') }));
-  const nAlerts = panels.alerts.querySelectorAll('.alert').length;
-  const bar = el('div', { class: 'tabs', role: 'tablist' }, [['me', t('tab_me')], ['team', t('tab_team')], ['alerts', nAlerts ? `${t('tab_alerts')} (${nAlerts})` : t('tab_alerts')]].map(([k, label]) =>
-    el('button', { type: 'button', role: 'tab', 'data-k': k, class: `tab${meTab === k ? ' on' : ''}`, 'aria-selected': String(meTab === k), text: label, onclick: () => { meTab = k; for (const [p, el2] of Object.entries(panels)) el2.hidden = p !== k; for (const b of bar.children) { const on = b.getAttribute('data-k') === k; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); } } })));
-  for (const [p, el2] of Object.entries(panels)) el2.hidden = p !== meTab;
-  if (!isTeamPortal && !viewAs) { (card || body.firstChild).after(panels.me); return; }   // the manager's own page: his data only
-  (card || body.firstChild).after(bar, panels.me, panels.team, panels.alerts);
 }
 async function receiveMe(fragment) {
   const r = await parseMe(fragment);
@@ -1907,27 +1722,6 @@ function levelsForRaw(tasks, ids, today, mail) {
   return { levels: out, quarter: qs[0] };
 }
 const AXES = ['volume', 'difficulty', 'speed', 'reliability'];
-function levelView(x, who, quarter) {
-  if (!x) return null;
-  const lvl = x.level ? LEVELS.find((l) => l.n === x.level) : null;
-  return el('section', { class: 'level-card' },
-    el('div', { class: 'level-head' },
-      el('div', {}, el('h3', { text: who }), el('span', { class: 'hint', text: quarter.label })),
-      el('div', { class: `level-badge l${x.level || 0}` }, el('b', { text: lvl ? String(lvl.n) : '—' }), el('span', { text: lvl ? t(`lvl_${lvl.k}`) : x.onLeave ? t('card_on_leave') : t('lvl_early') }))),
-    x.score != null ? el('div', { class: 'level-score' }, el('b', { text: String(x.score) }), el('span', { text: t('lvl_score') })) : null,
-    el('div', { class: 'level-axes' }, AXES.map((k) => el('div', { class: 'axis' },
-      el('span', { text: t(`axis_${k}`) }),
-      el('i', {}, el('span', { style: `width:${x.axes[k] ?? 0}%` })),
-      el('b', { text: x.axes[k] == null ? '—' : t('lvl_better', { p: x.axes[k] }) })))),
-    el('p', { class: 'level-trend' }, x.trend ? `${{ up: '▲', down: '▼', steady: '■' }[x.trend]} ${t(`lvl_trend_${x.trend}`)}` : t('lvl_trend_none'),
-      ' · ', x.forecast != null ? t('lvl_forecast', { f: x.forecast }) : t('lvl_forecast_none')));
-}
-function meLevelSection(pm, who) {
-  const today = saudiDay(new Date().toISOString()); const ids = [...new Set([me.user.id, ...(pm.scope.team || [])])];
-  if (!levelPools(ids).some((p) => p.includes(me.user.id))) return null;   // leaders are not levelled
-  const { levels, quarter } = levelsFor(me.tasks, ids, today, null);
-  return [el('h2', {}, t('lvl_h'), helpQ('help_level')), levelView(levels[me.user.id], who, quarter)];
-}
 // ---------- load sustainability (ADR-0032) — the manager's eyes only ----------
 // ---------- reports for management (ADR-0037): a branded PDF and an interactive HTML, per engineer or for a chosen team ----------
 let reportPick = null;
@@ -2111,24 +1905,6 @@ function kpiLoadSection(team, peopleById) {
         el('td', { class: 'num', text: p.status === 'leave' || leaders.includes(p.id) ? '—' : `×${p.share}` }),
         el('td', { class: 'sigs' }, sig(p)), el('td', { class: 'plan-cell', text: action(p) })))))));
 }
-function meCardSection(pm, who, nm) { const ymNow = cardMonth; const team = pm.scope.team; const ctx = cardCtxFromMe(team);
-      const own = (monthCards[ymNow] && monthCards[ymNow][me.user.id]) || monthCard(ctx, me.user.id, ymNow);
-      const below = pm.below.map((r) => r.id);
-      const typeChoices = Object.entries(weights().tasks).filter(([, x]) => x.team !== 'general').map(([k]) => [k, k.replace(/(^|\s)([a-z])/g, (mm, sp, ch) => sp + ch.toUpperCase())]);
-      const withMeet = (cardEl, id, name, editable) => { if (cardEl && viewAs) return cardEl; if (cardEl) { if (!isTeamPortal && editable && datasets.length) { cardEl.append(el('a', { class: 'moved-link', href: '#dev', onclick: () => { devSel = id; pref('devsel', id); }, text: `${t('dev_meet_moved')} ↗` })); return cardEl; } const b = meetBlock(ymNow, id, me.tasks, editable, name, typeChoices); if (b) cardEl.append(b); } return cardEl; };
-      const imp = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: (e) => { if (e.target.files[0]) importMeet(e.target.files[0]); e.target.value = ''; } });
-      const path = (id) => patternPath(monthCards, id);
-      const pathTable = (ids) => { const months = [...new Set(ids.flatMap((id) => path(id).map((p) => p.month)))].sort(); if (months.length < 2) return el('p', { class: 'hint', text: t('path_soon') });
-        const cellOf = (id, m) => { const p = path(id).find((x) => x.month === m); return el('td', {}, p ? [el('div', { text: t(`arch_${p.archetype}`) }), el('div', { class: 'hint', text: `${p.points} · ${t(`quartile_${p.quartile}`)}` })] : '—'); };
-        const head = el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), months.map((m) => el('th', { text: monthLabel(m) }))));
-        const bodyRows = el('tbody', {}, ids.map((id) => el('tr', {}, el('td', { text: id === me.user.id ? who : nm(id) }), months.map((m) => cellOf(id, m)))));
-        return el('div', { class: 'table-wrap' }, el('table', { class: 'path' }, head, bodyRows)); };
-      return [withMeet(renderCard(own, who, { showRank: false, showSuggestions: false }), me.user.id, who, false),
-        below.length && (isTeamPortal || viewAs) ? [el('h3', { class: 'card-team-h', text: t('card_team_h', { n: below.length }) }),   // the manager's own page carries his card only — the team's live in the person file
-          makeSortable(el('div', { class: 'cards-grid' }, sortByOrder(below, 'monthcards').map((id) => { const c = withMeet(renderCard((monthCards[ymNow] && monthCards[ymNow][id]) || monthCard(ctx, id, ymNow), nm(id), { showRank: true, showSuggestions: true, compact: true }), id, nm(id), true); if (c) c.dataset.id = id; return c; })), 'monthcards')] : null,
-        el('div', { class: 'row', style: 'margin-top:8px' }, el('button', { type: 'button', class: 'btn', text: t('card_print'), onclick: () => window.print() }),
-          below.length && !viewAs ? [el('button', { type: 'button', class: 'btn quiet', text: t('meet_export'), onclick: exportMeet }), el('button', { type: 'button', class: 'btn quiet', text: t('meet_import'), onclick: () => imp.click() }), imp] : null),
-        el('h2', {}, t('path_h'), helpQ('help_path')), pathTable([me.user.id, ...below])]; }
 // ---------- the board's sections, each its own function (ADR-0023) ----------
 // the manager's view of each person's slice of the team's work — day / week / month / quarter
 let mailQ = 0;
@@ -2488,11 +2264,11 @@ const prevMonthOf = (ym) => { const [y, m] = ym.split('-').map(Number); return m
 const monthRangeOf = (ym) => ({ from: `${ym}-01`, to: monthLast(ym) });
 const hmOf = (h) => (h == null ? '—' : (() => { const m = Math.round(h * 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; })());
 /** The months the pulls cover, newest first, each with how many of its days (up to today) a pull covers. */
-function pulledMonths() {
+function pulledMonths(ranges = datasets.map((d) => d.range)) {
   const today = saudiDay(new Date().toISOString()), days = new Set();
-  for (const d of datasets) {
-    if (!d.range || !d.range.from || !d.range.to) continue;
-    for (let x = Date.parse(`${d.range.from}T00:00:00Z`), end = Date.parse(`${d.range.to}T00:00:00Z`); x <= end; x += 86400000) days.add(new Date(x).toISOString().slice(0, 10));
+  for (const r of ranges) {
+    if (!r || !r.from || !r.to) continue;
+    for (let x = Date.parse(`${r.from}T00:00:00Z`), end = Date.parse(`${r.to}T00:00:00Z`); x <= end; x += 86400000) days.add(new Date(x).toISOString().slice(0, 10));
   }
   const yms = [...new Set([...days].map((s) => s.slice(0, 7)))].sort().reverse();
   return yms.map((ym) => {
@@ -2509,6 +2285,57 @@ function monthNumbers(f, wp, id) {
   return { email: s('email'), self: s('self'), other: s('other'), total: r.assigned, closed: r.cohortClosed, avg: r.cohortAvgHours,
     points: Math.round((id === 'team' ? wp.total : (wp.byId.get(id) || { total: 0 }).total) * 10) / 10 };
 }
+const KM_DEFS = ['km_def_recv', 'km_def_src', 'km_def_avg', 'km_def_pts', 'km_def_month'];
+/** A change beside a number: neutral for what arrived (n), green/red for what was done (h: higher is better, l: lower is better). */
+function kmDelta(a, b, kind, pml) {
+  if (a == null || b == null) return null;
+  const d = Math.round((a - b) * 10) / 10; if (!d) return el('small', { class: 'km-dl eq', title: t('km_vs', { m: pml }), text: '=' });
+  const good = kind === 'l' ? d < 0 : d > 0, cls = kind === 'n' ? 'nt' : good ? 'up' : 'down';
+  return el('small', { class: `km-dl ${cls}`, title: t('km_vs', { m: pml }), text: `${d > 0 ? '▲' : '▼'} ${kind === 'l' ? hmOf(Math.abs(d)) : Math.abs(d)}` });
+}
+/** ADR-0072: one person's month — the same view, from the same engine, in a row of «مؤشرات الفريق» and on «مؤشراتي». */
+function personMonthView({ id, tasks, acts = [], months, ym, head = '', share = null, actions = null }) {
+  const wt = weights(), pm = prevMonthOf(ym), hasPrev = months.some((m) => m.ym === pm), ml = monthLabel(ym), pml = monthLabel(pm);
+  const ZERO = { email: 0, self: 0, other: 0, total: 0, closed: 0, avg: null, points: 0 };
+  const one = (y) => { const r = monthRangeOf(y); return monthNumbers(factor1(tasks, { range: r, team: [id] }), weightedPoints(tasks, acts, wt, { range: r, team: [id] }), id) || ZERO; };
+  const n = one(ym), p = hasPrev ? one(pm) : null;
+  const rows = [['src_email', 'email', 'n'], ['src_self', 'self', 'n'], ['src_other', 'other', 'n'], ['km_total', 'total', 'n'], ['km_closed', 'closed', 'h'], ['km_avg', 'avg', 'l'], ['col_points', 'points', 'h']];
+  const fmt = (k, v) => (k === 'avg' ? hmOf(v) : String(v ?? '—'));
+  const hist = months.slice(0, 6).map((m) => ({ m, x: one(m.ym) }));
+  const open = openTasks(tasks, id);
+  return el('div', { class: 'km-detail' }, head ? el('p', { class: 'hint km-head', text: head }) : null,
+    el('div', { class: 'km-cmp' }, el('table', {},
+      el('thead', {}, el('tr', {}, el('th', {}), el('th', { class: 'num', text: ml }), el('th', { class: 'num', text: pml }), el('th', { class: 'num', text: t('km_change') }))),
+      el('tbody', {}, rows.map(([lab, k, kind]) => el('tr', {}, el('td', { text: t(lab) }), el('td', { class: 'num' }, el('b', { text: fmt(k, n[k]) })),
+        el('td', { class: 'num', text: p ? fmt(k, p[k]) : '—' }), el('td', { class: 'num' }, p ? kmDelta(n[k], p[k], kind, pml) : '—'))))),
+      share != null ? el('p', { class: 'hint', text: t('pf_share', { p: share }) }) : null),
+    el('div', { class: 'km-side' },
+      el('h4', { text: `${t('pf_open')} — ${open.length}` }),
+      open.length ? el('ul', { class: 'pf-open' }, open.slice(0, 6).map((x) => el('li', {}, el('span', { text: x.title || typeLabel(x.type || '', lang) || '—' }),
+        el('small', { class: 'hint', text: x.ageHours == null ? '' : t(x.ageHours < 48 ? 'hours' : 'days', { n: Math.round(x.ageHours < 48 ? x.ageHours : x.ageHours / 24) }) })))) : el('p', { class: 'hint', text: t('pf_none') }),
+      hist.length > 1 ? [el('h4', { text: t('km_hist_h') }), el('table', { class: 'km-hist' },
+        el('thead', {}, el('tr', {}, el('th', { text: t('km_month') }), ['km_total', 'km_closed', 'km_avg', 'col_points'].map((k) => el('th', { class: 'num', text: t(k) })))),
+        el('tbody', {}, hist.map(({ m, x }) => el('tr', { class: m.ym === ym ? 'on' : null }, el('td', { text: `${monthLabel(m.ym)}${m.whole ? '' : ' *'}` }),
+          el('td', { class: 'num', text: String(x.total) }), el('td', { class: 'num', text: String(x.closed) }), el('td', { class: 'num', text: hmOf(x.avg) }), el('td', { class: 'num', text: String(x.points) })))))] : null,
+      actions ? el('div', { class: 'row km-acts' }, actions) : null));
+}
+let meMonth = null;
+/** The month picker and the personal view for «مؤشراتي»: months from the manager's pulls, or from the engineer's own pull. */
+function meMonthParts() {
+  const uid = String(me.user.id), tasks = me.tasks || [], fromPulls = meDerived || !!viewAs;
+  const ranges = fromPulls ? datasets.map((d) => d.range) : [{ from: saudiDay(me.since || me.extractedAt), to: saudiDay(me.extractedAt) }];
+  const months = pulledMonths(ranges);
+  if (!months.length) return [el('p', { class: 'note', text: t('no_data') })];
+  const thisMonth = saudiDay(new Date().toISOString()).slice(0, 7);
+  if (!meMonth || !months.some((m) => m.ym === meMonth)) meMonth = (months.find((m) => m.ym === thisMonth) || months[0]).ym;
+  const cov = months.find((m) => m.ym === meMonth), pm = prevMonthOf(meMonth), hasPrev = months.some((m) => m.ym === pm);
+  return [
+    el('div', { class: 'bar km-bar' }, el('label', {}, el('span', { text: t('km_month') }), el('select', { id: 'me-month', onchange: (e) => { meMonth = e.target.value; renderMe(); } },
+      months.map((m) => el('option', { value: m.ym, selected: m.ym === meMonth, text: `${monthLabel(m.ym)}${m.whole ? '' : ' *'}` })))),
+      el('span', { class: 'hint', text: hasPrev ? t('km_vs', { m: monthLabel(pm) }) : t('km_no_prev', { m: monthLabel(pm) }) })),
+    !cov.whole ? el('p', { class: 'note', text: t('km_partial', { got: cov.got, need: cov.need }) }) : null,
+    personMonthView({ id: uid, tasks, acts: fromPulls ? allActivities() : [], months, ym: meMonth })];
+}
 function renderKpi() {
   applyNameFixes();
   applyPending().then((changed) => { if (changed) { renderTeam(); renderKpi(); renderMe(); } });
@@ -2521,19 +2348,16 @@ function renderKpi() {
   const range = monthRangeOf(ym), prange = monthRangeOf(pm);
   const tasks = allTasks(), acts = allActivities(), wt = weights();
   const people = scoped(peopleOf(datasets)), peopleById = new Map(peopleOf(datasets).map((p) => [p.id, p]));
-  const team = currentTeam(people, tasks);
+  // ADR-0072: «مؤشرات الفريق» is the team without the one using the portal — his own numbers are on «مؤشراتي»
+  const selfId = String((((viewAs ? realMe : me) || {}).user || {}).id || '');
+  const team = currentTeam(people, tasks).filter((x) => String(x) !== selfId);
   const f = factor1(tasks, { range, team }), wp = weightedPoints(tasks, acts, wt, { range, team });
   const fp = pcov ? factor1(tasks, { range: prange, team }) : null, wpp = pcov ? weightedPoints(tasks, acts, wt, { range: prange, team }) : null;
   const nm = (id) => (id === GROUP ? t('group_bucket') : (nameOf(peopleById.get(id), lang) || id));
   const now = (id) => monthNumbers(f, wp, id), was = (id) => (fp ? monthNumbers(fp, wpp, id) : null);
   const ml = monthLabel(ym), pml = monthLabel(pm);
   // a change beside a number: neutral for what arrived, green or red for what was done and how fast
-  const delta = (a, b, kind) => {
-    if (a == null || b == null) return null;
-    const d = Math.round((a - b) * 10) / 10; if (!d) return el('small', { class: 'km-dl eq', title: t('km_vs', { m: pml }), text: '=' });
-    const good = kind === 'l' ? d < 0 : d > 0, cls = kind === 'n' ? 'nt' : good ? 'up' : 'down';
-    return el('small', { class: `km-dl ${cls}`, title: t('km_vs', { m: pml }), text: `${d > 0 ? '▲' : '▼'} ${kind === 'l' ? hmOf(Math.abs(d)) : Math.abs(d)}` });
-  };
+  const delta = (x, y, kind) => kmDelta(x, y, kind, pml);
   const T = now('team'), P = was('team');
   const tile = (k, label, v, pv, kind, sub) => el('div', { class: `km-tile km-${k}` }, el('b', { text: k === 'avg' ? hmOf(v) : String(v ?? '—') }),
     el('span', { text: label }), P ? el('small', { class: 'km-was' }, `${t('km_vs', { m: pml })}: ${k === 'avg' ? hmOf(pv) : (pv ?? '—')} `, delta(v, pv, kind)) : null, sub ? el('small', { class: 'hint', text: sub }) : null);
@@ -2546,32 +2370,13 @@ function renderKpi() {
       el('td', { class: 'num' }, hmOf(n.avg), withDelta && p ? delta(n.avg, p.avg, 'l') : null),
       el('td', { class: 'num km-strong' }, el('b', { text: String(n.points) }), withDelta && p ? delta(n.points, p.points, 'h') : null));
   const detail = (id) => {
-    const n = now(id), p = was(id), share = wp.total ? Math.round((n.points / wp.total) * 100) : 0;
-    const rows = [['src_email', 'email', 'n'], ['src_self', 'self', 'n'], ['src_other', 'other', 'n'], ['km_total', 'total', 'n'], ['km_closed', 'closed', 'h'], ['km_avg', 'avg', 'l'], ['col_points', 'points', 'h']];
-    const fmt = (k, v) => (k === 'avg' ? hmOf(v) : String(v ?? '—'));
-    const hist = months.slice(0, 6).map((m) => { const r = monthRangeOf(m.ym), ff = factor1(tasks, { range: r, team: [id] }), ww = weightedPoints(tasks, acts, wt, { range: r, team: [id] }); return { m, x: monthNumbers(ff, ww, id) }; }).filter((h) => h.x);
-    const open = openTasks(tasks, id);
-    const mds = { key: `m:${ym}`, range, tasks, activities: acts };
-    const ro = (roster().people || {})[id] || {};   // his role, his manager and leave, as the person file showed them (team file)
+    const n = now(id), share = wp.total ? Math.round((n.points / wp.total) * 100) : 0, mds = { key: `m:${ym}`, range, tasks, activities: acts };
+    const ro = (roster().people || {})[id] || {};   // his role, his manager and leave (team file)
     const head = [positionOf(roster(), id, lang), ro.leaderId ? `${t('pf_leader')} ${nm(String(ro.leaderId))}` : '', ro.onLeave ? t('card_on_leave') : ''].filter(Boolean).join(' · ');
-    return el('div', { class: 'km-detail' }, head ? el('p', { class: 'hint km-head', text: head }) : null,
-      el('div', { class: 'km-cmp' }, el('table', {},
-        el('thead', {}, el('tr', {}, el('th', {}), el('th', { class: 'num', text: ml }), el('th', { class: 'num', text: pml }), el('th', { class: 'num', text: t('km_change') }))),
-        el('tbody', {}, rows.map(([lab, k, kind]) => el('tr', {}, el('td', { text: t(lab) }), el('td', { class: 'num' }, el('b', { text: fmt(k, n[k]) })),
-          el('td', { class: 'num', text: p ? fmt(k, p[k]) : '—' }), el('td', { class: 'num' }, p ? delta(n[k], p[k], kind) : '—'))))),
-        el('p', { class: 'hint', text: t('pf_share', { p: share }) })),
-      el('div', { class: 'km-side' },
-        el('h4', { text: `${t('pf_open')} — ${open.length}` }),
-        open.length ? el('ul', { class: 'pf-open' }, open.slice(0, 6).map((x) => el('li', {}, el('span', { text: x.title || typeLabel(x.type || '', lang) || '—' }),
-          el('small', { class: 'hint', text: x.ageHours == null ? '' : t(x.ageHours < 48 ? 'hours' : 'days', { n: Math.round(x.ageHours < 48 ? x.ageHours : x.ageHours / 24) }) })))) : el('p', { class: 'hint', text: t('pf_none') }),
-        hist.length > 1 ? [el('h4', { text: t('km_hist_h') }), el('table', { class: 'km-hist' },
-          el('thead', {}, el('tr', {}, el('th', { text: t('km_month') }), ['km_total', 'km_closed', 'km_avg', 'col_points'].map((k) => el('th', { class: 'num', text: t(k) })))),
-          el('tbody', {}, hist.map(({ m, x }) => el('tr', { class: m.ym === ym ? 'on' : null }, el('td', { text: `${monthLabel(m.ym)}${m.whole ? '' : ' *'}` }),
-            el('td', { class: 'num', text: String(x.total) }), el('td', { class: 'num', text: String(x.closed) }), el('td', { class: 'num', text: hmOf(x.avg) }), el('td', { class: 'num', text: String(x.points) })))))] : null,
-        el('div', { class: 'row km-acts' },
-          el('button', { type: 'button', class: 'btn tiny', text: `🖨 ${t('pf_pdf')}`, onclick: () => openReport(reportHtml(reportData(mds, [id], peopleById), { single: true }), 'pdf', `AFAQY-${nm(id).replace(/\s+/g, '-')}-${ym}`) }),
-          el('button', { type: 'button', class: 'btn tiny', text: `${t('pf_plan')} ↗`, onclick: () => { devSel = id; pref('devsel', id); location.hash = '#dev'; } }),
-          el('button', { type: 'button', class: 'btn tiny', text: `👁 ${t('pf_viewas')}`, onclick: () => startViewAs(id) }))));
+    return personMonthView({ id, tasks, acts, months, ym, head, share, actions: [
+      el('button', { type: 'button', class: 'btn tiny', text: `🖨 ${t('pf_pdf')}`, onclick: () => openReport(reportHtml(reportData(mds, [id], peopleById), { single: true }), 'pdf', `AFAQY-${nm(id).replace(/\s+/g, '-')}-${ym}`) }),
+      el('button', { type: 'button', class: 'btn tiny', text: `${t('pf_plan')} ↗`, onclick: () => { devSel = id; pref('devsel', id); location.hash = '#dev'; } }),
+      el('button', { type: 'button', class: 'btn tiny', text: `👁 ${t('pf_viewas')}`, onclick: () => startViewAs(id) })] });
   };
   const line = (id) => {
     const n = now(id), p = was(id), on = kpiOpen === id, pos = positionOf(roster(), id, lang);
@@ -2611,7 +2416,7 @@ function renderKpi() {
     rep ? [el('p', { class: 'hint km-from', text: t('km_tickets_from', { a: rep.range.from, b: rep.range.to }) }), renderReports(rep.key, team)] : null,
     rankLinksSection(),
     el('h2', { text: t('definitions') }),
-    el('ul', { class: 'defs' }, ['km_def_recv', 'km_def_src', 'km_def_avg', 'km_def_pts', 'km_def_month'].map((k) => el('li', { text: t(k) }))));
+    el('ul', { class: 'defs' }, KM_DEFS.map((k) => el('li', { text: t(k) }))));
   set(body,
     el('div', { class: 'bar km-bar' },
       el('label', {}, el('span', { text: t('km_month') }), el('select', { id: 'kpi-month', onchange: (e) => { kpiMonth = e.target.value; pref('kpimonth', kpiMonth); kpiOpen = kpiOpen; renderKpi(); } },
@@ -2966,10 +2771,6 @@ function renderOvertime() {
     el('details', { class: 'ot-how' }, el('summary', { text: t('ot_how_h') }), el('ul', {}, ['ot_how1', 'ot_how2', 'ot_how3', 'ot_how4', 'ot_how6', 'ot_how5'].map((k) => el('li', { text: t(k) })))));
 }
 // one way to show a person's or a team's tasks by source (ADR-0067): the same cards wherever they appear
-const srcHm = (h) => (h == null ? '—' : (() => { const m = Math.round(h * 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; })());
-const srcCards = (all, by) => el('div', { class: 'cnt-cards' }, [['all', all], ...SOURCES.map((k) => [k, by[k]])].map(([k, s]) => el('div', { class: `cnt-card cnt-${k}` },
-  el('div', { class: 'cnt-card-h' }, el('i', { class: `dot dot-${k}` }), el('span', { text: t(`src_${k}`) })), el('div', { class: 'cnt-big', text: srcHm(s.cohortAvgHours) }), el('div', { class: 'cnt-unit', text: t('cnt_avg_unit2') }),
-  el('div', { class: 'cnt-sub', text: t('cnt_recv_n', { r: s.received, c: s.cohortClosed }) }))));
 // ---------- tasks: where they came from and how long they took to close (ADR-0067) — one engine: the board's factor1 ----------
 function renderTeam() {
   applyNameFixes();
@@ -3197,46 +2998,33 @@ function applyTheme() {
   paintThemeButton();
 }
 // ---------- ADR-0071: «خطط الفريق» — the team planner, cut to the manager's own part, kept on this device only ----------
-// The file is read and kept in this browser (IndexedDB) — never published, never sent. plannerFor() keeps only the plans whose
-// people all sit under the manager and refuses if anyone else's e-mail or phone remains. It is shown in a sandboxed frame with
-// no access to the portal's origin: the planner's own scripts cannot read the portal's data, and its edits are not kept.
+// ADR-0072: the manager uploads the structure of his own part and it is shown exactly as uploaded. It is kept in this browser
+// only (IndexedDB) — never published, never sent — and shown in a sandboxed frame with no access to the portal's origin.
 let plannerFile;   // undefined until read from the device
+const isHtml = (s) => /<!doctype html|<html[\s>]|<body[\s>]/i.test(String(s || '').slice(0, 20000));
 function renderPlanner() {
   const body = $('planner-body'); if (!body || isTeamPortal) return;
   if (plannerFile === undefined) { set(body, el('p', { class: 'hint', text: '…' })); store.getPlanner().then((v) => { plannerFile = v || null; renderPlanner(); }); return; }
   const status = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
   const input = el('input', { type: 'file', accept: '.html,.htm,text/html', hidden: true, onchange: async (e) => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    const html = await f.text(), mg = plannerManagers(html);
-    if (!mg) { status.textContent = t('pl_err_not_planner'); status.classList.add('err'); return; }
-    // a newer file keeps the manager already chosen, when he is still in it — and must pass the same cut before it is kept
-    const owner = plannerFile && plannerFile.owner && mg.some((m) => m.email === plannerFile.owner) ? plannerFile.owner : null;
-    if (owner) { const r = plannerFor(html, owner); if (r.error) { status.textContent = t(`pl_err_${r.error}`); status.classList.add('err'); return; } }
-    plannerFile = { name: f.name, at: new Date().toISOString(), html, owner }; await store.putPlanner(plannerFile); toast(t('pl_saved')); renderPlanner(); } });
+    const html = await f.text();
+    if (!isHtml(html)) { status.textContent = t('pl_err_not_html'); status.classList.add('err'); return; }
+    plannerFile = { name: f.name, at: new Date().toISOString(), html }; await store.putPlanner(plannerFile); toast(t('pl_saved')); renderPlanner(); } });
   const pick = (label, cls) => el('button', { type: 'button', class: `btn ${cls}`, text: label, onclick: () => input.click() });
   const remove = el('button', { type: 'button', class: 'btn tiny quiet', text: t('pl_remove'), onclick: async () => { if (!confirm(t('pl_remove_confirm'))) return; plannerFile = null; await store.putPlanner(null); renderPlanner(); } });
   if (!plannerFile) { set(body, el('div', { class: 'card pl-empty' }, el('p', { text: t('pl_empty') }), el('p', { class: 'hint', text: t('pl_private') }), el('div', { class: 'row' }, pick(t('pl_upload'), 'primary'), input), status)); return; }
-  if (!plannerFile.owner) {   // who is the manager here: picked once, kept with the file on this device
-    const mg = plannerManagers(plannerFile.html) || [];
-    const sel = el('select', { 'aria-label': t('pl_who') }, el('option', { value: '', text: '—' }), mg.map((m) => el('option', { value: m.email, text: [m.name, m.role, m.dep].filter(Boolean).join(' — ') })));
-    set(body, el('div', { class: 'card pl-empty' }, el('p', { text: t('pl_who') }), el('div', { class: 'row' }, sel,
-      el('button', { type: 'button', class: 'btn primary', text: t('pl_who_go'), onclick: async () => {
-        if (!sel.value) return; const r = plannerFor(plannerFile.html, sel.value);
-        if (r.error) { status.textContent = t(`pl_err_${r.error}`); status.classList.add('err'); return; }
-        plannerFile = { ...plannerFile, owner: sel.value }; await store.putPlanner(plannerFile); renderPlanner(); } }), remove), el('p', { class: 'hint', text: t('pl_private') }), status));
-    return;
-  }
-  const r = plannerFor(plannerFile.html, plannerFile.owner);
-  if (r.error) { set(body, el('div', { class: 'card pl-empty' }, el('p', { class: 'msg err', text: t(`pl_err_${r.error}`) }), el('div', { class: 'row' }, pick(t('pl_replace'), 'primary'), remove, input), status)); return; }
-  // inside the sandbox the browser's storage is closed; the planner gets an in-memory one, so every feature of it works while the
-  // page is open (and nothing is kept, as the page says) — the frame stays cut off from the portal
+  const sum = plannerSummary(plannerFile.html);
+  // inside the sandbox the browser's storage is closed; the page gets an in-memory one, so its features work while it is open
+  // (nothing is kept, as the page says) — the frame stays cut off from the portal and its data
   const SHIM = '<script>(()=>{const mk=()=>{const d=new Map();return{getItem:(k)=>(d.has(String(k))?d.get(String(k)):null),setItem:(k,v)=>{d.set(String(k),String(v));},removeItem:(k)=>{d.delete(String(k));},clear:()=>d.clear(),key:(i)=>[...d.keys()][i]??null,get length(){return d.size;}};};for(const n of [\'localStorage\',\'sessionStorage\']){try{void window[n].length;}catch(e){try{Object.defineProperty(window,n,{value:mk(),configurable:true});}catch(_){}}}})();</script>';
-  const doc = /<head[^>]*>/i.test(r.html) ? r.html.replace(/<head[^>]*>/i, (m) => m + SHIM) : SHIM + r.html;
+  const doc = /<head[^>]*>/i.test(plannerFile.html) ? plannerFile.html.replace(/<head[^>]*>/i, (m) => m + SHIM) : SHIM + plannerFile.html;
   const frame = el('iframe', { class: 'pl-frame', title: t('nav_planner'), sandbox: 'allow-scripts allow-downloads allow-popups allow-modals allow-forms', referrerpolicy: 'no-referrer', srcdoc: doc });
   set(body,
     el('div', { class: 'pl-bar' },
-      el('div', {}, el('b', { text: r.plans.map((p) => p.name).join(' · ') }), el('div', { class: 'hint', text: t('pl_info', { n: r.people, file: plannerFile.name, at: saudiDay(plannerFile.at) }) })),
-      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny', text: t('pl_full'), onclick: () => { if (frame.requestFullscreen) frame.requestFullscreen(); } }), pick(t('pl_replace'), 'tiny quiet'), el('button', { type: 'button', class: 'btn tiny quiet', text: t('pl_who_reset'), onclick: async () => { plannerFile = { ...plannerFile, owner: null }; await store.putPlanner(plannerFile); renderPlanner(); } }), remove, input)),
+      el('div', {}, el('b', { text: sum ? sum.plans.map((p) => p.name).join(' · ') : plannerFile.name }),
+        el('div', { class: 'hint', text: t(sum ? 'pl_info' : 'pl_info_file', { n: sum ? sum.people : 0, file: plannerFile.name, at: saudiDay(plannerFile.at) }) })),
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny', text: t('pl_full'), onclick: () => { if (frame.requestFullscreen) frame.requestFullscreen(); } }), pick(t('pl_replace'), 'tiny quiet'), remove, input)),
     el('p', { class: 'hint', text: t('pl_private') }), status, frame);
 }
 
@@ -3407,7 +3195,7 @@ $('import-in').addEventListener('change', async (e) => {
       if (j.devplans && typeof j.devplans === 'object') { for (const [q, ppl] of Object.entries(j.devplans)) devPlans[q] = { ...(ppl || {}), ...(devPlans[q] || {}) }; await store.kvPut('devplans', devPlans); }
       if (j.register && !myRegister) { const r = cleanRegister(j.register); if (r) { myRegister = r; await store.putRegister(r); } }
       if (plannerFile === undefined) plannerFile = (await store.getPlanner()) || null;
-      if (j.planner && typeof j.planner.html === 'string' && !plannerFile && plannerManagers(j.planner.html)) { plannerFile = { name: String(j.planner.name || 'planner.html'), at: String(j.planner.at || new Date().toISOString()), html: j.planner.html, owner: j.planner.owner || null }; await store.putPlanner(plannerFile); }
+      if (j.planner && typeof j.planner.html === 'string' && !plannerFile && isHtml(j.planner.html)) { plannerFile = { name: String(j.planner.name || 'planner.html'), at: String(j.planner.at || new Date().toISOString()), html: j.planner.html }; await store.putPlanner(plannerFile); }
       if (j.projects && !myProjects) { const p = cleanProjects(j.projects); if (p) { myProjects = p; await store.putProjects(myProjects); } }
       if (Array.isArray(j.pending)) { const have = new Set(pendingList().map((x) => x.name.toLowerCase())); localStorage.setItem(PENDING_KEY, JSON.stringify([...pendingList(), ...j.pending.map(cleanPending).filter((x) => x && !have.has(x.name.toLowerCase()))])); }
       if (j.names && typeof j.names === 'object') { const fx = nameFixes(); for (const [id, v] of Object.entries(j.names)) if (/^\d+$/.test(id) && v && typeof v === 'object' && !fx[id]) fx[id] = { ar: String(v.ar || '').slice(0, 80), en: String(v.en || '').slice(0, 80) }; localStorage.setItem(NAME_KEY, JSON.stringify(fx)); }

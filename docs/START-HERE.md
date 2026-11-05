@@ -85,7 +85,8 @@
 | `docs/decisions/0068-one-pst-place-and-a-guard-that-reports-last.md` | One place to read a PST; every page named; the guard reports last |
 | `docs/decisions/0069-team-table-titles-in-both-languages.md` | The team table: both titles editable, real people only, aligned cells |
 | `docs/decisions/0070-one-monthly-place-for-every-employee.md` | One monthly place for every employee; no number in two places |
-| `docs/decisions/0071-team-planner-on-the-managers-device.md` | «Team plans»: the planner, cut to the manager's part, on his device only |
+| `docs/decisions/0071-team-planner-on-the-managers-device.md` | «Team plans» on his device only (its cut revised by 0072) |
+| `docs/decisions/0072-my-kpis-and-team-kpis.md` | «My KPIs» = me, «Team KPIs» = the team without me, one personal view; the structure file shown as uploaded |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

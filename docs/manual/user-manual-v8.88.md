@@ -32,7 +32,7 @@
 
 ### مؤشراتي
 
-صفحة «مؤشراتي» ملفّك أنت. مرة واحدة: اسحب زر «مؤشراتي» إلى شريط الإشارات في المتصفح. ثم كلما أردت: افتح ماي أفاقي بحسابك واضغط الإشارة — تقرأ شغلك وتفتح البوابة عليه. تجد بياناتك وفرقك، ثم «شغلي المفتوح الآن» بعناوين مهامك وعمرها، ثم «هذا الشهر مقابل الشهر الماضي» على الأيام نفسها بأسهم تقول أين تحسّنت وأين تراجعت، ثم مقارنتك بمتوسط الفريق بلا أسماء، ثم تاريخك لآخر اثني عشر شهرًا. وإن كان ماي أفاقي يضع أشخاصًا تحتك في هيكله — قائد فريق أو مدير — يظهر قسم «فريقي» بأرقام كل واحد منهم. البوابة تعرض لك بالضبط ما يعرضه لك ماي أفاقي ولا شيء زائدًا. كل شيء يبقى على جهازك؛ لا يُنقل رمز الدخول ولا أسماء العملاء ولا عناوين مهام غيرك ولا عناوين المنجزة، وزر «حذف مؤشراتي» يمحوه من الجهاز. زر «إرشادي خطوة بخطوة» موجود دائمًا أعلى الصفحة، حتى بعد تحميل البيانات. يفتح شرحًا تفاعليًا بخمس خطوات مخصصًا للكمبيوتر أو أندرويد أو آيفون: حفظ الإشارة، الدخول إلى ماي أفاقي، تشغيلها، ثم التأكد من وصول المؤشرات. يمكن الرجوع لأي خطوة وإغلاقه وإعادة فتحه دون فقد بياناتك. والآن يضم الدليل نافذة متصفح توضيحية متحركة، فيها مؤشر ماوس أو لمسة تنتقل للمكان المطلوب وتبين النقر أو سحب إشارة «مؤشراتي» إلى شريط الإشارات. زر «إعادة حركة الماوس» يعرض الحركة مرة ثانية. العرض محاكاة مرئية فقط، ولا يتحكم في المتصفح الحقيقي أو داخل ماي أفاقي. وبجانب النقاط في البطاقة الشهرية زر «تفصيل نقاط المهام» يعرض عدد المهام المنجزة لكل نوع ووزنها ومجموع نقاطها؛ أي نوع بلا وزن مُعلن يُحسب بالوزن الافتراضي مع تنبيه واضح. الشهور المقفولة القديمة تظل أرقامها محفوظة كما هي، ولا نعرض تفصيلًا تاريخيًا غير موجود.
+«مؤشراتي» أرقامك أنت وحدك، لا بيانات للفريق فيها. اختر الشهر، فترى: ما وصلك من الإيميل، وما عملته لنفسك، وما أسنده لك غيرك، والإجمالي، وكم أُغلق منها، ومتوسط وقت الإغلاق، ونقاطك — بجانب الشهر الذي قبله والتغيّر. وتحتها شغلك المفتوح الآن وآخر ستة أشهر. هو نفس العرض ونفس الحساب الذي يظهر حين يضغط المدير على اسمك في «مؤشرات الفريق». للمهندس: الأرقام من الإشارة التي يضغطها داخل ماي أفاقي؛ وللمدير: من بياناته المسحوبة.
 
 ### الفريق — المناصب ومن يتبع من
 
@@ -56,7 +56,7 @@
 
 ### خطط الفريق
 
-صفحة المدير وحده: ارفع ملف مخطط الفريق كما وصلك، فيظهر بنفس شكله مقصورًا على قسمك (التقني والمشاريع، والبحث والتطوير، وما بعد البيع). تبقى الخطة التي كل أفرادها تحتك في الهيكل، وتُحذف خطط الإدارات الأخرى وخطة الفرع كله، ويُرفض الملف لو بقي فيه إيميل أو جوال لأحد من خارج قسمك. الملف يبقى على جهازك فقط، ولا يظهر في رابط الفريق، ولا يُحفظ التعديل داخله — للتحديث ارفع النسخة الأحدث.
+صفحة المدير وحده: ارفع ملف هيكل الفريق (صفحة HTML)، فيظهر بنفس شكله كما رفعته بالضبط. يبقى على جهازك فقط، ولا يظهر في رابط الفريق، ولا يُحفظ التعديل داخله — للتحديث ارفع النسخة الأحدث، أو احذفه من الجهاز.
 
 ### إشارة المدير — سحب كل شيء بضغطة
 
@@ -74,7 +74,7 @@
 
 إذا قسّم كلود كروم الرد إلى أجزاء، ارفعها كلها؛ تُدمج بحسب رقم المهمة. تبقى الفترة «ناقصة» حتى يساوي عدد المهام العدد الذي أعلنه ماي أفاقي نفسه، وتظهر فوق أرقامها علامة تحذير.
 
-### المؤشرات
+### مؤشرات الفريق
 
 المكان الوحيد لأرقام كل موظف في الشهر. اختر الشهر من القائمة — الشهور تأتي مما سحبته، فسحبة ربع تعطي ثلاثة أشهر. البطاقات للفريق، والجدول لكل موظف: من الإيميل، وعملها لنفسه، وأسندها له غيره، والإجمالي، وأُغلق منها، ومتوسط الإغلاق، والنقاط، وتحت أهم الأرقام تغيّرها عن الشهر الذي قبله. اضغط على أي موظف تنفتح تفاصيله في مكانه: الشهر مقابل الذي قبله، وشغله المفتوح، وآخر ستة أشهر، وتقريره PDF، وخطته في التطوير، وصفحته كما يراها. وتحت الجدول «المزيد»: الفريق في آخر الأشهر، والأسبوع في لمحة، واستدامة الحمل، وتقارير الإدارة، والتذاكر، والتعريفات.
 
@@ -123,7 +123,7 @@ The side menu holds everything: “Home”, then the “Team engineering tools�
 
 ### My KPIs
 
-The “My KPIs” page is your own profile. Once: drag the “My KPIs” button onto the browser’s bookmarks bar. Then whenever you want: open myafaqy with your account and press the bookmark — it reads your work and opens the portal on it. You find your details and teams, then “My open work now” with your tasks’ titles and age, then “This month against last month” over the same days with arrows showing where you improved and where you slipped, then your comparison with the team average without names, then your history over the last twelve months. If myafaqy places people below you in its hierarchy — a team leader or a manager — a “My team” section shows each of them with their figures. The portal shows you exactly what myafaqy shows you, nothing more. Everything stays on your device; the sign-in token, customer names, the titles of others’ tasks and of completed tasks are never carried, and “Remove my KPIs” erases it from the device. The Step-by-step help button remains visible at the top even after loading your data. It opens an interactive five-step walkthrough for a computer, Android or iPhone: save the bookmark, sign in to myafaqy, run it and check your metrics. You can go back, close and reopen the guide without losing any data. The guide also contains an animated sample browser: a moving pointer or touch indicator demonstrates exactly where to click, or how to drag the My KPIs bookmark onto the bookmarks bar. Replay mouse movement repeats the scene. This is a visual simulation, not remote control of your browser or myafaqy. The monthly card also has Task points breakdown: completed count, weight and points for each task type, with a clear fallback-weight warning for unlisted types. Older closed cards retain their original totals and do not invent missing historical detail.
+«My KPIs» are your own numbers only — no team data. Pick the month and you see what came from e-mail, what you opened yourself, what others assigned you, the total, how many closed, the average time to close and your points — beside the month before and the change. Under it, your open work now and the last six months. It is the same view and the same calculation the manager sees when he clicks your name on «Team KPIs». For an engineer the numbers come from the bookmark pressed inside myafaqy; for the manager, from his pulled data.
 
 ### Team — positions and who reports to whom
 
@@ -147,7 +147,7 @@ An estimate of hours worked outside the working day, from the task times in the 
 
 ### Team plans
 
-The manager’s page only: upload the team planner file as it came, and it shows as it looks, limited to your part (Technical & Projects, R&D and After-Sales). A plan stays when all its people sit under you in the structure; the other departments’ plans and the whole-branch plan are removed, and the file is refused if any e-mail or phone of someone outside your part remains. The file stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file.
+The manager’s page only: upload the team structure file (an HTML page) and it shows as it looks, exactly as uploaded. It stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file, or remove it from the device.
 
 ### The manager bookmark — everything in one press
 
@@ -165,7 +165,7 @@ Each period has two prompts: “Copy the prompt” pulls the period’s tasks fo
 
 If Claude in Chrome splits its reply into parts, upload them all; they merge by task id. A period stays “incomplete” until its task count equals the total myafaqy itself reported, and its figures carry a warning.
 
-### KPIs
+### Team KPIs
 
 The one place for every employee’s numbers in a month. Pick the month from the list — months come from what you pulled, so a quarter pull gives three months. The tiles are the team; the table is each employee: from e-mail, opened by himself, assigned by others, total, closed of these, average to close and points, with the change from the month before under the main numbers. Click any employee and his details open in place: the month against the one before, his open work, the last six months, his PDF report, his development plan and his page as he sees it. Under the table, «More»: the team over recent months, the week at a glance, workload, management reports, tickets and the definitions.
 
@@ -214,7 +214,7 @@ On this device and in this browser only; nothing is sent anywhere. To move it to
 
 ### میرے اشاریے
 
-«میرے اشاریے» کا صفحہ آپ کا اپنا پروفائل ہے۔ ایک بار: «میرے اشاریے» کا بٹن براؤزر کی بک مارکس بار پر کھینچیں۔ پھر جب چاہیں: اپنے اکاؤنٹ سے مائی آفاقی کھولیں اور بک مارک دبائیں — یہ آپ کا کام پڑھتا ہے اور پورٹل اسی پر کھولتا ہے۔ آپ کو اپنی تفصیلات اور ٹیمیں ملتی ہیں، پھر «میرا کھلا کام ابھی» آپ کے ٹاسکس کے عنوان اور عمر کے ساتھ، پھر انہی دنوں پر «یہ مہینہ بمقابلہ پچھلا مہینہ» تیروں کے ساتھ جو بتاتے ہیں کہاں بہتری آئی اور کہاں کمی، پھر ناموں کے بغیر ٹیم کی اوسط سے آپ کا موازنہ، پھر پچھلے بارہ مہینوں کی آپ کی تاریخ۔ اگر مائی آفاقی اپنے ڈھانچے میں کچھ افراد کو آپ کے نیچے رکھتا ہے — ٹیم لیڈر یا مینیجر — تو «میری ٹیم» کا حصہ ان میں سے ہر ایک کو ان کے اعداد کے ساتھ دکھاتا ہے۔ پورٹل آپ کو بالکل وہی دکھاتا ہے جو مائی آفاقی دکھاتا ہے، اس سے زیادہ کچھ نہیں۔ سب کچھ آپ کے آلے پر رہتا ہے؛ لاگ اِن ٹوکن، گاہکوں کے نام، دوسروں کے ٹاسکس کے عنوان اور مکمل شدہ ٹاسکس کے عنوان کبھی نہیں لائے جاتے، اور «میرے اشاریے حذف کریں» اسے آلے سے مٹا دیتا ہے۔ قدم بہ قدم رہنمائی کا بٹن آپ کا ڈیٹا آنے کے بعد بھی صفحے کے اوپر ہمیشہ موجود رہتا ہے۔ اس میں کمپیوٹر، اینڈرائیڈ یا آئی فون کے لیے پانچ مراحل ہیں: بک مارک محفوظ کرنا، مائی آفاقی میں داخل ہونا، بک مارک چلانا اور اشاریے چیک کرنا۔ آپ پچھلے مراحل پر جا سکتے ہیں، رہنمائی بند کر کے دوبارہ کھول سکتے ہیں اور آپ کا ڈیٹا محفوظ رہتا ہے۔ رہنمائی میں اب فرضی براؤزر کی متحرک کھڑکی بھی ہے۔ اس میں ماؤس کا نشان یا انگلی کی نشانی درست جگہ کی طرف جاتی ہے، کلک دکھاتی ہے یا میرے اشاریوں کا بک مارک پٹی تک کھینچنا دکھاتی ہے۔ حرکت دوبارہ دکھانے کا بٹن منظر دوبارہ چلاتا ہے۔ یہ صرف بصری مثال ہے، اصل براؤزر یا مائی آفاقی پر کنٹرول نہیں کرتا۔ ماہانہ کارڈ میں «کام کے پوائنٹس کی مکمل تفصیل» بھی موجود ہے۔ اس میں ہر قسم کے مکمل کاموں کی تعداد، اس کا وزن اور مجموعی پوائنٹس دکھتے ہیں۔ جس قسم کا وزن مقرر نہ ہو اس کے لیے پہلے سے طے شدہ وزن کے استعمال کی تنبیہ ظاہر ہوتی ہے۔ پرانے بند ماہانہ کارڈوں کے اصل مجموعے برقرار رہتے ہیں اور ان کی غیر محفوظ شدہ تاریخی تفصیل نہیں بنائی جاتی۔
+«میرے اشاریے» صرف آپ کے اپنے اعداد ہیں — ٹیم کا ڈیٹا نہیں۔ مہینہ چنیں تو دیکھیں: ای میل سے کیا آیا، خود کیا کھولا، دوسروں نے کیا دیا، کل، کتنے بند ہوئے، بند ہونے کا اوسط اور آپ کے پوائنٹس — پچھلے مہینے اور تبدیلی کے ساتھ۔ نیچے آپ کا کھلا کام اور آخری چھ مہینے۔ یہ وہی منظر اور وہی حساب ہے جو مینیجر «ٹیم کے اشاریے» میں آپ کے نام پر کلک کر کے دیکھتا ہے۔ انجینئر کے لیے اعداد مائی آفاقی کے اندر دبائے گئے بک مارک سے آتے ہیں؛ مینیجر کے لیے اس کے کھینچے ہوئے ڈیٹا سے۔
 
 ### ٹیم — عہدے اور کون کس کے ماتحت
 
@@ -238,7 +238,7 @@ On this device and in this browser only; nothing is sent anywhere. To move it to
 
 ### ٹیم کے منصوبے
 
-صرف مینیجر کا صفحہ: ٹیم پلانر فائل جیسی آئی اپ لوڈ کریں، وہ اسی شکل میں آپ کے حصے تک محدود دکھے گی (ٹیکنیکل اینڈ پروجیکٹس، آر اینڈ ڈی اور آفٹر سیلز)۔ وہ منصوبہ رہتا ہے جس کے سب لوگ ڈھانچے میں آپ کے نیچے ہوں؛ دوسرے شعبوں اور پوری برانچ کے منصوبے ہٹا دیے جاتے ہیں، اور اگر باہر کے کسی کی ای میل یا فون باقی رہے تو فائل رد ہو جاتی ہے۔ فائل صرف آپ کی ڈیوائس پر رہتی ہے، ٹیم لنک پر نہیں، اور اس کے اندر کی ترمیم محفوظ نہیں ہوتی — اپ ڈیٹ کے لیے نئی فائل اپ لوڈ کریں۔
+صرف مینیجر کا صفحہ: ٹیم کے ڈھانچے کی فائل (HTML صفحہ) اپ لوڈ کریں، وہ بالکل جیسی اپ لوڈ کی اسی شکل میں دکھے گی۔ صرف آپ کی ڈیوائس پر رہتی ہے، ٹیم لنک پر نہیں، اور اس کے اندر کی ترمیم محفوظ نہیں ہوتی — اپ ڈیٹ کے لیے نئی فائل اپ لوڈ کریں، یا ڈیوائس سے ہٹا دیں۔
 
 ### مینیجر بک مارک — ایک دباؤ میں سب کچھ
 
@@ -256,7 +256,7 @@ On this device and in this browser only; nothing is sent anywhere. To move it to
 
 اگر کلاڈ کروم اپنا جواب کئی حصوں میں تقسیم کرے تو تمام حصے اپ لوڈ کریں؛ یہ ٹاسک نمبر کے حساب سے آپس میں جڑ جاتے ہیں۔ کوئی مدت اس وقت تک «نامکمل» رہتی ہے جب تک اس کے ٹاسکس کی تعداد مائی آفاقی کی بتائی ہوئی کل تعداد کے برابر نہ ہو جائے، اور اس کے اعداد پر انتباہ دکھائی دیتا ہے۔
 
-### کارکردگی کے اشاریے
+### ٹیم کے اشاریے
 
 مہینے میں ہر ملازم کے اعداد کی واحد جگہ۔ فہرست سے مہینہ چنیں — مہینے آپ کے کھینچے ہوئے ڈیٹا سے آتے ہیں، سہ ماہی کا ڈیٹا تین مہینے دیتا ہے۔ کارڈ ٹیم کے ہیں؛ جدول ہر ملازم کا ہے: ای میل سے، خود کھولے، دوسروں نے دیے، کل، ان میں سے بند، بند ہونے کا اوسط اور پوائنٹس، اور اہم اعداد کے نیچے پچھلے مہینے سے تبدیلی۔ کسی بھی ملازم پر کلک کریں تو تفصیل وہیں کھلتی ہے: مہینہ پچھلے کے مقابلے میں، اس کا کھلا کام، آخری چھ مہینے، اس کی PDF رپورٹ، ترقی کا منصوبہ اور اس کا صفحہ جیسا وہ دیکھتا ہے۔ جدول کے نیچے «مزید»: حالیہ مہینوں میں ٹیم، ہفتہ ایک نظر میں، کام کا بوجھ، انتظامی رپورٹس، ٹکٹس اور تعریفیں۔
 
