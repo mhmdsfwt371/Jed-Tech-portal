@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.94 — 2026-11-05
+
+- تصنيفات البريد بقت بتاعتك بالكامل من البوابة: تضيف تصنيف، وتسمّيه، وتكتب كلماته، وترتّب الأولوية بالأسهم، وتحذف. وجدول النتايج بيتبني من تصنيفاتك، والقواعد بقت بتتنقل مع النسخة الاحتياطية.
+
+<details><summary>English</summary>
+
+- Mail categories are now fully yours in the portal: add, name, give words, set priority with the arrows, remove. The results follow your categories, and the rules travel with the backup.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- میل کے زمرے اب پورٹل میں مکمل طور پر آپ کے ہیں: شامل کریں، نام رکھیں، الفاظ لکھیں، تیروں سے ترجیح طے کریں، ہٹائیں۔ نتائج آپ کے زمروں کے مطابق ہیں، اور اصول بیک اپ کے ساتھ منتقل ہوتے ہیں۔
+
+</div>
+</details>
+
+
 ## v8.93 — 2026-11-05
 
 - صفحة «البريد من ملف PST» بقت بتعرض قواعد التصنيف وطريقة العدّ من أول ما تفتحها، قبل ما ترفع أي ملف. كانت بتظهر بعد الرفع بس فمكنتش بتتلاقي.

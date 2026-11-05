@@ -3072,13 +3072,20 @@ function renderPlanner() {
 
 // ---------- «البريد من ملف PST» (ADR-0058): who sent how many, and each subject sorted into three kinds — read on the device, never uploaded ----------
 let mfState = { msgs: null, file: '', picked: new Set(), rules: null, cat: 'all', from: '', to: '' };
-const MF_CATS = ['normal', 'advanced', 'upsell', 'other'];
 const MF_DEFAULT_RULES = () => [
   { k: 'upsell', words: ['new inquiry', 'inquiry', 'new request', 'new requirement', 'requirement', 'quotation', 'طلب جديد', 'استفسار', 'متطلب', 'عرض سعر'] },
   { k: 'advanced', words: ['integration', 'api', 'ربط', 'تكامل'] },
   { k: 'normal', words: ['wasl', 'وصل'] },
 ];
 const mfRules = () => mfState.rules || MF_DEFAULT_RULES();
+/** ADR-0077: the manager's own categories — any number up to 12, each a key, an optional name and its words; order is priority. */
+function cleanMailRules(x) {
+  if (!Array.isArray(x)) return null; const seen = new Set();
+  const out = x.slice(0, 12).map((r) => ({ k: String((r && r.k) || '').replace(/[^a-z0-9_-]/gi, '').slice(0, 24), name: String((r && r.name) || '').trim().slice(0, 40),
+    words: (Array.isArray(r && r.words) ? r.words : []).map((w) => String(w).trim().slice(0, 60)).filter(Boolean).slice(0, 40) }))
+    .filter((r) => r.k && r.k !== 'other' && !seen.has(r.k) && seen.add(r.k)).map((r) => (r.name ? r : { k: r.k, words: r.words }));
+  return out.length ? out : null;
+}
 const mfCategory = (subject, rules) => { const s = String(subject || '').toLowerCase(); for (const r of rules) if (r.words.some((w) => w && s.includes(String(w).toLowerCase()))) return r.k; return 'other'; };
 async function mfLoadLib() { if (window.PSTFile) return;
   await new Promise((res, rej) => { const sc = el('script', { src: './assets/vendor/pst-extractor.min.js' }); sc.onload = res; sc.onerror = () => rej(new Error('pst lib')); document.head.append(sc); }); }
@@ -3104,7 +3111,8 @@ async function mfLoadFile(f, say) {   // read a PST on the device — from one p
 function renderMailFile() {
   const body = $('mailfile-body'); if (!body || isTeamPortal) return;
   const rulesOpen = !!(body.querySelector('.mf-rules') && body.querySelector('.mf-rules').open);   // the rules box stays open while its words are edited
-  const st = mfState, rules = mfRules(), catName = (k) => t(`mf_cat_${k}`);
+  const st = mfState, rules = mfRules(), catName = (k) => { const r = rules.find((x) => x.k === k); return (r && r.name) || (['normal', 'advanced', 'upsell', 'other'].includes(k) ? t(`mf_cat_${k}`) : k); };
+  const CATS = [...rules.map((r) => r.k), 'other'];   // ADR-0077: the results follow the manager's categories
   const status = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite', text: st.msgs ? t(st.copies ? 'mf_file_copies' : 'mf_file', { name: st.file, n: st.msgs.length, c: st.copies }) : '' });
   const fileIn = el('input', { type: 'file', accept: '.pst,.ost', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return;
     if (await mfLoadFile(f, (s) => { status.textContent = s; })) renderMailFile(); e.target.value = ''; } });
@@ -3114,9 +3122,20 @@ function renderMailFile() {
   // ADR-0070: the Outlook mailbox lives here with the PST file — one place for mail, shown with or without a file
   const mailbox = datasets.length ? kpiMailSection(currentTeam(scoped(peopleOf(datasets)), allTasks()), new Map(peopleOf(datasets).map((p) => [p.id, p]))) : null;
   const saveRules = async (next) => { st.rules = next; await store.kvPut('mailrules', next); renderMailFile(); };
+  const edit = (fn) => { const next = rules.map((x) => ({ ...x, words: [...x.words] })); fn(next); saveRules(cleanMailRules(next)); };
   const rulesBox = el('details', { class: 'me-phones mf-rules', ...(rulesOpen || !st.msgs ? { open: '' } : {}) }, el('summary', { text: t('mf_rules_h') }), el('p', { class: 'hint', text: t('mf_rules_lead') }),
-    ...rules.map((r, i) => el('label', { class: 'mf-rule' }, el('b', { text: catName(r.k) }), el('input', { type: 'text', value: r.words.join('، '), dir: 'auto', onchange: (e) => { const next = rules.map((x) => ({ k: x.k, words: [...x.words] })); next[i].words = e.target.value.split(/[,،]/).map((w) => w.trim()).filter(Boolean).slice(0, 40); saveRules(next); } }))),
-    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny quiet', text: t('mf_rules_reset'), onclick: () => saveRules(null) })));
+    ...rules.map((r, i) => el('div', { class: 'mf-rule', 'data-k': r.k },
+      el('input', { type: 'text', class: 'mf-rule-name', value: r.name || '', placeholder: catName(r.k), 'aria-label': t('mf_rule_name'), dir: 'auto', maxlength: 40,
+        onchange: (e) => edit((n) => { n[i].name = e.target.value.trim(); }) }),
+      el('input', { type: 'text', class: 'mf-rule-words', value: r.words.join('، '), dir: 'auto', 'aria-label': t('mf_rule_words'),
+        onchange: (e) => edit((n) => { n[i].words = e.target.value.split(/[,،]/).map((w) => w.trim()).filter(Boolean).slice(0, 40); }) }),
+      el('div', { class: 'mf-rule-acts' },
+        el('button', { type: 'button', class: 'btn tiny quiet', title: t('mf_rule_up'), 'aria-label': t('mf_rule_up'), disabled: i === 0, text: '▲', onclick: () => edit((n) => { [n[i - 1], n[i]] = [n[i], n[i - 1]]; }) }),
+        el('button', { type: 'button', class: 'btn tiny quiet', title: t('mf_rule_down'), 'aria-label': t('mf_rule_down'), disabled: i === rules.length - 1, text: '▼', onclick: () => edit((n) => { [n[i + 1], n[i]] = [n[i], n[i + 1]]; }) }),
+        el('button', { type: 'button', class: 'btn tiny quiet', title: t('mf_rule_del'), 'aria-label': t('mf_rule_del'), disabled: rules.length === 1, text: '✕', onclick: () => { if (confirm(t('mf_rule_del_confirm', { name: catName(r.k) }))) edit((n) => { n.splice(i, 1); }); } })))),
+    el('div', { class: 'row' },
+      el('button', { type: 'button', class: 'btn tiny', disabled: rules.length >= 12, text: `＋ ${t('mf_rule_add')}`, onclick: () => edit((n) => { n.push({ k: `c${Date.now().toString(36)}`, name: t('mf_rule_new'), words: [] }); }) }),
+      el('button', { type: 'button', class: 'btn tiny quiet', text: t('mf_rules_reset'), onclick: () => { if (confirm(t('mf_rules_reset_confirm'))) saveRules(null); } })));
   // ADR-0075 / ADR-0076: how this page counts and its classification rules — shown BEFORE a file is chosen too, so they can be read first
   const howBox = el('details', { class: 'tucked mf-howcount', open: true }, el('summary', { text: t('mf_count_h') }), el('ul', { class: 'defs' }, ['mf_count_1', 'mf_count_2', 'mf_count_3', 'mf_count_4', 'mf_count_5'].map((k) => el('li', { text: t(k) }))));
   if (!st.msgs) { set(body, mailbox, top, rulesBox, howBox); return; }
@@ -3134,12 +3153,12 @@ function renderMailFile() {
         el('td', {}, el('input', { type: 'checkbox', 'aria-label': s, ...(st.picked.has(s) ? { checked: '' } : {}), onchange: (e) => { if (e.target.checked) st.picked.add(s); else st.picked.delete(s); renderMailFile(); } })),
         el('td', { text: s || '—' }), el('td', { class: 'ltr hint', text: emails.get(s) || '' }), el('td', { class: 'num', text: String(n) })))))));
   const picked = ranged.filter((m) => st.picked.has(m.sender)).map((m) => ({ ...m, cat: mfCategory(m.subject, rules) }));
-  const perSender = [...st.picked].map((s) => { const list = picked.filter((m) => m.sender === s); const row = { s, total: list.length }; for (const c of MF_CATS) row[c] = list.filter((m) => m.cat === c).length; return row; }).sort((p, q) => q.total - p.total);
-  const tot = { total: picked.length }; for (const c of MF_CATS) tot[c] = picked.filter((m) => m.cat === c).length;
+  const perSender = [...st.picked].map((s) => { const list = picked.filter((m) => m.sender === s); const row = { s, total: list.length }; for (const c of CATS) row[c] = list.filter((m) => m.cat === c).length; return row; }).sort((p, q) => q.total - p.total);
+  const tot = { total: picked.length }; for (const c of CATS) tot[c] = picked.filter((m) => m.cat === c).length;
   const results = el('section', { id: 'mf-results' }, el('h2', { text: t('mf_results_h') }),
-    el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('mf_col_sender'), t('mf_col_total'), ...MF_CATS.map(catName)].map((h, i) => el('th', { class: i ? 'num' : null, text: h })))),
-      el('tbody', {}, perSender.map((r) => el('tr', {}, el('td', { text: r.s || '—' }), el('td', { class: 'num', text: String(r.total) }), ...MF_CATS.map((c) => el('td', { class: 'num', text: String(r[c]) })))),
-        el('tr', { class: 'mf-total' }, el('td', { text: t('mf_col_total') }), el('td', { class: 'num', text: String(tot.total) }), ...MF_CATS.map((c) => el('td', { class: 'num', text: String(tot[c]) })))))));
+    el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('mf_col_sender'), t('mf_col_total'), ...CATS.map(catName)].map((h, i) => el('th', { class: i ? 'num' : null, text: h })))),
+      el('tbody', {}, perSender.map((r) => el('tr', {}, el('td', { text: r.s || '—' }), el('td', { class: 'num', text: String(r.total) }), ...CATS.map((c) => el('td', { class: 'num', text: String(r[c]) })))),
+        el('tr', { class: 'mf-total' }, el('td', { text: t('mf_col_total') }), el('td', { class: 'num', text: String(tot.total) }), ...CATS.map((c) => el('td', { class: 'num', text: String(tot[c]) })))))));
   const shown = picked.filter((m) => st.cat === 'all' || m.cat === st.cat).sort((p, q) => (q.date || '').localeCompare(p.date || ''));
   const csv = () => { const esc = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
     const rows = [[t('mf_col_date'), t('mf_col_sender'), t('mf_col_subject'), t('mf_col_cat'), t('mf_col_folder')], ...shown.map((m) => [(m.date || '').slice(0, 10), m.sender, m.subject, catName(m.cat), m.folder])];
@@ -3147,7 +3166,7 @@ function renderMailFile() {
     const link = el('a', { href: URL.createObjectURL(blob), download: 'mail-by-kind.csv' }); document.body.append(link); link.click(); link.remove(); };
   const { tbody, more } = pagedBody([...shown], (m) => el('tr', {}, el('td', { class: 'ltr', text: (m.date || '').slice(0, 10) }), el('td', { text: m.sender }), el('td', { text: m.subject || '—' }), el('td', {}, el('span', { class: `mf-pill ${m.cat}`, text: catName(m.cat) })), el('td', { class: 'hint', text: m.folder })));
   const listBox = el('section', { id: 'mf-list' }, el('h2', { text: t('mf_list_h') }),
-    el('div', { class: 'row' }, el('div', { class: 'pills' }, [['all', t('mf_all')], ...MF_CATS.map((c) => [c, `${catName(c)} (${tot[c]})`])].map(([k, l]) => el('button', { type: 'button', class: `pill-btn${st.cat === k ? ' on' : ''}`, text: l, onclick: () => { st.cat = k; renderMailFile(); } }))),
+    el('div', { class: 'row' }, el('div', { class: 'pills' }, [['all', t('mf_all')], ...CATS.map((c) => [c, `${catName(c)} (${tot[c]})`])].map(([k, l]) => el('button', { type: 'button', class: `pill-btn${st.cat === k ? ' on' : ''}`, text: l, onclick: () => { st.cat = k; renderMailFile(); } }))),
       el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('mf_export')}`, onclick: csv })),
     shown.length ? el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('mf_col_date'), t('mf_col_sender'), t('mf_col_subject'), t('mf_col_cat'), t('mf_col_folder')].map((h) => el('th', { text: h })))), tbody), more) : el('div', { class: 'empty', text: t('mf_empty') }));
   set(body, mailbox, top, dateRow, sendersBox, rulesBox, results, howBox, listBox);
@@ -3212,7 +3231,7 @@ $('file-in').addEventListener('change', async (e) => { for (const f of e.target.
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
 $('export-btn').addEventListener('click', async () => {
   if (plannerFile === undefined) plannerFile = (await store.getPlanner()) || null;   // ADR-0071: the planner travels with the backup
-  const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION, planner: plannerFile || null,
+  const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION, planner: plannerFile || null, mailrules: mfState.rules || (await store.kvGet('mailrules')) || null,
     datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: (viewAs ? (meDerived ? null : realMe) : (meDerived ? null : me)) || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projfiles: await projFilesExport(), devplans: devPlans };
   download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(all, null, 1));
 });
@@ -3239,6 +3258,8 @@ $('import-in').addEventListener('change', async (e) => {
       if (j.projfiles && typeof j.projfiles === 'object') await projFilesImport(j.projfiles);
       if (j.devplans && typeof j.devplans === 'object') { for (const [q, ppl] of Object.entries(j.devplans)) devPlans[q] = { ...(ppl || {}), ...(devPlans[q] || {}) }; await store.kvPut('devplans', devPlans); }
       if (j.register && !myRegister) { const r = cleanRegister(j.register); if (r) { myRegister = r; await store.putRegister(r); } }
+      // ADR-0077: the mail rules come back with the backup when this device has none of its own
+      { const mr = cleanMailRules(j.mailrules); if (mr && !(await store.kvGet('mailrules'))) { mfState.rules = mr; await store.kvPut('mailrules', mr); } }
       if (plannerFile === undefined) plannerFile = (await store.getPlanner()) || null;
       if (j.planner && typeof j.planner.html === 'string' && !plannerFile && isHtml(j.planner.html)) { plannerFile = { name: String(j.planner.name || 'planner.html'), at: String(j.planner.at || new Date().toISOString()), html: j.planner.html }; await store.putPlanner(plannerFile); }
       if (j.projects && !myProjects) { const p = cleanProjects(j.projects); if (p) { myProjects = p; await store.putProjects(myProjects); } }
@@ -3295,7 +3316,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   devPlans = (await store.kvGet('devplans')) || {};
   teamTypesLive = (await store.kvGet('teamtypes')) || null;
   rankSnaps = (await store.kvGet('rankcards')) || {}; await takeRankLink();
-  mfState.rules = (await store.kvGet('mailrules')) || null;
+  mfState.rules = cleanMailRules(await store.kvGet('mailrules'));
   if (!isTeamPortal) { extSend(false); window.postMessage({ type: 'afaqy-ext-hello' }, location.origin); renderExtBox(); }   // ADR-0062
   await refreshOfficialWeights();
   try { const r = await fetch('./systems.json', { cache: 'no-store' }); const data = r.ok && validateSystems(await r.json()); if (data) { SYSTEMS = data.systems; SYSTEM_CATEGORIES = data.categories; } } catch { /* retain built-in links when unavailable */ }

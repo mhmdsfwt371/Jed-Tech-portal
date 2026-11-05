@@ -1,15 +1,15 @@
 {
-  "version": "8.93",
+  "version": "8.94",
   "date": "2026-11-05",
   "notes": {
     "ar": [
-      "صفحة «البريد من ملف PST» بقت بتعرض قواعد التصنيف وطريقة العدّ من أول ما تفتحها، قبل ما ترفع أي ملف. كانت بتظهر بعد الرفع بس فمكنتش بتتلاقي."
+      "تصنيفات البريد بقت بتاعتك بالكامل من البوابة: تضيف تصنيف، وتسمّيه، وتكتب كلماته، وترتّب الأولوية بالأسهم، وتحذف. وجدول النتايج بيتبني من تصنيفاتك، والقواعد بقت بتتنقل مع النسخة الاحتياطية."
     ],
     "en": [
-      "The «Mail from a PST file» page now shows its classification rules and how it counts as soon as it opens, before any file is chosen. They used to appear only after a file was read, so they could not be found."
+      "Mail categories are now fully yours in the portal: add, name, give words, set priority with the arrows, remove. The results follow your categories, and the rules travel with the backup."
     ],
     "ur": [
-      "«PST فائل سے میل» والا صفحہ اب کھلتے ہی زمرہ بندی کے اصول اور گنتی کا طریقہ دکھاتا ہے، فائل چننے سے پہلے۔ پہلے یہ فائل پڑھنے کے بعد ہی نظر آتے تھے، اس لیے ملتے نہیں تھے۔"
+      "میل کے زمرے اب پورٹل میں مکمل طور پر آپ کے ہیں: شامل کریں، نام رکھیں، الفاظ لکھیں، تیروں سے ترجیح طے کریں، ہٹائیں۔ نتائج آپ کے زمروں کے مطابق ہیں، اور اصول بیک اپ کے ساتھ منتقل ہوتے ہیں۔"
     ]
   }
 }

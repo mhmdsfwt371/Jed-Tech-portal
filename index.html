@@ -881,6 +881,10 @@
   .pl-bar .row{gap:8px;flex-wrap:wrap}
   .pl-frame{display:block;width:100%;height:calc(100vh - 240px);min-height:560px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card)}
   .pl-empty{padding:18px}
+  /* ADR-0077: the manager's mail categories */
+  .mf-rule{display:grid;grid-template-columns:minmax(120px,180px) 1fr auto;gap:8px;align-items:center;margin:6px 0}
+  .mf-rule-acts{display:flex;gap:4px}
+  @media (max-width:720px){.mf-rule{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
