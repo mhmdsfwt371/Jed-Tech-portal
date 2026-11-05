@@ -2009,3 +2009,12 @@ export function plannerSummary(html) {
   const who = new Set(S.plans.flatMap(plMembers).map((m) => String(((m && m.info) || {}).email || (m && m.name) || '').trim().toLowerCase()).filter(Boolean));
   return { plans: S.plans.map((p) => ({ name: p.name || '', people: plMembers(p).length })), people: who.size };
 }
+
+/** ADR-0075: one key per e-mail, not per copy — the global Message-ID when there is one, else who sent it, when and the subject. A message
+ *  kept in two folders of a PST is two items (two node ids) but one e-mail, and counts once. */
+export function mailKey(m) {
+  const id = String((m && m.internetMessageId) || '').trim().toLowerCase();
+  if (id) return `mid:${id}`;
+  const when = m && (m.clientSubmitTime || m.messageDeliveryTime); const iso = when ? new Date(when).toISOString() : '';
+  return `alt:${String((m && (m.senderEmailAddress || m.senderName)) || '').trim().toLowerCase()}|${iso}|${String((m && m.subject) || '').trim().toLowerCase()}`;
+}

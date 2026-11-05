@@ -1002,6 +1002,15 @@ test('one source per task (self, email, other) and, in the board engine, receive
 });
 // The runner sits after every test() so that each one runs; a test added below this line would be counted without running.
 let failed = 0;
+test('one e-mail counts once: copies in two folders share a key; without a Message-ID, sender, time and subject decide (ADR-0075)', () => {
+  const a = { internetMessageId: '<ABC@afaqy.com>', descriptorNodeId: 1, subject: 'x' }, b = { internetMessageId: '<abc@afaqy.com> ', descriptorNodeId: 2, subject: 'x' };
+  assert.equal(core.mailKey(a), core.mailKey(b));
+  const c = { senderEmailAddress: 'S@afaqy.com', clientSubmitTime: '2026-10-05T09:00:00Z', subject: 'Report' }, d = { ...c, descriptorNodeId: 9, subject: ' report ' };
+  assert.equal(core.mailKey(c), core.mailKey(d));
+  assert.notEqual(core.mailKey(c), core.mailKey({ ...c, subject: 'Another' }));
+  assert.notEqual(core.mailKey(a), core.mailKey({ internetMessageId: '<other@afaqy.com>' }));
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

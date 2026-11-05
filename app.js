@@ -2,7 +2,7 @@
 import { PRIMARY, SYSTEMS as DEFAULT_SYSTEMS, SYSTEM_CATEGORIES as DEFAULT_SYSTEM_CATEGORIES, MORE, PORTAL_VERSION, MODULE_ALLOW } from './config.js';
 import { mountTourDemo, replayTourDemo } from './tour-demo.js';
 import {
-  t as tr, L, LANGS, dirOf, tourState, TOUR_DEVICES, tourDemoPlan, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1, plannerSummary,
+  t as tr, L, LANGS, dirOf, tourState, TOUR_DEVICES, tourDemoPlan, periodBlocks, buildPrompt, parseDataset, mergeDataset, completeness, factor1, plannerSummary, mailKey,
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
@@ -2305,15 +2305,17 @@ function pulledPeriods(kind = kmKind, ranges = datasets.map((d) => d.range)) {
 /** The «month | quarter» switch both KPI pages carry; one choice for both, kept on this device. */
 const kindPills = (redraw) => el('div', { class: 'pills km-kind' }, [['month', 'km_kind_month'], ['quarter', 'km_kind_quarter']].map(([k, l]) =>
   el('button', { type: 'button', class: `pill-btn${kmKind === k ? ' on' : ''}`, 'data-kind': k, text: t(l), onclick: () => { if (kmKind === k) return; kmKind = k; pref('kmkind', k); kpiMonth = null; meMonth = null; redraw(); } })));
+/** ADR-0075: R&D is known for a period only when every pull that touches it carries the R&D queue's list (the button's pull does). */
+const rdKnownFor = (range) => { const ds = datasets.filter((d) => d.range && d.range.from <= range.to && d.range.to >= range.from); return ds.length > 0 && ds.every((d) => d.rdKnown); };
 /** One person's (or the team's) month in the numbers this page shows. */
 function monthNumbers(f, wp, id) {
   const r = id === 'team' ? f.team : f.people.find((x) => x.id === id);
   if (!r) return null;
   const s = (k) => (r.bySource && r.bySource[k] ? r.bySource[k].received : 0);
-  return { email: s('email'), self: s('self'), other: s('other'), total: r.assigned, closed: r.cohortClosed, avg: r.cohortAvgHours,
+  return { email: s('email'), self: s('self'), other: s('other'), total: r.assigned, closed: r.cohortClosed, avg: r.cohortAvgHours, rd: r.rd || 0,
     points: Math.round((id === 'team' ? wp.total : (wp.byId.get(id) || { total: 0 }).total) * 10) / 10 };
 }
-const KM_DEFS = ['km_def_recv', 'km_def_src', 'km_def_avg', 'km_def_pts', 'km_def_month'];
+const KM_DEFS = ['km_def_recv', 'km_def_src', 'km_def_avg', 'km_def_rd', 'km_def_pts', 'km_def_month'];
 /** A change beside a number: neutral for what arrived (n), green/red for what was done (h: higher is better, l: lower is better). */
 function kmDelta(a, b, kind, pml) {
   if (a == null || b == null) return null;
@@ -2327,7 +2329,8 @@ function personMonthView({ id, tasks, acts = [], months, ym, head = '', share = 
   const ZERO = { email: 0, self: 0, other: 0, total: 0, closed: 0, avg: null, points: 0 };
   const one = (y) => { const r = periodRangeOf(y); return monthNumbers(factor1(tasks, { range: r, team: [id] }), weightedPoints(tasks, acts, wt, { range: r, team: [id] }), id) || ZERO; };
   const n = one(ym), p = hasPrev ? one(pm) : null;
-  const rows = [['src_email', 'email', 'n'], ['src_self', 'self', 'n'], ['src_other', 'other', 'n'], ['km_total', 'total', 'n'], ['km_closed', 'closed', 'h'], ['km_avg', 'avg', 'l'], ['col_points', 'points', 'h']];
+  const rdOn = rdKnownFor(periodRangeOf(ym));
+  const rows = [['src_email', 'email', 'n'], ['src_self', 'self', 'n'], ['src_other', 'other', 'n'], ['km_total', 'total', 'n'], ['km_closed', 'closed', 'h'], ['km_avg', 'avg', 'l'], ...(rdOn ? [['km_rd', 'rd', 'n']] : []), ['col_points', 'points', 'h']];
   const fmt = (k, v) => (k === 'avg' ? hmOf(v) : String(v ?? '—'));
   const hist = months.slice(0, 6).map((m) => ({ m, x: one(m.ym) }));
   // every open task, newest first — six shown, the rest one fold away (as «My KPIs» always listed them)
@@ -2399,11 +2402,13 @@ function renderKpi() {
     el('span', { text: label }), P ? el('small', { class: 'km-was' }, `${t('km_vs', { m: pml })}: ${k === 'avg' ? hmOf(pv) : (pv ?? '—')} `, delta(v, pv, kind)) : null, sub ? el('small', { class: 'hint', text: sub }) : null);
   const sorter = { points: (id) => (now(id) || {}).points || 0, total: (id) => (now(id) || {}).total || 0, avg: (id) => -(((now(id) || {}).avg) ?? 1e9) }[kpiMSort];
   const ids = f.people.map((r) => r.id).sort((a, b) => sorter(b) - sorter(a) || nm(a).localeCompare(nm(b), lang));
-  const COLS = ['src_email', 'src_self', 'src_other', 'km_total', 'km_closed', 'km_avg', 'col_points'];
+  const rdOn = rdKnownFor(range);   // ADR-0075: R&D shows when the period's pulls carry the R&D list, «—» otherwise
+  const COLS = ['src_email', 'src_self', 'src_other', 'km_total', 'km_closed', 'km_avg', 'km_rd', 'col_points'];
   const cells = (n, p, withDelta) => [n.email, n.self, n.other].map((v) => el('td', { class: 'num', text: String(v) }))
     .concat(el('td', { class: 'num km-strong' }, el('b', { text: String(n.total) }), withDelta && p ? delta(n.total, p.total, 'n') : null),
       el('td', { class: 'num', text: String(n.closed) }),
       el('td', { class: 'num' }, hmOf(n.avg), withDelta && p ? delta(n.avg, p.avg, 'l') : null),
+      el('td', { class: 'num km-rd', title: rdOn ? t('km_def_rd') : t('km_rd_unknown') }, rdOn ? String(n.rd) : '—'),
       el('td', { class: 'num km-strong' }, el('b', { text: String(n.points) }), withDelta && p ? delta(n.points, p.points, 'h') : null));
   const detail = (id) => {
     const n = now(id), share = wp.total ? Math.round((n.points / wp.total) * 100) : 0, mds = { key: `m:${ym}`, range, tasks, activities: acts };
@@ -2432,8 +2437,8 @@ function renderKpi() {
   const csv = () => {
     const head = [t('col_person'), ...COLS.map((k) => t(k)), `${t('km_total')} — ${pml}`, `${t('col_points')} — ${pml}`];
     const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const rowsCsv = ids.map((id) => { const n = now(id), p = was(id) || {}; return [nm(id), n.email, n.self, n.other, n.total, n.closed, hmOf(n.avg), n.points, p.total ?? '', p.points ?? '']; });
-    rowsCsv.push([t('team'), T.email, T.self, T.other, T.total, T.closed, hmOf(T.avg), T.points, (P || {}).total ?? '', (P || {}).points ?? '']);
+    const rowsCsv = ids.map((id) => { const n = now(id), p = was(id) || {}; return [nm(id), n.email, n.self, n.other, n.total, n.closed, hmOf(n.avg), rdOn ? n.rd : '', n.points, p.total ?? '', p.points ?? '']; });
+    rowsCsv.push([t('team'), T.email, T.self, T.other, T.total, T.closed, hmOf(T.avg), rdOn ? T.rd : '', T.points, (P || {}).total ?? '', (P || {}).points ?? '']);
     download(`AFAQY-KPI-${ym}.csv`, '\ufeff' + [head, ...rowsCsv].map((r) => r.map(q).join(',')).join('\n'));
   };
   // what is not «who did what in the month» stays one fold away, each in its one place
@@ -2472,6 +2477,7 @@ function renderKpi() {
       tile('self', t('src_self'), T.self, P && P.self, 'n'),
       tile('other', t('src_other'), T.other, P && P.other, 'n'),
       tile('avg', t('km_avg'), T.avg, P && P.avg, 'l', t('km_closed_n', { n: T.closed })),
+      tile('rd', t('km_rd'), rdOn ? T.rd : '—', rdOn && P && rdKnownFor(prange) ? P.rd : null, 'n', rdOn ? null : t('km_rd_unknown')),
       tile('points', t('col_points'), T.points, P && P.points, 'h')),
     el('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin:4px 0 8px' },
       el('div', { class: 'pills' }, el('span', { class: 'hint', text: `${t('cnt_sort')}:` }), [['points', 'col_points'], ['total', 'km_total'], ['avg', 'km_avg']].map(([k, label]) =>
@@ -3077,19 +3083,20 @@ const mfCategory = (subject, rules) => { const s = String(subject || '').toLower
 async function mfLoadLib() { if (window.PSTFile) return;
   await new Promise((res, rej) => { const sc = el('script', { src: './assets/vendor/pst-extractor.min.js' }); sc.onload = res; sc.onerror = () => rej(new Error('pst lib')); document.head.append(sc); }); }
 function mfParse(buf) {
-  const pst = new window.PSTFile(window.Buffer.from(buf)); const out = []; const seen = new Set();
+  const pst = new window.PSTFile(window.Buffer.from(buf)); const out = []; const seen = new Set(), seenMail = new Set(); let copies = 0;   // ADR-0075
   const walk = (f, path) => {
     if (f.hasSubfolders) for (const c of f.getSubFolders()) walk(c, path ? `${path}/${c.displayName}` : String(c.displayName || ''));
     if (f.contentCount > 0) { let m = f.getNextChild(), guard = 0;
       while (m && guard++ < 500000) { const key = m.descriptorNodeId != null ? m.descriptorNodeId : `${path}:${out.length}`;
-        if (!seen.has(key)) { seen.add(key); const d = m.clientSubmitTime || m.messageDeliveryTime;
+        const mk = mailKey(m); if (!seen.has(key) && seenMail.has(mk)) copies++;   // the same e-mail kept in another folder
+        if (!seen.has(key) && !seenMail.has(mk)) { seen.add(key); seenMail.add(mk); const d = m.clientSubmitTime || m.messageDeliveryTime;
           out.push({ id: key, folder: path || '/', subject: String(m.subject || '').slice(0, 300), sender: String(m.senderName || m.senderEmailAddress || '').trim().slice(0, 120), email: String(m.senderEmailAddress || '').slice(0, 160), to: String(m.displayTo || '').slice(0, 300), date: d ? new Date(d).toISOString() : '' }); }
         m = f.getNextChild(); } } };
-  walk(pst.getRootFolder(), ''); return out;
+  walk(pst.getRootFolder(), ''); out.copies = copies; return out;
 }
 async function mfLoadFile(f, say) {   // read a PST on the device — from one place only, the mail page (ADR-0068)
   say(t('mf_reading', { name: f.name, mb: Math.max(1, Math.round(f.size / 1048576)) }));
-  try { await mfLoadLib(); const buf = await f.arrayBuffer(); await new Promise((r) => setTimeout(r, 30)); mfState.msgs = mfParse(buf); mfState.file = f.name;
+  try { await mfLoadLib(); const buf = await f.arrayBuffer(); await new Promise((r) => setTimeout(r, 30)); mfState.msgs = mfParse(buf); mfState.file = f.name; mfState.copies = mfState.msgs.copies || 0;
     const counts = new Map(); for (const m of mfState.msgs) counts.set(m.sender, (counts.get(m.sender) || 0) + 1);
     mfState.picked = new Set([...counts.entries()].sort((p, q) => q[1] - p[1]).slice(0, 5).map(([k]) => k)); toast(t('mf_done', { n: mfState.msgs.length })); return true; }
   catch (err) { console.error(err); say(t('mf_fail')); return false; }
@@ -3098,7 +3105,7 @@ function renderMailFile() {
   const body = $('mailfile-body'); if (!body || isTeamPortal) return;
   const rulesOpen = !!(body.querySelector('.mf-rules') && body.querySelector('.mf-rules').open);   // the rules box stays open while its words are edited
   const st = mfState, rules = mfRules(), catName = (k) => t(`mf_cat_${k}`);
-  const status = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite', text: st.msgs ? t('mf_file', { name: st.file, n: st.msgs.length }) : '' });
+  const status = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite', text: st.msgs ? t(st.copies ? 'mf_file_copies' : 'mf_file', { name: st.file, n: st.msgs.length, c: st.copies }) : '' });
   const fileIn = el('input', { type: 'file', accept: '.pst,.ost', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return;
     if (await mfLoadFile(f, (s) => { status.textContent = s; })) renderMailFile(); e.target.value = ''; } });
   const top = el('section', { class: 'dt-quick' },
@@ -3141,7 +3148,9 @@ function renderMailFile() {
     el('div', { class: 'row' }, el('div', { class: 'pills' }, [['all', t('mf_all')], ...MF_CATS.map((c) => [c, `${catName(c)} (${tot[c]})`])].map(([k, l]) => el('button', { type: 'button', class: `pill-btn${st.cat === k ? ' on' : ''}`, text: l, onclick: () => { st.cat = k; renderMailFile(); } }))),
       el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('mf_export')}`, onclick: csv })),
     shown.length ? el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('mf_col_date'), t('mf_col_sender'), t('mf_col_subject'), t('mf_col_cat'), t('mf_col_folder')].map((h) => el('th', { text: h })))), tbody), more) : el('div', { class: 'empty', text: t('mf_empty') }));
-  set(body, mailbox, top, dateRow, sendersBox, rulesBox, results, listBox);
+  // ADR-0075: how this page counts — said on the page, so the numbers are read for what they are
+  const howBox = el('details', { class: 'tucked mf-howcount', open: true }, el('summary', { text: t('mf_count_h') }), el('ul', { class: 'defs' }, ['mf_count_1', 'mf_count_2', 'mf_count_3', 'mf_count_4', 'mf_count_5'].map((k) => el('li', { text: t(k) }))));
+  set(body, mailbox, top, dateRow, sendersBox, rulesBox, results, howBox, listBox);
 }
 function route() {
   if (location.hash.startsWith('#rank=')) { takeRankLink(true).then(route); return; }   // a rank link can arrive while the portal is already open (only the hash changes)

@@ -1,15 +1,18 @@
 {
-  "version": "8.91",
+  "version": "8.92",
   "date": "2026-11-05",
   "notes": {
     "ar": [
-      "«مؤشراتي» و«مؤشرات الفريق» فيهم زرارين: «شهر» و«ربع». اختار شهر أو ربع، وكل رقم بيتقارن تلقائيًا بالشهر اللي فات أو بالربع اللي فات، ولما تضغط على أي شخص تفاصيله بتمشي على نفس الاختيار."
+      "عمود «بحث وتطوير» رجع في «مؤشرات الفريق» ومعاه بطاقة وتغيّرها عن الفترة اللي فاتت: عدد المهام اللي اتقفلت من طابور البحث والتطوير. لو السحبة قديمة ومش فيها قايمة الطابور، بيظهر «—» مع السبب، مش صفر.",
+      "ملف البريد بقى يعدّ كل رسالة مرة واحدة حتى لو محفوظة في أكتر من مجلد، وبيقولك كام نسخة مكررة اتشالت. وصفحة البريد بقت تشرح إزاي بتعدّ، وإن أرقامها ما بتدخلش في المؤشرات ولا النقاط."
     ],
     "en": [
-      "«My KPIs» and «Team KPIs» have a «Month | Quarter» switch: pick a month or a quarter and every number is compared with the month or the quarter before; a person's details follow the same choice."
+      "The «R&D» column is back on «Team KPIs», with a tile and its change against the period before: tasks closed from the R&D queue. An older pull without the queue's list shows «—» with the reason, never 0.",
+      "A PST now counts every e-mail once even when it is kept in several folders, and says how many copies were left out. The mail page explains how it counts, and that its numbers enter neither the KPIs nor the points."
     ],
     "ur": [
-      "«میرے اشاریے» اور «ٹیم کے اشاریے» میں «مہینہ | سہ ماہی» کا انتخاب ہے: مہینہ یا سہ ماہی چنیں، ہر عدد کا پچھلے مہینے یا پچھلی سہ ماہی سے موازنہ ہوتا ہے، اور کسی کی تفصیل بھی اسی انتخاب پر چلتی ہے۔"
+      "«آر اینڈ ڈی» کالم «ٹیم کے اشاریے» پر واپس آ گیا، ایک کارڈ اور پچھلے دور سے تبدیلی کے ساتھ: آر اینڈ ڈی قطار سے بند ہونے والے ٹاسک۔ قطار کی فہرست کے بغیر پرانا ڈیٹا «—» اور وجہ دکھاتا ہے، صفر کبھی نہیں۔",
+      "PST فائل اب ہر ای میل ایک بار گنتی ہے چاہے کئی فولڈروں میں ہو، اور بتاتی ہے کتنی کاپیاں چھوڑی گئیں۔ میل والا صفحہ بتاتا ہے کیسے گنتا ہے، اور یہ کہ اس کے اعداد نہ اشاریوں میں جاتے ہیں نہ پوائنٹس میں۔"
     ]
   }
 }

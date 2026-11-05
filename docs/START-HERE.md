@@ -89,6 +89,7 @@
 | `docs/decisions/0072-my-kpis-and-team-kpis.md` | «My KPIs» = me, «Team KPIs» = the team without me, one personal view; the structure file shown as uploaded |
 | `docs/decisions/0073-sixteen-old-suites-and-what-they-found.md` | The old failing suites: stale vs real; four faults fixed (preview, ✕ language, «me» known late, open work) |
 | `docs/decisions/0074-month-or-quarter-on-both-kpi-pages.md` | Month or quarter on «My KPIs» and «Team KPIs», each compared with the one before |
+| `docs/decisions/0075-rd-column-and-mail-counted-once.md` | R&D column back («—» when unknown); a PST counts each e-mail once; the mail page says how it counts |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |
