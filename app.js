@@ -3113,7 +3113,13 @@ function renderMailFile() {
     el('details', { class: 'me-phones' }, el('summary', { text: t('mf_how_h') }), el('p', { class: 'hint', text: t('mf_how') })));
   // ADR-0070: the Outlook mailbox lives here with the PST file — one place for mail, shown with or without a file
   const mailbox = datasets.length ? kpiMailSection(currentTeam(scoped(peopleOf(datasets)), allTasks()), new Map(peopleOf(datasets).map((p) => [p.id, p]))) : null;
-  if (!st.msgs) { set(body, mailbox, top); return; }
+  const saveRules = async (next) => { st.rules = next; await store.kvPut('mailrules', next); renderMailFile(); };
+  const rulesBox = el('details', { class: 'me-phones mf-rules', ...(rulesOpen || !st.msgs ? { open: '' } : {}) }, el('summary', { text: t('mf_rules_h') }), el('p', { class: 'hint', text: t('mf_rules_lead') }),
+    ...rules.map((r, i) => el('label', { class: 'mf-rule' }, el('b', { text: catName(r.k) }), el('input', { type: 'text', value: r.words.join('، '), dir: 'auto', onchange: (e) => { const next = rules.map((x) => ({ k: x.k, words: [...x.words] })); next[i].words = e.target.value.split(/[,،]/).map((w) => w.trim()).filter(Boolean).slice(0, 40); saveRules(next); } }))),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny quiet', text: t('mf_rules_reset'), onclick: () => saveRules(null) })));
+  // ADR-0075 / ADR-0076: how this page counts and its classification rules — shown BEFORE a file is chosen too, so they can be read first
+  const howBox = el('details', { class: 'tucked mf-howcount', open: true }, el('summary', { text: t('mf_count_h') }), el('ul', { class: 'defs' }, ['mf_count_1', 'mf_count_2', 'mf_count_3', 'mf_count_4', 'mf_count_5'].map((k) => el('li', { text: t(k) }))));
+  if (!st.msgs) { set(body, mailbox, top, rulesBox, howBox); return; }
   const inRange = (m) => (!st.from || (m.date || '').slice(0, 10) >= st.from) && (!st.to || (m.date || '').slice(0, 10) <= st.to);
   const ranged = st.msgs.filter(inRange), counts = new Map(), emails = new Map();
   for (const m of ranged) { counts.set(m.sender, (counts.get(m.sender) || 0) + 1); if (!emails.has(m.sender) && m.email && !m.email.startsWith('/')) emails.set(m.sender, m.email); }
@@ -3127,10 +3133,6 @@ function renderMailFile() {
       el('tbody', {}, senders.slice(0, 300).map(([s, n]) => el('tr', { class: st.picked.has(s) ? 'on' : null },
         el('td', {}, el('input', { type: 'checkbox', 'aria-label': s, ...(st.picked.has(s) ? { checked: '' } : {}), onchange: (e) => { if (e.target.checked) st.picked.add(s); else st.picked.delete(s); renderMailFile(); } })),
         el('td', { text: s || '—' }), el('td', { class: 'ltr hint', text: emails.get(s) || '' }), el('td', { class: 'num', text: String(n) })))))));
-  const saveRules = async (next) => { st.rules = next; await store.kvPut('mailrules', next); renderMailFile(); };
-  const rulesBox = el('details', { class: 'me-phones mf-rules', ...(rulesOpen ? { open: '' } : {}) }, el('summary', { text: t('mf_rules_h') }), el('p', { class: 'hint', text: t('mf_rules_lead') }),
-    ...rules.map((r, i) => el('label', { class: 'mf-rule' }, el('b', { text: catName(r.k) }), el('input', { type: 'text', value: r.words.join('، '), dir: 'auto', onchange: (e) => { const next = rules.map((x) => ({ k: x.k, words: [...x.words] })); next[i].words = e.target.value.split(/[,،]/).map((w) => w.trim()).filter(Boolean).slice(0, 40); saveRules(next); } }))),
-    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny quiet', text: t('mf_rules_reset'), onclick: () => saveRules(null) })));
   const picked = ranged.filter((m) => st.picked.has(m.sender)).map((m) => ({ ...m, cat: mfCategory(m.subject, rules) }));
   const perSender = [...st.picked].map((s) => { const list = picked.filter((m) => m.sender === s); const row = { s, total: list.length }; for (const c of MF_CATS) row[c] = list.filter((m) => m.cat === c).length; return row; }).sort((p, q) => q.total - p.total);
   const tot = { total: picked.length }; for (const c of MF_CATS) tot[c] = picked.filter((m) => m.cat === c).length;
@@ -3148,8 +3150,6 @@ function renderMailFile() {
     el('div', { class: 'row' }, el('div', { class: 'pills' }, [['all', t('mf_all')], ...MF_CATS.map((c) => [c, `${catName(c)} (${tot[c]})`])].map(([k, l]) => el('button', { type: 'button', class: `pill-btn${st.cat === k ? ' on' : ''}`, text: l, onclick: () => { st.cat = k; renderMailFile(); } }))),
       el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('mf_export')}`, onclick: csv })),
     shown.length ? el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('mf_col_date'), t('mf_col_sender'), t('mf_col_subject'), t('mf_col_cat'), t('mf_col_folder')].map((h) => el('th', { text: h })))), tbody), more) : el('div', { class: 'empty', text: t('mf_empty') }));
-  // ADR-0075: how this page counts — said on the page, so the numbers are read for what they are
-  const howBox = el('details', { class: 'tucked mf-howcount', open: true }, el('summary', { text: t('mf_count_h') }), el('ul', { class: 'defs' }, ['mf_count_1', 'mf_count_2', 'mf_count_3', 'mf_count_4', 'mf_count_5'].map((k) => el('li', { text: t(k) }))));
   set(body, mailbox, top, dateRow, sendersBox, rulesBox, results, howBox, listBox);
 }
 function route() {

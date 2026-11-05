@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v8.93 — 2026-11-05
+
+- صفحة «البريد من ملف PST» بقت بتعرض قواعد التصنيف وطريقة العدّ من أول ما تفتحها، قبل ما ترفع أي ملف. كانت بتظهر بعد الرفع بس فمكنتش بتتلاقي.
+
+<details><summary>English</summary>
+
+- The «Mail from a PST file» page now shows its classification rules and how it counts as soon as it opens, before any file is chosen. They used to appear only after a file was read, so they could not be found.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «PST فائل سے میل» والا صفحہ اب کھلتے ہی زمرہ بندی کے اصول اور گنتی کا طریقہ دکھاتا ہے، فائل چننے سے پہلے۔ پہلے یہ فائل پڑھنے کے بعد ہی نظر آتے تھے، اس لیے ملتے نہیں تھے۔
+
+</div>
+</details>
+
+
 ## v8.92 — 2026-11-05
 
 - عمود «بحث وتطوير» رجع في «مؤشرات الفريق» ومعاه بطاقة وتغيّرها عن الفترة اللي فاتت: عدد المهام اللي اتقفلت من طابور البحث والتطوير. لو السحبة قديمة ومش فيها قايمة الطابور، بيظهر «—» مع السبب، مش صفر.
