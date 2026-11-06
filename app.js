@@ -848,11 +848,13 @@ function rankFor(id, ym) {   // his team: the same team leader in the team file,
 
 // ---------- ADR-0081: the tender register — original tender mails from Outlook, one row each, his status and his dates ----------
 let tenders = null;   // { items: [...], to, pulledAt } — on this device, carried by the backup
-let tdKind = pref('tdkind') || 'month', tdPick = '';
+let tdKind = pref('tdkind') || 'month', tdPick = '', tdFrom = '', tdTo = '', tdBusy = '';
 const TD_FROM = 'a.ibrahim@afaqy.com';
 const tdNorm = (s) => String(s || '').replace(/[\u0640\u064B-\u0652]/g, '').replace(/[إأآ]/g, 'ا').replace(/ة/g, 'ه').replace(/\s+/g, ' ').trim().toLowerCase();
 const tdIsReply = (s) => /^\s*((re|fw|fwd|aw|wg)\s*:|رد\s*:|إعادة توجيه\s*:|اعادة توجيه\s*:|تحويل\s*:)/i.test(String(s || ''));
 const tdKey = (s) => tdNorm(String(s || '').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, ''));
+/** a.ibrahim as the SMTP address, or as the internal Exchange address a company PST keeps (…/cn=…-a.ibrahim). */
+const tdIsAI = (addr) => { const e = String(addr || '').trim().toLowerCase(); return e === TD_FROM || /\/cn=(?:[^/]*-)?a\.ibrahim$/.test(e); };
 const tdHasKraasa = (names) => (names || []).some((n) => tdNorm(n).includes(tdNorm('كراسة الشروط')));
 const tdDay = (iso) => (/^\d{4}-\d{2}-\d{2}/.test(String(iso || '')) ? saudiDay(String(iso).length > 10 ? String(iso) : `${iso}T12:00:00+03:00`) : null);
 /** Check what Claude brought against the rules here too: originals only, from a.ibrahim or carrying the booklet. */
@@ -864,10 +866,10 @@ function tdImport(j) {
     const att = (Array.isArray(m && m.attachments) ? m.attachments : []).map((x) => String(x).slice(0, 200)).slice(0, 20);
     if (!subject || !date) { other++; continue; }
     if (tdIsReply(subject)) { replies++; continue; }
-    const byFrom = from === TD_FROM, byKr = tdHasKraasa(att); if (!byFrom && !byKr) { other++; continue; }
+    const byFrom = tdIsAI(from), byKr = tdHasKraasa(att); if (!m.manual && !byFrom && !byKr) { other++; continue; }
     const id = tdKey(subject), was = byKey.get(id);
     if (was) { if (date < was.date) { was.date = date; was.from = from; } was.byFrom = was.byFrom || byFrom; was.byKr = was.byKr || byKr; was.att = [...new Set([...(was.att || []), ...att.filter((n) => tdHasKraasa([n]))])]; merged++; continue; }
-    const it = { id, subject, date, from, byFrom, byKr, att: att.filter((n) => tdHasKraasa([n])), status: 'open', readyOn: '', due: '', visit: '', note: '' };
+    const it = { id, subject, date, from: byFrom ? TD_FROM : from, byFrom, byKr, att: att.filter((n) => tdHasKraasa([n])), status: 'open', readyOn: '', due: '', visit: '', note: '', ...(m.manual ? { manual: true } : {}) };
     byKey.set(id, it); added++;
   }
   const items = [...byKey.values()].sort((x, y) => (x.date < y.date ? 1 : -1));
@@ -878,16 +880,16 @@ const tdSave = async () => { await store.kvPut('tenders', tenders); };
 function cleanTenders(x) {
   if (!x || !Array.isArray(x.items)) return null; const d = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? v : '');
   const items = x.items.filter((i) => i && i.id && i.subject && d(i.date)).slice(0, 5000).map((i) => ({ id: String(i.id).slice(0, 300), subject: String(i.subject).slice(0, 300), date: i.date,
-    from: String(i.from || '').slice(0, 120), byFrom: !!i.byFrom, byKr: !!i.byKr, att: (Array.isArray(i.att) ? i.att : []).map(String).slice(0, 20),
+    from: String(i.from || '').slice(0, 120), byFrom: !!i.byFrom, byKr: !!i.byKr, ...(i.manual ? { manual: true } : {}), att: (Array.isArray(i.att) ? i.att : []).map(String).slice(0, 20),
     status: i.status === 'ready' ? 'ready' : 'open', readyOn: d(i.readyOn), due: d(i.due), visit: d(i.visit), note: String(i.note || '').slice(0, 500) }));
   return { items, to: d(x.to) || null, pulledAt: String(x.pulledAt || '') };
 }
 const tdPeriodOf = (date, kind) => (kind === 'year' ? date.slice(0, 4) : kind === 'quarter' ? `${date.slice(0, 4)}-Q${Math.floor((Number(date.slice(5, 7)) - 1) / 3) + 1}` : kind === 'month' ? date.slice(0, 7) : 'all');
 const tdLabel = (k) => (k === 'all' ? t('td_all') : /^\d{4}$/.test(k) ? k : periodLabel(k));
-function tdPrompt() {
-  const from = (tenders && tenders.to) || '2026-01-01', known = tenders ? tenders.items.map((i) => i.subject) : [];
+const tdDefaultFrom = () => (tenders && tenders.to) || '2026-01-01';
+function tdPrompt(from = tdFrom || tdDefaultFrom(), to = tdTo || saudiDay(new Date().toISOString()), known = tenders ? tenders.items.map((i) => i.subject) : []) {
   return `Open Outlook on the web (https://outlook.office.com) — I am signed in with my AFAQY account.
-Goal: list TENDER mails received ON OR AFTER ${from} (up to today). Read only — do not send, reply, move, flag, delete or change read status.
+Goal: list TENDER mails received ON OR AFTER ${from} AND ON OR BEFORE ${to}. Read only — do not send, reply, move, flag, delete or change read status.
 
 A mail is a TENDER if it is an ORIGINAL message (not a reply or a forward: skip subjects starting with RE:, FW:, Fwd:, رد:, إعادة توجيه:) and ANY is true:
   A. it is FROM ${TD_FROM}
@@ -895,23 +897,71 @@ A mail is a TENDER if it is an ORIGINAL message (not a reply or a forward: skip 
 For each conversation keep ONLY its first (earliest) matching message.
 
 Search all folders (Archive included), scroll every result list to the end:
-  from:${TD_FROM} received>=${from}
-  attachmentnames:"كراسة الشروط" received>=${from}
-  attachmentnames:"كراسه الشروط" received>=${from}
+  from:${TD_FROM} received>=${from} received<=${to}
+  attachmentnames:"كراسة الشروط" received>=${from} received<=${to}
+  attachmentnames:"كراسه الشروط" received>=${from} received<=${to}
 
-ALREADY COLLECTED — skip any mail whose subject is one of these:
+${known ? `ALREADY COLLECTED — skip any mail whose subject is one of these:
 ${known.map((k) => `- ${k}`).join('\n') || '- (none)'}
-
+` : ''}
 Keep ONLY: subject, sender address, received date-time, and the file names of the «كراسة الشروط» attachments — no body text, contacts, phone numbers or prices.
 
 Save one JSON file named afaqy-tenders-from-mail-<today YYYY-MM-DD>.json:
-{ "schema": "afaqy-tenders-from-mail/v1", "mailbox": "<my address>", "from": "${from}", "to": "<today YYYY-MM-DD>",
+{ "schema": "afaqy-tenders-from-mail/v1", "mailbox": "<my address>", "from": "${from}", "to": "${to}",
   "tenders": [ { "subject": "...", "from_address": "...", "received": "YYYY-MM-DDTHH:MM:SS+03:00", "attachments": ["..."] } ] }
 If a search or folder failed, say exactly which one.`;
 }
+
+/** A bookmark to drag to the bar: asks the period, copies the instructions for Claude in Chrome, opens Outlook. It cannot start Claude itself. */
+function tdBookmarklet() {
+  const tpl = tdPrompt('__FROM__', '__TO__', null), def = tdDefaultFrom();
+  const q = { f: t('td_bm_from'), t: t('td_bm_to'), ok: t('td_bm_ok'), copy: t('td_bm_copy') };
+  const code = `(()=>{const T=${JSON.stringify(tpl)},Q=${JSON.stringify(q)},d=new Date(Date.now()+108e5).toISOString().slice(0,10),ok=(s)=>/^\\d{4}-\\d{2}-\\d{2}$/.test(s||'');`
+    + `const f=prompt(Q.f,${JSON.stringify(def)});if(!ok(f))return;const t=prompt(Q.t,d);if(!ok(t))return;const P=T.replace(/__FROM__/g,f).replace(/__TO__/g,t);`
+    + `const done=()=>alert(Q.ok);(navigator.clipboard?navigator.clipboard.writeText(P):Promise.reject()).then(done,()=>prompt(Q.copy,P));`
+    + `if(!/outlook\\.(office|office365|live)\\.com$/.test(location.hostname))window.open('https://outlook.office.com/mail/','_blank');})()`;
+  return `javascript:${encodeURIComponent(code)}`;
+}
+/** Tender mails out of a PST, on this device: the same rules and the same checks as the Claude file. */
+async function tdFromPst(f) {
+  tdBusy = t('td_pst_reading', { name: f.name, mb: Math.max(1, Math.round(f.size / 1048576)) }); renderTenders();
+  try {
+    await mfLoadLib(); const buf = await f.arrayBuffer(); await new Promise((r) => setTimeout(r, 30));
+    const pst = new window.PSTFile(window.Buffer.from(buf)), from = tdFrom || '0000-01-01', to = tdTo || '9999-12-31', out = []; let read = 0, withAtt = 0;
+    const walk = (fo) => { if (fo.hasSubfolders) for (const c of fo.getSubFolders()) walk(c);
+      if (fo.contentCount > 0) { let m = fo.getNextChild(), g = 0;
+        while (m && g++ < 500000) { read++; const d = m.clientSubmitTime || m.messageDeliveryTime, day = d ? saudiDay(new Date(d).toISOString()) : null;
+          if (day && day >= from && day <= to) { const att = [];
+            if (m.hasAttachments) { withAtt++; for (let i = 0; i < Math.min(30, m.numberOfAttachments || 0); i++) { try { const x = m.getAttachment(i); att.push(String(x.longFilename || x.filename || '')); } catch { /* an unreadable attachment is only its name missing */ } } }
+            const addr = String(m.senderEmailAddress || '').trim();
+            if (tdIsAI(addr) || tdHasKraasa(att)) out.push({ subject: String(m.subject || ''), from_address: addr, received: new Date(d).toISOString(), attachments: att }); }
+          m = fo.getNextChild(); } } };
+    walk(pst.getRootFolder());
+    const r = tdImport({ schema: 'afaqy-tenders-from-mail/v1', from, to: tdTo || saudiDay(new Date().toISOString()), tenders: out }); if (r.err) throw new Error(r.err);
+    tenders = r.state; await tdSave(); tdBusy = '';
+    toast(`${t('td_pst_read', { n: read, w: withAtt })} ${t('td_loaded', { a: r.added, m: r.merged, r: r.replies, o: r.other })}`);
+  } catch (err) { console.error(err); tdBusy = ''; toast(t('td_pst_fail')); }
+  renderTenders();
+}
+/** One tender by hand — a tender with no mail, or one the pull missed. */
+function tdAddManual() {
+  const today = saudiDay(new Date().toISOString());
+  const s = el('input', { type: 'text', class: 'td-m-subject', required: '', maxlength: 300, dir: 'auto' }), d = el('input', { type: 'date', class: 'td-m-date', value: today, max: today }),
+    w = el('input', { type: 'text', class: 'td-m-from', maxlength: 120, dir: 'auto', placeholder: t('td_m_from_ph') });
+  const dlg = el('dialog', { class: 'proj-edit td-add', 'aria-labelledby': 'td-add-h' }, el('h2', { id: 'td-add-h', text: t('td_add_h') }),
+    el('label', { class: 'fl-label' }, el('span', { text: t('td_col_subject') }), s), el('label', { class: 'fl-label' }, el('span', { text: t('td_col_date') }), d),
+    el('label', { class: 'fl-label' }, el('span', { text: t('td_col_from') }), w),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary td-m-save', text: t('td_add_save'), onclick: async () => {
+      const subject = s.value.trim(), date = d.value; if (!subject || !/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast(t('td_add_need')); return; }
+      if (tenders && tenders.items.some((i) => i.id === tdKey(subject))) { toast(t('td_add_exists')); return; }
+      const r = tdImport({ schema: 'afaqy-tenders-from-mail/v1', to: (tenders && tenders.to) || null, tenders: [{ subject, from_address: w.value.trim(), received: `${date}T12:00:00+03:00`, attachments: [], manual: true }] });
+      if (r.err || !r.added) { toast(t('td_add_need')); return; } tenders = { ...r.state, to: (tenders && tenders.to) || null }; await tdSave(); dlg.close(); toast(t('td_add_done')); renderTenders(); } }),
+      el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() })));
+  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal(); s.focus();
+}
 async function tdExcel(rows) {
   const X = await loadXlsx(), H = [t('td_col_subject'), t('td_col_date'), t('td_col_from'), t('td_col_why'), t('td_col_status'), t('td_col_ready'), t('td_col_due'), t('td_col_visit'), t('td_col_note')];
-  const why = (i) => [i.byFrom ? t('td_why_from') : '', i.byKr ? t('td_why_kr') : ''].filter(Boolean).join(' + ');
+  const why = (i) => [i.byFrom ? t('td_why_from') : '', i.byKr ? t('td_why_kr') : '', i.manual ? t('td_why_manual') : ''].filter(Boolean).join(' + ');
   const ws = X.utils.aoa_to_sheet([H, ...rows.map((i) => [i.subject, i.date, i.from, why(i), i.status === 'ready' ? t('td_ready') : t('td_open'), i.readyOn, i.due, i.visit, i.note])]);
   ws['!cols'] = [{ wch: 60 }, { wch: 12 }, { wch: 26 }, { wch: 24 }, { wch: 22 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 40 }]; ws['!views'] = [{ RTL: lang !== 'en' }];
   const months = [...new Set(tenders.items.map((i) => i.date.slice(0, 7)))].sort();
@@ -925,10 +975,20 @@ function renderTenders() {
     let j; try { j = JSON.parse(await f.text()); } catch { toast(t('td_bad')); return; }
     const r = tdImport(j); if (r.err) { toast(t(r.err)); return; } tenders = r.state; await tdSave();
     toast(t('td_loaded', { a: r.added, m: r.merged, r: r.replies, o: r.other })); renderTenders(); } });
-  const pull = el('section', { class: 'dt-quick td-pull' }, el('h2', { text: t('td_pull_h') }), el('p', { class: 'hint', text: t('td_pull_lead', { from: (tenders && tenders.to) || '2026-01-01' }) }),
-    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: `📋 ${t('td_copy')}`, onclick: () => copyText(tdPrompt(), t('td_copied')) }),
-      el('a', { class: 'btn', href: 'https://outlook.office.com/mail/', target: '_blank', rel: 'noopener', text: t('proj_open_outlook') }),
-      el('button', { type: 'button', class: 'btn', text: `⬆ ${t('td_upload')}`, onclick: () => up.click() }), up),
+  const pst = el('input', { type: 'file', accept: '.pst,.ost', hidden: true, onchange: (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) tdFromPst(f); } });
+  const dIn2 = (cls, val, on) => el('input', { type: 'date', class: cls, value: val, max: today, onchange: (e) => on(e.target.value) });
+  const pull = el('section', { class: 'dt-quick td-pull' }, el('h2', { text: t('td_pull_h') }),
+    el('div', { class: 'row td-period' }, el('span', { text: t('td_from') }), dIn2('td-from', tdFrom || tdDefaultFrom(), (v) => { tdFrom = v; }), el('span', { text: t('td_to') }), dIn2('td-to', tdTo || today, (v) => { tdTo = v; })),
+    el('div', { class: 'td-way' }, el('h3', { text: t('td_way_claude') }), el('p', { class: 'hint', text: t('td_pull_lead', { from: tdFrom || tdDefaultFrom() }) }),
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary td-copy', text: `📋 ${t('td_copy')}`, onclick: () => copyText(tdPrompt(), t('td_copied')) }),
+        el('a', { class: 'btn td-bm', href: tdBookmarklet(), title: t('td_bm_hint'), onclick: (e) => { e.preventDefault(); toast(t('td_bm_hint')); }, text: `📌 ${t('td_bm')}` }),
+        el('a', { class: 'btn', href: 'https://outlook.office.com/mail/', target: '_blank', rel: 'noopener', text: t('proj_open_outlook') }),
+        el('button', { type: 'button', class: 'btn', text: `⬆ ${t('td_upload')}`, onclick: () => up.click() }), up),
+      el('p', { class: 'hint', text: t('td_bm_hint') })),
+    el('div', { class: 'td-way' }, el('h3', { text: t('td_way_pst') }), el('p', { class: 'hint', text: t('td_pst_lead') }),
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn td-pst-btn', disabled: !!tdBusy, text: `📂 ${t('td_pst_pick')}`, onclick: () => pst.click() }), pst),
+      tdBusy ? el('p', { class: 'note td-busy', role: 'status', text: tdBusy }) : null),
+    el('div', { class: 'td-way' }, el('h3', { text: t('td_way_manual') }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn td-add-btn', text: `＋ ${t('td_add')}`, onclick: tdAddManual }))),
     tenders && tenders.pulledAt ? el('p', { class: 'hint', text: t('td_last', { to: tenders.to || '—', n: tenders.items.length }) }) : null);
   if (!tenders || !tenders.items.length) { set(body, pull, el('p', { class: 'note', text: t('td_empty') })); return; }
   const periods = [...new Set(tenders.items.map((i) => tdPeriodOf(i.date, tdKind)))].sort().reverse();
@@ -946,7 +1006,7 @@ function renderTenders() {
     el('tbody', {}, rows.map((i) => el('tr', { 'data-id': i.id, class: i.status === 'ready' ? 'td-done' : '' },
       el('td', {}, el('div', { class: 'td-subj', text: i.subject, dir: 'auto' }), el('small', { class: 'hint', text: i.from })),
       el('td', { class: 'num', text: i.date }),
-      el('td', {}, i.byFrom ? el('span', { class: 'chip', text: t('td_why_from') }) : null, i.byKr ? el('span', { class: 'chip', text: t('td_why_kr') }) : null),
+      el('td', {}, i.byFrom ? el('span', { class: 'chip', text: t('td_why_from') }) : null, i.byKr ? el('span', { class: 'chip', text: t('td_why_kr') }) : null, i.manual ? el('span', { class: 'chip td-manual', text: t('td_why_manual') }) : null),
       el('td', {}, el('select', { class: 'td-status', 'aria-label': t('td_col_status'), onchange: async (e) => { const st = e.target.value; await save(i, { status: st, readyOn: st === 'ready' ? (i.readyOn || today) : '' }); renderTenders(); } },
         el('option', { value: 'open', text: t('td_open'), ...(i.status !== 'ready' ? { selected: '' } : {}) }), el('option', { value: 'ready', text: t('td_ready'), ...(i.status === 'ready' ? { selected: '' } : {}) }))),
       el('td', {}, i.status === 'ready' ? dIn(i, 'readyOn') : el('span', { class: 'hint', text: '—' })),

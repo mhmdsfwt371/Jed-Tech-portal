@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.00 — 2026-11-06
+
+- «سجل المناقصات» بقى له ٣ طرق للإضافة بنفس الشروط: (١) فترة تختارها (من/إلى) وبوكمارك «📌 سحب المناقصات» يسأل عن الفترة وينسخ الأمر لكلود في كروم ويفتح أوتلوك؛ (٢) ملف بريد PST يتقرا على جهازك بس، مهما كان فيه إيميلات؛ (٣) «＋ مناقصة» بإيدك.
+
+<details><summary>English</summary>
+
+- The «Tender register» now has three ways in, by the same rules: (1) a period you choose and a «📌 Pull tenders» bookmark that asks it, copies the instructions for Claude in Chrome and opens Outlook; (2) a PST mail file read on your device only, however many mails it holds; (3) «＋ Tender» by hand.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «ٹینڈر رجسٹر» میں اب انہی اصولوں سے تین طریقے: (1) آپ کی منتخب مدت اور «📌 ٹینڈر لائیں» بک مارک جو مدت پوچھتا، Claude in Chrome کی ہدایات کاپی کرتا اور آؤٹ لک کھولتا ہے؛ (2) PST میل فائل صرف آپ کے آلے پر؛ (3) ہاتھ سے «＋ ٹینڈر»۔
+
+</div>
+</details>
+
+
 ## v8.99 — 2026-11-06
 
 - مربعات «سجل المناقصات» الأربعة بقت متساوية في سطر واحد (واتنين في السطر على الموبايل).
