@@ -54,6 +54,10 @@
 
 صفحة المدير وحده: ارفع ملف هيكل الفريق (صفحة HTML)، فيظهر بنفس شكله كما رفعته بالضبط. يبقى على جهازك فقط، ولا يظهر في رابط الفريق، ولا يُحفظ التعديل داخله — للتحديث ارفع النسخة الأحدث، أو احذفه من الجهاز.
 
+### سجل المناقصات
+
+يجمع كل مناقصة وصلت بالبريد مرة واحدة: الإيميل الأصلي (ليس ردًا ولا تحويلًا) القادم من a.ibrahim@afaqy.com، أو الذي فيه مرفق اسمه يحتوي «كراسة الشروط»، بتاريخ أول وصول. للسحب: انسخ الأمر وأعطه لكلود في كروم وأوتلوك على الويب مفتوح، ثم ارفع الملف الذي يحفظه — والبوابة تعيد التحقق من الشروط. الحالة (جاهزة: فني ومالي، أو لسه) وتواريخ الجاهزية وآخر موعد للتقديم وآخر موعد لزيارة الموقع تحددها أنت. الفلتر بالشهر أو الربع أو السنة، والتصدير إلى إكسل بورقتين: السجل وملخص شهري. كل شيء على جهازك وينتقل مع النسخة الاحتياطية.
+
 ### إشارة المدير — سحب كل شيء بضغطة
 
 في صفحة البيانات، إشارة واحدة للمدير تقرأ من داخل ماي أفاقي كل ما يقرأه الأمران: مهام الفترة كلها، وطابور البحث والتطوير، ونقاط الفنيين، وتذاكر ما بعد البيع — وتحفظها ملفين (مهام وتقارير) تُرفعان في البوابة. تعمل بدخول المدير نفسه، للقراءة فقط، بالطلبات الستة المسموحة نفسها، ولا يغادر رمز الدخول صفحة ماي أفاقي. هي بديل أسرع عن نسخ الأمرين وتشغيلهما في كلود كروم؛ وتبقى طريقة كلود كروم متاحة لمن يفضّلها. في صفحة البيانات فيه اختياران واضحان جنب بعض: «شبه أوتوماتيكي» و«الطريقة اليدوية». السحب المباشر يشتغل كإشارة من داخل ماي أفاقي بحساب المدير، ويفتح نافذة بوابة إدارة جديدة مرتبطة بعملية واحدة برمز مؤقت. بعد ما يقرأ المهام والتقارير يبعتهما للبوابة نفسها في المتصفح، وتتحقق البوابة من مصدر البيانات وفترة الملفين وتخزنهما وتفتح لوحة المؤشرات. لا تُرسل البيانات لخادم ولا يغادر رمز الدخول صفحة ماي أفاقي. لو متصفحك منع فتح النافذة أو التواصل معها، تنزّل الإشارة الملفين تلقائيًا. الإشارة اليدوية القديمة، ورفع الملفات، وأوامر كلود كروم، كلها ما زالت موجودة كما هي. نقل بيانات مهندس من جهازه لجهاز المدير تلقائيًا غير موجود؛ المدير يسحب ما يسمح به حسابه بنفسه.
@@ -141,6 +145,10 @@ An estimate of hours worked outside the working day, from the task times in the 
 
 The manager’s page only: upload the team structure file (an HTML page) and it shows as it looks, exactly as uploaded. It stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file, or remove it from the device.
 
+### Tender register
+
+Collects every tender that arrived by mail, once: the original message (not a reply or forward) from a.ibrahim@afaqy.com, or one with an attachment whose name contains «كراسة الشروط», on its first date. To pull: copy the instructions to Claude in Chrome with Outlook on the web open, then upload the file it saves — the portal checks the rules again. You set the status (ready: technical + financial, or not yet), the ready date, the submission deadline and the site-visit deadline. Filter by month, quarter or year; export to Excel with two sheets, the register and a monthly summary. Everything stays on your device and travels with the backup.
+
 ### The manager bookmark — everything in one press
 
 On the Data page, one manager bookmark reads from inside myafaqy everything the two prompts read: all of the period’s tasks, the R&D queue, technician points and after-sales tickets — and saves them as two files (tasks and reports) to upload in the portal. It runs with the manager’s own sign-in, read-only, through the same six allowed requests, and the sign-in token never leaves the myafaqy page. It is a faster alternative to copying the two prompts and running them in Claude in Chrome; the Claude in Chrome way stays available for whoever prefers it. The Data page now offers two clear methods: semi-automatic direct import and the existing manual workflow. Direct import runs as a bookmark on myafaqy under the manager's account and opens a fresh admin portal tab paired to that single pull with a temporary code. It sends the collected tasks and reports to that browser tab, which verifies their origin and matching date ranges, saves them locally and opens the KPI dashboard. No CRM sign-in token leaves myafaqy, and nothing is uploaded to an application server. If the browser blocks the new tab or messaging, the bookmark downloads the two files instead. The original manual bookmark, file uploads and Claude in Chrome prompts remain available. An employee's own device never syncs its private KPI data to the manager automatically; the manager pulls only what their account authorizes.
@@ -227,6 +235,10 @@ On this device and in this browser only; nothing is sent anywhere. To move it to
 ### ٹیم کے منصوبے
 
 صرف مینیجر کا صفحہ: ٹیم کے ڈھانچے کی فائل (HTML صفحہ) اپ لوڈ کریں، وہ بالکل جیسی اپ لوڈ کی اسی شکل میں دکھے گی۔ صرف آپ کی ڈیوائس پر رہتی ہے، ٹیم لنک پر نہیں، اور اس کے اندر کی ترمیم محفوظ نہیں ہوتی — اپ ڈیٹ کے لیے نئی فائل اپ لوڈ کریں، یا ڈیوائس سے ہٹا دیں۔
+
+### ٹینڈر رجسٹر
+
+میل سے آنے والے ہر ٹینڈر کو ایک بار جمع کرتا ہے: a.ibrahim@afaqy.com سے اصل پیغام (جواب یا فارورڈ نہیں)، یا جس کی منسلکہ فائل کے نام میں «كراسة الشروط» ہو، پہلی تاریخ کے ساتھ۔ لانے کے لیے: ہدایات Claude in Chrome کو دیں جبکہ آؤٹ لک ویب کھلا ہو، پھر محفوظ فائل اپ لوڈ کریں — پورٹل اصول دوبارہ جانچتا ہے۔ حیثیت (تیار: تکنیکی + مالی، یا ابھی نہیں)، تیاری کی تاریخ، جمع کرانے اور سائٹ وزٹ کی آخری تاریخیں آپ طے کرتے ہیں۔ مہینے، سہ ماہی یا سال سے فلٹر؛ ایکسل میں دو شیٹس کے ساتھ برآمد۔ سب کچھ آپ کے آلے پر اور بیک اپ کے ساتھ منتقل۔
 
 ### مینیجر بک مارک — ایک دباؤ میں سب کچھ
 

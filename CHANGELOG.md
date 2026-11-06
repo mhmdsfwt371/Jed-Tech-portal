@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.98 — 2026-11-06
+
+- صفحة جديدة «سجل المناقصات» تحت «المؤشرات»: كل مناقصة وصلت بالبريد مرة واحدة (إيميل أصلي من أ. إبراهيم أو فيه «كراسة الشروط») بأول تاريخ وصول. السحب من أوتلوك بأمر جاهز لكلود في كروم، والبوابة بتتأكد من الشروط تاني.
+- الحالة (جاهزة فني ومالي أو لسه) وتاريخ الجاهزية وآخر موعد للتقديم وآخر موعد لزيارة الموقع بإيدك، وفلتر شهر وربع وسنة، وتصدير إكسل بالسجل وملخص شهري.
+
+<details><summary>English</summary>
+
+- A new page, «Tender register», under «Indicators»: every tender that arrived by mail once (an original from A. Ibrahim or carrying «كراسة الشروط»), on its first date. Pulled from Outlook with ready instructions for Claude in Chrome; the portal checks the rules again.
+- You set the status (ready: technical + financial, or not yet), the ready date, the submission and site-visit deadlines; filter by month, quarter or year; export to Excel with the register and a monthly summary.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «اشاریے» کے تحت نیا صفحہ «ٹینڈر رجسٹر»: میل سے آنے والا ہر ٹینڈر ایک بار (اے ابراہیم سے اصل پیغام یا «كراسة الشروط» کے ساتھ)، پہلی تاریخ پر۔ آؤٹ لک سے Claude in Chrome کی تیار ہدایات کے ذریعے؛ پورٹل اصول دوبارہ جانچتا ہے۔
+- حیثیت (تیار: تکنیکی + مالی، یا ابھی نہیں)، تیاری کی تاریخ، جمع کرانے اور سائٹ وزٹ کی آخری تاریخیں آپ طے کرتے ہیں؛ مہینے، سہ ماہی یا سال سے فلٹر؛ رجسٹر اور ماہانہ خلاصے کے ساتھ ایکسل برآمد۔
+
+</div>
+</details>
+
+
 ## v8.97 — 2026-11-06
 
 - ملف بريد أوتلوك بقى له مكان واحد: «البريد من ملف PST» في القايمة. اتشال الكارت اللي كان في صفحة «البيانات».

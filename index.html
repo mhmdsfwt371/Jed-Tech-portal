@@ -1016,6 +1016,11 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   section[id^="view-"]:not([hidden]), .table-wrap tbody tr, .pill-btn.on, .main::before { animation: none; }
   .bt-rv { opacity: 1; transform: none; transition: none; } .nav a:hover .nav-item-icon { transform: none; } }
 
+
+  /* ADR-0081: the tender register */
+  .td-table td { vertical-align: top; } .td-subj { font-weight: 600; max-width: 46ch; } .td-table input[type=date] { min-width: 132px; } .td-table .td-note { min-width: 160px; width: 100%; }
+  .td-table tr.td-done .td-subj { color: var(--ok); } .td-table .chip { display: inline-block; margin: 2px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; white-space: nowrap; }
+  .td-filter { gap: 10px; align-items: center; margin: 6px 0 10px; } .td-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } .td-tiles .km-total { grid-column: span 1; grid-row: span 1; }
 </style>
 </head>
 <body>
@@ -1045,6 +1050,7 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
         <a href="#overtime" class="sub" data-view="overtime" data-t="nav_overtime">ساعات العمل الإضافي</a>
         <a href="#team" class="sub" data-view="team" data-t="nav_team">الفريق</a>
         <a href="#planner" class="sub" data-view="planner" data-t="nav_planner">خطط الفريق</a>
+        <a href="#tenders" class="sub" data-view="tenders" data-t="nav_tenders">سجل المناقصات</a>
       </div>
     </div>
     <div class="nav-section" data-nav-section="inputs">
@@ -1208,6 +1214,10 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   <section id="view-planner" hidden>
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_planner">خطط الفريق</h1><button type="button" class="help-q" data-help="g_planner_b" data-help-title="nav_planner" aria-label="?">?</button></div><p class="lead" data-t="pl_lead"></p></div>
     <div id="planner-body"></div>
+  </section>
+  <section id="view-tenders" hidden>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_tenders">سجل المناقصات</h1><button type="button" class="help-q" data-help="g_tenders_b" aria-label="?">?</button></div><p class="lead" data-t="td_lead"></p></div>
+    <div id="tenders-body"></div>
   </section>
   <section id="view-mailfile" hidden>
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_mailfile">البريد من ملف PST</h1><button type="button" class="help-q" data-help="g_mailfile_b" data-help-title="nav_mailfile" aria-label="?">?</button></div><p class="lead" data-t="mf_lead"></p></div>

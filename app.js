@@ -846,6 +846,121 @@ function rankFor(id, ym) {   // his team: the same team leader in the team file,
     lead: !above.length && below.length ? Math.round((mine.p - Math.max(...below)) * 10) / 10 : null, at: to, partial: ym === today.slice(0, 7), ...(lv ? { lv } : {}) };
 }
 
+// ---------- ADR-0081: the tender register — original tender mails from Outlook, one row each, his status and his dates ----------
+let tenders = null;   // { items: [...], to, pulledAt } — on this device, carried by the backup
+let tdKind = pref('tdkind') || 'month', tdPick = '';
+const TD_FROM = 'a.ibrahim@afaqy.com';
+const tdNorm = (s) => String(s || '').replace(/[\u0640\u064B-\u0652]/g, '').replace(/[إأآ]/g, 'ا').replace(/ة/g, 'ه').replace(/\s+/g, ' ').trim().toLowerCase();
+const tdIsReply = (s) => /^\s*((re|fw|fwd|aw|wg)\s*:|رد\s*:|إعادة توجيه\s*:|اعادة توجيه\s*:|تحويل\s*:)/i.test(String(s || ''));
+const tdKey = (s) => tdNorm(String(s || '').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, ''));
+const tdHasKraasa = (names) => (names || []).some((n) => tdNorm(n).includes(tdNorm('كراسة الشروط')));
+const tdDay = (iso) => (/^\d{4}-\d{2}-\d{2}/.test(String(iso || '')) ? saudiDay(String(iso).length > 10 ? String(iso) : `${iso}T12:00:00+03:00`) : null);
+/** Check what Claude brought against the rules here too: originals only, from a.ibrahim or carrying the booklet. */
+function tdImport(j) {
+  if (!j || j.schema !== 'afaqy-tenders-from-mail/v1' || !Array.isArray(j.tenders)) return { err: 'td_bad' };
+  const cur = tenders || { items: [] }, byKey = new Map(cur.items.map((x) => [x.id, x])); let added = 0, merged = 0, replies = 0, other = 0;
+  for (const m of j.tenders) {
+    const subject = String((m && m.subject) || '').trim().slice(0, 300), date = tdDay(m && m.received), from = String((m && m.from_address) || '').trim().toLowerCase().slice(0, 120);
+    const att = (Array.isArray(m && m.attachments) ? m.attachments : []).map((x) => String(x).slice(0, 200)).slice(0, 20);
+    if (!subject || !date) { other++; continue; }
+    if (tdIsReply(subject)) { replies++; continue; }
+    const byFrom = from === TD_FROM, byKr = tdHasKraasa(att); if (!byFrom && !byKr) { other++; continue; }
+    const id = tdKey(subject), was = byKey.get(id);
+    if (was) { if (date < was.date) { was.date = date; was.from = from; } was.byFrom = was.byFrom || byFrom; was.byKr = was.byKr || byKr; was.att = [...new Set([...(was.att || []), ...att.filter((n) => tdHasKraasa([n]))])]; merged++; continue; }
+    const it = { id, subject, date, from, byFrom, byKr, att: att.filter((n) => tdHasKraasa([n])), status: 'open', readyOn: '', due: '', visit: '', note: '' };
+    byKey.set(id, it); added++;
+  }
+  const items = [...byKey.values()].sort((x, y) => (x.date < y.date ? 1 : -1));
+  const to = [cur.to, /^\d{4}-\d{2}-\d{2}$/.test(String(j.to || '')) ? j.to : null].filter(Boolean).sort().pop() || null;
+  return { state: { items, to, pulledAt: new Date().toISOString() }, added, merged, replies, other };
+}
+const tdSave = async () => { await store.kvPut('tenders', tenders); };
+function cleanTenders(x) {
+  if (!x || !Array.isArray(x.items)) return null; const d = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? v : '');
+  const items = x.items.filter((i) => i && i.id && i.subject && d(i.date)).slice(0, 5000).map((i) => ({ id: String(i.id).slice(0, 300), subject: String(i.subject).slice(0, 300), date: i.date,
+    from: String(i.from || '').slice(0, 120), byFrom: !!i.byFrom, byKr: !!i.byKr, att: (Array.isArray(i.att) ? i.att : []).map(String).slice(0, 20),
+    status: i.status === 'ready' ? 'ready' : 'open', readyOn: d(i.readyOn), due: d(i.due), visit: d(i.visit), note: String(i.note || '').slice(0, 500) }));
+  return { items, to: d(x.to) || null, pulledAt: String(x.pulledAt || '') };
+}
+const tdPeriodOf = (date, kind) => (kind === 'year' ? date.slice(0, 4) : kind === 'quarter' ? `${date.slice(0, 4)}-Q${Math.floor((Number(date.slice(5, 7)) - 1) / 3) + 1}` : kind === 'month' ? date.slice(0, 7) : 'all');
+const tdLabel = (k) => (k === 'all' ? t('td_all') : /^\d{4}$/.test(k) ? k : periodLabel(k));
+function tdPrompt() {
+  const from = (tenders && tenders.to) || '2026-01-01', known = tenders ? tenders.items.map((i) => i.subject) : [];
+  return `Open Outlook on the web (https://outlook.office.com) — I am signed in with my AFAQY account.
+Goal: list TENDER mails received ON OR AFTER ${from} (up to today). Read only — do not send, reply, move, flag, delete or change read status.
+
+A mail is a TENDER if it is an ORIGINAL message (not a reply or a forward: skip subjects starting with RE:, FW:, Fwd:, رد:, إعادة توجيه:) and ANY is true:
+  A. it is FROM ${TD_FROM}
+  B. it has an attachment whose file name contains «كراسة الشروط» (also «كراسه الشروط»)
+For each conversation keep ONLY its first (earliest) matching message.
+
+Search all folders (Archive included), scroll every result list to the end:
+  from:${TD_FROM} received>=${from}
+  attachmentnames:"كراسة الشروط" received>=${from}
+  attachmentnames:"كراسه الشروط" received>=${from}
+
+ALREADY COLLECTED — skip any mail whose subject is one of these:
+${known.map((k) => `- ${k}`).join('\n') || '- (none)'}
+
+Keep ONLY: subject, sender address, received date-time, and the file names of the «كراسة الشروط» attachments — no body text, contacts, phone numbers or prices.
+
+Save one JSON file named afaqy-tenders-from-mail-<today YYYY-MM-DD>.json:
+{ "schema": "afaqy-tenders-from-mail/v1", "mailbox": "<my address>", "from": "${from}", "to": "<today YYYY-MM-DD>",
+  "tenders": [ { "subject": "...", "from_address": "...", "received": "YYYY-MM-DDTHH:MM:SS+03:00", "attachments": ["..."] } ] }
+If a search or folder failed, say exactly which one.`;
+}
+async function tdExcel(rows) {
+  const X = await loadXlsx(), H = [t('td_col_subject'), t('td_col_date'), t('td_col_from'), t('td_col_why'), t('td_col_status'), t('td_col_ready'), t('td_col_due'), t('td_col_visit'), t('td_col_note')];
+  const why = (i) => [i.byFrom ? t('td_why_from') : '', i.byKr ? t('td_why_kr') : ''].filter(Boolean).join(' + ');
+  const ws = X.utils.aoa_to_sheet([H, ...rows.map((i) => [i.subject, i.date, i.from, why(i), i.status === 'ready' ? t('td_ready') : t('td_open'), i.readyOn, i.due, i.visit, i.note])]);
+  ws['!cols'] = [{ wch: 60 }, { wch: 12 }, { wch: 26 }, { wch: 24 }, { wch: 22 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 40 }]; ws['!views'] = [{ RTL: lang !== 'en' }];
+  const months = [...new Set(tenders.items.map((i) => i.date.slice(0, 7)))].sort();
+  const sum = X.utils.aoa_to_sheet([[t('td_col_month'), t('td_k_in'), t('td_k_ready'), t('td_k_open')], ...months.map((m) => { const g = tenders.items.filter((i) => i.date.startsWith(m)); return [m, g.length, g.filter((i) => i.status === 'ready').length, g.filter((i) => i.status !== 'ready').length]; })]);
+  sum['!views'] = [{ RTL: lang !== 'en' }]; const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, t('td_sheet')); X.utils.book_append_sheet(wb, sum, t('td_sheet_sum'));
+  X.writeFile(wb, `AFAQY-tenders-${saudiDay(new Date().toISOString())}.xlsx`);
+}
+function renderTenders() {
+  const body = $('tenders-body'); if (!body || isTeamPortal) return; const today = saudiDay(new Date().toISOString());
+  const up = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    let j; try { j = JSON.parse(await f.text()); } catch { toast(t('td_bad')); return; }
+    const r = tdImport(j); if (r.err) { toast(t(r.err)); return; } tenders = r.state; await tdSave();
+    toast(t('td_loaded', { a: r.added, m: r.merged, r: r.replies, o: r.other })); renderTenders(); } });
+  const pull = el('section', { class: 'dt-quick td-pull' }, el('h2', { text: t('td_pull_h') }), el('p', { class: 'hint', text: t('td_pull_lead', { from: (tenders && tenders.to) || '2026-01-01' }) }),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: `📋 ${t('td_copy')}`, onclick: () => copyText(tdPrompt(), t('td_copied')) }),
+      el('a', { class: 'btn', href: 'https://outlook.office.com/mail/', target: '_blank', rel: 'noopener', text: t('proj_open_outlook') }),
+      el('button', { type: 'button', class: 'btn', text: `⬆ ${t('td_upload')}`, onclick: () => up.click() }), up),
+    tenders && tenders.pulledAt ? el('p', { class: 'hint', text: t('td_last', { to: tenders.to || '—', n: tenders.items.length }) }) : null);
+  if (!tenders || !tenders.items.length) { set(body, pull, el('p', { class: 'note', text: t('td_empty') })); return; }
+  const periods = [...new Set(tenders.items.map((i) => tdPeriodOf(i.date, tdKind)))].sort().reverse();
+  if (tdKind === 'all') tdPick = 'all'; else if (!periods.includes(tdPick)) tdPick = periods.includes(tdPeriodOf(today, tdKind)) ? tdPeriodOf(today, tdKind) : periods[0];
+  const rows = tenders.items.filter((i) => tdKind === 'all' || tdPeriodOf(i.date, tdKind) === tdPick);
+  const ready = rows.filter((i) => i.status === 'ready').length, soon = rows.filter((i) => i.status !== 'ready' && i.due && i.due >= today && i.due <= saudiDay(new Date(Date.now() + 7 * 864e5).toISOString())).length;
+  const kinds = el('div', { class: 'pills' }, [['month', 'td_month'], ['quarter', 'td_quarter'], ['year', 'td_year'], ['all', 'td_all']].map(([k, l]) =>
+    el('button', { type: 'button', class: `pill-btn${tdKind === k ? ' on' : ''}`, text: t(l), onclick: () => { tdKind = k; pref('tdkind', k); tdPick = ''; renderTenders(); } })));
+  const pick = tdKind === 'all' ? null : el('select', { class: 'td-pick', 'aria-label': t('td_period'), onchange: (e) => { tdPick = e.target.value; renderTenders(); } }, periods.map((k) => el('option', { value: k, text: tdLabel(k), ...(k === tdPick ? { selected: '' } : {}) })));
+  const tile = (cls, n, l) => el('div', { class: `km-tile ${cls}` }, el('b', { text: String(n) }), el('span', { text: t(l) }));
+  const save = async (i, patch) => { Object.assign(i, patch); await tdSave(); };
+  const dIn = (i, k) => el('input', { type: 'date', class: `td-${k}`, value: i[k] || '', 'aria-label': t(`td_col_${k === 'readyOn' ? 'ready' : k}`), onchange: async (e) => { await save(i, { [k]: e.target.value }); renderTenders(); } });
+  const table = el('div', { class: 'table-wrap' }, el('table', { class: 'td-table' },
+    el('thead', {}, el('tr', {}, ['td_col_subject', 'td_col_date', 'td_col_why', 'td_col_status', 'td_col_ready', 'td_col_due', 'td_col_visit', 'td_col_note', ''].map((k) => el('th', { text: k ? t(k) : '' })))),
+    el('tbody', {}, rows.map((i) => el('tr', { 'data-id': i.id, class: i.status === 'ready' ? 'td-done' : '' },
+      el('td', {}, el('div', { class: 'td-subj', text: i.subject, dir: 'auto' }), el('small', { class: 'hint', text: i.from })),
+      el('td', { class: 'num', text: i.date }),
+      el('td', {}, i.byFrom ? el('span', { class: 'chip', text: t('td_why_from') }) : null, i.byKr ? el('span', { class: 'chip', text: t('td_why_kr') }) : null),
+      el('td', {}, el('select', { class: 'td-status', 'aria-label': t('td_col_status'), onchange: async (e) => { const st = e.target.value; await save(i, { status: st, readyOn: st === 'ready' ? (i.readyOn || today) : '' }); renderTenders(); } },
+        el('option', { value: 'open', text: t('td_open'), ...(i.status !== 'ready' ? { selected: '' } : {}) }), el('option', { value: 'ready', text: t('td_ready'), ...(i.status === 'ready' ? { selected: '' } : {}) }))),
+      el('td', {}, i.status === 'ready' ? dIn(i, 'readyOn') : el('span', { class: 'hint', text: '—' })),
+      el('td', {}, dIn(i, 'due')), el('td', {}, dIn(i, 'visit')),
+      el('td', {}, el('input', { type: 'text', class: 'td-note', value: i.note || '', dir: 'auto', maxlength: 500, 'aria-label': t('td_col_note'), onchange: (e) => save(i, { note: e.target.value.trim() }) })),
+      el('td', {}, el('button', { type: 'button', class: 'icon-btn', title: t('td_del'), 'aria-label': t('td_del'), text: '✕', onclick: async () => { if (!confirm(t('td_del_confirm', { s: i.subject }))) return; tenders.items = tenders.items.filter((x) => x !== i); await tdSave(); renderTenders(); } })))))));
+  set(body, pull,
+    el('div', { class: 'row td-filter' }, kinds, pick),
+    el('p', { class: 'answer-line', text: t('td_answer', { p: tdLabel(tdPick), n: rows.length, r: ready, o: rows.length - ready }) }),
+    el('div', { class: 'km-tiles td-tiles' }, tile('km-total', rows.length, 'td_k_in'), tile('km-points', ready, 'td_k_ready'), tile('km-email', rows.length - ready, 'td_k_open'), tile('km-other', soon, 'td_k_soon')),
+    el('div', { class: 'row', style: 'justify-content:flex-end' }, el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('td_excel')}`, onclick: () => tdExcel(rows) })),
+    rows.length ? table : el('p', { class: 'note', text: t('td_none_period') }));
+}
+
 // ---------- ADR-0079: the bento's small visuals — drawn from the same numbers as the tiles, never decoration ----------
 /** The total's sources as one bar: from e-mail, opened himself, assigned by others — their real shares. */
 function splitBar(T) {
@@ -3248,7 +3363,7 @@ function renderMailFile() {
 }
 function route() {
   if (location.hash.startsWith('#rank=')) { takeRankLink(true).then(route); return; }   // a rank link can arrive while the portal is already open (only the hash changes)
-  const views = ['home', 'tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'guide', 'mailfile', 'overtime', 'planner'];
+  const views = ['home', 'tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'guide', 'mailfile', 'overtime', 'planner', 'tenders'];
   const requested = location.hash.slice(1);
   let hash = portalRoute(requested, isTeamPortal);
   if (requested !== hash) history.replaceState(null, '', '#' + hash);
@@ -3266,7 +3381,7 @@ function route() {
   for (const id of [...views, 'module']) $(`view-${id}`).hidden = id !== v;
   document.body.classList.toggle('in-module', v === 'module');
   if (mod) openModule(mod);
-  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', dev: 'nav_dev', home: 'cr_title', guide: 'nav_guide' , overtime: 'nav_overtime', planner: 'nav_planner', mailfile: 'nav_mailfile' }[v]); currentModule = null; }
+  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', dev: 'nav_dev', home: 'cr_title', guide: 'nav_guide' , overtime: 'nav_overtime', planner: 'nav_planner', mailfile: 'nav_mailfile', tenders: 'nav_tenders' }[v]); currentModule = null; }
   $('module-open').hidden = v !== 'module';
   // one item in the menu is current — the open module, or the page — and its group is the open one
   let current = null;
@@ -3282,6 +3397,7 @@ function route() {
   if (v === 'kpi') renderKpi();
   if (v === 'planner') renderPlanner();
   if (v === 'mailfile') renderMailFile();
+  if (v === 'tenders') renderTenders();
   if (v === 'overtime') renderOvertime();
   if (v === 'pro' && proToken.get() && !proUnits && !proBusy) proLoad();
   if (v === 'team') renderTeam();
@@ -3306,7 +3422,7 @@ $('file-in').addEventListener('change', async (e) => { for (const f of e.target.
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
 $('export-btn').addEventListener('click', async () => {
   if (plannerFile === undefined) plannerFile = (await store.getPlanner()) || null;   // ADR-0071: the planner travels with the backup
-  const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION, planner: plannerFile || null, mailrules: mfState.rules || (await store.kvGet('mailrules')) || null,
+  const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION, planner: plannerFile || null, tenders: tenders || (await store.kvGet('tenders')) || null, mailrules: mfState.rules || (await store.kvGet('mailrules')) || null,
     datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: (viewAs ? (meDerived ? null : realMe) : (meDerived ? null : me)) || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projfiles: await projFilesExport(), devplans: devPlans };
   download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(all, null, 1));
 });
@@ -3337,6 +3453,7 @@ $('import-in').addEventListener('change', async (e) => {
       { const mr = cleanMailRules(j.mailrules); if (mr && !(await store.kvGet('mailrules'))) { mfState.rules = mr; await store.kvPut('mailrules', mr); } }
       if (plannerFile === undefined) plannerFile = (await store.getPlanner()) || null;
       if (j.planner && typeof j.planner.html === 'string' && !plannerFile && isHtml(j.planner.html)) { plannerFile = { name: String(j.planner.name || 'planner.html'), at: String(j.planner.at || new Date().toISOString()), html: j.planner.html }; await store.putPlanner(plannerFile); }
+      { const td = cleanTenders(j.tenders); if (td && !(tenders && tenders.items.length)) { tenders = td; await store.kvPut('tenders', td); } }   // ADR-0081
       if (j.projects && !myProjects) { const p = cleanProjects(j.projects); if (p) { myProjects = p; await store.putProjects(myProjects); } }
       if (Array.isArray(j.pending)) { const have = new Set(pendingList().map((x) => x.name.toLowerCase())); localStorage.setItem(PENDING_KEY, JSON.stringify([...pendingList(), ...j.pending.map(cleanPending).filter((x) => x && !have.has(x.name.toLowerCase()))])); }
       if (j.names && typeof j.names === 'object') { const fx = nameFixes(); for (const [id, v] of Object.entries(j.names)) if (/^\d+$/.test(id) && v && typeof v === 'object' && !fx[id]) fx[id] = { ar: String(v.ar || '').slice(0, 80), en: String(v.en || '').slice(0, 80) }; localStorage.setItem(NAME_KEY, JSON.stringify(fx)); }
@@ -3386,7 +3503,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   repairs = (await store.getRepairs()) || [];
   privLinks = (await store.getPriv()) || [];
   mailRows = (await store.getMail()) || [];
-  myProjects = await store.getProjects();
+  myProjects = await store.getProjects(); tenders = cleanTenders(await store.kvGet('tenders'));
   myRegister = await store.getRegister();
   devPlans = (await store.kvGet('devplans')) || {};
   teamTypesLive = (await store.kvGet('teamtypes')) || null;

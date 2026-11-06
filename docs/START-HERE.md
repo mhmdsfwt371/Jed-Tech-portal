@@ -95,6 +95,7 @@
 | `docs/decisions/0078-weekly-message-phone-link-and-flag.md` | Weekly message and phone link (his month and week, no setup); ⚑ «this number looks wrong» |
 | `docs/decisions/0079-live-bento-look.md` | «Live bento» look: asphalt and AFAQY green, bento summaries with real-number visuals, Cairo type, motion that answers |
 | `docs/decisions/0080-one-place-for-the-mail-file.md` | The mail file has one place (the menu); the card on «Data» is gone |
+| `docs/decisions/0081-tender-register.md` | Tender register: tender mails once (from a.ibrahim or «كراسة الشروط»), his status and dates, month/quarter/year, Excel |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |
