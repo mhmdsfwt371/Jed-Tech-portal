@@ -1020,7 +1020,8 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   /* ADR-0081: the tender register */
   .td-table td { vertical-align: top; } .td-subj { font-weight: 600; max-width: 46ch; } .td-table input[type=date] { min-width: 132px; } .td-table .td-note { min-width: 160px; width: 100%; }
   .td-table tr.td-done .td-subj { color: var(--ok); } .td-table .chip { display: inline-block; margin: 2px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; white-space: nowrap; }
-  .td-filter { gap: 10px; align-items: center; margin: 6px 0 10px; } .td-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } .td-tiles .km-total { grid-column: span 1; grid-row: span 1; }
+  .td-filter { gap: 10px; align-items: center; margin: 6px 0 10px; } .td-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } .td-tiles > .km-tile { grid-column: span 1 !important; grid-row: span 1 !important; }   /* four equal tiles — the board's bento sizes are not for this page */
+  @media (max-width: 820px) { .td-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 </head>
 <body>

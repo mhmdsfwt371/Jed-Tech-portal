@@ -34,3 +34,7 @@ replies/forwards and 1 newsletter left out; filters 1/3/4/4; ready date set to t
 sheets; the same file again adds nothing; the backup restores it on a new device; the team link cannot open it.
 Also: `home.py` H2 knows the new menu item; `mobile.py` measures with reduced motion (the settled layout, not an entrance frame);
 `shell.py` R4 waits for the menu marker to finish its slide, then measures within 1 px. Full run clean.
+
+## v8.99
+On the live site the four counts inherited the board's bento sizes (ready spanning two, the last on its own row). They are now four
+equal tiles in one row (two per row on a phone); `tenders.py` T12b measures it.
