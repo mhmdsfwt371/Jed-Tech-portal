@@ -1,13 +1,13 @@
 // sw.js — offline shell for the portal. Scope is this folder only (registered with scope './'), so it never touches
 // the other tools that live on the same domain. The shell is served from the cache of this version; version.json is
 // always read from the network so a new release is noticed.
-const VERSION = '8.95';   // stamped by scripts/bump.mjs — never edit by hand
+const VERSION = '8.96';   // stamped by scripts/bump.mjs — never edit by hand
 const CACHE = 'afaqy-portal-' + VERSION;
 const SHELL = [
   './', './index.html', './app.js', './core.js', './i18n/ar.js', './i18n/en.js', './i18n/ur.js', './tour-demo.js', './config.js', './manifest.webmanifest',
   './team.json', './weights.json', './systems.json', './systems-core.js', './manage-systems.html', './manage-systems.js',
   './assets/afaqy-logo.png', './assets/afaqy-logo-reverse.png', './assets/favicon.png', './assets/apple-touch-icon.png', './assets/icon-192.png', './assets/icon-512.png',
-  './assets/fonts/NotoSansArabic-Regular.woff2', './assets/fonts/NotoSansArabic-Bold.woff2',
+  './assets/fonts/NotoSansArabic-Regular.woff2', './assets/fonts/NotoSansArabic-Bold.woff2', './assets/fonts/Cairo-var.woff2',
 ];
 
 self.addEventListener('install', (event) => {

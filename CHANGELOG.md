@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v8.96 — 2026-11-06
+
+- شكل جديد للبوابة «البنتو الحي»: ملخصات بمربعات بأحجام مختلفة، والإجمالي معاه شريط بنسب مصادره الحقيقية، والمتوسط معاه دايرة «نسبة الإغلاق»، والنقاط إطارها بيلف.
+- خط أفاقي على الويب «Cairo» للعربي (وAxiforma للإنجليزي والأرقام على الأجهزة اللي متسطب عليها)، وحركات: انتقال بين الصفحات، وشفق بألوان أفاقي، وظهور الأقسام وانت بتنزل، وميلان وضوء مع الماوس. الحركة بتقف لو الجهاز مضبوط على «تقليل الحركة».
+
+<details><summary>English</summary>
+
+- A new look, «Live bento»: summaries as tiles of different sizes; the total with a bar of its real sources, the average with a «Closed rate» ring, points with a turning edge.
+- AFAQY's web type «Cairo» for Arabic (and Axiforma for Latin and digits where installed), and motion: page transitions, an aurora in AFAQY's colours, sections appearing as you scroll, tiles that lean and light under the pointer. Motion stops when the device asks for less.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- نیا انداز «لائیو بینٹو»: خلاصے مختلف سائز کے خانوں میں؛ کل کے ساتھ اس کے حقیقی ذرائع کی پٹی، اوسط کے ساتھ «بند ہونے کی شرح» کا دائرہ، پوائنٹس کا گھومتا کنارہ۔
+- عربی کے لیے آفاقی کا ویب فونٹ «Cairo» (اور جہاں نصب ہو وہاں لاطینی اور اعداد کے لیے Axiforma)، اور حرکت: صفحات کی منتقلی، آفاقی کے رنگوں میں شفق، اسکرول پر حصوں کا ظاہر ہونا، ماؤس کے ساتھ جھکاؤ اور روشنی۔ کم حرکت کی ترتیب پر حرکت رک جاتی ہے۔
+
+</div>
+</details>
+
+
 ## v8.95 — 2026-11-05
 
 - «رسائل الفريق» تحت «المزيد» في «مؤشرات الفريق»: لكل مهندس رسالة أسبوعه ورسالة مركزه الشهري بنفس الرابط. المهندس بيفتح الرابط مرة من موبايله فيشوف شهره وأسبوعه في «مؤشراتي» من غير أي إعداد.

@@ -93,6 +93,7 @@
 | `docs/decisions/0076-mail-rules-visible-before-the-file.md` | The mail page shows its rules and how it counts before any file is chosen |
 | `docs/decisions/0077-mail-categories-are-the-managers.md` | Mail categories: add, name, reorder, remove in the portal; carried by the backup |
 | `docs/decisions/0078-weekly-message-phone-link-and-flag.md` | Weekly message and phone link (his month and week, no setup); ⚑ «this number looks wrong» |
+| `docs/decisions/0079-live-bento-look.md` | «Live bento» look: asphalt and AFAQY green, bento summaries with real-number visuals, Cairo type, motion that answers |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

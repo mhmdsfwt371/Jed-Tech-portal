@@ -1,18 +1,18 @@
 {
-  "version": "8.95",
-  "date": "2026-11-05",
+  "version": "8.96",
+  "date": "2026-11-06",
   "notes": {
     "ar": [
-      "«رسائل الفريق» تحت «المزيد» في «مؤشرات الفريق»: لكل مهندس رسالة أسبوعه ورسالة مركزه الشهري بنفس الرابط. المهندس بيفتح الرابط مرة من موبايله فيشوف شهره وأسبوعه في «مؤشراتي» من غير أي إعداد.",
-      "زرار «⚑ الرقم ده شكله غلط» جنب كل رقم شخصي: بيفتح بلاغ فيه الرقم ومصدره وتعريفه وتاريخ البيانات، وخانة لملاحظتك، وتنسخه أو تبعته بالإيميل."
+      "شكل جديد للبوابة «البنتو الحي»: ملخصات بمربعات بأحجام مختلفة، والإجمالي معاه شريط بنسب مصادره الحقيقية، والمتوسط معاه دايرة «نسبة الإغلاق»، والنقاط إطارها بيلف.",
+      "خط أفاقي على الويب «Cairo» للعربي (وAxiforma للإنجليزي والأرقام على الأجهزة اللي متسطب عليها)، وحركات: انتقال بين الصفحات، وشفق بألوان أفاقي، وظهور الأقسام وانت بتنزل، وميلان وضوء مع الماوس. الحركة بتقف لو الجهاز مضبوط على «تقليل الحركة»."
     ],
     "en": [
-      "«Team messages» under «More» on «Team KPIs»: each engineer's week message and month rank message, with the same link. He opens it once on his phone and sees his month and week on «My KPIs» with no setup.",
-      "«⚑ This number looks wrong» beside every personal number: a report with the number, where it comes from, its definition and the data date, a note, then copy or e-mail it."
+      "A new look, «Live bento»: summaries as tiles of different sizes; the total with a bar of its real sources, the average with a «Closed rate» ring, points with a turning edge.",
+      "AFAQY's web type «Cairo» for Arabic (and Axiforma for Latin and digits where installed), and motion: page transitions, an aurora in AFAQY's colours, sections appearing as you scroll, tiles that lean and light under the pointer. Motion stops when the device asks for less."
     ],
     "ur": [
-      "«ٹیم کے اشاریے» میں «مزید» کے نیچے «ٹیم کے پیغامات»: ہر انجینئر کا ہفتے کا پیغام اور مہینے کے درجے کا پیغام، ایک ہی لنک کے ساتھ۔ وہ فون پر ایک بار کھولے تو بغیر سیٹ اپ «میرے اشاریے» میں اپنا مہینہ اور ہفتہ دیکھے۔",
-      "ہر ذاتی عدد کے ساتھ «⚑ یہ عدد غلط لگتا ہے»: عدد، اس کا ماخذ، تعریف اور ڈیٹا کی تاریخ کے ساتھ رپورٹ، ایک نوٹ، پھر کاپی کریں یا ای میل کریں۔"
+      "نیا انداز «لائیو بینٹو»: خلاصے مختلف سائز کے خانوں میں؛ کل کے ساتھ اس کے حقیقی ذرائع کی پٹی، اوسط کے ساتھ «بند ہونے کی شرح» کا دائرہ، پوائنٹس کا گھومتا کنارہ۔",
+      "عربی کے لیے آفاقی کا ویب فونٹ «Cairo» (اور جہاں نصب ہو وہاں لاطینی اور اعداد کے لیے Axiforma)، اور حرکت: صفحات کی منتقلی، آفاقی کے رنگوں میں شفق، اسکرول پر حصوں کا ظاہر ہونا، ماؤس کے ساتھ جھکاؤ اور روشنی۔ کم حرکت کی ترتیب پر حرکت رک جاتی ہے۔"
     ]
   }
 }

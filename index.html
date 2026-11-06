@@ -894,6 +894,128 @@
   .fl-label{display:grid;gap:6px;margin-bottom:12px}.fl-note{width:100%;box-sizing:border-box}
   .me-snap table{width:100%}.me-snap h3{margin:16px 0 6px}
   .wk-cell{white-space:nowrap}
+
+  /* ===== ADR-0079: «Live bento» — the portal's own look (asphalt, AFAQY green, bento summaries, motion that answers) ===== */
+/* ===== «Live bento» — the portal's own look: summary pages as a bento of different sizes, small visuals drawn from the real numbers ===== */
+@property --ang { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+:root {
+  --asphalt:#1E2A36; --asphalt-2:#2A3A4A; --live:#2A7130; --live-bright:#4CC35A; --sig:#E0A32E; --sea:#1F4E79;
+  --menu:var(--asphalt); --ink:#18232E; --title:#18232E; --text:var(--ink); --slate:#5C6B78; --slate-light:#8A97A3;
+  --paper:#F2F4F7; --card:#FFFFFF; --card-head:#FFFFFF; --line:#E1E6EC; --line-strong:#C9D2DB;
+  --accent:#1F4E79; --accent-dark:#163A5B; --accent-wash:#E8EEF5; --on-accent:#FFFFFF; --ok:#2A7130; --ok-wash:#E8F3EA;
+  --btn-bg:var(--asphalt); --btn-ink:#FFFFFF; --btn-hover:var(--asphalt-2); --track:#E6EBF0;
+  --side-ink:#CBD5DE; --side-icon:#DCE4EA; --ink-line:rgba(255,255,255,.08);
+  --radius:16px; --radius-sm:10px; --lift:0 1px 2px rgba(24,35,46,.05), 0 10px 26px -14px rgba(24,35,46,.28);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ink:#E4ECF3; --title:#F2F6F9; --slate:#9AA8B5; --paper:#0E151D; --card:#16212C; --card-head:#16212C; --line:#233140; --line-strong:#2F4052;
+  --accent:#7FB2E5; --accent-dark:#A9CCF0; --accent-wash:#16283A; --on-accent:#0E151D; --ok:#4CC35A; --ok-wash:#14301C;
+  --btn-bg:#2C3E52; --btn-hover:#36495F; --menu:#0A1118; --track:#223040; --lift:0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.6); } }
+:root[data-theme="dark"] {
+  --ink:#E4ECF3; --title:#F2F6F9; --slate:#9AA8B5; --paper:#0E151D; --card:#16212C; --card-head:#16212C; --line:#233140; --line-strong:#2F4052;
+  --accent:#7FB2E5; --accent-dark:#A9CCF0; --accent-wash:#16283A; --on-accent:#0E151D; --ok:#4CC35A; --ok-wash:#14301C;
+  --btn-bg:#2C3E52; --btn-hover:#36495F; --menu:#0A1118; --track:#223040; --lift:0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.6);
+}
+body { background: var(--paper); }
+/* the menu: asphalt, the page you are on marked by a sliding pill with a live dot */
+.sidebar { background: var(--menu); }
+.nav { position: relative; }
+.nav a { position: relative; z-index: 1; border-radius: 12px; margin-inline: 8px; width: calc(100% - 16px); border-inline-start-color: transparent !important; }
+.nav a[aria-current="page"] { background: transparent; color: #fff; font-weight: 600; }
+#bt-ind { position: absolute; z-index: 0; top: 0; inset-inline-start: 8px; border-radius: 12px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12);
+  transition: transform .38s cubic-bezier(.2,.9,.25,1.15), height .38s, opacity .2s; pointer-events: none; }
+#bt-ind::after { content: ""; position: absolute; inset-inline-end: 12px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: var(--live-bright); box-shadow: 0 0 0 4px rgba(76,195,90,.18); }
+.nav a[aria-current="page"] .nav-item-icon { background: var(--live); color: #fff; }
+.btn.primary, button.primary, .pill-btn.on { background: var(--btn-bg); border-color: var(--btn-bg); color: var(--btn-ink); }
+.btn.primary:hover, button.primary:hover { background: var(--btn-hover); }
+.table-wrap { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+input, select, textarea { border-radius: var(--radius-sm); }
+.burger { color: var(--ink); border-color: var(--line); background: var(--card); }
+
+/* the bento: «Team KPIs» — total 2×2 with its sources, points 2×1 with the turning edge, the rest small */
+.km-tiles { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(108px, auto); gap: 12px; perspective: 900px; }
+.km-tiles .km-total { grid-column: span 2; grid-row: span 2; }
+.km-tiles .km-points { grid-column: span 2; }
+.km-tiles .km-rd { grid-column: span 2; }
+.km-tile, .cr-num { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--lift);
+  transition: transform .18s ease-out, box-shadow .18s; transform-style: preserve-3d; animation: bt-in .55s cubic-bezier(.2,.8,.2,1) both; }
+.km-tile:hover, .cr-num:hover { box-shadow: 0 2px 4px rgba(24,35,46,.06), 0 18px 34px -16px rgba(24,35,46,.38); }
+.km-tiles > :nth-child(2), .cr-nums > :nth-child(2) { animation-delay: .05s } .km-tiles > :nth-child(3), .cr-nums > :nth-child(3) { animation-delay: .1s }
+.km-tiles > :nth-child(4), .cr-nums > :nth-child(4) { animation-delay: .15s } .km-tiles > :nth-child(5) { animation-delay: .2s } .km-tiles > :nth-child(6) { animation-delay: .25s } .km-tiles > :nth-child(7) { animation-delay: .3s }
+@keyframes bt-in { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
+.km-total b { font-size: 2.6rem; line-height: 1.1; }
+.km-points b { font-size: 2rem; }
+.km-points::before, .cr-nums > .cr-num:nth-child(2)::before { content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 2px;
+  background: conic-gradient(from var(--ang), var(--live), var(--live-bright), var(--sea), var(--live)); animation: bt-spin 5s linear infinite;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+@keyframes bt-spin { to { --ang: 360deg; } }
+/* the sources bar inside the total, from the three real counts */
+.bt-split { margin-top: 14px; }
+.bt-split .bt-bar { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: var(--track); }
+.bt-split .bt-bar i { display: block; height: 100%; transform-origin: inline-start; animation: bt-grow .9s cubic-bezier(.2,.8,.2,1) both .25s; }
+@keyframes bt-grow { from { transform: scaleX(0); } to { transform: none; } }
+.bt-split .lg { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: .82rem; color: var(--slate); }
+.bt-split .lg span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-inline-end: 6px; background: var(--c); vertical-align: middle; }
+/* the closed ring inside the average, from closed ÷ total */
+.bt-ringbox { position: absolute; inset-inline-end: 12px; top: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bt-ringbox span { font-size: 12px; color: var(--slate); white-space: nowrap; }   /* 12px: the portal's smallest text */   /* says what the ring is */
+.bt-ring { width: 54px; height: 54px; }
+.bt-ring circle { fill: none; stroke-width: 6; }
+.bt-ring .bg { stroke: var(--track); } .bt-ring .fg { stroke: var(--live-bright); stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1) .3s; }
+.bt-ring text { font-size: 13px; font-weight: 600; fill: var(--ink); }
+/* the control room: «done this month» large, the rest around it */
+.cr-nums { display: grid !important; grid-template-columns: 2fr 1fr 1fr; gap: 12px; perspective: 900px; }
+.cr-nums > .cr-num:first-child { grid-row: span 2; }
+.cr-nums > .cr-num:first-child b, .cr-nums > .cr-num:first-child .cr-v { font-size: 2.6rem; }
+.cr-nums > .cr-num:nth-child(4) { grid-column: span 2; }
+@media (max-width: 820px) { .km-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .km-tiles .km-rd { grid-column: span 2; }
+  .cr-nums { grid-template-columns: 1fr 1fr; } .cr-nums > .cr-num:first-child { grid-row: auto; grid-column: span 2; } }
+@media (prefers-reduced-motion: reduce) { .km-tile, .cr-num, .bt-split .bt-bar i { animation: none; } .km-points::before, .cr-nums > .cr-num:nth-child(2)::before { animation: none; } #bt-ind, .bt-ring .fg { transition: none; } }
+
+/* ===== the AFAQY type: Axiforma where the device has it (the brand font, Latin and digits), Cairo for Arabic (afaqy.com's web font, SIL OFL, bundled) ===== */
+@font-face { font-family: 'Axiforma'; src: local('Axiforma'), local('Axiforma Regular'), local('Axiforma-Regular'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Axiforma'; src: local('Axiforma Medium'), local('Axiforma-Medium'); font-weight: 500; font-display: swap; }
+@font-face { font-family: 'Axiforma'; src: local('Axiforma SemiBold'), local('Axiforma-SemiBold'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Axiforma'; src: local('Axiforma Bold'), local('Axiforma-Bold'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Cairo'; src: url('assets/fonts/Cairo-var.woff2') format('woff2-variations'), url('assets/fonts/Cairo-var.woff2') format('woff2'); font-weight: 200 1000; font-display: swap; }
+html, body, button, input, select, textarea { font-family: 'Axiforma', 'Cairo', 'Noto Sans Arabic', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+.km-tile b, .cr-num b, .num, td.num { font-feature-settings: 'tnum' 1; }
+
+/* ===== more motion — every move answers something: a page arriving, a section coming into view, a press, the pointer ===== */
+section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes bt-page { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+/* the aurora behind each page's head, in AFAQY's colours, drifting slowly */
+.main { position: relative; isolation: isolate; }
+.main::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 300px; z-index: -1; pointer-events: none;
+  background: radial-gradient(38% 60% at 15% 0%, var(--au1), transparent 70%), radial-gradient(34% 58% at 85% 5%, var(--au2), transparent 70%), radial-gradient(30% 50% at 50% 0%, var(--au3), transparent 70%);
+  background-size: 170% 170%; animation: bt-aurora 16s ease-in-out infinite alternate; -webkit-mask-image: linear-gradient(#000 35%, transparent); mask-image: linear-gradient(#000 35%, transparent); }
+:root { --au1: rgba(42,113,48,.16); --au2: rgba(31,78,121,.16); --au3: rgba(224,163,46,.10); }
+:root[data-theme="dark"] { --au1: rgba(76,195,90,.20); --au2: rgba(127,178,229,.18); --au3: rgba(224,163,46,.12); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --au1: rgba(76,195,90,.20); --au2: rgba(127,178,229,.18); --au3: rgba(224,163,46,.12); } }
+@keyframes bt-aurora { 0% { background-position: 0% 0%, 100% 0%, 50% 0%; } 50% { background-position: 30% 10%, 70% 0%, 40% 10%; } 100% { background-position: 10% 0%, 90% 10%, 65% 0%; } }
+/* sections come into view once, as you scroll */
+.bt-rv { opacity: 0; transform: translateY(16px); transition: opacity .55s cubic-bezier(.2,.8,.2,1), transform .55s cubic-bezier(.2,.8,.2,1); }
+.bt-rv.bt-seen { opacity: 1; transform: none; }
+/* table rows arrive one after another */
+.table-wrap tbody tr { animation: bt-row .45s cubic-bezier(.2,.8,.2,1) both; }
+.table-wrap tbody tr:nth-child(2) { animation-delay: .03s } .table-wrap tbody tr:nth-child(3) { animation-delay: .06s } .table-wrap tbody tr:nth-child(4) { animation-delay: .09s }
+.table-wrap tbody tr:nth-child(5) { animation-delay: .12s } .table-wrap tbody tr:nth-child(6) { animation-delay: .15s } .table-wrap tbody tr:nth-child(7) { animation-delay: .18s }
+.table-wrap tbody tr:nth-child(8) { animation-delay: .21s } .table-wrap tbody tr:nth-child(9) { animation-delay: .24s } .table-wrap tbody tr:nth-child(n+10) { animation-delay: .27s }
+@keyframes bt-row { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* the pointer: a light that follows it on the tiles */
+.km-tile::after, .cr-num::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: var(--o, 0); transition: opacity .2s;
+  background: radial-gradient(200px circle at var(--mx, 50%) var(--my, 50%), rgba(76,195,90,.13), transparent 70%); }
+/* a press you can feel; the chosen pill pops when it changes */
+.btn, .pill-btn, .nav a, button { transition: transform .12s ease, background-color .15s, color .15s, box-shadow .15s; }
+.btn:active, .pill-btn:active, button:active { transform: scale(.97); }
+.pill-btn.on { animation: bt-pop .32s cubic-bezier(.2,.9,.3,1.4); }
+@keyframes bt-pop { 0% { transform: scale(.92); } 100% { transform: none; } }
+.nav a .nav-item-icon { transition: transform .2s cubic-bezier(.2,.9,.3,1.4), background-color .2s; }
+.nav a:hover .nav-item-icon { transform: scale(1.12) rotate(-4deg); }
+@media (prefers-reduced-motion: reduce) {
+  section[id^="view-"]:not([hidden]), .table-wrap tbody tr, .pill-btn.on, .main::before { animation: none; }
+  .bt-rv { opacity: 1; transform: none; transition: none; } .nav a:hover .nav-item-icon { transform: none; } }
+
 </style>
 </head>
 <body>

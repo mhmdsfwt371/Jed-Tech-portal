@@ -44,3 +44,14 @@
 ## AFAQY brand colours (reports)
 
 Taken from the AFAQY logo (assets/afaqy-logo.png): navy **#1C1E3D** and green **#2A7130**. Used only in the management reports (ADR-0037), with the portal teal #0E7C86 as the supporting colour.
+
+## «Live bento» (ADR-0079, v8.96) — the current look
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| asphalt | #1E2A36 | #0A1118 (menu) · #2C3E52 (buttons) | the menu, primary buttons, the chosen pill |
+| live green | #2A7130 | #4CC35A | what is live, points, the current page's dot |
+| signal amber | #E0A32E | #E0A32E | warnings, «assigned by others» in the sources bar |
+| sea blue | #1F4E79 | #7FB2E5 | links and focus, «from e-mail» in the sources bar |
+| paper / card | #F2F4F7 / #FFFFFF | #0E151D / #16212C | page / surfaces |
+| ink / slate | #18232E / #5C6B78 | #E4ECF3 / #9AA8B5 | text / secondary text |
+Radii: cards 16, fields 10, pills round. Type: Axiforma (when installed) → Cairo (bundled) → Noto Sans Arabic. Smallest text 12 px.

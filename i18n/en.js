@@ -17,6 +17,8 @@ export default {
     g_planner_h: 'Team plans',
     g_planner_b: 'The manager’s page only: upload the team structure file (an HTML page) and it shows as it looks, exactly as uploaded. It stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file, or remove it from the device.',
     // ADR-0070: the one monthly place
+    bt_closed_full: 'Closed rate {p}% — {c} of {n} closed',
+    bt_closed_rate: 'Closed rate',
     fl_subject: 'A number looks wrong: {label} — {who}',
     fl_mail: 'Send by e-mail',
     fl_copied: 'Report copied',

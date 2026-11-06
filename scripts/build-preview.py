@@ -26,7 +26,7 @@ def config_src():
 js = '\n'.join([config_src(), strip((root/'systems-core.js').read_text(encoding='utf-8')), core, strip((root/'app.js').read_text(encoding='utf-8'))])
 def uri(path, mime): return f"data:{mime};base64," + base64.b64encode((root/path).read_bytes()).decode()
 for f, m in [('assets/afaqy-logo-reverse.png', 'image/png'), ('assets/favicon.png', 'image/png'), ('assets/apple-touch-icon.png', 'image/png'),
-             ('assets/fonts/NotoSansArabic-Regular.woff2', 'font/woff2'), ('assets/fonts/NotoSansArabic-Bold.woff2', 'font/woff2')]:
+             ('assets/fonts/NotoSansArabic-Regular.woff2', 'font/woff2'), ('assets/fonts/NotoSansArabic-Bold.woff2', 'font/woff2'), ('assets/fonts/Cairo-var.woff2', 'font/woff2')]:
     html = html.replace(f, uri(f, m))
 # the preview has no version.json beside it, so it carries this version's notes inside
 import json

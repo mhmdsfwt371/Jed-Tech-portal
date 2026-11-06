@@ -845,6 +845,26 @@ function rankFor(id, ym) {   // his team: the same team leader in the team file,
   return { v: 1, id, ym, r: 1 + above.length, n: pts.length, gap: above.length ? Math.round((Math.min(...above) - mine.p) * 10) / 10 : null,
     lead: !above.length && below.length ? Math.round((mine.p - Math.max(...below)) * 10) / 10 : null, at: to, partial: ym === today.slice(0, 7), ...(lv ? { lv } : {}) };
 }
+
+// ---------- ADR-0079: the bento's small visuals — drawn from the same numbers as the tiles, never decoration ----------
+/** The total's sources as one bar: from e-mail, opened himself, assigned by others — their real shares. */
+function splitBar(T) {
+  const parts = [['email', 'src_email', 'var(--sea)'], ['self', 'src_self', 'var(--live)'], ['other', 'src_other', 'var(--sig)']].map(([k, l, c]) => ({ v: Number(T[k]) || 0, l: t(l), c }));
+  const sum = parts.reduce((s, p) => s + p.v, 0); if (!sum) return null; const pc = (v) => Math.round((v / sum) * 100);
+  return el('div', { class: 'bt-split' },
+    el('div', { class: 'bt-bar', role: 'img', 'aria-label': parts.map((p) => `${p.l} ${pc(p.v)}%`).join(' · ') }, parts.map((p) => el('i', { style: `width:${(p.v / sum) * 100}%;background:${p.c}`, title: `${p.l}: ${p.v}` }))),
+    el('div', { class: 'lg' }, parts.map((p) => el('span', { style: `--c:${p.c}`, text: `${p.l} ${pc(p.v)}%` }))));
+}
+/** The closed share as a ring beside the average, named under it, the full sentence on hover. */
+function closedRing(closed, total) {
+  if (!total || closed == null) return null; const k = Math.min(1, closed / total), r = 22, C = 2 * Math.PI * r, p = Math.round(k * 100);
+  const full = t('bt_closed_full', { p, c: closed, n: total }), box = el('div', { class: 'bt-ringbox', title: full });
+  box.innerHTML = `<svg class="bt-ring" viewBox="0 0 54 54" role="img"><circle class="bg" cx="27" cy="27" r="${r}"/><circle class="fg" cx="27" cy="27" r="${r}" transform="rotate(-90 27 27)" stroke-dasharray="${C}" stroke-dashoffset="${C}"/><text x="27" y="31" text-anchor="middle">${p}%</text></svg>`;
+  box.querySelector('svg').setAttribute('aria-label', full); box.append(el('span', { 'aria-hidden': 'true', text: t('bt_closed_rate') }));
+  requestAnimationFrame(() => requestAnimationFrame(() => { const fg = box.querySelector('.fg'); if (fg) fg.style.strokeDashoffset = String(C * (1 - k)); }));
+  return box;
+}
+
 // ---------- ADR-0078: the weekly message, the personal phone link (his month and week), and «this number looks wrong» ----------
 let mySnapId = null;   // the engineer's own snapshot, from the last link he opened on this device
 const SNAP_KEYS = ['email', 'self', 'other', 'total', 'closed', 'avg', 'points'];
@@ -2527,11 +2547,11 @@ function renderKpi() {
     !cov.whole ? el('p', { class: 'note', text: t('km_partial', { got: cov.got, need: cov.need }) }) : null,
     el('p', { class: 'answer-line', text: t('km_answer', { m: ml, n: T.total, e: T.email, s: T.self, o: T.other, c: T.closed, h: hmOf(T.avg), p: T.points }) + (P ? ` ${t('km_answer_prev', { m: pml, n: P.total, p: P.points })}` : '') }),
     el('div', { class: 'km-tiles' },
-      tile('total', t('km_total'), T.total, P && P.total, 'n'),
+      (() => { const x = tile('total', t('km_total'), T.total, P && P.total, 'n'), s = splitBar(T); if (s) x.append(s); return x; })(),
       tile('email', t('src_email'), T.email, P && P.email, 'n'),
       tile('self', t('src_self'), T.self, P && P.self, 'n'),
       tile('other', t('src_other'), T.other, P && P.other, 'n'),
-      tile('avg', t('km_avg'), T.avg, P && P.avg, 'l', t('km_closed_n', { n: T.closed })),
+      (() => { const x = tile('avg', t('km_avg'), T.avg, P && P.avg, 'l', t('km_closed_n', { n: T.closed })), g = closedRing(T.closed, T.total); if (g) x.append(g); return x; })(),
       tile('rd', t('km_rd'), rdOn ? T.rd : '—', rdOn && P && rdKnownFor(prange) ? P.rd : null, 'n', rdOn ? null : t('km_rd_unknown')),
       tile('points', t('col_points'), T.points, P && P.points, 'h')),
     el('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin:4px 0 8px' },
@@ -3394,3 +3414,34 @@ $('update-btn').addEventListener('click', () => location.reload());
   document.addEventListener('visibilitychange', () => { if (!document.hidden) loadRelease(); });
   $('install-btn').addEventListener('click', doInstall);
 })();
+
+// ---------- ADR-0079: motion that answers — the menu pill slides, tiles lean and light under the pointer, sections arrive as you scroll ----------
+// «Live bento»: the small visuals come from the real numbers on the page; the tiles lean with the pointer; the menu pill slides.
+(() => {
+  // lean with the pointer — a few degrees, gone when motion is reduced
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.addEventListener('pointermove', (e) => { const t = e.target.closest && e.target.closest('.km-tile, .cr-num');
+      document.querySelectorAll('.bt-lean').forEach((n) => { if (n !== t) { n.classList.remove('bt-lean'); n.style.transform = ''; } });
+      if (!t) return; const r = t.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      t.classList.add('bt-lean'); t.style.transform = `rotateY(${x * 6}deg) rotateX(${-y * 6}deg) translateZ(4px)`; }); }
+  // the menu pill slides to the page you open
+  const nav = document.querySelector('.sidebar .nav'); if (!nav) return; const ind = document.createElement('span'); ind.id = 'bt-ind'; ind.setAttribute('aria-hidden', 'true'); nav.prepend(ind);
+  const place = () => { const a = nav.querySelector('a[aria-current="page"]'); if (!a || !a.offsetParent) { ind.style.opacity = 0; return; }
+    ind.style.opacity = 1; ind.style.width = `${a.offsetWidth}px`; ind.style.height = `${a.offsetHeight}px`; ind.style.transform = `translateY(${a.offsetTop}px)`; };
+  new MutationObserver(place).observe(nav, { subtree: true, attributes: true, attributeFilter: ['aria-current', 'aria-expanded', 'class'] });
+  addEventListener('resize', place); addEventListener('hashchange', () => setTimeout(place, 60)); setTimeout(place, 300);
+})();
+// sections come into view once as you scroll; the light that follows the pointer on the tiles
+(() => {
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches; if (still || !('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('bt-seen'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -6% 0px', threshold: .08 });
+  const SEL = '.table-wrap, details.km-more, .cr-alerts > *, .me-card, .proj-card, section.share, .km-detail';
+  const scan = () => document.querySelectorAll(SEL).forEach((n) => { if (n.dataset.btRv) return; n.dataset.btRv = '1';
+    const r = n.getBoundingClientRect(); if (r.top < innerHeight * .94) return;   // what is already on screen is simply there
+    n.classList.add('bt-rv'); io.observe(n); });
+  new MutationObserver(() => requestAnimationFrame(scan)).observe(document.body, { childList: true, subtree: true }); scan();
+  document.addEventListener('pointermove', (e) => { const t = e.target.closest && e.target.closest('.km-tile, .cr-num');
+    document.querySelectorAll('.bt-lit').forEach((n) => { if (n !== t) { n.classList.remove('bt-lit'); n.style.setProperty('--o', 0); } });
+    if (!t) return; const r = t.getBoundingClientRect(); t.classList.add('bt-lit'); t.style.setProperty('--mx', `${e.clientX - r.left}px`); t.style.setProperty('--my', `${e.clientY - r.top}px`); t.style.setProperty('--o', 1); });
+})();
+
