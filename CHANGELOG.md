@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.01 — 2026-11-06
+
+- «سجل المناقصات» بقى دورة حياة كاملة: وصلت ← فرز أولي ← قرار المشاركة ← جاري الإعداد ← جاهزة ← تم التقديم ← فزنا/خسرنا (أو أُلغيت/اعتذرنا بسبب إلزامي)، مع «واقفة من كام يوم» وأقرب موعد بعدّاد ملوّن.
+- اضغط أي مناقصة لتفاصيلها: رقم اعتماد، والقيمة، وقيمة الكراسة، والضمان، ومواعيد الاستفسارات والزيارة والتقديم وفتح المظاريف، والمسؤول، والدراسة، و«ضيف للتقويم» (ملف يفتح في أوتلوك). وأرقام الفترة: محتاج قرار، وشاركنا، وقدّمنا، وفزنا، ونسبة الفوز، ومتوسط أيام القرار، والتقديم في الوقت. والإكسل بكل الأعمدة.
+
+<details><summary>English</summary>
+
+- The «Tender register» is now a full lifecycle: arrived → screening → bid decision → in preparation → ready → submitted → won/lost (or cancelled/declined with a required reason), with days waiting and the nearest date as a coloured countdown.
+- Click a tender for its details: the Etimad number, value, booklet fee, guarantee, the inquiries, site-visit, submission and opening dates, the owner, the study, and «Add to calendar» (a file that opens in Outlook). The period's numbers: awaiting a decision, joined, submitted, won, win rate, average decision days, on-time submission. Excel with every column.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «ٹینڈر رجسٹر» اب مکمل سائیکل ہے: آئی ← جانچ ← شرکت کا فیصلہ ← تیاری ← تیار ← جمع ← جیت/ہار (یا منسوخ/معذرت لازمی وجہ کے ساتھ)، انتظار کے دن اور قریب ترین تاریخ رنگین گنتی کے ساتھ۔
+- تفصیل کے لیے ٹینڈر پر کلک کریں: اعتماد نمبر، مالیت، فیس، ضمانت، تاریخیں، ذمہ دار، مطالعہ، اور «کیلنڈر میں شامل کریں»۔ مدت کے اعداد اور ہر کالم کے ساتھ ایکسل۔
+
+</div>
+</details>
+
+
 ## v9.00 — 2026-11-06
 
 - «سجل المناقصات» بقى له ٣ طرق للإضافة بنفس الشروط: (١) فترة تختارها (من/إلى) وبوكمارك «📌 سحب المناقصات» يسأل عن الفترة وينسخ الأمر لكلود في كروم ويفتح أوتلوك؛ (٢) ملف بريد PST يتقرا على جهازك بس، مهما كان فيه إيميلات؛ (٣) «＋ مناقصة» بإيدك.

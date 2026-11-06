@@ -1,15 +1,18 @@
 {
-  "version": "9.00",
+  "version": "9.01",
   "date": "2026-11-06",
   "notes": {
     "ar": [
-      "«سجل المناقصات» بقى له ٣ طرق للإضافة بنفس الشروط: (١) فترة تختارها (من/إلى) وبوكمارك «📌 سحب المناقصات» يسأل عن الفترة وينسخ الأمر لكلود في كروم ويفتح أوتلوك؛ (٢) ملف بريد PST يتقرا على جهازك بس، مهما كان فيه إيميلات؛ (٣) «＋ مناقصة» بإيدك."
+      "«سجل المناقصات» بقى دورة حياة كاملة: وصلت ← فرز أولي ← قرار المشاركة ← جاري الإعداد ← جاهزة ← تم التقديم ← فزنا/خسرنا (أو أُلغيت/اعتذرنا بسبب إلزامي)، مع «واقفة من كام يوم» وأقرب موعد بعدّاد ملوّن.",
+      "اضغط أي مناقصة لتفاصيلها: رقم اعتماد، والقيمة، وقيمة الكراسة، والضمان، ومواعيد الاستفسارات والزيارة والتقديم وفتح المظاريف، والمسؤول، والدراسة، و«ضيف للتقويم» (ملف يفتح في أوتلوك). وأرقام الفترة: محتاج قرار، وشاركنا، وقدّمنا، وفزنا، ونسبة الفوز، ومتوسط أيام القرار، والتقديم في الوقت. والإكسل بكل الأعمدة."
     ],
     "en": [
-      "The «Tender register» now has three ways in, by the same rules: (1) a period you choose and a «📌 Pull tenders» bookmark that asks it, copies the instructions for Claude in Chrome and opens Outlook; (2) a PST mail file read on your device only, however many mails it holds; (3) «＋ Tender» by hand."
+      "The «Tender register» is now a full lifecycle: arrived → screening → bid decision → in preparation → ready → submitted → won/lost (or cancelled/declined with a required reason), with days waiting and the nearest date as a coloured countdown.",
+      "Click a tender for its details: the Etimad number, value, booklet fee, guarantee, the inquiries, site-visit, submission and opening dates, the owner, the study, and «Add to calendar» (a file that opens in Outlook). The period's numbers: awaiting a decision, joined, submitted, won, win rate, average decision days, on-time submission. Excel with every column."
     ],
     "ur": [
-      "«ٹینڈر رجسٹر» میں اب انہی اصولوں سے تین طریقے: (1) آپ کی منتخب مدت اور «📌 ٹینڈر لائیں» بک مارک جو مدت پوچھتا، Claude in Chrome کی ہدایات کاپی کرتا اور آؤٹ لک کھولتا ہے؛ (2) PST میل فائل صرف آپ کے آلے پر؛ (3) ہاتھ سے «＋ ٹینڈر»۔"
+      "«ٹینڈر رجسٹر» اب مکمل سائیکل ہے: آئی ← جانچ ← شرکت کا فیصلہ ← تیاری ← تیار ← جمع ← جیت/ہار (یا منسوخ/معذرت لازمی وجہ کے ساتھ)، انتظار کے دن اور قریب ترین تاریخ رنگین گنتی کے ساتھ۔",
+      "تفصیل کے لیے ٹینڈر پر کلک کریں: اعتماد نمبر، مالیت، فیس، ضمانت، تاریخیں، ذمہ دار، مطالعہ، اور «کیلنڈر میں شامل کریں»۔ مدت کے اعداد اور ہر کالم کے ساتھ ایکسل۔"
     ]
   }
 }

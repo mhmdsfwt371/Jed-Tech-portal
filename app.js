@@ -848,8 +848,36 @@ function rankFor(id, ym) {   // his team: the same team leader in the team file,
 
 // ---------- ADR-0081: the tender register — original tender mails from Outlook, one row each, his status and his dates ----------
 let tenders = null;   // { items: [...], to, pulledAt } — on this device, carried by the backup
-let tdKind = pref('tdkind') || 'month', tdPick = '', tdFrom = '', tdTo = '', tdBusy = '';
+let tdKind = pref('tdkind') || 'month', tdPick = '', tdFrom = '', tdTo = '', tdBusy = '', tdOpenId = null;
 const TD_FROM = 'a.ibrahim@afaqy.com';
+// ADR-0083: the lifecycle. Open stages in order, then the closed ones. declined/lost need a reason.
+const TD_STAGES = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted', 'won', 'lost', 'cancelled', 'declined'];
+const TD_OPEN = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted'], TD_NEED_REASON = ['declined', 'lost'];
+const tdDaysBetween = (a, b) => Math.round((new Date(`${b}T00:00:00Z`) - new Date(`${a}T00:00:00Z`)) / 864e5);
+/** The nearest coming date of a tender and what it is, for the countdown. */
+function tdNextDate(i, today) { return [['askDue', i.askDue], ['visit', i.visit], ['due', i.due], ['openAt', i.openAt]].filter(([, v]) => v && v >= today).sort((x, y) => (x[1] < y[1] ? -1 : 1))[0] || null; }
+/** The period's own numbers: how many we joined, won, how long a decision took, how many were in on time. */
+function tdKpis(rows, today) {
+  const decided = rows.filter((i) => i.decidedOn), joined = rows.filter((i) => !['declined', 'cancelled'].includes(i.stage) && i.stage !== 'received' && i.stage !== 'screen' && i.stage !== 'decide');
+  const submitted = rows.filter((i) => ['submitted', 'won', 'lost'].includes(i.stage)), closed = rows.filter((i) => ['won', 'lost'].includes(i.stage)), won = rows.filter((i) => i.stage === 'won');
+  const dd = decided.map((i) => tdDaysBetween(i.date, i.decidedOn)).filter((n) => n >= 0), onTime = submitted.filter((i) => i.submittedOn && i.due && tdDaysBetween(i.submittedOn, i.due) >= 1);
+  const waiting = rows.filter((i) => ['received', 'screen', 'decide'].includes(i.stage)), waitDays = waiting.map((i) => tdDaysBetween(i.date, today));
+  return { n: rows.length, waiting: waiting.length, waitMax: waitDays.length ? Math.max(...waitDays) : 0, joined: joined.length, declined: rows.filter((i) => i.stage === 'declined').length,
+    submitted: submitted.length, won: won.length, closed: closed.length, winRate: closed.length ? Math.round((won.length / closed.length) * 100) : null,
+    avgDecision: dd.length ? Math.round((dd.reduce((s, x) => s + x, 0) / dd.length) * 10) / 10 : null, onTime: submitted.length ? Math.round((onTime.length / submitted.length) * 100) : null,
+    value: rows.filter((i) => TD_OPEN.includes(i.stage)).reduce((s, i) => s + (i.value || 0), 0), soon: rows.filter((i) => TD_OPEN.includes(i.stage) && tdNextDate(i, today) && tdDaysBetween(today, tdNextDate(i, today)[1]) <= 7).length,
+    late: rows.filter((i) => TD_OPEN.includes(i.stage) && i.due && i.due < today && !i.submittedOn).length };
+}
+/** An .ics file with the tender's dates — opens straight in Outlook, each date an all-day event with a reminder the day before. */
+function tdIcs(i) {
+  const ev = [['askDue', i.askDue], ['visit', i.visit], ['due', i.due], ['openAt', i.openAt]].filter(([, v]) => v);
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z', esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//AFAQY Jeddah portal//tenders//AR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
+  for (const [k, v] of ev) { const d = v.replace(/-/g, ''), next = new Date(`${v}T00:00:00Z`); next.setUTCDate(next.getUTCDate() + 1);
+    lines.push('BEGIN:VEVENT', `UID:${i.id.replace(/[^a-z0-9]/gi, '').slice(0, 40)}-${k}@afaqy-jeddah-portal`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${next.toISOString().slice(0, 10).replace(/-/g, '')}`,
+      `SUMMARY:${esc(`${t(`td_col_${k}`)} — ${i.subject}`)}`, `DESCRIPTION:${esc(`${t('nav_tenders')}${i.etimadNo ? ` · ${t('td_col_etimadNo')} ${i.etimadNo}` : ''}`)}`, 'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY', `DESCRIPTION:${esc(i.subject)}`, 'END:VALARM', 'END:VEVENT'); }
+  lines.push('END:VCALENDAR'); return lines.join('\r\n');
+}
 const tdNorm = (s) => String(s || '').replace(/[\u0640\u064B-\u0652]/g, '').replace(/[إأآ]/g, 'ا').replace(/ة/g, 'ه').replace(/\s+/g, ' ').trim().toLowerCase();
 const tdIsReply = (s) => /^\s*((re|fw|fwd|aw|wg)\s*:|رد\s*:|إعادة توجيه\s*:|اعادة توجيه\s*:|تحويل\s*:)/i.test(String(s || ''));
 const tdKey = (s) => tdNorm(String(s || '').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, ''));
@@ -869,7 +897,7 @@ function tdImport(j) {
     const byFrom = tdIsAI(from), byKr = tdHasKraasa(att); if (!m.manual && !byFrom && !byKr) { other++; continue; }
     const id = tdKey(subject), was = byKey.get(id);
     if (was) { if (date < was.date) { was.date = date; was.from = from; } was.byFrom = was.byFrom || byFrom; was.byKr = was.byKr || byKr; was.att = [...new Set([...(was.att || []), ...att.filter((n) => tdHasKraasa([n]))])]; merged++; continue; }
-    const it = { id, subject, date, from: byFrom ? TD_FROM : from, byFrom, byKr, att: att.filter((n) => tdHasKraasa([n])), status: 'open', readyOn: '', due: '', visit: '', note: '', ...(m.manual ? { manual: true } : {}) };
+    const it = { id, subject, date, from: byFrom ? TD_FROM : from, byFrom, byKr, att: att.filter((n) => tdHasKraasa([n])), status: 'open', stage: 'received', stageAt: date, readyOn: '', due: '', visit: '', note: '', ...(m.manual ? { manual: true } : {}) };
     byKey.set(id, it); added++;
   }
   const items = [...byKey.values()].sort((x, y) => (x.date < y.date ? 1 : -1));
@@ -881,7 +909,12 @@ function cleanTenders(x) {
   if (!x || !Array.isArray(x.items)) return null; const d = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? v : '');
   const items = x.items.filter((i) => i && i.id && i.subject && d(i.date)).slice(0, 5000).map((i) => ({ id: String(i.id).slice(0, 300), subject: String(i.subject).slice(0, 300), date: i.date,
     from: String(i.from || '').slice(0, 120), byFrom: !!i.byFrom, byKr: !!i.byKr, ...(i.manual ? { manual: true } : {}), att: (Array.isArray(i.att) ? i.att : []).map(String).slice(0, 20),
-    status: i.status === 'ready' ? 'ready' : 'open', readyOn: d(i.readyOn), due: d(i.due), visit: d(i.visit), note: String(i.note || '').slice(0, 500) }));
+    status: i.status === 'ready' ? 'ready' : 'open', readyOn: d(i.readyOn), due: d(i.due), visit: d(i.visit), note: String(i.note || '').slice(0, 500),
+    // ADR-0083: the lifecycle — older rows get their stage from the old status
+    stage: TD_STAGES.includes(i.stage) ? i.stage : (i.status === 'ready' ? 'ready' : 'received'), stageAt: d(i.stageAt) || d(i.readyOn) || i.date,
+    reason: String(i.reason || '').slice(0, 300), owner: String(i.owner || '').slice(0, 80), etimadNo: String(i.etimadNo || '').slice(0, 40),
+    value: Number.isFinite(Number(i.value)) && Number(i.value) >= 0 ? Number(i.value) : null, fees: Number.isFinite(Number(i.fees)) && Number(i.fees) >= 0 ? Number(i.fees) : null, bond: String(i.bond || '').slice(0, 120),
+    askDue: d(i.askDue), openAt: d(i.openAt), submittedOn: d(i.submittedOn), submitNo: String(i.submitNo || '').slice(0, 60), decidedOn: d(i.decidedOn), study: String(i.study || '').slice(0, 300) }));
   return { items, to: d(x.to) || null, pulledAt: String(x.pulledAt || '') };
 }
 const tdPeriodOf = (date, kind) => (kind === 'year' ? date.slice(0, 4) : kind === 'quarter' ? `${date.slice(0, 4)}-Q${Math.floor((Number(date.slice(5, 7)) - 1) / 3) + 1}` : kind === 'month' ? date.slice(0, 7) : 'all');
@@ -960,14 +993,16 @@ function tdAddManual() {
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal(); s.focus();
 }
 async function tdExcel(rows) {
-  const X = await loadXlsx(), H = [t('td_col_subject'), t('td_col_date'), t('td_col_from'), t('td_col_why'), t('td_col_status'), t('td_col_ready'), t('td_col_due'), t('td_col_visit'), t('td_col_note')];
+  const X = await loadXlsx(), today = saudiDay(new Date().toISOString());
+  const H = ['td_col_subject', 'td_col_date', 'td_col_from', 'td_col_why', 'td_col_stage', 'td_col_stageAt', 'td_col_days', 'td_col_reason', 'td_col_owner', 'td_col_etimadNo', 'td_col_value', 'td_col_fees', 'td_col_bond', 'td_col_askDue', 'td_col_visit', 'td_col_due', 'td_col_openAt', 'td_col_submittedOn', 'td_col_submitNo', 'td_col_decidedOn', 'td_col_study', 'td_col_note'].map((k) => t(k));
   const why = (i) => [i.byFrom ? t('td_why_from') : '', i.byKr ? t('td_why_kr') : '', i.manual ? t('td_why_manual') : ''].filter(Boolean).join(' + ');
-  const ws = X.utils.aoa_to_sheet([H, ...rows.map((i) => [i.subject, i.date, i.from, why(i), i.status === 'ready' ? t('td_ready') : t('td_open'), i.readyOn, i.due, i.visit, i.note])]);
-  ws['!cols'] = [{ wch: 60 }, { wch: 12 }, { wch: 26 }, { wch: 24 }, { wch: 22 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 40 }]; ws['!views'] = [{ RTL: lang !== 'en' }];
+  const ws = X.utils.aoa_to_sheet([H, ...rows.map((i) => [i.subject, i.date, i.from, why(i), t(`td_st_${i.stage}`), i.stageAt, tdDaysBetween(i.stageAt, today), i.reason, i.owner, i.etimadNo, i.value, i.fees, i.bond, i.askDue, i.visit, i.due, i.openAt, i.submittedOn, i.submitNo, i.decidedOn, i.study, i.note])]);
+  ws['!cols'] = [60, 12, 26, 24, 18, 12, 8, 30, 16, 16, 14, 12, 18, 14, 14, 14, 14, 14, 16, 14, 30, 40].map((w) => ({ wch: w })); ws['!views'] = [{ RTL: lang !== 'en' }];
   const months = [...new Set(tenders.items.map((i) => i.date.slice(0, 7)))].sort();
-  const sum = X.utils.aoa_to_sheet([[t('td_col_month'), t('td_k_in'), t('td_k_ready'), t('td_k_open')], ...months.map((m) => { const g = tenders.items.filter((i) => i.date.startsWith(m)); return [m, g.length, g.filter((i) => i.status === 'ready').length, g.filter((i) => i.status !== 'ready').length]; })]);
+  const sum = X.utils.aoa_to_sheet([[t('td_col_month'), t('td_k_in'), t('td_k_joined'), t('td_st_declined'), t('td_k_submitted'), t('td_st_won'), t('td_st_lost'), t('td_k_winrate'), t('td_k_decision'), t('td_k_ontime')],
+    ...months.map((m) => { const k = tdKpis(tenders.items.filter((i) => i.date.startsWith(m)), today); return [m, k.n, k.joined, k.declined, k.submitted, k.won, k.closed - k.won, k.winRate == null ? '' : `${k.winRate}%`, k.avgDecision == null ? '' : k.avgDecision, k.onTime == null ? '' : `${k.onTime}%`]; })]);
   sum['!views'] = [{ RTL: lang !== 'en' }]; const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, t('td_sheet')); X.utils.book_append_sheet(wb, sum, t('td_sheet_sum'));
-  X.writeFile(wb, `AFAQY-tenders-${saudiDay(new Date().toISOString())}.xlsx`);
+  X.writeFile(wb, `AFAQY-tenders-${today}.xlsx`);
 }
 function renderTenders() {
   const body = $('tenders-body'); if (!body || isTeamPortal) return; const today = saudiDay(new Date().toISOString());
@@ -993,30 +1028,48 @@ function renderTenders() {
   if (!tenders || !tenders.items.length) { set(body, pull, el('p', { class: 'note', text: t('td_empty') })); return; }
   const periods = [...new Set(tenders.items.map((i) => tdPeriodOf(i.date, tdKind)))].sort().reverse();
   if (tdKind === 'all') tdPick = 'all'; else if (!periods.includes(tdPick)) tdPick = periods.includes(tdPeriodOf(today, tdKind)) ? tdPeriodOf(today, tdKind) : periods[0];
-  const rows = tenders.items.filter((i) => tdKind === 'all' || tdPeriodOf(i.date, tdKind) === tdPick);
-  const ready = rows.filter((i) => i.status === 'ready').length, soon = rows.filter((i) => i.status !== 'ready' && i.due && i.due >= today && i.due <= saudiDay(new Date(Date.now() + 7 * 864e5).toISOString())).length;
+  const rows = tenders.items.filter((i) => tdKind === 'all' || tdPeriodOf(i.date, tdKind) === tdPick), K = tdKpis(rows, today);
   const kinds = el('div', { class: 'pills' }, [['month', 'td_month'], ['quarter', 'td_quarter'], ['year', 'td_year'], ['all', 'td_all']].map(([k, l]) =>
     el('button', { type: 'button', class: `pill-btn${tdKind === k ? ' on' : ''}`, text: t(l), onclick: () => { tdKind = k; pref('tdkind', k); tdPick = ''; renderTenders(); } })));
   const pick = tdKind === 'all' ? null : el('select', { class: 'td-pick', 'aria-label': t('td_period'), onchange: (e) => { tdPick = e.target.value; renderTenders(); } }, periods.map((k) => el('option', { value: k, text: tdLabel(k), ...(k === tdPick ? { selected: '' } : {}) })));
-  const tile = (cls, n, l) => el('div', { class: `km-tile ${cls}` }, el('b', { text: String(n) }), el('span', { text: t(l) }));
+  const tile = (cls, n, l, sub) => el('div', { class: `km-tile ${cls}` }, el('b', { text: String(n) }), el('span', { text: t(l) }), sub ? el('small', { class: 'hint', text: sub }) : null);
   const save = async (i, patch) => { Object.assign(i, patch); await tdSave(); };
-  const dIn = (i, k) => el('input', { type: 'date', class: `td-${k}`, value: i[k] || '', 'aria-label': t(`td_col_${k === 'readyOn' ? 'ready' : k}`), onchange: async (e) => { await save(i, { [k]: e.target.value }); renderTenders(); } });
+  const cd = (i) => { const nx = tdNextDate(i, today); if (!nx || !TD_OPEN.includes(i.stage)) return el('span', { class: 'hint', text: '—' }); const d = tdDaysBetween(today, nx[1]);
+    return el('span', { class: `chip td-cd ${d <= 3 ? 'td-red' : d <= 7 ? 'td-amber' : 'td-green'}`, title: nx[1], text: `${t(`td_col_${nx[0]}`)}: ${t('td_in_days', { n: d })}` }); };
+  const fld = (i, k, type = 'text', extra = {}) => el('input', { type, class: `td-f td-${k}`, value: i[k] == null ? '' : String(i[k]), dir: 'auto', 'aria-label': t(`td_col_${k}`), ...extra,
+    onchange: async (e) => { const v = e.target.value; await save(i, { [k]: type === 'number' ? (v === '' ? null : Number(v)) : v.trim() }); renderTenders(); } });
+  const lab = (k, node) => el('label', { class: 'td-lab' }, el('span', { text: t(`td_col_${k}`) }), node);
+  const stageSel = (i) => el('select', { class: 'td-stage', 'aria-label': t('td_col_stage'), onchange: async (e) => { const st = e.target.value, patch = { stage: st, stageAt: today };
+      if (TD_NEED_REASON.includes(st)) { const r = window.prompt(t(st === 'lost' ? 'td_why_lost' : 'td_why_declined'), i.reason || ''); if (r == null || !r.trim()) { e.target.value = i.stage; return; } patch.reason = r.trim().slice(0, 300); }
+      if (['prep', 'ready', 'submitted', 'declined'].includes(st) && !i.decidedOn) patch.decidedOn = today;
+      if (st === 'ready' && !i.readyOn) patch.readyOn = today; if (st === 'submitted' && !i.submittedOn) patch.submittedOn = today;
+      patch.status = st === 'ready' ? 'ready' : i.status; await save(i, patch); renderTenders(); } },
+    TD_STAGES.map((s) => el('option', { value: s, text: t(`td_st_${s}`), ...(i.stage === s ? { selected: '' } : {}) })));
+  const detail = (i) => el('div', { class: 'td-detail' },
+    el('div', { class: 'td-grid' },
+      lab('reason', fld(i, 'reason')), lab('owner', fld(i, 'owner')), lab('etimadNo', fld(i, 'etimadNo')), lab('value', fld(i, 'value', 'number', { min: 0, step: 1 })), lab('fees', fld(i, 'fees', 'number', { min: 0, step: 1 })), lab('bond', fld(i, 'bond')),
+      lab('askDue', fld(i, 'askDue', 'date')), lab('visit', fld(i, 'visit', 'date')), lab('due', fld(i, 'due', 'date')), lab('openAt', fld(i, 'openAt', 'date')), lab('submittedOn', fld(i, 'submittedOn', 'date')), lab('submitNo', fld(i, 'submitNo')),
+      lab('decidedOn', fld(i, 'decidedOn', 'date')), lab('readyOn', fld(i, 'readyOn', 'date')), lab('study', fld(i, 'study')), lab('note', fld(i, 'note'))),
+    el('div', { class: 'row' },
+      el('button', { type: 'button', class: 'btn tiny td-ics', disabled: !(i.askDue || i.visit || i.due || i.openAt), text: `📅 ${t('td_ics')}`, onclick: () => { const b = new Blob([tdIcs(i)], { type: 'text/calendar' }), u = URL.createObjectURL(b); const x = el('a', { href: u, download: `tender-${(i.etimadNo || i.date).replace(/[^\w-]/g, '')}.ics` }); document.body.append(x); x.click(); x.remove(); setTimeout(() => URL.revokeObjectURL(u), 5000); } }),
+      el('span', { class: 'hint', text: i.from }),
+      el('button', { type: 'button', class: 'btn tiny quiet', text: `✕ ${t('td_del')}`, onclick: async () => { if (!confirm(t('td_del_confirm', { s: i.subject }))) return; tenders.items = tenders.items.filter((x) => x !== i); await tdSave(); renderTenders(); } })));
   const table = el('div', { class: 'table-wrap' }, el('table', { class: 'td-table' },
-    el('thead', {}, el('tr', {}, ['td_col_subject', 'td_col_date', 'td_col_why', 'td_col_status', 'td_col_ready', 'td_col_due', 'td_col_visit', 'td_col_note', ''].map((k) => el('th', { text: k ? t(k) : '' })))),
-    el('tbody', {}, rows.map((i) => el('tr', { 'data-id': i.id, class: i.status === 'ready' ? 'td-done' : '' },
-      el('td', {}, el('div', { class: 'td-subj', text: i.subject, dir: 'auto' }), el('small', { class: 'hint', text: i.from })),
-      el('td', { class: 'num', text: i.date }),
-      el('td', {}, i.byFrom ? el('span', { class: 'chip', text: t('td_why_from') }) : null, i.byKr ? el('span', { class: 'chip', text: t('td_why_kr') }) : null, i.manual ? el('span', { class: 'chip td-manual', text: t('td_why_manual') }) : null),
-      el('td', {}, el('select', { class: 'td-status', 'aria-label': t('td_col_status'), onchange: async (e) => { const st = e.target.value; await save(i, { status: st, readyOn: st === 'ready' ? (i.readyOn || today) : '' }); renderTenders(); } },
-        el('option', { value: 'open', text: t('td_open'), ...(i.status !== 'ready' ? { selected: '' } : {}) }), el('option', { value: 'ready', text: t('td_ready'), ...(i.status === 'ready' ? { selected: '' } : {}) }))),
-      el('td', {}, i.status === 'ready' ? dIn(i, 'readyOn') : el('span', { class: 'hint', text: '—' })),
-      el('td', {}, dIn(i, 'due')), el('td', {}, dIn(i, 'visit')),
-      el('td', {}, el('input', { type: 'text', class: 'td-note', value: i.note || '', dir: 'auto', maxlength: 500, 'aria-label': t('td_col_note'), onchange: (e) => save(i, { note: e.target.value.trim() }) })),
-      el('td', {}, el('button', { type: 'button', class: 'icon-btn', title: t('td_del'), 'aria-label': t('td_del'), text: '✕', onclick: async () => { if (!confirm(t('td_del_confirm', { s: i.subject }))) return; tenders.items = tenders.items.filter((x) => x !== i); await tdSave(); renderTenders(); } })))))));
+    el('thead', {}, el('tr', {}, ['td_col_subject', 'td_col_date', 'td_col_stage', 'td_col_days', 'td_col_next', ''].map((k) => el('th', { text: k ? t(k) : '' })))),
+    el('tbody', {}, rows.flatMap((i) => { const open = tdOpenId === i.id, days = tdDaysBetween(i.stageAt, today);
+      return [el('tr', { 'data-id': i.id, class: `td-row${open ? ' on' : ''}${TD_OPEN.includes(i.stage) ? '' : ' td-closed'}`, onclick: (e) => { if (e.target.closest('select, input, button, a')) return; tdOpenId = open ? null : i.id; renderTenders(); } },
+        el('td', {}, el('div', { class: 'td-subj', text: i.subject, dir: 'auto' }), el('div', {}, i.byFrom ? el('span', { class: 'chip', text: t('td_why_from') }) : null, i.byKr ? el('span', { class: 'chip', text: t('td_why_kr') }) : null, i.manual ? el('span', { class: 'chip td-manual', text: t('td_why_manual') }) : null, i.etimadNo ? el('span', { class: 'chip', text: i.etimadNo }) : null)),
+        el('td', { class: 'num', text: i.date }), el('td', {}, stageSel(i)),
+        el('td', { class: `num${TD_OPEN.includes(i.stage) && ['received', 'screen', 'decide'].includes(i.stage) && days > 3 ? ' td-wait' : ''}`, text: TD_OPEN.includes(i.stage) ? String(days) : '—', title: t('td_col_days') }),
+        el('td', {}, cd(i)), el('td', { class: 'num td-tog', text: open ? '▾' : '▸' })),
+        open ? el('tr', { class: 'td-detail-row' }, el('td', { colspan: 6 }, detail(i))) : null]; }))));
   set(body, pull,
     el('div', { class: 'row td-filter' }, kinds, pick),
-    el('p', { class: 'answer-line', text: t('td_answer', { p: tdLabel(tdPick), n: rows.length, r: ready, o: rows.length - ready }) }),
-    el('div', { class: 'km-tiles td-tiles' }, tile('km-total', rows.length, 'td_k_in'), tile('km-points', ready, 'td_k_ready'), tile('km-email', rows.length - ready, 'td_k_open'), tile('km-other', soon, 'td_k_soon')),
+    el('p', { class: 'answer-line', text: t('td_answer2', { p: tdLabel(tdPick), n: K.n, w: K.waiting, j: K.joined, s: K.submitted, won: K.won }) }),
+    el('div', { class: 'km-tiles td-tiles' },
+      tile('km-total', K.n, 'td_k_in'), tile(K.waiting ? 'km-other td-hot' : 'km-other', K.waiting, 'td_k_waiting', K.waiting ? t('td_k_waitmax', { d: K.waitMax }) : ''),
+      tile('km-email', K.soon, 'td_k_soon', K.late ? t('td_k_late', { n: K.late }) : ''), tile('km-points', K.won, 'td_st_won', K.winRate == null ? t('td_k_norate') : t('td_k_winrate_of', { r: K.winRate, n: K.closed }))),
+    el('p', { class: 'hint td-kpis', text: t('td_kpi_line', { j: K.joined, n: K.n, d: K.avgDecision == null ? '—' : K.avgDecision, o: K.onTime == null ? '—' : `${K.onTime}%`, v: K.value ? K.value.toLocaleString('en') : '0' }) }),
     el('div', { class: 'row', style: 'justify-content:flex-end' }, el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('td_excel')}`, onclick: () => tdExcel(rows) })),
     rows.length ? table : el('p', { class: 'note', text: t('td_none_period') }));
 }

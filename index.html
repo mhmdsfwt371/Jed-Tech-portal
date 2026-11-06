@@ -1024,6 +1024,12 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   @media (max-width: 820px) { .td-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .td-period { gap: 8px; align-items: center; margin: 4px 0 12px; } .td-way { border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 10px; } .td-way h3 { margin: 0 0 4px; font-size: 1rem; }
   .td-bm { cursor: grab; } .td-table .chip.td-manual { border-style: dashed; }
+  /* ADR-0083: the tender lifecycle */
+  .td-row { cursor: pointer; } .td-row.on { background: var(--accent-wash); } .td-row.td-closed .td-subj { color: var(--slate); } .td-tog { color: var(--slate); }
+  .td-detail { padding: 10px 6px 4px; } .td-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px 12px; margin-bottom: 10px; }
+  .td-lab { display: grid; gap: 3px; font-size: .82rem; color: var(--slate); } .td-lab input { width: 100%; box-sizing: border-box; }
+  .td-cd { white-space: nowrap; } .td-green { border-color: var(--ok); color: var(--ok); } .td-amber { border-color: var(--sig); color: var(--warn); } .td-red { border-color: #B42318; color: #B42318; }
+  .td-wait { color: #B42318; font-weight: 700; } .km-tile.td-hot { border-top: 3px solid var(--sig); } .td-stage { max-width: 190px; }
 </style>
 </head>
 <body>
