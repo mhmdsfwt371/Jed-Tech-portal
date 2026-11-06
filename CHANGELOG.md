@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.03 — 2026-11-06
+
+- «سجل المناقصات» أوضح: جزء السحب بقى شريط مضغوط (الفترة وخمس زراير، والشرح تحت «إزاي؟»)، والجدول بيبدأ في أول شاشة. وعلى الموبايل كل مناقصة كارت فيه المحطة وواقفة من كام يوم والعدّاد، من غير سحب بالعرض.
+
+<details><summary>English</summary>
+
+- The «Tender register» is clearer: the pull section is a compact bar (the period and five buttons, the explanations under «How?»), and the table starts on the first screen. On a phone each tender is a card with its stage, days waiting and countdown — no sideways scrolling.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «ٹینڈر رجسٹر» اب واضح: لانے کا حصہ ایک مختصر پٹی (مدت اور پانچ بٹن، وضاحت «کیسے؟» میں)، اور جدول پہلی اسکرین پر۔ فون پر ہر ٹینڈر ایک کارڈ — بغیر افقی اسکرول۔
+
+</div>
+</details>
+
+
 ## v9.02 — 2026-11-06
 
 - غرفة المتابعة بتنبّهك للمناقصات: محتاج قرار (وأقدمها من كام يوم)، وموعد خلال ٧ أيام، وفات موعدها — حتى من غير سحب مهام، وكل تنبيه يفتح السجل.

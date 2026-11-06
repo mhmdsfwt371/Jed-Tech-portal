@@ -1030,6 +1030,22 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   .td-lab { display: grid; gap: 3px; font-size: .82rem; color: var(--slate); } .td-lab input { width: 100%; box-sizing: border-box; }
   .td-cd { white-space: nowrap; } .td-green { border-color: var(--ok); color: var(--ok); } .td-amber { border-color: var(--sig); color: var(--warn); } .td-red { border-color: #B42318; color: #B42318; }
   .td-wait { color: #B42318; font-weight: 700; } .km-tile.td-hot { border-top: 3px solid var(--sig); } .td-stage { max-width: 190px; }
+  /* ADR-0085: the register, compact on top, cards on a phone */
+  .td-period input[type=date], .td-table input, .td-table select, .td-add input { min-height: 36px; }   /* finger-sized on a phone */
+  .td-pull-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; } .td-pull-head h2 { margin: 0; }
+  .td-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; } .td-how { margin-top: 8px; } .td-how > summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+  @media (max-width: 820px) {
+    .td-actions .btn { flex: 1 1 calc(50% - 8px); justify-content: center; text-align: center; }
+    .td-table thead { display: none; } .td-table, .td-table tbody { display: block; width: 100%; }
+    .td-table tr.td-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; padding: 12px; border-bottom: 1px solid var(--line); align-items: center; }
+    .td-table tr.td-row > td { display: block; padding: 0; border: 0; }
+    .td-table tr.td-row > td:nth-child(1) { grid-column: 1 / -1; }
+    .td-table tr.td-row > td:nth-child(2) { grid-column: 1; font-size: 12px; color: var(--slate); }
+    .td-table tr.td-row > td:nth-child(3) { grid-column: 1 / -1; } .td-table tr.td-row > td:nth-child(3) select { width: 100%; max-width: none; }
+    .td-table tr.td-row > td:nth-child(4) { grid-column: 2; grid-row: 2; } .td-table tr.td-row > td:nth-child(4)::before { content: attr(title) ": "; font-weight: 400; color: var(--slate); font-size: 12px; }
+    .td-table tr.td-row > td:nth-child(5) { grid-column: 1 / -1; } .td-table tr.td-row > td:nth-child(6) { display: none; }
+    .td-table tr.td-detail-row, .td-table tr.td-detail-row > td { display: block; padding: 0 12px; } .td-grid { grid-template-columns: 1fr 1fr; }
+  }
 </style>
 </head>
 <body>

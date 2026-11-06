@@ -1025,19 +1025,23 @@ function renderTenders() {
     toast(t('td_loaded', { a: r.added, m: r.merged, r: r.replies, o: r.other })); renderTenders(); } });
   const pst = el('input', { type: 'file', accept: '.pst,.ost', hidden: true, onchange: (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) tdFromPst(f); } });
   const dIn2 = (cls, val, on) => el('input', { type: 'date', class: cls, value: val, max: today, onchange: (e) => on(e.target.value) });
-  const pull = el('section', { class: 'dt-quick td-pull' }, el('h2', { text: t('td_pull_h') }),
+  const empty = !tenders || !tenders.items.length;
+  // ADR-0085: one compact bar — the period and the five actions; how each way works is folded, open only while the register is empty
+  const pull = el('section', { class: 'dt-quick td-pull' },
+    el('div', { class: 'td-pull-head' }, el('h2', { text: t('td_pull_h') }), tenders && tenders.pulledAt ? el('span', { class: 'hint', text: t('td_last', { to: tenders.to || '—', n: tenders.items.length }) }) : null),
     el('div', { class: 'row td-period' }, el('span', { text: t('td_from') }), dIn2('td-from', tdFrom || tdDefaultFrom(), (v) => { tdFrom = v; }), el('span', { text: t('td_to') }), dIn2('td-to', tdTo || today, (v) => { tdTo = v; })),
-    el('div', { class: 'td-way' }, el('h3', { text: t('td_way_claude') }), el('p', { class: 'hint', text: t('td_pull_lead', { from: tdFrom || tdDefaultFrom() }) }),
-      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary td-copy', text: `📋 ${t('td_copy')}`, onclick: () => copyText(tdPrompt(), t('td_copied')) }),
-        el('a', { class: 'btn td-bm', href: tdBookmarklet(), title: t('td_bm_hint'), onclick: (e) => { e.preventDefault(); toast(t('td_bm_hint')); }, text: `📌 ${t('td_bm')}` }),
-        el('a', { class: 'btn', href: 'https://outlook.office.com/mail/', target: '_blank', rel: 'noopener', text: t('proj_open_outlook') }),
-        el('button', { type: 'button', class: 'btn', text: `⬆ ${t('td_upload')}`, onclick: () => up.click() }), up),
-      el('p', { class: 'hint', text: t('td_bm_hint') })),
-    el('div', { class: 'td-way' }, el('h3', { text: t('td_way_pst') }), el('p', { class: 'hint', text: t('td_pst_lead') }),
-      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn td-pst-btn', disabled: !!tdBusy, text: `📂 ${t('td_pst_pick')}`, onclick: () => pst.click() }), pst),
-      tdBusy ? el('p', { class: 'note td-busy', role: 'status', text: tdBusy }) : null),
-    el('div', { class: 'td-way' }, el('h3', { text: t('td_way_manual') }), el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn td-add-btn', text: `＋ ${t('td_add')}`, onclick: tdAddManual }))),
-    tenders && tenders.pulledAt ? el('p', { class: 'hint', text: t('td_last', { to: tenders.to || '—', n: tenders.items.length }) }) : null);
+    el('div', { class: 'td-actions' },
+      el('button', { type: 'button', class: 'btn primary td-copy', text: `📋 ${t('td_copy')}`, onclick: () => copyText(tdPrompt(), t('td_copied')) }),
+      el('a', { class: 'btn td-bm', href: tdBookmarklet(), title: t('td_bm_hint'), onclick: (e) => { e.preventDefault(); toast(t('td_bm_hint')); }, text: `📌 ${t('td_bm')}` }),
+      el('button', { type: 'button', class: 'btn', text: `⬆ ${t('td_upload')}`, onclick: () => up.click() }), up,
+      el('button', { type: 'button', class: 'btn td-pst-btn', disabled: !!tdBusy, text: `📂 ${t('td_pst_pick')}`, onclick: () => pst.click() }), pst,
+      el('button', { type: 'button', class: 'btn td-add-btn', text: `＋ ${t('td_add')}`, onclick: tdAddManual })),
+    tdBusy ? el('p', { class: 'note td-busy', role: 'status', text: tdBusy }) : null,
+    el('details', { class: 'td-how', ...(empty ? { open: '' } : {}) }, el('summary', { text: t('td_how') }),
+      el('div', { class: 'td-way' }, el('h3', { text: t('td_way_claude') }), el('p', { class: 'hint', text: t('td_pull_lead', { from: tdFrom || tdDefaultFrom() }) }), el('p', { class: 'hint', text: t('td_bm_hint') }),
+        el('a', { class: 'btn tiny', href: 'https://outlook.office.com/mail/', target: '_blank', rel: 'noopener', text: t('proj_open_outlook') })),
+      el('div', { class: 'td-way' }, el('h3', { text: t('td_way_pst') }), el('p', { class: 'hint', text: t('td_pst_lead') })),
+      el('div', { class: 'td-way' }, el('h3', { text: t('td_way_manual') }), el('p', { class: 'hint', text: t('td_manual_lead') }))));
   if (!tenders || !tenders.items.length) { set(body, pull, el('p', { class: 'note', text: t('td_empty') })); return; }
   const periods = [...new Set(tenders.items.map((i) => tdPeriodOf(i.date, tdKind)))].sort().reverse();
   if (tdKind === 'all') tdPick = 'all'; else if (!periods.includes(tdPick)) tdPick = periods.includes(tdPeriodOf(today, tdKind)) ? tdPeriodOf(today, tdKind) : periods[0];

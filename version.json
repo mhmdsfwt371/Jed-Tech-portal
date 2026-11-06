@@ -1,18 +1,15 @@
 {
-  "version": "9.02",
+  "version": "9.03",
   "date": "2026-11-06",
   "notes": {
     "ar": [
-      "غرفة المتابعة بتنبّهك للمناقصات: محتاج قرار (وأقدمها من كام يوم)، وموعد خلال ٧ أيام، وفات موعدها — حتى من غير سحب مهام، وكل تنبيه يفتح السجل.",
-      "في «سجل المناقصات» زر «رسالة الإدارة الأسبوعية»: ملخص آخر ٧ أيام (وصل، قررنا، قدّمنا، فزنا، خسرنا وأسبابها، في الانتظار، مواعيد الأسبوع القادم، نسبة الفوز) تنسخه أو تبعته بالإيميل."
+      "«سجل المناقصات» أوضح: جزء السحب بقى شريط مضغوط (الفترة وخمس زراير، والشرح تحت «إزاي؟»)، والجدول بيبدأ في أول شاشة. وعلى الموبايل كل مناقصة كارت فيه المحطة وواقفة من كام يوم والعدّاد، من غير سحب بالعرض."
     ],
     "en": [
-      "The control room now warns about tenders: awaiting a decision (and the oldest wait), a date within 7 days, past deadline — even with no task pull; each alert opens the register.",
-      "«Weekly management message» on the tender register: a summary of the last 7 days (arrived, decided, submitted, won, lost with reasons, waiting, next week’s dates, win rate) to copy or e-mail."
+      "The «Tender register» is clearer: the pull section is a compact bar (the period and five buttons, the explanations under «How?»), and the table starts on the first screen. On a phone each tender is a card with its stage, days waiting and countdown — no sideways scrolling."
     ],
     "ur": [
-      "کنٹرول روم اب ٹینڈرز کے الرٹ دیتا ہے: فیصلے کے منتظر، 7 دن میں تاریخ، تاریخ گزری — ہر الرٹ رجسٹر کھولتا ہے۔",
-      "ٹینڈر رجسٹر پر «ہفتہ وار انتظامی پیغام»: گزشتہ 7 دنوں کا خلاصہ کاپی یا ای میل کریں۔"
+      "«ٹینڈر رجسٹر» اب واضح: لانے کا حصہ ایک مختصر پٹی (مدت اور پانچ بٹن، وضاحت «کیسے؟» میں)، اور جدول پہلی اسکرین پر۔ فون پر ہر ٹینڈر ایک کارڈ — بغیر افقی اسکرول۔"
     ]
   }
 }
