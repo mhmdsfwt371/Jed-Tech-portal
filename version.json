@@ -1,18 +1,15 @@
 {
-  "version": "8.96",
+  "version": "8.97",
   "date": "2026-11-06",
   "notes": {
     "ar": [
-      "شكل جديد للبوابة «البنتو الحي»: ملخصات بمربعات بأحجام مختلفة، والإجمالي معاه شريط بنسب مصادره الحقيقية، والمتوسط معاه دايرة «نسبة الإغلاق»، والنقاط إطارها بيلف.",
-      "خط أفاقي على الويب «Cairo» للعربي (وAxiforma للإنجليزي والأرقام على الأجهزة اللي متسطب عليها)، وحركات: انتقال بين الصفحات، وشفق بألوان أفاقي، وظهور الأقسام وانت بتنزل، وميلان وضوء مع الماوس. الحركة بتقف لو الجهاز مضبوط على «تقليل الحركة»."
+      "ملف بريد أوتلوك بقى له مكان واحد: «البريد من ملف PST» في القايمة. اتشال الكارت اللي كان في صفحة «البيانات»."
     ],
     "en": [
-      "A new look, «Live bento»: summaries as tiles of different sizes; the total with a bar of its real sources, the average with a «Closed rate» ring, points with a turning edge.",
-      "AFAQY's web type «Cairo» for Arabic (and Axiforma for Latin and digits where installed), and motion: page transitions, an aurora in AFAQY's colours, sections appearing as you scroll, tiles that lean and light under the pointer. Motion stops when the device asks for less."
+      "The Outlook mail file now has one place: «Mail from a PST file» in the menu. The card on «Data» is gone."
     ],
     "ur": [
-      "نیا انداز «لائیو بینٹو»: خلاصے مختلف سائز کے خانوں میں؛ کل کے ساتھ اس کے حقیقی ذرائع کی پٹی، اوسط کے ساتھ «بند ہونے کی شرح» کا دائرہ، پوائنٹس کا گھومتا کنارہ۔",
-      "عربی کے لیے آفاقی کا ویب فونٹ «Cairo» (اور جہاں نصب ہو وہاں لاطینی اور اعداد کے لیے Axiforma)، اور حرکت: صفحات کی منتقلی، آفاقی کے رنگوں میں شفق، اسکرول پر حصوں کا ظاہر ہونا، ماؤس کے ساتھ جھکاؤ اور روشنی۔ کم حرکت کی ترتیب پر حرکت رک جاتی ہے۔"
+      "آؤٹ لک میل فائل کی اب ایک ہی جگہ ہے: مینو میں «PST فائل سے میل»۔ «ڈیٹا» والا کارڈ ہٹا دیا گیا۔"
     ]
   }
 }
