@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.05 — 2026-11-06
+
+- تصحيح مهم: رابط الموبايل للمهندس ما بقاش يقارن بشهر أو أسبوع مش متسحوب كامل — بيعرض «—» ويقول ليه، زي «مؤشرات الفريق» بالظبط.
+- على الموبايل: جداول «مؤشراتي» بأعمدتها كلها (والتغيّر و⚑)، وكارت التعريف سطر واحد لما يبقى فيه أرقام، و«البيانات» بتخفي خطوات إضافة كروم (بتتعمل من الكمبيوتر).
+
+<details><summary>English</summary>
+
+- An important correction: the engineer's phone link no longer compares with a month or week that was not pulled whole — it shows «—» and says why, exactly as «Team KPIs» does.
+- On a phone: «My KPIs» tables with every column (change and ⚑), the intro card as one line once there are numbers, and «Data» folding the Chrome-extension steps (done on a computer).
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اہم درستگی: انجینئر کا فون لنک اب ایسے مہینے یا ہفتے سے موازنہ نہیں کرتا جو مکمل نہیں لایا گیا — «—» دکھاتا اور وجہ بتاتا ہے۔
+- فون پر: «میرے اشاریے» کے جدول تمام کالموں کے ساتھ، اعداد ہوں تو تعارفی کارڈ ایک سطر، اور «ڈیٹا» کروم ایکسٹینشن کے مراحل چھپاتا ہے۔
+
+</div>
+</details>
+
+
 ## v9.04 — 2026-11-06
 
 - «خط سير المناقصات» في السجل: كل محطة بعددها، والخطوط بينها بتجري لما فيه مناقصات ماشية، والمحطة اللي فيها حاجة واقفة أكتر من ٣ أيام بتنبض بالأحمر، وتضغط أي محطة يتفلتر الجدول عليها.

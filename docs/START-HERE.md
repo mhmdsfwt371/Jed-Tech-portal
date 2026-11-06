@@ -101,6 +101,7 @@
 | `docs/decisions/0084-tender-alerts-and-weekly-management-message.md` | Tender alerts on the control room; the weekly management message |
 | `docs/decisions/0085-tender-register-compact-and-phone-cards.md` | Tender register: compact pull bar; cards on a phone |
 | `docs/decisions/0086-light-moving-lines-and-the-tender-pipeline.md` | The tender pipeline (counts, running lines, red pulse, click to filter); title lines, page sweep, glows |
+| `docs/decisions/0087-phone-audit-my-kpis-and-data.md` | Phone audit: no false «month before» on the phone link; all columns on screen; numbers first; «Data» on a phone |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

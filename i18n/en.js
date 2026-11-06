@@ -17,6 +17,8 @@ export default {
     g_planner_h: 'Team plans',
     g_planner_b: 'The manager’s page only: upload the team structure file (an HTML page) and it shows as it looks, exactly as uploaded. It stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file, or remove it from the device.',
     // ADR-0070: the one monthly place
+    ext_phone: 'Automatic updates with the extension are set up in Chrome on a computer — phones do not take Chrome extensions. Open this page on a computer to install it.',
+    ms_week_noprev: 'The week before was not pulled whole, so there is no comparison.',
     td_pipe_clear: 'Show all',
     td_pipe_on: 'Showing: «{s}» — {n}',
     td_pipe_hint: 'Click to filter on this stage, click again to clear',

@@ -1,18 +1,18 @@
 {
-  "version": "9.04",
+  "version": "9.05",
   "date": "2026-11-06",
   "notes": {
     "ar": [
-      "«خط سير المناقصات» في السجل: كل محطة بعددها، والخطوط بينها بتجري لما فيه مناقصات ماشية، والمحطة اللي فيها حاجة واقفة أكتر من ٣ أيام بتنبض بالأحمر، وتضغط أي محطة يتفلتر الجدول عليها.",
-      "حركة ونور: خط بألوان أفاقي بيترسم ويلمع تحت عنوان كل صفحة، وخط ضوء مع كل انتقال لصفحة، والعدّادات والتنبيهات الحمرا بتنبض، ولمعة على الأزرار، وضوء الماوس على الكروت. كله بيقف مع «تقليل الحركة»."
+      "تصحيح مهم: رابط الموبايل للمهندس ما بقاش يقارن بشهر أو أسبوع مش متسحوب كامل — بيعرض «—» ويقول ليه، زي «مؤشرات الفريق» بالظبط.",
+      "على الموبايل: جداول «مؤشراتي» بأعمدتها كلها (والتغيّر و⚑)، وكارت التعريف سطر واحد لما يبقى فيه أرقام، و«البيانات» بتخفي خطوات إضافة كروم (بتتعمل من الكمبيوتر)."
     ],
     "en": [
-      "The «tender pipeline» on the register: each stage with its count, running lines where tenders move through, a red pulse where something waits over 3 days; click a stage to filter the table.",
-      "Light and motion: a line in AFAQY's colours draws and shimmers under each page title, a light sweeps on every page change, red countdowns and alerts pulse, primary buttons shine, the pointer's light on more cards. All of it stops with reduced motion."
+      "An important correction: the engineer's phone link no longer compares with a month or week that was not pulled whole — it shows «—» and says why, exactly as «Team KPIs» does.",
+      "On a phone: «My KPIs» tables with every column (change and ⚑), the intro card as one line once there are numbers, and «Data» folding the Chrome-extension steps (done on a computer)."
     ],
     "ur": [
-      "رجسٹر پر «ٹینڈر پائپ لائن»: ہر مرحلہ اپنی تعداد کے ساتھ، چلتی لکیریں، 3 دن سے زیادہ انتظار پر سرخ دھڑکن؛ مرحلے پر کلک سے جدول فلٹر۔",
-      "روشنی اور حرکت: ہر صفحے کے عنوان کے نیچے آفاقی رنگوں کی لکیر، صفحہ بدلنے پر روشنی، سرخ گنتیاں اور الرٹ دھڑکتے ہیں، بٹنوں پر چمک۔ کم حرکت کی ترتیب پر سب رک جاتا ہے۔"
+      "اہم درستگی: انجینئر کا فون لنک اب ایسے مہینے یا ہفتے سے موازنہ نہیں کرتا جو مکمل نہیں لایا گیا — «—» دکھاتا اور وجہ بتاتا ہے۔",
+      "فون پر: «میرے اشاریے» کے جدول تمام کالموں کے ساتھ، اعداد ہوں تو تعارفی کارڈ ایک سطر، اور «ڈیٹا» کروم ایکسٹینشن کے مراحل چھپاتا ہے۔"
     ]
   }
 }

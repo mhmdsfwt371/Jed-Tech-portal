@@ -1084,6 +1084,18 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   .cr-item, .td-pipe-node, .cr-job { position: relative; } .cr-item::after, .td-pipe-node::after, .cr-job::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: var(--o, 0); transition: opacity .2s;
     background: radial-gradient(160px circle at var(--mx, 50%) var(--my, 50%), rgba(76,195,90,.14), transparent 70%); }
   @media (prefers-reduced-motion: reduce) { .td-pipe-line.on, .td-pipe-node.hot, .td-cd.td-red, .cr-item.k-red, .page-head h1::after, .cr-h::after { animation: none; } .btn.primary::after { display: none; } }
+  .ext-phone { display: none; }   /* before the phone rule, so the phone rule wins */
+  /* ADR-0087: phones — every column of the personal tables on screen; numbers before the intro; desktop-only steps folded */
+  @media (max-width: 820px) {
+    .km-cmp, .km-snap { table-layout: fixed; width: 100%; font-size: 14px; }
+    .km-cmp th, .km-cmp td, .km-snap th, .km-snap td { padding: 8px 4px; overflow-wrap: anywhere; }
+    .km-cmp th:first-child, .km-cmp td:first-child, .km-snap th:first-child, .km-snap td:first-child { width: 33%; }
+    .km-cmp th:last-child, .km-cmp td:last-child, .km-snap th:last-child, .km-snap td:last-child { width: 40px; padding: 0; }
+    .km-cmp .km-flag, .km-snap .km-flag { min-width: 36px; min-height: 36px; }
+    .ext-desk { display: none; } .ext-phone { display: block; }
+  }
+  .intro-card.intro-compact { padding: 8px 12px; } .intro-card.intro-compact p, .intro-card.intro-compact .ic-icon { display: none; }
+  .intro-card.intro-compact h2, .intro-card.intro-compact h3 { font-size: .95rem; margin: 0; } .intro-card.intro-compact .ic-acts { margin-top: 6px; }
 </style>
 </head>
 <body>

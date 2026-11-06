@@ -726,6 +726,7 @@ function renderMe(waiting = false) {
       el('button', { type: 'button', class: 'btn tiny', text: t('va_go'), onclick: () => { if (sel.value) startViewAs(sel.value); else toast(t('va_pick')); } }),
       el('span', { class: 'hint', text: t('va_hint') }));
   })();
+  { const ic = $('intro-card-me'); if (ic) ic.classList.toggle('intro-compact', !!(me || (isTeamPortal && mySnapId && rankSnaps[mySnapId]))); }   // ADR-0087: his numbers first
   if (!me) { const snap = isTeamPortal && mySnapId ? rankSnaps[mySnapId] : null;   // ADR-0078: his numbers as his manager sent them
     if (snap && snap.m) { set(body, snapView(snap), el('details', { class: 'me-again' }, el('summary', { text: t('ms_full') }), el('section', { class: 'dt-quick me-setup' }, ...setup))); return; }
     set(body, vaBar, el('section', { class: 'dt-quick me-setup' }, ...setup)); return; }   // the two steps carry their own numbers
@@ -1156,22 +1157,29 @@ function weekRange(off = 1, today = saudiDay(new Date().toISOString())) {
 }
 const prevWeekRange = (r) => { const s = new Date(`${r.from}T00:00:00Z`); s.setUTCDate(s.getUTCDate() - 7); const e = new Date(s); e.setUTCDate(s.getUTCDate() + 6); return { from: s.toISOString().slice(0, 10), to: e.toISOString().slice(0, 10) }; };
 /** The personal link's snapshot: his rank (as before) plus his month and his week, each with the one before. Only his own numbers. */
+/** ADR-0087: a range counts as pulled only if the pulls cover every day of it (up to today). */
+function rangePulled(r) {
+  const today = saudiDay(new Date().toISOString()), to = r.to < today ? r.to : today, rs = datasets.map((d) => d.range).filter((x) => x && x.from && x.to).sort((x, y) => (x.from < y.from ? -1 : 1));
+  let reach = r.from; for (const x of rs) { if (x.from > reach) break; if (x.to >= reach) { const n = new Date(`${x.to}T00:00:00Z`); n.setUTCDate(n.getUTCDate() + 1); reach = n.toISOString().slice(0, 10); } if (reach > to) return true; }
+  return reach > to;
+}
 function personSnap(id, ym, week) {
-  return { ...rankFor(id, ym), v: 2, m: { n: numsFor(id, monthRangeOf(ym)), p: numsFor(id, monthRangeOf(prevMonthOf(ym))) }, w: { f: week.from, t: week.to, n: numsFor(id, week), p: numsFor(id, prevWeekRange(week)) } };
+  const pm = prevMonthOf(ym), pmOk = pulledPeriods('month').some((m) => m.ym === pm && m.whole), pw = prevWeekRange(week);
+  return { ...rankFor(id, ym), v: 2, m: { n: numsFor(id, monthRangeOf(ym)), p: pmOk ? numsFor(id, monthRangeOf(pm)) : null }, w: { f: week.from, t: week.to, n: numsFor(id, week), p: rangePulled(pw) ? numsFor(id, pw) : null } };
 }
 function copyWeekMessage(id, ym, nm, week) {
-  const s = personSnap(id, ym, week), [e, sf, o, tot, cl, avg, pts] = s.w.n, P = s.w.p;
+  const s = personSnap(id, ym, week), [e, sf, o, tot, cl, avg, pts] = s.w.n, P = s.w.p || [null, null, null, '—', null, null, '—'];
   copyText(t('wk_msg', { name: (nm(id) || '').split(' ')[0], a: s.w.f, b: s.w.t, total: tot, email: e, self: sf, other: o, closed: cl, avg: avg < 0 ? '—' : hmOf(avg / 60), points: pts, ptotal: P[3], ppoints: P[6], link: rankLink(s) }), t('wk_copied', { name: nm(id) }));
 }
 /** On a phone with no pull of his own: his numbers as his manager sent them. */
 function snapView(s) {
   const fv = (k, v) => (k === 'avg' ? (v < 0 ? '—' : hmOf(v / 60)) : String(v)), hv = (k, v) => (k === 'avg' ? (v < 0 ? null : v / 60) : v);
   const tbl = (label, plabel, n, p) => el('table', { class: 'km-snap' }, el('thead', {}, el('tr', {}, el('th', {}), el('th', { class: 'num', text: label }), el('th', { class: 'num', text: plabel }), el('th', { class: 'num', text: t('km_change') }), el('th', {}))),
-    el('tbody', {}, SNAP_KEYS.map((k, i) => el('tr', {}, el('td', { text: t(SNAP_LABEL[k]) }), el('td', { class: 'num' }, el('b', { text: fv(k, n[i]) })), el('td', { class: 'num', text: fv(k, p[i]) }),
-      el('td', { class: 'num' }, kmDelta(hv(k, n[i]), hv(k, p[i]), SNAP_KIND[k], plabel)), el('td', {}, flagBtn({ who: t('ms_me'), period: label, label: t(SNAP_LABEL[k]), value: fv(k, n[i]), prev: fv(k, p[i]), def: t(SNAP_DEF[k]), asOf: s.at }))))));
+    el('tbody', {}, SNAP_KEYS.map((k, i) => el('tr', {}, el('td', { text: t(SNAP_LABEL[k]) }), el('td', { class: 'num' }, el('b', { text: fv(k, n[i]) })), el('td', { class: 'num', text: p ? fv(k, p[i]) : '—' }),
+      el('td', { class: 'num' }, p ? kmDelta(hv(k, n[i]), hv(k, p[i]), SNAP_KIND[k], plabel) : '—'), el('td', {}, flagBtn({ who: t('ms_me'), period: label, label: t(SNAP_LABEL[k]), value: fv(k, n[i]), prev: p ? fv(k, p[i]) : '—', def: t(SNAP_DEF[k]), asOf: s.at }))))));
   return el('section', { class: 'me-snap' }, el('h2', { text: t('ms_h') }), el('p', { class: 'hint', text: t('ms_lead', { at: s.at || '—' }) }),
-    el('h3', { text: t('ms_month', { m: monthLabel(s.ym) }) }), el('div', { class: 'table-wrap' }, tbl(monthLabel(s.ym), monthLabel(prevMonthOf(s.ym)), s.m.n, s.m.p)),
-    s.w ? [el('h3', { text: t('ms_week', { a: s.w.f, b: s.w.t }) }), el('div', { class: 'table-wrap' }, tbl(t('ms_this_week'), t('ms_prev_week'), s.w.n, s.w.p))] : null,
+    el('h3', { text: t('ms_month', { m: monthLabel(s.ym) }) }), s.m.p ? null : el('p', { class: 'hint', text: t('km_no_prev', { m: monthLabel(prevMonthOf(s.ym)) }) }), el('div', { class: 'table-wrap' }, tbl(monthLabel(s.ym), monthLabel(prevMonthOf(s.ym)), s.m.n, s.m.p)),
+    s.w ? [el('h3', { text: t('ms_week', { a: s.w.f, b: s.w.t }) }), s.w.p ? null : el('p', { class: 'hint', text: t('ms_week_noprev') }), el('div', { class: 'table-wrap' }, tbl(t('ms_this_week'), t('ms_prev_week'), s.w.n, s.w.p))] : null,
     el('p', { class: 'me-teams', text: t('pg_rank', { r: s.r, n: s.n }) }));
 }
 const rankLink = (snap) => `${location.origin}${location.pathname.replace(/[^/]*$/, '')}?portal=team#rank=${b64u.enc(snap)}`;
@@ -1181,7 +1189,7 @@ function parseRankSnap(o) {   // only his own numbers; anything else is refused
   const lv = o.lv && Number.isInteger(o.lv.l) && o.lv.l >= 1 && o.lv.l <= LEVELS.length && Number.isFinite(Number(o.lv.s))
     ? { l: o.lv.l, s: Math.max(0, Math.min(100, Math.round(Number(o.lv.s)))), ax: Object.fromEntries(Object.entries(o.lv.ax && typeof o.lv.ax === 'object' ? o.lv.ax : {}).filter(([k, v]) => /^[a-zA-Z]{1,16}$/.test(k) && Number.isFinite(Number(v))).slice(0, 8).map(([k, v]) => [k, Math.max(0, Math.min(100, Math.round(Number(v))))])) } : null;
   const arr = (x) => (Array.isArray(x) && x.length === 7 && x.every((y) => Number.isFinite(Number(y)) && Number(y) >= -1 && Number(y) < 1e7) ? x.map(Number) : null), day = (x) => /^\d{4}-\d{2}-\d{2}$/.test(String(x || ''));
-  const m = o.m && arr(o.m.n) && arr(o.m.p) ? { n: arr(o.m.n), p: arr(o.m.p) } : null, w = o.w && day(o.w.f) && day(o.w.t) && arr(o.w.n) && arr(o.w.p) ? { f: o.w.f, t: o.w.t, n: arr(o.w.n), p: arr(o.w.p) } : null;
+  const m = o.m && arr(o.m.n) && (o.m.p == null || arr(o.m.p)) ? { n: arr(o.m.n), p: o.m.p == null ? null : arr(o.m.p) } : null, w = o.w && day(o.w.f) && day(o.w.t) && arr(o.w.n) && (o.w.p == null || arr(o.w.p)) ? { f: o.w.f, t: o.w.t, n: arr(o.w.n), p: o.w.p == null ? null : arr(o.w.p) } : null;   // ADR-0087: no «before» when it was not pulled
   return { v: o.v, ...(m ? { m } : {}), ...(w ? { w } : {}), id: o.id, ym: o.ym, r: o.r, n: o.n, gap: num(o.gap), lead: num(o.lead), at: /^\d{4}-\d{2}-\d{2}$/.test(o.at || '') ? o.at : null, partial: !!o.partial, ...(lv ? { lv } : {}) };
 }
 async function takeRankLink(redraw = false) {   // at start the page is drawn after loading; on an open portal it is redrawn here (the router does not redraw)
@@ -1205,7 +1213,7 @@ function rankLinksSection() {
   const team = currentTeam(scoped(ppl), allTasks()).filter((id) => ro[id] && ro[id].leaderId && !ro[id].onLeave), body = el('tbody', {});
   const draw = () => set(body, ...team.map((id) => ({ id, s: rankFor(id, ym) })).sort((p, q) => String(ro[p.id].leaderId).localeCompare(String(ro[q.id].leaderId)) || p.s.r - q.s.r).map(({ id, s }) => el('tr', {},
     el('td', { text: nm(id) }), el('td', { class: 'num', text: t('pg_rank', { r: s.r, n: s.n }) }), el('td', { text: s.gap != null ? t('pg_gap', { g: s.gap }) : s.lead != null ? t('pg_lead', { g: s.lead }) : '—' }),
-    (() => { const n = numsFor(id, wk), p = numsFor(id, prevWeekRange(wk)); return el('td', { class: 'wk-cell' }, t('wk_cell', { n: n[3], p: n[6] }), ' ', kmDelta(n[6], p[6], 'h', t('ms_prev_week'))); })(),
+    (() => { const n = numsFor(id, wk), pr = prevWeekRange(wk), p = rangePulled(pr) ? numsFor(id, pr) : null; return el('td', { class: 'wk-cell' }, t('wk_cell', { n: n[3], p: n[6] }), ' ', p ? kmDelta(n[6], p[6], 'h', t('ms_prev_week')) : null); })(),
     el('td', {}, el('button', { type: 'button', class: 'btn tiny rk-copy', text: `📋 ${t('rk_copy')}`, onclick: () => copyRankMessage(id, ym, nm, wk) }), ' ', el('button', { type: 'button', class: 'btn tiny wk-copy', text: `🗓 ${t('wk_copy')}`, onclick: () => copyWeekMessage(id, ym, nm, wk) })))));
   const sel = el('select', { class: 'rk-month', onchange: (e) => { ym = e.target.value; draw(); } }, [[cur, t('rk_cur', { m: monthLabel(cur) })], [ymPrev(cur), monthLabel(ymPrev(cur))]].map(([v, l]) => el('option', { value: v, selected: v === ym ? '' : null, text: l })));
   draw();
@@ -3099,7 +3107,7 @@ function renderExtBox() {
     el('span', { class: 'ext-dot', text: done ? '✓' : String(i + 1) }),
     el('div', {}, el('strong', { text: t(`${k}_t`) }), el('p', { class: 'hint', text: t(`${k}_d`) }), !done && i === cur && act ? act() : null))));
   const how = el('details', { class: 'ext-how' }, el('summary', { text: t('ext_works_h') }), el('ul', {}, ['ext_works1', 'ext_works2', 'ext_works3'].map((k) => el('li', { text: t(k) }))));
-  if (!on || !got) { set(box, el('p', { class: 'ext-line', text: on ? t('ext_almost') : t('ext_off') }), list, how); return; }
+  if (!on || !got) { set(box, el('p', { class: 'ext-line', text: on ? t('ext_almost') : t('ext_off') }), el('p', { class: 'note ext-phone', text: t('ext_phone') }), el('div', { class: 'ext-desk' }, list, how)); return; }
   const s = st, when = s.lastAt ? new Date(s.lastAt + 3 * 3600e3).toISOString().replace('T', ' ').slice(0, 16) : null;
   const msg = s.status === 'pulling' ? t('ext_pulling') : s.status === 'failed' ? t('ext_failed', { e: s.error || '' }) : s.status === 'needs-portal' ? t('ext_month') : when ? t('ext_last', { d: when }) : t('ext_never');
   set(box, el('p', { class: 'ext-line on', text: `${t('ext_on')} ${msg}` }),
