@@ -919,6 +919,24 @@ function tdImport(j) {
   return { state: { items, to, pulledAt: new Date().toISOString() }, added, merged, replies, other };
 }
 const tdSave = async () => { await store.kvPut('tenders', tenders); };
+/** ADR-0088: the result from any assistant — a file, or text pasted from its chat (code fences and words around it are fine). */
+function tdParse(text) {
+  const s = String(text || ''), fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i), body = fence ? fence[1] : s;
+  const i = body.indexOf('{'), j = body.lastIndexOf('}'); if (i < 0 || j <= i) return null;
+  try { return JSON.parse(body.slice(i, j + 1)); } catch { return null; }
+}
+async function tdTake(text) {
+  const j = tdParse(text); if (!j) { toast(t('td_bad')); return false; }
+  const r = tdImport(j); if (r.err) { toast(t(r.err)); return false; } tenders = r.state; await tdSave();
+  toast(t('td_loaded', { a: r.added, m: r.merged, r: r.replies, o: r.other })); renderTenders(); return true;
+}
+function tdPasteDialog() {
+  const ta = el('textarea', { rows: 10, class: 'td-paste-ta', dir: 'ltr', placeholder: '{ "schema": "afaqy-tenders-from-mail/v1", … }' });
+  const dlg = el('dialog', { class: 'proj-edit td-paste', 'aria-labelledby': 'td-paste-h' }, el('h2', { id: 'td-paste-h', text: t('td_paste_h') }), el('p', { class: 'hint', text: t('td_paste_lead') }), ta,
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary td-paste-go', text: t('td_paste_go'), onclick: async () => { if (await tdTake(ta.value)) dlg.close(); } }),
+      el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() })));
+  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal(); ta.focus();
+}
 function cleanTenders(x) {
   if (!x || !Array.isArray(x.items)) return null; const d = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? v : '');
   const items = x.items.filter((i) => i && i.id && i.subject && d(i.date)).slice(0, 5000).map((i) => ({ id: String(i.id).slice(0, 300), subject: String(i.subject).slice(0, 300), date: i.date,
@@ -953,7 +971,7 @@ ${known.map((k) => `- ${k}`).join('\n') || '- (none)'}
 ` : ''}
 Keep ONLY: subject, sender address, received date-time, and the file names of the «كراسة الشروط» attachments — no body text, contacts, phone numbers or prices.
 
-Save one JSON file named afaqy-tenders-from-mail-<today YYYY-MM-DD>.json:
+Save one JSON file named afaqy-tenders-from-mail-<today YYYY-MM-DD>.json. If you cannot save files, print exactly the same JSON in ONE code block and nothing else inside it:
 { "schema": "afaqy-tenders-from-mail/v1", "mailbox": "<my address>", "from": "${from}", "to": "${to}",
   "tenders": [ { "subject": "...", "from_address": "...", "received": "YYYY-MM-DDTHH:MM:SS+03:00", "attachments": ["..."] } ] }
 If a search or folder failed, say exactly which one.`;
@@ -1020,10 +1038,7 @@ async function tdExcel(rows) {
 }
 function renderTenders() {
   const body = $('tenders-body'); if (!body || isTeamPortal) return; const today = saudiDay(new Date().toISOString());
-  const up = el('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    let j; try { j = JSON.parse(await f.text()); } catch { toast(t('td_bad')); return; }
-    const r = tdImport(j); if (r.err) { toast(t(r.err)); return; } tenders = r.state; await tdSave();
-    toast(t('td_loaded', { a: r.added, m: r.merged, r: r.replies, o: r.other })); renderTenders(); } });
+  const up = el('input', { type: 'file', accept: '.json,.txt,application/json,text/plain', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; await tdTake(await f.text()); } });
   const pst = el('input', { type: 'file', accept: '.pst,.ost', hidden: true, onchange: (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) tdFromPst(f); } });
   const dIn2 = (cls, val, on) => el('input', { type: 'date', class: cls, value: val, max: today, onchange: (e) => on(e.target.value) });
   const empty = !tenders || !tenders.items.length;
@@ -1035,6 +1050,7 @@ function renderTenders() {
       el('button', { type: 'button', class: 'btn primary td-copy', text: `📋 ${t('td_copy')}`, onclick: () => copyText(tdPrompt(), t('td_copied')) }),
       el('a', { class: 'btn td-bm', href: tdBookmarklet(), title: t('td_bm_hint'), onclick: (e) => { e.preventDefault(); toast(t('td_bm_hint')); }, text: `📌 ${t('td_bm')}` }),
       el('button', { type: 'button', class: 'btn', text: `⬆ ${t('td_upload')}`, onclick: () => up.click() }), up,
+      el('button', { type: 'button', class: 'btn td-paste-btn', text: `📥 ${t('td_paste')}`, onclick: tdPasteDialog }),
       el('button', { type: 'button', class: 'btn td-pst-btn', disabled: !!tdBusy, text: `📂 ${t('td_pst_pick')}`, onclick: () => pst.click() }), pst,
       el('button', { type: 'button', class: 'btn td-add-btn', text: `＋ ${t('td_add')}`, onclick: tdAddManual })),
     tdBusy ? el('p', { class: 'note td-busy', role: 'status', text: tdBusy }) : null,

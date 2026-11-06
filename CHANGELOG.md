@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.06 — 2026-11-07
+
+- «سجل المناقصات» بيشتغل مع أي مساعد: زر «انسخ الأمر للمساعد» (كلود في كروم أو شات جي بي تي في وضع العمل)، وزر جديد «📥 الصق النتيجة» تلصق فيه رد المساعد زي ما هو، والبوابة تطلّع البيانات وتفحصها بنفس الشروط.
+
+<details><summary>English</summary>
+
+- The «Tender register» works with any assistant: «Copy the instructions for the assistant» (Claude in Chrome or ChatGPT in Work mode), and a new «📥 Paste the result» that takes the assistant's answer as it is, then checks it by the same rules.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «ٹینڈر رجسٹر» اب کسی بھی اسسٹنٹ کے ساتھ: «اسسٹنٹ کے لیے ہدایات کاپی کریں» (Claude in Chrome یا ورک موڈ میں ChatGPT)، اور نیا «📥 نتیجہ پیسٹ کریں» جو جواب کو جیسا ہے لے کر انہی اصولوں سے جانچتا ہے۔
+
+</div>
+</details>
+
+
 ## v9.05 — 2026-11-06
 
 - تصحيح مهم: رابط الموبايل للمهندس ما بقاش يقارن بشهر أو أسبوع مش متسحوب كامل — بيعرض «—» ويقول ليه، زي «مؤشرات الفريق» بالظبط.

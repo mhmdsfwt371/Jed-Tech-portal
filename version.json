@@ -1,18 +1,15 @@
 {
-  "version": "9.05",
-  "date": "2026-11-06",
+  "version": "9.06",
+  "date": "2026-11-07",
   "notes": {
     "ar": [
-      "تصحيح مهم: رابط الموبايل للمهندس ما بقاش يقارن بشهر أو أسبوع مش متسحوب كامل — بيعرض «—» ويقول ليه، زي «مؤشرات الفريق» بالظبط.",
-      "على الموبايل: جداول «مؤشراتي» بأعمدتها كلها (والتغيّر و⚑)، وكارت التعريف سطر واحد لما يبقى فيه أرقام، و«البيانات» بتخفي خطوات إضافة كروم (بتتعمل من الكمبيوتر)."
+      "«سجل المناقصات» بيشتغل مع أي مساعد: زر «انسخ الأمر للمساعد» (كلود في كروم أو شات جي بي تي في وضع العمل)، وزر جديد «📥 الصق النتيجة» تلصق فيه رد المساعد زي ما هو، والبوابة تطلّع البيانات وتفحصها بنفس الشروط."
     ],
     "en": [
-      "An important correction: the engineer's phone link no longer compares with a month or week that was not pulled whole — it shows «—» and says why, exactly as «Team KPIs» does.",
-      "On a phone: «My KPIs» tables with every column (change and ⚑), the intro card as one line once there are numbers, and «Data» folding the Chrome-extension steps (done on a computer)."
+      "The «Tender register» works with any assistant: «Copy the instructions for the assistant» (Claude in Chrome or ChatGPT in Work mode), and a new «📥 Paste the result» that takes the assistant's answer as it is, then checks it by the same rules."
     ],
     "ur": [
-      "اہم درستگی: انجینئر کا فون لنک اب ایسے مہینے یا ہفتے سے موازنہ نہیں کرتا جو مکمل نہیں لایا گیا — «—» دکھاتا اور وجہ بتاتا ہے۔",
-      "فون پر: «میرے اشاریے» کے جدول تمام کالموں کے ساتھ، اعداد ہوں تو تعارفی کارڈ ایک سطر، اور «ڈیٹا» کروم ایکسٹینشن کے مراحل چھپاتا ہے۔"
+      "«ٹینڈر رجسٹر» اب کسی بھی اسسٹنٹ کے ساتھ: «اسسٹنٹ کے لیے ہدایات کاپی کریں» (Claude in Chrome یا ورک موڈ میں ChatGPT)، اور نیا «📥 نتیجہ پیسٹ کریں» جو جواب کو جیسا ہے لے کر انہی اصولوں سے جانچتا ہے۔"
     ]
   }
 }
