@@ -17,6 +17,7 @@ export default {
     g_planner_h: 'Team plans',
     g_planner_b: 'The manager’s page only: upload the team structure file (an HTML page) and it shows as it looks, exactly as uploaded. It stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file, or remove it from the device.',
     // ADR-0070: the one monthly place
+    proj_from_td: 'from the tender register',
     page_by: 'Technical team portal — Jeddah · Powered by Mohamed Safwat',
     crm_more: 'and {n} more in the Excel file.',
     crm_open_n: 'Open',
@@ -1240,7 +1241,7 @@ export default {
     proj_s_c_won: 'Won',
     proj_s_c_val: 'Value won',
     proj_s_total: 'Total',
-    proj_s_note: '“Won” = won + with us + delivered. The win rate counts decided bids only (won or lost), not pending ones. Click any tile to see its projects.',
+    proj_s_note: '“Won” = won + with us + delivered. The win rate counts decided bids only (won or lost), not pending ones. Click any tile to see its projects. Tenders that reached «submitted», «won» or «lost» in the «Tender register» count here on their own — once, and a loss with its reason.',
     proj_ok: 'Reviewed and right',
     proj_files: 'Files',
     proj_files_h: 'Project files',

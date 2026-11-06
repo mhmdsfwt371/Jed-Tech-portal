@@ -1,15 +1,15 @@
 {
-  "version": "9.08",
+  "version": "9.09",
   "date": "2026-11-07",
   "notes": {
     "ar": [
-      "الماوس بقى بينوّر أي حاجة بتتضغط وهو واقف عليها (أزرار، وقايمة، وكروت، وصفوف جداول)، والصيغة الموحدة: «فكرة وتصميم وتطوير: محمد صفوت»."
+      "«سجل المناقصات» بقى بيغذّي «مشاريعي»: أي مناقصة «تم التقديم» أو «فزنا» أو «خسرنا» بتتحسب هناك لوحدها، مرة واحدة، والخسارة بسببها، فنسبة الفوز بقت حقيقية."
     ],
     "en": [
-      "The pointer now lights whatever you can press as it rests on it (buttons, menu, cards, table rows); one credit wording: «Powered by Mohamed Safwat — idea, design & build»."
+      "The «Tender register» now feeds «My projects»: a tender submitted, won or lost counts there on its own, once, a loss with its reason — so the win rate is real."
     ],
     "ur": [
-      "ماؤس اب ہر قابلِ کلک چیز کو روشن کرتا ہے؛ ایک ہی کریڈٹ: «Powered by محمد صفوت — خیال، ڈیزائن اور تیاری»۔"
+      "«ٹینڈر رجسٹر» اب «میرے منصوبے» کو بھرتا ہے: جمع، جیت یا ہار والا ٹینڈر وہاں خود ایک بار شمار ہوتا ہے، ہار اپنی وجہ کے ساتھ۔"
     ]
   }
 }

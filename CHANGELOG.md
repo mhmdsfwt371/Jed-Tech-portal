@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.09 — 2026-11-07
+
+- «سجل المناقصات» بقى بيغذّي «مشاريعي»: أي مناقصة «تم التقديم» أو «فزنا» أو «خسرنا» بتتحسب هناك لوحدها، مرة واحدة، والخسارة بسببها، فنسبة الفوز بقت حقيقية.
+
+<details><summary>English</summary>
+
+- The «Tender register» now feeds «My projects»: a tender submitted, won or lost counts there on its own, once, a loss with its reason — so the win rate is real.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «ٹینڈر رجسٹر» اب «میرے منصوبے» کو بھرتا ہے: جمع، جیت یا ہار والا ٹینڈر وہاں خود ایک بار شمار ہوتا ہے، ہار اپنی وجہ کے ساتھ۔
+
+</div>
+</details>
+
+
 ## v9.08 — 2026-11-07
 
 - الماوس بقى بينوّر أي حاجة بتتضغط وهو واقف عليها (أزرار، وقايمة، وكروت، وصفوف جداول)، والصيغة الموحدة: «فكرة وتصميم وتطوير: محمد صفوت».

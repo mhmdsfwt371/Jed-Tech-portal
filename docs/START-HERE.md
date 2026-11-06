@@ -121,6 +121,7 @@
 | `docs/decisions/0089-readable-fields-and-arabic-order.md` | Fields in the portal's colours; softer night text; Arabic phrases that keep their order |
 | `docs/decisions/0090-number-windows-and-authorship.md` | Control-room numbers open detail windows (bars, list, Excel); authorship marks, not ownership |
 | `docs/decisions/0091-pointer-light-and-credit-wording.md` | Pointer light on everything you can press; one credit wording |
+| `docs/decisions/0092-tender-register-feeds-my-projects.md` | Tenders submitted/won/lost count in «My projects», once; closest-match rule |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

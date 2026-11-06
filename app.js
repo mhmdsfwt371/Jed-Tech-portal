@@ -1303,6 +1303,20 @@ function projectsModel() {
   for (const r of rows) { const t2 = r.threads; r.first = t2.map((p) => p.first).filter(Boolean).sort()[0] || r.date || ''; r.last = t2.map((p) => p.last).filter(Boolean).sort().pop() || r.date || '';
     r.messages = t2.reduce((x, p) => x + p.messages, 0); r.me = t2.reduce((x, p) => x + p.me, 0); r.akram = t2.reduce((x, p) => x + p.akram, 0); r.shaarawi = t2.reduce((x, p) => x + p.shaarawi, 0);
     r.worked = t2.some((p) => p.worked) || (r.manual && r.status !== 'seen'); r.aibrahim = t2.some((p) => p.aibrahim); r.kraasa = t2.some((p) => p.kraasa); r.rules = [...new Set(t2.flatMap((p) => (p.rules || '').split(',')).filter(Boolean))].sort().join(','); }
+  // ADR-0092: the tender register feeds «My projects» — a tender submitted, won or lost counts here, once.
+  if (tenders && tenders.items) {
+    const ST = { submitted: 'submitted', won: 'won', lost: 'lost' }, nn = (x) => tdNorm(x).replace(/[^\p{L}\p{N} ]/gu, ' ').replace(/\s+/g, ' ').trim();
+    for (const i of tenders.items) { const st = ST[i.stage]; if (!st) continue; const key = nn(i.subject);
+      // the closest row wins: the same name or the Etimad number first; one name inside the other only when they are nearly the same length
+      // (so «Elaf Al-Arabia», a delivered H1 project, is not taken for «Elaf Al-Arabia — AVL + CAN + Gates», a new offer)
+      const score = (r) => { const n = nn(r.name); if (!n) return 0; if (n === key) return 3; if (i.etimadNo && nn(i.etimadNo).length >= 4 && n.includes(nn(i.etimadNo))) return 3;
+        const [sh, lo] = n.length < key.length ? [n, key] : [key, n]; return sh.length >= 10 && lo.includes(sh) && sh.length / lo.length >= 0.8 ? 2 : 0; };
+      const hit = rows.map((r) => [r, score(r)]).filter(([, v]) => v > 0).sort((x, y) => y[1] - x[1]).map(([r]) => r)[0];
+      if (hit) { if ((PROJ_RANK[st] || 0) > (PROJ_RANK[hit.status] || 0)) hit.status = st; hit.tender = i.id; if (!hit.value && i.value) hit.value = i.value; if (st === 'lost' && i.reason) hit.reason = i.reason; continue; }
+      rows.push({ id: `t:${i.id}`, tender: i.id, fromTender: true, ok: true, files: 0, name: i.subject, client: i.from || '', line: '', status: st, kind: 'tender', value: i.value || 0,
+        period: (i.submittedOn || i.date).slice(0, 4), date: i.submittedOn || i.date, threads: [], first: i.date, last: i.stageAt || i.date, messages: 0, me: 0, akram: 0, shaarawi: 0,
+        worked: true, manual: true, aibrahim: !!i.byFrom, kraasa: !!i.byKr, rules: [], reason: i.reason || '' }); }
+  }
   return rows;
 }
 const PROJ_RANK = { delivered: 7, ongoing: 6, won: 5, lost: 4, submitted: 3, studied: 2, worked: 1, seen: 0 };
@@ -1498,7 +1512,7 @@ function projCsv(rows) {
 }
 // the card on «أنا»: the headline numbers — the whole workspace opens in its own layer
 function projectsCard() {
-  const rows = (myProjects || myRegister) ? projectsModel() : [], won = rows.filter((r) => WONISH.includes(r.status));
+  const rows = (myProjects || myRegister || (tenders && tenders.items.length)) ? projectsModel() : [], won = rows.filter((r) => WONISH.includes(r.status));
   const n = (st) => rows.filter((r) => r.status === st).length;
   return el('button', { type: 'button', class: 'proj-card', onclick: projOpen },
     el('div', { class: 'pc-head' }, el('b', { text: t('proj_h') }), el('span', { class: 'pc-open', text: `${t('proj_open')} ↗` })),
@@ -1530,7 +1544,7 @@ function projDetail(k, scope) {
   const dlg = el('dialog', { class: 'proj-detail' });
   dlg.append(el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, el('h2', { style: 'margin:0', text: `${t(k === 'commercial' ? 'proj_v_com' : k === 'tender' ? 'proj_v_ten' : k === 'bid' ? 'proj_s_bid' : k === 'wonall' ? 'proj_s_won' : `proj_f_${k}`)} — ${list.length}` })),
     el('div', { class: 'pd-grid' }, list.map((r) => el('button', { type: 'button', class: `pd-card st-b-${r.status}`, onclick: () => { dlg.close(); projEdit(r); } },
-      el('span', { class: `st-pill st-${r.status}`, text: t(`proj_f_${r.status}`) }), el('b', { text: r.name }), r.client && r.client !== r.name ? el('span', { class: 'hint', text: r.client }) : null,
+      el('span', { class: `st-pill st-${r.status}`, text: t(`proj_f_${r.status}`) }), el('b', { text: r.name }), r.tender ? el('a', { class: 'chip proj-td', href: '#tenders', text: t('proj_from_td') }) : null, r.status === 'lost' && r.reason ? el('span', { class: 'hint', text: `${t('td_col_reason')}: ${r.reason}` }) : null, r.client && r.client !== r.name ? el('span', { class: 'hint', text: r.client }) : null,
       r.value ? el('strong', { text: `${r.value.toLocaleString('en-US')} ${t('sar')}` }) : null,
       el('small', { class: 'hint', text: [r.last && `${t('proj_c_last')} ${r.last}`, r.messages && t('proj_msgs_n', { n: r.messages }), projWhy(r)].filter(Boolean).join(' · ') })))));
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
