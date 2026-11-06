@@ -1046,6 +1046,44 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
     .td-table tr.td-row > td:nth-child(5) { grid-column: 1 / -1; } .td-table tr.td-row > td:nth-child(6) { display: none; }
     .td-table tr.td-detail-row, .td-table tr.td-detail-row > td { display: block; padding: 0 12px; } .td-grid { grid-template-columns: 1fr 1fr; }
   }
+  /* ===== ADR-0086: light, moving lines, things that answer the hand ===== */
+  /* the tender pipeline */
+  .td-pipe { display: flex; align-items: center; overflow-x: auto; padding: 8px 2px 12px; margin: 4px 0 10px; scrollbar-width: thin; }
+  .td-pipe-node { position: relative; flex: 0 0 auto; min-width: 96px; min-height: 64px; display: grid; justify-items: center; align-content: center; gap: 2px; padding: 8px 12px; border-radius: 16px;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; overflow: hidden; transition: transform .18s cubic-bezier(.2,.9,.3,1.3), box-shadow .2s, border-color .2s; }
+  .td-pipe-node b { font-size: 1.35rem; line-height: 1.1; font-feature-settings: 'tnum' 1; } .td-pipe-node span { font-size: 12px; color: var(--slate); white-space: nowrap; }
+  .td-pipe-node.zero b { color: var(--slate-light); } .td-pipe-node:hover { transform: translateY(-3px); box-shadow: 0 10px 22px -12px rgba(42,113,48,.55); border-color: var(--live-bright); }
+  .td-pipe-node.sel { border-color: var(--live-bright); box-shadow: 0 0 0 3px rgba(76,195,90,.22), 0 0 22px rgba(76,195,90,.35); }
+  .td-pipe-node.hot { border-color: #B42318; animation: bt-pulse 1.9s ease-in-out infinite; } .td-pipe-node.hot b { color: #B42318; }
+  .td-pipe-end { min-width: 78px; min-height: 52px; } .td-end-won b { color: var(--ok); } .td-end-lost b { color: #B42318; }
+  .td-pipe-line { flex: 1 0 22px; min-width: 22px; height: 2px; background: repeating-linear-gradient(90deg, var(--line-strong) 0 6px, transparent 6px 12px); }
+  .td-pipe-line.on { background: repeating-linear-gradient(90deg, var(--live-bright) 0 7px, transparent 7px 13px); background-size: 26px 2px; animation: bt-flow-rtl .9s linear infinite; filter: drop-shadow(0 0 3px rgba(76,195,90,.7)); }
+  html[dir="ltr"] .td-pipe-line.on { animation-name: bt-flow-ltr; }
+  .td-pipe-sep { flex: 0 0 14px; } .td-filtered { gap: 8px; align-items: center; margin: 4px 0 8px; }
+  @keyframes bt-flow-rtl { to { background-position: -26px 0; } } @keyframes bt-flow-ltr { to { background-position: 26px 0; } }
+  @keyframes bt-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(180,35,24,0); } 50% { box-shadow: 0 0 0 4px rgba(180,35,24,.16), 0 0 20px rgba(180,35,24,.32); } }
+  /* urgency glows: red countdowns and red alerts */
+  .td-cd.td-red, .cr-item.k-red { animation: bt-pulse 2.2s ease-in-out infinite; }
+  /* the page title: a line in AFAQY's colours draws itself, then shimmers */
+  .page-head h1 { position: relative; padding-bottom: 8px; }
+  .page-head h1::after { content: ""; position: absolute; inset-inline-start: 0; bottom: 0; height: 3px; width: 72px; border-radius: 3px;
+    background: linear-gradient(90deg, var(--live), var(--live-bright), var(--sea), var(--live)); background-size: 300% 100%; animation: bt-draw .7s cubic-bezier(.2,.8,.2,1) both .15s, bt-shimmer 6s linear infinite 1s; }
+  @keyframes bt-draw { from { width: 0; opacity: 0; } to { width: 72px; opacity: 1; } } @keyframes bt-shimmer { to { background-position: 300% 0; } }
+  /* the control room's headings draw their line as they come into view */
+  .cr-h { position: relative; padding-bottom: 6px; } .cr-h::after { content: ""; position: absolute; inset-inline-start: 0; bottom: 0; height: 2px; width: 48px; border-radius: 2px; background: linear-gradient(90deg, var(--live-bright), transparent); animation: bt-draw2 .8s cubic-bezier(.2,.8,.2,1) both .2s; }
+  @keyframes bt-draw2 { from { width: 0; } to { width: 48px; } }
+  /* the sweep across the top on a page change */
+  #bt-sweep { position: fixed; inset-inline: 0; top: 0; height: 2px; z-index: 70; pointer-events: none; opacity: 0;
+    background: linear-gradient(90deg, transparent, var(--live-bright), var(--sea), transparent); background-size: 40% 100%; background-repeat: no-repeat; }
+  #bt-sweep.go { animation: bt-sweep .7s cubic-bezier(.4,0,.2,1); } @keyframes bt-sweep { 0% { opacity: 1; background-position: -40% 0; } 100% { opacity: 0; background-position: 140% 0; } }
+  /* a light passes over the primary buttons under the pointer */
+  .btn.primary { position: relative; overflow: hidden; } .btn.primary::after { content: ""; position: absolute; top: -50%; bottom: -50%; width: 40%; inset-inline-start: -60%; pointer-events: none;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); transform: skewX(-18deg); transition: inset-inline-start .6s ease; }
+  .btn.primary:hover::after { inset-inline-start: 120%; }
+  /* the pointer light on more cards */
+  .cr-item, .td-pipe-node, .cr-job { position: relative; } .cr-item::after, .td-pipe-node::after, .cr-job::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: var(--o, 0); transition: opacity .2s;
+    background: radial-gradient(160px circle at var(--mx, 50%) var(--my, 50%), rgba(76,195,90,.14), transparent 70%); }
+  @media (prefers-reduced-motion: reduce) { .td-pipe-line.on, .td-pipe-node.hot, .td-cd.td-red, .cr-item.k-red, .page-head h1::after, .cr-h::after { animation: none; } .btn.primary::after { display: none; } }
 </style>
 </head>
 <body>

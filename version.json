@@ -1,15 +1,18 @@
 {
-  "version": "9.03",
+  "version": "9.04",
   "date": "2026-11-06",
   "notes": {
     "ar": [
-      "«سجل المناقصات» أوضح: جزء السحب بقى شريط مضغوط (الفترة وخمس زراير، والشرح تحت «إزاي؟»)، والجدول بيبدأ في أول شاشة. وعلى الموبايل كل مناقصة كارت فيه المحطة وواقفة من كام يوم والعدّاد، من غير سحب بالعرض."
+      "«خط سير المناقصات» في السجل: كل محطة بعددها، والخطوط بينها بتجري لما فيه مناقصات ماشية، والمحطة اللي فيها حاجة واقفة أكتر من ٣ أيام بتنبض بالأحمر، وتضغط أي محطة يتفلتر الجدول عليها.",
+      "حركة ونور: خط بألوان أفاقي بيترسم ويلمع تحت عنوان كل صفحة، وخط ضوء مع كل انتقال لصفحة، والعدّادات والتنبيهات الحمرا بتنبض، ولمعة على الأزرار، وضوء الماوس على الكروت. كله بيقف مع «تقليل الحركة»."
     ],
     "en": [
-      "The «Tender register» is clearer: the pull section is a compact bar (the period and five buttons, the explanations under «How?»), and the table starts on the first screen. On a phone each tender is a card with its stage, days waiting and countdown — no sideways scrolling."
+      "The «tender pipeline» on the register: each stage with its count, running lines where tenders move through, a red pulse where something waits over 3 days; click a stage to filter the table.",
+      "Light and motion: a line in AFAQY's colours draws and shimmers under each page title, a light sweeps on every page change, red countdowns and alerts pulse, primary buttons shine, the pointer's light on more cards. All of it stops with reduced motion."
     ],
     "ur": [
-      "«ٹینڈر رجسٹر» اب واضح: لانے کا حصہ ایک مختصر پٹی (مدت اور پانچ بٹن، وضاحت «کیسے؟» میں)، اور جدول پہلی اسکرین پر۔ فون پر ہر ٹینڈر ایک کارڈ — بغیر افقی اسکرول۔"
+      "رجسٹر پر «ٹینڈر پائپ لائن»: ہر مرحلہ اپنی تعداد کے ساتھ، چلتی لکیریں، 3 دن سے زیادہ انتظار پر سرخ دھڑکن؛ مرحلے پر کلک سے جدول فلٹر۔",
+      "روشنی اور حرکت: ہر صفحے کے عنوان کے نیچے آفاقی رنگوں کی لکیر، صفحہ بدلنے پر روشنی، سرخ گنتیاں اور الرٹ دھڑکتے ہیں، بٹنوں پر چمک۔ کم حرکت کی ترتیب پر سب رک جاتا ہے۔"
     ]
   }
 }

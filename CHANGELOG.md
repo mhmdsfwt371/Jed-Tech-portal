@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.04 — 2026-11-06
+
+- «خط سير المناقصات» في السجل: كل محطة بعددها، والخطوط بينها بتجري لما فيه مناقصات ماشية، والمحطة اللي فيها حاجة واقفة أكتر من ٣ أيام بتنبض بالأحمر، وتضغط أي محطة يتفلتر الجدول عليها.
+- حركة ونور: خط بألوان أفاقي بيترسم ويلمع تحت عنوان كل صفحة، وخط ضوء مع كل انتقال لصفحة، والعدّادات والتنبيهات الحمرا بتنبض، ولمعة على الأزرار، وضوء الماوس على الكروت. كله بيقف مع «تقليل الحركة».
+
+<details><summary>English</summary>
+
+- The «tender pipeline» on the register: each stage with its count, running lines where tenders move through, a red pulse where something waits over 3 days; click a stage to filter the table.
+- Light and motion: a line in AFAQY's colours draws and shimmers under each page title, a light sweeps on every page change, red countdowns and alerts pulse, primary buttons shine, the pointer's light on more cards. All of it stops with reduced motion.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- رجسٹر پر «ٹینڈر پائپ لائن»: ہر مرحلہ اپنی تعداد کے ساتھ، چلتی لکیریں، 3 دن سے زیادہ انتظار پر سرخ دھڑکن؛ مرحلے پر کلک سے جدول فلٹر۔
+- روشنی اور حرکت: ہر صفحے کے عنوان کے نیچے آفاقی رنگوں کی لکیر، صفحہ بدلنے پر روشنی، سرخ گنتیاں اور الرٹ دھڑکتے ہیں، بٹنوں پر چمک۔ کم حرکت کی ترتیب پر سب رک جاتا ہے۔
+
+</div>
+</details>
+
+
 ## v9.03 — 2026-11-06
 
 - «سجل المناقصات» أوضح: جزء السحب بقى شريط مضغوط (الفترة وخمس زراير، والشرح تحت «إزاي؟»)، والجدول بيبدأ في أول شاشة. وعلى الموبايل كل مناقصة كارت فيه المحطة وواقفة من كام يوم والعدّاد، من غير سحب بالعرض.

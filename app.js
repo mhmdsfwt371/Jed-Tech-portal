@@ -848,7 +848,7 @@ function rankFor(id, ym) {   // his team: the same team leader in the team file,
 
 // ---------- ADR-0081: the tender register — original tender mails from Outlook, one row each, his status and his dates ----------
 let tenders = null;   // { items: [...], to, pulledAt } — on this device, carried by the backup
-let tdKind = pref('tdkind') || 'month', tdPick = '', tdFrom = '', tdTo = '', tdBusy = '', tdOpenId = null;
+let tdKind = pref('tdkind') || 'month', tdPick = '', tdFrom = '', tdTo = '', tdBusy = '', tdOpenId = null, tdStageF = null;
 const TD_FROM = 'a.ibrahim@afaqy.com';
 // ADR-0083: the lifecycle. Open stages in order, then the closed ones. declined/lost need a reason.
 const TD_STAGES = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted', 'won', 'lost', 'cancelled', 'declined'];
@@ -1045,7 +1045,17 @@ function renderTenders() {
   if (!tenders || !tenders.items.length) { set(body, pull, el('p', { class: 'note', text: t('td_empty') })); return; }
   const periods = [...new Set(tenders.items.map((i) => tdPeriodOf(i.date, tdKind)))].sort().reverse();
   if (tdKind === 'all') tdPick = 'all'; else if (!periods.includes(tdPick)) tdPick = periods.includes(tdPeriodOf(today, tdKind)) ? tdPeriodOf(today, tdKind) : periods[0];
-  const rows = tenders.items.filter((i) => tdKind === 'all' || tdPeriodOf(i.date, tdKind) === tdPick), K = tdKpis(rows, today);
+  const rowsAll = tenders.items.filter((i) => tdKind === 'all' || tdPeriodOf(i.date, tdKind) === tdPick), K = tdKpis(rowsAll, today);
+  if (tdStageF && !rowsAll.some((i) => i.stage === tdStageF)) tdStageF = null;
+  const rows = tdStageF ? rowsAll.filter((i) => i.stage === tdStageF) : rowsAll;
+  // ADR-0086: the pipeline — each stage with its count; the lines between run while tenders move through; a stage pulses when something waits there over 3 days
+  const stale = (s) => ['received', 'screen', 'decide'].includes(s) && rowsAll.some((i) => i.stage === s && tdDaysBetween(i.stageAt, today) > 3);
+  const cnt = (s) => rowsAll.filter((i) => i.stage === s).length, flow = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted'];
+  const node = (s, cls = '') => el('button', { type: 'button', class: `td-pipe-node${cls}${tdStageF === s ? ' sel' : ''}${stale(s) ? ' hot' : ''}${cnt(s) ? '' : ' zero'}`, 'data-stage': s, 'aria-pressed': tdStageF === s ? 'true' : 'false',
+    title: t('td_pipe_hint'), onclick: () => { tdStageF = tdStageF === s ? null : s; renderTenders(); } }, el('b', { text: String(cnt(s)) }), el('span', { text: t(`td_st_${s}`) }));
+  const pipe = el('div', { class: 'td-pipe', role: 'group', 'aria-label': t('td_pipe') },
+    flow.flatMap((s, k) => [k ? el('span', { class: `td-pipe-line${flow.slice(k).some((x) => cnt(x)) && flow.slice(0, k).some((x) => cnt(x)) ? ' on' : ''}`, 'aria-hidden': 'true' }) : null, node(s)]),
+    el('span', { class: 'td-pipe-sep', 'aria-hidden': 'true' }), ['won', 'lost', 'declined', 'cancelled'].map((s) => node(s, ` td-pipe-end td-end-${s}`)));
   const kinds = el('div', { class: 'pills' }, [['month', 'td_month'], ['quarter', 'td_quarter'], ['year', 'td_year'], ['all', 'td_all']].map(([k, l]) =>
     el('button', { type: 'button', class: `pill-btn${tdKind === k ? ' on' : ''}`, text: t(l), onclick: () => { tdKind = k; pref('tdkind', k); tdPick = ''; renderTenders(); } })));
   const pick = tdKind === 'all' ? null : el('select', { class: 'td-pick', 'aria-label': t('td_period'), onchange: (e) => { tdPick = e.target.value; renderTenders(); } }, periods.map((k) => el('option', { value: k, text: tdLabel(k), ...(k === tdPick ? { selected: '' } : {}) })));
@@ -1083,6 +1093,7 @@ function renderTenders() {
   set(body, pull,
     el('div', { class: 'row td-filter' }, kinds, pick),
     el('p', { class: 'answer-line', text: t('td_answer2', { p: tdLabel(tdPick), n: K.n, w: K.waiting, j: K.joined, s: K.submitted, won: K.won }) }),
+    pipe,
     el('div', { class: 'km-tiles td-tiles' },
       tile('km-total', K.n, 'td_k_in'), tile(K.waiting ? 'km-other td-hot' : 'km-other', K.waiting, 'td_k_waiting', K.waiting ? t('td_k_waitmax', { d: K.waitMax }) : ''),
       tile('km-email', K.soon, 'td_k_soon', K.late ? t('td_k_late', { n: K.late }) : ''), tile('km-points', K.won, 'td_st_won', K.winRate == null ? t('td_k_norate') : t('td_k_winrate_of', { r: K.winRate, n: K.closed }))),
@@ -1091,6 +1102,7 @@ function renderTenders() {
       el('button', { type: 'button', class: 'btn tiny td-wm', text: `🗓 ${t('td_wm')}`, onclick: () => copyText(tdWeekMessage(), t('td_wm_copied')) }),
       el('a', { class: 'btn tiny td-wm-mail', href: '#', text: `✉ ${t('fl_mail')}`, onclick: (e) => { e.preventDefault(); location.href = `mailto:?subject=${encodeURIComponent(t('td_wm_subject', { a: saudiDay(new Date(Date.now() - 6 * 864e5).toISOString()), b: saudiDay(new Date().toISOString()) }))}&body=${encodeURIComponent(tdWeekMessage())}`; } }),
       el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('td_excel')}`, onclick: () => tdExcel(rows) })),
+    tdStageF ? el('div', { class: 'row td-filtered' }, el('span', { class: 'chip', text: t('td_pipe_on', { s: t(`td_st_${tdStageF}`), n: rows.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: `✕ ${t('td_pipe_clear')}`, onclick: () => { tdStageF = null; renderTenders(); } })) : null,
     rows.length ? table : el('p', { class: 'note', text: t('td_none_period') }));
 }
 
@@ -3703,8 +3715,11 @@ $('update-btn').addEventListener('click', () => location.reload());
     const r = n.getBoundingClientRect(); if (r.top < innerHeight * .94) return;   // what is already on screen is simply there
     n.classList.add('bt-rv'); io.observe(n); });
   new MutationObserver(() => requestAnimationFrame(scan)).observe(document.body, { childList: true, subtree: true }); scan();
-  document.addEventListener('pointermove', (e) => { const t = e.target.closest && e.target.closest('.km-tile, .cr-num');
+  document.addEventListener('pointermove', (e) => { const t = e.target.closest && e.target.closest('.km-tile, .cr-num, .cr-item, .td-pipe-node, .cr-job');
     document.querySelectorAll('.bt-lit').forEach((n) => { if (n !== t) { n.classList.remove('bt-lit'); n.style.setProperty('--o', 0); } });
     if (!t) return; const r = t.getBoundingClientRect(); t.classList.add('bt-lit'); t.style.setProperty('--mx', `${e.clientX - r.left}px`); t.style.setProperty('--my', `${e.clientY - r.top}px`); t.style.setProperty('--o', 1); });
 })();
 
+// ---------- ADR-0086: a light sweeps across the top on every page change ----------
+(() => { if (matchMedia('(prefers-reduced-motion: reduce)').matches) return; const s = document.createElement('div'); s.id = 'bt-sweep'; s.setAttribute('aria-hidden', 'true'); document.body.append(s);
+  addEventListener('hashchange', () => { s.classList.remove('go'); void s.offsetWidth; s.classList.add('go'); }); })();

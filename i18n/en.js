@@ -17,6 +17,10 @@ export default {
     g_planner_h: 'Team plans',
     g_planner_b: 'The manager’s page only: upload the team structure file (an HTML page) and it shows as it looks, exactly as uploaded. It stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file, or remove it from the device.',
     // ADR-0070: the one monthly place
+    td_pipe_clear: 'Show all',
+    td_pipe_on: 'Showing: «{s}» — {n}',
+    td_pipe_hint: 'Click to filter on this stage, click again to clear',
+    td_pipe: 'Tender pipeline',
     td_manual_lead: 'For a tender with no mail (a platform, WhatsApp, paper) or one the pull missed: write its name and date; it is registered and marked «by hand».',
     td_how: 'How? The three ways to pull',
     td_wm_rate: 'Cumulative win rate: {r} of {n} decided · value in progress: SAR {v}',
