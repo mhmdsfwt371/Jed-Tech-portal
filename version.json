@@ -1,21 +1,15 @@
 {
-  "version": "9.07",
+  "version": "9.08",
   "date": "2026-11-07",
   "notes": {
     "ar": [
-      "أرقام غرفة المتابعة بقت بتفتح نافذة تفاصيل: مربعات ملخص، وعمود لكل مهندس، والقايمة كاملة (المتأخر بالأحمر)، وتصدير إكسل.",
-      "الخانات (ومنها التاريخ) بقت بلون البوابة وأيقونة التقويم غامقة في الليلي، والنص الثانوي أوضح، و«كراسة الشروط» بتظهر صح جوه الكلام الإنجليزي.",
-      "«تصميم وتطوير: محمد صفوت» تحت القايمة وفي آخر كل صفحة، ونافذة «عن البوابة»، واسم المؤلف في خصائص كل ملف إكسل."
+      "الماوس بقى بينوّر أي حاجة بتتضغط وهو واقف عليها (أزرار، وقايمة، وكروت، وصفوف جداول)، والصيغة الموحدة: «فكرة وتصميم وتطوير: محمد صفوت»."
     ],
     "en": [
-      "Control-room numbers open a detail window: summary tiles, a bar per engineer, the full list (late ones in red) and Excel.",
-      "Fields (dates included) take the portal's colours with a dark calendar at night, secondary text is easier to read, and «كراسة الشروط» shows in the right order inside English text.",
-      "«Designed & built by Mohamed Safwat» under the menu and at the foot of every page, an «About» window, and the author in every Excel file's properties."
+      "The pointer now lights whatever you can press as it rests on it (buttons, menu, cards, table rows); one credit wording: «Powered by Mohamed Safwat — idea, design & build»."
     ],
     "ur": [
-      "کنٹرول روم کے اعداد اب تفصیل کی کھڑکی کھولتے ہیں: خلاصہ، فی انجینئر بار، مکمل فہرست اور ایکسل۔",
-      "فیلڈز پورٹل کے رنگوں میں، رات کو گہرا کیلنڈر، ثانوی متن زیادہ واضح، اور «كراسة الشروط» انگریزی متن میں درست ترتیب سے۔",
-      "مینو کے نیچے اور ہر صفحے کے آخر میں «ڈیزائن و تیاری: محمد صفوت»، «پورٹل کے بارے میں» کھڑکی، اور ہر ایکسل فائل میں مصنف کا نام۔"
+      "ماؤس اب ہر قابلِ کلک چیز کو روشن کرتا ہے؛ ایک ہی کریڈٹ: «Powered by محمد صفوت — خیال، ڈیزائن اور تیاری»۔"
     ]
   }
 }

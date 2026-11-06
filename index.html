@@ -1127,6 +1127,13 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   .crm-track { height: 10px; border-radius: 999px; background: var(--track); overflow: hidden; } .crm-track i { display: block; height: 100%; width: var(--w); border-radius: 999px; background: linear-gradient(90deg, var(--live), var(--live-bright)); animation: crm-grow .7s cubic-bezier(.2,.8,.2,1) both; }
   @keyframes crm-grow { from { width: 0; } to { width: var(--w); } } .crm-list { max-height: 46vh; overflow: auto; } .crm-hot td { color: #B42318; font-weight: 600; }
   @media (prefers-reduced-motion: reduce) { .crm-track i { animation: none; } }
+  /* ADR-0091: the pointer's light on everything you can press — a soft spot under the cursor, a lit edge, a small lift */
+  .bt-hot { background-image: radial-gradient(140px circle at var(--hx, 50%) var(--hy, 50%), rgba(76,195,90,.16), transparent 70%) !important;
+    box-shadow: 0 0 0 1px rgba(76,195,90,.45), 0 8px 22px -14px rgba(76,195,90,.55); transition: box-shadow .2s, transform .18s; }
+  .btn.bt-hot, .pill-btn.bt-hot, .tool.bt-hot, .sm-card.bt-hot, .proj-card.bt-hot, .pg-card.bt-hot, .cr-item.bt-hot, .cr-job.bt-hot, .card.bt-hot { transform: translateY(-1px); }
+  .nav a.bt-hot, .nav-group-toggle.bt-hot { box-shadow: inset 0 0 0 1px rgba(76,195,90,.35); background-image: radial-gradient(120px circle at var(--hx, 50%) var(--hy, 50%), rgba(76,195,90,.22), transparent 70%) !important; }
+  tr.bt-hot { box-shadow: inset 3px 0 0 var(--live-bright); } [dir="rtl"] tr.bt-hot { box-shadow: inset -3px 0 0 var(--live-bright); }
+  details > summary.bt-hot { box-shadow: none; }
 </style>
 </head>
 <body>
@@ -1185,7 +1192,7 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
       <button type="button" id="install-btn" class="foot-btn install" data-t="install_app" hidden>تثبيت التطبيق</button>
       <button type="button" id="version" class="ver-tag"></button>
     </div>
-    <button type="button" id="by-line" class="by-line" data-t="by_line">تصميم وتطوير: محمد صفوت</button>
+    <button type="button" id="by-line" class="by-line" data-t="by_line">فكرة وتصميم وتطوير: محمد صفوت</button>
   </div>
 </aside>
 <div class="scrim" id="scrim"></div>

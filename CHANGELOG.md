@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.08 — 2026-11-07
+
+- الماوس بقى بينوّر أي حاجة بتتضغط وهو واقف عليها (أزرار، وقايمة، وكروت، وصفوف جداول)، والصيغة الموحدة: «فكرة وتصميم وتطوير: محمد صفوت».
+
+<details><summary>English</summary>
+
+- The pointer now lights whatever you can press as it rests on it (buttons, menu, cards, table rows); one credit wording: «Powered by Mohamed Safwat — idea, design & build».
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ماؤس اب ہر قابلِ کلک چیز کو روشن کرتا ہے؛ ایک ہی کریڈٹ: «Powered by محمد صفوت — خیال، ڈیزائن اور تیاری»۔
+
+</div>
+</details>
+
+
 ## v9.07 — 2026-11-07
 
 - أرقام غرفة المتابعة بقت بتفتح نافذة تفاصيل: مربعات ملخص، وعمود لكل مهندس، والقايمة كاملة (المتأخر بالأحمر)، وتصدير إكسل.

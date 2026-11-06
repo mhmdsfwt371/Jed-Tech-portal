@@ -3805,3 +3805,15 @@ $('update-btn').addEventListener('click', () => location.reload());
 // ---------- ADR-0086: a light sweeps across the top on every page change ----------
 (() => { if (matchMedia('(prefers-reduced-motion: reduce)').matches) return; const s = document.createElement('div'); s.id = 'bt-sweep'; s.setAttribute('aria-hidden', 'true'); document.body.append(s);
   addEventListener('hashchange', () => { s.classList.remove('go'); void s.offsetWidth; s.classList.add('go'); }); })();
+
+// ---------- ADR-0091: the pointer's light on everything you can press ----------
+(() => {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !matchMedia('(hover: hover)').matches) return;
+  const SEL = '.btn, .pill-btn, .nav a, .nav-group-toggle, .tool, .sm-card, .proj-card, .pg-card, .me-card, .dev-card, .card, .td-row, .km-row, .cr-item, .cr-job, .cr-num-go, .td-pipe-node, .tip-card, details > summary, .ver-tag, .by-line';
+  let cur = null;
+  document.addEventListener('pointermove', (e) => { const el = e.target.closest && e.target.closest(SEL);
+    if (cur && cur !== el) { cur.classList.remove('bt-hot'); cur = null; }
+    if (!el) return; const r = el.getBoundingClientRect(); el.style.setProperty('--hx', `${e.clientX - r.left}px`); el.style.setProperty('--hy', `${e.clientY - r.top}px`);
+    if (cur !== el) { el.classList.add('bt-hot'); cur = el; } }, { passive: true });
+  document.addEventListener('pointerleave', () => { if (cur) { cur.classList.remove('bt-hot'); cur = null; } });
+})();
