@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.02 — 2026-11-06
+
+- غرفة المتابعة بتنبّهك للمناقصات: محتاج قرار (وأقدمها من كام يوم)، وموعد خلال ٧ أيام، وفات موعدها — حتى من غير سحب مهام، وكل تنبيه يفتح السجل.
+- في «سجل المناقصات» زر «رسالة الإدارة الأسبوعية»: ملخص آخر ٧ أيام (وصل، قررنا، قدّمنا، فزنا، خسرنا وأسبابها، في الانتظار، مواعيد الأسبوع القادم، نسبة الفوز) تنسخه أو تبعته بالإيميل.
+
+<details><summary>English</summary>
+
+- The control room now warns about tenders: awaiting a decision (and the oldest wait), a date within 7 days, past deadline — even with no task pull; each alert opens the register.
+- «Weekly management message» on the tender register: a summary of the last 7 days (arrived, decided, submitted, won, lost with reasons, waiting, next week’s dates, win rate) to copy or e-mail.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- کنٹرول روم اب ٹینڈرز کے الرٹ دیتا ہے: فیصلے کے منتظر، 7 دن میں تاریخ، تاریخ گزری — ہر الرٹ رجسٹر کھولتا ہے۔
+- ٹینڈر رجسٹر پر «ہفتہ وار انتظامی پیغام»: گزشتہ 7 دنوں کا خلاصہ کاپی یا ای میل کریں۔
+
+</div>
+</details>
+
+
 ## v9.01 — 2026-11-06
 
 - «سجل المناقصات» بقى دورة حياة كاملة: وصلت ← فرز أولي ← قرار المشاركة ← جاري الإعداد ← جاهزة ← تم التقديم ← فزنا/خسرنا (أو أُلغيت/اعتذرنا بسبب إلزامي)، مع «واقفة من كام يوم» وأقرب موعد بعدّاد ملوّن.

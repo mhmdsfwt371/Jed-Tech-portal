@@ -98,6 +98,7 @@
 | `docs/decisions/0081-tender-register.md` | Tender register: tender mails once (from a.ibrahim or «كراسة الشروط»), his status and dates, month/quarter/year, Excel |
 | `docs/decisions/0082-tender-register-three-ways-in.md` | Tender register: a pull period, a bookmark for Claude in Chrome, a PST read on the device, and by hand |
 | `docs/decisions/0083-tender-lifecycle.md` | Tender lifecycle: stages with reasons, Etimad dates and figures, countdown, calendar file, the period's numbers |
+| `docs/decisions/0084-tender-alerts-and-weekly-management-message.md` | Tender alerts on the control room; the weekly management message |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

@@ -1,18 +1,18 @@
 {
-  "version": "9.01",
+  "version": "9.02",
   "date": "2026-11-06",
   "notes": {
     "ar": [
-      "«سجل المناقصات» بقى دورة حياة كاملة: وصلت ← فرز أولي ← قرار المشاركة ← جاري الإعداد ← جاهزة ← تم التقديم ← فزنا/خسرنا (أو أُلغيت/اعتذرنا بسبب إلزامي)، مع «واقفة من كام يوم» وأقرب موعد بعدّاد ملوّن.",
-      "اضغط أي مناقصة لتفاصيلها: رقم اعتماد، والقيمة، وقيمة الكراسة، والضمان، ومواعيد الاستفسارات والزيارة والتقديم وفتح المظاريف، والمسؤول، والدراسة، و«ضيف للتقويم» (ملف يفتح في أوتلوك). وأرقام الفترة: محتاج قرار، وشاركنا، وقدّمنا، وفزنا، ونسبة الفوز، ومتوسط أيام القرار، والتقديم في الوقت. والإكسل بكل الأعمدة."
+      "غرفة المتابعة بتنبّهك للمناقصات: محتاج قرار (وأقدمها من كام يوم)، وموعد خلال ٧ أيام، وفات موعدها — حتى من غير سحب مهام، وكل تنبيه يفتح السجل.",
+      "في «سجل المناقصات» زر «رسالة الإدارة الأسبوعية»: ملخص آخر ٧ أيام (وصل، قررنا، قدّمنا، فزنا، خسرنا وأسبابها، في الانتظار، مواعيد الأسبوع القادم، نسبة الفوز) تنسخه أو تبعته بالإيميل."
     ],
     "en": [
-      "The «Tender register» is now a full lifecycle: arrived → screening → bid decision → in preparation → ready → submitted → won/lost (or cancelled/declined with a required reason), with days waiting and the nearest date as a coloured countdown.",
-      "Click a tender for its details: the Etimad number, value, booklet fee, guarantee, the inquiries, site-visit, submission and opening dates, the owner, the study, and «Add to calendar» (a file that opens in Outlook). The period's numbers: awaiting a decision, joined, submitted, won, win rate, average decision days, on-time submission. Excel with every column."
+      "The control room now warns about tenders: awaiting a decision (and the oldest wait), a date within 7 days, past deadline — even with no task pull; each alert opens the register.",
+      "«Weekly management message» on the tender register: a summary of the last 7 days (arrived, decided, submitted, won, lost with reasons, waiting, next week’s dates, win rate) to copy or e-mail."
     ],
     "ur": [
-      "«ٹینڈر رجسٹر» اب مکمل سائیکل ہے: آئی ← جانچ ← شرکت کا فیصلہ ← تیاری ← تیار ← جمع ← جیت/ہار (یا منسوخ/معذرت لازمی وجہ کے ساتھ)، انتظار کے دن اور قریب ترین تاریخ رنگین گنتی کے ساتھ۔",
-      "تفصیل کے لیے ٹینڈر پر کلک کریں: اعتماد نمبر، مالیت، فیس، ضمانت، تاریخیں، ذمہ دار، مطالعہ، اور «کیلنڈر میں شامل کریں»۔ مدت کے اعداد اور ہر کالم کے ساتھ ایکسل۔"
+      "کنٹرول روم اب ٹینڈرز کے الرٹ دیتا ہے: فیصلے کے منتظر، 7 دن میں تاریخ، تاریخ گزری — ہر الرٹ رجسٹر کھولتا ہے۔",
+      "ٹینڈر رجسٹر پر «ہفتہ وار انتظامی پیغام»: گزشتہ 7 دنوں کا خلاصہ کاپی یا ای میل کریں۔"
     ]
   }
 }

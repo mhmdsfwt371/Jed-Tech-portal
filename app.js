@@ -868,6 +868,19 @@ function tdKpis(rows, today) {
     value: rows.filter((i) => TD_OPEN.includes(i.stage)).reduce((s, i) => s + (i.value || 0), 0), soon: rows.filter((i) => TD_OPEN.includes(i.stage) && tdNextDate(i, today) && tdDaysBetween(today, tdNextDate(i, today)[1]) <= 7).length,
     late: rows.filter((i) => TD_OPEN.includes(i.stage) && i.due && i.due < today && !i.submittedOn).length };
 }
+/** The week's tender message for management: what arrived, what we decided, submitted, won and lost, what waits, and next week's dates. */
+function tdWeekMessage() {
+  const today = saudiDay(new Date().toISOString()), wk = { from: saudiDay(new Date(Date.now() - 6 * 864e5).toISOString()), to: today }, inWk = (d) => d && d >= wk.from && d <= wk.to, I = tenders ? tenders.items : [];   // the last 7 days, whatever the weekday
+  const arrived = I.filter((i) => inWk(i.date)), decided = I.filter((i) => inWk(i.decidedOn)), joined = decided.filter((i) => i.stage !== 'declined'), declined = I.filter((i) => i.stage === 'declined' && inWk(i.stageAt));
+  const submitted = I.filter((i) => inWk(i.submittedOn)), won = I.filter((i) => i.stage === 'won' && inWk(i.stageAt)), lost = I.filter((i) => i.stage === 'lost' && inWk(i.stageAt));
+  const K = tdKpis(I, today), next = weekRange(0, saudiDay(new Date(Date.now() + 7 * 864e5).toISOString()));
+  const coming = I.filter((i) => TD_OPEN.includes(i.stage)).flatMap((i) => [['askDue', i.askDue], ['visit', i.visit], ['due', i.due], ['openAt', i.openAt]].filter(([, v]) => v && v > today && v <= next.to).map(([k, v]) => ({ i, k, v }))).sort((x, y) => (x.v < y.v ? -1 : 1));
+  const L = [t('td_wm_h', { a: wk.from, b: wk.to }), t('td_wm_flow', { a: arrived.length, d: decided.length, j: joined.length, x: declined.length, s: submitted.length, w: won.length, l: lost.length })];
+  if (lost.length) L.push(t('td_wm_lost', { s: lost.map((i) => `${i.subject.slice(0, 50)}: ${i.reason || '—'}`).join(' · ') }));
+  L.push(t('td_wm_wait', { n: K.waiting, d: K.waitMax, late: K.late })); if (coming.length) L.push(t('td_wm_next', { s: coming.slice(0, 8).map((c) => `${c.v} ${t(`td_col_${c.k}`)} — ${c.i.subject.slice(0, 50)}`).join(' · ') }));
+  L.push(t('td_wm_rate', { r: K.winRate == null ? '—' : `${K.winRate}%`, n: K.closed, v: K.value ? K.value.toLocaleString('en') : '0' }), `— ${t('nav_tenders')} · ${t('portal')} v${PORTAL_VERSION}`);
+  return L.join('\n');
+}
 /** An .ics file with the tender's dates — opens straight in Outlook, each date an all-day event with a reminder the day before. */
 function tdIcs(i) {
   const ev = [['askDue', i.askDue], ['visit', i.visit], ['due', i.due], ['openAt', i.openAt]].filter(([, v]) => v);
@@ -1070,7 +1083,10 @@ function renderTenders() {
       tile('km-total', K.n, 'td_k_in'), tile(K.waiting ? 'km-other td-hot' : 'km-other', K.waiting, 'td_k_waiting', K.waiting ? t('td_k_waitmax', { d: K.waitMax }) : ''),
       tile('km-email', K.soon, 'td_k_soon', K.late ? t('td_k_late', { n: K.late }) : ''), tile('km-points', K.won, 'td_st_won', K.winRate == null ? t('td_k_norate') : t('td_k_winrate_of', { r: K.winRate, n: K.closed }))),
     el('p', { class: 'hint td-kpis', text: t('td_kpi_line', { j: K.joined, n: K.n, d: K.avgDecision == null ? '—' : K.avgDecision, o: K.onTime == null ? '—' : `${K.onTime}%`, v: K.value ? K.value.toLocaleString('en') : '0' }) }),
-    el('div', { class: 'row', style: 'justify-content:flex-end' }, el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('td_excel')}`, onclick: () => tdExcel(rows) })),
+    el('div', { class: 'row', style: 'justify-content:flex-end;gap:8px' },
+      el('button', { type: 'button', class: 'btn tiny td-wm', text: `🗓 ${t('td_wm')}`, onclick: () => copyText(tdWeekMessage(), t('td_wm_copied')) }),
+      el('a', { class: 'btn tiny td-wm-mail', href: '#', text: `✉ ${t('fl_mail')}`, onclick: (e) => { e.preventDefault(); location.href = `mailto:?subject=${encodeURIComponent(t('td_wm_subject', { a: saudiDay(new Date(Date.now() - 6 * 864e5).toISOString()), b: saudiDay(new Date().toISOString()) }))}&body=${encodeURIComponent(tdWeekMessage())}`; } }),
+      el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('td_excel')}`, onclick: () => tdExcel(rows) })),
     rows.length ? table : el('p', { class: 'note', text: t('td_none_period') }));
 }
 
@@ -2387,9 +2403,17 @@ function addTips() {
     document.querySelectorAll(`#view-tools a[href="#m-${x.id}"]${x.url ? `, #view-tools a[href="${x.url}"]` : ''}`).forEach((a) => attachTip(a, text, !a.closest('#primary'))); }
 }
 { const withTips = (fn) => function toolsWithTips(...args) { const out = fn.apply(this, args); try { addTips(); } catch (e) { console.error(e); } return out; }; renderTools = withTips(renderTools); }
+
+/** ADR-0084: the tenders that need him, shown on the control room even before any task pull. */
+function tdStartAlerts() {
+  if (!tenders || !tenders.items.length) return null; const today = saudiDay(new Date().toISOString()), K = tdKpis(tenders.items, today), go = (prep) => () => { tdKind = 'all'; location.hash = '#tenders'; };
+  const items = [K.late && { k: 'red', title: t('cr_att_td_late', { n: K.late }) }, K.waiting && { k: K.waitMax > 3 ? 'red' : 'pending', title: t('cr_att_td_wait', { n: K.waiting }), detail: t('td_k_waitmax', { d: K.waitMax }) }, K.soon && { k: 'old', title: t('cr_att_td_soon', { n: K.soon }) }].filter(Boolean);
+  if (!items.length) return null;
+  return el('div', {}, el('h2', { class: 'cr-h', text: t('cr_att_h') }), el('div', { class: 'cr-att' }, items.map((x) => el('button', { type: 'button', class: `cr-item k-${x.k}`, onclick: go() }, el('div', {}, el('b', { text: x.title }), x.detail ? el('span', { text: x.detail }) : null), el('span', { class: 'cr-go', text: `${t('cr_go')} ↗` })))));
+}
 function renderHome() {
   const body = $('home-body'); if (!body) return;
-  if (!datasets.length) { set(body, el('div', { class: 'cr-start' }, el('h2', { text: t('cr_start_h') }), el('p', { text: t('cr_start_b') }), el('a', { class: 'btn primary', href: '#data', text: `${t('cr_pull')} ↗` }))); return; }
+  if (!datasets.length) { set(body, tdStartAlerts(), el('div', { class: 'cr-start' }, el('h2', { text: t('cr_start_h') }), el('p', { text: t('cr_start_b') }), el('a', { class: 'btn primary', href: '#data', text: `${t('cr_pull')} ↗` }))); return; }
   const tasks = allTasks(), wt = weights(), today = saudiDay(new Date().toISOString()), ro = roster().people || {};
   const ppl = peopleOf(datasets), team = currentTeam(scoped(ppl), tasks), nm = (id) => nameOf(ppl.find((p) => p.id === id) || {}, lang) || id;
   const latest = [...datasets].sort((x, y) => (y.range.to || '').localeCompare(x.range.to || ''))[0];
@@ -2408,7 +2432,12 @@ function renderHome() {
   const pending = pendingList().length;
   const names = (ids) => ids.slice(0, 4).map(nm).join('، ') + (ids.length > 4 ? ` +${ids.length - 4}` : '');
   const go = (hash, prep) => () => { if (prep) prep(); location.hash = hash; };
+  const TK = tenders && tenders.items.length ? tdKpis(tenders.items, saudiDay(new Date().toISOString())) : null;   // ADR-0084: the tenders that need him
+  const tdSoonList = () => { const td = saudiDay(new Date().toISOString()); return tenders.items.filter((i) => TD_OPEN.includes(i.stage) && tdNextDate(i, td) && tdDaysBetween(td, tdNextDate(i, td)[1]) <= 7).map((i) => `${i.subject.slice(0, 40)} (${tdNextDate(i, td)[1]})`).slice(0, 3).join('، '); };
   const att = [
+    TK && TK.late && { k: 'red', title: t('cr_att_td_late', { n: TK.late }), detail: tenders.items.filter((i) => TD_OPEN.includes(i.stage) && i.due && i.due < saudiDay(new Date().toISOString()) && !i.submittedOn).map((i) => i.subject.slice(0, 40)).slice(0, 3).join('، '), href: '#tenders', prep: () => { tdKind = 'all'; } },
+    TK && TK.waiting && { k: TK.waitMax > 3 ? 'red' : 'pending', title: t('cr_att_td_wait', { n: TK.waiting }), detail: t('td_k_waitmax', { d: TK.waitMax }), href: '#tenders', prep: () => { tdKind = 'all'; } },
+    TK && TK.soon && { k: 'old', title: t('cr_att_td_soon', { n: TK.soon }), detail: tdSoonList(), href: '#tenders', prep: () => { tdKind = 'all'; } },
     red.length && { k: 'red', title: t('cr_att_red', { n: red.length }), detail: names(red), href: '#dev' },
     noPlan.length && { k: 'plan', title: t('cr_att_plan', { n: noPlan.length, m: active.length, q: qNext.label }), detail: names(noPlan), href: '#dev', prep: () => { devQ = 'next'; pref('devq', 'next'); } },
     old.length && { k: 'old', title: t('cr_att_old', { n: old.length }), detail: oldBy.slice(0, 3).map(([id, n]) => `${nm(id)} ${n}`).join('، '), href: '#kpi', prep: () => { kpiMore = true; } },
