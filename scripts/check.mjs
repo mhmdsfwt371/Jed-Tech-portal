@@ -49,7 +49,7 @@ for (const [name, src] of [['index.html', html], ['app.js', appWithoutPro], ['co
   if (/firebase/i.test(src)) note(`${name}: Firebase is referenced — the portal runs without it`);
   if (/afaqy\.sa|afaqy\.pro\/|crmbackend/.test((name === 'config.js' ? src.replace(/https:\/\/[^\s"']+/g, '') : src.replace(/https:\/\/afaqy\.pro\/'/g, '')))) note(`${name}: an Afaqy API address appeared — the portal never calls an Afaqy API`);
   const calls = [...src.matchAll(/fetch\(\s*([^,)]+)/g)].map((m) => m[1].trim());
-  for (const c of calls) if (!["'./version.json'", "'./team.json'", "'./weights.json'", "'./systems.json'"].includes(c)) note(`${name}: network call to ${c} — the only allowed reads are the site's own version.json, team.json and weights.json`);
+  for (const c of calls) if (!["'./version.json'", "'./team.json'", "'./weights.json'", "'./systems.json'", "'./CHANGELOG.md'", "'./docs/START-HERE.md'"].includes(c)) note(`${name}: network call to ${c} — the only allowed reads are the site's own version.json, team.json and weights.json`);
 }
 
 // 5. The service worker stays inside this folder, so the other tools on the same domain are never taken over.
@@ -144,6 +144,7 @@ if (exists('docs/manual/README.md') && !read('docs/manual/README.md').includes(`
 // fingerprints of them (the first 16 hex of SHA-256 of each lowercased word), never the names — the list itself is public.
 const CAPTURED = new Set(["8dde8eb09b4f8ade","8f7dfb13f1d1e5d1","4322323b706af66d","8ad9672dfc2ee48a","6ea5f03f8197a4c6","8a4bd12b0ef7909a","87d57964ebda55a8","46de21c135a6c283","8afec982b4ea3c9d","a91e1695e9ab35c8","b189867634e3b00b","639e0252e8f41839","0be1e8491d132360","81bdbb4f05b08f4a","93ab256d195b2c84"]);
 const fingerprint = (w) => createHash('sha256').update(w).digest('hex').slice(0, 16);
+const AUTHOR_WORDS = new Set(['mohamed', 'safwat', 'محمد', 'صفوت']);   // ADR-0090: the portal's author, credited by his own request
 // the Jeddah team itself (29 Oct 2026) — fingerprints only, as above
 for (const f of ["0be1e8491d132360", "0eee3231330958bc", "10f75987b734bd50", "15192f4a24c77aa8", "1d3a99e2f4f2bba3", "25ae3bf574575f62", "27715c6a5a183018", "2923b4f60d35fbce", "322e49b795fda0df", "3551ac5dc0815434", "39c27c48136dbf68", "402a947784d58cb8", "45185f3bc39e55da", "469a9455918ed408", "4c74d2323d34b34e", "4d3dd758e3262a8d", "5db688aff74ef50b", "5ed1fd4daa460667", "60409199a6cca757", "639e0252e8f41839", "694c271dc2318c00", "6df95ad0a252c668", "6ea5f03f8197a4c6", "6f64a360bca18d0a", "705301a7ca4c57fd", "7b0f0922a3700a15", "7d256b20141fb0fc", "8ad9672dfc2ee48a", "8afec982b4ea3c9d", "8c4e0bb679d74ee4", "8f7dfb13f1d1e5d1", "9108f01cc21bbb71", "9314a107617edf4c", "93ab256d195b2c84", "973d74ebb73735b9", "9bd9270a3dc6b3bf", "a7c73022b1cd9ace", "b42c3b92efe01065", "c3fb34ee2a7d9cd7", "d0892c3743fbdeef", "d7c12ba5fca0106f", "de13dbdcec62c9ec", "e01b5c571b8dce68", "e10f81efc499efd6", "ea3b62f4435c1e77", "f01e98bd4e393b0f", "f6274038b0611ac7", "fb41e979ac815b4e"]) CAPTURED.add(f);
 const walkMd = (dir) => { const out = []; for (const e of readdirSync(new URL(dir, root), { withFileTypes: true })) { const p = `${dir}${e.name}`; if (e.isDirectory()) out.push(...walkMd(`${p}/`)); else if (/\.(md|json)$/.test(e.name)) out.push(p); } return out; };
@@ -151,7 +152,8 @@ for (const f of ['index.html', 'app.js', 'core.js', 'config.js', 'i18n/ar.js', '
   'version.json', 'team.json', 'release/next.json', ...walkMd('docs/')]) {
   if (!exists(f)) continue;
   const words = read(f).toLowerCase().match(/[a-z]{4,}|[\u0600-\u06ff]{3,}/g) || [];
-  if (words.some((w) => CAPTURED.has(fingerprint(w)))) note(`${f}: contains a name from the CRM capture — the repository is public`);
+  // ADR-0090: the author's own name is written on purpose (authorship credit); only its words are exempt — every other captured name still stops the release
+  if (words.some((w) => CAPTURED.has(fingerprint(w)) && !AUTHOR_WORDS.has(w))) note(`${f}: contains a name from the CRM capture — the repository is public`);
 }
 for (const f of ['docs/crm-api.md', 'docs/data-format.md', 'docs/kpi-factors.md', 'README.md', 'AGENTS.md']) {
   if (!exists(f)) continue;
@@ -177,7 +179,7 @@ for (const f of ['docs/crm-api.md', 'docs/data-format.md', 'docs/kpi-factors.md'
 // 15. Identity colours only. Every colour in the page is the AFAQY template palette or a tint/shade of it — plus the «Live bento» set approved in ADR-0079.
 {
   // the Service Management / R&D Portal colours (light) and the dark set derived from them — docs/design.md
-  const PALETTE = new Set(["#1C1E3D", "#2A7130", "#0369A1", "#08131C", "#0A5F67", "#0B1824", "#0E3438", "#0E7C86", "#0F2231", "#10283A", "#11222F", "#12301F", "#14293A", "#15803D", "#1B3547", "#223A4D", "#24394A", "#27455B", "#2CA6B0", "#2F4A5E", "#3A2A10", "#3B1714", "#4CB782", "#5A6B78", "#5AB0E0", "#6CC7CF", "#8797A3", "#8FA0AC", "#B42318", "#B45309", "#C3CED7", "#CFDAE2", "#DBE2E8", "#DCE6EC", "#E0A32E", "#E2F0F9", "#E3EAF0", "#E4F2F3", "#E6F4EA", "#EEF1F4", "#F07167", "#F1F5F8", "#FDECEB", "#FDF1E1", "#FFFFFF", "#0A1118", "#0E151D", "#14301C", "#16212C", "#16283A", "#163A5B", "#18232E", "#1E2A36", "#1F4E79", "#223040", "#233140", "#2A3A4A", "#2C3E52", "#2F4052", "#36495F", "#4CC35A", "#5C6B78", "#7FB2E5", "#8A97A3", "#9AA8B5", "#A9CCF0", "#C9D2DB", "#CBD5DE", "#DCE4EA", "#E1E6EC", "#E4ECF3", "#E6EBF0", "#E8EEF5", "#E8F3EA", "#F2F4F7", "#F2F6F9"]);
+  const PALETTE = new Set(["#1C1E3D", "#2A7130", "#0369A1", "#08131C", "#0A5F67", "#0B1824", "#0E3438", "#0E7C86", "#0F2231", "#10283A", "#11222F", "#12301F", "#14293A", "#15803D", "#1B3547", "#223A4D", "#24394A", "#27455B", "#2CA6B0", "#2F4A5E", "#3A2A10", "#3B1714", "#4CB782", "#5A6B78", "#5AB0E0", "#6CC7CF", "#8797A3", "#8FA0AC", "#B42318", "#B45309", "#C3CED7", "#CFDAE2", "#DBE2E8", "#DCE6EC", "#E0A32E", "#E2F0F9", "#E3EAF0", "#E4F2F3", "#E6F4EA", "#EEF1F4", "#F07167", "#F1F5F8", "#FDECEB", "#FDF1E1", "#FFFFFF", "#0A1118", "#0E151D", "#14301C", "#16212C", "#16283A", "#163A5B", "#18232E", "#1E2A36", "#1F4E79", "#223040", "#233140", "#2A3A4A", "#2C3E52", "#2F4052", "#36495F", "#4CC35A", "#5C6B78", "#7FB2E5", "#8A97A3", "#9AA8B5", "#A9CCF0", "#C9D2DB", "#CBD5DE", "#DCE4EA", "#E1E6EC", "#E4ECF3", "#E6EBF0", "#E8EEF5", "#E8F3EA", "#F2F4F7", "#F2F6F9", "#1B2836", "#3A4E62", "#AEBAC6"]);
   for (const f of ['index.html', 'app.js']) {
     for (const c of read(f).match(/#[0-9A-Fa-f]{6}\b/g) || []) if (!PALETTE.has(c.toUpperCase())) note(`${f}: colour ${c} is not in the Service Management palette (docs/design.md)`);
   }

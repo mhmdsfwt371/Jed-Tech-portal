@@ -1123,6 +1123,38 @@ function renderTenders() {
     rows.length ? table : el('p', { class: 'note', text: t('td_none_period') }));
 }
 
+// ---------- ADR-0090: authorship — who designed and built the portal (not a claim of ownership: built for AFAQY's work) ----------
+const AUTHOR = { ar: 'محمد صفوت', en: 'Mohamed Safwat', ur: 'محمد صفوت' };
+const HISTORY_SINCE = { ver: 'v5.0', date: '2026-10-29' };   // the first entry of this repository's version history
+async function openAbout() {
+  const dlg = el('dialog', { class: 'about-dlg', 'aria-labelledby': 'about-h' }, el('h2', { id: 'about-h', text: t('about_h') }),
+    el('p', { class: 'about-by' }, el('span', { text: t('about_by') }), ' ', el('b', { text: AUTHOR[lang] || AUTHOR.en }), el('br'), el('span', { class: 'hint', text: t('about_role') })),
+    el('dl', { class: 'fl-ctx about-facts' }, el('dt', { text: t('about_ver') }), el('dd', { text: `v${PORTAL_VERSION}` }), el('dt', { text: t('about_since') }), el('dd', { text: `${HISTORY_SINCE.ver} — ${HISTORY_SINCE.date}` }),
+      el('dt', { text: t('about_versions') }), el('dd', { class: 'about-nv', text: '…' }), el('dt', { text: t('about_adrs') }), el('dd', { class: 'about-na', text: '…' })),
+    el('p', { class: 'hint', text: t('about_note') }),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: t('about_news'), onclick: () => { dlg.close(); openNews(); } }), el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() })));
+  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
+  const cnt = async (req, re) => { try { const r = await req; if (!r.ok) return null; const s = await r.text(); return new Set(s.match(re) || []).size; } catch { return null; } };   // the site's own files, read only; distinct entries
+  const [nv, na] = await Promise.all([cnt(fetch('./CHANGELOG.md', { cache: 'no-store' }), /^## v\d+\.\d+/gm), cnt(fetch('./docs/START-HERE.md', { cache: 'no-store' }), /docs\/decisions\/(?!0000)0\d{3}(?=-)/g)]);
+  const q = (c, v) => { const x = dlg.querySelector(c); if (x) x.textContent = v == null ? '—' : String(v); }; q('.about-nv', nv); q('.about-na', na);
+}
+// ---------- ADR-0090: a control-room number opens its detail — tiles, a bar per engineer, the list, Excel ----------
+function crModal({ title, lead, tiles = [], bars = [], head = [], rows = [], hot = () => false, file }) {
+  const max = Math.max(1, ...bars.map((b) => b[1])), shown = rows.slice(0, 300);
+  const xl = async () => { const X = await loadXlsx(), ws = X.utils.aoa_to_sheet([head, ...rows]); ws['!views'] = [{ RTL: lang !== 'en' }]; ws['!cols'] = head.map((h, k) => ({ wch: k === 0 ? 50 : 16 })); const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, title.slice(0, 30)); X.writeFile(wb, `${file}-${saudiDay(new Date().toISOString())}.xlsx`); };
+  const dlg = el('dialog', { class: 'cr-modal', 'aria-labelledby': 'crm-h' },
+    el('div', { class: 'crm-head' }, el('h2', { id: 'crm-h', text: title }), el('button', { type: 'button', class: 'btn tiny crm-xl', text: `⬇ ${t('td_excel')}`, onclick: xl })),
+    lead ? el('p', { class: 'hint', text: lead }) : null,
+    tiles.length ? el('div', { class: 'crm-tiles' }, tiles.map(([l, v, s]) => el('div', { class: 'km-tile' }, el('b', { text: String(v) }), el('span', { text: l }), s ? el('small', { class: 'hint', text: s }) : null))) : null,
+    bars.length ? el('div', { class: 'crm-bars', role: 'img', 'aria-label': t('crm_bars') }, bars.slice(0, 15).map(([n, v], k) => el('div', { class: 'crm-bar' }, el('span', { class: 'crm-n', text: n }),
+      el('span', { class: 'crm-track' }, el('i', { style: `--w:${(v / max) * 100}%;animation-delay:${k * 40}ms` })), el('b', { text: String(v) })))) : null,
+    el('div', { class: 'table-wrap crm-list' }, el('table', {}, el('thead', {}, el('tr', {}, head.map((h) => el('th', { text: h })))),
+      el('tbody', {}, shown.map((r, k) => el('tr', { class: hot(r, k) ? 'crm-hot' : '' }, r.map((c, k) => el('td', { class: k ? 'num' : '', dir: 'auto', text: c == null ? '—' : String(c) }))))))),
+    rows.length > shown.length ? el('p', { class: 'hint', text: t('crm_more', { n: rows.length - shown.length }) }) : null,
+    el('div', { class: 'row', style: 'justify-content:flex-end' }, el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() })));
+  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
+}
+
 // ---------- ADR-0079: the bento's small visuals — drawn from the same numbers as the tiles, never decoration ----------
 /** The total's sources as one bar: from e-mail, opened himself, assigned by others — their real shares. */
 function splitBar(T) {
@@ -1417,9 +1449,12 @@ async function projFiles(r) {
 }
 // Excel: four sheets (from mail, bids — clients, bids — large projects, summary); edit it and import it back by its ID column
 async function loadXlsx() {
-  if (window.XLSX) return window.XLSX;
-  await new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = res; s.onerror = rej; document.head.append(s); });
-  return window.XLSX;
+  if (!window.XLSX) await new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = res; s.onerror = rej; document.head.append(s); });
+  const X = window.XLSX;
+  if (!X.__byAuthor) {   // ADR-0090: every workbook the portal writes names its author in the file's properties
+    const w = X.writeFile.bind(X); X.writeFile = (wb, name, o) => { wb.Props = { ...(wb.Props || {}), Title: name, Author: AUTHOR.en, Company: 'AFAQY — Jeddah', Comments: `${t('brand')} — ${t('portal')} v${PORTAL_VERSION} · ${t('by_line')}` }; return w(wb, name, o); };
+    X.__byAuthor = true; }
+  return X;
 }
 async function projXlsx() {
   let X; try { X = await loadXlsx(); } catch { toast(t('proj_x_fail')); projCsv(projectsModel()); return; }
@@ -2451,6 +2486,8 @@ function tdStartAlerts() {
   if (!items.length) return null;
   return el('div', {}, el('h2', { class: 'cr-h', text: t('cr_att_h') }), el('div', { class: 'cr-att' }, items.map((x) => el('button', { type: 'button', class: `cr-item k-${x.k}`, onclick: go() }, el('div', {}, el('b', { text: x.title }), x.detail ? el('span', { text: x.detail }) : null), el('span', { class: 'cr-go', text: `${t('cr_go')} ↗` })))));
 }
+/** ADR-0090: the authorship line at the foot of every page. */
+function pageBy() { document.querySelectorAll('section[id^="view-"]').forEach((sec) => { if (sec.querySelector(':scope > .page-by')) return; sec.append(el('p', { class: 'page-by' }, el('button', { type: 'button', text: `${t('page_by')} · v${PORTAL_VERSION}`, onclick: openAbout }))); }); }
 function renderHome() {
   const body = $('home-body'); if (!body) return;
   if (!datasets.length) { set(body, tdStartAlerts(), el('div', { class: 'cr-start' }, el('h2', { text: t('cr_start_h') }), el('p', { text: t('cr_start_b') }), el('a', { class: 'btn primary', href: '#data', text: `${t('cr_pull')} ↗` }))); return; }
@@ -2485,7 +2522,26 @@ function renderHome() {
     (() => { const f = newTypes(wt); return f.length ? { k: 'types', title: t('cr_att_types', { n: f.length }), detail: f.slice(0, 4).join('، '), href: '#weights' } : null; })(),
     (() => { const od = orgData(); if (!od) return null; const r = orgRootId(od); if (!r) return null; const fa = Object.keys(roster().people || {}).some((id) => od.org.hasRow(id)), c = fa ? compareOrg(od.org, roster(), r) : { leader: [], missingInFile: [], notInOrg: [], inactive: [], unmatched: od.org.unmatchedUnder(r) }, n = c.leader.length + c.missingInFile.length + c.notInOrg.length + c.inactive.length + c.unmatched.length; return n ? { k: 'org', title: t('cr_att_org', { n }), detail: '', href: '#team' } : null; })(),
   ].filter(Boolean);
-  const num = (k, v, sub) => el('div', { class: 'cr-num' }, el('span', { text: t(k) }), el('b', { text: String(v) }), sub ? el('small', { text: sub }) : null);
+  // ADR-0090: every number opens its detail — tiles, a bar per engineer, the list, Excel
+  const byPerson = (list, f = () => 1) => { const m = new Map(); for (const x of list) m.set(x.assigneeId, (m.get(x.assigneeId) || 0) + f(x)); return [...m.entries()].map(([id, v]) => [nm(id), Math.round(v * 10) / 10]).sort((p, q) => q[1] - p[1]); };
+  const ageD = (x) => (x.createdAt ? Math.max(0, Math.round((Date.now() - Date.parse(x.createdAt)) / 864e5)) : null);
+  const ptsM = Math.round(doneM.reduce((s, x) => s + taskPoints(wt, x), 0));
+  const MODAL = {
+    done: () => crModal({ title: t('cr_nums_done'), file: 'done-this-month', tiles: [[t('cr_nums_done'), doneM.length, hasPrev ? t('cr_nums_last', { n: doneP.length }) : ''], [t('cr_nums_points'), ptsM], [t('crm_people'), new Set(doneM.map((x) => x.assigneeId)).size]],
+      bars: byPerson(doneM), head: [t('crm_task'), t('col_person'), t('crm_closed'), t('col_points'), t('crm_type')],
+      rows: [...doneM].sort((p, q) => (p.completedAt < q.completedAt ? 1 : -1)).map((x) => [x.title || x.id, nm(x.assigneeId), saudiDay(x.completedAt), Math.round(taskPoints(wt, x) * 10) / 10, x.type || '']) }),
+    points: () => { const per = byPerson(doneM, (x) => taskPoints(wt, x)), cnt = new Map(byPerson(doneM));
+      return crModal({ title: t('cr_nums_points'), file: 'points-this-month', tiles: [[t('cr_nums_points'), ptsM], [t('crm_avg_eng'), team.length ? Math.round(ptsM / team.length) : 0], [t('crm_top'), per.length ? per[0][0] : '—', per.length ? `${per[0][1]}` : '']],
+        bars: per, head: [t('col_person'), t('crm_closed_n'), t('col_points'), t('crm_share')], rows: per.map(([n, v]) => [n, cnt.get(n) || 0, v, ptsM ? `${Math.round((v / ptsM) * 100)}%` : '—']) }); },
+    open: () => { const L = [...openNow].sort((p, q) => (p.createdAt > q.createdAt ? 1 : -1)), isOld = new Set(old);   // the tile's own list decides which rows are red
+      return crModal({ title: t('cr_nums_open'), file: 'open-now', tiles: [[t('cr_nums_open'), openNow.length], [t('crm_old'), old.length], [t('crm_oldest'), openNow.length ? `${Math.max(...openNow.map((x) => ageD(x) || 0))} ${t('crm_days')}` : '—']],
+        bars: byPerson(openNow), head: [t('crm_task'), t('col_person'), t('crm_opened'), t('crm_age'), t('crm_type')], hot: (r, k) => isOld.has(L[k]),
+        rows: L.map((x) => [x.title || x.id, nm(x.assigneeId), x.createdAt ? saudiDay(x.createdAt) : '', ageD(x), x.type || '']) }); },
+    team: () => crModal({ title: t('cr_nums_team'), file: 'team', tiles: [[t('cr_nums_team'), team.length], [t('crm_with_done'), team.filter((id) => doneM.some((x) => x.assigneeId === id)).length], [t('crm_on_leave'), team.filter((id) => ro[id] && ro[id].onLeave).length]],
+      head: [t('col_person'), t('crm_closed_n'), t('col_points'), t('crm_open_n')],
+      rows: team.map((id) => [nm(id), doneM.filter((x) => x.assigneeId === id).length, Math.round(doneM.filter((x) => x.assigneeId === id).reduce((s, x) => s + taskPoints(wt, x), 0) * 10) / 10, openNow.filter((x) => x.assigneeId === id).length]).sort((p, q) => q[2] - p[2]) }) };
+  const num = (k, v, sub, kind) => el('button', { type: 'button', class: 'cr-num cr-num-go', title: t('cr_num_open'), 'data-kind': kind, onclick: () => MODAL[kind]() },
+  el('span', { text: t(k) }), el('b', { text: String(v) }), sub ? el('small', { text: sub }) : null, el('span', { class: 'cr-num-arrow', 'aria-hidden': 'true', text: '↗' }));
   const job = (label, hash, prep) => el('button', { type: 'button', class: 'cr-job', onclick: go(hash, prep) }, el('b', { text: label }), el('span', { text: '↗' }));
   set(body,
     el('div', { class: `cr-fresh ${fresh ? 'ok' : 'old'}` },
@@ -2493,8 +2549,8 @@ function renderHome() {
         el('small', { text: t('cr_fresh_meta', { n: tasks.length.toLocaleString('en-US'), d: (latest.extractedAt || '').slice(0, 10) }) })),
       el('a', { class: `btn${fresh ? '' : ' primary'}`, href: '#data', text: `${t('cr_pull_again')} ↗` })),
     el('p', { class: 'answer-line', text: t('cr_answer', { d: doneM.length, p: Math.round(doneM.reduce((s, x) => s + taskPoints(wt, x), 0)), o: openNow.length, old: old.length, n: team.length }) }),
-    el('div', { class: 'cr-nums' }, num('cr_nums_done', doneM.length, hasPrev ? t('cr_nums_last', { n: doneP.length }) : t('cr_nums_nolast')), num('cr_nums_points', Math.round(doneM.reduce((s, x) => s + taskPoints(wt, x), 0)), hasPrev ? t('cr_nums_last', { n: Math.round(doneP.reduce((s, x) => s + taskPoints(wt, x), 0)) }) : t('cr_nums_nolast')),
-      num('cr_nums_open', openNow.length, old.length ? t('cr_nums_old', { n: old.length }) : ''), num('cr_nums_team', team.length, '')),
+    el('div', { class: 'cr-nums' }, num('cr_nums_done', doneM.length, hasPrev ? t('cr_nums_last', { n: doneP.length }) : t('cr_nums_nolast'), 'done'), num('cr_nums_points', Math.round(doneM.reduce((s, x) => s + taskPoints(wt, x), 0)), hasPrev ? t('cr_nums_last', { n: Math.round(doneP.reduce((s, x) => s + taskPoints(wt, x), 0)) }) : t('cr_nums_nolast'), 'points'),
+      num('cr_nums_open', openNow.length, old.length ? t('cr_nums_old', { n: old.length }) : '', 'open'), num('cr_nums_team', team.length, '', 'team')),
     el('h2', { class: 'cr-h', text: t('cr_att_h') }),
     att.length ? el('div', { class: 'cr-att' }, att.map((x) => el('button', { type: 'button', class: `cr-item k-${x.k}`, onclick: go(x.href, x.prep) },
       el('div', {}, el('b', { text: x.title }), x.detail ? el('span', { text: x.detail }) : null), el('span', { class: 'cr-go', text: `${t('cr_go')} ↗` }))))
@@ -3666,11 +3722,13 @@ $('sample-btn').addEventListener('click', async () => {
 });
 window.addEventListener('hashchange', route);
 $('version').addEventListener('click', openNews);
+$('by-line').addEventListener('click', openAbout);   // ADR-0090
 $('news-close').addEventListener('click', () => $('news-dialog').close());
 $('update-btn').addEventListener('click', () => location.reload());
 
 (async () => {
   $('version').textContent = `v${PORTAL_VERSION}`;
+  document.querySelectorAll('.page-by').forEach((p) => p.remove()); pageBy();
   // the service worker is scoped to this folder only, so it can never take over the other tools on the same domain
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {});
   applyTheme();

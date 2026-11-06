@@ -55,3 +55,6 @@ Taken from the AFAQY logo (assets/afaqy-logo.png): navy **#1C1E3D** and green **
 | paper / card | #F2F4F7 / #FFFFFF | #0E151D / #16212C | page / surfaces |
 | ink / slate | #18232E / #5C6B78 | #E4ECF3 / #9AA8B5 | text / secondary text |
 Radii: cards 16, fields 10, pills round. Type: Axiforma (when installed) → Cairo (bundled) → Noto Sans Arabic. Smallest text 12 px.
+| field (ADR-0089) | #FFFFFF | #1B2836 (line #3A4E62) | inputs, selects, date fields — the page's own colours, dark calendar icon at night |
+| slate at night (ADR-0089) | — | #AEBAC6 | secondary text, one step lighter for easier reading |
+

@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.07 — 2026-11-07
+
+- أرقام غرفة المتابعة بقت بتفتح نافذة تفاصيل: مربعات ملخص، وعمود لكل مهندس، والقايمة كاملة (المتأخر بالأحمر)، وتصدير إكسل.
+- الخانات (ومنها التاريخ) بقت بلون البوابة وأيقونة التقويم غامقة في الليلي، والنص الثانوي أوضح، و«كراسة الشروط» بتظهر صح جوه الكلام الإنجليزي.
+- «تصميم وتطوير: محمد صفوت» تحت القايمة وفي آخر كل صفحة، ونافذة «عن البوابة»، واسم المؤلف في خصائص كل ملف إكسل.
+
+<details><summary>English</summary>
+
+- Control-room numbers open a detail window: summary tiles, a bar per engineer, the full list (late ones in red) and Excel.
+- Fields (dates included) take the portal's colours with a dark calendar at night, secondary text is easier to read, and «كراسة الشروط» shows in the right order inside English text.
+- «Designed & built by Mohamed Safwat» under the menu and at the foot of every page, an «About» window, and the author in every Excel file's properties.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- کنٹرول روم کے اعداد اب تفصیل کی کھڑکی کھولتے ہیں: خلاصہ، فی انجینئر بار، مکمل فہرست اور ایکسل۔
+- فیلڈز پورٹل کے رنگوں میں، رات کو گہرا کیلنڈر، ثانوی متن زیادہ واضح، اور «كراسة الشروط» انگریزی متن میں درست ترتیب سے۔
+- مینو کے نیچے اور ہر صفحے کے آخر میں «ڈیزائن و تیاری: محمد صفوت»، «پورٹل کے بارے میں» کھڑکی، اور ہر ایکسل فائل میں مصنف کا نام۔
+
+</div>
+</details>
+
+
 ## v9.06 — 2026-11-07
 
 - «سجل المناقصات» بيشتغل مع أي مساعد: زر «انسخ الأمر للمساعد» (كلود في كروم أو شات جي بي تي في وضع العمل)، وزر جديد «📥 الصق النتيجة» تلصق فيه رد المساعد زي ما هو، والبوابة تطلّع البيانات وتفحصها بنفس الشروط.

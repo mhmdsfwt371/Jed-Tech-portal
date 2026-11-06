@@ -26,6 +26,16 @@
 | `scripts/bump.mjs` | ختم النسخة وتوليد دليلها |
 | `scripts/build-manual.mjs` | دليل المستخدم من نصوص الدليل — يُشغَّل وحده بعد تعديل نص |
 | `docs/manual/` | دليل كل نسخة وفهرسها |
+| `docs/decisions/0000-template.md` | قالب سجل قرار |
+| `docs/decisions/0001-static-no-firebase.md` | بوابة ثابتة بلا فايربيز |
+| `docs/decisions/0002-crm-through-claude-in-chrome.md` | بيانات ماي أفاقي عبر كلود كروم |
+| `docs/decisions/0003-fixed-exchange-format.md` | صيغة تبادل نملكها |
+| `docs/decisions/0004-data-on-device.md` | البيانات على الجهاز |
+| `docs/decisions/0005-languages-and-manual.md` | ثلاث لغات بالمعنى، ودليل لكل نسخة |
+| `docs/decisions/0006-factor1-on-the-capture.md` | المؤشر الأول على ما يحمله ماي أفاقي فعلًا |
+| `docs/decisions/0007-modules.md` | الأدوات وحدات داخل البوابة، لا روابط |
+| `docs/decisions/0008-side-menu.md` | قائمة جانبية على نسق برج تحكم البحث والتطوير |
+| `docs/decisions/0009-service-management-design.md` | نظام تصميم «إدارة الخدمات» بدل برج التحكم |
 | `docs/decisions/0010-my-kpis-through-myafaqy.md` | «مؤشراتي» وضماناته واختبار قبوله |
 | `docs/decisions/0011-afaqy-pro-in-the-portal.md` | صفحة أفاقي برو وحدودها وضماناتها |
 | `docs/decisions/0012-reports-factors-2-and-3.md` | المؤشران الثاني والثالث وما أُغلق بالدليل |
@@ -41,6 +51,11 @@
 | `docs/decisions/0021-week-coverage-one-to-one.md` | الأسبوع، تغطية الحسابات، اللقاء الشهري والأهداف، مسار النمط |
 | `docs/decisions/0022-repair-quality-from-pro.md` | جودة الإصلاح من برو — عاد للإرسال؟ |
 | `docs/decisions/0023-review-fixes-data-design-card-speed.md` | إصلاحات المراجعة: النسخة الكاملة، التصميم، البطاقة، اللغات عند الحاجة |
+| `docs/decisions/0024-animated-my-kpis-tour.md` | المتصفح التجريبي المتحرك في دليل «مؤشراتي» |
+| `docs/decisions/0024-system-categories.md` | 0024 — تصنيف روابط الأنظمة |
+| `docs/decisions/0025-published-weights-and-task-breakdown.md` | نقاط كل مهندس من الأوزان المعتمدة ونشر مراجعات المدير |
+| `docs/decisions/0025-shared-system-links.md` | 0025 — إدارة روابط الأنظمة المشتركة |
+| `docs/decisions/0026-manager-dual-ingestion.md` | طريقان لسحب بيانات الفريق: شبه أوتوماتيكي ويدوي |
 | `docs/decisions/0027-no-internal-addresses-in-public.md` | لا عناوين داخلية في المستودع العام؛ روابطي الخاصة على الجهاز |
 | `docs/decisions/0028-workload-share.md` | Each person’s share of the work by day/week/month/quarter |
 | `docs/decisions/0029-outlook-replies-from-own-inbox.md` | Email replies per person from the manager’s inbox, read-only |
@@ -103,6 +118,8 @@
 | `docs/decisions/0086-light-moving-lines-and-the-tender-pipeline.md` | The tender pipeline (counts, running lines, red pulse, click to filter); title lines, page sweep, glows |
 | `docs/decisions/0087-phone-audit-my-kpis-and-data.md` | Phone audit: no false «month before» on the phone link; all columns on screen; numbers first; «Data» on a phone |
 | `docs/decisions/0088-tender-register-any-assistant.md` | Tender register with any assistant (Claude or ChatGPT): paste the result |
+| `docs/decisions/0089-readable-fields-and-arabic-order.md` | Fields in the portal's colours; softer night text; Arabic phrases that keep their order |
+| `docs/decisions/0090-number-windows-and-authorship.md` | Control-room numbers open detail windows (bars, list, Excel); authorship marks, not ownership |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |
