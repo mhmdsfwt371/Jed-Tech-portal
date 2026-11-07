@@ -1,18 +1,21 @@
 {
-  "version": "9.10",
-  "date": "2026-11-07",
+  "version": "9.11",
+  "date": "2026-11-08",
   "notes": {
     "ar": [
-      "كل سحبة من سحبات البريد التلاتة (نشاط البريد من PST، والمشاريع من البريد، وسجل المناقصات) بقى فوقها شريط بيقول: بتجاوب على إيه، وبترفعها منين، وبياناتها بتظهر فين، ومع روابط للاتنين التانيين.",
-      "«مشاريعي» بتفتح بالمناقصات لوحدها حتى من غير سجل مشاريع."
+      "«نبض الفريق» في غرفة المتابعة: خط حي بيترسم بالمغلق كل يوم الشهر ده، والنهارده بينبض، والجمعة والسبت مظللين، واضغط أي يوم تشوف مهامه.",
+      "«عن البوابة» بقت بتحكي التاريخ كامل: بدأ العمل في سبتمبر ٢٠٢٦ (الإصدارات ١ لـ٤ على فايربيز)، والبناء الحالي من v5.0.",
+      "كل نافذة بقى فيها زرار «إغلاق» واحد بس."
     ],
     "en": [
-      "Each of the three mail pulls (mail activity from PST, projects from mail, the tender register) now opens with a strip: what it answers, where it goes in, where its data shows, with links to the other two.",
-      "«My projects» opens with tenders alone, even with no projects register."
+      "«Team pulse» on the control room: a live trace of what the team closed each day this month, today pulsing, Friday and Saturday shaded — click any day to see its tasks.",
+      "«About» now tells the whole history: work started in September 2026 (versions 1–4 on Firebase), current build since v5.0.",
+      "Every window has one Close button only."
     ],
     "ur": [
-      "تینوں میل پلز کے اوپر اب ایک پٹی: کیا بتاتا ہے، کہاں سے ڈالیں، کہاں دکھتا ہے، اور باقی دو کے لنک۔",
-      "«میرے منصوبے» صرف ٹینڈرز سے بھی کھلتا ہے۔"
+      "کنٹرول روم پر «ٹیم کی نبض»: اس مہینے روزانہ بند ٹاسک کی زندہ لکیر، آج دھڑکتا ہوا، جمعہ ہفتہ نمایاں؛ کسی دن پر کلک کریں۔",
+      "«پورٹل کے بارے میں» اب پوری تاریخ بتاتا ہے: کام ستمبر 2026 میں شروع، موجودہ تعمیر v5.0 سے۔",
+      "ہر کھڑکی میں ایک ہی «بند کریں»۔"
     ]
   }
 }

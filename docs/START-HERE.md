@@ -123,6 +123,7 @@
 | `docs/decisions/0091-pointer-light-and-credit-wording.md` | Pointer light on everything you can press; one credit wording |
 | `docs/decisions/0092-tender-register-feeds-my-projects.md` | Tenders submitted/won/lost count in «My projects», once; closest-match rule |
 | `docs/decisions/0093-three-mail-pulls-said-plainly.md` | The three mail pulls: what each answers, where it goes in, where it shows |
+| `docs/decisions/0094-team-pulse-and-full-history.md` | Team pulse on the control room; About's whole history; one Close per window |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

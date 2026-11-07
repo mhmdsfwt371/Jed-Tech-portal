@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.11 — 2026-11-08
+
+- «نبض الفريق» في غرفة المتابعة: خط حي بيترسم بالمغلق كل يوم الشهر ده، والنهارده بينبض، والجمعة والسبت مظللين، واضغط أي يوم تشوف مهامه.
+- «عن البوابة» بقت بتحكي التاريخ كامل: بدأ العمل في سبتمبر ٢٠٢٦ (الإصدارات ١ لـ٤ على فايربيز)، والبناء الحالي من v5.0.
+- كل نافذة بقى فيها زرار «إغلاق» واحد بس.
+
+<details><summary>English</summary>
+
+- «Team pulse» on the control room: a live trace of what the team closed each day this month, today pulsing, Friday and Saturday shaded — click any day to see its tasks.
+- «About» now tells the whole history: work started in September 2026 (versions 1–4 on Firebase), current build since v5.0.
+- Every window has one Close button only.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- کنٹرول روم پر «ٹیم کی نبض»: اس مہینے روزانہ بند ٹاسک کی زندہ لکیر، آج دھڑکتا ہوا، جمعہ ہفتہ نمایاں؛ کسی دن پر کلک کریں۔
+- «پورٹل کے بارے میں» اب پوری تاریخ بتاتا ہے: کام ستمبر 2026 میں شروع، موجودہ تعمیر v5.0 سے۔
+- ہر کھڑکی میں ایک ہی «بند کریں»۔
+
+</div>
+</details>
+
+
 ## v9.10 — 2026-11-07
 
 - كل سحبة من سحبات البريد التلاتة (نشاط البريد من PST، والمشاريع من البريد، وسجل المناقصات) بقى فوقها شريط بيقول: بتجاوب على إيه، وبترفعها منين، وبياناتها بتظهر فين، ومع روابط للاتنين التانيين.

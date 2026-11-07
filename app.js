@@ -934,7 +934,7 @@ function tdPasteDialog() {
   const ta = el('textarea', { rows: 10, class: 'td-paste-ta', dir: 'ltr', placeholder: '{ "schema": "afaqy-tenders-from-mail/v1", … }' });
   const dlg = el('dialog', { class: 'proj-edit td-paste', 'aria-labelledby': 'td-paste-h' }, el('h2', { id: 'td-paste-h', text: t('td_paste_h') }), el('p', { class: 'hint', text: t('td_paste_lead') }), ta,
     el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary td-paste-go', text: t('td_paste_go'), onclick: async () => { if (await tdTake(ta.value)) dlg.close(); } }),
-      el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() })));
+      null));
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal(); ta.focus();
 }
 function cleanTenders(x) {
@@ -1128,11 +1128,11 @@ const AUTHOR = { ar: 'محمد صفوت', en: 'Mohamed Safwat', ur: 'محمد ص
 const HISTORY_SINCE = { ver: 'v5.0', date: '2026-10-29' };   // the first entry of this repository's version history
 async function openAbout() {
   const dlg = el('dialog', { class: 'about-dlg', 'aria-labelledby': 'about-h' }, el('h2', { id: 'about-h', text: t('about_h') }),
-    el('p', { class: 'about-by' }, el('span', { text: t('about_by') }), ' ', el('b', { text: AUTHOR[lang] || AUTHOR.en }), el('br'), el('span', { class: 'hint', text: t('about_role') })),
-    el('dl', { class: 'fl-ctx about-facts' }, el('dt', { text: t('about_ver') }), el('dd', { text: `v${PORTAL_VERSION}` }), el('dt', { text: t('about_since') }), el('dd', { text: `${HISTORY_SINCE.ver} — ${HISTORY_SINCE.date}` }),
+    el('p', { class: 'about-by' }, el('span', { class: 'about-eyebrow', text: t('about_by') }), el('b', { text: AUTHOR[lang] || AUTHOR.en }), el('span', { class: 'hint', text: t('about_role') })),
+    el('dl', { class: 'fl-ctx about-facts' }, el('dt', { text: t('about_ver') }), el('dd', { text: `v${PORTAL_VERSION}` }), el('dt', { text: t('about_started') }), el('dd', { text: t('about_started_v') }), el('dt', { text: t('about_since') }), el('dd', { text: `${HISTORY_SINCE.ver} — ${HISTORY_SINCE.date}` }),
       el('dt', { text: t('about_versions') }), el('dd', { class: 'about-nv', text: '…' }), el('dt', { text: t('about_adrs') }), el('dd', { class: 'about-na', text: '…' })),
     el('p', { class: 'hint', text: t('about_note') }),
-    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: t('about_news'), onclick: () => { dlg.close(); openNews(); } }), el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() })));
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: t('about_news'), onclick: () => { dlg.close(); openNews(); } })));   // the dialog's own top bar closes it
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
   const cnt = async (req, re) => { try { const r = await req; if (!r.ok) return null; const s = await r.text(); return new Set(s.match(re) || []).size; } catch { return null; } };   // the site's own files, read only; distinct entries
   const [nv, na] = await Promise.all([cnt(fetch('./CHANGELOG.md', { cache: 'no-store' }), /^## v\d+\.\d+/gm), cnt(fetch('./docs/START-HERE.md', { cache: 'no-store' }), /docs\/decisions\/(?!0000)0\d{3}(?=-)/g)]);
@@ -1151,7 +1151,7 @@ function crModal({ title, lead, tiles = [], bars = [], head = [], rows = [], hot
     el('div', { class: 'table-wrap crm-list' }, el('table', {}, el('thead', {}, el('tr', {}, head.map((h) => el('th', { text: h })))),
       el('tbody', {}, shown.map((r, k) => el('tr', { class: hot(r, k) ? 'crm-hot' : '' }, r.map((c, k) => el('td', { class: k ? 'num' : '', dir: 'auto', text: c == null ? '—' : String(c) }))))))),
     rows.length > shown.length ? el('p', { class: 'hint', text: t('crm_more', { n: rows.length - shown.length }) }) : null,
-    el('div', { class: 'row', style: 'justify-content:flex-end' }, el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() })));
+    null);
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
 }
 
@@ -1166,6 +1166,44 @@ function mailSrc(kind) {
     el('div', { class: 'msrc-head' }, el('span', { class: 'msrc-ic', 'aria-hidden': 'true', text: MAIL_SRC[kind].ic }), el('b', { text: t(`msrc_${kind}_name`) }), el('span', { class: 'chip msrc-n', text: t('msrc_one_of') })),
     el('dl', { class: 'msrc-dl' }, el('dt', { text: t('msrc_answers') }), el('dd', { text: t(`msrc_${kind}_q`) }), el('dt', { text: t('msrc_in') }), el('dd', { text: t(`msrc_${kind}_in`) }),
       el('dt', { text: t('msrc_shows') }), el('dd', { text: t(`msrc_${kind}_out`) }), el('dt', { text: t('msrc_not') }), el('dd', {}, other.map((k, n) => [n ? ' · ' : '', el('button', { type: 'button', class: 'linkish', text: `${MAIL_SRC[k].ic} ${t(`msrc_${k}_name`)}`, onclick: MAIL_SRC[k].go })]))));
+}
+
+// ---------- ADR-0094: «نبض الفريق» — the month's closes, day by day, drawn like a live trace ----------
+function teamPulse(doneM, doneP, onDay, hasPrev) {   // hasPrev: last month pulled whole — otherwise no comparison (ADR-0087)
+  const today = saudiDay(new Date().toISOString()), y = +today.slice(0, 4), m = +today.slice(5, 7), d = +today.slice(8, 10);
+  const len = new Date(Date.UTC(y, m, 0)).getUTCDate(), plen = new Date(Date.UTC(y, m - 1, 0)).getUTCDate();
+  const per = (list, n) => { const c = Array(n + 1).fill(0); for (const x of list) { const k = +saudiDay(x.completedAt).slice(8, 10); if (k >= 1 && k <= n) c[k]++; } return c; };
+  const cur = per(doneM, len), prev = per(doneP, plen), top = Math.max(4, ...cur.slice(1, d + 1), ...(hasPrev ? prev.slice(1) : []));
+  const narrow = innerWidth < 640, W = narrow ? 420 : 1000, H = narrow ? 210 : 170, P = 14, axFs = Math.ceil(13.5 * W / Math.max(300, Math.min(innerWidth - 40, 1180)));   // phone: taller; day numbers never under 12px
+  const _u = 0, X = (k) => P + ((k - 1) / (len - 1)) * (W - 2 * P), Y = (v) => H - 22 - (v / top) * (H - 46);
+  const pts = (arr, upTo) => Array.from({ length: upTo }, (_, i) => [X(i + 1), Y(arr[i + 1] || 0)]);
+  const smooth = (p) => p.length < 2 ? '' : p.reduce((s, [x, yy], i) => { if (!i) return `M${x},${yy}`; const [x0, y0] = p[i - 1], cx = (x0 + x) / 2; return `${s} C${cx},${y0} ${cx},${yy} ${x},${yy}`; }, '');
+  const cp = pts(cur, d), pp = pts(prev, Math.min(plen, len)), line = smooth(cp), area = cp.length ? `${line} L${cp[cp.length - 1][0]},${H - 22} L${cp[0][0]},${H - 22} Z` : '';
+  const NS = 'http://www.w3.org/2000/svg', S = (tag, at = {}) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(at)) e.setAttribute(k, v); return e; };
+  const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, class: 'tp-svg', role: 'img', 'aria-label': t('tp_aria', { n: cur.slice(1, d + 1).reduce((s, v) => s + v, 0) }) });
+  const defs = S('defs'), g = S('linearGradient', { id: 'tp-fill', x1: 0, y1: 0, x2: 0, y2: 1 });
+  g.append(S('stop', { offset: '0%', 'stop-color': 'var(--live-bright)', 'stop-opacity': '.32' }), S('stop', { offset: '100%', 'stop-color': 'var(--live-bright)', 'stop-opacity': '0' })); defs.append(g); svg.append(defs);
+  for (let k = 1; k <= len; k++) { const wd = new Date(Date.UTC(y, m - 1, k)).getUTCDay(); if (wd === 5 || wd === 6) svg.append(S('rect', { class: 'tp-weekend', x: X(k) - (W - 2 * P) / (len - 1) / 2, y: 8, width: (W - 2 * P) / (len - 1), height: H - 30 })); }
+  for (let v = 0; v <= 1; v += 0.5) svg.append(S('line', { class: 'tp-grid', x1: P, x2: W - P, y1: Y(top * v), y2: Y(top * v) }));
+  if (hasPrev && pp.length > 1) svg.append(S('path', { class: 'tp-prev', d: smooth(pp) }));
+  if (area) svg.append(S('path', { class: 'tp-area', d: area, fill: 'url(#tp-fill)' }));
+  if (line) svg.append(S('path', { class: 'tp-line', d: line, pathLength: '1' }));
+  const guide = S('line', { class: 'tp-guide', y1: 8, y2: H - 22, x1: -10, x2: -10 }); svg.append(guide);
+  if (cp.length) { const [lx, ly] = cp[cp.length - 1]; svg.append(S('circle', { class: 'tp-ring', cx: lx, cy: ly, r: 6 }), S('circle', { class: 'tp-ring tp-ring2', cx: lx, cy: ly, r: 6 }), S('circle', { class: 'tp-dot', cx: lx, cy: ly, r: 5 })); }
+  for (let k = 1; k <= len; k += (len > 28 ? 7 : 7)) { const tx = S('text', { class: 'tp-ax', x: X(k), y: H - 6, 'text-anchor': 'middle', 'font-size': axFs }); tx.textContent = String(k); svg.append(tx); }
+  const tip = el('div', { class: 'tp-tip', hidden: true });
+  const show = (k) => { if (k < 1 || k > len) return; guide.setAttribute('x1', X(k)); guide.setAttribute('x2', X(k)); const future = k > d;
+    tip.hidden = false; tip.textContent = future ? t('tp_tip_future', { d: k }) : t('tp_tip', { d: k, n: cur[k], p: hasPrev && k <= plen ? prev[k] : '—' }); tip.style.setProperty('--tx', `${(X(k) / W) * 100}%`); };
+  const dayAt = (e) => { const r = svg.getBoundingClientRect(), fx = ((e.clientX - r.left) / r.width) * W; return Math.max(1, Math.min(len, Math.round(((fx - P) / (W - 2 * P)) * (len - 1)) + 1)); };
+  svg.addEventListener('pointermove', (e) => show(dayAt(e))); svg.addEventListener('pointerleave', () => { tip.hidden = true; guide.setAttribute('x1', -10); guide.setAttribute('x2', -10); });
+  svg.addEventListener('click', (e) => { const k = dayAt(e); if (k <= d) onDay(`${today.slice(0, 8)}${String(k).padStart(2, '0')}`); });
+  const tot = cur.slice(1, d + 1).reduce((s, v) => s + v, 0), work = Array.from({ length: d }, (_, i) => i + 1).filter((k) => { const wd = new Date(Date.UTC(y, m - 1, k)).getUTCDay(); return wd !== 5 && wd !== 6; });
+  const avg = work.length ? Math.round((work.reduce((s, k) => s + cur[k], 0) / work.length) * 10) / 10 : 0, peakK = cur.slice(1, d + 1).indexOf(Math.max(0, ...cur.slice(1, d + 1))) + 1;
+  return el('section', { class: 'tp' },
+    el('div', { class: 'tp-head' }, el('span', { class: 'tp-live', 'aria-hidden': 'true' }), el('h2', { text: t('tp_h') }),
+      el('span', { class: 'tp-sum', text: t('tp_sum', { today: cur[d], avg, peak: cur[peakK] || 0, pd: peakK }) })),
+    el('div', { class: 'tp-wrap' }, svg, tip),
+    el('p', { class: 'hint tp-legend' }, el('span', { class: 'tp-k tp-k-cur' }), t('tp_leg_cur'), el('span', { class: 'tp-k tp-k-prev' }), hasPrev ? t('tp_leg_prev') : t('tp_leg_noprev'), el('span', { class: 'tp-k tp-k-we' }), t('tp_leg_we'), ` · ${t('tp_click')}`));
 }
 
 // ---------- ADR-0079: the bento's small visuals — drawn from the same numbers as the tiles, never decoration ----------
@@ -2579,6 +2617,7 @@ function renderHome() {
     el('p', { class: 'answer-line', text: t('cr_answer', { d: doneM.length, p: Math.round(doneM.reduce((s, x) => s + taskPoints(wt, x), 0)), o: openNow.length, old: old.length, n: team.length }) }),
     el('div', { class: 'cr-nums' }, num('cr_nums_done', doneM.length, hasPrev ? t('cr_nums_last', { n: doneP.length }) : t('cr_nums_nolast'), 'done'), num('cr_nums_points', Math.round(doneM.reduce((s, x) => s + taskPoints(wt, x), 0)), hasPrev ? t('cr_nums_last', { n: Math.round(doneP.reduce((s, x) => s + taskPoints(wt, x), 0)) }) : t('cr_nums_nolast'), 'points'),
       num('cr_nums_open', openNow.length, old.length ? t('cr_nums_old', { n: old.length }) : '', 'open'), num('cr_nums_team', team.length, '', 'team')),
+    teamPulse(doneM, doneP, (day) => { const L = doneM.filter((x) => saudiDay(x.completedAt) === day); crModal({ title: t('tp_day_h', { d: day }), file: `closed-${day}`, tiles: [[t('cr_nums_done'), L.length], [t('cr_nums_points'), Math.round(L.reduce((s, x) => s + taskPoints(wt, x), 0))], [t('crm_people'), new Set(L.map((x) => x.assigneeId)).size]], bars: byPerson(L), head: [t('crm_task'), t('col_person'), t('col_points'), t('crm_type')], rows: L.map((x) => [x.title || x.id, nm(x.assigneeId), Math.round(taskPoints(wt, x) * 10) / 10, x.type || '']) }); }, hasPrev),
     el('h2', { class: 'cr-h', text: t('cr_att_h') }),
     att.length ? el('div', { class: 'cr-att' }, att.map((x) => el('button', { type: 'button', class: `cr-item k-${x.k}`, onclick: go(x.href, x.prep) },
       el('div', {}, el('b', { text: x.title }), x.detail ? el('span', { text: x.detail }) : null), el('span', { class: 'cr-go', text: `${t('cr_go')} ↗` }))))
