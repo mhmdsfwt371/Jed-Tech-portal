@@ -1,15 +1,18 @@
 {
-  "version": "9.09",
+  "version": "9.10",
   "date": "2026-11-07",
   "notes": {
     "ar": [
-      "«سجل المناقصات» بقى بيغذّي «مشاريعي»: أي مناقصة «تم التقديم» أو «فزنا» أو «خسرنا» بتتحسب هناك لوحدها، مرة واحدة، والخسارة بسببها، فنسبة الفوز بقت حقيقية."
+      "كل سحبة من سحبات البريد التلاتة (نشاط البريد من PST، والمشاريع من البريد، وسجل المناقصات) بقى فوقها شريط بيقول: بتجاوب على إيه، وبترفعها منين، وبياناتها بتظهر فين، ومع روابط للاتنين التانيين.",
+      "«مشاريعي» بتفتح بالمناقصات لوحدها حتى من غير سجل مشاريع."
     ],
     "en": [
-      "The «Tender register» now feeds «My projects»: a tender submitted, won or lost counts there on its own, once, a loss with its reason — so the win rate is real."
+      "Each of the three mail pulls (mail activity from PST, projects from mail, the tender register) now opens with a strip: what it answers, where it goes in, where its data shows, with links to the other two.",
+      "«My projects» opens with tenders alone, even with no projects register."
     ],
     "ur": [
-      "«ٹینڈر رجسٹر» اب «میرے منصوبے» کو بھرتا ہے: جمع، جیت یا ہار والا ٹینڈر وہاں خود ایک بار شمار ہوتا ہے، ہار اپنی وجہ کے ساتھ۔"
+      "تینوں میل پلز کے اوپر اب ایک پٹی: کیا بتاتا ہے، کہاں سے ڈالیں، کہاں دکھتا ہے، اور باقی دو کے لنک۔",
+      "«میرے منصوبے» صرف ٹینڈرز سے بھی کھلتا ہے۔"
     ]
   }
 }

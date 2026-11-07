@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.10 — 2026-11-07
+
+- كل سحبة من سحبات البريد التلاتة (نشاط البريد من PST، والمشاريع من البريد، وسجل المناقصات) بقى فوقها شريط بيقول: بتجاوب على إيه، وبترفعها منين، وبياناتها بتظهر فين، ومع روابط للاتنين التانيين.
+- «مشاريعي» بتفتح بالمناقصات لوحدها حتى من غير سجل مشاريع.
+
+<details><summary>English</summary>
+
+- Each of the three mail pulls (mail activity from PST, projects from mail, the tender register) now opens with a strip: what it answers, where it goes in, where its data shows, with links to the other two.
+- «My projects» opens with tenders alone, even with no projects register.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- تینوں میل پلز کے اوپر اب ایک پٹی: کیا بتاتا ہے، کہاں سے ڈالیں، کہاں دکھتا ہے، اور باقی دو کے لنک۔
+- «میرے منصوبے» صرف ٹینڈرز سے بھی کھلتا ہے۔
+
+</div>
+</details>
+
+
 ## v9.09 — 2026-11-07
 
 - «سجل المناقصات» بقى بيغذّي «مشاريعي»: أي مناقصة «تم التقديم» أو «فزنا» أو «خسرنا» بتتحسب هناك لوحدها، مرة واحدة، والخسارة بسببها، فنسبة الفوز بقت حقيقية.

@@ -1059,7 +1059,7 @@ function renderTenders() {
         el('a', { class: 'btn tiny', href: 'https://outlook.office.com/mail/', target: '_blank', rel: 'noopener', text: t('proj_open_outlook') })),
       el('div', { class: 'td-way' }, el('h3', { text: t('td_way_pst') }), el('p', { class: 'hint', text: t('td_pst_lead') })),
       el('div', { class: 'td-way' }, el('h3', { text: t('td_way_manual') }), el('p', { class: 'hint', text: t('td_manual_lead') }))));
-  if (!tenders || !tenders.items.length) { set(body, pull, el('p', { class: 'note', text: t('td_empty') })); return; }
+  if (!tenders || !tenders.items.length) { set(body, mailSrc('tenders'), pull, el('p', { class: 'note', text: t('td_empty') })); return; }
   const periods = [...new Set(tenders.items.map((i) => tdPeriodOf(i.date, tdKind)))].sort().reverse();
   if (tdKind === 'all') tdPick = 'all'; else if (!periods.includes(tdPick)) tdPick = periods.includes(tdPeriodOf(today, tdKind)) ? tdPeriodOf(today, tdKind) : periods[0];
   const rowsAll = tenders.items.filter((i) => tdKind === 'all' || tdPeriodOf(i.date, tdKind) === tdPick), K = tdKpis(rowsAll, today);
@@ -1107,7 +1107,7 @@ function renderTenders() {
         el('td', { class: `num${TD_OPEN.includes(i.stage) && ['received', 'screen', 'decide'].includes(i.stage) && days > 3 ? ' td-wait' : ''}`, text: TD_OPEN.includes(i.stage) ? String(days) : '—', title: t('td_col_days') }),
         el('td', {}, cd(i)), el('td', { class: 'num td-tog', text: open ? '▾' : '▸' })),
         open ? el('tr', { class: 'td-detail-row' }, el('td', { colspan: 6 }, detail(i))) : null]; }))));
-  set(body, pull,
+  set(body, mailSrc('tenders'), pull,
     el('div', { class: 'row td-filter' }, kinds, pick),
     el('p', { class: 'answer-line', text: t('td_answer2', { p: tdLabel(tdPick), n: K.n, w: K.waiting, j: K.joined, s: K.submitted, won: K.won }) }),
     pipe,
@@ -1153,6 +1153,19 @@ function crModal({ title, lead, tiles = [], bars = [], head = [], rows = [], hot
     rows.length > shown.length ? el('p', { class: 'hint', text: t('crm_more', { n: rows.length - shown.length }) }) : null,
     el('div', { class: 'row', style: 'justify-content:flex-end' }, el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() })));
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
+}
+
+// ---------- ADR-0093: three mail pulls, each said plainly where it lives — what it answers, where it goes in, where it shows ----------
+const MAIL_SRC = {
+  pst: { ic: '📨', go: () => { location.hash = '#mailfile'; } },
+  projects: { ic: '🗂', go: () => { location.hash = '#me'; setTimeout(() => { projView = 'mail'; projOpen(); }, 300); } },
+  tenders: { ic: '📑', go: () => { location.hash = '#tenders'; } } };
+function mailSrc(kind) {
+  const other = Object.keys(MAIL_SRC).filter((k) => k !== kind);
+  return el('section', { class: `mail-src mail-src-${kind}`, 'aria-label': t('msrc_aria') },
+    el('div', { class: 'msrc-head' }, el('span', { class: 'msrc-ic', 'aria-hidden': 'true', text: MAIL_SRC[kind].ic }), el('b', { text: t(`msrc_${kind}_name`) }), el('span', { class: 'chip msrc-n', text: t('msrc_one_of') })),
+    el('dl', { class: 'msrc-dl' }, el('dt', { text: t('msrc_answers') }), el('dd', { text: t(`msrc_${kind}_q`) }), el('dt', { text: t('msrc_in') }), el('dd', { text: t(`msrc_${kind}_in`) }),
+      el('dt', { text: t('msrc_shows') }), el('dd', { text: t(`msrc_${kind}_out`) }), el('dt', { text: t('msrc_not') }), el('dd', {}, other.map((k, n) => [n ? ' · ' : '', el('button', { type: 'button', class: 'linkish', text: `${MAIL_SRC[k].ic} ${t(`msrc_${k}_name`)}`, onclick: MAIL_SRC[k].go })]))));
 }
 
 // ---------- ADR-0079: the bento's small visuals — drawn from the same numbers as the tiles, never decoration ----------
@@ -1345,7 +1358,8 @@ function projWorkspaceBody() {
     el('div', { class: 'row proj-actions' }, el('button', { type: 'button', class: 'btn primary tiny', text: `＋ ${t('proj_add')}`, onclick: () => projEdit(null) }),
       el('button', { type: 'button', class: 'btn tiny', text: `⇩ ${t('proj_pull')}`, onclick: projPrompt }), el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('proj_excel')}`, onclick: projXlsx }),
       el('button', { type: 'button', class: 'btn tiny', text: `🖨 ${t('proj_pdf')}`, onclick: projReport }), el('button', { type: 'button', class: 'btn quiet tiny', text: t('proj_import_any'), onclick: () => up.click() }), up));
-  if (!myProjects && !myRegister) return el('section', { class: 'proj' }, head, el('div', { class: 'empty', text: t('proj_none') }));
+  // ADR-0092/0093: the tender register alone is enough to open the workspace; the empty state still says where the data goes in
+  if (!myProjects && !myRegister && !(tenders && tenders.items.length)) return el('section', { class: 'proj' }, head, mailSrc('projects'), el('div', { class: 'empty', text: t('proj_none') }));
   const year = ((myProjects && myProjects.to) || (myRegister && myRegister.asOf) || '2026').slice(0, 4), y0 = `${year}-01-01`;
   const all = projectsModel(), inYear = (r) => (r.deck ? ((r.period || '').includes(year) || (r.date || '') >= y0) : (r.last || '') >= y0), scope = all.filter((r) => projAll || inYear(r));
   const sar = (v) => `${Math.round(v).toLocaleString('en-US')} ${t('sar')}`, sumV = (l) => l.reduce((x, r) => x + r.value, 0);
@@ -1425,7 +1439,7 @@ function projWorkspaceBody() {
       el('p', { class: 'hint', text: t('proj_s_note') }));
   }
   const src = el('p', { class: 'hint' }, [myRegister ? t('proj_src_reg', { d: myRegister.asOf, n: myRegister.items.length, b: myRegister.board.length }) : t('proj_src_noreg'), myProjects ? ` · ${t('proj_src', { from: myProjects.from, to: myProjects.to, d: myProjects.importedAt })}` : ` · ${t('proj_src_nomail')}`].join(''));
-  return el('section', { class: 'proj' }, head, src, el('div', { class: 'row proj-tools' }, tabs, period), page);
+  return el('section', { class: 'proj' }, head, projView === 'mail' ? mailSrc('projects') : null, src, el('div', { class: 'row proj-tools' }, tabs, period), page);
 }
 async function projFilesExport() {
   const out = {}; for (const it of (myRegister ? myRegister.items : [])) { if (!it.files) continue; const files = (await store.kvGet(`pf:${it.id}`)) || [];
@@ -3580,7 +3594,7 @@ function renderMailFile() {
       el('button', { type: 'button', class: 'btn tiny quiet', text: t('mf_rules_reset'), onclick: () => { if (confirm(t('mf_rules_reset_confirm'))) saveRules(null); } })));
   // ADR-0075 / ADR-0076: how this page counts and its classification rules — shown BEFORE a file is chosen too, so they can be read first
   const howBox = el('details', { class: 'tucked mf-howcount', open: true }, el('summary', { text: t('mf_count_h') }), el('ul', { class: 'defs' }, ['mf_count_1', 'mf_count_2', 'mf_count_3', 'mf_count_4', 'mf_count_5'].map((k) => el('li', { text: t(k) }))));
-  if (!st.msgs) { set(body, mailbox, top, rulesBox, howBox); return; }
+  if (!st.msgs) { set(body, mailSrc('pst'), mailbox, top, rulesBox, howBox); return; }
   const inRange = (m) => (!st.from || (m.date || '').slice(0, 10) >= st.from) && (!st.to || (m.date || '').slice(0, 10) <= st.to);
   const ranged = st.msgs.filter(inRange), counts = new Map(), emails = new Map();
   for (const m of ranged) { counts.set(m.sender, (counts.get(m.sender) || 0) + 1); if (!emails.has(m.sender) && m.email && !m.email.startsWith('/')) emails.set(m.sender, m.email); }
@@ -3611,7 +3625,7 @@ function renderMailFile() {
     el('div', { class: 'row' }, el('div', { class: 'pills' }, [['all', t('mf_all')], ...CATS.map((c) => [c, `${catName(c)} (${tot[c]})`])].map(([k, l]) => el('button', { type: 'button', class: `pill-btn${st.cat === k ? ' on' : ''}`, text: l, onclick: () => { st.cat = k; renderMailFile(); } }))),
       el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('mf_export')}`, onclick: csv })),
     shown.length ? el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('mf_col_date'), t('mf_col_sender'), t('mf_col_subject'), t('mf_col_cat'), t('mf_col_folder')].map((h) => el('th', { text: h })))), tbody), more) : el('div', { class: 'empty', text: t('mf_empty') }));
-  set(body, mailbox, top, dateRow, sendersBox, rulesBox, results, howBox, listBox);
+  set(body, mailSrc('pst'), mailbox, top, dateRow, sendersBox, rulesBox, results, howBox, listBox);
 }
 function route() {
   if (location.hash.startsWith('#rank=')) { takeRankLink(true).then(route); return; }   // a rank link can arrive while the portal is already open (only the hash changes)
