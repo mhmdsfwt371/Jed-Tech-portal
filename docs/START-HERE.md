@@ -125,6 +125,7 @@
 | `docs/decisions/0093-three-mail-pulls-said-plainly.md` | The three mail pulls: what each answers, where it goes in, where it shows |
 | `docs/decisions/0094-team-pulse-and-full-history.md` | Team pulse on the control room; About's whole history; one Close per window |
 | `docs/decisions/0095-large-pst-extractor-and-manager-inbox-indicator.md` | Large PSTs through the local extractor; «Email Activity — Manager Inbox» indicator |
+| `docs/decisions/0096-big-pst-goes-to-the-extractor.md` | A PST too big for the browser goes straight to the extractor |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

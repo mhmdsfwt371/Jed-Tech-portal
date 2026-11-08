@@ -1039,7 +1039,7 @@ async function tdExcel(rows) {
 function renderTenders() {
   const body = $('tenders-body'); if (!body || isTeamPortal) return; const today = saudiDay(new Date().toISOString());
   const up = el('input', { type: 'file', accept: '.json,.txt,application/json,text/plain', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; await tdTake(await f.text()); } });
-  const pst = el('input', { type: 'file', accept: '.pst,.ost', hidden: true, onchange: (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) tdFromPst(f); } });
+  const pst = el('input', { type: 'file', accept: '.pst,.ost', hidden: true, onchange: (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; if (f.size > MF_BROWSER_MAX) { toast(t('td_pst_big', { gb: (f.size / 1073741824).toFixed(1) })); return; } tdFromPst(f); } });   // ADR-0096: a file the browser cannot hold is not tried
   const dIn2 = (cls, val, on) => el('input', { type: 'date', class: cls, value: val, max: today, onchange: (e) => on(e.target.value) });
   const empty = !tenders || !tenders.items.length;
   // ADR-0085: one compact bar — the period and the five actions; how each way works is folded, open only while the register is empty
@@ -1295,6 +1295,13 @@ function maWeightsLocked() {
   return el('details', { class: 'tucked ma-w-fold' }, el('summary', { text: `🔒 ${t('ma_w_h')}` }),   // closed: locked until approved
     el('fieldset', { class: 'ma-w', disabled: true }, el('legend', { text: t('ma_w_h') }), el('p', { class: 'hint', text: t('ma_w_locked') }),
       el('div', { class: 'row' }, maCats().map((c) => el('label', {}, el('span', { text: maCatName(c) }), el('input', { type: 'number', value: '0', min: '0', step: '0.5', 'aria-label': maCatName(c) }))))));
+}
+
+// ---------- ADR-0096: a PST the browser cannot hold goes straight to the extractor, never to an error ----------
+const MF_BROWSER_MAX = 900 * 1048576;   // about the most a browser tab reliably holds in one piece
+function maTooBig(f) {
+  return el('div', { class: 'ma-big' }, el('p', {}, el('b', { text: t('ma_big_h', { gb: (f.size / 1073741824).toFixed(1) }) })), el('ol', { class: 'ma-steps' }, ['ma_step1', 'ma_step2', 'ma_step3', 'ma_step4'].map((k) => el('li', { text: t(k) }))),
+    el('div', { class: 'row' }, el('a', { class: 'btn primary', href: MA_RELEASES, target: '_blank', rel: 'noopener noreferrer', text: `⬇ ${t('ma_get')}` })));
 }
 
 // ---------- ADR-0079: the bento's small visuals — drawn from the same numbers as the tiles, never decoration ----------
@@ -3702,7 +3709,8 @@ function renderMailFile() {
   const CATS = [...rules.map((r) => r.k), 'other'];   // ADR-0077: the results follow the manager's categories
   const status = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite', text: st.msgs ? t(st.copies ? 'mf_file_copies' : 'mf_file', { name: st.file, n: st.msgs.length, c: st.copies }) : '' });
   const fileIn = el('input', { type: 'file', accept: '.pst,.ost', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return;
-    if (await mfLoadFile(f, (s) => { status.textContent = s; })) renderMailFile(); e.target.value = ''; } });
+    if (f.size > MF_BROWSER_MAX) { e.target.value = ''; set(status, maTooBig(f)); const box = document.querySelector('.ma-sec'); if (box) { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); box.classList.add('ma-flash'); setTimeout(() => box.classList.remove('ma-flash'), 2400); } return; }   // ADR-0096
+    if (await mfLoadFile(f, (s) => { status.textContent = s; })) renderMailFile(); else set(status, el('p', { class: 'note' }, t('mf_fail'), ' ', el('a', { class: 'linkish', href: MA_RELEASES, target: '_blank', rel: 'noopener noreferrer', text: t('ma_get') }))); e.target.value = ''; } });
   const top = el('section', { class: 'dt-quick' },
     el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: `📂 ${t('mf_pick_file')}`, onclick: () => fileIn.click() }), fileIn, el('span', { class: 'hint', text: t('mf_privacy') })), status,
     el('details', { class: 'me-phones' }, el('summary', { text: t('mf_how_h') }), el('p', { class: 'hint', text: t('mf_how') })));

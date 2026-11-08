@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.14 — 2026-11-08
+
+- لو اخترت ملف بريد أكبر من حوالي ١ جيجا في صفحة نشاط البريد، البوابة ما بتحاولش تقراه: بتعرضلك خطوات «مستخرج البريد» الأربعة وزرار التنزيل على طول، بدل رسالة الخطأ.
+
+<details><summary>English</summary>
+
+- If you choose a mail file over about 1 GB on the Mail activity page, the portal no longer tries to read it: it shows the four «Mail Extractor» steps and the download button at once, instead of an error.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اگر آپ تقریباً 1 GB سے بڑی میل فائل چنیں تو پورٹل اسے پڑھنے کی کوشش نہیں کرتا: غلطی کی بجائے فوراً «میل ایکسٹریکٹر» کے چار مراحل اور ڈاؤن لوڈ بٹن دکھاتا ہے۔
+
+</div>
+</details>
+
+
 ## v9.13 — 2026-11-08
 
 - «مستخرج البريد»: برنامج ويندوز بيقرا ملف بريد أوتلوك كامل مهما كان حجمه على جهازك، رسالة رسالة، من غير ما يرفع حاجة، وبيطلّع ملف صغير تستورده في صفحة نشاط البريد.

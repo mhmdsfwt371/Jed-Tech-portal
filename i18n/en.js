@@ -17,6 +17,12 @@ export default {
     g_planner_h: 'Team plans',
     g_planner_b: 'The manager’s page only: upload the team structure file (an HTML page) and it shows as it looks, exactly as uploaded. It stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file, or remove it from the device.',
     // ADR-0070: the one monthly place
+    td_pst_big: 'This file is {gb} GB — too large for the browser. For tenders use «Copy the instructions for the assistant», or export from Outlook only A. Ibrahim’s folder or a shorter period.',
+    ma_step4: 'Come back here: «Import the extractor’s file» in the green box above, then confirm whose each address is.',
+    ma_step3: 'When it finishes it opens the folder with a small file ending in .jsonl.gz.',
+    ma_step2: 'Open «AFAQY Mail Extractor», choose the same file and period, and press Start.',
+    ma_step1: 'Download the «Mail Extractor» from the button below and unzip it.',
+    ma_big_h: 'This file is {gb} GB — too large for the browser to read. Use the «Mail Extractor»:',
     ma_w_locked: 'Locked: the weights are prepared but not active until you approve the scoring rules after testing. Until then email activity is a separate indicator and does not affect points.',
     ma_w_h: 'Weight of email activity in scoring',
     ma_src: 'Source',
