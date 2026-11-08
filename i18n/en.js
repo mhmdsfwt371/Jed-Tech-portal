@@ -17,6 +17,9 @@ export default {
     g_planner_h: 'Team plans',
     g_planner_b: 'The manager’s page only: upload the team structure file (an HTML page) and it shows as it looks, exactly as uploaded. It stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file, or remove it from the device.',
     // ADR-0070: the one monthly place
+    mf_read_stats: '(read only {mb} MB of a {size} MB file, in {sec} s)',
+    td_pst_progress: 'Reading: {n} messages — {mb} of {size} MB',
+    mf_progress: 'Reading from your device: {n} messages — {mb} of {size} MB read — {sec} s',
     td_pst_big: 'This file is {gb} GB — too large for the browser. For tenders use «Copy the instructions for the assistant», or export from Outlook only A. Ibrahim’s folder or a shorter period.',
     ma_step4: 'Come back here: «Import the extractor’s file» in the green box above, then confirm whose each address is.',
     ma_step3: 'When it finishes it opens the folder with a small file ending in .jsonl.gz.',
@@ -1689,7 +1692,7 @@ export default {
     mf_privacy: 'Read in the browser only; never uploaded or saved, and the messages vanish when the page closes.',
     mf_reading: 'Reading {name} ({mb} MB)…',
     mf_done: '{n} messages read.',
-    mf_fail: 'Could not read the file — is it an Outlook PST? Very large files (over about 1 GB) do not fit in the browser; export a smaller folder or period.',
+    mf_fail: 'Could not read the file — is it an Outlook PST? A damaged or password-protected file cannot be read. For files over 5 GB use the «Mail Extractor».',
     mf_file: 'File: {name} — {n} messages',
     mf_how_h: 'How to export a PST from Outlook',
     mf_how: 'Outlook → File → Open & Export → Import/Export → Export to a file → Outlook Data File (.pst) → pick the folder (e.g. Sent Items or Inbox) → Filter to limit the period so the file stays small → Finish.',

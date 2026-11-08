@@ -991,17 +991,12 @@ function tdBookmarklet() {
 async function tdFromPst(f) {
   tdBusy = t('td_pst_reading', { name: f.name, mb: Math.max(1, Math.round(f.size / 1048576)) }); renderTenders();
   try {
-    await mfLoadLib(); const buf = await f.arrayBuffer(); await new Promise((r) => setTimeout(r, 30));
-    const pst = new window.PSTFile(window.Buffer.from(buf)), from = tdFrom || '0000-01-01', to = tdTo || '9999-12-31', out = []; let read = 0, withAtt = 0;
-    const walk = (fo) => { if (fo.hasSubfolders) for (const c of fo.getSubFolders()) walk(c);
-      if (fo.contentCount > 0) { let m = fo.getNextChild(), g = 0;
-        while (m && g++ < 500000) { read++; const d = m.clientSubmitTime || m.messageDeliveryTime, day = d ? saudiDay(new Date(d).toISOString()) : null;
-          if (day && day >= from && day <= to) { const att = [];
-            if (m.hasAttachments) { withAtt++; for (let i = 0; i < Math.min(30, m.numberOfAttachments || 0); i++) { try { const x = m.getAttachment(i); att.push(String(x.longFilename || x.filename || '')); } catch { /* an unreadable attachment is only its name missing */ } } }
-            const addr = String(m.senderEmailAddress || '').trim();
-            if (tdIsAI(addr) || tdHasKraasa(att)) out.push({ subject: String(m.subject || ''), from_address: addr, received: new Date(d).toISOString(), attachments: att }); }
-          m = fo.getNextChild(); } } };
-    walk(pst.getRootFolder());
+    const from = tdFrom || '0000-01-01', to = tdTo || '9999-12-31', out = []; let read = 0, withAtt = 0;   // ADR-0097: from the disk, in the background
+    const recs = await pstRead(f, { attFrom: from, attTo: to }, (p) => { tdBusy = t('td_pst_progress', { n: p.n.toLocaleString('en'), mb: p.mb, size: Math.round(p.size / 1048576) }); renderTenders(); });
+    for (const m of recs) { read++; const d = m.clientSubmitTime || m.messageDeliveryTime, day = d ? saudiDay(d) : null;
+      if (day && day >= from && day <= to) { const att = m.att || []; if (att.length) withAtt++;
+        const addr = String(m.senderEmailAddress || '').trim();
+        if (tdIsAI(addr) || tdHasKraasa(att)) out.push({ subject: String(m.subject || ''), from_address: addr, received: d, attachments: att }); } }
     const r = tdImport({ schema: 'afaqy-tenders-from-mail/v1', from, to: tdTo || saudiDay(new Date().toISOString()), tenders: out }); if (r.err) throw new Error(r.err);
     tenders = r.state; await tdSave(); tdBusy = '';
     toast(`${t('td_pst_read', { n: read, w: withAtt })} ${t('td_loaded', { a: r.added, m: r.merged, r: r.replies, o: r.other })}`);
@@ -1297,8 +1292,27 @@ function maWeightsLocked() {
       el('div', { class: 'row' }, maCats().map((c) => el('label', {}, el('span', { text: maCatName(c) }), el('input', { type: 'number', value: '0', min: '0', step: '0.5', 'aria-label': maCatName(c) }))))));
 }
 
+// ---------- ADR-0097: a PST up to 5 GB read in the background, straight from the disk ----------
+function pstRead(f, opts, onProgress) {
+  return new Promise((res, rej) => {
+    let w; try { w = new Worker('./assets/pst-worker.js'); } catch (e) { rej(e); return; }
+    w.onmessage = (e) => { const d = e.data; if (d.type === 'progress') { if (onProgress) onProgress(d); return; } w.terminate(); if (d.type === 'done') { d.recs.stats = d.stats; res(d.recs); } else rej(new Error(d.message)); };
+    w.onerror = (e) => { w.terminate(); rej(new Error(e.message || 'worker')); };
+    w.postMessage({ file: f, attFrom: (opts && opts.attFrom) || null, attTo: (opts && opts.attTo) || null });
+  });
+}
+/** The same result as before (ADR-0075): one row per e-mail, copies in other folders counted, not repeated. */
+function mfParseRecs(recs) {
+  const out = []; const seen = new Set(), seenMail = new Set(); let copies = 0;
+  for (const m of recs) { const key = m.d != null ? m.d : `${m.folder}:${out.length}`, mk = mailKey(m);
+    if (!seen.has(key) && seenMail.has(mk)) copies++;
+    if (!seen.has(key) && !seenMail.has(mk)) { seen.add(key); seenMail.add(mk); const d = m.clientSubmitTime || m.messageDeliveryTime;
+      out.push({ id: key, folder: m.folder || '/', subject: m.subject, sender: String(m.senderName || m.senderEmailAddress || '').trim().slice(0, 120), email: String(m.senderEmailAddress || '').slice(0, 160), to: m.displayTo, date: d || '' }); } }
+  out.copies = copies; return out;
+}
+
 // ---------- ADR-0096: a PST the browser cannot hold goes straight to the extractor, never to an error ----------
-const MF_BROWSER_MAX = 900 * 1048576;   // about the most a browser tab reliably holds in one piece
+const MF_BROWSER_MAX = 5 * 1073741824;   // ADR-0097: read from the disk in the background up to 5 GB; beyond that the extractor is faster
 function maTooBig(f) {
   return el('div', { class: 'ma-big' }, el('p', {}, el('b', { text: t('ma_big_h', { gb: (f.size / 1073741824).toFixed(1) }) })), el('ol', { class: 'ma-steps' }, ['ma_step1', 'ma_step2', 'ma_step3', 'ma_step4'].map((k) => el('li', { text: t(k) }))),
     el('div', { class: 'row' }, el('a', { class: 'btn primary', href: MA_RELEASES, target: '_blank', rel: 'noopener noreferrer', text: `⬇ ${t('ma_get')}` })));
@@ -3697,7 +3711,8 @@ function mfParse(buf) {
 }
 async function mfLoadFile(f, say) {   // read a PST on the device — from one place only, the mail page (ADR-0068)
   say(t('mf_reading', { name: f.name, mb: Math.max(1, Math.round(f.size / 1048576)) }));
-  try { await mfLoadLib(); const buf = await f.arrayBuffer(); await new Promise((r) => setTimeout(r, 30)); mfState.msgs = mfParse(buf); mfState.file = f.name; mfState.copies = mfState.msgs.copies || 0;
+  try { const recs = await pstRead(f, null, (p) => say(t('mf_progress', { n: p.n.toLocaleString('en'), mb: p.mb, size: Math.round(p.size / 1048576), sec: p.sec })));   // ADR-0097: from the disk, in the background
+    mfState.msgs = mfParseRecs(recs); mfState.file = f.name; mfState.copies = mfState.msgs.copies || 0; mfState.readStats = recs.stats;
     const counts = new Map(); for (const m of mfState.msgs) counts.set(m.sender, (counts.get(m.sender) || 0) + 1);
     mfState.picked = new Set([...counts.entries()].sort((p, q) => q[1] - p[1]).slice(0, 5).map(([k]) => k)); toast(t('mf_done', { n: mfState.msgs.length })); return true; }
   catch (err) { console.error(err); say(t('mf_fail')); return false; }
@@ -3707,7 +3722,7 @@ function renderMailFile() {
   const rulesOpen = !!(body.querySelector('.mf-rules') && body.querySelector('.mf-rules').open);   // the rules box stays open while its words are edited
   const st = mfState, rules = mfRules(), catName = (k) => { const r = rules.find((x) => x.k === k); return (r && r.name) || (['normal', 'advanced', 'upsell', 'other'].includes(k) ? t(`mf_cat_${k}`) : k); };
   const CATS = [...rules.map((r) => r.k), 'other'];   // ADR-0077: the results follow the manager's categories
-  const status = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite', text: st.msgs ? t(st.copies ? 'mf_file_copies' : 'mf_file', { name: st.file, n: st.msgs.length, c: st.copies }) : '' });
+  const status = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite', text: st.msgs ? `${t(st.copies ? 'mf_file_copies' : 'mf_file', { name: st.file, n: st.msgs.length, c: st.copies })}${st.readStats ? ` ${t('mf_read_stats', { mb: Math.max(1, Math.round(st.readStats.bytesRead / 1048576)), size: Math.round(st.readStats.size / 1048576).toLocaleString('en'), sec: Math.round(st.readStats.sec) })}` : ''}` : '' });   // ADR-0097: how much of the file was actually read
   const fileIn = el('input', { type: 'file', accept: '.pst,.ost', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return;
     if (f.size > MF_BROWSER_MAX) { e.target.value = ''; set(status, maTooBig(f)); const box = document.querySelector('.ma-sec'); if (box) { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); box.classList.add('ma-flash'); setTimeout(() => box.classList.remove('ma-flash'), 2400); } return; }   // ADR-0096
     if (await mfLoadFile(f, (s) => { status.textContent = s; })) renderMailFile(); else set(status, el('p', { class: 'note' }, t('mf_fail'), ' ', el('a', { class: 'linkish', href: MA_RELEASES, target: '_blank', rel: 'noopener noreferrer', text: t('ma_get') }))); e.target.value = ''; } });

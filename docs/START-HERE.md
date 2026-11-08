@@ -126,6 +126,7 @@
 | `docs/decisions/0094-team-pulse-and-full-history.md` | Team pulse on the control room; About's whole history; one Close per window |
 | `docs/decisions/0095-large-pst-extractor-and-manager-inbox-indicator.md` | Large PSTs through the local extractor; «Email Activity — Manager Inbox» indicator |
 | `docs/decisions/0096-big-pst-goes-to-the-extractor.md` | A PST too big for the browser goes straight to the extractor |
+| `docs/decisions/0097-browser-pst-up-to-5gb-and-extractor-path-fix.md` | Browser reads a PST up to 5 GB from the disk; extractor 1.0.2 opens any Windows path |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

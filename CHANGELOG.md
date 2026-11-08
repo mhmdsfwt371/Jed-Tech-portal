@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.15 — 2026-11-08
+
+- صفحة نشاط البريد وسجل المناقصات بقوا بيقروا ملف بريد لحد ٥ جيجا من جوه المتصفح: الملف ما بيتحمّلش كله، بيتقرا حتة حتة من الجهاز في الخلفية، والصفحة بتوريك التقدم وبتقولك اتقرا كام منه.
+- «مستخرج البريد» 1.0.2: اتصلّح فتح الملفات اللي في اسمها مسافة أو اللي بيديها اختيار الملف بشرطة مايلة (زي E:/OCTOBER inbox.pst).
+
+<details><summary>English</summary>
+
+- The Mail activity page and the tender register now read a mail file up to 5 GB in the browser: the file is never loaded whole, it is read piece by piece from your device in the background, with live progress and how much was read.
+- «Mail Extractor» 1.0.2: opening a file whose name has a space, or a path the file picker gives with forward slashes (like E:/OCTOBER inbox.pst), is fixed.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- میل سرگرمی اور ٹینڈر رجسٹر اب براؤزر میں 5 GB تک کی میل فائل پڑھتے ہیں: فائل پوری لوڈ نہیں ہوتی، پس منظر میں ٹکڑوں میں پڑھی جاتی ہے۔
+- «میل ایکسٹریکٹر» 1.0.2: اسپیس یا سلیش والے راستے (جیسے E:/OCTOBER inbox.pst) کھولنا ٹھیک ہو گیا۔
+
+</div>
+</details>
+
+
 ## v9.14 — 2026-11-08
 
 - لو اخترت ملف بريد أكبر من حوالي ١ جيجا في صفحة نشاط البريد، البوابة ما بتحاولش تقراه: بتعرضلك خطوات «مستخرج البريد» الأربعة وزرار التنزيل على طول، بدل رسالة الخطأ.
