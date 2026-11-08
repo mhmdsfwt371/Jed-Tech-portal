@@ -8,7 +8,7 @@ message filed in two folders counts once. A checkpoint is written as it goes, so
 import gzip, hashlib, json, os, re, sys, time, datetime as dt
 
 SCHEMA = 'afaqy-mail-activity/v1'
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 P_MSGID, P_SENDER_SMTP, P_SENDER_EMAIL, P_TO, P_CC = 0x1035, 0x5D01, 0x0C1F, 0x0E04, 0x0E03
 R_SMTP, R_EMAIL, R_TYPE = 0x39FE, 0x3003, 0x0C15
 SKIP = re.compile(r'^(sent items|sent|deleted items|deleted|outbox|drafts|junk( e-?mail)?|spam|conversation history|sync issues.*|calendar|contacts|tasks|notes|journal|'

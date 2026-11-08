@@ -56,4 +56,10 @@ class App(tk.Tk):
                     self.bar.stop(); self.go.state(['!disabled']); self.status.set(f'Stopped: {v}\nStart again with the same file and period to resume where it stopped.')
         except queue.Empty: pass
         self.after(250, self.poll)
-if __name__ == '__main__': App().mainloop()
+if __name__ == '__main__':
+    # --selftest <pst> <out>: read a file and exit without a window — the build runs the built .exe this way before releasing it
+    if len(sys.argv) == 4 and sys.argv[1] == '--selftest':
+        import json; h = X.run(sys.argv[2], sys.argv[3], scope='all')
+        with open(sys.argv[3] + '.selftest.json', 'w', encoding='utf-8') as fh: json.dump(h, fh, ensure_ascii=False)
+        sys.exit(0 if h['counts']['kept'] > 0 and h['counts']['errors'] == 0 else 1)
+    App().mainloop()

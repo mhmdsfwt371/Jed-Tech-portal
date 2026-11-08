@@ -34,6 +34,13 @@ jobs:
         run: |
           python afaqy_extract.py "$env:PST_SAMPLES\enron.pst" smoke.jsonl.gz --scope all
           if (-not (Test-Path smoke.jsonl.gz)) { throw 'no output' }
+      - name: Run the built .exe itself on the sample PST (self-test, no window)
+        run: |
+          $exe = "dist\AFAQY Mail Extractor\AFAQY Mail Extractor.exe"
+          $p = Start-Process -FilePath $exe -ArgumentList '--selftest', "`"$env:PST_SAMPLES\enron.pst`"", 'exe-smoke.jsonl.gz' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "the built exe failed its self-test (exit $($p.ExitCode))" }
+          if (-not (Test-Path exe-smoke.jsonl.gz)) { throw 'the built exe wrote no output' }
+          Get-Content exe-smoke.jsonl.gz.selftest.json
       - name: Release
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |
