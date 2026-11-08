@@ -128,6 +128,7 @@
 | `docs/decisions/0096-big-pst-goes-to-the-extractor.md` | A PST too big for the browser goes straight to the extractor |
 | `docs/decisions/0097-browser-pst-up-to-5gb-and-extractor-path-fix.md` | Browser reads a PST up to 5 GB from the disk; extractor 1.0.2 opens any Windows path |
 | `docs/decisions/0098-light-on-touch-always-and-pst-lock-named.md` | Light under mouse and finger, always (a design rule, guarded); a PST locked by Outlook is named |
+| `docs/decisions/0099-mail-kept-own-words-search-alias.md` | Mail reads kept and built on; classified by the sender's own words; search; aliases |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

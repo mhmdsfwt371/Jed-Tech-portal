@@ -17,6 +17,35 @@
 
 <!-- releases -->
 
+## v9.18 — 2026-11-08
+
+- ملف البريد اللي بيتقرا في المتصفح بقى بيتحفظ على جهازك وبيدخل مؤشر «نشاط البريد — صندوق المدير»، ومش هتحتاج تقراه تاني. والرسالة بتتحسب مرة واحدة سواء جت من المتصفح أو من «مستخرج البريد».
+- التصنيف بقى بكلام المهندس نفسه في الرد مش بعنوان الإيميل: الرد الفني على «طلب عرض سعر» ما بقاش بيتحسب بيع إضافي.
+- بحث بالاسم أو الإيميل في قايمة المرسلين مع «علّم على النتائج»، والمرسل من جوه الشركة بيظهر اسم حسابه، وجدول الرسايل بقى بيتحرك جوه صندوقه فالسكرول قريب.
+- «مستخرج البريد» 1.0.4: بيقرا كلام الرد نفسه للتصنيف، وما بيسيبش ملفات .part لو اتوقف.
+
+<details><summary>English</summary>
+
+- A mail file read in the browser is now kept on your device and feeds «Email Activity — Manager Inbox» — no need to read it again. A message counts once whether it came from the browser or the «Mail Extractor».
+- Classification now uses the engineer's own words in the reply, not the e-mail's subject: a technical reply to «quotation request» is no longer counted as upselling.
+- Search the senders by name or e-mail with «Tick the matches»; internal senders show their account name; the messages table scrolls in its own box, so the sideways bar is close.
+- «Mail Extractor» 1.0.4: reads the reply's own words for classification, and leaves no .part files when it stops.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- براؤزر میں پڑھی گئی میل فائل اب آپ کے آلے پر محفوظ رہتی ہے اور اشاریے میں جاتی ہے؛ پیغام ایک بار شمار ہوتا ہے۔
+- زمرہ بندی اب جواب میں انجینئر کے اپنے الفاظ سے ہوتی ہے، عنوان سے نہیں۔
+- نام یا ای میل سے تلاش؛ اندرونی بھیجنے والوں کا اکاؤنٹ نام؛ جدول اپنے خانے میں اسکرول ہوتا ہے۔
+- «میل ایکسٹریکٹر» 1.0.4۔
+
+</div>
+</details>
+
+
 ## v9.17 — 2026-11-08
 
 - أي حاجة بتتضغط بقت بتنوّر في كل الأجهزة: تحت الماوس، ولما تلمسها بصباعك على الموبايل أو شاشة اللمس، وحتى لو «إظهار الحركة» مقفول في ويندوز. وبقى ليها اختبار ثابت بيتأكد منها في كل إصدار.

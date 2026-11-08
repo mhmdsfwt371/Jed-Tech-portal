@@ -2043,10 +2043,10 @@ export function maMerge(state, head, recs, importedAt) {
   const id = `${head.source || '?'}|${head.from || ''}|${head.to || ''}`;
   const prev = st.imports.findIndex((x) => x.id === id), entry = { id, source: head.source || '', bytes: head.source_bytes || null, from: head.from || null, to: head.to || null, scope: head.scope || '', extractedAt: head.extracted_at || null, importedAt, helper: head.helper || '', counts: head.counts || {}, n: recs.length };
   if (prev >= 0) st.imports[prev] = entry; else st.imports.push(entry);
-  const byK = new Map(st.recs.map((r) => [r.k, r])); let added = 0, replaced = 0;
-  for (const r of recs) { if (byK.has(r.k)) replaced++; else added++; byK.set(r.k, { ...r, i: id }); }
+  const byK = new Map(st.recs.map((r) => [r.k, r])); let added = 0, replaced = 0; const links = [];
+  for (const r of recs) { const old = byK.get(r.k); if (old) { replaced++; if (old.fe && r.fe && old.fe !== r.fe) links.push([old.fe, r.fe]); } else added++; byK.set(r.k, { ...(old || {}), ...r, i: id, b: r.b || (old && old.b) || '' }); }
   st.recs = [...byK.values()];
-  return { state: st, added, replaced, again: prev >= 0 };
+  return { state: st, added, replaced, again: prev >= 0, links };   // links: one sender, two addresses (the same message proves it)
 }
 /** The Saudi day a message arrived (received time; sent time when there is none). */
 export const maDay = (r) => saudiDay(r.rt || r.st);
@@ -2066,7 +2066,7 @@ export function maStats(recs, ids, classify, from, to) {
     total++; if (r.fb) fallback++;
     const id = r.fe && ids[r.fe];
     if (!id) { const u = unmatched.get(r.fe || `name:${r.fn}`) || { addr: r.fe, name: r.fn, n: 0 }; u.n++; unmatched.set(r.fe || `name:${r.fn}`, u); continue; }
-    const p = per.get(id) || { id, total: 0, cats: {}, recs: [] }; const c = classify(r.s);
+    const p = per.get(id) || { id, total: 0, cats: {}, recs: [] }; const c = maCategory(r, classify);   // ADR-0099: the sender's own words
     p.total++; p.cats[c] = (p.cats[c] || 0) + 1; p.recs.push(r); per.set(id, p);
   }
   return { per, unmatched: [...unmatched.values()].sort((p, q) => q.n - p.n), total, fallback };
@@ -2077,4 +2077,17 @@ export function maSuggest(addr, name, people) {
   const local = tok(String(addr || '').split('@')[0].replace(/^ex:/, '').replace(/[._-]+/g, ' ')), nm = tok(name), want = new Set([...local, ...nm]);
   return (people || []).map((p) => { const ws = new Set([...tok(p.nameEn), ...tok(p.nameAr)]); let hit = 0; for (const w of want) if (ws.has(w)) hit++; return { id: p.id, score: hit }; })
     .filter((x) => x.score > 0).sort((p, q) => q.score - p.score).slice(0, 3);
+}
+/** ADR-0099: the sender's own words — the top of the body, before the quoted earlier messages. */
+export function maOwnText(body) {
+  const s = String(body || '').replace(/\r\n?/g, '\n');
+  const cut = s.search(/^\s*(-{2,}\s*original message\s*-{2,}|_{8,}|from\s*:|de\s*:|von\s*:|من\s*:|المرسل\s*:|on .{4,120} wrote:|في .{4,120} كتب:)/im);
+  return (cut >= 0 ? s.slice(0, cut) : s).replace(/\s+/g, ' ').trim().slice(0, 400);
+}
+export const maIsReply = (subject) => /^\s*((re|fw|fwd|رد|إعادة توجيه|تحويل)\s*:\s*)/i.test(String(subject || ''));
+/** Classify by what the sender wrote: his own words first; a reply that matches no rule does not inherit its thread's subject;
+ *  an original message (or one with no body read) falls back to the subject. classify(text) → a rule key or 'other'. */
+export function maCategory(rec, classify) {
+  if (rec && rec.b) { const c = classify(rec.b); if (c !== 'other') return c; if (maIsReply(rec.s)) return 'other'; }
+  return classify(rec ? rec.s : '');
 }

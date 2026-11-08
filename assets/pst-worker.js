@@ -38,6 +38,7 @@ self.onmessage = (e) => {
           const r = { d: m.descriptorNodeId, folder: path || '/', subject: String(m.subject || '').slice(0, 300), senderName: String(m.senderName || '').slice(0, 120),
             senderEmailAddress: String(m.senderEmailAddress || '').slice(0, 200), displayTo: String(m.displayTo || '').slice(0, 300), internetMessageId: String(m.internetMessageId || '').slice(0, 300),
             clientSubmitTime: sent, messageDeliveryTime: recv };
+          try { const bd = m.body; if (bd) r.body = String(bd).slice(0, 3000); } catch { /* no plain body */ }   // ADR-0099: the top of the body, for the sender's own words
           if (attFrom && m.hasAttachments && day && day >= attFrom && day <= attTo) {   // attachment names only, only when asked, only in the period
             r.att = []; for (let i = 0; i < Math.min(30, m.numberOfAttachments || 0); i++) { try { const x = m.getAttachment(i); r.att.push(String(x.longFilename || x.filename || '')); } catch { /* a name missing */ } }
           }

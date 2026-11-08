@@ -12,7 +12,7 @@ import {
   mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
   quarterRange, quarterOf, quarterBaseline, quarterGoalProgress, planProgress, suggestQuarterGoals,
-  maParse, maMerge, maCovers, maStats, maSuggest, maDay } from './core.js';
+  maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply } from './core.js';
 
 import { validateSystems } from './systems-core.js';
 
@@ -1216,13 +1216,16 @@ async function maReadFile(f) {
   return gz ? await new Response(f.stream().pipeThrough(new DecompressionStream('gzip'))).text() : await f.text();
 }
 async function maImport(f) {
-  let p; try { p = maParse(await maReadFile(f)); } catch { p = { error: 'ma_bad_file' }; }
-  if (p.error) { toast(t(p.error)); return; }
-  const r = maMerge(mailAct, p.head, p.recs, saudiDay(new Date().toISOString())); mailAct = r.state; await maSave();
+  if (/\.part$|\.checkpoint\.json$/i.test(f.name)) { toast(t('ma_is_part', { name: f.name })); return; }   // ADR-0099: name the cause
+  let text = ''; try { text = await maReadFile(f); } catch { toast(t('ma_bad_file')); return; }
+  if (!text.trim()) { toast(t('ma_is_empty', { name: f.name })); return; }
+  const p = maParse(text);
+  if (p.error) { toast(t('ma_bad_schema_x', { name: f.name, start: text.trim().slice(0, 40) })); return; }
+  const r = maMerge(mailAct, p.head, p.recs, saudiDay(new Date().toISOString())); mailAct = r.state; maLink(r.links); await maSave();
   toast(t(r.again ? 'ma_loaded_again' : 'ma_loaded', { a: r.added, r: r.replaced, b: p.bad })); renderMailFile();
 }
 function maSection() {
-  const up = el('input', { type: 'file', accept: '.gz,.jsonl,.json,application/gzip', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) await maImport(f); } });
+  const up = el('input', { type: 'file', accept: '.jsonl.gz,.gz,.jsonl,.json,application/gzip', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) await maImport(f); } });
   const head = el('div', {}, el('h2', { text: t('ma_h') }), el('p', { class: 'hint', text: t('ma_lead') }),
     el('div', { class: 'row' }, el('a', { class: 'btn', href: MA_RELEASES, target: '_blank', rel: 'noopener noreferrer', text: `⬇ ${t('ma_get')}` }), el('button', { type: 'button', class: 'btn primary ma-import', text: `📥 ${t('ma_import')}`, onclick: () => up.click() }), up));
   if (!mailAct.recs.length) return el('section', { class: 'ma-sec' }, head, el('p', { class: 'note', text: t('ma_none') }));
@@ -1250,7 +1253,7 @@ function maSection() {
   const covered = rg && maCovers(mailAct.imports, rg.from, rg.to);
   const rows = S ? [...S.per.values()].sort((p, q) => q.total - p.total) : [];
   const xl = async () => { const X = await loadXlsx(), head2 = [t('col_person'), t('ma_c_total'), ...cats.map(maCatName)], ws = X.utils.aoa_to_sheet([head2, ...rows.map((p) => [pname(p.id), p.total, ...cats.map((c) => p.cats[c] || 0)])]);
-    const ev = X.utils.aoa_to_sheet([[t('col_person'), t('ma_c_day'), t('ma_c_subject'), t('ma_c_cat'), t('ma_c_folder')], ...rows.flatMap((p) => p.recs.map((r) => [pname(p.id), maDay(r), r.s, maCatName(maClassify(r.s)), r.f]))]);
+    const ev = X.utils.aoa_to_sheet([[t('col_person'), t('ma_c_day'), t('ma_c_subject'), t('ma_c_cat'), t('ma_c_folder')], ...rows.flatMap((p) => p.recs.map((r) => [pname(p.id), maDay(r), r.s, maCatName(maCategory(r, maClassify)), r.f]))]);
     const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, t('ma_x_sum').slice(0, 30)); X.utils.book_append_sheet(wb, ev, t('ma_x_ev').slice(0, 30)); X.writeFile(wb, `email-activity-manager-inbox-${maMonth}.xlsx`); };
   const res = el('section', { class: 'ma-res' }, el('h3', { text: t('ma_res_h') }),
     el('div', { class: 'row' }, el('label', {}, el('span', { text: t('km_month') }), el('select', { class: 'ma-month', onchange: (e) => { maMonth = e.target.value; renderMailFile(); } }, months.map((m) => el('option', { value: m, selected: m === maMonth, text: periodLabel(m) })))),
@@ -1259,7 +1262,7 @@ function maSection() {
     S && S.unmatched.length ? el('p', { class: 'hint', text: t('ma_unmatched', { n: S.unmatched.reduce((s, u) => s + u.n, 0), a: S.unmatched.length }) }) : null,
     rows.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'ma-table' }, el('thead', {}, el('tr', {}, [t('col_person'), t('ma_c_total'), ...cats.map(maCatName)].map((h) => el('th', { text: h })))),
       el('tbody', {}, rows.map((p) => el('tr', { class: 'ma-row', title: t('ma_evidence'), onclick: () => crModal({ title: `${pname(p.id)} — ${periodLabel(maMonth)}`, file: `email-${p.id}-${maMonth}`, tiles: [[t('ma_c_total'), p.total], ...cats.map((c) => [maCatName(c), p.cats[c] || 0])],
-        head: [t('ma_c_subject'), t('ma_c_day'), t('ma_c_cat'), t('ma_c_folder')], rows: p.recs.map((r) => [r.s, maDay(r), maCatName(maClassify(r.s)), r.f]) }) },
+        head: [t('ma_c_subject'), t('ma_c_day'), t('ma_c_cat'), t('ma_c_folder')], rows: p.recs.map((r) => [r.s, maDay(r), maCatName(maCategory(r, maClassify)), r.f]) }) },
         el('td', { text: pname(p.id) }), el('td', { class: 'num', text: String(p.total) }), ...cats.map((c) => el('td', { class: 'num', text: String(p.cats[c] || 0) }))))))) : el('p', { class: 'hint', text: t('ma_no_rows') }),
     el('p', { class: 'hint', text: t('ma_res_note') }));
   return el('section', { class: 'ma-sec' }, head, imps, ident, res);
@@ -1307,7 +1310,7 @@ function mfParseRecs(recs) {
   for (const m of recs) { const key = m.d != null ? m.d : `${m.folder}:${out.length}`, mk = mailKey(m);
     if (!seen.has(key) && seenMail.has(mk)) copies++;
     if (!seen.has(key) && !seenMail.has(mk)) { seen.add(key); seenMail.add(mk); const d = m.clientSubmitTime || m.messageDeliveryTime;
-      out.push({ id: key, folder: m.folder || '/', subject: m.subject, sender: String(m.senderName || m.senderEmailAddress || '').trim().slice(0, 120), email: String(m.senderEmailAddress || '').slice(0, 160), to: m.displayTo, date: d || '' }); } }
+      out.push({ id: key, folder: m.folder || '/', subject: m.subject, sender: String(m.senderName || m.senderEmailAddress || '').trim().slice(0, 120), email: String(m.senderEmailAddress || '').slice(0, 160), to: m.displayTo, date: d || '', own: maOwnText(m.body) }); } }
   out.copies = copies; return out;
 }
 
@@ -1318,6 +1321,35 @@ function mfFailBox(err) {
   return el('div', { class: 'note' }, el('p', { text: t('mf_fail') }), el('a', { class: 'linkish', href: MA_RELEASES, target: '_blank', rel: 'noopener noreferrer', text: t('ma_get') }),
     err ? el('details', { class: 'mf-detail' }, el('summary', { text: t('mf_detail') }), el('code', { dir: 'ltr', text: `${err.name || 'Error'}: ${String(err.message || err).slice(0, 600)}` })) : null);
 }
+
+// ---------- ADR-0099: who sent it (an internal sender's alias), short folder names ----------
+/** An address to show and to match: SMTP as is; an internal Exchange address (/o=…/cn=…-alias) becomes ex:alias. */
+function mfAddr(a) {
+  const s = String(a || '').trim().replace(/^<|>$/g, '').toLowerCase(); if (!s) return '';
+  if (s.startsWith('/o=') || s.startsWith('/cn=')) { const m = s.match(/\/cn=(?:[^/]*-)?([^/-][^/]*)$/); return m ? `ex:${m[1]}` : ''; }
+  return s.includes('@') ? s : '';
+}
+const mfFolder = (f) => String(f || '').replace(/^\/?(top of (outlook data file|personal folders)|أعلى ملف بيانات outlook|بداية ملف بيانات outlook)\/?/i, '') || '/';
+
+// ---------- ADR-0099: a PST read in the browser is kept — the same records and keys as the extractor's file ----------
+const maSha1 = async (s) => [...new Uint8Array(await crypto.subtle.digest('SHA-1', new TextEncoder().encode(s)))].map((x) => x.toString(16).padStart(2, '0')).join('');
+const maNormSubject = (s) => String(s || '').replace(/^\s*(((re|fw|fwd|رد|إعادة توجيه|تحويل)\s*:\s*)+)/i, '').replace(/\s+/g, ' ').trim().toLowerCase();
+async function maSaveBrowser(recs, f) {
+  const out = []; let fb = 0; const seen = new Set(); let dup = 0;
+  for (const m of recs) {
+    const fe = mfAddr(m.senderEmailAddress), sent = m.clientSubmitTime || null, mid = String(m.internetMessageId || '').trim().toLowerCase();
+    const k = mid ? (await maSha1(mid)).slice(0, 20) : `fb${(await maSha1(`${fe || String(m.senderName || '').toLowerCase()}|${sent ? sent.slice(0, 19) + 'Z' : ''}|${maNormSubject(m.subject)}`)).slice(0, 18)}`;
+    if (seen.has(k)) { dup++; continue; } seen.add(k); if (!mid) fb++;
+    const iso = (x) => (x ? `${x.slice(0, 19)}Z` : null);
+    out.push({ k, fb: !mid, fe, fn: String(m.senderName || ''), s: String(m.subject || ''), st: iso(m.clientSubmitTime), rt: iso(m.messageDeliveryTime), f: m.folder || '/', to: String(m.displayTo || '').split(';').filter((x) => x.trim()).length, cc: 0, rd: [], b: maOwnText(m.body) });
+  }
+  const days = out.map((r) => maDay(r)).filter(Boolean).sort();
+  const head = { schema: 'afaqy-mail-activity/v1', helper: `browser v${PORTAL_VERSION}`, source: f.name, source_bytes: f.size, from: days[0] || null, to: days[days.length - 1] || null, scope: 'browser', extracted_at: new Date().toISOString().slice(0, 19) + 'Z', counts: { read: recs.length, kept: out.length, dup, fallback: fb, errors: 0 } };
+  const r = maMerge(mailAct, head, out, saudiDay(new Date().toISOString())); mailAct = r.state; maLink(r.links); await maSave();
+  return { n: out.length, added: r.added, replaced: r.replaced };
+}
+/** One sender, two addresses (the same message came with both): a confirmed one confirms the other. */
+function maLink(links) { for (const [x, y] of links || []) { if (mailIds.map[x] && !mailIds.map[y]) mailIds.map[y] = mailIds.map[x]; else if (mailIds.map[y] && !mailIds.map[x]) mailIds.map[x] = mailIds.map[y]; } }
 
 // ---------- ADR-0096: a PST the browser cannot hold goes straight to the extractor, never to an error ----------
 const MF_BROWSER_MAX = 5 * 1073741824;   // ADR-0097: read from the disk in the background up to 5 GB; beyond that the extractor is faster
@@ -3721,6 +3753,7 @@ async function mfLoadFile(f, say) {   // read a PST on the device — from one p
   say(t('mf_reading', { name: f.name, mb: Math.max(1, Math.round(f.size / 1048576)) }));
   try { const recs = await pstRead(f, null, (p) => say(t('mf_progress', { n: p.n.toLocaleString('en'), mb: p.mb, size: Math.round(p.size / 1048576), sec: p.sec })));   // ADR-0097: from the disk, in the background
     mfState.msgs = mfParseRecs(recs); mfState.file = f.name; mfState.copies = mfState.msgs.copies || 0; mfState.readStats = recs.stats;
+    try { mfState.saved = await maSaveBrowser(recs, f); } catch (e) { console.error(e); mfState.saved = null; }   // ADR-0099: kept, so it is never read again
     const counts = new Map(); for (const m of mfState.msgs) counts.set(m.sender, (counts.get(m.sender) || 0) + 1);
     mfState.picked = new Set([...counts.entries()].sort((p, q) => q[1] - p[1]).slice(0, 5).map(([k]) => k)); toast(t('mf_done', { n: mfState.msgs.length })); return true; }
   catch (err) { console.error(err); mfState.lastErr = err; say(t('mf_fail')); return false; }
@@ -3730,7 +3763,7 @@ function renderMailFile() {
   const rulesOpen = !!(body.querySelector('.mf-rules') && body.querySelector('.mf-rules').open);   // the rules box stays open while its words are edited
   const st = mfState, rules = mfRules(), catName = (k) => { const r = rules.find((x) => x.k === k); return (r && r.name) || (['normal', 'advanced', 'upsell', 'other'].includes(k) ? t(`mf_cat_${k}`) : k); };
   const CATS = [...rules.map((r) => r.k), 'other'];   // ADR-0077: the results follow the manager's categories
-  const status = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite', text: st.msgs ? `${t(st.copies ? 'mf_file_copies' : 'mf_file', { name: st.file, n: st.msgs.length, c: st.copies })}${st.readStats ? ` ${t('mf_read_stats', { mb: Math.max(1, Math.round(st.readStats.bytesRead / 1048576)), size: Math.round(st.readStats.size / 1048576).toLocaleString('en'), sec: Math.round(st.readStats.sec) })}` : ''}` : '' });   // ADR-0097: how much of the file was actually read
+  const status = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite', text: st.msgs ? `${st.saved ? `${t('mf_saved', { n: st.saved.n.toLocaleString('en'), a: st.saved.added.toLocaleString('en') })} ` : ''}${t(st.copies ? 'mf_file_copies' : 'mf_file', { name: st.file, n: st.msgs.length, c: st.copies })}${st.readStats ? ` ${t('mf_read_stats', { mb: Math.max(1, Math.round(st.readStats.bytesRead / 1048576)), size: Math.round(st.readStats.size / 1048576).toLocaleString('en'), sec: Math.round(st.readStats.sec) })}` : ''}` : '' });   // ADR-0097: how much of the file was actually read
   const fileIn = el('input', { type: 'file', accept: '.pst,.ost', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return;
     if (f.size > MF_BROWSER_MAX) { e.target.value = ''; set(status, maTooBig(f)); const box = document.querySelector('.ma-sec'); if (box) { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); box.classList.add('ma-flash'); setTimeout(() => box.classList.remove('ma-flash'), 2400); } return; }   // ADR-0096
     if (await mfLoadFile(f, (s) => { status.textContent = s; })) renderMailFile(); else set(status, mfFailBox(mfState.lastErr)); e.target.value = ''; } });
@@ -3759,18 +3792,22 @@ function renderMailFile() {
   if (!st.msgs) { set(body, mailSrc('pst'), maSection(), mailbox, top, rulesBox, howBox); return; }
   const inRange = (m) => (!st.from || (m.date || '').slice(0, 10) >= st.from) && (!st.to || (m.date || '').slice(0, 10) <= st.to);
   const ranged = st.msgs.filter(inRange), counts = new Map(), emails = new Map();
-  for (const m of ranged) { counts.set(m.sender, (counts.get(m.sender) || 0) + 1); if (!emails.has(m.sender) && m.email && !m.email.startsWith('/')) emails.set(m.sender, m.email); }
+  for (const m of ranged) { counts.set(m.sender, (counts.get(m.sender) || 0) + 1); if (!emails.has(m.sender) && m.email) { const ad = mfAddr(m.email); if (ad) emails.set(m.sender, ad); } }   // ADR-0099: an internal sender shows his Exchange alias
   const senders = [...counts.entries()].sort((p, q) => q[1] - p[1]);
+  const qq = String(st.q || '').trim().toLowerCase(), found = qq ? senders.filter(([s]) => `${s} ${emails.get(s) || ''}`.toLowerCase().includes(qq)) : senders;   // ADR-0099: find by name or e-mail
   const dateRow = el('div', { class: 'row mgr-dates' }, el('label', {}, el('span', { text: t('mf_from') }), el('input', { type: 'date', value: st.from, onchange: (e) => { st.from = e.target.value; renderMailFile(); } })),
     el('label', {}, el('span', { text: t('mf_to') }), el('input', { type: 'date', value: st.to, onchange: (e) => { st.to = e.target.value; renderMailFile(); } })));
   const sendersBox = el('section', {}, el('h2', { text: t('mf_senders_h') }), el('p', { class: 'hint', text: t('mf_senders_lead') }),
-    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny', text: t('mf_all'), onclick: () => { st.picked = new Set(senders.map(([k]) => k)); renderMailFile(); } }),
-      el('button', { type: 'button', class: 'btn tiny', text: t('mf_none'), onclick: () => { st.picked = new Set(); renderMailFile(); } })),
+    el('div', { class: 'row mf-find' }, el('input', { type: 'search', class: 'mf-q', placeholder: t('mf_find_ph'), value: st.q || '', 'aria-label': t('mf_find_ph'), oninput: (e) => { st.q = e.target.value; const keep = e.target.selectionStart; renderMailFile(); const q2 = document.querySelector('#mailfile-body .mf-q'); if (q2) { q2.focus(); q2.setSelectionRange(keep, keep); } } }),
+      el('button', { type: 'button', class: 'btn tiny', text: t('mf_pick_matches'), onclick: () => { for (const [k] of found) st.picked.add(k); renderMailFile(); } }),
+      el('button', { type: 'button', class: 'btn tiny', text: t('mf_all'), onclick: () => { st.picked = new Set(senders.map(([k]) => k)); renderMailFile(); } }),
+      el('button', { type: 'button', class: 'btn tiny', text: t('mf_none'), onclick: () => { st.picked = new Set(); renderMailFile(); } }),
+      el('span', { class: 'hint', text: t('mf_found', { n: found.length, p: st.picked.size }) })),
     el('div', { class: 'table-wrap mf-senders' }, el('table', {}, el('thead', {}, el('tr', {}, ['', 'mf_col_sender', 'mf_col_email', 'mf_col_n'].map((k, i) => el('th', { class: i === 3 ? 'num' : null, text: k ? t(k) : '' })))),
-      el('tbody', {}, senders.slice(0, 300).map(([s, n]) => el('tr', { class: st.picked.has(s) ? 'on' : null },
+      el('tbody', {}, found.slice(0, 300).map(([s, n]) => el('tr', { class: st.picked.has(s) ? 'on' : null },
         el('td', {}, el('input', { type: 'checkbox', 'aria-label': s, ...(st.picked.has(s) ? { checked: '' } : {}), onchange: (e) => { if (e.target.checked) st.picked.add(s); else st.picked.delete(s); renderMailFile(); } })),
         el('td', { text: s || '—' }), el('td', { class: 'ltr hint', text: emails.get(s) || '' }), el('td', { class: 'num', text: String(n) })))))));
-  const picked = ranged.filter((m) => st.picked.has(m.sender)).map((m) => ({ ...m, cat: mfCategory(m.subject, rules) }));
+  const picked = ranged.filter((m) => st.picked.has(m.sender)).map((m) => ({ ...m, cat: maCategory({ s: m.subject, b: m.own }, (x) => mfCategory(x, rules)) }));   // ADR-0099: the sender's own words
   const perSender = [...st.picked].map((s) => { const list = picked.filter((m) => m.sender === s); const row = { s, total: list.length }; for (const c of CATS) row[c] = list.filter((m) => m.cat === c).length; return row; }).sort((p, q) => q.total - p.total);
   const tot = { total: picked.length }; for (const c of CATS) tot[c] = picked.filter((m) => m.cat === c).length;
   const results = el('section', { id: 'mf-results' }, el('h2', { text: t('mf_results_h') }),
@@ -3782,11 +3819,11 @@ function renderMailFile() {
     const rows = [[t('mf_col_date'), t('mf_col_sender'), t('mf_col_subject'), t('mf_col_cat'), t('mf_col_folder')], ...shown.map((m) => [(m.date || '').slice(0, 10), m.sender, m.subject, catName(m.cat), m.folder])];
     const blob = new Blob(['\ufeff' + rows.map((r) => r.map(esc).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
     const link = el('a', { href: URL.createObjectURL(blob), download: 'mail-by-kind.csv' }); document.body.append(link); link.click(); link.remove(); };
-  const { tbody, more } = pagedBody([...shown], (m) => el('tr', {}, el('td', { class: 'ltr', text: (m.date || '').slice(0, 10) }), el('td', { text: m.sender }), el('td', { text: m.subject || '—' }), el('td', {}, el('span', { class: `mf-pill ${m.cat}`, text: catName(m.cat) })), el('td', { class: 'hint', text: m.folder })));
+  const { tbody, more } = pagedBody([...shown], (m) => el('tr', {}, el('td', { class: 'ltr', text: (m.date || '').slice(0, 10) }), el('td', { text: m.sender }), el('td', { text: m.subject || '—' }), el('td', {}, el('span', { class: `mf-pill ${m.cat}`, text: catName(m.cat) })), el('td', { class: 'hint', text: mfFolder(m.folder) })));
   const listBox = el('section', { id: 'mf-list' }, el('h2', { text: t('mf_list_h') }),
     el('div', { class: 'row' }, el('div', { class: 'pills' }, [['all', t('mf_all')], ...CATS.map((c) => [c, `${catName(c)} (${tot[c]})`])].map(([k, l]) => el('button', { type: 'button', class: `pill-btn${st.cat === k ? ' on' : ''}`, text: l, onclick: () => { st.cat = k; renderMailFile(); } }))),
       el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('mf_export')}`, onclick: csv })),
-    shown.length ? el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('mf_col_date'), t('mf_col_sender'), t('mf_col_subject'), t('mf_col_cat'), t('mf_col_folder')].map((h) => el('th', { text: h })))), tbody), more) : el('div', { class: 'empty', text: t('mf_empty') }));
+    shown.length ? [el('div', { class: 'table-wrap mf-msgs' }, el('table', {}, el('thead', {}, el('tr', {}, [t('mf_col_date'), t('mf_col_sender'), t('mf_col_subject'), t('mf_col_cat'), t('mf_col_folder')].map((h) => el('th', { text: h })))), tbody)), more] : el('div', { class: 'empty', text: t('mf_empty') }));
   set(body, mailSrc('pst'), maSection(), mailbox, top, dateRow, sendersBox, rulesBox, results, howBox, listBox);
 }
 function route() {
