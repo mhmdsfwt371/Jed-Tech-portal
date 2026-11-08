@@ -70,6 +70,14 @@
 
 لكل فترة أمران: «نسخ الأمر» يسحب مهام الفترة للمؤشر الأول، و«نسخ أمر التقارير» يسحب نقاط الفنيين وتذاكر ما بعد البيع للمؤشرين الثاني والثالث. كل أمر يسمّي بالاسم الطلبات المسموحة له ويمنع ما سواها، فلا يتغيّر شيء في ماي أفاقي. شغّل الأمر في كلود كروم وأنت داخل ماي أفاقي؛ يحفظ النتيجة ملفًّا على جهازك، فترفعه هنا من «اختيار ملف» — الصندوق نفسه يقبل النوعين. البوابة لا تقرأ ماي أفاقي بنفسها لأن خادمه لا يقبل طلبات من عنوان آخر.
 
+### مزامنة اللابتوب والموبايل
+
+من صفحة «البيانات» ← «مزامنة أجهزتي»: على الجهاز اللي فيه البيانات اكتب كلمة سر واضغط «ابعت لجهازي التاني»، وابعت الملف لنفسك (AirDrop أو Quick Share أو واتساب أو تطبيق OneDrive). على الجهاز التاني افتح «البيانات»، اكتب نفس كلمة السر، واضغط «استقبل» واختار الملف. بيتدمج مع اللي على الجهاز وما بيمسحش حاجة: المهام والمناقصات (المرحلة الأبعد هي اللي بتكسب) ونشاط البريد ومشاريعي. الملف مشفّر بكلمة السر، وكلمة السر ما بتتحفظش في أي مكان.
+
+### الكروت اللي بتفلتر
+
+أي كارت عليه رقم في نافذة أو صفحة — نوافذ غرفة المتابعة، كروت سجل المناقصات، مربعات مؤشرات الفريق — اضغطه أو المسه: بيبقى أخضر وبيعرض صفوفه بس، والإكسل بيطلع المعروض بس. اضغطه تاني يشيل الفلتر، أو «اعرض الكل». وفي النوافذ، اضغط اسم أي موظف في الأعمدة تشوف شغله بس.
+
 ### الرد الطويل والفترة الناقصة
 
 إذا قسّم كلود كروم الرد إلى أجزاء، ارفعها كلها؛ تُدمج بحسب رقم المهمة. تبقى الفترة «ناقصة» حتى يساوي عدد المهام العدد الذي أعلنه ماي أفاقي نفسه، وتظهر فوق أرقامها علامة تحذير.
@@ -161,6 +169,14 @@ The “Afaqy PRO” page shows your account’s units inside the portal: name, I
 
 Each period has two prompts: “Copy the prompt” pulls the period’s tasks for Factor 1, and “Copy the reports prompt” pulls technician points and after-sales tickets for Factors 2 and 3. Each prompt names the requests it may make and forbids all others, so nothing changes in myafaqy. Run the prompt in Claude in Chrome while signed in to myafaqy; it saves the result as a file on your computer, which you upload here with “Choose file” — the same box takes both kinds. The portal does not read myafaqy itself because its server refuses requests from another address.
 
+### Sync the laptop and the phone
+
+From «Data» → «Sync my devices»: on the device with the data type a passphrase and press «Send to my other device», then send the file to yourself (AirDrop, Quick Share, WhatsApp or the OneDrive app). On the other device open «Data», type the same passphrase, press «Receive» and choose the file. It merges with what is there and deletes nothing: tasks, tenders (the further stage wins), mail activity and my projects. The file is encrypted with the passphrase, and the passphrase is never stored.
+
+### Cards that filter
+
+Any card with a number in a window or a page — the control-room windows, the tender register’s cards, the Team KPIs tiles — press or tap it: it turns green and shows only its rows, and Excel exports only what is shown. Press it again to clear, or «Show all». In the windows, press a person’s name in the bars to see only their work.
+
 ### Long replies and incomplete periods
 
 If Claude in Chrome splits its reply into parts, upload them all; they merge by task id. A period stays “incomplete” until its task count equals the total myafaqy itself reported, and its figures carry a warning.
@@ -251,6 +267,14 @@ On this device and in this browser only; nothing is sent anywhere. To move it to
 ### اشاریوں کا ڈیٹا
 
 ہر مدت کی دو ہدایات ہیں: «ہدایت کاپی کریں» پہلے اشاریے کے لیے مدت کے ٹاسک لاتی ہے، اور «رپورٹس کی ہدایت کاپی کریں» دوسرے اور تیسرے اشاریے کے لیے ٹیکنیشن پوائنٹس اور آفٹر سیلز ٹکٹس لاتی ہے۔ ہر ہدایت اپنی اجازت شدہ درخواستوں کے نام لیتی ہے اور باقی سب سے منع کرتی ہے، اس لیے مائی آفاقی میں کچھ نہیں بدلتا۔ مائی آفاقی میں لاگ اِن ہو کر ہدایت کلاڈ کروم میں چلائیں؛ یہ نتیجہ آپ کے کمپیوٹر پر فائل کے طور پر محفوظ کرتی ہے، جسے آپ یہاں «فائل منتخب کریں» سے اپ لوڈ کرتے ہیں — وہی خانہ دونوں قسمیں قبول کرتا ہے۔ پورٹل خود مائی آفاقی نہیں پڑھتا کیونکہ اس کا سرور کسی دوسرے پتے سے آنے والی درخواستیں قبول نہیں کرتا۔
+
+### لیپ ٹاپ اور فون کی ہم آہنگی
+
+«ڈیٹا» ← «میرے آلات کی ہم آہنگی» سے: ڈیٹا والے آلے پر پاس فریز لکھیں اور «دوسرے آلے کو بھیجیں» دبائیں، پھر فائل خود کو بھیجیں (AirDrop، Quick Share، واٹس ایپ یا OneDrive ایپ)۔ دوسرے آلے پر «ڈیٹا» کھولیں، وہی پاس فریز لکھیں، «وصول کریں» دبائیں اور فائل چنیں۔ یہ موجودہ کے ساتھ ضم ہوتا ہے اور کچھ حذف نہیں کرتا: ٹاسک، ٹینڈر (آگے کا مرحلہ جیتتا ہے)، میل سرگرمی اور میرے پروجیکٹس۔ فائل پاس فریز سے خفیہ ہے، اور پاس فریز کہیں محفوظ نہیں ہوتا۔
+
+### فلٹر کرنے والے کارڈ
+
+کسی ونڈو یا صفحے میں عدد والا کوئی بھی کارڈ — کنٹرول روم کی ونڈوز، ٹینڈر رجسٹر کے کارڈ، ٹیم اشاریوں کے خانے — دبائیں یا ٹیپ کریں: یہ سبز ہو کر صرف اپنی قطاریں دکھاتا ہے، اور ایکسل صرف دکھایا ہوا دیتا ہے۔ دوبارہ دبائیں تو فلٹر ہٹے، یا «سب دکھائیں»۔ ونڈوز میں بار میں کسی شخص کا نام دبائیں تو صرف اس کا کام۔
 
 ### لمبے جوابات اور نامکمل مدتیں
 

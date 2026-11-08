@@ -1369,6 +1369,77 @@ async function maSaveBrowser(recs, f) {
 /** One sender, two addresses (the same message came with both): a confirmed one confirms the other. */
 function maLink(links) { for (const [x, y] of links || []) { if (mailIds.map[x] && !mailIds.map[y]) mailIds.map[y] = mailIds.map[x]; else if (mailIds.map[y] && !mailIds.map[x]) mailIds.map[x] = mailIds.map[y]; } }
 
+// ---------- ADR-0103: sync between my devices — one encrypted file, sent through the phone's own share sheet, merged on arrival ----------
+function syncTenders(local, inc) {
+  if (!local || !local.items || !local.items.length) return inc;
+  const rank = (x) => TD_STAGES.indexOf(x.stage), filled = (x) => Object.values(x).filter((v) => v !== '' && v != null).length, by = new Map(local.items.map((x) => [x.id, x]));
+  for (const x of inc.items) { const y = by.get(x.id); if (!y) { by.set(x.id, x); continue; }
+    const [base, other] = rank(x) > rank(y) || (rank(x) === rank(y) && filled(x) > filled(y)) ? [x, y] : [y, x];   // the further stage wins, then the fuller copy
+    const m = { ...base }; for (const [k, v] of Object.entries(other)) if ((m[k] === '' || m[k] == null) && v !== '' && v != null) m[k] = v; by.set(x.id, m); }
+  return { ...local, items: [...by.values()].sort((p, q) => (p.date < q.date ? 1 : -1)), to: [local.to, inc.to].filter(Boolean).sort().pop() || null };
+}
+function syncMailAct(local, inc) {
+  const L = local && local.recs ? local : { imports: [], recs: [] }, by = new Map(L.recs.map((r) => [r.k, r]));
+  for (const r of inc.recs || []) { const o = by.get(r.k); by.set(r.k, o ? { ...r, ...o, b: o.b || r.b || '' } : r); }
+  const ik = (x) => x.id || `${x.source}|${x.extracted_at}`, imp = new Map((L.imports || []).map((x) => [ik(x), x])); for (const x of inc.imports || []) if (!imp.has(ik(x))) imp.set(ik(x), x);
+  return { imports: [...imp.values()], recs: [...by.values()] };
+}
+function syncProjects(local, p) {
+  if (!local) return p; const have = new Map(local.projects.map((x) => [projKey(x.project), x]));
+  for (const x of p.projects) { const k = projKey(x.project), o = have.get(k);
+    if (!o) { local.projects.push(x); have.set(k, x); continue; }
+    o.first = [o.first, x.first].filter(Boolean).sort()[0] || ''; o.last = [o.last, x.last].filter(Boolean).sort().pop() || ''; for (const f2 of ['messages', 'me', 'akram', 'shaarawi']) o[f2] = Math.max(o[f2] || 0, x[f2] || 0); o.worked = o.worked || x.worked; o.aibrahim = o.aibrahim || x.aibrahim; o.kraasa = o.kraasa || x.kraasa; }
+  const sk = new Set(local.skipped.map((x) => x.subject)); for (const x of p.skipped || []) if (!sk.has(x.subject)) local.skipped.push(x);
+  local.to = [local.to, p.to].filter(Boolean).sort().pop(); return local;
+}
+const SYNC_MAGIC = [0x41, 0x46, 0x51, 0x53, 1];   // «AFQS» + version
+async function syncKey(pass, salt) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 310000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function syncPack(obj, pass) {
+  const gz = new Uint8Array(await new Response(new Blob([JSON.stringify(obj)]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await syncKey(pass, salt), gz));
+  return new Blob([new Uint8Array(SYNC_MAGIC), salt, iv, ct], { type: 'application/octet-stream' });
+}
+async function syncUnpack(buf, pass) {
+  const b = new Uint8Array(buf); if (b.length < 40 || SYNC_MAGIC.some((v, i) => b[i] !== v)) throw new Error('sync_not_file');
+  const salt = b.slice(5, 21), iv = b.slice(21, 33), ct = b.slice(33);
+  let gz; try { gz = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, await syncKey(pass, salt), ct); } catch { throw new Error('sync_bad_pass'); }
+  return JSON.parse(await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
+}
+const syncCount = (j) => ({ tasks: (j.datasets || []).reduce((s, d) => s + (d.tasks || []).length, 0), tenders: j.tenders && j.tenders.items ? j.tenders.items.length : 0, mail: j.mailact && j.mailact.recs ? j.mailact.recs.length : 0 });
+async function syncSend(pass) {
+  if (String(pass || '').length < 6) { toast(t('sync_pass_short')); return; }
+  const all = await buildBackup(), blob = await syncPack(all, pass), stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
+  const file = new File([blob], `afaqy-sync-${stamp}.afqs`, { type: 'application/octet-stream' }), c = syncCount(all);
+  const last = { sentAt: new Date().toISOString(), ...c, kb: Math.round(blob.size / 1024) }; await store.kvPut('syncsent', last);
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: t('sync_share_title') }); toast(t('sync_sent', { kb: last.kb })); renderSync(); return; } catch (e) { if (e && e.name === 'AbortError') { renderSync(); return; } } }
+  const url = URL.createObjectURL(file), link = el('a', { href: url, download: file.name }); document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast(t('sync_saved', { kb: last.kb })); renderSync();
+}
+async function syncReceive(f, pass) {
+  if (String(pass || '').length < 6) { toast(t('sync_pass_short')); return false; }
+  let j; try { j = await syncUnpack(await f.arrayBuffer(), pass); } catch (e) { toast(t(e && /^sync_/.test(e.message) ? e.message : 'sync_not_file')); return false; }
+  const before = syncCount({ datasets, tenders, mailact: mailAct }); await applyBackup(j); const after = syncCount({ datasets, tenders, mailact: mailAct });
+  const got = { receivedAt: new Date().toISOString(), from: j.exportedAt || '', tasks: after.tasks - before.tasks, tenders: after.tenders - before.tenders, mail: after.mail - before.mail };
+  await store.kvPut('syncgot', got); toast(t('sync_got', { t: got.tasks, d: got.tenders, m: got.mail })); renderSync(); return true;
+}
+async function renderSync() {
+  const box = $('sync-card'); if (!box) return;
+  const sent = await store.kvGet('syncsent'), got = await store.kvGet('syncgot'), when = (iso) => (iso ? `${saudiDay(iso)} ${new Date(iso).toLocaleTimeString(lang === 'en' ? 'en-GB' : 'ar-SA-u-nu-latn', { hour: '2-digit', minute: '2-digit' })}` : '');
+  const pass = el('input', { type: 'password', class: 'sync-pass', autocomplete: 'new-password', minlength: '6', placeholder: t('sync_pass_ph'), 'aria-label': t('sync_pass_ph') });
+  const up = el('input', { type: 'file', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) await syncReceive(f, pass.value); } });   // no «accept»: iOS greys out an extension it does not know — the file is checked by its own header and the passphrase
+  set(box, el('h2', {}, `🔄 ${t('sync_h')}`), el('p', { class: 'hint', text: t('sync_lead') }),
+    el('ol', { class: 'sync-steps' }, ['sync_s1', 'sync_s2', 'sync_s3'].map((k) => el('li', { text: t(k) }))),
+    el('div', { class: 'row sync-row' }, pass,
+      el('button', { type: 'button', class: 'btn primary sync-send', text: `📤 ${t('sync_send')}`, onclick: () => syncSend(pass.value) }),
+      el('button', { type: 'button', class: 'btn sync-get', text: `📥 ${t('sync_get')}`, onclick: () => up.click() }), up),
+    el('p', { class: 'hint sync-last', text: [sent ? t('sync_last_sent', { w: when(sent.sentAt), n: sent.tasks, kb: sent.kb }) : '', got ? t('sync_last_got', { w: when(got.receivedAt), f: when(got.from) }) : ''].filter(Boolean).join(' · ') || t('sync_never') }),
+    el('p', { class: 'hint sync-safe', text: t('sync_safe') }));
+}
+
 // ---------- ADR-0096: a PST the browser cannot hold goes straight to the extractor, never to an error ----------
 const MF_BROWSER_MAX = 5 * 1073741824;   // ADR-0097: read from the disk in the background up to 5 GB; beyond that the extractor is faster
 function maTooBig(f) {
@@ -4011,6 +4082,7 @@ function route() {
   if (v === 'planner') renderPlanner();
   if (v === 'mailfile') renderMailFile();
   if (v === 'tenders') renderTenders();
+  if (v === 'data') renderSync();   // ADR-0103 (route() also runs on the first load, so a bookmark to «Data» draws it)
   if (v === 'overtime') renderOvertime();
   if (v === 'pro' && proToken.get() && !proUnits && !proBusy) proLoad();
   if (v === 'team') renderTeam();
@@ -4033,17 +4105,18 @@ $('read-text').addEventListener('click', async () => { if (await ingest($('paste
 $('file-in').addEventListener('change', async (e) => { for (const f of e.target.files) await ingest(await f.text()); e.target.value = ''; });
 // The device backup carries EVERYTHING this device holds — data, reports, closed month cards, one-to-ones, the repair list,
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
-$('export-btn').addEventListener('click', async () => {
+/** ADR-0103: everything this device holds — the backup file and the sync file carry the same thing. */
+async function buildBackup() {
   if (plannerFile === undefined) plannerFile = (await store.getPlanner()) || null;   // ADR-0071: the planner travels with the backup
   const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION, planner: plannerFile || null, tenders: tenders || (await store.kvGet('tenders')) || null, mailrules: mfState.rules || (await store.kvGet('mailrules')) || null, mailact: mailAct, mailids: mailIds,
     datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: (viewAs ? (meDerived ? null : realMe) : (meDerived ? null : me)) || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projfiles: await projFilesExport(), devplans: devPlans };
-  download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(all, null, 1));
-});
-$('import-in').addEventListener('change', async (e) => {
-  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  try {
-    const j = JSON.parse(await f.text());
-    if (!['afaqy-portal/v1', 'afaqy-portal/v2'].includes(j.backup) || !Array.isArray(j.datasets)) throw new Error('format');
+  return all;
+}
+$('export-btn').addEventListener('click', async () => { download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(await buildBackup(), null, 1)); });
+
+/** Restore or sync: merge, never overwrite. Settings (weights, team file, profile, rules, planner) stay as this device has them. */
+async function applyBackup(j) {
+  if (!['afaqy-portal/v1', 'afaqy-portal/v2'].includes(j.backup) || !Array.isArray(j.datasets)) throw new Error('format');
     for (const d of j.datasets) datasets = mergeDataset(datasets, d);
     await store.put(datasets);
     if (j.backup === 'afaqy-portal/v2') {
@@ -4061,15 +4134,15 @@ $('import-in').addEventListener('change', async (e) => {
       for (const x of Array.isArray(j.privlinks) ? j.privlinks : []) { const v = cleanPrivLink(x); if (v && !known.has(v.url)) privLinks.push(v); }
       if (j.projfiles && typeof j.projfiles === 'object') await projFilesImport(j.projfiles);
       if (j.devplans && typeof j.devplans === 'object') { for (const [q, ppl] of Object.entries(j.devplans)) devPlans[q] = { ...(ppl || {}), ...(devPlans[q] || {}) }; await store.kvPut('devplans', devPlans); }
-      if (j.register && !myRegister) { const r = cleanRegister(j.register); if (r) { myRegister = r; await store.putRegister(r); } }
+      if (j.register) { const r = cleanRegister(j.register); if (r) { if (!myRegister) myRegister = r; else { const have = new Set(myRegister.items.map((x) => x.id)); for (const x of r.items) if (!have.has(x.id)) myRegister.items.push(x); } await store.putRegister(myRegister); } }   // ADR-0103: merged
       // ADR-0077: the mail rules come back with the backup when this device has none of its own
       { const mr = cleanMailRules(j.mailrules); if (mr && !(await store.kvGet('mailrules'))) { mfState.rules = mr; await store.kvPut('mailrules', mr); } }
-      if (j.mailact && Array.isArray(j.mailact.recs) && !(mailAct && mailAct.recs.length)) { mailAct = { imports: j.mailact.imports || [], recs: j.mailact.recs }; await store.kvPut('mailact', mailAct); }   // ADR-0095
-      if (j.mailids && j.mailids.map && !Object.keys(mailIds.map).length) { mailIds = { map: j.mailids.map, ignored: j.mailids.ignored || [] }; await store.kvPut('mailids', mailIds); }
+      if (j.mailact && Array.isArray(j.mailact.recs)) { mailAct = syncMailAct(mailAct, j.mailact); await store.kvPut('mailact', mailAct); }   // ADR-0095 · ADR-0103: merged by message key
+      if (j.mailids && j.mailids.map) { mailIds = { map: { ...j.mailids.map, ...mailIds.map }, ignored: [...new Set([...(mailIds.ignored || []), ...(j.mailids.ignored || [])])] }; await store.kvPut('mailids', mailIds); }   // ADR-0103: this device's choice wins a clash
       if (plannerFile === undefined) plannerFile = (await store.getPlanner()) || null;
       if (j.planner && typeof j.planner.html === 'string' && !plannerFile && isHtml(j.planner.html)) { plannerFile = { name: String(j.planner.name || 'planner.html'), at: String(j.planner.at || new Date().toISOString()), html: j.planner.html }; await store.putPlanner(plannerFile); }
-      { const td = cleanTenders(j.tenders); if (td && !(tenders && tenders.items.length)) { tenders = td; await store.kvPut('tenders', td); } }   // ADR-0081
-      if (j.projects && !myProjects) { const p = cleanProjects(j.projects); if (p) { myProjects = p; await store.putProjects(myProjects); } }
+      { const td = cleanTenders(j.tenders); if (td) { tenders = syncTenders(tenders, td); await store.kvPut('tenders', tenders); } }   // ADR-0081 · ADR-0103: merged tender by tender
+      if (j.projects) { const p = cleanProjects(j.projects); if (p) { myProjects = syncProjects(myProjects, p); await store.putProjects(myProjects); } }   // ADR-0103: merged
       if (Array.isArray(j.pending)) { const have = new Set(pendingList().map((x) => x.name.toLowerCase())); localStorage.setItem(PENDING_KEY, JSON.stringify([...pendingList(), ...j.pending.map(cleanPending).filter((x) => x && !have.has(x.name.toLowerCase()))])); }
       if (j.names && typeof j.names === 'object') { const fx = nameFixes(); for (const [id, v] of Object.entries(j.names)) if (/^\d+$/.test(id) && v && typeof v === 'object' && !fx[id]) fx[id] = { ar: String(v.ar || '').slice(0, 80), en: String(v.en || '').slice(0, 80) }; localStorage.setItem(NAME_KEY, JSON.stringify(fx)); }
       await store.putPriv(privLinks);
@@ -4082,9 +4155,15 @@ $('import-in').addEventListener('change', async (e) => {
       if (j.me && !me) { const m = upgradeMe(j.me); if (m) { me = m; await store.putMe(me); } }
     }
     renderDatasets(); renderBlocks(); renderKpi(); renderMe(); renderTeam(); renderWeights(); renderPrivLinks();
+}
+$('import-in').addEventListener('change', async (e) => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const j = JSON.parse(await f.text()); await applyBackup(j);
     toast(t(j.backup === 'afaqy-portal/v2' ? 'backup_restored_all' : 'loaded', { n: datasets.reduce((s, d) => s + d.tasks.length, 0), range: '' }));
   } catch { toast(t('err_json')); }
 });
+
 // ask the browser to keep this site's storage — without it, Safari clears it after seven days unused
 async function keepStorage() {
   try {

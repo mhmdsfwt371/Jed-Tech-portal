@@ -1235,6 +1235,10 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
     dialog[open]:not(.tour-dialog) { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; inset: 0; border-radius: 0; border: 0; overflow: auto; overscroll-behavior: contain;
       padding-top: max(12px, env(safe-area-inset-top, 0px)); padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
   }
+  /* ADR-0103: sync between my devices */
+  .sync-card { margin-top: 16px; padding: 16px; } .sync-card h2 { margin: 0 0 6px; } .sync-steps { margin: 8px 0; padding-inline-start: 20px; display: grid; gap: 4px; font-size: 14px; }
+  .sync-row { gap: 8px; flex-wrap: wrap; align-items: center; } .sync-pass { flex: 1 1 220px; min-height: 44px; padding: 8px 12px; } .sync-row .btn { min-height: 44px; }
+  .sync-safe { font-size: 12.5px; }
 </style>
 </head>
 <body>
@@ -1420,6 +1424,7 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
       <button type="button" class="btn quiet" id="sample-btn" data-t="sample">تحميل بيانات تجريبية</button>
     </div>
     </details>
+    <div class="card sync-card no-print" id="sync-card"></div>
   </section>
 
   <section id="view-overtime" hidden>

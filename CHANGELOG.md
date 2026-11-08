@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.23 — 2026-11-08
+
+- مزامنة اللابتوب والموبايل: من «البيانات» ← «مزامنة أجهزتي»، اكتب كلمة سر واضغط «ابعت لجهازي التاني»، وعلى الجهاز التاني «استقبل» بنفس كلمة السر — الأرقام بتظهر على طول من غير سحب جديد. الملف مشفّر وصغير (شهر كامل حوالي ٨٠ ك.ب)، وبيتدمج من غير ما يمسح حاجة.
+- الاستعادة بقت دمج حقيقي: المناقصات ونشاط البريد ومشاريعي بتتدمج حتى لو الجهاز فيه بيانات (المناقصة بتاخد المرحلة الأبعد).
+- الدليل جوه البوابة فيه قسمين جداد: «مزامنة اللابتوب والموبايل» و«الكروت اللي بتفلتر».
+
+<details><summary>English</summary>
+
+- Sync the laptop and the phone: from «Data» → «Sync my devices», type a passphrase and press «Send to my other device»; on the other device press «Receive» with the same passphrase — the numbers show at once, no new pull. The file is encrypted and small (about 80 KB for a month), and merges without deleting anything.
+- Restoring now truly merges: tenders, mail activity and my projects merge even when the device already has data (a tender keeps its further stage).
+- The guide has two new sections: «Sync the laptop and the phone» and «Cards that filter».
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- لیپ ٹاپ اور فون کی ہم آہنگی: «ڈیٹا» ← «میرے آلات کی ہم آہنگی» سے پاس فریز لکھ کر «دوسرے آلے کو بھیجیں»، دوسرے آلے پر اسی پاس فریز سے «وصول کریں» — نئے حصول کے بغیر اعداد فوراً۔ فائل خفیہ اور چھوٹی ہے، اور کچھ حذف کیے بغیر ضم ہوتی ہے۔
+- بحالی اب حقیقی انضمام ہے: ٹینڈر، میل سرگرمی اور میرے پروجیکٹس ضم ہوتے ہیں چاہے آلے پر ڈیٹا ہو۔
+- رہنما میں دو نئے حصے: «لیپ ٹاپ اور فون کی ہم آہنگی» اور «فلٹر کرنے والے کارڈ»۔
+
+</div>
+</details>
+
+
 ## v9.22 — 2026-11-08
 
 - على الموبايل، أي نافذة بقت بتملا الشاشة كلها، والخلفية ورا النوافذ بقت أغمق في كل الأجهزة — ما بقاش في كلام من الصفحة باين حوالين النافذة أو من وراها.
