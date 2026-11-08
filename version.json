@@ -1,24 +1,18 @@
 {
-  "version": "9.18",
+  "version": "9.19",
   "date": "2026-11-08",
   "notes": {
     "ar": [
-      "ملف البريد اللي بيتقرا في المتصفح بقى بيتحفظ على جهازك وبيدخل مؤشر «نشاط البريد — صندوق المدير»، ومش هتحتاج تقراه تاني. والرسالة بتتحسب مرة واحدة سواء جت من المتصفح أو من «مستخرج البريد».",
-      "التصنيف بقى بكلام المهندس نفسه في الرد مش بعنوان الإيميل: الرد الفني على «طلب عرض سعر» ما بقاش بيتحسب بيع إضافي.",
-      "بحث بالاسم أو الإيميل في قايمة المرسلين مع «علّم على النتائج»، والمرسل من جوه الشركة بيظهر اسم حسابه، وجدول الرسايل بقى بيتحرك جوه صندوقه فالسكرول قريب.",
-      "«مستخرج البريد» 1.0.4: بيقرا كلام الرد نفسه للتصنيف، وما بيسيبش ملفات .part لو اتوقف."
+      "تفاصيل كل موظف في «مؤشرات الفريق» و«مؤشراتي» بقت داشبورد تفاعلية: ست مربعات بمصطلحات المؤشرات (المهام المُنجزة، حجم العمل، نسبة الإغلاق، متوسط زمن الحل، النقاط الموزونة، المفتوح الآن)، كل واحد فيه التغير عن الشهر اللي قبله وخط آخر الشهور وتعريفه لما تعدّي بالماوس، وحلقة مصادر الشغل، ورسم آخر الشهور، وعمر المفتوح. والجدول لسه تحت.",
+      "سجل المناقصات: أي إيميل فيه مرفق «كراسة الشروط» بيظهر — من شعراوي أو من أي حد، حتى لو رد أو تحويل — والمناقصة بتتحسب مرة واحدة بأول تاريخ."
     ],
     "en": [
-      "A mail file read in the browser is now kept on your device and feeds «Email Activity — Manager Inbox» — no need to read it again. A message counts once whether it came from the browser or the «Mail Extractor».",
-      "Classification now uses the engineer's own words in the reply, not the e-mail's subject: a technical reply to «quotation request» is no longer counted as upselling.",
-      "Search the senders by name or e-mail with «Tick the matches»; internal senders show their account name; the messages table scrolls in its own box, so the sideways bar is close.",
-      "«Mail Extractor» 1.0.4: reads the reply's own words for classification, and leaves no .part files when it stops."
+      "Each person's detail in «Team KPIs» and «My KPIs» is now an interactive dashboard: six tiles in KPI terms (Throughput, Workload, Closure rate, MTTR, Weighted points, Backlog), each with its change on the previous month, a recent-months line and its definition on hover, plus the work-intake ring, a recent-months chart and the age of open work. The table stays below.",
+      "Tender register: any e-mail with a «كراسة الشروط» attachment shows — from Shaarawi or anyone, even a reply or a forward — and a tender counts once, on its first date."
     ],
     "ur": [
-      "براؤزر میں پڑھی گئی میل فائل اب آپ کے آلے پر محفوظ رہتی ہے اور اشاریے میں جاتی ہے؛ پیغام ایک بار شمار ہوتا ہے۔",
-      "زمرہ بندی اب جواب میں انجینئر کے اپنے الفاظ سے ہوتی ہے، عنوان سے نہیں۔",
-      "نام یا ای میل سے تلاش؛ اندرونی بھیجنے والوں کا اکاؤنٹ نام؛ جدول اپنے خانے میں اسکرول ہوتا ہے۔",
-      "«میل ایکسٹریکٹر» 1.0.4۔"
+      "«ٹیم اشاریے» اور «میرے اشاریے» میں ہر شخص کی تفصیل اب انٹرایکٹو ڈیش بورڈ ہے: اشاریوں کی اصطلاحات میں چھ خانے، تبدیلی، رجحان اور ماؤس پر تعریف۔",
+      "ٹینڈر رجسٹر: «كراسة الشروط» منسلک ہر ای میل ظاہر ہوتی ہے، کسی سے بھی، جواب یا فارورڈ بھی۔"
     ]
   }
 }

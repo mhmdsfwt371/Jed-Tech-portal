@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.19 — 2026-11-08
+
+- تفاصيل كل موظف في «مؤشرات الفريق» و«مؤشراتي» بقت داشبورد تفاعلية: ست مربعات بمصطلحات المؤشرات (المهام المُنجزة، حجم العمل، نسبة الإغلاق، متوسط زمن الحل، النقاط الموزونة، المفتوح الآن)، كل واحد فيه التغير عن الشهر اللي قبله وخط آخر الشهور وتعريفه لما تعدّي بالماوس، وحلقة مصادر الشغل، ورسم آخر الشهور، وعمر المفتوح. والجدول لسه تحت.
+- سجل المناقصات: أي إيميل فيه مرفق «كراسة الشروط» بيظهر — من شعراوي أو من أي حد، حتى لو رد أو تحويل — والمناقصة بتتحسب مرة واحدة بأول تاريخ.
+
+<details><summary>English</summary>
+
+- Each person's detail in «Team KPIs» and «My KPIs» is now an interactive dashboard: six tiles in KPI terms (Throughput, Workload, Closure rate, MTTR, Weighted points, Backlog), each with its change on the previous month, a recent-months line and its definition on hover, plus the work-intake ring, a recent-months chart and the age of open work. The table stays below.
+- Tender register: any e-mail with a «كراسة الشروط» attachment shows — from Shaarawi or anyone, even a reply or a forward — and a tender counts once, on its first date.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «ٹیم اشاریے» اور «میرے اشاریے» میں ہر شخص کی تفصیل اب انٹرایکٹو ڈیش بورڈ ہے: اشاریوں کی اصطلاحات میں چھ خانے، تبدیلی، رجحان اور ماؤس پر تعریف۔
+- ٹینڈر رجسٹر: «كراسة الشروط» منسلک ہر ای میل ظاہر ہوتی ہے، کسی سے بھی، جواب یا فارورڈ بھی۔
+
+</div>
+</details>
+
+
 ## v9.18 — 2026-11-08
 
 - ملف البريد اللي بيتقرا في المتصفح بقى بيتحفظ على جهازك وبيدخل مؤشر «نشاط البريد — صندوق المدير»، ومش هتحتاج تقراه تاني. والرسالة بتتحسب مرة واحدة سواء جت من المتصفح أو من «مستخرج البريد».

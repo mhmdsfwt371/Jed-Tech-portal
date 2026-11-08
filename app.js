@@ -894,10 +894,10 @@ function tdIcs(i) {
 }
 const tdNorm = (s) => String(s || '').replace(/[\u0640\u064B-\u0652]/g, '').replace(/[إأآ]/g, 'ا').replace(/ة/g, 'ه').replace(/\s+/g, ' ').trim().toLowerCase();
 const tdIsReply = (s) => /^\s*((re|fw|fwd|aw|wg)\s*:|رد\s*:|إعادة توجيه\s*:|اعادة توجيه\s*:|تحويل\s*:)/i.test(String(s || ''));
-const tdKey = (s) => tdNorm(String(s || '').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, ''));
+const tdKey = (s) => tdNorm(String(s || '').replace(/^\s*(((re|fw|fwd|aw|wg)\s*:|رد\s*:|إعادة توجيه\s*:|اعادة توجيه\s*:|تحويل\s*:)\s*)+/i, ''));   // the same tender, whatever its reply/forward prefix
 /** a.ibrahim as the SMTP address, or as the internal Exchange address a company PST keeps (…/cn=…-a.ibrahim). */
 const tdIsAI = (addr) => { const e = String(addr || '').trim().toLowerCase(); return e === TD_FROM || /\/cn=(?:[^/]*-)?a\.ibrahim$/.test(e); };
-const tdHasKraasa = (names) => (names || []).some((n) => tdNorm(n).includes(tdNorm('كراسة الشروط')));
+const tdHasKraasa = (names) => (names || []).some((n) => { const x = tdNorm(String(n || '').replace(/[_\-.]+/g, ' ')); return x.includes('كراسه الشروط') || x.includes('كراسه شروط') || (x.includes('كراسه') && x.includes('الشروط')); });   // ADR-0100
 const tdDay = (iso) => (/^\d{4}-\d{2}-\d{2}/.test(String(iso || '')) ? saudiDay(String(iso).length > 10 ? String(iso) : `${iso}T12:00:00+03:00`) : null);
 /** Check what Claude brought against the rules here too: originals only, from a.ibrahim or carrying the booklet. */
 function tdImport(j) {
@@ -907,8 +907,9 @@ function tdImport(j) {
     const subject = String((m && m.subject) || '').trim().slice(0, 300), date = tdDay(m && m.received), from = String((m && m.from_address) || '').trim().toLowerCase().slice(0, 120);
     const att = (Array.isArray(m && m.attachments) ? m.attachments : []).map((x) => String(x).slice(0, 200)).slice(0, 20);
     if (!subject || !date) { other++; continue; }
-    if (tdIsReply(subject)) { replies++; continue; }
-    const byFrom = tdIsAI(from), byKr = tdHasKraasa(att); if (!m.manual && !byFrom && !byKr) { other++; continue; }
+    const byFrom = tdIsAI(from), byKr = tdHasKraasa(att);
+    if (tdIsReply(subject) && !byKr) { replies++; continue; }   // ADR-0100: a reply or forward counts only when it carries the booklet
+    if (!m.manual && !byFrom && !byKr) { other++; continue; }
     const id = tdKey(subject), was = byKey.get(id);
     if (was) { if (date < was.date) { was.date = date; was.from = from; } was.byFrom = was.byFrom || byFrom; was.byKr = was.byKr || byKr; was.att = [...new Set([...(was.att || []), ...att.filter((n) => tdHasKraasa([n]))])]; merged++; continue; }
     const it = { id, subject, date, from: byFrom ? TD_FROM : from, byFrom, byKr, att: att.filter((n) => tdHasKraasa([n])), status: 'open', stage: 'received', stageAt: date, readyOn: '', due: '', visit: '', note: '', ...(m.manual ? { manual: true } : {}) };
@@ -956,15 +957,17 @@ function tdPrompt(from = tdFrom || tdDefaultFrom(), to = tdTo || saudiDay(new Da
   return `Open Outlook on the web (https://outlook.office.com) — I am signed in with my AFAQY account.
 Goal: list TENDER mails received ON OR AFTER ${from} AND ON OR BEFORE ${to}. Read only — do not send, reply, move, flag, delete or change read status.
 
-A mail is a TENDER if it is an ORIGINAL message (not a reply or a forward: skip subjects starting with RE:, FW:, Fwd:, رد:, إعادة توجيه:) and ANY is true:
-  A. it is FROM ${TD_FROM}
-  B. it has an attachment whose file name contains «كراسة الشروط» (also «كراسه الشروط»)
+A mail is a TENDER if ANY is true:
+  A. it has an attachment whose file name contains «كراسة الشروط» (also «كراسه الشروط», «كراسة_الشروط», «كراسة شروط», «كراسة الشروط والمواصفات») — FROM ANYONE, and EVEN IF it is a reply or a forward (RE:, FW:, Fwd:, رد:, إعادة توجيه:)
+  B. it is an ORIGINAL message (not a reply or a forward) FROM ${TD_FROM}
 For each conversation keep ONLY its first (earliest) matching message.
 
 Search all folders (Archive included), scroll every result list to the end:
   from:${TD_FROM} received>=${from} received<=${to}
   attachmentnames:"كراسة الشروط" received>=${from} received<=${to}
   attachmentnames:"كراسه الشروط" received>=${from} received<=${to}
+  attachmentnames:"كراسة شروط" received>=${from} received<=${to}
+  attachmentnames:"كراسة_الشروط" received>=${from} received<=${to}
 
 ${known ? `ALREADY COLLECTED — skip any mail whose subject is one of these:
 ${known.map((k) => `- ${k}`).join('\n') || '- (none)'}
@@ -1356,6 +1359,70 @@ const MF_BROWSER_MAX = 5 * 1073741824;   // ADR-0097: read from the disk in the 
 function maTooBig(f) {
   return el('div', { class: 'ma-big' }, el('p', {}, el('b', { text: t('ma_big_h', { gb: (f.size / 1073741824).toFixed(1) }) })), el('ol', { class: 'ma-steps' }, ['ma_step1', 'ma_step2', 'ma_step3', 'ma_step4'].map((k) => el('li', { text: t(k) }))),
     el('div', { class: 'row' }, el('a', { class: 'btn primary', href: MA_RELEASES, target: '_blank', rel: 'noopener noreferrer', text: `⬇ ${t('ma_get')}` })));
+}
+
+// ---------- ADR-0100: a person's KPIs as an interactive dashboard — real numbers, KPI terms, definitions on hover ----------
+const NS_SVG = 'http://www.w3.org/2000/svg';
+const svgEl = (tag, at = {}) => { const e = document.createElementNS(NS_SVG, tag); for (const [k, v] of Object.entries(at)) e.setAttribute(k, v); return e; };
+function pmSpark(vals, cls = '') {
+  const v = vals.map((x) => (x == null ? null : +x)), ok = v.filter((x) => x != null); if (ok.length < 2) return null;
+  const W = 120, H = 34, lo = Math.min(...ok), hi = Math.max(...ok), span = hi - lo || 1;
+  const pts = v.map((x, i) => (x == null ? null : [4 + (i / (v.length - 1)) * (W - 8), H - 4 - ((x - lo) / span) * (H - 10)])).filter(Boolean);
+  const s = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, class: `pm-spark ${cls}`, 'aria-hidden': 'true' });
+  s.append(svgEl('polyline', { points: pts.map((p) => p.join(',')).join(' '), fill: 'none' }));
+  const [lx, ly] = pts[pts.length - 1]; s.append(svgEl('circle', { cx: lx, cy: ly, r: 3 })); return s;
+}
+function pmDonut(parts) {
+  const total = parts.reduce((s, p) => s + p.v, 0); const s = svgEl('svg', { viewBox: '0 0 120 120', class: 'pm-donut', role: 'img', 'aria-label': parts.map((p) => `${p.l} ${p.v}`).join(', ') });
+  s.append(svgEl('circle', { cx: 60, cy: 60, r: 44, class: 'pm-donut-track' }));
+  if (total) { let acc = 0; const C = 2 * Math.PI * 44;
+    for (const p of parts) { if (!p.v) continue; const len = (p.v / total) * C; const c = svgEl('circle', { cx: 60, cy: 60, r: 44, class: `pm-seg ${p.c}`, 'stroke-dasharray': `${len} ${C - len}`, 'stroke-dashoffset': `${-acc}`, transform: 'rotate(-90 60 60)' }); c.append(svgEl('title')); c.lastChild.textContent = `${p.l}: ${p.v} (${Math.round((p.v / total) * 100)}%)`; s.append(c); acc += len; } }
+  const tx = svgEl('text', { x: 60, y: 64, 'text-anchor': 'middle', class: 'pm-donut-n' }); tx.textContent = String(total); s.append(tx); return s;
+}
+function pmTrend(hist) {   // hist: newest first → drawn oldest to newest
+  const H = [...hist].reverse(); if (H.length < 2) return null;
+  const W = 520, Ht = 170, P = 26, bw = (W - 2 * P) / H.length, maxN = Math.max(1, ...H.map((h) => h.x.total)), maxA = Math.max(1, ...H.map((h) => h.x.avg || 0));
+  const s = svgEl('svg', { viewBox: `0 0 ${W} ${Ht}`, class: 'pm-trend', role: 'img', 'aria-label': t('pm_trend_h') });
+  const tip = el('div', { class: 'pm-tt', hidden: true });
+  H.forEach((h, i) => { const x = P + i * bw, tot = h.x.total, cl = h.x.closed, yT = Ht - 22 - (tot / maxN) * (Ht - 44), yC = Ht - 22 - (cl / maxN) * (Ht - 44);
+    const g = svgEl('g', { class: 'pm-bar-g' });
+    g.append(svgEl('rect', { x: x + bw * 0.16, y: yT, width: bw * 0.68, height: Ht - 22 - yT, class: 'pm-bar-total', rx: 4 }), svgEl('rect', { x: x + bw * 0.3, y: yC, width: bw * 0.4, height: Ht - 22 - yC, class: 'pm-bar-closed', rx: 3 }));
+    const lab = svgEl('text', { x: x + bw / 2, y: Ht - 6, 'text-anchor': 'middle', class: 'pm-ax' }); lab.textContent = periodLabel(h.m.ym).split(' ')[0].slice(0, 3); g.append(lab);
+    g.addEventListener('pointerenter', () => { tip.hidden = false; tip.textContent = t('pm_trend_tip', { m: periodLabel(h.m.ym), t: tot, c: cl, a: hmOf(h.x.avg), p: h.x.points }); tip.style.setProperty('--tx', `${((x + bw / 2) / W) * 100}%`); g.classList.add('on'); });
+    g.addEventListener('pointerleave', () => { tip.hidden = true; g.classList.remove('on'); }); s.append(g); });
+  const line = H.map((h, i) => (h.x.avg == null ? null : [P + i * bw + bw / 2, Ht - 22 - (h.x.avg / maxA) * (Ht - 44)])).filter(Boolean);
+  if (line.length > 1) { s.append(svgEl('polyline', { points: line.map((p) => p.join(',')).join(' '), class: 'pm-line-avg', fill: 'none' })); for (const [cx, cy] of line) s.append(svgEl('circle', { cx, cy, r: 3.5, class: 'pm-dot-avg' })); }
+  return el('div', { class: 'pm-trend-wrap' }, s, tip);
+}
+function pmDash({ n, p, hist, open, share, ml, pml }) {
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) : null), rate = pct(n.closed, n.total), prate = p ? pct(p.closed, p.total) : null;
+  const oldest = open.length ? Math.max(...open.map((x) => x.ageHours || 0)) : 0;
+  const H = [...hist].reverse(), sp = (f) => H.map((h) => f(h.x));
+  const tile = (key, val, sub, delta, spark, extra) => el('div', { class: 'km-tile pm-tile', tabindex: '0', 'data-kpi': key },
+    el('span', { class: 'pm-k' }, el('b', { text: t(`pm_${key}`) }), el('i', { class: 'pm-term', text: t(`pm_${key}_term`) })),
+    el('strong', { class: 'pm-v', text: val }), sub ? el('small', { class: 'hint', text: sub }) : null, delta, spark, extra || null,
+    el('span', { class: 'pm-def', role: 'tooltip', text: t(`pm_${key}_def`) }));
+  const d = (cur, prev, kind) => (p && prev != null && cur != null ? kmDelta(cur, prev, kind, pml) : null);
+  const tiles = el('div', { class: 'pm-tiles' },
+    tile('thru', String(n.closed), t('pm_of', { n: n.total }), d(n.closed, p && p.closed, 'h'), pmSpark(sp((x) => x.closed))),
+    tile('load', String(n.total), t('pm_src3', { e: n.email, s: n.self, o: n.other }), d(n.total, p && p.total, 'n'), pmSpark(sp((x) => x.total))),
+    tile('rate', rate == null ? '—' : `${rate}%`, '', d(rate, prate, 'h'), pmSpark(sp((x) => pct(x.closed, x.total)))),
+    tile('mttr', hmOf(n.avg), t('pm_hm'), d(n.avg, p && p.avg, 'l'), pmSpark(sp((x) => x.avg), 'pm-spark-low')),
+    tile('pts', String(n.points), share != null ? t('pm_share', { p: share }) : '', d(n.points, p && p.points, 'h'), pmSpark(sp((x) => x.points))),
+    tile('backlog', String(open.length), open.length ? t('pm_oldest', { a: oldest < 48 ? t('hours', { n: Math.round(oldest) }) : t('days', { n: Math.round(oldest / 24) }) }) : t('pf_none'), null, null));
+  const mix = [{ l: t('src_email'), v: n.email, c: 'c-email' }, { l: t('src_self'), v: n.self, c: 'c-self' }, { l: t('src_other'), v: n.other, c: 'c-other' }];
+  const mixBox = el('div', { class: 'pm-card' }, el('h4', {}, t('pm_mix_h'), el('i', { class: 'pm-term', text: 'Work intake mix' })), el('div', { class: 'pm-mix' }, pmDonut(mix),
+    el('ul', { class: 'pm-legend' }, mix.map((m) => el('li', { class: m.c }, el('span', { class: 'pm-sw' }), `${m.l} `, el('b', { text: String(m.v) }), el('small', { class: 'hint', text: n.total ? ` ${Math.round((m.v / n.total) * 100)}%` : '' }))))),
+    el('p', { class: 'hint', text: t('pm_self_rate', { p: n.total ? Math.round((n.self / n.total) * 100) : 0 }) }));
+  const B = [[0, 24, 'pm_age_1'], [24, 72, 'pm_age_2'], [72, 168, 'pm_age_3'], [168, Infinity, 'pm_age_4']].map(([lo, hi, k]) => ({ k, v: open.filter((x) => (x.ageHours || 0) >= lo && (x.ageHours || 0) < hi).length }));
+  const bmax = Math.max(1, ...B.map((b) => b.v));
+  const ageBox = el('div', { class: 'pm-card' }, el('h4', {}, t('pm_age_h'), el('i', { class: 'pm-term', text: 'Backlog aging' })),
+    el('div', { class: 'pm-age' }, B.map((b, i) => el('div', { class: `pm-age-row a${i}` }, el('span', { text: t(b.k) }), el('span', { class: 'pm-age-track' }, el('i', { style: `--w:${(b.v / bmax) * 100}%` })), el('b', { text: String(b.v) })))));
+  const tr = pmTrend(hist);
+  const trendBox = tr ? el('div', { class: 'pm-card pm-wide' }, el('h4', {}, t('pm_trend_h'), el('i', { class: 'pm-term', text: 'Throughput · MTTR trend' })), tr,
+    el('p', { class: 'hint pm-keys' }, el('span', { class: 'pm-key k-total' }), t('km_total'), el('span', { class: 'pm-key k-closed' }), t('km_closed'), el('span', { class: 'pm-key k-avg' }), t('km_avg'))) : null;
+  return el('section', { class: 'pm-dash' }, el('p', { class: 'hint pm-period', text: p ? t('pm_period', { m: ml, p: pml }) : t('pm_period_np', { m: ml, p: pml }) }), tiles,
+    el('div', { class: `pm-cards${trendBox ? '' : ' no-trend'}` }, trendBox, mixBox, ageBox));
 }
 
 // ---------- ADR-0079: the bento's small visuals — drawn from the same numbers as the tiles, never decoration ----------
@@ -2984,6 +3051,8 @@ function personMonthView({ id, tasks, acts = [], months, ym, head = '', share = 
   const item = (x) => el('li', {}, el('span', { text: x.title || typeLabel(x.type || '', lang) || '—' }),
     el('small', { class: 'hint', text: x.ageHours == null ? '' : t(x.ageHours < 48 ? 'hours' : 'days', { n: Math.round(x.ageHours < 48 ? x.ageHours : x.ageHours / 24) }) }));
   return el('div', { class: 'km-detail' }, head ? el('p', { class: 'hint km-head', text: head }) : null, maPersonLine(id, ym),
+    pmDash({ n, p, hist, open, share, ml, pml }),   // ADR-0100: the dashboard first; the table below for the detail and ⚑
+    el('h4', { class: 'pm-table-h', text: t('pm_table_h') }),
     el('div', { class: 'km-cmp' }, el('table', {},
       el('thead', {}, el('tr', {}, el('th', {}), el('th', { class: 'num', text: ml }), el('th', { class: 'num', text: pml }), el('th', { class: 'num', text: t('km_change') }), el('th', {}))),
       el('tbody', {}, rows.map(([lab, k, kind]) => el('tr', {}, el('td', { text: t(lab) }), el('td', { class: 'num' }, el('b', { text: fmt(k, n[k]) })),
