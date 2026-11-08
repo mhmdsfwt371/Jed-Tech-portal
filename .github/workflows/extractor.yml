@@ -44,7 +44,16 @@ jobs:
           if ($p.ExitCode -ne 0) { throw "the built exe failed its self-test (exit $($p.ExitCode))" }
           if (-not (Test-Path exe-smoke.jsonl.gz)) { throw 'the built exe wrote no output' }
           Get-Content exe-smoke.jsonl.gz.selftest.json
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: The portal's own reader accepts the .exe's output (on Windows)
+        working-directory: .
+        run: node tests/check-extractor-output.mjs "tools/mail-extractor/exe-smoke.jsonl.gz"
+      - name: Keep the Windows output for inspection
+        uses: actions/upload-artifact@v4
+        with: { name: windows-output, path: tools/mail-extractor/exe-smoke.jsonl.gz }
       - name: Release
+        if: startsWith(github.ref, 'refs/tags/')   # a manual run only builds and checks
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |
           $tag = if ($env:GITHUB_REF -like 'refs/tags/*') { $env:GITHUB_REF_NAME } else { "extractor-manual-$env:GITHUB_RUN_NUMBER" }
