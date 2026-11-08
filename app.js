@@ -849,7 +849,7 @@ function rankFor(id, ym) {   // his team: the same team leader in the team file,
 
 // ---------- ADR-0081: the tender register — original tender mails from Outlook, one row each, his status and his dates ----------
 let tenders = null;   // { items: [...], to, pulledAt } — on this device, carried by the backup
-let tdKind = pref('tdkind') || 'month', tdPick = '', tdFrom = '', tdTo = '', tdBusy = '', tdOpenId = null, tdStageF = null;
+let tdKind = pref('tdkind') || 'month', tdPick = '', tdFrom = '', tdTo = '', tdBusy = '', tdOpenId = null, tdStageF = null, tdCardF = null;   // ADR-0102: a card's filter
 const TD_FROM = 'a.ibrahim@afaqy.com';
 // ADR-0083: the lifecycle. Open stages in order, then the closed ones. declined/lost need a reason.
 const TD_STAGES = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted', 'won', 'lost', 'cancelled', 'declined'];
@@ -1062,19 +1062,22 @@ function renderTenders() {
   if (tdKind === 'all') tdPick = 'all'; else if (!periods.includes(tdPick)) tdPick = periods.includes(tdPeriodOf(today, tdKind)) ? tdPeriodOf(today, tdKind) : periods[0];
   const rowsAll = tenders.items.filter((i) => tdKind === 'all' || tdPeriodOf(i.date, tdKind) === tdPick), K = tdKpis(rowsAll, today);
   if (tdStageF && !rowsAll.some((i) => i.stage === tdStageF)) tdStageF = null;
-  const rows = tdStageF ? rowsAll.filter((i) => i.stage === tdStageF) : rowsAll;
+  const CARD = { waiting: (i) => ['received', 'screen', 'decide'].includes(i.stage), soon: (i) => TD_OPEN.includes(i.stage) && tdNextDate(i, today) && tdDaysBetween(today, tdNextDate(i, today)[1]) <= 7, decided: (i) => ['won', 'lost'].includes(i.stage) };
+  const rows = tdStageF ? rowsAll.filter((i) => i.stage === tdStageF) : tdCardF ? rowsAll.filter(CARD[tdCardF]) : rowsAll;
   // ADR-0086: the pipeline — each stage with its count; the lines between run while tenders move through; a stage pulses when something waits there over 3 days
   const stale = (s) => ['received', 'screen', 'decide'].includes(s) && rowsAll.some((i) => i.stage === s && tdDaysBetween(i.stageAt, today) > 3);
   const cnt = (s) => rowsAll.filter((i) => i.stage === s).length, flow = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted'];
   const node = (s, cls = '') => el('button', { type: 'button', class: `td-pipe-node${cls}${tdStageF === s ? ' sel' : ''}${stale(s) ? ' hot' : ''}${cnt(s) ? '' : ' zero'}`, 'data-stage': s, 'aria-pressed': tdStageF === s ? 'true' : 'false',
-    title: t('td_pipe_hint'), onclick: () => { tdStageF = tdStageF === s ? null : s; renderTenders(); } }, el('b', { text: String(cnt(s)) }), el('span', { text: t(`td_st_${s}`) }));
+    title: t('td_pipe_hint'), onclick: () => { tdStageF = tdStageF === s ? null : s; tdCardF = null; renderTenders(); } }, el('b', { text: String(cnt(s)) }), el('span', { text: t(`td_st_${s}`) }));
   const pipe = el('div', { class: 'td-pipe', role: 'group', 'aria-label': t('td_pipe') },
     flow.flatMap((s, k) => [k ? el('span', { class: `td-pipe-line${flow.slice(k).some((x) => cnt(x)) && flow.slice(0, k).some((x) => cnt(x)) ? ' on' : ''}`, 'aria-hidden': 'true' }) : null, node(s)]),
     el('span', { class: 'td-pipe-sep', 'aria-hidden': 'true' }), ['won', 'lost', 'declined', 'cancelled'].map((s) => node(s, ` td-pipe-end td-end-${s}`)));
   const kinds = el('div', { class: 'pills' }, [['month', 'td_month'], ['quarter', 'td_quarter'], ['year', 'td_year'], ['all', 'td_all']].map(([k, l]) =>
     el('button', { type: 'button', class: `pill-btn${tdKind === k ? ' on' : ''}`, text: t(l), onclick: () => { tdKind = k; pref('tdkind', k); tdPick = ''; renderTenders(); } })));
   const pick = tdKind === 'all' ? null : el('select', { class: 'td-pick', 'aria-label': t('td_period'), onchange: (e) => { tdPick = e.target.value; renderTenders(); } }, periods.map((k) => el('option', { value: k, text: tdLabel(k), ...(k === tdPick ? { selected: '' } : {}) })));
-  const tile = (cls, n, l, sub) => el('div', { class: `km-tile ${cls}` }, el('b', { text: String(n) }), el('span', { text: t(l) }), sub ? el('small', { class: 'hint', text: sub }) : null);
+  const tile = (cls, n, l, sub, f) => el('button', { type: 'button', class: `km-tile crm-tile-f ${cls}${(f === 'all' ? !tdCardF && !tdStageF : tdCardF === f) ? ' on' : ''}`, 'aria-pressed': String(f === 'all' ? !tdCardF && !tdStageF : tdCardF === f), 'data-card': f,
+    title: t(f === 'all' ? 'crm_show_all' : tdCardF === f ? 'crm_f_off' : 'crm_f_on'), onclick: () => { if (f === 'all') { tdCardF = null; tdStageF = null; } else { tdCardF = tdCardF === f ? null : f; tdStageF = null; } renderTenders(); } },
+    el('b', { text: String(n) }), el('span', { text: t(l) }), sub ? el('small', { class: 'hint', text: sub }) : null);
   const save = async (i, patch) => { Object.assign(i, patch); await tdSave(); };
   const cd = (i) => { const nx = tdNextDate(i, today); if (!nx || !TD_OPEN.includes(i.stage)) return el('span', { class: 'hint', text: '—' }); const d = tdDaysBetween(today, nx[1]);
     return el('span', { class: `chip td-cd ${d <= 3 ? 'td-red' : d <= 7 ? 'td-amber' : 'td-green'}`, title: nx[1], text: `${t(`td_col_${nx[0]}`)}: ${t('td_in_days', { n: d })}` }); };
@@ -1107,17 +1110,17 @@ function renderTenders() {
         open ? el('tr', { class: 'td-detail-row' }, el('td', { colspan: 6 }, detail(i))) : null]; }))));
   set(body, mailSrc('tenders'), pull,
     el('div', { class: 'row td-filter' }, kinds, pick),
-    el('p', { class: 'answer-line', text: t('td_answer2', { p: tdLabel(tdPick), n: K.n, w: K.waiting, j: K.joined, s: K.submitted, won: K.won }) }),
     pipe,
     el('div', { class: 'km-tiles td-tiles' },
-      tile('km-total', K.n, 'td_k_in'), tile(K.waiting ? 'km-other td-hot' : 'km-other', K.waiting, 'td_k_waiting', K.waiting ? t('td_k_waitmax', { d: K.waitMax }) : ''),
-      tile('km-email', K.soon, 'td_k_soon', K.late ? t('td_k_late', { n: K.late }) : ''), tile('km-points', K.won, 'td_st_won', K.winRate == null ? t('td_k_norate') : t('td_k_winrate_of', { r: K.winRate, n: K.closed }))),
+      tile('km-total', K.n, 'td_k_in_all', t('td_k_in_all_sub'), 'all'), tile(K.waiting ? 'km-other td-hot' : 'km-other', K.waiting, 'td_k_waiting', K.waiting ? t('td_k_waitmax', { d: K.waitMax }) : '', 'waiting'),
+      tile('km-email', K.soon, 'td_k_soon', K.late ? t('td_k_late', { n: K.late }) : '', 'soon'), tile('km-points', K.winRate == null ? '—' : `${K.winRate}%`, 'td_k_winrate', K.winRate == null ? t('td_k_norate') : t('td_k_won_of', { w: K.won, n: K.closed }), 'decided')),
     el('p', { class: 'hint td-kpis', text: t('td_kpi_line', { j: K.joined, n: K.n, d: K.avgDecision == null ? '—' : K.avgDecision, o: K.onTime == null ? '—' : `${K.onTime}%`, v: K.value ? K.value.toLocaleString('en') : '0' }) }),
     el('div', { class: 'row', style: 'justify-content:flex-end;gap:8px' },
       el('button', { type: 'button', class: 'btn tiny td-wm', text: `🗓 ${t('td_wm')}`, onclick: () => copyText(tdWeekMessage(), t('td_wm_copied')) }),
       el('a', { class: 'btn tiny td-wm-mail', href: '#', text: `✉ ${t('fl_mail')}`, onclick: (e) => { e.preventDefault(); location.href = `mailto:?subject=${encodeURIComponent(t('td_wm_subject', { a: saudiDay(new Date(Date.now() - 6 * 864e5).toISOString()), b: saudiDay(new Date().toISOString()) }))}&body=${encodeURIComponent(tdWeekMessage())}`; } }),
       el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('td_excel')}`, onclick: () => tdExcel(rows) })),
     tdStageF ? el('div', { class: 'row td-filtered' }, el('span', { class: 'chip', text: t('td_pipe_on', { s: t(`td_st_${tdStageF}`), n: rows.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: `✕ ${t('td_pipe_clear')}`, onclick: () => { tdStageF = null; renderTenders(); } })) : null,
+    !tdStageF && tdCardF ? el('div', { class: 'row td-filtered' }, el('span', { class: 'chip', text: t('crm_filtered', { f: t({ waiting: 'td_k_waiting', soon: 'td_k_soon', decided: 'td_k_decided' }[tdCardF]), n: rows.length, all: rowsAll.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: t('crm_show_all'), onclick: () => { tdCardF = null; renderTenders(); } })) : null,
     rows.length ? table : el('p', { class: 'note', text: t('td_none_period') }));
 }
 
@@ -1137,20 +1140,32 @@ async function openAbout() {
   const q = (c, v) => { const x = dlg.querySelector(c); if (x) x.textContent = v == null ? '—' : String(v); }; q('.about-nv', nv); q('.about-na', na);
 }
 // ---------- ADR-0090: a control-room number opens its detail — tiles, a bar per engineer, the list, Excel ----------
-function crModal({ title, lead, tiles = [], bars = [], head = [], rows = [], hot = () => false, file }) {
-  const max = Math.max(1, ...bars.map((b) => b[1])), shown = rows.slice(0, 300);
-  const xl = async () => { const X = await loadXlsx(), ws = X.utils.aoa_to_sheet([head, ...rows]); ws['!views'] = [{ RTL: lang !== 'en' }]; ws['!cols'] = head.map((h, k) => ({ wch: k === 0 ? 50 : 16 })); const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, title.slice(0, 30)); X.writeFile(wb, `${file}-${saudiDay(new Date().toISOString())}.xlsx`); };
+/** A number's window: tiles, bars, the list, Excel. ADR-0102: a tile with a filter (its 4th item, (k) => bool on row k) or a person's bar
+ *  narrows the list, the bars, the count and Excel to its rows; a second click clears it. bar: (k) => [name, weight] for row k. */
+function crModal({ title, lead, tiles = [], bars = [], bar = null, head = [], rows = [], hot = () => false, file }) {
+  const st = { tile: -1, who: '' };
+  const keep = () => rows.map((r, k) => k).filter((k) => (st.tile < 0 || !tiles[st.tile][3] || tiles[st.tile][3](k)) && (!st.who || (bar && bar(k)[0] === st.who)));
+  const label = () => [st.tile >= 0 ? tiles[st.tile][0] : '', st.who].filter(Boolean).join(' · ');
+  const xl = async () => { const ks = keep(), X = await loadXlsx(), ws = X.utils.aoa_to_sheet([head, ...ks.map((k) => rows[k])]); ws['!views'] = [{ RTL: lang !== 'en' }]; ws['!cols'] = head.map((h, k) => ({ wch: k === 0 ? 50 : 16 })); const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, title.slice(0, 30)); X.writeFile(wb, `${file}${label() ? '-filtered' : ''}-${saudiDay(new Date().toISOString())}.xlsx`); };
+  const tilesBox = tiles.length ? el('div', { class: 'crm-tiles' }) : null, barsBox = el('div', { class: 'crm-bars', role: 'img', 'aria-label': t('crm_bars') }), info = el('div', { class: 'crm-filter', hidden: true }), listBox = el('div');
+  const draw = () => {
+    const ks = keep(), on = st.tile >= 0 || st.who;
+    if (tilesBox) set(tilesBox, tiles.map(([l, v, s, f], ti) => f ? el('button', { type: 'button', class: `km-tile crm-tile-f${st.tile === ti ? ' on' : ''}`, 'aria-pressed': String(st.tile === ti), title: t(st.tile === ti ? 'crm_f_off' : 'crm_f_on'), onclick: () => { st.tile = st.tile === ti ? -1 : ti; draw(); } },
+      el('b', { text: String(v) }), el('span', { text: l }), s ? el('small', { class: 'hint', text: s }) : null)
+      : el('div', { class: 'km-tile' }, el('b', { text: String(v) }), el('span', { text: l }), s ? el('small', { class: 'hint', text: s }) : null)));
+    const B = bar ? [...ks.reduce((m, k) => { const [n, w] = bar(k); m.set(n, (m.get(n) || 0) + (+w || 0)); return m; }, new Map())].map(([n, v]) => [n, Math.round(v * 10) / 10]).sort((p, q) => q[1] - p[1]) : bars, max = Math.max(1, ...B.map((b) => b[1]));
+    barsBox.hidden = !B.length; set(barsBox, B.slice(0, 15).map(([n, v], k) => el(bar ? 'button' : 'div', { type: bar ? 'button' : null, class: `crm-bar${bar ? ' crm-bar-f' : ''}${st.who === n ? ' on' : ''}`, 'aria-pressed': bar ? String(st.who === n) : null, title: bar ? t(st.who === n ? 'crm_f_off' : 'crm_f_who') : null, onclick: bar ? () => { st.who = st.who === n ? '' : n; draw(); } : null },
+      el('span', { class: 'crm-n', text: n }), el('span', { class: 'crm-track' }, el('i', { style: `--w:${(v / max) * 100}%;animation-delay:${k * 40}ms` })), el('b', { text: String(v) }))));
+    info.hidden = !on; if (on) set(info, el('span', { text: t('crm_filtered', { f: label(), n: ks.length, all: rows.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: t('crm_show_all'), onclick: () => { st.tile = -1; st.who = ''; draw(); } })); else set(info);   // «Show all» exists only while something is filtered
+    const shown = ks.slice(0, 300);
+    set(listBox, el('div', { class: 'table-wrap crm-list' }, el('table', {}, el('thead', {}, el('tr', {}, head.map((h) => el('th', { text: h })))),
+      el('tbody', {}, shown.map((k) => el('tr', { class: hot(rows[k], k) ? 'crm-hot' : '' }, rows[k].map((c, ci) => el('td', { class: ci ? 'num' : '', dir: 'auto', text: c == null ? '—' : String(c) }))))))),
+      ks.length > shown.length ? el('p', { class: 'hint', text: t('crm_more', { n: ks.length - shown.length }) }) : null, !ks.length ? el('p', { class: 'empty', text: t('crm_none') }) : null);
+  };
   const dlg = el('dialog', { class: 'cr-modal', 'aria-labelledby': 'crm-h' },
     el('div', { class: 'crm-head' }, el('h2', { id: 'crm-h', text: title }), el('button', { type: 'button', class: 'btn tiny crm-xl', text: `⬇ ${t('td_excel')}`, onclick: xl })),
-    lead ? el('p', { class: 'hint', text: lead }) : null,
-    tiles.length ? el('div', { class: 'crm-tiles' }, tiles.map(([l, v, s]) => el('div', { class: 'km-tile' }, el('b', { text: String(v) }), el('span', { text: l }), s ? el('small', { class: 'hint', text: s }) : null))) : null,
-    bars.length ? el('div', { class: 'crm-bars', role: 'img', 'aria-label': t('crm_bars') }, bars.slice(0, 15).map(([n, v], k) => el('div', { class: 'crm-bar' }, el('span', { class: 'crm-n', text: n }),
-      el('span', { class: 'crm-track' }, el('i', { style: `--w:${(v / max) * 100}%;animation-delay:${k * 40}ms` })), el('b', { text: String(v) })))) : null,
-    el('div', { class: 'table-wrap crm-list' }, el('table', {}, el('thead', {}, el('tr', {}, head.map((h) => el('th', { text: h })))),
-      el('tbody', {}, shown.map((r, k) => el('tr', { class: hot(r, k) ? 'crm-hot' : '' }, r.map((c, k) => el('td', { class: k ? 'num' : '', dir: 'auto', text: c == null ? '—' : String(c) }))))))),
-    rows.length > shown.length ? el('p', { class: 'hint', text: t('crm_more', { n: rows.length - shown.length }) }) : null,
-    null);
-  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
+    lead ? el('p', { class: 'hint', text: lead }) : null, tilesBox, (tiles.some((x) => x[3]) || bar) ? el('p', { class: 'hint crm-how', text: t('crm_how') }) : null, barsBox, info, listBox);
+  draw(); dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
 }
 
 // ---------- ADR-0093: three mail pulls, each said plainly where it lives — what it answers, where it goes in, where it shows ----------
@@ -1264,7 +1279,7 @@ function maSection() {
     covered ? null : el('p', { class: 'note', text: t('ma_partial', { m: periodLabel(maMonth) }) }),
     S && S.unmatched.length ? el('p', { class: 'hint', text: t('ma_unmatched', { n: S.unmatched.reduce((s, u) => s + u.n, 0), a: S.unmatched.length }) }) : null,
     rows.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'ma-table' }, el('thead', {}, el('tr', {}, [t('col_person'), t('ma_c_total'), ...cats.map(maCatName)].map((h) => el('th', { text: h })))),
-      el('tbody', {}, rows.map((p) => el('tr', { class: 'ma-row', title: t('ma_evidence'), onclick: () => crModal({ title: `${pname(p.id)} — ${periodLabel(maMonth)}`, file: `email-${p.id}-${maMonth}`, tiles: [[t('ma_c_total'), p.total], ...cats.map((c) => [maCatName(c), p.cats[c] || 0])],
+      el('tbody', {}, rows.map((p) => el('tr', { class: 'ma-row', title: t('ma_evidence'), onclick: () => crModal({ title: `${pname(p.id)} — ${periodLabel(maMonth)}`, file: `email-${p.id}-${maMonth}`, tiles: [[t('ma_c_total'), p.total], ...cats.map((c) => [maCatName(c), p.cats[c] || 0, '', (k) => maCategory(p.recs[k], maClassify) === c])],
         head: [t('ma_c_subject'), t('ma_c_day'), t('ma_c_cat'), t('ma_c_folder')], rows: p.recs.map((r) => [r.s, maDay(r), maCatName(maCategory(r, maClassify)), r.f]) }) },
         el('td', { text: pname(p.id) }), el('td', { class: 'num', text: String(p.total) }), ...cats.map((c) => el('td', { class: 'num', text: String(p.cats[c] || 0) }))))))) : el('p', { class: 'hint', text: t('ma_no_rows') }),
     el('p', { class: 'hint', text: t('ma_res_note') }));
@@ -1379,44 +1394,55 @@ function pmDonut(parts) {
     for (const p of parts) { if (!p.v) continue; const len = (p.v / total) * C; const c = svgEl('circle', { cx: 60, cy: 60, r: 44, class: `pm-seg ${p.c}`, 'stroke-dasharray': `${len} ${C - len}`, 'stroke-dashoffset': `${-acc}`, transform: 'rotate(-90 60 60)' }); c.append(svgEl('title')); c.lastChild.textContent = `${p.l}: ${p.v} (${Math.round((p.v / total) * 100)}%)`; s.append(c); acc += len; } }
   const tx = svgEl('text', { x: 60, y: 64, 'text-anchor': 'middle', class: 'pm-donut-n' }); tx.textContent = String(total); s.append(tx); return s;
 }
-function pmTrend(hist) {   // hist: newest first → drawn oldest to newest
+function pmTrend(hist) {   // hist: newest first → drawn oldest to newest. ADR-0102: tasks and hours never share an axis
   const H = [...hist].reverse(); if (H.length < 2) return null;
-  const W = 520, Ht = 170, P = 26, bw = (W - 2 * P) / H.length, maxN = Math.max(1, ...H.map((h) => h.x.total)), maxA = Math.max(1, ...H.map((h) => h.x.avg || 0));
+  const W = 520, P = 26, bw = (W - 2 * P) / H.length, TOP = 20, BH = 120, GAP = 26, LH = 54, Ht = TOP + BH + 18 + GAP + LH + 10;
+  const maxN = Math.max(1, ...H.map((h) => h.x.total)), av = H.map((h) => h.x.avg).filter((v) => v != null), lo = av.length ? Math.min(...av) : 0, hi = av.length ? Math.max(...av) : 1, span = hi - lo || 1;
   const s = svgEl('svg', { viewBox: `0 0 ${W} ${Ht}`, class: 'pm-trend', role: 'img', 'aria-label': t('pm_trend_h') });
-  H.forEach((h, i) => { const x = P + i * bw, tot = h.x.total, cl = h.x.closed, yT = Ht - 22 - (tot / maxN) * (Ht - 44), yC = Ht - 22 - (cl / maxN) * (Ht - 44);
+  const base = TOP + BH, ly0 = base + 18 + GAP, yA = (v) => ly0 + LH - 8 - ((v - lo) / span) * (LH - 18);
+  const sep = svgEl('line', { x1: P, x2: W - P, y1: base + 18 + GAP / 2, y2: base + 18 + GAP / 2, class: 'pm-sep' }); s.append(sep);
+  const cap = svgEl('text', { x: W / 2, y: ly0 - 4, 'text-anchor': 'middle', class: 'pm-cap' }); cap.textContent = t('pm_mttr_strip'); s.append(cap);
+  H.forEach((h, i) => { const x = P + i * bw, tot = h.x.total, cl = h.x.closed, yT = base - (tot / maxN) * BH, yC = base - (cl / maxN) * BH;
     const g = svgEl('g', { class: 'pm-bar-g', 'data-tip-hold': '' });
-    g.append(svgEl('rect', { x: x + bw * 0.16, y: yT, width: bw * 0.68, height: Ht - 22 - yT, class: 'pm-bar-total', rx: 4 }), svgEl('rect', { x: x + bw * 0.3, y: yC, width: bw * 0.4, height: Ht - 22 - yC, class: 'pm-bar-closed', rx: 3 }));
-    const lab = svgEl('text', { x: x + bw / 2, y: Ht - 6, 'text-anchor': 'middle', class: 'pm-ax' }); lab.textContent = periodLabel(h.m.ym).split(' ')[0].slice(0, 3); g.append(lab);
-    g.addEventListener('pointerenter', () => { showTip(g, t('pm_trend_tip', { m: periodLabel(h.m.ym), t: tot, c: cl, a: hmOf(h.x.avg), p: h.x.points })); g.classList.add('on'); });   // ADR-0101
+    g.append(svgEl('rect', { x: x + bw * 0.16, y: yT, width: bw * 0.68, height: base - yT, class: 'pm-bar-total', rx: 4 }), svgEl('rect', { x: x + bw * 0.3, y: yC, width: bw * 0.4, height: base - yC, class: 'pm-bar-closed', rx: 3 }));
+    const val = svgEl('text', { x: x + bw / 2, y: Math.max(12, yT - 5), 'text-anchor': 'middle', class: 'pm-val' }); val.textContent = `${cl}/${tot}`; g.append(val);
+    const lab = svgEl('text', { x: x + bw / 2, y: base + 14, 'text-anchor': 'middle', class: 'pm-ax' }); lab.textContent = periodLabel(h.m.ym).split(' ')[0].slice(0, 3); g.append(lab);
+    g.append(svgEl('rect', { x, y: 0, width: bw, height: Ht, class: 'pm-hit' }));   // the whole month column answers the pointer
+    g.addEventListener('pointerenter', () => { showTip(g, t('pm_trend_tip', { m: periodLabel(h.m.ym), t: tot, c: cl, a: hmOf(h.x.avg), p: h.x.points })); g.classList.add('on'); });
     g.addEventListener('pointerleave', () => { hideTip(g); g.classList.remove('on'); }); s.append(g); });
-  const line = H.map((h, i) => (h.x.avg == null ? null : [P + i * bw + bw / 2, Ht - 22 - (h.x.avg / maxA) * (Ht - 44)])).filter(Boolean);
-  if (line.length > 1) { s.append(svgEl('polyline', { points: line.map((p) => p.join(',')).join(' '), class: 'pm-line-avg', fill: 'none' })); for (const [cx, cy] of line) s.append(svgEl('circle', { cx, cy, r: 3.5, class: 'pm-dot-avg' })); }
+  const pts = H.map((h, i) => (h.x.avg == null ? null : [P + i * bw + bw / 2, yA(h.x.avg), h.x.avg])).filter(Boolean);
+  if (pts.length > 1) s.append(svgEl('polyline', { points: pts.map((q) => `${q[0]},${q[1]}`).join(' '), class: 'pm-line-avg', fill: 'none' }));
+  for (const [cx, cy, v] of pts) { s.append(svgEl('circle', { cx, cy, r: 3.5, class: 'pm-dot-avg' })); const tx = svgEl('text', { x: cx, y: cy - 7, 'text-anchor': 'middle', class: 'pm-val pm-val-avg' }); tx.textContent = hmOf(v); s.append(tx); }
   return el('div', { class: 'pm-trend-wrap' }, s);
 }
-function pmDash({ n, p, hist, open, share, ml, pml }) {
+function pmDash({ n, p, hist, open, share, ml, pml, rdOn = false, flag = null, item = null }) {
   const pct = (a, b) => (b ? Math.round((a / b) * 100) : null), rate = pct(n.closed, n.total), prate = p ? pct(p.closed, p.total) : null;
   const oldest = open.length ? Math.max(...open.map((x) => x.ageHours || 0)) : 0;
   const H = [...hist].reverse(), sp = (f) => H.map((h) => f(h.x));
-  const tile = (key, val, sub, delta, spark, extra) => el('div', { class: 'km-tile pm-tile', tabindex: '0', 'data-kpi': key },
+  const tile = (key, val, sub, delta, spark, fl) => el('div', { class: 'km-tile pm-tile', tabindex: '0', 'data-kpi': key },
     el('span', { class: 'pm-k' }, el('b', { text: t(`pm_${key}`) }), el('i', { class: 'pm-term', text: t(`pm_${key}_term`) })),
-    el('strong', { class: 'pm-v', text: val }), sub ? el('small', { class: 'hint', text: sub }) : null, delta, spark, extra || null);
+    el('strong', { class: 'pm-v', text: val }), sub ? el('small', { class: 'hint', text: sub }) : null, delta, spark, fl ? el('span', { class: 'pm-flag' }, fl) : null);
   const d = (cur, prev, kind) => (p && prev != null && cur != null ? kmDelta(cur, prev, kind, pml) : null);
   const withTip = (node, key) => { attachTip(node, t(`pm_${key}_def`), false); node.setAttribute('aria-description', t(`pm_${key}_def`)); return node; };   // ADR-0101: the one tooltip
-  const tiles = el('div', { class: 'pm-tiles' },
-    withTip(tile('thru', String(n.closed), t('pm_of', { n: n.total }), d(n.closed, p && p.closed, 'h'), pmSpark(sp((x) => x.closed))), 'thru'),
-    withTip(tile('load', String(n.total), t('pm_src3', { e: n.email, s: n.self, o: n.other }), d(n.total, p && p.total, 'n'), pmSpark(sp((x) => x.total))), 'load'),
-    withTip(tile('rate', rate == null ? '—' : `${rate}%`, '', d(rate, prate, 'h'), pmSpark(sp((x) => pct(x.closed, x.total)))), 'rate'),
-    withTip(tile('mttr', hmOf(n.avg), t('pm_hm'), d(n.avg, p && p.avg, 'l'), pmSpark(sp((x) => x.avg), 'pm-spark-low')), 'mttr'),
-    withTip(tile('pts', String(n.points), share != null ? t('pm_share', { p: share }) : '', d(n.points, p && p.points, 'h'), pmSpark(sp((x) => x.points))), 'pts'),
-    withTip(tile('backlog', String(open.length), open.length ? t('pm_oldest', { a: oldest < 48 ? t('hours', { n: Math.round(oldest) }) : t('days', { n: Math.round(oldest / 24) }) }) : t('pf_none'), null, null), 'backlog'));
-  const mix = [{ l: t('src_email'), v: n.email, c: 'c-email' }, { l: t('src_self'), v: n.self, c: 'c-self' }, { l: t('src_other'), v: n.other, c: 'c-other' }];
+  const F = (lab, k) => (flag ? flag(lab, k) : null);
+  const tiles = el('div', { class: `pm-tiles${rdOn ? ' seven' : ''}` },
+    withTip(tile('thru', String(n.closed), t('pm_of', { n: n.total }), d(n.closed, p && p.closed, 'h'), pmSpark(sp((x) => x.closed)), F('km_closed', 'closed')), 'thru'),
+    withTip(tile('load', String(n.total), '', d(n.total, p && p.total, 'n'), pmSpark(sp((x) => x.total)), F('km_total', 'total')), 'load'),
+    withTip(tile('rate', rate == null ? '—' : `${rate}%`, '', d(rate, prate, 'h'), pmSpark(sp((x) => pct(x.closed, x.total))), null), 'rate'),
+    withTip(tile('mttr', hmOf(n.avg), t('pm_hm'), d(n.avg, p && p.avg, 'l'), pmSpark(sp((x) => x.avg), 'pm-spark-low'), F('km_avg', 'avg')), 'mttr'),
+    withTip(tile('pts', String(n.points), share != null ? t('pm_share', { p: share }) : '', d(n.points, p && p.points, 'h'), pmSpark(sp((x) => x.points)), F('col_points', 'points')), 'pts'),
+    rdOn ? withTip(tile('rd', String(n.rd || 0), '', d(n.rd || 0, p && (p.rd || 0), 'h'), pmSpark(sp((x) => x.rd || 0)), F('km_rd', 'rd')), 'rd') : null,
+    withTip(tile('backlog', String(open.length), open.length ? t('pm_oldest', { a: oldest < 48 ? t('hours', { n: Math.round(oldest) }) : t('days', { n: Math.round(oldest / 24) }) }) : t('pf_none'), null, null, null), 'backlog'));
+  const mix = [{ k: 'email', l: t('src_email'), v: n.email, c: 'c-email', lab: 'src_email' }, { k: 'self', l: t('src_self'), v: n.self, c: 'c-self', lab: 'src_self' }, { k: 'other', l: t('src_other'), v: n.other, c: 'c-other', lab: 'src_other' }];
   const mixBox = el('div', { class: 'pm-card' }, el('h4', {}, t('pm_mix_h'), el('i', { class: 'pm-term', text: 'Work intake mix' })), el('div', { class: 'pm-mix' }, pmDonut(mix),
-    el('ul', { class: 'pm-legend' }, mix.map((m) => el('li', { class: m.c }, el('span', { class: 'pm-sw' }), `${m.l} `, el('b', { text: String(m.v) }), el('small', { class: 'hint', text: n.total ? ` ${Math.round((m.v / n.total) * 100)}%` : '' }))))),
+    el('ul', { class: 'pm-legend' }, mix.map((m) => el('li', { class: m.c, 'data-src': m.k }, el('span', { class: 'pm-sw' }), el('span', { class: 'pm-lg-l', text: m.l }), el('b', { text: String(m.v) }),
+      el('small', { class: 'hint', text: n.total ? `${Math.round((m.v / n.total) * 100)}%` : '' }), d(m.v, p && p[m.k], 'n'), F(m.lab, m.k))))),
     el('p', { class: 'hint', text: t('pm_self_rate', { p: n.total ? Math.round((n.self / n.total) * 100) : 0 }) }));
   const B = [[0, 24, 'pm_age_1'], [24, 72, 'pm_age_2'], [72, 168, 'pm_age_3'], [168, Infinity, 'pm_age_4']].map(([lo, hi, k]) => ({ k, v: open.filter((x) => (x.ageHours || 0) >= lo && (x.ageHours || 0) < hi).length }));
   const bmax = Math.max(1, ...B.map((b) => b.v));
-  const ageBox = el('div', { class: 'pm-card' }, el('h4', {}, t('pm_age_h'), el('i', { class: 'pm-term', text: 'Backlog aging' })),
-    el('div', { class: 'pm-age' }, B.map((b, i) => el('div', { class: `pm-age-row a${i}` }, el('span', { text: t(b.k) }), el('span', { class: 'pm-age-track' }, el('i', { style: `--w:${(b.v / bmax) * 100}%` })), el('b', { text: String(b.v) })))));
+  const ageBox = el('div', { class: 'pm-card pm-open-card' }, el('h4', { class: 'pm-open-h' }, `${t('pf_open')} — ${open.length}`, el('i', { class: 'pm-term', text: 'Backlog aging' })),
+    el('div', { class: 'pm-age' }, B.map((b, i) => el('div', { class: `pm-age-row a${i}` }, el('span', { text: t(b.k) }), el('span', { class: 'pm-age-track' }, el('i', { style: `--w:${(b.v / bmax) * 100}%` })), el('b', { text: String(b.v) })))),
+    open.length && item ? [el('ul', { class: 'pf-open' }, open.slice(0, 6).map(item)), open.length > 6 ? el('details', { class: 'more-work' }, el('summary', { text: t('me_open_more', { n: open.length - 6 }) }), el('ul', { class: 'pf-open' }, open.slice(6).map(item))) : null] : null);
   const tr = pmTrend(hist);
   const trendBox = tr ? el('div', { class: 'pm-card pm-wide' }, el('h4', {}, t('pm_trend_h'), el('i', { class: 'pm-term', text: 'Throughput · MTTR trend' })), tr,
     el('p', { class: 'hint pm-keys' }, el('span', { class: 'pm-key k-total' }), t('km_total'), el('span', { class: 'pm-key k-closed' }), t('km_closed'), el('span', { class: 'pm-key k-avg' }), t('km_avg'))) : null;
@@ -1431,7 +1457,7 @@ function splitBar(T) {
   const sum = parts.reduce((s, p) => s + p.v, 0); if (!sum) return null; const pc = (v) => Math.round((v / sum) * 100);
   return el('div', { class: 'bt-split' },
     el('div', { class: 'bt-bar', role: 'img', 'aria-label': parts.map((p) => `${p.l} ${pc(p.v)}%`).join(' · ') }, parts.map((p) => el('i', { style: `width:${(p.v / sum) * 100}%;background:${p.c}`, title: `${p.l}: ${p.v}` }))),
-    el('div', { class: 'lg' }, parts.map((p) => el('span', { style: `--c:${p.c}`, text: `${p.l} ${pc(p.v)}%` }))));
+    null);   // ADR-0102: each source's share is on its own tile — the bar draws the split, the words are not repeated
 }
 /** The closed share as a ring beside the average, named under it, the full sentence on hover. */
 function closedRing(closed, total) {
@@ -2869,19 +2895,22 @@ function renderHome() {
   const ageD = (x) => (x.createdAt ? Math.max(0, Math.round((Date.now() - Date.parse(x.createdAt)) / 864e5)) : null);
   const ptsM = Math.round(doneM.reduce((s, x) => s + taskPoints(wt, x), 0));
   const MODAL = {
-    done: () => crModal({ title: t('cr_nums_done'), file: 'done-this-month', tiles: [[t('cr_nums_done'), doneM.length, hasPrev ? t('cr_nums_last', { n: doneP.length }) : ''], [t('cr_nums_points'), ptsM], [t('crm_people'), new Set(doneM.map((x) => x.assigneeId)).size]],
-      bars: byPerson(doneM), head: [t('crm_task'), t('col_person'), t('crm_closed'), t('col_points'), t('crm_type')],
-      rows: [...doneM].sort((p, q) => (p.completedAt < q.completedAt ? 1 : -1)).map((x) => [x.title || x.id, nm(x.assigneeId), saudiDay(x.completedAt), Math.round(taskPoints(wt, x) * 10) / 10, x.type || '']) }),
+    done: () => { const L = [...doneM].sort((p, q) => (p.completedAt < q.completedAt ? 1 : -1)), wk = saudiDay(new Date(Date.now() - 6 * 864e5).toISOString());
+      return crModal({ title: t('cr_nums_done'), file: 'done-this-month', tiles: [[t('cr_nums_done'), doneM.length, hasPrev ? t('cr_nums_last', { n: doneP.length }) : ''], [t('crm_last7'), L.filter((x) => saudiDay(x.completedAt) >= wk).length, '', (k) => saudiDay(L[k].completedAt) >= wk], [t('crm_people'), new Set(doneM.map((x) => x.assigneeId)).size]],
+        bar: (k) => [nm(L[k].assigneeId), 1], head: [t('crm_task'), t('col_person'), t('crm_closed'), t('col_points'), t('crm_type')],
+        rows: L.map((x) => [x.title || x.id, nm(x.assigneeId), saudiDay(x.completedAt), Math.round(taskPoints(wt, x) * 10) / 10, x.type || '']) }); },
     points: () => { const per = byPerson(doneM, (x) => taskPoints(wt, x)), cnt = new Map(byPerson(doneM));
-      return crModal({ title: t('cr_nums_points'), file: 'points-this-month', tiles: [[t('cr_nums_points'), ptsM], [t('crm_avg_eng'), team.length ? Math.round(ptsM / team.length) : 0], [t('crm_top'), per.length ? per[0][0] : '—', per.length ? `${per[0][1]}` : '']],
-        bars: per, head: [t('col_person'), t('crm_closed_n'), t('col_points'), t('crm_share')], rows: per.map(([n, v]) => [n, cnt.get(n) || 0, v, ptsM ? `${Math.round((v / ptsM) * 100)}%` : '—']) }); },
+      const avg = team.length ? Math.round(ptsM / team.length) : 0;
+      return crModal({ title: t('cr_nums_points'), file: 'points-this-month', tiles: [[t('cr_nums_points'), ptsM], [t('crm_avg_eng'), avg, t('crm_at_above'), (k) => per[k][1] >= avg], [t('crm_top'), per.length ? per[0][0] : '—', per.length ? `${per[0][1]}` : '', (k) => k === 0]],
+        bar: (k) => [per[k][0], per[k][1]], head: [t('col_person'), t('crm_closed_n'), t('col_points'), t('crm_share')], rows: per.map(([n, v]) => [n, cnt.get(n) || 0, v, ptsM ? `${Math.round((v / ptsM) * 100)}%` : '—']) }); },
     open: () => { const L = [...openNow].sort((p, q) => (p.createdAt > q.createdAt ? 1 : -1)), isOld = new Set(old);   // the tile's own list decides which rows are red
-      return crModal({ title: t('cr_nums_open'), file: 'open-now', tiles: [[t('cr_nums_open'), openNow.length], [t('crm_old'), old.length], [t('crm_oldest'), openNow.length ? `${Math.max(...openNow.map((x) => ageD(x) || 0))} ${t('crm_days')}` : '—']],
-        bars: byPerson(openNow), head: [t('crm_task'), t('col_person'), t('crm_opened'), t('crm_age'), t('crm_type')], hot: (r, k) => isOld.has(L[k]),
+      const oldestD = openNow.length ? Math.max(...openNow.map((x) => ageD(x) || 0)) : 0;
+      return crModal({ title: t('cr_nums_open'), file: 'open-now', tiles: [[t('cr_nums_open'), openNow.length], [t('crm_old'), old.length, '', (k) => isOld.has(L[k])], [t('crm_oldest'), openNow.length ? `${oldestD} ${t('crm_days')}` : '—', '', (k) => (ageD(L[k]) || 0) === oldestD]],
+        bar: (k) => [nm(L[k].assigneeId), 1], head: [t('crm_task'), t('col_person'), t('crm_opened'), t('crm_age'), t('crm_type')], hot: (r, k) => isOld.has(L[k]),
         rows: L.map((x) => [x.title || x.id, nm(x.assigneeId), x.createdAt ? saudiDay(x.createdAt) : '', ageD(x), x.type || '']) }); },
-    team: () => crModal({ title: t('cr_nums_team'), file: 'team', tiles: [[t('cr_nums_team'), team.length], [t('crm_with_done'), team.filter((id) => doneM.some((x) => x.assigneeId === id)).length], [t('crm_on_leave'), team.filter((id) => ro[id] && ro[id].onLeave).length]],
-      head: [t('col_person'), t('crm_closed_n'), t('col_points'), t('crm_open_n')],
-      rows: team.map((id) => [nm(id), doneM.filter((x) => x.assigneeId === id).length, Math.round(doneM.filter((x) => x.assigneeId === id).reduce((s, x) => s + taskPoints(wt, x), 0) * 10) / 10, openNow.filter((x) => x.assigneeId === id).length]).sort((p, q) => q[2] - p[2]) }) };
+    team: () => { const R = team.map((id) => ({ id, r: [nm(id), doneM.filter((x) => x.assigneeId === id).length, Math.round(doneM.filter((x) => x.assigneeId === id).reduce((s, x) => s + taskPoints(wt, x), 0) * 10) / 10, openNow.filter((x) => x.assigneeId === id).length] })).sort((p, q) => q.r[2] - p.r[2]);
+      return crModal({ title: t('cr_nums_team'), file: 'team', tiles: [[t('cr_nums_team'), team.length], [t('crm_with_done'), R.filter((x) => x.r[1] > 0).length, '', (k) => R[k].r[1] > 0], [t('crm_on_leave'), R.filter((x) => ro[x.id] && ro[x.id].onLeave).length, '', (k) => !!(ro[R[k].id] && ro[R[k].id].onLeave)]],
+        head: [t('col_person'), t('crm_closed_n'), t('col_points'), t('crm_open_n')], rows: R.map((x) => x.r) }); } };
   const num = (k, v, sub, kind) => el('button', { type: 'button', class: 'cr-num cr-num-go', title: t('cr_num_open'), 'data-kind': kind, onclick: () => MODAL[kind]() },
   el('span', { text: t(k) }), el('b', { text: String(v) }), sub ? el('small', { text: sub }) : null, el('span', { class: 'cr-num-arrow', 'aria-hidden': 'true', text: '↗' }));
   const job = (label, hash, prep) => el('button', { type: 'button', class: 'cr-job', onclick: go(hash, prep) }, el('b', { text: label }), el('span', { text: '↗' }));
@@ -2890,10 +2919,9 @@ function renderHome() {
       el('div', {}, el('span', { class: 'cr-k', text: t('cr_fresh_h') }), el('b', { text: fresh ? t('cr_fresh_ok', { to: latest.range.to }) : t('cr_fresh_old', { to: latest.range.to, n: ageDays }) }),
         el('small', { text: t('cr_fresh_meta', { n: tasks.length.toLocaleString('en-US'), d: (latest.extractedAt || '').slice(0, 10) }) })),
       el('a', { class: `btn${fresh ? '' : ' primary'}`, href: '#data', text: `${t('cr_pull_again')} ↗` })),
-    el('p', { class: 'answer-line', text: t('cr_answer', { d: doneM.length, p: Math.round(doneM.reduce((s, x) => s + taskPoints(wt, x), 0)), o: openNow.length, old: old.length, n: team.length }) }),
     el('div', { class: 'cr-nums' }, num('cr_nums_done', doneM.length, hasPrev ? t('cr_nums_last', { n: doneP.length }) : t('cr_nums_nolast'), 'done'), num('cr_nums_points', Math.round(doneM.reduce((s, x) => s + taskPoints(wt, x), 0)), hasPrev ? t('cr_nums_last', { n: Math.round(doneP.reduce((s, x) => s + taskPoints(wt, x), 0)) }) : t('cr_nums_nolast'), 'points'),
-      num('cr_nums_open', openNow.length, old.length ? t('cr_nums_old', { n: old.length }) : '', 'open'), num('cr_nums_team', team.length, '', 'team')),
-    teamPulse(doneM, doneP, (day) => { const L = doneM.filter((x) => saudiDay(x.completedAt) === day); crModal({ title: t('tp_day_h', { d: day }), file: `closed-${day}`, tiles: [[t('cr_nums_done'), L.length], [t('cr_nums_points'), Math.round(L.reduce((s, x) => s + taskPoints(wt, x), 0))], [t('crm_people'), new Set(L.map((x) => x.assigneeId)).size]], bars: byPerson(L), head: [t('crm_task'), t('col_person'), t('col_points'), t('crm_type')], rows: L.map((x) => [x.title || x.id, nm(x.assigneeId), Math.round(taskPoints(wt, x) * 10) / 10, x.type || '']) }); }, hasPrev),
+      num('cr_nums_open', openNow.length, openNow.length ? t('cr_nums_oldest_sub', { d: Math.max(...openNow.map((x) => ageD(x) || 0)) }) : '', 'open'), num('cr_nums_team', team.length, '', 'team')),
+    teamPulse(doneM, doneP, (day) => { const L = doneM.filter((x) => saudiDay(x.completedAt) === day); crModal({ title: t('tp_day_h', { d: day }), file: `closed-${day}`, tiles: [[t('cr_nums_done'), L.length], [t('cr_nums_points'), Math.round(L.reduce((s, x) => s + taskPoints(wt, x), 0))], [t('crm_people'), new Set(L.map((x) => x.assigneeId)).size]], bar: (k) => [nm(L[k].assigneeId), 1], head: [t('crm_task'), t('col_person'), t('col_points'), t('crm_type')], rows: L.map((x) => [x.title || x.id, nm(x.assigneeId), Math.round(taskPoints(wt, x) * 10) / 10, x.type || '']) }); }, hasPrev),
     el('h2', { class: 'cr-h', text: t('cr_att_h') }),
     att.length ? el('div', { class: 'cr-att' }, att.map((x) => el('button', { type: 'button', class: `cr-item k-${x.k}`, onclick: go(x.href, x.prep) },
       el('div', {}, el('b', { text: x.title }), x.detail ? el('span', { text: x.detail }) : null), el('span', { class: 'cr-go', text: `${t('cr_go')} ↗` }))))
@@ -3025,7 +3053,7 @@ function coverageSection(rep, team, nm) { const cv = coverageTotals(rep, team); 
 // once (allTasks() and allActivities() keep every record once). Every number here comes from factor1 (the three sources
 // and the time to close) and weightedPoints (points) — the engine every other page reads. An employee has no page of his
 // own: his row opens in place, this month against the month before.
-let kpiMonth = pref('kpimonth') || null, kpiOpen = null, kpiMore = false, kpiMSort = 'points';
+let kpiMonth = pref('kpimonth') || null, kpiOpen = null, kpiMore = false, kpiMSort = 'points', kpiTileF = null;   // ADR-0102: a tile's filter
 function allActivities() {
   const seen = new Set();
   return [...reports].sort((a, b) => String(b.extractedAt || '').localeCompare(String(a.extractedAt || '')))
@@ -3107,25 +3135,16 @@ function personMonthView({ id, tasks, acts = [], months, ym, head = '', share = 
   const open = openTasks(tasks, id).sort((x, y) => String(y.createdAt || '').localeCompare(String(x.createdAt || '')));
   const item = (x) => el('li', {}, el('span', { text: x.title || typeLabel(x.type || '', lang) || '—' }),
     el('small', { class: 'hint', text: x.ageHours == null ? '' : t(x.ageHours < 48 ? 'hours' : 'days', { n: Math.round(x.ageHours < 48 ? x.ageHours : x.ageHours / 24) }) }));
+  const who = nameOf(peopleOf(datasets).find((x) => x.id === id) || {}, lang) || (me && me.user && String(me.user.id) === String(id) ? me.user.name : id);
+  const flag = (lab, k) => flagBtn({ who, period: ml, label: t(lab), value: fmt(k, n[k]), prev: p ? fmt(k, p[k]) : '—', def: t(SNAP_DEF[k] || 'km_total'), asOf: dataAsOf() });
+  // ADR-0102: one place for each number — the tiles (with ⚑), the ring and the chart; the same numbers as a table for screen readers only
   return el('div', { class: 'km-detail' }, head ? el('p', { class: 'hint km-head', text: head }) : null, maPersonLine(id, ym),
-    pmDash({ n, p, hist, open, share, ml, pml }),   // ADR-0100: the dashboard first; the table below for the detail and ⚑
-    el('h4', { class: 'pm-table-h', text: t('pm_table_h') }),
-    el('div', { class: 'km-cmp' }, el('table', {},
-      el('thead', {}, el('tr', {}, el('th', {}), el('th', { class: 'num', text: ml }), el('th', { class: 'num', text: pml }), el('th', { class: 'num', text: t('km_change') }), el('th', {}))),
+    pmDash({ n, p, hist, open, share, ml, pml, rdOn, flag, item }),
+    el('div', { class: 'km-cmp sr-only' }, el('table', {}, el('caption', { text: t('pm_sr_caption', { m: ml, p: pml }) }),
+      el('thead', {}, el('tr', {}, el('th', {}), el('th', { class: 'num', text: ml }), el('th', { class: 'num', text: pml }), el('th', { class: 'num', text: t('km_change') }))),
       el('tbody', {}, rows.map(([lab, k, kind]) => el('tr', {}, el('td', { text: t(lab) }), el('td', { class: 'num' }, el('b', { text: fmt(k, n[k]) })),
-        el('td', { class: 'num', text: p ? fmt(k, p[k]) : '—' }), el('td', { class: 'num' }, p ? kmDelta(n[k], p[k], kind, pml) : '—'),
-        el('td', {}, flagBtn({ who: nameOf(peopleOf(datasets).find((x) => x.id === id) || {}, lang) || (me && me.user && String(me.user.id) === String(id) ? me.user.name : id), period: ml, label: t(lab), value: fmt(k, n[k]), prev: p ? fmt(k, p[k]) : '—', def: t(SNAP_DEF[k]), asOf: dataAsOf() })))))),
-      share != null ? el('p', { class: 'hint', text: t('pf_share', { p: share }) }) : null),
-    el('div', { class: 'km-side' },
-      el('h4', { text: `${t('pf_open')} — ${open.length}` }),
-      open.length ? [el('ul', { class: 'pf-open' }, open.slice(0, 6).map(item)),
-        open.length > 6 ? el('details', { class: 'more-work' }, el('summary', { text: t('me_open_more', { n: open.length - 6 }) }), el('ul', { class: 'pf-open' }, open.slice(6).map(item))) : null]
-        : el('p', { class: 'hint', text: t('pf_none') }),
-      hist.length > 1 ? [el('h4', { text: t('km_hist_h') }), el('table', { class: 'km-hist' },
-        el('thead', {}, el('tr', {}, el('th', { text: t('km_month') }), ['km_total', 'km_closed', 'km_avg', 'col_points'].map((k) => el('th', { class: 'num', text: t(k) })))),
-        el('tbody', {}, hist.map(({ m, x }) => el('tr', { class: m.ym === ym ? 'on' : null }, el('td', { text: `${periodLabel(m.ym)}${m.whole ? '' : ' *'}` }),
-          el('td', { class: 'num', text: String(x.total) }), el('td', { class: 'num', text: String(x.closed) }), el('td', { class: 'num', text: hmOf(x.avg) }), el('td', { class: 'num', text: String(x.points) })))))] : null,
-      actions ? el('div', { class: 'row km-acts' }, actions) : null));
+        el('td', { class: 'num', text: p ? fmt(k, p[k]) : '—' }), el('td', { class: 'num' }, p ? kmDelta(n[k], p[k], kind, pml) : '—')))))),
+    actions ? el('div', { class: 'row km-acts' }, actions) : null);
 }
 let meMonth = null;
 /** The month picker and the personal view for «مؤشراتي»: months from the manager's pulls, or from the engineer's own pull. */
@@ -3171,10 +3190,13 @@ function renderKpi() {
   // a change beside a number: neutral for what arrived, green or red for what was done and how fast
   const delta = (x, y, kind) => kmDelta(x, y, kind, pml);
   const T = now('team'), P = was('team');
-  const tile = (k, label, v, pv, kind, sub) => el('div', { class: `km-tile km-${k}` }, el('b', { text: k === 'avg' ? hmOf(v) : String(v ?? '—') }),
+  const tile = (k, label, v, pv, kind, sub) => el('button', { type: 'button', class: `km-tile crm-tile-f km-${k}${kpiTileF === k ? ' on' : ''}`, 'aria-pressed': String(kpiTileF === k), 'data-tile': k, title: t(kpiTileF === k ? 'crm_f_off' : 'km_tile_f'), onclick: () => { kpiTileF = kpiTileF === k ? null : k; renderKpi(); } }, el('b', { text: k === 'avg' ? hmOf(v) : String(v ?? '—') }),
     el('span', { text: label }), P ? el('small', { class: 'km-was' }, `${t('km_vs', { m: pml })}: ${k === 'avg' ? hmOf(pv) : (pv ?? '—')} `, delta(v, pv, kind)) : null, sub ? el('small', { class: 'hint', text: sub }) : null);
   const sorter = { points: (id) => (now(id) || {}).points || 0, total: (id) => (now(id) || {}).total || 0, avg: (id) => -(((now(id) || {}).avg) ?? 1e9) }[kpiMSort];
-  const ids = f.people.map((r) => r.id).sort((a, b) => sorter(b) - sorter(a) || nm(a).localeCompare(nm(b), lang));
+  const TF = { total: (n) => n.total, email: (n) => n.email, self: (n) => n.self, other: (n) => n.other, avg: (n) => n.closed, rd: (n) => n.rd || 0, points: (n) => n.points }[kpiTileF];
+  const tsort = kpiTileF === 'avg' ? (id) => -(((now(id) || {}).avg) ?? 1e9) : TF ? (id) => TF(now(id) || {}) : null;
+  const idsAll = f.people.map((r) => r.id);
+  const ids = idsAll.filter((id) => !TF || TF(now(id) || {}) > 0).sort((a, b) => (tsort || sorter)(b) - (tsort || sorter)(a) || nm(a).localeCompare(nm(b), lang));
   const rdOn = rdKnownFor(range);   // ADR-0075: R&D shows when the period's pulls carry the R&D list, «—» otherwise
   const COLS = ['src_email', 'src_self', 'src_other', 'km_total', 'km_closed', 'km_avg', 'km_rd', 'col_points'];
   const cells = (n, p, withDelta) => [n.email, n.self, n.other].map((v) => el('td', { class: 'num', text: String(v) }))
@@ -3243,15 +3265,15 @@ function renderKpi() {
     renderTeamPicker(people, team),
     datasets.some((d) => d.sample) ? el('p', { class: 'note sample', text: t('sample_note') }) : null,
     !cov.whole ? el('p', { class: 'note', text: t('km_partial', { got: cov.got, need: cov.need }) }) : null,
-    el('p', { class: 'answer-line', text: t('km_answer', { m: ml, n: T.total, e: T.email, s: T.self, o: T.other, c: T.closed, h: hmOf(T.avg), p: T.points }) + (P ? ` ${t('km_answer_prev', { m: pml, n: P.total, p: P.points })}` : '') }),
     el('div', { class: 'km-tiles' },
       (() => { const x = tile('total', t('km_total'), T.total, P && P.total, 'n'), s = splitBar(T); if (s) x.append(s); return x; })(),
-      tile('email', t('src_email'), T.email, P && P.email, 'n'),
-      tile('self', t('src_self'), T.self, P && P.self, 'n'),
-      tile('other', t('src_other'), T.other, P && P.other, 'n'),
+      tile('email', t('src_email'), T.email, P && P.email, 'n', T.total ? t('km_share_of', { p: Math.round((T.email / T.total) * 100) }) : null),
+      tile('self', t('src_self'), T.self, P && P.self, 'n', T.total ? t('km_share_of', { p: Math.round((T.self / T.total) * 100) }) : null),
+      tile('other', t('src_other'), T.other, P && P.other, 'n', T.total ? t('km_share_of', { p: Math.round((T.other / T.total) * 100) }) : null),
       (() => { const x = tile('avg', t('km_avg'), T.avg, P && P.avg, 'l', t('km_closed_n', { n: T.closed })), g = closedRing(T.closed, T.total); if (g) x.append(g); return x; })(),
       tile('rd', t('km_rd'), rdOn ? T.rd : '—', rdOn && P && rdKnownFor(prange) ? P.rd : null, 'n', rdOn ? null : t('km_rd_unknown')),
       tile('points', t('col_points'), T.points, P && P.points, 'h')),
+    kpiTileF ? el('div', { class: 'crm-filter km-tile-on' }, el('span', { text: t('km_tile_on', { f: t({ total: 'km_total', email: 'src_email', self: 'src_self', other: 'src_other', avg: 'km_avg', rd: 'km_rd', points: 'col_points' }[kpiTileF]), n: ids.length, all: idsAll.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: t('crm_show_all'), onclick: () => { kpiTileF = null; renderKpi(); } })) : null,
     el('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin:4px 0 8px' },
       el('div', { class: 'pills' }, el('span', { class: 'hint', text: `${t('cnt_sort')}:` }), [['points', 'col_points'], ['total', 'km_total'], ['avg', 'km_avg']].map(([k, label]) =>
         el('button', { type: 'button', class: `pill-btn${kpiMSort === k ? ' on' : ''}`, text: t(label), onclick: () => { kpiMSort = k; renderKpi(); } }))),

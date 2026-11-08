@@ -1,21 +1,24 @@
 {
-  "version": "9.20",
+  "version": "9.21",
   "date": "2026-11-08",
   "notes": {
     "ar": [
-      "التلميحات بقت سياسة واحدة للبوابة كلها: تلميح واحد مُعتم ولونه مختلف عن الصفحة، فوق كل حاجة، جنب الحاجة اللي بيشرحها من غير ما يغطيها أو يخرج برا الشاشة — ما بقاش الكلام يطلع فوق الكلام. وعلى الموبايل لمسة بتظهر التعريف ولمسة تانية بتخفيه.",
-      "«مشاريعي»: زرار الاستيراد بقى قايمة فيها ٤ اختيارات واضحة (سجل المشاريع، نتيجة المساعد ملف أو لصق، إكسل بعد التعديل)، وأي ملف مكانه مش هنا — زي الـ PST — بيقولك مكانه الصح.",
-      "تعليمات «سحب جديد من البريد» اتحدثت: كراسة الشروط من أي حد حتى لو رد أو تحويل، والمناقصات اللي في السجل بتتحسب مرة واحدة، وتقدر تلزق رد المساعد لو ما حفظش ملف."
+      "أي كارت في أي نافذة أو صفحة بقى فلتر: ضغطة أو لمسة بتعرض صفوفه بس وبيبقى أخضر، وضغطة تانية بتشيل الفلتر — في نوافذ غرفة المتابعة، وكروت سجل المناقصات، ومربعات مؤشرات الفريق. وضغطة على عمود أي موظف بتعرض شغله بس.",
+      "كل رقم بقى في مكان واحد: اتشالت الجمل اللي كانت بتكرر المربعات في غرفة المتابعة ومؤشرات الفريق وسجل المناقصات، وبروفايل الموظف بقى المربعات والرسومات بس (وزرار ⚑ جوه كل مربع).",
+      "رسم آخر الشهور: عدد المهام فوق ومكتوب على كل عمود، ومتوسط زمن الحل في لوحة لوحده تحت — مفيش نقطة بتتلخبط مع عمود.",
+      "حقل «تاريخ اكتمال العرض» في سجل المناقصات كان ظاهر كود — اتصلح. والدائرة في مربع متوسط الإغلاق ما بقتش بتغطي الكلام على الموبايل."
     ],
     "en": [
-      "Tooltips now follow one policy across the portal: a single opaque tooltip, clearly apart from the page, above everything, beside what it explains without covering it or leaving the screen — no more text over text. On a phone a tap shows a definition and a second tap hides it.",
-      "«My projects»: the import button is now a menu of four clear kinds (project register, the assistant's result as a file or pasted, Excel after editing); a file that belongs elsewhere — like a PST — tells you where.",
-      "«New pull from mail» instructions updated: the booklet counts from anyone, even on a reply or forward; tenders already in the register count once; you can paste the assistant's answer if it saved no file."
+      "Every card in every window and page now filters: a click or tap shows only its rows and turns green, a second press clears it — in the control-room windows, the tender register's cards and the Team KPIs tiles. A press on a person's bar shows only their work.",
+      "Each number now lives in one place: the sentences that repeated the tiles on the control room, Team KPIs and the tender register are gone, and a person's profile is the tiles and charts only (⚑ inside each tile).",
+      "Recent-months chart: tasks on top with the numbers on each bar, the average time to resolve in its own strip below — no point confused with a bar.",
+      "The «Offer ready on» field in the tender register showed a raw code — fixed. The ring on the average-to-close tile no longer covers its text on a phone."
     ],
     "ur": [
-      "ٹول ٹپس اب ایک پالیسی پر: ایک مبہم ٹپ، صفحے سے واضح الگ، سب سے اوپر، چیز کے ساتھ بغیر ڈھانپے۔ فون پر ٹیپ دکھاتا اور دوسرا ٹیپ چھپاتا ہے۔",
-      "«میرے پروجیکٹس»: درآمد اب چار واضح اقسام کا مینو؛ غلط جگہ کی فائل اپنی جگہ بتاتی ہے۔",
-      "«میل سے نیا حصول» کی ہدایات تازہ: کتابچہ کسی سے بھی، جواب یا فارورڈ میں بھی۔"
+      "ہر ونڈو اور صفحے کا ہر کارڈ اب فلٹر ہے: کلک یا ٹیپ صرف اس کی قطاریں دکھاتا اور سبز ہوتا ہے، دوسرا دباؤ فلٹر ہٹاتا ہے۔",
+      "ہر عدد اب ایک جگہ: خانوں کو دہرانے والے جملے ہٹا دیے گئے۔",
+      "حالیہ مہینوں کا چارٹ: ٹاسک اوپر، اوسط وقت نیچے الگ پٹی میں۔",
+      "ٹینڈر رجسٹر کا ایک خانہ کوڈ دکھا رہا تھا — درست؛ فون پر دائرہ اب متن نہیں ڈھانپتا۔"
     ]
   }
 }

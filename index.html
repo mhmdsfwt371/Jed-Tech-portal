@@ -1210,6 +1210,25 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   .proj-imp-menu { position: absolute; inset-inline-end: 0; top: calc(100% + 6px); z-index: 80; width: min(340px, 86vw); display: grid; gap: 4px; padding: 6px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--card); box-shadow: 0 14px 34px -14px rgba(0,0,0,.5); }
   .proj-imp-opt { display: grid; gap: 2px; text-align: start; padding: 8px 10px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--ink); cursor: pointer; min-height: 44px; }
   .proj-imp-opt:hover, .proj-imp-opt:focus-visible { background: var(--paper); } .proj-imp-opt b { font-size: 13.5px; } .proj-imp-opt small { font-size: 12px; line-height: 1.45; }
+  /* ADR-0102: tiles and bars that filter their window */
+  .crm-tile-f { cursor: pointer; text-align: start; font: inherit; color: inherit; border: 1px solid var(--line); } .crm-tile-f.on { border-color: var(--live-bright); box-shadow: 0 0 0 2px rgba(76,195,90,.35) inset; }
+  .crm-bar-f { all: unset; display: grid; grid-template-columns: inherit; align-items: center; gap: inherit; cursor: pointer; border-radius: 6px; padding: 1px 4px; } .crm-bar-f.on { background: rgba(76,195,90,.14); } .crm-bar-f:focus-visible { outline: 2px solid var(--live-bright); }
+  .crm-filter { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0; padding: 6px 10px; border-radius: var(--radius-sm); background: rgba(76,195,90,.12); font-size: 13px; } .crm-how { margin: 6px 0 0; font-size: 12px; }
+  /* ADR-0102: one place per number; the chart with its own MTTR strip */
+  .sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .pm-tiles.seven { grid-template-columns: repeat(7, minmax(0, 1fr)); } @media (max-width: 1350px) { .pm-tiles.seven { grid-template-columns: repeat(4, minmax(0, 1fr)); } } @media (max-width: 640px) { .pm-tiles.seven { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .pm-tile { padding-inline-end: 30px; } .pm-flag { position: absolute; top: 8px; inset-inline-end: 6px; } .pm-flag .km-flag { opacity: .45; } .pm-tile:hover .pm-flag .km-flag, .pm-flag .km-flag:focus-visible { opacity: 1; }
+  .pm-val { font-size: 11.5px; fill: var(--ink); font-weight: 600; font-feature-settings: 'tnum' 1; } .pm-val-avg { fill: var(--slate); font-weight: 500; }
+  .pm-cap { font-size: 11px; fill: var(--slate); } .pm-sep { stroke: var(--line); stroke-dasharray: 3 4; } .pm-hit { fill: transparent; }
+  .pm-legend li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto auto auto auto; align-items: center; gap: 6px; white-space: nowrap; } .pm-legend .pm-sw { margin: 0; } .pm-lg-l { overflow: hidden; text-overflow: ellipsis; }
+  .pm-legend .km-flag { opacity: .45; } .pm-legend li:hover .km-flag { opacity: 1; }
+  .pm-mix { flex-wrap: wrap; } .pm-open-card .pf-open { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 13px; } .pm-open-card .pf-open li { display: flex; justify-content: space-between; gap: 8px; }
+  .pm-open-card .pf-open li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pm-open-card .more-work summary { font-size: 13px; margin-top: 6px; cursor: pointer; }
+  .pm-cards { grid-template-columns: 1.6fr 1fr 1.2fr; }
+  /* ADR-0102: the ring never sits on the text — room beside it on wide screens, below it on a phone */
+  .km-tile.km-avg { padding-inline-end: 96px; } .km-tiles .km-tile.crm-tile-f { width: 100%; }
+  @media (max-width: 640px) { .km-tile.km-avg { padding-inline-end: 14px; } .km-avg .bt-ringbox { position: static; flex-direction: row; align-self: flex-start; margin-top: 8px; gap: 8px; } }
+  .td-tiles .crm-tile-f, .km-tiles .crm-tile-f { text-align: start; font: inherit; color: inherit; cursor: pointer; }
 </style>
 </head>
 <body>
