@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.13 — 2026-11-08
+
+- «مستخرج البريد»: برنامج ويندوز بيقرا ملف بريد أوتلوك كامل مهما كان حجمه على جهازك، رسالة رسالة، من غير ما يرفع حاجة، وبيطلّع ملف صغير تستورده في صفحة نشاط البريد.
+- مراجعة الهوية: الإيميل ما بيتحسبش لمهندس إلا بعد ما تأكّد انت إنه بتاعه، مرة واحدة. واستيراد نفس الفترة تاني بيحدّث من غير تكرار.
+- مؤشر جديد منفصل «نشاط البريد — صندوق المدير» في مؤشرات الفريق وتفاصيل كل مهندس، بالتصنيفات والدليل وإكسل. ما بيدخلش النقاط، وأوزانه جاهزة بس مقفولة لحد اعتمادك.
+
+<details><summary>English</summary>
+
+- «Mail Extractor»: a Windows app that reads a whole Outlook mail file of any size on your computer, one message at a time, uploads nothing, and writes a small file you import on the Mail activity page.
+- Identity review: a message counts for an engineer only once you confirm the address is theirs, once. Importing the same period again updates, never doubles.
+- A new separate indicator «Email Activity — Manager Inbox» on Team KPIs and each engineer's detail, by category, with the evidence and Excel. It does not enter points; its weights are prepared but locked until you approve them.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «میل ایکسٹریکٹر»: ونڈوز ایپ جو آپ کے کمپیوٹر پر کسی بھی سائز کی پوری آؤٹ لک میل فائل ایک ایک پیغام پڑھتی ہے، کچھ اپ لوڈ نہیں کرتی، اور ایک چھوٹی فائل بناتی ہے۔
+- شناخت کا جائزہ: پیغام انجینئر کے لیے تبھی شمار ہوتا ہے جب آپ پتے کی تصدیق کریں۔ ایک ہی مدت دوبارہ درآمد کرنے سے دہرائی نہیں ہوتی۔
+- نیا الگ اشاریہ «ای میل سرگرمی — مینیجر ان باکس»، زمروں، ثبوت اور ایکسل کے ساتھ۔ پوائنٹس میں شامل نہیں؛ وزن آپ کی منظوری تک مقفل۔
+
+</div>
+</details>
+
+
 ## v9.12 — 2026-11-08
 
 - تصحيح: سطر «فكرة وتصميم وتطوير» في آخر كل صفحة كان بيظهر كلمة برمجية بدل الجملة — اتصلّح في اللغات التلاتة.

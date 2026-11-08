@@ -2018,3 +2018,63 @@ export function mailKey(m) {
   const when = m && (m.clientSubmitTime || m.messageDeliveryTime); const iso = when ? new Date(when).toISOString() : '';
   return `alt:${String((m && (m.senderEmailAddress || m.senderName)) || '').trim().toLowerCase()}|${iso}|${String((m && m.subject) || '').trim().toLowerCase()}`;
 }
+
+// ---------- ADR-0095: «Email Activity — Manager Inbox» — the extractor's file, merged, matched and counted ----------
+export const MA_SCHEMA = 'afaqy-mail-activity/v1';
+const MA_ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
+/** Read an extractor file (JSON lines: a header, then one record per message). Bad lines are counted, never guessed. */
+export function maParse(text) {
+  const lines = String(text || '').split(/\r?\n/).filter((l) => l.trim());
+  let head = null; try { head = JSON.parse(lines[0] || ''); } catch { head = null; }
+  if (!head || head.schema !== MA_SCHEMA) return { error: 'ma_bad_schema' };
+  const recs = []; let bad = 0;
+  for (const l of lines.slice(1)) {
+    let r; try { r = JSON.parse(l); } catch { bad++; continue; }
+    const t = r.rt || r.st;
+    if (!r || typeof r.k !== 'string' || !r.k || typeof r.fe !== 'string' || !MA_ISO.test(t || '')) { bad++; continue; }
+    recs.push({ k: r.k, fb: !!r.fb, fe: r.fe.toLowerCase(), fn: String(r.fn || ''), s: String(r.s || ''), st: r.st || null, rt: r.rt || null, f: String(r.f || ''), to: +r.to || 0, cc: +r.cc || 0, rd: Array.isArray(r.rd) ? r.rd.slice(0, 20) : [] });
+  }
+  return { head, recs, bad };
+}
+/** Merge an import. A message is its key: importing the same period again replaces, never adds. The import keeps its
+ *  source file, period and dates for audit; re-importing the same source and period replaces that import's entry. */
+export function maMerge(state, head, recs, importedAt) {
+  const st = { imports: [...((state && state.imports) || [])], recs: [...((state && state.recs) || [])] };
+  const id = `${head.source || '?'}|${head.from || ''}|${head.to || ''}`;
+  const prev = st.imports.findIndex((x) => x.id === id), entry = { id, source: head.source || '', bytes: head.source_bytes || null, from: head.from || null, to: head.to || null, scope: head.scope || '', extractedAt: head.extracted_at || null, importedAt, helper: head.helper || '', counts: head.counts || {}, n: recs.length };
+  if (prev >= 0) st.imports[prev] = entry; else st.imports.push(entry);
+  const byK = new Map(st.recs.map((r) => [r.k, r])); let added = 0, replaced = 0;
+  for (const r of recs) { if (byK.has(r.k)) replaced++; else added++; byK.set(r.k, { ...r, i: id }); }
+  st.recs = [...byK.values()];
+  return { state: st, added, replaced, again: prev >= 0 };
+}
+/** The Saudi day a message arrived (received time; sent time when there is none). */
+export const maDay = (r) => saudiDay(r.rt || r.st);
+/** Do the imports' periods cover every day of [from, to]? */
+export function maCovers(imports, from, to) {
+  const rs = (imports || []).filter((x) => x.from && x.to).map((x) => [x.from, x.to]).sort((p, q) => (p[0] < q[0] ? -1 : 1));
+  let reach = from;
+  for (const [a, b] of rs) { if (a > reach) break; if (b >= reach) { const n = new Date(`${b}T00:00:00Z`); n.setUTCDate(n.getUTCDate() + 1); reach = n.toISOString().slice(0, 10); } if (reach > to) return true; }
+  return reach > to;
+}
+/** Count per engineer in [from, to]. Only confirmed addresses count (ids: address → employee id); an address with no
+ *  confirmed engineer is «unmatched» and never counted; display names never decide. classify(subject) → category key. */
+export function maStats(recs, ids, classify, from, to) {
+  const per = new Map(), unmatched = new Map(); let total = 0, fallback = 0;
+  for (const r of recs || []) {
+    const d = maDay(r); if (!d || d < from || d > to) continue;
+    total++; if (r.fb) fallback++;
+    const id = r.fe && ids[r.fe];
+    if (!id) { const u = unmatched.get(r.fe || `name:${r.fn}`) || { addr: r.fe, name: r.fn, n: 0 }; u.n++; unmatched.set(r.fe || `name:${r.fn}`, u); continue; }
+    const p = per.get(id) || { id, total: 0, cats: {}, recs: [] }; const c = classify(r.s);
+    p.total++; p.cats[c] = (p.cats[c] || 0) + 1; p.recs.push(r); per.set(id, p);
+  }
+  return { per, unmatched: [...unmatched.values()].sort((p, q) => q.n - p.n), total, fallback };
+}
+/** Suggest engineers for an address — a suggestion only; nothing counts until the manager confirms it. */
+export function maSuggest(addr, name, people) {
+  const tok = (s) => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').split(' ').filter((w) => w.length > 1);
+  const local = tok(String(addr || '').split('@')[0].replace(/^ex:/, '').replace(/[._-]+/g, ' ')), nm = tok(name), want = new Set([...local, ...nm]);
+  return (people || []).map((p) => { const ws = new Set([...tok(p.nameEn), ...tok(p.nameAr)]); let hit = 0; for (const w of want) if (ws.has(w)) hit++; return { id: p.id, score: hit }; })
+    .filter((x) => x.score > 0).sort((p, q) => q.score - p.score).slice(0, 3);
+}

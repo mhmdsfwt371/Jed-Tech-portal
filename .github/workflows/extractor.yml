@@ -1,0 +1,41 @@
+# Builds the AFAQY Mail Extractor on a real Windows machine, runs its tests there, and publishes the zip as a release.
+# Runs when a tag extractor-v* is pushed, or by hand.
+name: extractor
+on:
+  push: { tags: ['extractor-v*'] }
+  workflow_dispatch:
+permissions: { contents: write }
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults: { run: { shell: pwsh, working-directory: tools/mail-extractor } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Install
+        run: python -m pip install --upgrade pip; pip install libpff-python==20260926 pyinstaller psutil
+      - name: Sample mail files (public test data, downloaded, never committed)
+        run: |
+          npm pack pst-extractor@1 --silent | Out-Null
+          tar -xzf (Get-ChildItem pst-extractor-*.tgz | Select-Object -First 1).Name
+          "PST_SAMPLES=$PWD\package\example\testdata" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Tests on Windows
+        run: python test_extract.py
+      - name: Build
+        run: |
+          pyinstaller --noconfirm --onedir --windowed --name "AFAQY Mail Extractor" --hidden-import pypff afaqy_gui.py
+          New-Item -ItemType Directory -Force "dist\AFAQY Mail Extractor\LICENSES" | Out-Null
+          Invoke-WebRequest https://www.gnu.org/licenses/lgpl-3.0.txt -OutFile "dist\AFAQY Mail Extractor\LICENSES\libpff-LGPL.txt"
+          Copy-Item README.md "dist\AFAQY Mail Extractor\README.md"
+          Compress-Archive -Path "dist\AFAQY Mail Extractor" -DestinationPath AFAQY-Mail-Extractor-win64.zip
+          (Get-FileHash AFAQY-Mail-Extractor-win64.zip -Algorithm SHA256).Hash | Out-File AFAQY-Mail-Extractor-win64.zip.sha256 -Encoding ascii
+      - name: Smoke test of the built app (command line, on the sample PST)
+        run: |
+          python afaqy_extract.py "$env:PST_SAMPLES\enron.pst" smoke.jsonl.gz --scope all
+          if (-not (Test-Path smoke.jsonl.gz)) { throw 'no output' }
+      - name: Release
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          $tag = if ($env:GITHUB_REF -like 'refs/tags/*') { $env:GITHUB_REF_NAME } else { "extractor-manual-$env:GITHUB_RUN_NUMBER" }
+          gh release create $tag AFAQY-Mail-Extractor-win64.zip AFAQY-Mail-Extractor-win64.zip.sha256 --title "AFAQY Mail Extractor ($tag)" --notes "Windows app that reads a whole Outlook .pst on your computer and writes the file for the portal's Mail activity. Unzip, double-click «AFAQY Mail Extractor.exe». Tests ran on Windows before this build." --latest=false

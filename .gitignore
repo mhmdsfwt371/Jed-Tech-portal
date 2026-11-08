@@ -2,3 +2,10 @@ dist/
 node_modules/
 .DS_Store
 *.log
+
+# Python (the mail extractor)
+__pycache__/
+*.pyc
+tools/mail-extractor/build/
+tools/mail-extractor/dist/
+*.spec

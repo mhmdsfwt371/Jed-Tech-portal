@@ -112,3 +112,11 @@
 - `reports`: نفس محتوى ملف التقارير `afaqy-crm-reports/v1` الصالح للرفع اليدوي
 
 نافذة الإدارة تتأكد من أصل الرسالة ونافذة المرسل والرمز، ثم تعيد استخدام قارئي الملفات الحاليين وتمنع حفظ زوج فترات غير متطابقة. لا تنتقل أي رموز دخول أو طلبات API إلى البوابة، وتظل الطريقة اليدوية كما هي. هذا ليس مزامنة من جهاز المهندس إلى المدير.
+
+## `afaqy-mail-activity/v1` — the Mail Extractor's file (ADR-0095)
+Gzip JSON lines. Line 1, the header: `schema`, `helper`, `source`, `source_bytes`, `from`, `to`, `by` ("received"), `scope`
+("inbox" | "all"), `extracted_at`, `counts` {read, kept, dup, fallback, out_of_range, errors}, `seconds`, `peak_mb`.
+Then one line per message: `k` (key), `fb` (fallback key), `fn` (sender name), `fe` (sender address, lower case, or `ex:alias`),
+`s` (subject), `st`/`rt` (sent/received, UTC `YYYY-MM-DDTHH:MM:SSZ`), `f` (folder path), `to`/`cc` (counts), `rd` (recipient
+domains). No bodies, no attachments, no recipient addresses. Kept on the manager's device only; the guard refuses it in the repository.
+

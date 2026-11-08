@@ -7,6 +7,15 @@ import { createHash } from 'node:crypto';
 const root = new URL('../', import.meta.url);
 const problems = [];
 const note = (m) => problems.push(m);
+// ADR-0095: no mailbox ever enters the public repository — no .pst/.ost, no extractor output, nothing carrying its schema
+{
+  const { execSync: _x } = await import('node:child_process');
+  let tracked = []; try { tracked = _x('git ls-files', { encoding: 'utf8' }).split('\n').filter(Boolean); } catch { tracked = []; }
+  for (const f of tracked) {
+    if (/\.(pst|ost)$/i.test(f) || /\.jsonl(\.gz)?$/i.test(f) || /mail-activity.*\.(gz|json)$/i.test(f)) note(`${f}: a mailbox or an extractor file must never be committed — the repository is public`);
+    else if (/\.(json|txt|csv)$/i.test(f)) { try { const head = (await import('node:fs')).readFileSync(f, 'utf8').slice(0, 400); if (head.includes('afaqy-mail-activity/v1')) note(`${f}: carries mailbox data (afaqy-mail-activity/v1) — never commit it`); } catch {} }
+  }
+}
 const read = (f) => readFileSync(new URL(f, root), 'utf8');
 const exists = (f) => existsSync(new URL(f, root));
 

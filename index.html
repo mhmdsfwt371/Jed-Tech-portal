@@ -1164,6 +1164,11 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   .tp-k-cur { background: var(--live-bright); box-shadow: 0 0 6px rgba(76,195,90,.6); } .tp-k-prev { background: repeating-linear-gradient(90deg, var(--slate) 0 4px, transparent 4px 8px); } .tp-k-we { height: 10px; background: var(--track); }
   .about-by { display: grid; gap: 2px; } .about-eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--slate); } .about-by b { font-size: 1.35rem; }
   @media (prefers-reduced-motion: reduce) { .tp-line { animation: none; stroke-dashoffset: 0; } .tp-area, .tp-dot { animation: none; opacity: 1; } .tp-ring, .tp-live { animation: none; } }
+  /* ADR-0095: email activity from the extractor */
+  .ma-sec { border: 1px solid var(--line); border-inline-start: 4px solid var(--live); border-radius: var(--radius); padding: 12px 16px; margin: 0 0 16px; background: var(--card); }
+  .ma-sec h2 { margin-top: 0; } .ma-res h3 { margin: 14px 0 6px; } .ma-row { cursor: pointer; } .ma-sug { margin-inline-start: 8px; }
+  .ma-kpi { margin-top: 22px; border-top: 1px dashed var(--line-strong); padding-top: 12px; } .ma-src { font-size: 12px; }
+  .ma-w { border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); padding: 8px 12px; margin-top: 16px; opacity: .8; } .ma-w input { width: 70px; }
 </style>
 </head>
 <body>

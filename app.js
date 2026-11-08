@@ -12,7 +12,7 @@ import {
   mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
   quarterRange, quarterOf, quarterBaseline, quarterGoalProgress, planProgress, suggestQuarterGoals,
-} from './core.js';
+  maParse, maMerge, maCovers, maStats, maSuggest, maDay } from './core.js';
 
 import { validateSystems } from './systems-core.js';
 
@@ -1204,6 +1204,97 @@ function teamPulse(doneM, doneP, onDay, hasPrev) {   // hasPrev: last month pull
       el('span', { class: 'tp-sum', text: t('tp_sum', { today: cur[d], avg, peak: cur[peakK] || 0, pd: peakK }) })),
     el('div', { class: 'tp-wrap' }, svg, tip),
     el('p', { class: 'hint tp-legend' }, el('span', { class: 'tp-k tp-k-cur' }), t('tp_leg_cur'), el('span', { class: 'tp-k tp-k-prev' }), hasPrev ? t('tp_leg_prev') : t('tp_leg_noprev'), el('span', { class: 'tp-k tp-k-we' }), t('tp_leg_we'), ` · ${t('tp_click')}`));
+}
+
+// ---------- ADR-0095: «Email Activity — Manager Inbox» from the extractor's file ----------
+let mailAct = { imports: [], recs: [] }, mailIds = { map: {}, ignored: [] };
+const MA_RELEASES = 'https://github.com/mhmdsfwt371/Jed-Tech-portal/releases?q=extractor&expanded=true';
+const maSave = async () => { await store.kvPut('mailact', mailAct); await store.kvPut('mailids', mailIds); };
+const maClassify = (s) => mfCategory(s, mfRules());
+const maCats = () => [...mfRules().map((r) => r.k), 'other'];
+const maCatName = (k) => (k === 'other' ? t('mf_cat_other') : ((mfRules().find((r) => r.k === k) || {}).name || k));
+const maPeople = () => [...peopleOf(datasets), ...(me ? me.people : [])].filter((p, i, arr) => p && arr.findIndex((q) => q.id === p.id) === i);
+const maMonths = () => [...new Set(mailAct.recs.map((r) => (maDay(r) || '').slice(0, 7)).filter(Boolean))].sort().reverse();
+let maMonth = '';
+async function maReadFile(f) {
+  const head = new Uint8Array(await f.slice(0, 2).arrayBuffer()), gz = head[0] === 0x1f && head[1] === 0x8b;
+  return gz ? await new Response(f.stream().pipeThrough(new DecompressionStream('gzip'))).text() : await f.text();
+}
+async function maImport(f) {
+  let p; try { p = maParse(await maReadFile(f)); } catch { p = { error: 'ma_bad_file' }; }
+  if (p.error) { toast(t(p.error)); return; }
+  const r = maMerge(mailAct, p.head, p.recs, saudiDay(new Date().toISOString())); mailAct = r.state; await maSave();
+  toast(t(r.again ? 'ma_loaded_again' : 'ma_loaded', { a: r.added, r: r.replaced, b: p.bad })); renderMailFile();
+}
+function maSection() {
+  const up = el('input', { type: 'file', accept: '.gz,.jsonl,.json,application/gzip', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) await maImport(f); } });
+  const head = el('div', {}, el('h2', { text: t('ma_h') }), el('p', { class: 'hint', text: t('ma_lead') }),
+    el('div', { class: 'row' }, el('a', { class: 'btn', href: MA_RELEASES, target: '_blank', rel: 'noopener noreferrer', text: `⬇ ${t('ma_get')}` }), el('button', { type: 'button', class: 'btn primary ma-import', text: `📥 ${t('ma_import')}`, onclick: () => up.click() }), up));
+  if (!mailAct.recs.length) return el('section', { class: 'ma-sec' }, head, el('p', { class: 'note', text: t('ma_none') }));
+  // the imports, for audit
+  const imps = el('details', { class: 'tucked ma-imps' }, el('summary', { text: t('ma_imports', { n: mailAct.imports.length, m: mailAct.recs.length }) }),
+    el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, ['ma_c_src', 'ma_c_period', 'ma_c_kept', 'ma_c_dup', 'ma_c_fb', 'ma_c_err', 'ma_c_at', ''].map((k) => el('th', { text: k ? t(k) : '' })))),
+      el('tbody', {}, mailAct.imports.map((x) => el('tr', {}, el('td', { dir: 'auto', text: x.source }), el('td', { text: `${x.from || '…'} → ${x.to || '…'}` }), el('td', { class: 'num', text: String(x.n) }), el('td', { class: 'num', text: String((x.counts || {}).dup || 0) }), el('td', { class: 'num', text: String((x.counts || {}).fallback || 0) }), el('td', { class: 'num', text: String((x.counts || {}).errors || 0) }), el('td', { text: x.importedAt || '' }),
+        el('td', {}, el('button', { type: 'button', class: 'btn tiny quiet', text: t('ma_remove'), onclick: async () => { if (!confirm(t('ma_remove_confirm', { s: x.source }))) return; mailAct = { imports: mailAct.imports.filter((y) => y.id !== x.id), recs: mailAct.recs.filter((r) => r.i !== x.id) }; await maSave(); renderMailFile(); } }))))))));
+  // identity: an address counts only once the manager confirms whose it is
+  const senders = new Map(); for (const r of mailAct.recs) { if (!r.fe) continue; const s = senders.get(r.fe) || { addr: r.fe, name: r.fn, n: 0 }; s.n++; senders.set(r.fe, s); }
+  const ppl = maPeople(), pname = (id) => { const p = ppl.find((q) => String(q.id) === String(id)); return p ? `${nameOf(p, lang) || p.id}${p.branchCode ? ` · ${t('ma_branch')} ${p.branchCode}` : ''}` : id; };
+  const todo = [...senders.values()].filter((s) => !mailIds.map[s.addr] && !mailIds.ignored.includes(s.addr)).sort((p, q) => q.n - p.n).slice(0, 60);
+  const done = Object.entries(mailIds.map);
+  const pick = (s) => { const sg = maSuggest(s.addr, s.name, ppl); const sel = el('select', { 'aria-label': s.addr }, el('option', { value: '', text: '—' }), ppl.map((p) => ({ p, n: pname(p.id) })).sort((x, y) => x.n.localeCompare(y.n, lang)).map(({ p, n }) => el('option', { value: p.id, text: n })));
+    return el('tr', {}, el('td', { class: 'ltr', text: s.addr }), el('td', { dir: 'auto', text: s.name || '' }), el('td', { class: 'num', text: String(s.n) }),
+      el('td', {}, sel, sg.length ? el('button', { type: 'button', class: 'linkish ma-sug', text: `${t('ma_suggest')}: ${pname(sg[0].id)}`, onclick: () => { sel.value = sg[0].id; } }) : null),
+      el('td', {}, el('button', { type: 'button', class: 'btn tiny ma-ok', text: t('ma_confirm'), onclick: async () => { if (!sel.value) { toast(t('ma_pick_first')); return; } mailIds.map[s.addr] = String(sel.value); await maSave(); renderMailFile(); } }),
+        el('button', { type: 'button', class: 'btn tiny quiet', text: t('ma_ignore'), onclick: async () => { mailIds.ignored.push(s.addr); await maSave(); renderMailFile(); } }))); };
+  const ident = el('details', { class: 'tucked ma-ident', open: todo.length > 0 },   // stays open while addresses wait el('summary', { text: t('ma_ident', { a: done.length, b: todo.length }) }), el('p', { class: 'hint', text: t('ma_ident_lead') }),
+    todo.length ? el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, ['ma_c_addr', 'ma_c_name', 'ma_c_n', 'ma_c_who', ''].map((k) => el('th', { text: k ? t(k) : '' })))), el('tbody', {}, todo.map(pick)))) : el('p', { class: 'hint', text: t('ma_ident_none') }),
+    done.length ? el('details', {}, el('summary', { text: t('ma_ident_done', { n: done.length }) }), el('ul', { class: 'defs' }, done.map(([addr, id]) => el('li', {}, el('span', { class: 'ltr', text: addr }), ' → ', pname(id), ' ', el('button', { type: 'button', class: 'linkish', text: t('ma_unlink'), onclick: async () => { delete mailIds.map[addr]; await maSave(); renderMailFile(); } }))))) : null);
+  // the month's counts per engineer, with the evidence behind each
+  const months = maMonths(); if (!months.includes(maMonth)) maMonth = months[0] || '';
+  const rg = maMonth ? monthRangeOf(maMonth) : null, S = rg ? maStats(mailAct.recs, mailIds.map, maClassify, rg.from, rg.to) : null, cats = maCats();
+  const covered = rg && maCovers(mailAct.imports, rg.from, rg.to);
+  const rows = S ? [...S.per.values()].sort((p, q) => q.total - p.total) : [];
+  const xl = async () => { const X = await loadXlsx(), head2 = [t('col_person'), t('ma_c_total'), ...cats.map(maCatName)], ws = X.utils.aoa_to_sheet([head2, ...rows.map((p) => [pname(p.id), p.total, ...cats.map((c) => p.cats[c] || 0)])]);
+    const ev = X.utils.aoa_to_sheet([[t('col_person'), t('ma_c_day'), t('ma_c_subject'), t('ma_c_cat'), t('ma_c_folder')], ...rows.flatMap((p) => p.recs.map((r) => [pname(p.id), maDay(r), r.s, maCatName(maClassify(r.s)), r.f]))]);
+    const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, t('ma_x_sum').slice(0, 30)); X.utils.book_append_sheet(wb, ev, t('ma_x_ev').slice(0, 30)); X.writeFile(wb, `email-activity-manager-inbox-${maMonth}.xlsx`); };
+  const res = el('section', { class: 'ma-res' }, el('h3', { text: t('ma_res_h') }),
+    el('div', { class: 'row' }, el('label', {}, el('span', { text: t('km_month') }), el('select', { class: 'ma-month', onchange: (e) => { maMonth = e.target.value; renderMailFile(); } }, months.map((m) => el('option', { value: m, selected: m === maMonth, text: periodLabel(m) })))),
+      rows.length ? el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('td_excel')}`, onclick: xl }) : null),
+    covered ? null : el('p', { class: 'note', text: t('ma_partial', { m: periodLabel(maMonth) }) }),
+    S && S.unmatched.length ? el('p', { class: 'hint', text: t('ma_unmatched', { n: S.unmatched.reduce((s, u) => s + u.n, 0), a: S.unmatched.length }) }) : null,
+    rows.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'ma-table' }, el('thead', {}, el('tr', {}, [t('col_person'), t('ma_c_total'), ...cats.map(maCatName)].map((h) => el('th', { text: h })))),
+      el('tbody', {}, rows.map((p) => el('tr', { class: 'ma-row', title: t('ma_evidence'), onclick: () => crModal({ title: `${pname(p.id)} — ${periodLabel(maMonth)}`, file: `email-${p.id}-${maMonth}`, tiles: [[t('ma_c_total'), p.total], ...cats.map((c) => [maCatName(c), p.cats[c] || 0])],
+        head: [t('ma_c_subject'), t('ma_c_day'), t('ma_c_cat'), t('ma_c_folder')], rows: p.recs.map((r) => [r.s, maDay(r), maCatName(maClassify(r.s)), r.f]) }) },
+        el('td', { text: pname(p.id) }), el('td', { class: 'num', text: String(p.total) }), ...cats.map((c) => el('td', { class: 'num', text: String(p.cats[c] || 0) }))))))) : el('p', { class: 'hint', text: t('ma_no_rows') }),
+    el('p', { class: 'hint', text: t('ma_res_note') }));
+  return el('section', { class: 'ma-sec' }, head, imps, ident, res);
+}
+/** The separate indicator on «Team KPIs»: counts from the manager's Inbox, never mixed with tasks or points. */
+function maKpiSection(range, prange, team) {
+  const h = el('h2', { text: t('ma_kpi_h') });
+  if (!mailAct.recs.length) return el('section', { class: 'ma-kpi' }, h, el('p', { class: 'hint' }, t('ma_kpi_none'), ' ', el('a', { class: 'linkish', href: '#mailfile', text: t('nav_mailfile') })));
+  if (!maCovers(mailAct.imports, range.from, range.to)) return el('section', { class: 'ma-kpi' }, h, el('p', { class: 'note', text: t('ma_kpi_uncovered', { a: range.from, b: range.to }) }));
+  const S = maStats(mailAct.recs, mailIds.map, maClassify, range.from, range.to), P = maCovers(mailAct.imports, prange.from, prange.to) ? maStats(mailAct.recs, mailIds.map, maClassify, prange.from, prange.to) : null, cats = maCats();
+  const ids = [...new Set([...(team || []), ...S.per.keys()])].filter((id) => S.per.has(id) || (team || []).includes(id));
+  const ppl = maPeople(), pname = (id) => { const p = ppl.find((q) => String(q.id) === String(id)); return p ? nameOf(p, lang) || p.id : id; };
+  const rows = ids.map((id) => ({ id, s: S.per.get(id) || { total: 0, cats: {} }, p: P ? P.per.get(id) || { total: 0, cats: {} } : null })).sort((x, y) => y.s.total - x.s.total);
+  const src = mailAct.imports.filter((x) => x.from <= range.to && x.to >= range.from).map((x) => `${x.source} (${x.from} → ${x.to}, ${t('ma_c_at')} ${x.importedAt})`).join(' · ');
+  return el('section', { class: 'ma-kpi' }, h, el('p', { class: 'hint', text: t('ma_kpi_note') }),
+    el('div', { class: 'table-wrap' }, el('table', { class: 'ma-table' }, el('thead', {}, el('tr', {}, [t('col_person'), t('ma_c_total'), ...cats.map(maCatName), P ? t('ma_c_prev') : null].filter(Boolean).map((x) => el('th', { text: x })))),
+      el('tbody', {}, rows.map((r) => el('tr', {}, el('td', { text: pname(r.id) }), el('td', { class: 'num' }, el('b', { text: String(r.s.total) })), ...cats.map((c) => el('td', { class: 'num', text: String(r.s.cats[c] || 0) })), P ? el('td', { class: 'num' }, `${r.p.total} `, kmDelta(r.s.total, r.p.total, 'h', t('ma_c_prev'))) : null))))),
+    el('p', { class: 'hint ma-src', text: `${t('ma_src')}: ${src}${S.unmatched.length ? ` · ${t('ma_unmatched', { n: S.unmatched.reduce((s, u) => s + u.n, 0), a: S.unmatched.length })}` : ''}` }));
+}
+/** One line in an engineer's detail. */
+function maPersonLine(id, ym) {
+  if (!mailAct.recs.length || !ym) return null; const rg = periodRangeOf(ym); if (!maCovers(mailAct.imports, rg.from, rg.to)) return null;
+  const S = maStats(mailAct.recs, mailIds.map, maClassify, rg.from, rg.to), p = S.per.get(String(id)) || S.per.get(id); if (!p) return null;
+  return el('p', { class: 'hint ma-line', text: `${t('ma_kpi_h')}: ${p.total} — ${maCats().filter((c) => p.cats[c]).map((c) => `${maCatName(c)} ${p.cats[c]}`).join(' · ')}` });
+}
+/** Weights for this indicator: prepared, locked until the manager approves the scoring rules. */
+function maWeightsLocked() {
+  return el('details', { class: 'tucked ma-w-fold' }, el('summary', { text: `🔒 ${t('ma_w_h')}` }),   // closed: locked until approved
+    el('fieldset', { class: 'ma-w', disabled: true }, el('legend', { text: t('ma_w_h') }), el('p', { class: 'hint', text: t('ma_w_locked') }),
+      el('div', { class: 'row' }, maCats().map((c) => el('label', {}, el('span', { text: maCatName(c) }), el('input', { type: 'number', value: '0', min: '0', step: '0.5', 'aria-label': maCatName(c) }))))));
 }
 
 // ---------- ADR-0079: the bento's small visuals — drawn from the same numbers as the tiles, never decoration ----------
@@ -2831,7 +2922,7 @@ function personMonthView({ id, tasks, acts = [], months, ym, head = '', share = 
   const open = openTasks(tasks, id).sort((x, y) => String(y.createdAt || '').localeCompare(String(x.createdAt || '')));
   const item = (x) => el('li', {}, el('span', { text: x.title || typeLabel(x.type || '', lang) || '—' }),
     el('small', { class: 'hint', text: x.ageHours == null ? '' : t(x.ageHours < 48 ? 'hours' : 'days', { n: Math.round(x.ageHours < 48 ? x.ageHours : x.ageHours / 24) }) }));
-  return el('div', { class: 'km-detail' }, head ? el('p', { class: 'hint km-head', text: head }) : null,
+  return el('div', { class: 'km-detail' }, head ? el('p', { class: 'hint km-head', text: head }) : null, maPersonLine(id, ym),
     el('div', { class: 'km-cmp' }, el('table', {},
       el('thead', {}, el('tr', {}, el('th', {}), el('th', { class: 'num', text: ml }), el('th', { class: 'num', text: pml }), el('th', { class: 'num', text: t('km_change') }), el('th', {}))),
       el('tbody', {}, rows.map(([lab, k, kind]) => el('tr', {}, el('td', { text: t(lab) }), el('td', { class: 'num' }, el('b', { text: fmt(k, n[k]) })),
@@ -2981,6 +3072,7 @@ function renderKpi() {
     el('p', { class: 'hint', text: t('km_click') }),
     table,
     more);
+  body.append(maKpiSection(range, prange, team));   // ADR-0095: a separate indicator — never added to tasks or points
   if (kpiOpen) { const r = body.querySelector(`tr.km-row[data-id="${CSS.escape(kpiOpen)}"]`); if (r && kpiScroll) { kpiScroll = false; r.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }
 }
 let kpiScroll = false;
@@ -3147,7 +3239,7 @@ function renderWeights() {
     el('details', { class: 'w-adv', ...(advOpen ? { open: '' } : {}) }, el('summary', { text: t('w_adv') }), el('p', { class: 'hint', text: t('w_adv_lead') }), el('div', { class: 'w-adv-top' }),
       el('div', { class: 'tiers' }, TIERS.map((tr) => el('div', { class: 'tier' }, el('b', { text: String((weightsRepo && weightsRepo.tiers && weightsRepo.tiers[tr]) || { admin: 1, customer: 2, integration: 3, multistage: 5 }[tr]) }), el('div', {}, el('strong', { text: t(`tier_${tr}`) }), el('p', { text: t(`tier_${tr}_why`) }))))),
       groups.map(table),
-      el('p', { class: 'hint', text: t('weights_seen_note', { range: ds ? `${ds.range.from} → ${ds.range.to}` : '—' }) })));
+      el('p', { class: 'hint', text: t('weights_seen_note', { range: ds ? `${ds.range.from} → ${ds.range.to}` : '—' }) }), maWeightsLocked()));
 }
 
 // ---------- the Team page: positions and leaders by myafaqy id, kept on this device and exportable as team.json ----------
@@ -3633,7 +3725,7 @@ function renderMailFile() {
       el('button', { type: 'button', class: 'btn tiny quiet', text: t('mf_rules_reset'), onclick: () => { if (confirm(t('mf_rules_reset_confirm'))) saveRules(null); } })));
   // ADR-0075 / ADR-0076: how this page counts and its classification rules — shown BEFORE a file is chosen too, so they can be read first
   const howBox = el('details', { class: 'tucked mf-howcount', open: true }, el('summary', { text: t('mf_count_h') }), el('ul', { class: 'defs' }, ['mf_count_1', 'mf_count_2', 'mf_count_3', 'mf_count_4', 'mf_count_5'].map((k) => el('li', { text: t(k) }))));
-  if (!st.msgs) { set(body, mailSrc('pst'), mailbox, top, rulesBox, howBox); return; }
+  if (!st.msgs) { set(body, mailSrc('pst'), maSection(), mailbox, top, rulesBox, howBox); return; }
   const inRange = (m) => (!st.from || (m.date || '').slice(0, 10) >= st.from) && (!st.to || (m.date || '').slice(0, 10) <= st.to);
   const ranged = st.msgs.filter(inRange), counts = new Map(), emails = new Map();
   for (const m of ranged) { counts.set(m.sender, (counts.get(m.sender) || 0) + 1); if (!emails.has(m.sender) && m.email && !m.email.startsWith('/')) emails.set(m.sender, m.email); }
@@ -3664,7 +3756,7 @@ function renderMailFile() {
     el('div', { class: 'row' }, el('div', { class: 'pills' }, [['all', t('mf_all')], ...CATS.map((c) => [c, `${catName(c)} (${tot[c]})`])].map(([k, l]) => el('button', { type: 'button', class: `pill-btn${st.cat === k ? ' on' : ''}`, text: l, onclick: () => { st.cat = k; renderMailFile(); } }))),
       el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('mf_export')}`, onclick: csv })),
     shown.length ? el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('mf_col_date'), t('mf_col_sender'), t('mf_col_subject'), t('mf_col_cat'), t('mf_col_folder')].map((h) => el('th', { text: h })))), tbody), more) : el('div', { class: 'empty', text: t('mf_empty') }));
-  set(body, mailSrc('pst'), mailbox, top, dateRow, sendersBox, rulesBox, results, howBox, listBox);
+  set(body, mailSrc('pst'), maSection(), mailbox, top, dateRow, sendersBox, rulesBox, results, howBox, listBox);
 }
 function route() {
   if (location.hash.startsWith('#rank=')) { takeRankLink(true).then(route); return; }   // a rank link can arrive while the portal is already open (only the hash changes)
@@ -3727,7 +3819,7 @@ $('file-in').addEventListener('change', async (e) => { for (const f of e.target.
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
 $('export-btn').addEventListener('click', async () => {
   if (plannerFile === undefined) plannerFile = (await store.getPlanner()) || null;   // ADR-0071: the planner travels with the backup
-  const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION, planner: plannerFile || null, tenders: tenders || (await store.kvGet('tenders')) || null, mailrules: mfState.rules || (await store.kvGet('mailrules')) || null,
+  const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION, planner: plannerFile || null, tenders: tenders || (await store.kvGet('tenders')) || null, mailrules: mfState.rules || (await store.kvGet('mailrules')) || null, mailact: mailAct, mailids: mailIds,
     datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: (viewAs ? (meDerived ? null : realMe) : (meDerived ? null : me)) || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projfiles: await projFilesExport(), devplans: devPlans };
   download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(all, null, 1));
 });
@@ -3756,6 +3848,8 @@ $('import-in').addEventListener('change', async (e) => {
       if (j.register && !myRegister) { const r = cleanRegister(j.register); if (r) { myRegister = r; await store.putRegister(r); } }
       // ADR-0077: the mail rules come back with the backup when this device has none of its own
       { const mr = cleanMailRules(j.mailrules); if (mr && !(await store.kvGet('mailrules'))) { mfState.rules = mr; await store.kvPut('mailrules', mr); } }
+      if (j.mailact && Array.isArray(j.mailact.recs) && !(mailAct && mailAct.recs.length)) { mailAct = { imports: j.mailact.imports || [], recs: j.mailact.recs }; await store.kvPut('mailact', mailAct); }   // ADR-0095
+      if (j.mailids && j.mailids.map && !Object.keys(mailIds.map).length) { mailIds = { map: j.mailids.map, ignored: j.mailids.ignored || [] }; await store.kvPut('mailids', mailIds); }
       if (plannerFile === undefined) plannerFile = (await store.getPlanner()) || null;
       if (j.planner && typeof j.planner.html === 'string' && !plannerFile && isHtml(j.planner.html)) { plannerFile = { name: String(j.planner.name || 'planner.html'), at: String(j.planner.at || new Date().toISOString()), html: j.planner.html }; await store.putPlanner(plannerFile); }
       { const td = cleanTenders(j.tenders); if (td && !(tenders && tenders.items.length)) { tenders = td; await store.kvPut('tenders', td); } }   // ADR-0081
@@ -3811,6 +3905,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   privLinks = (await store.getPriv()) || [];
   mailRows = (await store.getMail()) || [];
   myProjects = await store.getProjects(); tenders = cleanTenders(await store.kvGet('tenders'));
+  mailAct = (await store.kvGet('mailact')) || { imports: [], recs: [] }; mailIds = (await store.kvGet('mailids')) || { map: {}, ignored: [] };   // ADR-0095
   myRegister = await store.getRegister();
   devPlans = (await store.kvGet('devplans')) || {};
   teamTypesLive = (await store.kvGet('teamtypes')) || null;
