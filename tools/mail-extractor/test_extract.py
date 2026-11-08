@@ -6,8 +6,8 @@ sys.path.insert(0, os.path.dirname(__file__)); import afaqy_extract as X
 SAMPLES = os.environ.get('PST_SAMPLES', '/tmp/pst/node_modules/pst-extractor/example/testdata')
 
 class Msg:
-    def __init__(self, subject, sender, name, sent, recv=None, msgid=None, recips=()):
-        self.subject, self.sender_name = subject, name
+    def __init__(self, subject, sender, name, sent, recv=None, msgid=None, recips=(), body=None):
+        self.subject, self.sender_name, self.body_text = subject, name, body
         self.client_submit_time, self.delivery_time = sent, recv or sent
         self.props = {X.P_MSGID: msgid, X.P_SENDER_SMTP: sender if sender and '@' in sender else None, X.P_SENDER_EMAIL: sender}
         self.recipients = Rc(recips)
@@ -112,4 +112,14 @@ class Extract(unittest.TestCase):
         self.assertEqual(h['counts']['kept'], N)
         mb = peak / 1048576; print(f'\n    300k messages: {time.time() - t:.1f}s, peak Python memory {mb:.1f} MB, file {os.path.getsize(self.out) / 1048576:.1f} MB')
         self.assertLess(mb, 120, 'memory must not grow with the mailbox beyond the seen-key set')
+    def test_11_own_words_are_kept_not_the_quoted_thread(self):
+        body = 'Installed and activated; the client receives data.\r\n\r\nFrom: Customer <c@client.sa>\r\nSubject: طلب عرض سعر\r\nPlease send a quotation for 13 vehicles'
+        m = Msg('RE: طلب عرض سعر لعدد 13 مركبة', 'eng@afaqy.com', 'Eng', T('2026-10-05T07:00:00'), msgid='<own@a>', body=body)
+        h, R = read(self.out) if X.run([('/Inbox', 0, m)], self.out) else (None, None)
+        self.assertEqual(R[0]['b'], 'Installed and activated; the client receives data.')
+    def test_12_a_run_that_stops_before_keeping_anything_leaves_no_part_file(self):
+        def boom():
+            raise RuntimeError('cannot read'); yield
+        with self.assertRaises(RuntimeError): X.run(boom(), self.out)
+        self.assertFalse(os.path.exists(self.out + '.part')); self.assertFalse(os.path.exists(self.out + '.checkpoint.json'))
 if __name__ == '__main__': unittest.main(verbosity=2)

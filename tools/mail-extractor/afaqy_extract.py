@@ -8,7 +8,7 @@ message filed in two folders counts once. A checkpoint is written as it goes, so
 import gzip, hashlib, json, os, re, sys, time, datetime as dt
 
 SCHEMA = 'afaqy-mail-activity/v1'
-VERSION = '1.0.3'
+VERSION = '1.0.4'
 P_MSGID, P_SENDER_SMTP, P_SENDER_EMAIL, P_TO, P_CC = 0x1035, 0x5D01, 0x0C1F, 0x0E04, 0x0E03
 R_SMTP, R_EMAIL, R_TYPE = 0x39FE, 0x3003, 0x0C15
 SKIP = re.compile(r'^(sent items|sent|deleted items|deleted|outbox|drafts|junk( e-?mail)?|spam|conversation history|sync issues.*|calendar|contacts|tasks|notes|journal|'
@@ -112,6 +112,27 @@ def pst_messages(path, scope='inbox', skip_folders=None):
         try: f.close()
         finally: fh.close()
 
+OWN_CUT = re.compile(r'^\s*(-{2,}\s*original message\s*-{2,}|_{8,}|from\s*:|de\s*:|von\s*:|من\s*:|المرسل\s*:|on .{4,120} wrote:|في .{4,120} كتب:)', re.I | re.M)
+def own_text(body):
+    """The sender's own words: the top of the body, before the quoted earlier messages (same rule as the portal's maOwnText)."""
+    s = (body or '').replace('\r\n', '\n').replace('\r', '\n')
+    m = OWN_CUT.search(s)
+    return re.sub(r'\s+', ' ', s[:m.start()] if m else s).strip()[:400]
+
+def _body_text(m):
+    try:
+        b = m.plain_text_body
+        if b: return (b.decode('utf-8', 'ignore') if isinstance(b, (bytes, bytearray)) else str(b))[:3000]
+    except Exception: pass
+    try:
+        h = m.html_body
+        if h:
+            h = (h.decode('utf-8', 'ignore') if isinstance(h, (bytes, bytearray)) else str(h))[:12000]
+            h = re.sub(r'(?is)<(script|style).*?</\1>', ' ', h); h = re.sub(r'(?i)<br\s*/?>|</p>|</div>', '\n', h)
+            return re.sub(r'<[^>]+>', ' ', h).replace('&nbsp;', ' ')[:3000]
+    except Exception: pass
+    return ''
+
 def record_of(m, fpath):
     sender_name = (m.sender_name or '').strip()
     sender = clean_addr(_prop(m, P_SENDER_SMTP)) or clean_addr(_prop(m, P_SENDER_EMAIL))
@@ -119,7 +140,8 @@ def record_of(m, fpath):
     subject = m.subject or ''
     key, fb = message_key(_prop(m, P_MSGID), sender or sender_name.lower(), sent, subject)
     to, cc, doms = _recipients(m)
-    return {'k': key, 'fb': fb, 'fn': sender_name, 'fe': sender, 's': subject, 'st': sent, 'rt': recv, 'to': to, 'cc': cc, 'rd': doms, 'f': fpath}
+    body = getattr(m, 'body_text', None)
+    return {'k': key, 'fb': fb, 'fn': sender_name, 'fe': sender, 's': subject, 'st': sent, 'rt': recv, 'to': to, 'cc': cc, 'rd': doms, 'f': fpath, 'b': own_text(body if body is not None else _body_text(m))}
 
 # ---------------- the run ----------------
 def in_range(rec, d_from, d_to, by='rt'):
@@ -144,7 +166,6 @@ def run(source, out_path, d_from=None, d_to=None, scope='inbox', progress=None, 
                 if 'k' in r: seen.add(r['k'])
         mode = 'at'
     else: mode = 'wt'
-    peak = 0
     def rss():
         try:
             import psutil; return psutil.Process().memory_info().rss
@@ -154,7 +175,19 @@ def run(source, out_path, d_from=None, d_to=None, scope='inbox', progress=None, 
             except Exception: return 0
     if isinstance(source, str) and reader is None: check_readable(source)   # locked by Outlook? not a PST? say so before anything is written
     msgs = (reader or pst_messages)(source, scope, done_folders) if isinstance(source, str) else source
-    cur_folder, last_folder = None, None
+    try:
+        _loop(msgs, part, mode, resume_at, counts, seen, done_folders, d_from, d_to, every, ck, progress, t0, peak_box := [0], rss)
+    except BaseException:
+        if counts['kept'] == 0 and not resume_at:   # stopped before anything was kept: leave no «.part» leftover behind
+            for x in (part, ck):
+                try: os.remove(x)
+                except OSError: pass
+        raise
+    peak = max(peak_box[0], rss())
+    return _finish(source, out_path, part, ck, d_from, d_to, scope, counts, t0, peak)
+
+def _loop(msgs, part, mode, resume_at, counts, seen, done_folders, d_from, d_to, every, ck, progress, t0, peak_box, rss):
+    last_folder = None
     with gzip.open(part, mode, encoding='utf-8') as out:
         for fpath, idx, m in msgs:
             if fpath != last_folder:
@@ -170,11 +203,12 @@ def run(source, out_path, d_from=None, d_to=None, scope='inbox', progress=None, 
             seen.add(rec['k']); counts['kept'] += 1; counts['fallback'] += 1 if rec['fb'] else 0
             out.write(json.dumps(rec, ensure_ascii=False, separators=(',', ':')) + '\n')
             if counts['read'] % every == 0:
-                peak = max(peak, rss()); out.flush()
+                peak_box[0] = max(peak_box[0], rss()); out.flush()
                 with open(ck + '.tmp', 'w', encoding='utf-8') as fh: json.dump({'counts': counts, 'done': sorted(done_folders), 'folder': fpath, 'index': idx + 1}, fh)
                 os.replace(ck + '.tmp', ck)   # atomic: a cut mid-write never leaves a broken checkpoint
-                if progress: progress(dict(counts, folder=fpath, seconds=round(time.time() - t0, 1), peak_mb=round(peak / 1048576, 1)))
-    peak = max(peak, rss())
+                if progress: progress(dict(counts, folder=fpath, seconds=round(time.time() - t0, 1), peak_mb=round(peak_box[0] / 1048576, 1)))
+
+def _finish(source, out_path, part, ck, d_from, d_to, scope, counts, t0, peak):
     size = os.path.getsize(source) if isinstance(source, str) and os.path.exists(source) else None
     head = {'schema': SCHEMA, 'helper': VERSION, 'source': os.path.basename(source) if isinstance(source, str) else 'test', 'source_bytes': size,
             'from': d_from, 'to': d_to, 'by': 'received', 'scope': scope, 'extracted_at': iso(dt.datetime.now(dt.timezone.utc)),
