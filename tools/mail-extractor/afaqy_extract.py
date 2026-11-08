@@ -8,7 +8,7 @@ message filed in two folders counts once. A checkpoint is written as it goes, so
 import gzip, hashlib, json, os, re, sys, time, datetime as dt
 
 SCHEMA = 'afaqy-mail-activity/v1'
-VERSION = '1.0.2'
+VERSION = '1.0.3'
 P_MSGID, P_SENDER_SMTP, P_SENDER_EMAIL, P_TO, P_CC = 0x1035, 0x5D01, 0x0C1F, 0x0E04, 0x0E03
 R_SMTP, R_EMAIL, R_TYPE = 0x39FE, 0x3003, 0x0C15
 SKIP = re.compile(r'^(sent items|sent|deleted items|deleted|outbox|drafts|junk( e-?mail)?|spam|conversation history|sync issues.*|calendar|contacts|tasks|notes|journal|'
@@ -40,6 +40,21 @@ def message_key(msgid, sender, sent, subject):
         return hashlib.sha1(msgid.strip().lower().encode('utf-8')).hexdigest()[:20], False
     raw = f'{sender}|{sent or ""}|{norm_subject(subject)}'
     return 'fb' + hashlib.sha1(raw.encode('utf-8')).hexdigest()[:18], True
+
+class LockedFile(Exception):
+    """The PST is open in Outlook (or another program) and locked: it can be opened, but not read."""
+
+def check_readable(path):
+    """Read the first bytes before starting. Outlook keeps an open PST locked; reading it then fails with
+    «Permission denied» (Windows lock violation). Say so plainly instead of a library error."""
+    p = os.path.normpath(os.path.abspath(path))
+    try:
+        with open(p, 'rb') as fh:
+            head = fh.read(4)
+    except PermissionError as e:
+        raise LockedFile(str(e)) from e
+    if head != b'!BDN':
+        raise ValueError('This is not an Outlook data file (.pst / .ost).')
 
 # ---------------- reading a PST through libpff ----------------
 def _prop(item, tag):
@@ -137,6 +152,7 @@ def run(source, out_path, d_from=None, d_to=None, scope='inbox', progress=None, 
             try:
                 import resource; v = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss; return v * 1024 if sys.platform != 'darwin' else v
             except Exception: return 0
+    if isinstance(source, str) and reader is None: check_readable(source)   # locked by Outlook? not a PST? say so before anything is written
     msgs = (reader or pst_messages)(source, scope, done_folders) if isinstance(source, str) else source
     cur_folder, last_folder = None, None
     with gzip.open(part, mode, encoding='utf-8') as out:

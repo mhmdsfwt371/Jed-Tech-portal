@@ -41,6 +41,8 @@ class App(tk.Tk):
         self.go.state(['disabled']); self.bar.start(12); self.status.set('Resuming where it stopped…' if resuming else 'Reading…')
         def work():
             try: self.q.put(('done', X.run(p, self.out, self.dfrom.get(), self.dto.get(), self.scope.get(), progress=lambda s: self.q.put(('p', s)))))
+            except X.LockedFile: self.q.put(('locked', None))
+            except ValueError as e: self.q.put(('notpst', e))
             except Exception as e: self.q.put(('err', e))
         self.worker = threading.Thread(target=work, daemon=True); self.worker.start()
     def poll(self):
@@ -52,6 +54,16 @@ class App(tk.Tk):
                     self.bar.stop(); self.go.state(['!disabled']); c = v['counts']
                     self.status.set(f"Done in {v['seconds']}s (peak memory {v['peak_mb']} MB): kept {c['kept']:,} of {c['read']:,} read · duplicates {c['dup']:,} · outside the period {c['out_of_range']:,} · errors {c['errors']:,}.\nFile: {self.out}\nImport it in the portal: Mail activity → Import the extractor's file.")
                     if sys.platform == 'win32': subprocess.Popen(['explorer', '/select,', self.out])
+                elif kind == 'locked':
+                    self.bar.stop(); self.go.state(['!disabled'])
+                    msg = ('This file is open in Outlook, so Windows locks it and no other program can read it.\n\n'
+                           'Do one of these, then press Start again:\n\n'
+                           '1. Close Outlook completely. If it still happens, open Task Manager (Ctrl+Shift+Esc) and make sure Outlook is not running.\n\n'
+                           '2. Or keep Outlook open and detach this file: File → Account Settings → Account Settings → Data Files → select the file → Remove. '
+                           'The file is not deleted; Outlook just stops using it.')
+                    self.status.set('The file is locked by Outlook — close Outlook or detach the file (see the message).'); messagebox.showwarning('AFAQY Mail Extractor — file in use', msg)
+                elif kind == 'notpst':
+                    self.bar.stop(); self.go.state(['!disabled']); self.status.set(str(v)); messagebox.showerror('AFAQY Mail Extractor', f'{v}\nChoose the .pst file exported from Outlook.')
                 elif kind == 'err':
                     self.bar.stop(); self.go.state(['!disabled']); self.status.set(f'Stopped: {v}\nStart again with the same file and period to resume where it stopped.')
         except queue.Empty: pass

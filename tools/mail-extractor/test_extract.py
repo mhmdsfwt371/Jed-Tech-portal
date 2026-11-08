@@ -39,6 +39,25 @@ class Extract(unittest.TestCase):
         as_picker = os.path.abspath(dst).replace(os.sep, '/')   # exactly what the Tk file picker returns on Windows
         h, R = read(self.out) if X.run(as_picker, self.out, scope='all') else (None, None)
         self.assertEqual(h['counts']['errors'], 0); self.assertGreater(len(R), 50); self.assertEqual(h['source'], 'OCTOBER inbox.pst')
+    def test_01c_locked_file_is_said_plainly(self):
+        """Outlook keeps an open PST locked. On Windows, lock the file the way Outlook does and expect LockedFile — not a library error."""
+        if sys.platform != 'win32': self.skipTest('Windows file locks only')
+        import msvcrt, shutil
+        src = os.path.join(SAMPLES, 'enron.pst')
+        if not os.path.exists(src): self.skipTest('sample PST not present')
+        dst = os.path.join(self.d, 'OCTOBER inbox.pst'); shutil.copy(src, dst)
+        holder = open(dst, 'r+b'); msvcrt.locking(holder.fileno(), msvcrt.LK_NBLCK, 1024)   # another program holds a lock, like Outlook
+        try:
+            with self.assertRaises(X.LockedFile): X.run(dst.replace(os.sep, '/'), self.out, scope='all')
+            self.assertFalse(os.path.exists(self.out), 'nothing written for a locked file')
+        finally:
+            holder.seek(0); msvcrt.locking(holder.fileno(), msvcrt.LK_UNLCK, 1024); holder.close()
+        h, R = read(self.out) if X.run(dst, self.out, scope='all') else (None, None)   # unlocked: it reads
+        self.assertGreater(len(R), 50)
+    def test_01d_not_a_pst_is_said_plainly(self):
+        p = os.path.join(self.d, 'notes.pst')
+        with open(p, 'wb') as fh: fh.write(b'hello, not a pst')
+        with self.assertRaises(ValueError): X.run(p, self.out)
     def test_02_real_ost(self):
         p = os.path.join(SAMPLES, 'pstextractortest@outlook.com.ost')
         if not os.path.exists(p): self.skipTest('sample OST not present')
