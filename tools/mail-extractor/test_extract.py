@@ -29,6 +29,16 @@ class Extract(unittest.TestCase):
         self.assertEqual(h['schema'], 'afaqy-mail-activity/v1'); self.assertEqual(h['counts']['kept'], len(R)); self.assertGreater(len(R), 50)
         self.assertTrue(all(r['f'].startswith('/') and r['k'] and (r['st'] or r['rt']) for r in R))
         self.assertGreater(len({r['f'] for r in R}), 3, 'several folders read')
+    def test_01b_path_with_space_forward_slash_and_drive(self):
+        """The 1.0.1 failure: the file picker gives «E:/OCTOBER inbox.pst» (forward slash, a space); libpff mangled it."""
+        import shutil
+        src = os.path.join(SAMPLES, 'enron.pst')
+        if not os.path.exists(src): self.skipTest('sample PST not present')
+        d = os.path.join(self.d, 'Mail Folder (October)', 'صندوق الوارد'); os.makedirs(d)
+        dst = os.path.join(d, 'OCTOBER inbox.pst'); shutil.copy(src, dst)
+        as_picker = os.path.abspath(dst).replace(os.sep, '/')   # exactly what the Tk file picker returns on Windows
+        h, R = read(self.out) if X.run(as_picker, self.out, scope='all') else (None, None)
+        self.assertEqual(h['counts']['errors'], 0); self.assertGreater(len(R), 50); self.assertEqual(h['source'], 'OCTOBER inbox.pst')
     def test_02_real_ost(self):
         p = os.path.join(SAMPLES, 'pstextractortest@outlook.com.ost')
         if not os.path.exists(p): self.skipTest('sample OST not present')

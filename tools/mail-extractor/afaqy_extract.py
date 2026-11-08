@@ -8,7 +8,7 @@ message filed in two folders counts once. A checkpoint is written as it goes, so
 import gzip, hashlib, json, os, re, sys, time, datetime as dt
 
 SCHEMA = 'afaqy-mail-activity/v1'
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 P_MSGID, P_SENDER_SMTP, P_SENDER_EMAIL, P_TO, P_CC = 0x1035, 0x5D01, 0x0C1F, 0x0E04, 0x0E03
 R_SMTP, R_EMAIL, R_TYPE = 0x39FE, 0x3003, 0x0C15
 SKIP = re.compile(r'^(sent items|sent|deleted items|deleted|outbox|drafts|junk( e-?mail)?|spam|conversation history|sync issues.*|calendar|contacts|tasks|notes|journal|'
@@ -77,7 +77,10 @@ def pst_messages(path, scope='inbox', skip_folders=None):
     """Yield (folder_path, index, message) lazily. scope='inbox': the Inbox and its subfolders; scope='all': every mail
     folder except sent, deleted, drafts, outbox, junk and non-mail folders."""
     import pypff
-    f = pypff.file(); f.open(path)
+    # Open the file ourselves and hand libpff the open file: libpff's own Windows path handling mangles a path like
+    # «E:/OCTOBER inbox.pst» (a forward slash and a space) into «\\?\E:\E:\…» and fails. Python's open() takes any path.
+    fh = open(os.path.normpath(os.path.abspath(path)), 'rb', buffering=1 << 20)
+    f = pypff.file(); f.open_file_object(fh)
     root = f.get_root_folder()
     def walk(folder, fpath, inside):
         for i in range(folder.number_of_sub_folders):
@@ -89,8 +92,10 @@ def pst_messages(path, scope='inbox', skip_folders=None):
                     try: yield p, k, sub.get_sub_message(k)
                     except Exception as e: yield p, k, e
             yield from walk(sub, p, here)
-    yield from walk(root, '', False)
-    f.close()
+    try: yield from walk(root, '', False)
+    finally:
+        try: f.close()
+        finally: fh.close()
 
 def record_of(m, fpath):
     sender_name = (m.sender_name or '').strip()
