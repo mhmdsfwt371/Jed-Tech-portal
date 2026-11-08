@@ -1692,7 +1692,7 @@ export default {
     mf_privacy: 'Read in the browser only; never uploaded or saved, and the messages vanish when the page closes.',
     mf_reading: 'Reading {name} ({mb} MB)…',
     mf_done: '{n} messages read.',
-    mf_fail: 'Could not read the file — is it an Outlook PST? A damaged or password-protected file cannot be read. For files over 5 GB use the «Mail Extractor».',
+    mf_fail: 'Could not read the file. If it is open in Outlook, Outlook locks it: close Outlook, or detach the file under «Data Files», and try again. A damaged or password-protected file cannot be read. For files over 5 GB use the «Mail Extractor».',
     mf_file: 'File: {name} — {n} messages',
     mf_how_h: 'How to export a PST from Outlook',
     mf_how: 'Outlook → File → Open & Export → Import/Export → Export to a file → Outlook Data File (.pst) → pick the folder (e.g. Sent Items or Inbox) → Filter to limit the period so the file stays small → Finish.',

@@ -28,3 +28,11 @@ Extractor: `test_01b` (a folder and file with spaces, brackets and Arabic, given
 .exe self-tests on «C:/Temp Mail/OCTOBER inbox.pst» before release (69 messages). Portal: `bigpst.py` — a 6 GB file goes to the
 extractor steps; the 3 GB file is read with the same 71 messages and under 64 MB read; the tender register reads it too.
 Full run clean.
+
+## Addendum — extractor 1.0.3 (v9.16): a PST open in Outlook
+Outlook keeps an open PST locked: it opens, but reading fails with «Permission denied». The extractor now reads the first bytes
+before starting and, when locked, says so plainly with the two ways out (close Outlook; or File → Account Settings → Data Files →
+Remove, which does not delete the file); a file that is not a PST is named as such. Nothing is written for a locked file. The
+browser's failure message names the same cause. Tested on Windows with a real lock (`test_01c`): the plain error, no output, and a
+normal read once unlocked. 1.0.2 was withdrawn.
+

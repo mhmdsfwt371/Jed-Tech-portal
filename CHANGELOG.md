@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.16 — 2026-11-08
+
+- «مستخرج البريد» 1.0.3: لو ملف البريد مفتوح في أوتلوك (أوتلوك بيقفله)، البرنامج بيقولك كده بكلام واضح قبل ما يبدأ، ويوريك الطريقتين: تقفل أوتلوك أو تفصل الملف من «ملفات البيانات». ونفس التنبيه في المتصفح.
+
+<details><summary>English</summary>
+
+- «Mail Extractor» 1.0.3: if the mail file is open in Outlook (Outlook locks it), the app says so plainly before it starts and shows the two ways out: close Outlook, or detach the file under «Data Files». The browser says the same.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «میل ایکسٹریکٹر» 1.0.3: اگر میل فائل آؤٹ لک میں کھلی ہے تو ایپ شروع کرنے سے پہلے صاف بتاتی ہے اور دو راستے دکھاتی ہے۔ براؤزر بھی یہی کہتا ہے۔
+
+</div>
+</details>
+
+
 ## v9.15 — 2026-11-08
 
 - صفحة نشاط البريد وسجل المناقصات بقوا بيقروا ملف بريد لحد ٥ جيجا من جوه المتصفح: الملف ما بيتحمّلش كله، بيتقرا حتة حتة من الجهاز في الخلفية، والصفحة بتوريك التقدم وبتقولك اتقرا كام منه.
