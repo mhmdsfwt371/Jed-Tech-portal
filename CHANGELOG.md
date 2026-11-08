@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.12 — 2026-11-08
+
+- تصحيح: سطر «فكرة وتصميم وتطوير» في آخر كل صفحة كان بيظهر كلمة برمجية بدل الجملة — اتصلّح في اللغات التلاتة.
+
+<details><summary>English</summary>
+
+- Fix: the authorship line at the foot of every page showed a code word instead of its sentence — fixed in all three languages.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- درستگی: ہر صفحے کے آخر میں تصنیف کی سطر جملے کی جگہ کوڈ کا لفظ دکھاتی تھی — تینوں زبانوں میں ٹھیک۔
+
+</div>
+</details>
+
+
 ## v9.11 — 2026-11-08
 
 - «نبض الفريق» في غرفة المتابعة: خط حي بيترسم بالمغلق كل يوم الشهر ده، والنهارده بينبض، والجمعة والسبت مظللين، واضغط أي يوم تشوف مهامه.

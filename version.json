@@ -1,21 +1,15 @@
 {
-  "version": "9.11",
+  "version": "9.12",
   "date": "2026-11-08",
   "notes": {
     "ar": [
-      "«نبض الفريق» في غرفة المتابعة: خط حي بيترسم بالمغلق كل يوم الشهر ده، والنهارده بينبض، والجمعة والسبت مظللين، واضغط أي يوم تشوف مهامه.",
-      "«عن البوابة» بقت بتحكي التاريخ كامل: بدأ العمل في سبتمبر ٢٠٢٦ (الإصدارات ١ لـ٤ على فايربيز)، والبناء الحالي من v5.0.",
-      "كل نافذة بقى فيها زرار «إغلاق» واحد بس."
+      "تصحيح: سطر «فكرة وتصميم وتطوير» في آخر كل صفحة كان بيظهر كلمة برمجية بدل الجملة — اتصلّح في اللغات التلاتة."
     ],
     "en": [
-      "«Team pulse» on the control room: a live trace of what the team closed each day this month, today pulsing, Friday and Saturday shaded — click any day to see its tasks.",
-      "«About» now tells the whole history: work started in September 2026 (versions 1–4 on Firebase), current build since v5.0.",
-      "Every window has one Close button only."
+      "Fix: the authorship line at the foot of every page showed a code word instead of its sentence — fixed in all three languages."
     ],
     "ur": [
-      "کنٹرول روم پر «ٹیم کی نبض»: اس مہینے روزانہ بند ٹاسک کی زندہ لکیر، آج دھڑکتا ہوا، جمعہ ہفتہ نمایاں؛ کسی دن پر کلک کریں۔",
-      "«پورٹل کے بارے میں» اب پوری تاریخ بتاتا ہے: کام ستمبر 2026 میں شروع، موجودہ تعمیر v5.0 سے۔",
-      "ہر کھڑکی میں ایک ہی «بند کریں»۔"
+      "درستگی: ہر صفحے کے آخر میں تصنیف کی سطر جملے کی جگہ کوڈ کا لفظ دکھاتی تھی — تینوں زبانوں میں ٹھیک۔"
     ]
   }
 }
