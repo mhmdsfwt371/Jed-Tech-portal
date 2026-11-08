@@ -26,7 +26,7 @@ jobs:
         run: |
           pyinstaller --noconfirm --onedir --windowed --name "AFAQY Mail Extractor" --hidden-import pypff afaqy_gui.py
           New-Item -ItemType Directory -Force "dist\AFAQY Mail Extractor\LICENSES" | Out-Null
-          Invoke-WebRequest https://www.gnu.org/licenses/lgpl-3.0.txt -OutFile "dist\AFAQY Mail Extractor\LICENSES\libpff-LGPL.txt"
+          Copy-Item "LICENSES\libpff-LGPL.txt" "dist\AFAQY Mail Extractor\LICENSES\libpff-LGPL.txt"   # kept in the repository: the build depends on no outside site
           Copy-Item README.md "dist\AFAQY Mail Extractor\README.md"
           Compress-Archive -Path "dist\AFAQY Mail Extractor" -DestinationPath AFAQY-Mail-Extractor-win64.zip
           (Get-FileHash AFAQY-Mail-Extractor-win64.zip -Algorithm SHA256).Hash | Out-File AFAQY-Mail-Extractor-win64.zip.sha256 -Encoding ascii
