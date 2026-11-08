@@ -130,6 +130,7 @@
 | `docs/decisions/0098-light-on-touch-always-and-pst-lock-named.md` | Light under mouse and finger, always (a design rule, guarded); a PST locked by Outlook is named |
 | `docs/decisions/0099-mail-kept-own-words-search-alias.md` | Mail reads kept and built on; classified by the sender's own words; search; aliases |
 | `docs/decisions/0100-person-dashboard-and-booklet-from-anyone.md` | Person KPIs as an interactive dashboard; a booklet from anyone, even a forward |
+| `docs/decisions/0101-tooltip-policy-and-project-imports.md` | **The tooltip policy (design rule)**; «My projects» imports in four kinds; the projects pull |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

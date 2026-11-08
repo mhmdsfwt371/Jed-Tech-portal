@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.20 — 2026-11-08
+
+- التلميحات بقت سياسة واحدة للبوابة كلها: تلميح واحد مُعتم ولونه مختلف عن الصفحة، فوق كل حاجة، جنب الحاجة اللي بيشرحها من غير ما يغطيها أو يخرج برا الشاشة — ما بقاش الكلام يطلع فوق الكلام. وعلى الموبايل لمسة بتظهر التعريف ولمسة تانية بتخفيه.
+- «مشاريعي»: زرار الاستيراد بقى قايمة فيها ٤ اختيارات واضحة (سجل المشاريع، نتيجة المساعد ملف أو لصق، إكسل بعد التعديل)، وأي ملف مكانه مش هنا — زي الـ PST — بيقولك مكانه الصح.
+- تعليمات «سحب جديد من البريد» اتحدثت: كراسة الشروط من أي حد حتى لو رد أو تحويل، والمناقصات اللي في السجل بتتحسب مرة واحدة، وتقدر تلزق رد المساعد لو ما حفظش ملف.
+
+<details><summary>English</summary>
+
+- Tooltips now follow one policy across the portal: a single opaque tooltip, clearly apart from the page, above everything, beside what it explains without covering it or leaving the screen — no more text over text. On a phone a tap shows a definition and a second tap hides it.
+- «My projects»: the import button is now a menu of four clear kinds (project register, the assistant's result as a file or pasted, Excel after editing); a file that belongs elsewhere — like a PST — tells you where.
+- «New pull from mail» instructions updated: the booklet counts from anyone, even on a reply or forward; tenders already in the register count once; you can paste the assistant's answer if it saved no file.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹول ٹپس اب ایک پالیسی پر: ایک مبہم ٹپ، صفحے سے واضح الگ، سب سے اوپر، چیز کے ساتھ بغیر ڈھانپے۔ فون پر ٹیپ دکھاتا اور دوسرا ٹیپ چھپاتا ہے۔
+- «میرے پروجیکٹس»: درآمد اب چار واضح اقسام کا مینو؛ غلط جگہ کی فائل اپنی جگہ بتاتی ہے۔
+- «میل سے نیا حصول» کی ہدایات تازہ: کتابچہ کسی سے بھی، جواب یا فارورڈ میں بھی۔
+
+</div>
+</details>
+
+
 ## v9.19 — 2026-11-08
 
 - تفاصيل كل موظف في «مؤشرات الفريق» و«مؤشراتي» بقت داشبورد تفاعلية: ست مربعات بمصطلحات المؤشرات (المهام المُنجزة، حجم العمل، نسبة الإغلاق، متوسط زمن الحل، النقاط الموزونة، المفتوح الآن)، كل واحد فيه التغير عن الشهر اللي قبله وخط آخر الشهور وتعريفه لما تعدّي بالماوس، وحلقة مصادر الشغل، ورسم آخر الشهور، وعمر المفتوح. والجدول لسه تحت.

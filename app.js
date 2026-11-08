@@ -1189,18 +1189,18 @@ function teamPulse(doneM, doneP, onDay, hasPrev) {   // hasPrev: last month pull
   const guide = S('line', { class: 'tp-guide', y1: 8, y2: H - 22, x1: -10, x2: -10 }); svg.append(guide);
   if (cp.length) { const [lx, ly] = cp[cp.length - 1]; svg.append(S('circle', { class: 'tp-ring', cx: lx, cy: ly, r: 6 }), S('circle', { class: 'tp-ring tp-ring2', cx: lx, cy: ly, r: 6 }), S('circle', { class: 'tp-dot', cx: lx, cy: ly, r: 5 })); }
   for (let k = 1; k <= len; k += (len > 28 ? 7 : 7)) { const tx = S('text', { class: 'tp-ax', x: X(k), y: H - 6, 'text-anchor': 'middle', 'font-size': axFs }); tx.textContent = String(k); svg.append(tx); }
-  const tip = el('div', { class: 'tp-tip', hidden: true });
   const show = (k) => { if (k < 1 || k > len) return; guide.setAttribute('x1', X(k)); guide.setAttribute('x2', X(k)); const future = k > d;
-    tip.hidden = false; tip.textContent = future ? t('tp_tip_future', { d: k }) : t('tp_tip', { d: k, n: cur[k], p: hasPrev && k <= plen ? prev[k] : '—' }); tip.style.setProperty('--tx', `${(X(k) / W) * 100}%`); };
+    const r = svg.getBoundingClientRect(), px = r.left + (X(k) / W) * r.width, py = r.top + (Y(cur[k] || 0) / H) * r.height;   // ADR-0101: the one tooltip, beside the day's point
+    showTip(tipPoint(px, py, 10), future ? t('tp_tip_future', { d: k }) : t('tp_tip', { d: k, n: cur[k], p: hasPrev && k <= plen ? prev[k] : '—' }), svg); };
   const dayAt = (e) => { const r = svg.getBoundingClientRect(), fx = ((e.clientX - r.left) / r.width) * W; return Math.max(1, Math.min(len, Math.round(((fx - P) / (W - 2 * P)) * (len - 1)) + 1)); };
-  svg.addEventListener('pointermove', (e) => show(dayAt(e))); svg.addEventListener('pointerleave', () => { tip.hidden = true; guide.setAttribute('x1', -10); guide.setAttribute('x2', -10); });
+  svg.addEventListener('pointermove', (e) => show(dayAt(e))); svg.addEventListener('pointerleave', () => { hideTip(svg); guide.setAttribute('x1', -10); guide.setAttribute('x2', -10); });
   svg.addEventListener('click', (e) => { const k = dayAt(e); if (k <= d) onDay(`${today.slice(0, 8)}${String(k).padStart(2, '0')}`); });
   const tot = cur.slice(1, d + 1).reduce((s, v) => s + v, 0), work = Array.from({ length: d }, (_, i) => i + 1).filter((k) => { const wd = new Date(Date.UTC(y, m - 1, k)).getUTCDay(); return wd !== 5 && wd !== 6; });
   const avg = work.length ? Math.round((work.reduce((s, k) => s + cur[k], 0) / work.length) * 10) / 10 : 0, peakK = cur.slice(1, d + 1).indexOf(Math.max(0, ...cur.slice(1, d + 1))) + 1;
   return el('section', { class: 'tp' },
     el('div', { class: 'tp-head' }, el('span', { class: 'tp-live', 'aria-hidden': 'true' }), el('h2', { text: t('tp_h') }),
       el('span', { class: 'tp-sum', text: t('tp_sum', { today: cur[d], avg, peak: cur[peakK] || 0, pd: peakK }) })),
-    el('div', { class: 'tp-wrap' }, svg, tip),
+    el('div', { class: 'tp-wrap' }, svg),
     el('p', { class: 'hint tp-legend' }, el('span', { class: 'tp-k tp-k-cur' }), t('tp_leg_cur'), el('span', { class: 'tp-k tp-k-prev' }), hasPrev ? t('tp_leg_prev') : t('tp_leg_noprev'), el('span', { class: 'tp-k tp-k-we' }), t('tp_leg_we'), ` · ${t('tp_click')}`));
 }
 
@@ -1383,16 +1383,15 @@ function pmTrend(hist) {   // hist: newest first → drawn oldest to newest
   const H = [...hist].reverse(); if (H.length < 2) return null;
   const W = 520, Ht = 170, P = 26, bw = (W - 2 * P) / H.length, maxN = Math.max(1, ...H.map((h) => h.x.total)), maxA = Math.max(1, ...H.map((h) => h.x.avg || 0));
   const s = svgEl('svg', { viewBox: `0 0 ${W} ${Ht}`, class: 'pm-trend', role: 'img', 'aria-label': t('pm_trend_h') });
-  const tip = el('div', { class: 'pm-tt', hidden: true });
   H.forEach((h, i) => { const x = P + i * bw, tot = h.x.total, cl = h.x.closed, yT = Ht - 22 - (tot / maxN) * (Ht - 44), yC = Ht - 22 - (cl / maxN) * (Ht - 44);
-    const g = svgEl('g', { class: 'pm-bar-g' });
+    const g = svgEl('g', { class: 'pm-bar-g', 'data-tip-hold': '' });
     g.append(svgEl('rect', { x: x + bw * 0.16, y: yT, width: bw * 0.68, height: Ht - 22 - yT, class: 'pm-bar-total', rx: 4 }), svgEl('rect', { x: x + bw * 0.3, y: yC, width: bw * 0.4, height: Ht - 22 - yC, class: 'pm-bar-closed', rx: 3 }));
     const lab = svgEl('text', { x: x + bw / 2, y: Ht - 6, 'text-anchor': 'middle', class: 'pm-ax' }); lab.textContent = periodLabel(h.m.ym).split(' ')[0].slice(0, 3); g.append(lab);
-    g.addEventListener('pointerenter', () => { tip.hidden = false; tip.textContent = t('pm_trend_tip', { m: periodLabel(h.m.ym), t: tot, c: cl, a: hmOf(h.x.avg), p: h.x.points }); tip.style.setProperty('--tx', `${((x + bw / 2) / W) * 100}%`); g.classList.add('on'); });
-    g.addEventListener('pointerleave', () => { tip.hidden = true; g.classList.remove('on'); }); s.append(g); });
+    g.addEventListener('pointerenter', () => { showTip(g, t('pm_trend_tip', { m: periodLabel(h.m.ym), t: tot, c: cl, a: hmOf(h.x.avg), p: h.x.points })); g.classList.add('on'); });   // ADR-0101
+    g.addEventListener('pointerleave', () => { hideTip(g); g.classList.remove('on'); }); s.append(g); });
   const line = H.map((h, i) => (h.x.avg == null ? null : [P + i * bw + bw / 2, Ht - 22 - (h.x.avg / maxA) * (Ht - 44)])).filter(Boolean);
   if (line.length > 1) { s.append(svgEl('polyline', { points: line.map((p) => p.join(',')).join(' '), class: 'pm-line-avg', fill: 'none' })); for (const [cx, cy] of line) s.append(svgEl('circle', { cx, cy, r: 3.5, class: 'pm-dot-avg' })); }
-  return el('div', { class: 'pm-trend-wrap' }, s, tip);
+  return el('div', { class: 'pm-trend-wrap' }, s);
 }
 function pmDash({ n, p, hist, open, share, ml, pml }) {
   const pct = (a, b) => (b ? Math.round((a / b) * 100) : null), rate = pct(n.closed, n.total), prate = p ? pct(p.closed, p.total) : null;
@@ -1400,16 +1399,16 @@ function pmDash({ n, p, hist, open, share, ml, pml }) {
   const H = [...hist].reverse(), sp = (f) => H.map((h) => f(h.x));
   const tile = (key, val, sub, delta, spark, extra) => el('div', { class: 'km-tile pm-tile', tabindex: '0', 'data-kpi': key },
     el('span', { class: 'pm-k' }, el('b', { text: t(`pm_${key}`) }), el('i', { class: 'pm-term', text: t(`pm_${key}_term`) })),
-    el('strong', { class: 'pm-v', text: val }), sub ? el('small', { class: 'hint', text: sub }) : null, delta, spark, extra || null,
-    el('span', { class: 'pm-def', role: 'tooltip', text: t(`pm_${key}_def`) }));
+    el('strong', { class: 'pm-v', text: val }), sub ? el('small', { class: 'hint', text: sub }) : null, delta, spark, extra || null);
   const d = (cur, prev, kind) => (p && prev != null && cur != null ? kmDelta(cur, prev, kind, pml) : null);
+  const withTip = (node, key) => { attachTip(node, t(`pm_${key}_def`), false); node.setAttribute('aria-description', t(`pm_${key}_def`)); return node; };   // ADR-0101: the one tooltip
   const tiles = el('div', { class: 'pm-tiles' },
-    tile('thru', String(n.closed), t('pm_of', { n: n.total }), d(n.closed, p && p.closed, 'h'), pmSpark(sp((x) => x.closed))),
-    tile('load', String(n.total), t('pm_src3', { e: n.email, s: n.self, o: n.other }), d(n.total, p && p.total, 'n'), pmSpark(sp((x) => x.total))),
-    tile('rate', rate == null ? '—' : `${rate}%`, '', d(rate, prate, 'h'), pmSpark(sp((x) => pct(x.closed, x.total)))),
-    tile('mttr', hmOf(n.avg), t('pm_hm'), d(n.avg, p && p.avg, 'l'), pmSpark(sp((x) => x.avg), 'pm-spark-low')),
-    tile('pts', String(n.points), share != null ? t('pm_share', { p: share }) : '', d(n.points, p && p.points, 'h'), pmSpark(sp((x) => x.points))),
-    tile('backlog', String(open.length), open.length ? t('pm_oldest', { a: oldest < 48 ? t('hours', { n: Math.round(oldest) }) : t('days', { n: Math.round(oldest / 24) }) }) : t('pf_none'), null, null));
+    withTip(tile('thru', String(n.closed), t('pm_of', { n: n.total }), d(n.closed, p && p.closed, 'h'), pmSpark(sp((x) => x.closed))), 'thru'),
+    withTip(tile('load', String(n.total), t('pm_src3', { e: n.email, s: n.self, o: n.other }), d(n.total, p && p.total, 'n'), pmSpark(sp((x) => x.total))), 'load'),
+    withTip(tile('rate', rate == null ? '—' : `${rate}%`, '', d(rate, prate, 'h'), pmSpark(sp((x) => pct(x.closed, x.total)))), 'rate'),
+    withTip(tile('mttr', hmOf(n.avg), t('pm_hm'), d(n.avg, p && p.avg, 'l'), pmSpark(sp((x) => x.avg), 'pm-spark-low')), 'mttr'),
+    withTip(tile('pts', String(n.points), share != null ? t('pm_share', { p: share }) : '', d(n.points, p && p.points, 'h'), pmSpark(sp((x) => x.points))), 'pts'),
+    withTip(tile('backlog', String(open.length), open.length ? t('pm_oldest', { a: oldest < 48 ? t('hours', { n: Math.round(oldest) }) : t('days', { n: Math.round(oldest / 24) }) }) : t('pf_none'), null, null), 'backlog'));
   const mix = [{ l: t('src_email'), v: n.email, c: 'c-email' }, { l: t('src_self'), v: n.self, c: 'c-self' }, { l: t('src_other'), v: n.other, c: 'c-other' }];
   const mixBox = el('div', { class: 'pm-card' }, el('h4', {}, t('pm_mix_h'), el('i', { class: 'pm-term', text: 'Work intake mix' })), el('div', { class: 'pm-mix' }, pmDonut(mix),
     el('ul', { class: 'pm-legend' }, mix.map((m) => el('li', { class: m.c }, el('span', { class: 'pm-sw' }), `${m.l} `, el('b', { text: String(m.v) }), el('small', { class: 'hint', text: n.total ? ` ${Math.round((m.v / n.total) * 100)}%` : '' }))))),
@@ -1594,27 +1593,20 @@ const WONISH = ['won', 'ongoing', 'delivered'], BIDISH = ['submitted', 'won', 'o
 const regEnsure = () => { if (!myRegister) myRegister = { schema: 'afaqy-projects-register/v1', asOf: new Date().toISOString().slice(0, 10), sources: [], h1: {}, items: [], board: [], mail: {} }; if (!myRegister.mail) myRegister.mail = {}; return myRegister; };
 const projSave = async () => { await store.putRegister(myRegister); projRefresh(); };
 function projWorkspaceBody() {
-  const up = el('input', { type: 'file', accept: '.json,application/json,.xlsx', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return; e.target.value = '';
-    if (/\.xlsx$/i.test(f.name)) { await projXlsxImport(f); return; }
-    try { const j = JSON.parse(await f.text());
-      if (j && j.schema === 'afaqy-projects-register/v1') { const r = cleanRegister(j); if (!r) throw 0;
-        if (myRegister) { const have = new Set(myRegister.items.map((x) => x.id)); for (const x of r.items) if (!have.has(x.id)) myRegister.items.push(x); myRegister.board = r.board; myRegister.h1 = r.h1; myRegister.sources = r.sources; myRegister.asOf = r.asOf; }
-        else myRegister = r;
-        await store.putRegister(myRegister); toast(t('proj_reg_loaded', { n: myRegister.items.length, b: myRegister.board.length })); }
-      else { const p = cleanProjects(j); if (!p) { toast(t('proj_bad')); return; }
-        if (myProjects) { const have = new Map(myProjects.projects.map((x) => [projKey(x.project), x])); let added = 0;
-          for (const x of p.projects) { const k = projKey(x.project), o = have.get(k);
-            if (!o) { myProjects.projects.push(x); have.set(k, x); added++; }
-            else { o.first = [o.first, x.first].filter(Boolean).sort()[0] || ''; o.last = [o.last, x.last].filter(Boolean).sort().pop() || ''; for (const f2 of ['messages', 'me', 'akram', 'shaarawi']) o[f2] = Math.max(o[f2], x[f2]); o.worked = o.worked || x.worked; o.aibrahim = o.aibrahim || x.aibrahim; o.kraasa = o.kraasa || x.kraasa; } }
-          const sk = new Set(myProjects.skipped.map((x) => x.subject)); for (const x of p.skipped) if (!sk.has(x.subject)) myProjects.skipped.push(x);
-          myProjects.to = [myProjects.to, p.to].sort().pop(); myProjects.importedAt = p.importedAt; toast(t('proj_merged', { n: added })); }
-        else { myProjects = p; toast(t('proj_loaded', { n: p.projects.length })); }
-        await store.putProjects(myProjects); }
-      projRefresh(); } catch { toast(t('err_json')); } } });
+  const up = el('input', { type: 'file', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return; e.target.value = ''; await projTakeFile(f, up.dataset.kind || ''); } });   // ADR-0101: one picker, the chosen kind
+  const pick = (kind, accept) => { up.dataset.kind = kind; up.accept = accept; up.click(); };
+  const opt = (icon, key, onclick) => el('button', { type: 'button', class: 'proj-imp-opt', onclick: (e) => { e.currentTarget.closest('details').open = false; onclick(); } },
+    el('b', { text: `${icon} ${t(`proj_imp_${key}`)}` }), el('small', { class: 'hint', text: t(`proj_imp_${key}_d`) }));
+  const impMenu = el('details', { class: 'proj-imp' }, el('summary', { class: 'btn quiet tiny', text: `⇧ ${t('proj_imp')} ▾` }),
+    el('div', { class: 'proj-imp-menu', role: 'menu' },
+      opt('📒', 'reg', () => pick('register', '.json,application/json')),
+      opt('📨', 'mail', () => pick('mail', '.json,application/json')),
+      opt('📋', 'paste', projPasteDialog),
+      opt('📊', 'xlsx', () => pick('xlsx', '.xlsx'))));
   const head = el('div', { class: 'row', style: 'justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px' }, el('h2', { style: 'margin:0' }, t('proj_h'), helpQ('help_proj')),
     el('div', { class: 'row proj-actions' }, el('button', { type: 'button', class: 'btn primary tiny', text: `＋ ${t('proj_add')}`, onclick: () => projEdit(null) }),
       el('button', { type: 'button', class: 'btn tiny', text: `⇩ ${t('proj_pull')}`, onclick: projPrompt }), el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('proj_excel')}`, onclick: projXlsx }),
-      el('button', { type: 'button', class: 'btn tiny', text: `🖨 ${t('proj_pdf')}`, onclick: projReport }), el('button', { type: 'button', class: 'btn quiet tiny', text: t('proj_import_any'), onclick: () => up.click() }), up));
+      el('button', { type: 'button', class: 'btn tiny', text: `🖨 ${t('proj_pdf')}`, onclick: projReport }), impMenu, up));
   // ADR-0092/0093: the tender register alone is enough to open the workspace; the empty state still says where the data goes in
   if (!myProjects && !myRegister && !(tenders && tenders.items.length)) return el('section', { class: 'proj' }, head, mailSrc('projects'), el('div', { class: 'empty', text: t('proj_none') }));
   const year = ((myProjects && myProjects.to) || (myRegister && myRegister.asOf) || '2026').slice(0, 4), y0 = `${year}-01-01`;
@@ -1755,6 +1747,45 @@ async function projXlsx() {
   X.writeFile(wb, `AFAQY-projects-${new Date().toISOString().slice(0, 10)}.xlsx`);
   toast(t('proj_x_done'));
 }
+// ---------- ADR-0101: «My projects» imports — four kinds said plainly; a file of another place is sent there ----------
+async function projTakeFile(f, kind) {
+  const nm = f.name.toLowerCase();
+  if (/\.(pst|ost)$/.test(nm)) { projWrongPlace('proj_wrong_pst'); return; }
+  if (/\.jsonl\.gz$|\.jsonl$|\.part$/.test(nm)) { projWrongPlace('proj_wrong_ext'); return; }
+  if (/\.xlsx$/.test(nm)) { await projXlsxImport(f); return; }
+  let j; try { j = JSON.parse(await f.text()); } catch { toast(t('err_json')); return; }
+  await projTakeJson(j, kind);
+}
+async function projTakeJson(j, kind) {
+  if (j && j.schema === 'afaqy-tenders-from-mail/v1') { projWrongPlace('proj_wrong_td'); return false; }
+  if (j && j.schema === 'afaqy-projects-register/v1') { const r = cleanRegister(j); if (!r) { toast(t('proj_bad')); return false; }
+    if (myRegister) { const have = new Set(myRegister.items.map((x) => x.id)); for (const x of r.items) if (!have.has(x.id)) myRegister.items.push(x); myRegister.board = r.board; myRegister.h1 = r.h1; myRegister.sources = r.sources; myRegister.asOf = r.asOf; }
+    else myRegister = r;
+    await store.putRegister(myRegister); toast(`${kind === 'mail' ? `${t('proj_was_reg')} ` : ''}${t('proj_reg_loaded', { n: myRegister.items.length, b: myRegister.board.length })}`); projRefresh(); return true; }
+  const p = cleanProjects(j); if (!p) { toast(t('proj_bad')); return false; }
+  if (myProjects) { const have = new Map(myProjects.projects.map((x) => [projKey(x.project), x])); let added = 0;
+    for (const x of p.projects) { const k = projKey(x.project), o = have.get(k);
+      if (!o) { myProjects.projects.push(x); have.set(k, x); added++; }
+      else { o.first = [o.first, x.first].filter(Boolean).sort()[0] || ''; o.last = [o.last, x.last].filter(Boolean).sort().pop() || ''; for (const f2 of ['messages', 'me', 'akram', 'shaarawi']) o[f2] = Math.max(o[f2], x[f2]); o.worked = o.worked || x.worked; o.aibrahim = o.aibrahim || x.aibrahim; o.kraasa = o.kraasa || x.kraasa; } }
+    const sk = new Set(myProjects.skipped.map((x) => x.subject)); for (const x of p.skipped) if (!sk.has(x.subject)) myProjects.skipped.push(x);
+    myProjects.to = [myProjects.to, p.to].sort().pop(); myProjects.importedAt = p.importedAt; toast(`${kind === 'register' ? `${t('proj_was_mail')} ` : ''}${t('proj_merged', { n: added })}`); }
+  else { myProjects = p; toast(`${kind === 'register' ? `${t('proj_was_mail')} ` : ''}${t('proj_loaded', { n: p.projects.length })}`); }
+  await store.putProjects(myProjects); projRefresh(); return true;
+}
+function projWrongPlace(key) {
+  const where = { proj_wrong_pst: [['#mailfile', 'nav_mailfile'], ['#tenders', 'nav_tenders']], proj_wrong_ext: [['#mailfile', 'nav_mailfile']], proj_wrong_td: [['#tenders', 'nav_tenders']] }[key] || [];
+  const dlg = el('dialog', { class: 'proj-edit proj-wrong' }, el('h2', { text: t('proj_wrong_h') }), el('p', { text: t(key) }),
+    el('div', { class: 'row' }, where.map(([h, k]) => el('a', { class: 'btn primary', href: h, onclick: () => { dlg.close(); closeProjDialogs(); } , text: `→ ${t(k)}` })), el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() })));
+  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
+}
+const closeProjDialogs = () => { for (const d of document.querySelectorAll('dialog[open]')) if (!d.classList.contains('proj-wrong')) try { d.close(); } catch { /* already closed */ } };
+function projPasteDialog() {
+  const ta = el('textarea', { rows: 10, class: 'td-paste-ta', dir: 'ltr', placeholder: '{ "schema": "afaqy-projects-from-mail/v1", … }' });
+  const dlg = el('dialog', { class: 'proj-edit proj-paste' }, el('h2', { text: t('proj_imp_paste') }), el('p', { class: 'hint', text: t('proj_paste_lead') }), ta,
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary proj-paste-go', text: t('td_paste_go'), onclick: async () => { const j = tdParse(ta.value); if (!j) { toast(t('proj_bad')); return; } if (await projTakeJson(j, 'mail')) dlg.close(); } })));
+  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal(); ta.focus();
+}
+
 async function projXlsxImport(file) {
   let X; try { X = await loadXlsx(); } catch { toast(t('proj_x_fail')); return; }
   const wb = X.read(new Uint8Array(await file.arrayBuffer()), { type: 'array' }), R = regEnsure(), stOf = new Map(Object.keys(PROJ_RANK).map((s) => [t(`proj_f_${s}`), s]));
@@ -1868,25 +1899,31 @@ function projAttach(r) {
 // the prompt for Claude in Chrome — starts after the last pull and skips what is already here
 function projPrompt() {
   const from = (myProjects && myProjects.to) || '2026-01-01', known = myProjects ? myProjects.projects.map((p) => projKey(p.project)) : [], skipped = myProjects ? myProjects.skipped.map((x) => projKey(x.subject)) : [];
+  const inReg = (tenders && tenders.items ? tenders.items : []).map((x) => x.subject).slice(0, 80);   // ADR-0101: the same names as the tender register
   const text = `Open Outlook on the web (https://outlook.office.com) — I am signed in with my AFAQY account.
 Goal: find NEW project conversations received or sent ON OR AFTER ${from} (up to today). Read only — do not send, reply, move, flag, delete or change read status.
 
 A conversation is a PROJECT if ANY is true:
   R1. a message in it is from, to or cc a.ibrahim@afaqy.com
   R2. the subject contains: project, projects, tender, tenders, مشروع, المشروع, مشاريع, مناقصة, المناقصة, منافسة, المنافسة
-  R3. it has an attachment whose file name contains: كراسة الشروط
+  R3. a message in it has an attachment whose file name contains «كراسة الشروط» (also «كراسه الشروط», «كراسة_الشروط», «كراسة شروط», «كراسة الشروط والمواصفات») — FROM ANYONE, and EVEN IF that message is a reply or a forward (RE:, FW:, Fwd:, رد:, إعادة توجيه:)
+One conversation = one project: group by the subject without RE:/FW:/Fwd:/رد:/إعادة توجيه:, and keep its earliest date.
 worked_on = true if a message in it was sent by me, by Akram (AFAQY, display name Akram / أكرم) or by Mohamed Shaarawi (AFAQY, Shaarawi / شعراوي).
 
 Search all folders (Sent Items and Archive included), scroll every result list to the end:
   participants:a.ibrahim@afaqy.com received>=${from}
   subject:<each keyword above> received>=${from}
-  hasattachments:yes "كراسة الشروط" received>=${from}   and   attachmentnames:"كراسة الشروط"
+  attachmentnames:"كراسة الشروط" received>=${from}
+  attachmentnames:"كراسه الشروط" received>=${from}
+  attachmentnames:"كراسة شروط" received>=${from}
+  attachmentnames:"كراسة_الشروط" received>=${from}
 
-ALREADY COLLECTED — skip any conversation whose subject (without RE:/FW:/رد:) is one of these:
+ALREADY COLLECTED — skip any conversation whose subject (without RE:/FW:/رد:/إعادة توجيه:) is one of these:
 ${known.map((k) => `- ${k}`).join('\n') || '- (none)'}
 Already set aside before — skip too:
 ${skipped.map((k) => `- ${k}`).join('\n') || '- (none)'}
 
+${inReg.length ? `ALREADY IN MY TENDER REGISTER — still list them if they match, but write "project" EXACTLY as here so they are counted once:\n${inReg.map((k) => `- ${k}`).join('\n')}\n` : ''}
 Skip automated mail (no-reply, notifications, newsletters, calendar-only invites); list them under "skipped" with the reason.
 Keep ONLY: subject, dates, counts — no body text, customer contacts, phone numbers, prices or attachments.
 
@@ -1895,6 +1932,7 @@ Save one JSON file named afaqy-projects-from-mail-<today YYYY-MM-DD>.json:
   "projects": [ { "project": "<subject without RE/FW>", "tender_no": "", "first_date": "YYYY-MM-DD", "last_date": "YYYY-MM-DD", "messages": 0,
                   "sent_by_me": 0, "sent_by_akram": 0, "sent_by_shaarawi": 0, "with_a_ibrahim": false, "has_kraasa": false, "matched_rules": "R1,R2", "worked_on": true } ],
   "skipped": [ { "subject": "...", "reason": "..." } ] }
+If you cannot save a file, print the same JSON in ONE code block in the chat instead — I will paste it into the portal.
 If a search or folder failed, say exactly which one.`;
   const dlg = el('dialog', { class: 'proj-edit' }); const ta = el('textarea', { class: 'ltr', rows: '14', readonly: '' }); ta.value = text;
   dlg.append(el('h2', { text: t('proj_pull_h') }), el('p', { class: 'hint', text: t('proj_pull_hint', { from, n: known.length }) }), ta,
@@ -2738,18 +2776,37 @@ function pointsRulesBox(wt, admin) {
   renderWeights = withRules(renderWeights); }
 // ---------- what each tool does: a popup on hover, an ⓘ to tap on a phone (ADR-0051) ----------
 const tipEl = () => document.getElementById('tool-tip') || document.body.appendChild(el('div', { id: 'tool-tip', role: 'tooltip', hidden: '' }));
-function showTip(target, text) {
-  const tp = tipEl(); tp.textContent = text; tp.hidden = false; tp.style.maxWidth = `${Math.min(320, innerWidth - 16)}px`;
-  const r = target.getBoundingClientRect(), tr = tp.getBoundingClientRect();
-  const left = Math.max(8, Math.min(innerWidth - tr.width - 8, r.left + r.width / 2 - tr.width / 2)); let top = r.bottom + 8; if (top + tr.height > innerHeight - 8) top = r.top - tr.height - 8;
-  tp.style.left = `${left}px`; tp.style.top = `${Math.max(8, top)}px`;
+/** ADR-0101 — the tooltip policy: ONE tooltip for the whole portal (#tool-tip). Opaque and clearly apart from the page, above
+ *  everything, beside what it explains (below if there is room, else above, else the roomier side) — never over it and never off
+ *  the screen; one at a time; on hover, keyboard focus or tap. It may cover what is under it; it never mixes with it.
+ *  target: an element, or a rectangle {left, top, right, bottom} (a point on a chart). Guarded by harness/tips.py. */
+function showTip(target, text, owner = target, keepTime = false) {
+  const tp = tipEl(); tp.textContent = text; tp.hidden = false; tp.__owner = owner; tp.__target = target; if (!keepTime) tp.__at = performance.now();   // ADR-0101: whose tooltip it is tp.style.maxWidth = `${Math.min(320, innerWidth - 16)}px`; tp.style.left = '0px'; tp.style.top = '0px';
+  const r = target.getBoundingClientRect ? target.getBoundingClientRect() : target, tr = tp.getBoundingClientRect(), gap = 8, M = 8;
+  const below = innerHeight - r.bottom - gap - M, above = r.top - gap - M;
+  const top = tr.height <= below ? r.bottom + gap : tr.height <= above ? r.top - gap - tr.height : (below >= above ? Math.min(r.bottom + gap, innerHeight - M - tr.height) : Math.max(M, r.top - gap - tr.height));
+  const cx = (r.left + r.right) / 2, left = Math.max(M, Math.min(innerWidth - tr.width - M, cx - tr.width / 2));
+  tp.style.left = `${Math.round(left)}px`; tp.style.top = `${Math.round(Math.max(M, top))}px`;
 }
-const hideTip = () => { const tp = document.getElementById('tool-tip'); if (tp) { tp.hidden = true; tp.dataset.for = ''; } };
-document.addEventListener('click', (e) => { if (!e.target.closest('.tip-i')) hideTip(); }); window.addEventListener('scroll', hideTip, { passive: true });
+const tipPoint = (x, y, pad = 6) => ({ left: x - pad, right: x + pad, top: y - pad, bottom: y + pad });
+/** hideTip(owner): leaving something closes only its own tooltip — the next element may already own it (pointer events come before
+ *  mouse events); hideTip() with no owner (scroll, a tap elsewhere) closes it whoever owns it. */
+const hideTip = (owner) => { const tp = document.getElementById('tool-tip'); if (!tp || (owner && tp.__owner !== owner)) return; tp.hidden = true; tp.dataset.for = ''; tp.__owner = null; };
+document.addEventListener('click', (e) => {   // ADR-0101: a tap on something that explains itself shows (or hides) its tooltip; a tap elsewhere closes it
+  if (e.target.closest('.tip-i, [data-tip-hold]')) return;
+  const host = e.target.closest('[data-tip]');
+  if (host && !host.closest('a, button, summary') && host.tagName !== 'A') { const tp = tipEl(); if (!tp.hidden && tp.__owner === host && performance.now() - tp.__at > 350) hideTip(); else if (tp.hidden || tp.__owner !== host) showTip(host, host.dataset.tip); return; }
+  hideTip();
+}); window.addEventListener('scroll', () => {   // ADR-0101: the tooltip follows its element while the page moves; it goes when the element leaves the screen
+  const tp = document.getElementById('tool-tip'); if (!tp || tp.hidden) return;
+  const tg = tp.__target; if (!tg || !tg.getBoundingClientRect || !tg.isConnected) { hideTip(); return; }
+  const r = tg.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) { hideTip(); return; }
+  showTip(tg, tp.textContent, tp.__owner, true);
+}, { passive: true });
 function attachTip(a, text, withButton = true) {
   if (!a || !text || a.dataset.tip) return; a.dataset.tip = text;
-  a.addEventListener('mouseenter', () => { if (matchMedia('(hover: hover)').matches) showTip(a, text); }); a.addEventListener('mouseleave', hideTip);
-  a.addEventListener('focus', () => showTip(a, text)); a.addEventListener('blur', hideTip);
+  a.addEventListener('mouseenter', () => { if (matchMedia('(hover: hover)').matches) showTip(a, text); }); a.addEventListener('mouseleave', () => hideTip(a));
+  a.addEventListener('focus', () => showTip(a, text)); a.addEventListener('blur', () => hideTip(a));
   const key = a.getAttribute('href') || '';
   if (!withButton) return;   // a card that already shows its description needs no ⓘ
   a.after(el('button', { type: 'button', class: 'tip-i', 'aria-label': t('tip_what'), text: 'ⓘ', onclick: (e) => { e.preventDefault(); e.stopPropagation(); const tp = tipEl(); if (!tp.hidden && tp.dataset.for === key) hideTip(); else { showTip(e.currentTarget, text); tipEl().dataset.for = key; } } }));
