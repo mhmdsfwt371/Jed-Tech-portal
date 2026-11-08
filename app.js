@@ -2553,7 +2553,7 @@ function tdStartAlerts() {
   return el('div', {}, el('h2', { class: 'cr-h', text: t('cr_att_h') }), el('div', { class: 'cr-att' }, items.map((x) => el('button', { type: 'button', class: `cr-item k-${x.k}`, onclick: go() }, el('div', {}, el('b', { text: x.title }), x.detail ? el('span', { text: x.detail }) : null), el('span', { class: 'cr-go', text: `${t('cr_go')} ↗` })))));
 }
 /** ADR-0090: the authorship line at the foot of every page. */
-function pageBy() { document.querySelectorAll('section[id^="view-"]').forEach((sec) => { if (sec.querySelector(':scope > .page-by')) return; sec.append(el('p', { class: 'page-by' }, el('button', { type: 'button', text: `${t('page_by')} · v${PORTAL_VERSION}`, onclick: openAbout }))); }); }
+function pageBy() { document.querySelectorAll('section[id^="view-"]').forEach((sec) => { if (sec.querySelector(':scope > .page-by')) return; sec.append(el('p', { class: 'page-by' }, el('button', { type: 'button', onclick: openAbout }, el('span', { 'data-t': 'page_by', text: t('page_by') }), ` · v${PORTAL_VERSION}`))); }); }   // data-t: the language system fills and refreshes it (the hand-built text showed the raw key)
 function renderHome() {
   const body = $('home-body'); if (!body) return;
   if (!datasets.length) { set(body, tdStartAlerts(), el('div', { class: 'cr-start' }, el('h2', { text: t('cr_start_h') }), el('p', { text: t('cr_start_b') }), el('a', { class: 'btn primary', href: '#data', text: `${t('cr_pull')} ↗` }))); return; }
