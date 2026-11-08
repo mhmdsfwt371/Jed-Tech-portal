@@ -1229,6 +1229,12 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   .km-tile.km-avg { padding-inline-end: 96px; } .km-tiles .km-tile.crm-tile-f { width: 100%; }
   @media (max-width: 640px) { .km-tile.km-avg { padding-inline-end: 14px; } .km-avg .bt-ringbox { position: static; flex-direction: row; align-self: flex-start; margin-top: 8px; gap: 8px; } }
   .td-tiles .crm-tile-f, .km-tiles .crm-tile-f { text-align: start; font: inherit; color: inherit; cursor: pointer; }
+  /* ADR-0102: a window never shows the page through it — a darker backdrop everywhere; on a phone it takes the whole screen */
+  dialog::backdrop, .help-dialog::backdrop { background: rgba(6,10,16,.82); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  @media (max-width: 640px) {
+    dialog[open]:not(.tour-dialog) { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; inset: 0; border-radius: 0; border: 0; overflow: auto; overscroll-behavior: contain;
+      padding-top: max(12px, env(safe-area-inset-top, 0px)); padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
+  }
 </style>
 </head>
 <body>

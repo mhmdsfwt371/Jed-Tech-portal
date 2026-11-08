@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.22 — 2026-11-08
+
+- على الموبايل، أي نافذة بقت بتملا الشاشة كلها، والخلفية ورا النوافذ بقت أغمق في كل الأجهزة — ما بقاش في كلام من الصفحة باين حوالين النافذة أو من وراها.
+
+<details><summary>English</summary>
+
+- On a phone every window now fills the whole screen, and the backdrop behind windows is darker on every device — no text of the page shows around or through a window any more.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- فون پر ہر ونڈو اب پوری اسکرین بھرتی ہے، اور ونڈو کے پیچھے کا پس منظر ہر آلے پر گہرا ہے — صفحے کا متن اب ونڈو کے گرد یا پیچھے نظر نہیں آتا۔
+
+</div>
+</details>
+
+
 ## v9.21 — 2026-11-08
 
 - أي كارت في أي نافذة أو صفحة بقى فلتر: ضغطة أو لمسة بتعرض صفوفه بس وبيبقى أخضر، وضغطة تانية بتشيل الفلتر — في نوافذ غرفة المتابعة، وكروت سجل المناقصات، ومربعات مؤشرات الفريق. وضغطة على عمود أي موظف بتعرض شغله بس.

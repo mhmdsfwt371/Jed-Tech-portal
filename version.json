@@ -1,24 +1,15 @@
 {
-  "version": "9.21",
+  "version": "9.22",
   "date": "2026-11-08",
   "notes": {
     "ar": [
-      "أي كارت في أي نافذة أو صفحة بقى فلتر: ضغطة أو لمسة بتعرض صفوفه بس وبيبقى أخضر، وضغطة تانية بتشيل الفلتر — في نوافذ غرفة المتابعة، وكروت سجل المناقصات، ومربعات مؤشرات الفريق. وضغطة على عمود أي موظف بتعرض شغله بس.",
-      "كل رقم بقى في مكان واحد: اتشالت الجمل اللي كانت بتكرر المربعات في غرفة المتابعة ومؤشرات الفريق وسجل المناقصات، وبروفايل الموظف بقى المربعات والرسومات بس (وزرار ⚑ جوه كل مربع).",
-      "رسم آخر الشهور: عدد المهام فوق ومكتوب على كل عمود، ومتوسط زمن الحل في لوحة لوحده تحت — مفيش نقطة بتتلخبط مع عمود.",
-      "حقل «تاريخ اكتمال العرض» في سجل المناقصات كان ظاهر كود — اتصلح. والدائرة في مربع متوسط الإغلاق ما بقتش بتغطي الكلام على الموبايل."
+      "على الموبايل، أي نافذة بقت بتملا الشاشة كلها، والخلفية ورا النوافذ بقت أغمق في كل الأجهزة — ما بقاش في كلام من الصفحة باين حوالين النافذة أو من وراها."
     ],
     "en": [
-      "Every card in every window and page now filters: a click or tap shows only its rows and turns green, a second press clears it — in the control-room windows, the tender register's cards and the Team KPIs tiles. A press on a person's bar shows only their work.",
-      "Each number now lives in one place: the sentences that repeated the tiles on the control room, Team KPIs and the tender register are gone, and a person's profile is the tiles and charts only (⚑ inside each tile).",
-      "Recent-months chart: tasks on top with the numbers on each bar, the average time to resolve in its own strip below — no point confused with a bar.",
-      "The «Offer ready on» field in the tender register showed a raw code — fixed. The ring on the average-to-close tile no longer covers its text on a phone."
+      "On a phone every window now fills the whole screen, and the backdrop behind windows is darker on every device — no text of the page shows around or through a window any more."
     ],
     "ur": [
-      "ہر ونڈو اور صفحے کا ہر کارڈ اب فلٹر ہے: کلک یا ٹیپ صرف اس کی قطاریں دکھاتا اور سبز ہوتا ہے، دوسرا دباؤ فلٹر ہٹاتا ہے۔",
-      "ہر عدد اب ایک جگہ: خانوں کو دہرانے والے جملے ہٹا دیے گئے۔",
-      "حالیہ مہینوں کا چارٹ: ٹاسک اوپر، اوسط وقت نیچے الگ پٹی میں۔",
-      "ٹینڈر رجسٹر کا ایک خانہ کوڈ دکھا رہا تھا — درست؛ فون پر دائرہ اب متن نہیں ڈھانپتا۔"
+      "فون پر ہر ونڈو اب پوری اسکرین بھرتی ہے، اور ونڈو کے پیچھے کا پس منظر ہر آلے پر گہرا ہے — صفحے کا متن اب ونڈو کے گرد یا پیچھے نظر نہیں آتا۔"
     ]
   }
 }

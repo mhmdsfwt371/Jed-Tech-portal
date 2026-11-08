@@ -30,6 +30,11 @@
   languages, rows and folds open, and fails on any raw label key (proved on this fault before the fix).
 - The closed-share ring had no room on a phone and covered the average's text: room beside it on wide screens, below it on a phone.
 
+## v9.22 — a window never shows the page through it
+On a phone the number windows were capped at 88% of the height and the backdrop was 45% opaque, so the page read around and
+through them («text over text»). Every window's backdrop is now 82% with a slight blur, and on a phone a window takes the whole
+screen (safe areas kept). Guarded in `cardf.py` (window = the screen on a phone; backdrop alpha ≥ 0.8).
+
 ## Tests
 `cardf.py` (20, desktop and phone taps), `dedup.py` (15), `rawkeys.py` (3). Eleven suites moved to the new places for the same
 checks. Full run 73/73.
