@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.17 — 2026-11-08
+
+- أي حاجة بتتضغط بقت بتنوّر في كل الأجهزة: تحت الماوس، ولما تلمسها بصباعك على الموبايل أو شاشة اللمس، وحتى لو «إظهار الحركة» مقفول في ويندوز. وبقى ليها اختبار ثابت بيتأكد منها في كل إصدار.
+- لو ملف البريد مفتوح في أوتلوك، صفحة نشاط البريد بتقولك كده صراحة وبتوريك تعمل إيه، ولأي سبب تاني بتعرض التفاصيل الفنية تنسخها.
+
+<details><summary>English</summary>
+
+- Everything you can press now lights on every device: under the mouse, when touched with a finger on a phone or touch screen, and even with Windows «Show animations» off — checked by a standing test in every release.
+- If the mail file is open in Outlook, the Mail activity page says so plainly and shows what to do; for any other cause it shows the technical detail to copy.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ہر دبائی جانے والی چیز اب ہر آلے پر روشن ہوتی ہے: ماؤس کے نیچے، انگلی سے چھونے پر، اور حرکت بند ہونے پر بھی — ہر ریلیز میں ٹیسٹ۔
+- اگر میل فائل آؤٹ لک میں کھلی ہو تو صفحہ صاف بتاتا ہے؛ ورنہ تکنیکی تفصیل دکھاتا ہے۔
+
+</div>
+</details>
+
+
 ## v9.16 — 2026-11-08
 
 - «مستخرج البريد» 1.0.3: لو ملف البريد مفتوح في أوتلوك (أوتلوك بيقفله)، البرنامج بيقولك كده بكلام واضح قبل ما يبدأ، ويوريك الطريقتين: تقفل أوتلوك أو تفصل الملف من «ملفات البيانات». ونفس التنبيه في المتصفح.

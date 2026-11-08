@@ -17,6 +17,11 @@ export default {
     g_planner_h: 'Team plans',
     g_planner_b: 'The manager’s page only: upload the team structure file (an HTML page) and it shows as it looks, exactly as uploaded. It stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file, or remove it from the device.',
     // ADR-0070: the one monthly place
+    mf_detail: 'Technical detail (copy it if the problem stays)',
+    mf_locked_3: 'The sign it is open: beside it, in the same folder, a file named «~file name.pst.tmp» — it disappears when Outlook lets go.',
+    mf_locked_2: 'Or keep Outlook open and detach only this file: File → Account Settings → Account Settings → Data Files → select the file → Remove. The file is not deleted.',
+    mf_locked_1: 'Close Outlook completely. If it still happens, open Task Manager (Ctrl+Shift+Esc) and make sure Outlook is not running.',
+    mf_locked_h: 'This file is open in Outlook right now, and Outlook locks it so nothing else can read it. Do one of these, then try again:',
     mf_read_stats: '(read only {mb} MB of a {size} MB file, in {sec} s)',
     td_pst_progress: 'Reading: {n} messages — {mb} of {size} MB',
     mf_progress: 'Reading from your device: {n} messages — {mb} of {size} MB read — {sec} s',

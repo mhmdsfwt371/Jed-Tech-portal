@@ -1171,6 +1171,12 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   .ma-w { border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); padding: 8px 12px; margin-top: 16px; opacity: .8; } .ma-w input { width: 70px; }
   .ma-big { margin-top: 10px; padding: 12px 14px; border: 1px solid var(--live); border-radius: var(--radius-sm); background: var(--ok-wash, rgba(76,195,90,.08)); } .ma-steps { margin: 6px 0 10px; padding-inline-start: 22px; } .ma-steps li { margin: 3px 0; }
   .ma-flash { box-shadow: 0 0 0 3px var(--live-bright), 0 0 26px rgba(76,195,90,.45); transition: box-shadow .3s; }
+  /* ADR-0098: the tap glow — a finger, a click or a pen press lights what it touches; reduced motion keeps a steady glow */
+  .bt-tap { background-image: radial-gradient(180px circle at var(--hx, 50%) var(--hy, 50%), rgba(76,195,90,.30), transparent 70%) !important; animation: bt-tapglow .7s ease-out; }
+  @keyframes bt-tapglow { 0% { box-shadow: 0 0 0 0 rgba(76,195,90,.55), 0 0 0 1px rgba(76,195,90,.8); } 100% { box-shadow: 0 0 0 12px rgba(76,195,90,0), 0 0 0 1px rgba(76,195,90,0); } }
+  .bt-focus { box-shadow: 0 0 0 2px var(--live-bright), 0 0 18px -4px rgba(76,195,90,.6); }
+  @media (prefers-reduced-motion: reduce) { .bt-tap { animation: none; box-shadow: 0 0 0 2px rgba(76,195,90,.7); } .bt-hot { transition: none; transform: none !important; } }
+  .mf-detail { margin-top: 8px; } .mf-detail code { display: block; white-space: pre-wrap; word-break: break-word; font-size: 12px; padding: 8px; background: var(--track); border-radius: var(--radius-sm); }
 </style>
 </head>
 <body>

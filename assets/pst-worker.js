@@ -46,5 +46,5 @@ self.onmessage = (e) => {
           m = fo.getNextChild(); } } };
     walk(pst.getRootFolder(), '');
     self.postMessage({ type: 'done', recs: out, stats: { n, bytesRead, reads, size: file.size, sec: (Date.now() - t0) / 1000, cacheMb: Math.round(MAX_BLOCKS * BS / 1048576) } });
-  } catch (err) { self.postMessage({ type: 'error', message: String(err && err.message || err) }); }
+  } catch (err) { self.postMessage({ type: 'error', name: String(err && err.name || ''), message: String(err && err.message || err) }); }   // NotReadableError: the file is locked (open in Outlook)
 };

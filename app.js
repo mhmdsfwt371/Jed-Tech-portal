@@ -1000,7 +1000,7 @@ async function tdFromPst(f) {
     const r = tdImport({ schema: 'afaqy-tenders-from-mail/v1', from, to: tdTo || saudiDay(new Date().toISOString()), tenders: out }); if (r.err) throw new Error(r.err);
     tenders = r.state; await tdSave(); tdBusy = '';
     toast(`${t('td_pst_read', { n: read, w: withAtt })} ${t('td_loaded', { a: r.added, m: r.merged, r: r.replies, o: r.other })}`);
-  } catch (err) { console.error(err); tdBusy = ''; toast(t('td_pst_fail')); }
+  } catch (err) { console.error(err); tdBusy = ''; toast(err && err.name === 'NotReadableError' ? t('mf_locked_h') : t('td_pst_fail')); }
   renderTenders();
 }
 /** One tender by hand — a tender with no mail, or one the pull missed. */
@@ -1296,7 +1296,7 @@ function maWeightsLocked() {
 function pstRead(f, opts, onProgress) {
   return new Promise((res, rej) => {
     let w; try { w = new Worker('./assets/pst-worker.js'); } catch (e) { rej(e); return; }
-    w.onmessage = (e) => { const d = e.data; if (d.type === 'progress') { if (onProgress) onProgress(d); return; } w.terminate(); if (d.type === 'done') { d.recs.stats = d.stats; res(d.recs); } else rej(new Error(d.message)); };
+    w.onmessage = (e) => { const d = e.data; if (d.type === 'progress') { if (onProgress) onProgress(d); return; } w.terminate(); if (d.type === 'done') { d.recs.stats = d.stats; res(d.recs); } else { const er = new Error(d.message); er.name = d.name || 'Error'; rej(er); } };
     w.onerror = (e) => { w.terminate(); rej(new Error(e.message || 'worker')); };
     w.postMessage({ file: f, attFrom: (opts && opts.attFrom) || null, attTo: (opts && opts.attTo) || null });
   });
@@ -1309,6 +1309,14 @@ function mfParseRecs(recs) {
     if (!seen.has(key) && !seenMail.has(mk)) { seen.add(key); seenMail.add(mk); const d = m.clientSubmitTime || m.messageDeliveryTime;
       out.push({ id: key, folder: m.folder || '/', subject: m.subject, sender: String(m.senderName || m.senderEmailAddress || '').trim().slice(0, 120), email: String(m.senderEmailAddress || '').slice(0, 160), to: m.displayTo, date: d || '' }); } }
   out.copies = copies; return out;
+}
+
+// ---------- ADR-0098: say why a PST could not be read — a lock by Outlook is named, anything else shows its detail ----------
+function mfFailBox(err) {
+  const locked = err && (err.name === 'NotReadableError' || /NotReadable|could not be read|permission/i.test(String(err.message || '')));
+  if (locked) return el('div', { class: 'ma-big mf-locked' }, el('p', {}, el('b', { text: t('mf_locked_h') })), el('ol', { class: 'ma-steps' }, ['mf_locked_1', 'mf_locked_2', 'mf_locked_3'].map((k) => el('li', { text: t(k) }))));
+  return el('div', { class: 'note' }, el('p', { text: t('mf_fail') }), el('a', { class: 'linkish', href: MA_RELEASES, target: '_blank', rel: 'noopener noreferrer', text: t('ma_get') }),
+    err ? el('details', { class: 'mf-detail' }, el('summary', { text: t('mf_detail') }), el('code', { dir: 'ltr', text: `${err.name || 'Error'}: ${String(err.message || err).slice(0, 600)}` })) : null);
 }
 
 // ---------- ADR-0096: a PST the browser cannot hold goes straight to the extractor, never to an error ----------
@@ -3715,7 +3723,7 @@ async function mfLoadFile(f, say) {   // read a PST on the device — from one p
     mfState.msgs = mfParseRecs(recs); mfState.file = f.name; mfState.copies = mfState.msgs.copies || 0; mfState.readStats = recs.stats;
     const counts = new Map(); for (const m of mfState.msgs) counts.set(m.sender, (counts.get(m.sender) || 0) + 1);
     mfState.picked = new Set([...counts.entries()].sort((p, q) => q[1] - p[1]).slice(0, 5).map(([k]) => k)); toast(t('mf_done', { n: mfState.msgs.length })); return true; }
-  catch (err) { console.error(err); say(t('mf_fail')); return false; }
+  catch (err) { console.error(err); mfState.lastErr = err; say(t('mf_fail')); return false; }
 }
 function renderMailFile() {
   const body = $('mailfile-body'); if (!body || isTeamPortal) return;
@@ -3725,7 +3733,7 @@ function renderMailFile() {
   const status = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite', text: st.msgs ? `${t(st.copies ? 'mf_file_copies' : 'mf_file', { name: st.file, n: st.msgs.length, c: st.copies })}${st.readStats ? ` ${t('mf_read_stats', { mb: Math.max(1, Math.round(st.readStats.bytesRead / 1048576)), size: Math.round(st.readStats.size / 1048576).toLocaleString('en'), sec: Math.round(st.readStats.sec) })}` : ''}` : '' });   // ADR-0097: how much of the file was actually read
   const fileIn = el('input', { type: 'file', accept: '.pst,.ost', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return;
     if (f.size > MF_BROWSER_MAX) { e.target.value = ''; set(status, maTooBig(f)); const box = document.querySelector('.ma-sec'); if (box) { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); box.classList.add('ma-flash'); setTimeout(() => box.classList.remove('ma-flash'), 2400); } return; }   // ADR-0096
-    if (await mfLoadFile(f, (s) => { status.textContent = s; })) renderMailFile(); else set(status, el('p', { class: 'note' }, t('mf_fail'), ' ', el('a', { class: 'linkish', href: MA_RELEASES, target: '_blank', rel: 'noopener noreferrer', text: t('ma_get') }))); e.target.value = ''; } });
+    if (await mfLoadFile(f, (s) => { status.textContent = s; })) renderMailFile(); else set(status, mfFailBox(mfState.lastErr)); e.target.value = ''; } });
   const top = el('section', { class: 'dt-quick' },
     el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: `📂 ${t('mf_pick_file')}`, onclick: () => fileIn.click() }), fileIn, el('span', { class: 'hint', text: t('mf_privacy') })), status,
     el('details', { class: 'me-phones' }, el('summary', { text: t('mf_how_h') }), el('p', { class: 'hint', text: t('mf_how') })));
@@ -3991,14 +3999,24 @@ $('update-btn').addEventListener('click', () => location.reload());
 (() => { if (matchMedia('(prefers-reduced-motion: reduce)').matches) return; const s = document.createElement('div'); s.id = 'bt-sweep'; s.setAttribute('aria-hidden', 'true'); document.body.append(s);
   addEventListener('hashchange', () => { s.classList.remove('go'); void s.offsetWidth; s.classList.add('go'); }); })();
 
-// ---------- ADR-0091: the pointer's light on everything you can press ----------
+// ---------- ADR-0091 / ADR-0098: everything you can press lights — under the mouse AND under a finger, always ----------
+// A design rule of the portal (the technical manager: «never forget it again»): no device and no setting switches it off.
+// Mouse and pen: a soft light follows the pointer. Touch, click, pen tap: a glow blooms from the spot pressed.
+// Reduced motion keeps the light and drops only the movement (no bloom animation, a steady glow).
+const GLOW_SEL = 'button, a[href], summary, select, input:not([type=hidden]), textarea, label, [role="button"], [onclick], .btn, .pill-btn, .nav a, .nav-group-toggle, .tool, .sm-card, .sm-tile, .proj-card, .pg-card, .me-card, .dev-card, .card, .km-tile, .td-row, .km-row, .ma-row, .cr-item, .cr-job, .cr-num-go, .td-pipe-node, .tip-card, .chip, .linkish, .ver-tag, .by-line, tr.on, .tp-svg';
 (() => {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !matchMedia('(hover: hover)').matches) return;
-  const SEL = '.btn, .pill-btn, .nav a, .nav-group-toggle, .tool, .sm-card, .proj-card, .pg-card, .me-card, .dev-card, .card, .td-row, .km-row, .cr-item, .cr-job, .cr-num-go, .td-pipe-node, .tip-card, details > summary, .ver-tag, .by-line';
   let cur = null;
-  document.addEventListener('pointermove', (e) => { const el = e.target.closest && e.target.closest(SEL);
+  const at = (el, e) => { const r = el.getBoundingClientRect(); el.style.setProperty('--hx', `${e.clientX - r.left}px`); el.style.setProperty('--hy', `${e.clientY - r.top}px`); };
+  document.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'touch') return;   // a finger does not hover; it gets the tap glow below
+    const el = e.target.closest && e.target.closest(GLOW_SEL);
     if (cur && cur !== el) { cur.classList.remove('bt-hot'); cur = null; }
-    if (!el) return; const r = el.getBoundingClientRect(); el.style.setProperty('--hx', `${e.clientX - r.left}px`); el.style.setProperty('--hy', `${e.clientY - r.top}px`);
-    if (cur !== el) { el.classList.add('bt-hot'); cur = el; } }, { passive: true });
+    if (!el) return; at(el, e); if (cur !== el) { el.classList.add('bt-hot'); cur = el; } }, { passive: true });
   document.addEventListener('pointerleave', () => { if (cur) { cur.classList.remove('bt-hot'); cur = null; } });
+  document.addEventListener('pointerdown', (e) => {   // every press — finger, mouse or pen
+    const el = e.target.closest && e.target.closest(GLOW_SEL); if (!el) return;
+    at(el, e); el.classList.remove('bt-tap'); void el.offsetWidth; el.classList.add('bt-tap');
+    clearTimeout(el._tapT); el._tapT = setTimeout(() => el.classList.remove('bt-tap'), 700); }, { passive: true });
+  document.addEventListener('focusin', (e) => { const el = e.target.closest && e.target.closest(GLOW_SEL); if (el && el.matches(':focus-visible')) el.classList.add('bt-focus'); });
+  document.addEventListener('focusout', (e) => { const el = e.target.closest && e.target.closest(GLOW_SEL); if (el) el.classList.remove('bt-focus'); });
 })();
