@@ -17,6 +17,11 @@ export default {
     g_planner_h: 'Team plans',
     g_planner_b: 'The manager’s page only: upload the team structure file (an HTML page) and it shows as it looks, exactly as uploaded. It stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file, or remove it from the device.',
     // ADR-0070: the one monthly place
+    ext_old: 'The extension in this browser is version {v}; {n} is needed so it tells you what it is waiting for. Download the new one, unzip it over the old folder, and press reload on chrome://extensions.',
+    ext_bad_recipe: 'The pull request is not valid — open «Data» again and press «Update now».',
+    ext_busy: 'A pull has been running in MyAFAQY for {m} min — wait for it, or try again in {r} min.',
+    ext_signin_late: 'No sign-in to MyAFAQY within 5 minutes — sign in and press «Update now» again.',
+    ext_signin: 'Waiting for you to sign in: sign in to MyAFAQY in the tab that opened — the pull starts by itself once you are in.',
     g_cards_b: 'Any card with a number in a window or a page — the control-room windows, the tender register’s cards, the Team KPIs tiles — press or tap it: it turns green and shows only its rows, and Excel exports only what is shown. Press it again to clear, or «Show all». In the windows, press a person’s name in the bars to see only their work.',
     g_cards_h: 'Cards that filter',
     g_sync_b: 'From «Data» → «Sync my devices»: on the device with the data type a passphrase and press «Send to my other device», then send the file to yourself (AirDrop, Quick Share, WhatsApp or the OneDrive app). On the other device open «Data», type the same passphrase, press «Receive» and choose the file. It merges with what is there and deletes nothing: tasks, tenders (the further stage wins), mail activity and my projects. The file is encrypted with the passphrase, and the passphrase is never stored.',

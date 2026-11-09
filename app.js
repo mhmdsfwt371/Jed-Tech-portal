@@ -3585,6 +3585,7 @@ function orgCheckBox() {
 // ---------- the sync extension (ADR-0062): the same pull, run by the browser when myafaqy opens — or by one click ----------
 const extOn = () => !isTeamPortal && !!document.documentElement.dataset.afaqyExt;
 let extState = null, extLastAt = null;
+const EXT_NEEDED = '1.0.1';   // ADR-0104: the extension that says why it waits
 const monthLast = (ym) => { const d = new Date(Date.parse(`${ym}-01T00:00:00Z`)); d.setUTCMonth(d.getUTCMonth() + 1); d.setUTCDate(0); return d.toISOString().slice(0, 10); };
 const extRecipe = () => { const ym = saudiDay(new Date().toISOString()).slice(0, 7); return managerPullRecipe(`${ymPrev(ym)}-01`, monthLast(ym), pullBranch().code, lang, 'ext'); };
 const extSend = (now) => { if (extOn()) window.postMessage({ type: 'afaqy-ext-recipe', recipe: extRecipe(), now: !!now }, location.origin); };
@@ -3620,8 +3621,11 @@ function renderExtBox() {
   const how = el('details', { class: 'ext-how' }, el('summary', { text: t('ext_works_h') }), el('ul', {}, ['ext_works1', 'ext_works2', 'ext_works3'].map((k) => el('li', { text: t(k) }))));
   if (!on || !got) { set(box, el('p', { class: 'ext-line', text: on ? t('ext_almost') : t('ext_off') }), el('p', { class: 'note ext-phone', text: t('ext_phone') }), el('div', { class: 'ext-desk' }, list, how)); return; }
   const s = st, when = s.lastAt ? new Date(s.lastAt + 3 * 3600e3).toISOString().replace('T', ' ').slice(0, 16) : null;
-  const msg = s.status === 'pulling' ? t('ext_pulling') : s.status === 'failed' ? t('ext_failed', { e: s.error || '' }) : s.status === 'needs-portal' ? t('ext_month') : when ? t('ext_last', { d: when }) : t('ext_never');
-  set(box, el('p', { class: 'ext-line on', text: `${t('ext_on')} ${msg}` }),
+  const mins = s.runningAt ? Math.max(1, Math.round((Date.now() - s.runningAt) / 60e3)) : 0;
+  const msg = { pulling: t('ext_pulling'), failed: t('ext_failed', { e: s.error || '' }), 'needs-portal': t('ext_month'), 'needs-signin': t('ext_signin'), 'signin-timeout': t('ext_signin_late'), busy: t('ext_busy', { m: mins, r: Math.max(1, 10 - mins) }), 'bad-recipe': t('ext_bad_recipe') }[s.status] || (when ? t('ext_last', { d: when }) : t('ext_never'));   // ADR-0104: every state said
+  const old = String(document.documentElement.dataset.afaqyExt || '') < EXT_NEEDED;
+  set(box, el('p', { class: `ext-line on${['failed', 'needs-signin', 'signin-timeout', 'busy', 'bad-recipe'].includes(s.status) ? ' warn' : ''}`, text: `${t('ext_on')} ${msg}` }),
+    old ? el('p', { class: 'note warn ext-old' }, `${t('ext_old', { v: document.documentElement.dataset.afaqyExt || '?', n: EXT_NEEDED })} `, el('a', { class: 'btn tiny', href: './assets/afaqy-sync-extension.zip', download: 'afaqy-sync-extension.zip', text: `⬇ ${t('ext_dl')}` })) : null,
     el('button', { type: 'button', class: 'btn primary ext-now', text: `↻ ${t('ext_now')}`, onclick: () => { extSend(true); window.open('https://myafaqy.com/#/home', '_blank'); toast(t('ext_now_toast')); } }),
     el('details', { class: 'ext-how' }, el('summary', { text: t('ext_setup_done') }), list), how);
 }

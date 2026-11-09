@@ -5,7 +5,7 @@
   const ok = (R) => R && R.DEL === 'ext' && R.PORTAL === '' && /^\d{4}-\d{2}-\d{2}$/.test(R.FROM) && /^\d{4}-\d{2}-\d{2}$/.test(R.TO) && R.FROM <= R.TO
     && /^[0-9A-Za-z_-]{1,12}$/.test(String(R.BR)) && Array.isArray(R.MMS) && R.MMS.length <= 24 && Array.isArray(R.M) && R.M.length <= 12 && typeof R.PACKET === 'string';
   const today = () => new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10);
-  const born = Date.now(); let started = false;
+  const born = Date.now(); let started = false, waiting = false;
   const attempt = async () => {
     if (started) return;
     const st = await S.get(['recipe', 'lastAt', 'want', 'runningAt']);
@@ -13,9 +13,14 @@
     if (!R) return;                                                     // the portal has not been opened with the extension yet
     if (!ok(R)) { await S.set({ status: 'bad-recipe', want: false }); return; }
     if (today() > R.TO) { await S.set({ status: 'needs-portal' }); return; }   // a new month: opening the portal once renews the recipe
-    if (!localStorage.getItem('token')) return;                         // not signed in to myafaqy
     const due = !!st.want || !st.lastAt || Date.now() - st.lastAt > 12 * 3600e3;
-    if (!due || (st.runningAt && Date.now() - st.runningAt < 10 * 60e3)) return;
+    if (!due) return;
+    if (!localStorage.getItem('token')) {                               // not signed in: say so, and start by itself once signed in (1.0.1)
+      await S.set({ status: 'needs-signin' });
+      if (!waiting) { waiting = true; const t0 = Date.now(); const tick = setInterval(() => { if (localStorage.getItem('token')) { clearInterval(tick); waiting = false; attempt(); } else if (Date.now() - t0 > 5 * 60e3) { clearInterval(tick); waiting = false; S.set({ status: 'signin-timeout' }); } }, 2000); }
+      return;
+    }
+    if (st.runningAt && Date.now() - st.runningAt < 10 * 60e3) { if (st.want) await S.set({ status: 'busy' }); return; }   // a pull already running: say so (1.0.1)
     if (started) return;
     started = true;
     const close = st.want === 'close';
@@ -35,5 +40,5 @@
   };
   attempt();
   // «Update now» stores its request while this tab is opening; a request that lands in the tab's first 20 seconds still counts.
-  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch.want && ch.want.newValue && Date.now() - born < 20000) attempt(); });
+  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && ch.want && ch.want.newValue && Date.now() - born < 5 * 60e3) attempt(); });
 })();

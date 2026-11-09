@@ -1,21 +1,18 @@
 {
-  "version": "9.23",
-  "date": "2026-11-08",
+  "version": "9.24",
+  "date": "2026-11-09",
   "notes": {
     "ar": [
-      "مزامنة اللابتوب والموبايل: من «البيانات» ← «مزامنة أجهزتي»، اكتب كلمة سر واضغط «ابعت لجهازي التاني»، وعلى الجهاز التاني «استقبل» بنفس كلمة السر — الأرقام بتظهر على طول من غير سحب جديد. الملف مشفّر وصغير (شهر كامل حوالي ٨٠ ك.ب)، وبيتدمج من غير ما يمسح حاجة.",
-      "الاستعادة بقت دمج حقيقي: المناقصات ونشاط البريد ومشاريعي بتتدمج حتى لو الجهاز فيه بيانات (المناقصة بتاخد المرحلة الأبعد).",
-      "الدليل جوه البوابة فيه قسمين جداد: «مزامنة اللابتوب والموبايل» و«الكروت اللي بتفلتر»."
+      "«حدّث دلوقتي» ما بقاش بيقف ساكت: لو ماي أفاقي محتاج تسجيل دخول، صفحة «البيانات» بتقولك سجّل في التبويب اللي اتفتح، والسحب بيبدأ لوحده أول ما تدخل. ولو فيه سحب شغال، أو السحب فشل، بيتقال بوضوح.",
+      "إضافة المزامنة الجديدة 1.0.1: لو الإضافة اللي عندك أقدم، صفحة «البيانات» بتقولك ومعاها زرار التنزيل."
     ],
     "en": [
-      "Sync the laptop and the phone: from «Data» → «Sync my devices», type a passphrase and press «Send to my other device»; on the other device press «Receive» with the same passphrase — the numbers show at once, no new pull. The file is encrypted and small (about 80 KB for a month), and merges without deleting anything.",
-      "Restoring now truly merges: tenders, mail activity and my projects merge even when the device already has data (a tender keeps its further stage).",
-      "The guide has two new sections: «Sync the laptop and the phone» and «Cards that filter»."
+      "«Update now» no longer stops in silence: if MyAFAQY needs a sign-in, «Data» tells you to sign in in the tab that opened, and the pull starts by itself once you are in. A pull already running, or a failed one, is said plainly.",
+      "Sync extension 1.0.1: if the one in your browser is older, «Data» says so, with the download."
     ],
     "ur": [
-      "لیپ ٹاپ اور فون کی ہم آہنگی: «ڈیٹا» ← «میرے آلات کی ہم آہنگی» سے پاس فریز لکھ کر «دوسرے آلے کو بھیجیں»، دوسرے آلے پر اسی پاس فریز سے «وصول کریں» — نئے حصول کے بغیر اعداد فوراً۔ فائل خفیہ اور چھوٹی ہے، اور کچھ حذف کیے بغیر ضم ہوتی ہے۔",
-      "بحالی اب حقیقی انضمام ہے: ٹینڈر، میل سرگرمی اور میرے پروجیکٹس ضم ہوتے ہیں چاہے آلے پر ڈیٹا ہو۔",
-      "رہنما میں دو نئے حصے: «لیپ ٹاپ اور فون کی ہم آہنگی» اور «فلٹر کرنے والے کارڈ»۔"
+      "«ابھی اپ ڈیٹ کریں» اب خاموشی سے نہیں رکتا: اگر مائی آفاقی کو سائن اِن چاہیے تو «ڈیٹا» بتاتا ہے، اور اندر آتے ہی حصول خود شروع ہوتا ہے۔",
+      "ہم آہنگی ایکسٹینشن 1.0.1: پرانی ہو تو «ڈیٹا» ڈاؤن لوڈ کے ساتھ بتاتا ہے۔"
     ]
   }
 }

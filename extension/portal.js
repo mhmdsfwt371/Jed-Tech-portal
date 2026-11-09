@@ -4,8 +4,8 @@
   document.documentElement.dataset.afaqyExt = chrome.runtime.getManifest().version;
   const S = chrome.storage.local, send = (m) => window.postMessage(m, location.origin);
   const state = async () => {
-    const st = await S.get(['lastAt', 'status', 'error', 'recipe', 'packet', 'packetAt']);
-    send({ type: 'afaqy-ext-state', lastAt: st.lastAt || null, status: st.status || '', error: st.error || '', recipeTo: st.recipe ? st.recipe.TO : null });
+    const st = await S.get(['lastAt', 'status', 'error', 'recipe', 'packet', 'packetAt', 'runningAt']);
+    send({ type: 'afaqy-ext-state', lastAt: st.lastAt || null, status: st.status || '', error: st.error || '', recipeTo: st.recipe ? st.recipe.TO : null, runningAt: st.runningAt || 0 });
     if (st.packet) send({ type: 'afaqy-ext-packet', packet: st.packet, at: st.packetAt || null });
   };
   window.addEventListener('message', async (e) => {
@@ -15,5 +15,5 @@
     if (d.type === 'afaqy-ext-recipe' && d.recipe && d.recipe.DEL === 'ext') { await S.set(d.now ? { recipe: d.recipe, want: 'close', status: '' } : { recipe: d.recipe }); state(); }
     if (d.type === 'afaqy-ext-got') await S.remove(['packet']);
   });
-  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && (ch.packet || ch.status || ch.lastAt)) state(); });
+  chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && (ch.packet || ch.status || ch.lastAt || ch.runningAt)) state(); });
 })();
