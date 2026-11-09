@@ -55,7 +55,7 @@
 ## Tests
 `harness/monthly.py` (26 checks, real Chromium): a quarter pull (built from October's real tasks, shifted) and October's real pull
 give exactly Oct, Sep, Aug, Jul; every counted person's six numbers equal an independent count for October and for September;
-Hossam equals myafaqy's own export (24 · 22 · 26 · 72 · 14:07); team row = sum of the people (tasks and points); the change shown
+engineer H equals myafaqy's own export (24 · 22 · 26 · 72 · 14:07); team row = sum of the people (tasks and points); the change shown
 equals the independent difference; a third, overlapping pull changes nothing; the row opens with both months, four months of
 history and the three buttons; CSV = the table; the mailbox is on the mail page with no PST; «More» holds the four months and five
 definitions; the development page's button and the control room's «reports» open the board; no raw key in Arabic, Urdu or

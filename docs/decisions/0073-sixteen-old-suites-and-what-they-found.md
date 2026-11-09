@@ -29,7 +29,7 @@
 - The suites keep their intent; where a decision changed the product, the check follows the decision (e.g. «My KPIs» has no
   team list, so the old «my team» checks now assert it is absent). Retired earlier: src, card (ADR-0072).
 - One-to-ones: the separate export removed in v8.89 was a second way to do what the full backup does — now proven: the backup
-  restored on a new device brings Suzan's goals back (8 / 10).
+  restored on a new device brings engineer S's goals back (8 / 10).
 - **Open question to the manager:** the old board had an «R&D» column (done tasks from the R&D queue); ADR-0070 left it out and it
   is shown nowhere now.
 - Full run: 57 of 57 local suites clean, mail 17/17 alone, the extension 11/11, the layout sweep with no problem.

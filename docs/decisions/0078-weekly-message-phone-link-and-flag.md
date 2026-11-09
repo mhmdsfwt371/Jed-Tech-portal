@@ -21,7 +21,7 @@
   Nothing is stored. The ⚑ is a 32-pixel target (the mobile suite holds every control to it).
 
 ## Tests
-`harness/weekly.py` (14): the section's week column, picker and two buttons; Hossam's week Oct 18–24 equals an independent count
+`harness/weekly.py` (14): the section's week column, picker and two buttons; engineer H's week Oct 18–24 equals an independent count
 (20); the copied message carries his dates, total, the week before and the link; the decoded link holds only his numbers (month 72,
 week 20) and no names or titles; the month message carries the same kind of link; ⚑ on every number of a person's details; on a new
 phone with no setup «My KPIs» shows his month and week, the address bar is cleaned, a reload keeps them; ⚑ opens the report with the

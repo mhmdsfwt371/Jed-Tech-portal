@@ -20,6 +20,6 @@
 
 ## Tests
 `harness/monthly.py` Q1–Q6: the quarters Q4 and Q3 (from a quarter pull and October), every counted person's Q4 total and closed
-against an independent count, Hossam's change against Q3 (72 vs 79 → ▼ 7), his details comparing Q4 2026 with Q3 2026 with Q3's
+against an independent count, engineer H's change against Q3 (72 vs 79 → ▼ 7), his details comparing Q4 2026 with Q3 2026 with Q3's
 total independent, «My KPIs» following the same choice, and back to months. Full run: all local suites clean; two suites now pick
 the sort pills explicitly (the switch is also a row of pills).

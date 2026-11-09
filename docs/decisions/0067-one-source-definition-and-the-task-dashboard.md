@@ -42,6 +42,6 @@
 | Points, rank, level | Board, person file, My KPIs | completed in the period | the points engine (`taskPoints`) |
 
 ## Verification
-Hossam's October row equals MyAFAQY's own export for the same 72 tasks, in all four groups: all 72 (14:07), by himself 22 (5:07),
+engineer H's October row equals MyAFAQY's own export for the same 72 tasks, in all four groups: all 72 (14:07), by himself 22 (5:07),
 e-mail 24 (23:18), assigned by others 26 (13:15). Every counted-team member's numbers equal an independent count; the board's
 «From email» and «Self-logged» tiles (440, 426) equal the dashboard's.
