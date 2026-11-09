@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.26 — 2026-11-10
+
+- مكتبة الإكسل اتحدثت لإصدار آمن وبقت جزء من البوابة نفسها: التصدير والاستيراد بيشتغلوا من غير إنترنت، والبوابة ما بقتش بتحمّل أي حاجة من موقع تاني.
+- على الموبايل: تعريف المربع لما تلمسه بيفضل ظاهر لحد ما تلمسه تاني أو تلمس برا — كان ساعات بيختفي فورًا.
+- سهولة الوصول: كل قايمة وخانة تاريخ ليها اسم لقارئ الشاشة، واسم الموظف في «مؤشرات الفريق» بقى زرار بيتفتح بالكيبورد.
+
+<details><summary>English</summary>
+
+- The Excel library is updated to a safe version and is now part of the portal itself: export and import work offline, and the portal no longer loads anything from another site.
+- On a phone, a tile's definition now stays after you tap it until you tap it again or tap elsewhere — it could vanish at once.
+- Accessibility: every dropdown and date field has a name for screen readers, and a name on «Team KPIs» is a button the keyboard can open.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ایکسل لائبریری محفوظ ورژن پر اپ ڈیٹ ہو کر پورٹل کا حصہ بن گئی: برآمد اور درآمد آف لائن چلتے ہیں، اور پورٹل اب کسی دوسری سائٹ سے کچھ لوڈ نہیں کرتا۔
+- فون پر: خانے کی تعریف ٹیپ کے بعد قائم رہتی ہے جب تک دوبارہ ٹیپ نہ کریں یا باہر ٹیپ نہ کریں۔
+- رسائی: ہر فہرست اور تاریخ کے خانے کا نام ہے، اور «ٹیم اشاریے» میں نام کی بورڈ سے کھلنے والا بٹن ہے۔
+
+</div>
+</details>
+
+
 ## v9.25 — 2026-11-09
 
 - علامة «?» في كل صفحة من صفحات ما بعد البيع بقت فيها «طريقة الاستخدام» خطوة بخطوة: مؤشراتي، غرفة المتابعة، مؤشرات الفريق، التطوير، ساعات العمل الإضافي، الفريق، البيانات، الأوزان، والأدوات — بالتلات لغات، وعلى رابط المهندس كمان.

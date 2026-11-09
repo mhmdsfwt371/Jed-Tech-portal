@@ -368,7 +368,7 @@ function openMeet(ym, id, name, typeChoices) {
   const dlg = el('dialog', { class: 'help-dialog meet-dialog' });
   const goalRows = el('div', { class: 'goal-rows' });
   const paintGoals = () => set(goalRows, goals.map((g, i) => el('div', { class: 'goal-row' },
-    el('select', { class: 'w-sel', onchange: (e) => { g.key = e.target.value; } }, [['__points__', t('goal_points')], ...typeChoices].map(([k, n]) => el('option', { value: k, selected: k === g.key, text: n }))),
+    el('select', { class: 'w-sel', 'aria-label': t('a11y_goal_measure'), onchange: (e) => { g.key = e.target.value; } }, [['__points__', t('goal_points')], ...typeChoices].map(([k, n]) => el('option', { value: k, selected: k === g.key, text: n }))),
     el('input', { type: 'number', min: '1', max: '999', value: String(g.target || ''), class: 'goal-n', oninput: (e) => { g.target = Math.max(0, Number(e.target.value) || 0); } }),
     el('button', { type: 'button', class: 'btn quiet tiny', text: '✕', onclick: () => { goals.splice(i, 1); paintGoals(); } }))));
   paintGoals();
@@ -403,7 +403,7 @@ function renderRepairs() {
   const nmR = (id) => { const p = scopePeople.find((q) => q.id === id); return (p && nameOf(p, lang)) || id || '—'; };
   const rc = repairCheck(proUnits || [], repairs, new Date());
   const ta = el('textarea', { rows: '4', dir: 'ltr', class: 'repair-in', placeholder: t('repair_ph') });
-  const eng = el('select', { class: 'w-sel' }, el('option', { value: '', text: t('repair_who') }), scopePeople.map((p) => el('option', { value: p.id, text: nameOf(p, lang) || p.id })));
+  const eng = el('select', { class: 'w-sel', 'aria-label': t('repair_who') }, el('option', { value: '', text: t('repair_who') }), scopePeople.map((p) => el('option', { value: p.id, text: nameOf(p, lang) || p.id })));
   const add = async () => { const lines = parseRepairLines(ta.value, new Date()); if (!lines.length) { toast(t('repair_none_in')); return; }
     repairs = [...repairs, ...lines.map((x) => ({ ...x, engineerId: eng.value || null, added: new Date().toISOString() }))].slice(-2000); await store.putRepairs(repairs); ta.value = ''; renderPro(); };
   const csv = () => { const lines = ['ref,engineer,repairedAt,status,lastReport,hoursToReport', ...rc.rows.map((r) => [r.ref, nmR(r.engineerId), r.at, r.status, r.last || '', r.hoursToReport == null ? '' : r.hoursToReport.toFixed(1)].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))];
@@ -1041,7 +1041,7 @@ function renderTenders() {
   const body = $('tenders-body'); if (!body || isTeamPortal) return; const today = saudiDay(new Date().toISOString());
   const up = el('input', { type: 'file', accept: '.json,.txt,application/json,text/plain', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; await tdTake(await f.text()); } });
   const pst = el('input', { type: 'file', accept: '.pst,.ost', hidden: true, onchange: (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; if (f.size > MF_BROWSER_MAX) { toast(t('td_pst_big', { gb: (f.size / 1073741824).toFixed(1) })); return; } tdFromPst(f); } });   // ADR-0096: a file the browser cannot hold is not tried
-  const dIn2 = (cls, val, on) => el('input', { type: 'date', class: cls, value: val, max: today, onchange: (e) => on(e.target.value) });
+  const dIn2 = (cls, val, on) => el('input', { type: 'date', class: cls, 'aria-label': t(cls === 'td-from' ? 'td_from' : 'td_to'), value: val, max: today, onchange: (e) => on(e.target.value) });
   const empty = !tenders || !tenders.items.length;
   // ADR-0085: one compact bar — the period and the five actions; how each way works is folded, open only while the register is empty
   const pull = el('section', { class: 'dt-quick td-pull' },
@@ -1826,7 +1826,8 @@ async function projFiles(r) {
 }
 // Excel: four sheets (from mail, bids — clients, bids — large projects, summary); edit it and import it back by its ID column
 async function loadXlsx() {
-  if (!window.XLSX) await new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = res; s.onerror = rej; document.head.append(s); });
+  // ADR-0106: SheetJS 0.20.3, served by the portal itself — no outside CDN (0.18.5 carried CVE-2023-30533 and CVE-2024-22363)
+  if (!window.XLSX) await new Promise((res, rej) => { const s = document.createElement('script'); s.src = './assets/vendor/xlsx.full.min.js'; s.onload = res; s.onerror = rej; document.head.append(s); });
   const X = window.XLSX;
   if (!X.__byAuthor) {   // ADR-0090: every workbook the portal writes names its author in the file's properties
     const w = X.writeFile.bind(X); X.writeFile = (wb, name, o) => { wb.Props = { ...(wb.Props || {}), Title: name, Author: AUTHOR.en, Company: 'AFAQY — Jeddah', Comments: `${t('brand')} — ${t('portal')} v${PORTAL_VERSION} · ${t('by_line')}` }; return w(wb, name, o); };
@@ -2905,7 +2906,8 @@ document.addEventListener('click', (e) => {   // ADR-0101: a tap on something th
 }, { passive: true });
 function attachTip(a, text, withButton = true) {
   if (!a || !text || a.dataset.tip) return; a.dataset.tip = text;
-  a.addEventListener('mouseenter', () => { if (matchMedia('(hover: hover)').matches) showTip(a, text); }); a.addEventListener('mouseleave', () => hideTip(a));
+  a.addEventListener('mouseenter', () => { if (matchMedia('(hover: hover)').matches) showTip(a, text); });
+  a.addEventListener('mouseleave', () => { if (matchMedia('(hover: hover)').matches) hideTip(a); });   // ADR-0106: on a touch screen «mouse left» is synthetic (it fires when the page shifts under the finger) — a tapped tooltip stays until a second tap or a tap elsewhere
   a.addEventListener('focus', () => showTip(a, text)); a.addEventListener('blur', () => hideTip(a));
   const key = a.getAttribute('href') || '';
   if (!withButton) return;   // a card that already shows its description needs no ⓘ
@@ -3069,7 +3071,7 @@ function devPanel(id, ctx) {
         el('label', { class: 'dev-f' }, el('span', { text: t('dev_note') }), el('textarea', { rows: '2', onchange: async (e) => { plan.note = e.target.value.slice(0, 1000); await devSave(); } }, plan.note || '')))),
     el('div', { class: 'row dev-goals-head' }, el('h3', { style: 'margin:0', text: t('dev_goals_h') }),
       el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary tiny', text: `✨ ${t('dev_suggest')}`, onclick: suggest }),
-        el('select', { class: 'btn tiny', onchange: (e) => { if (e.target.value) addGoal(e.target.value); e.target.value = ''; } }, [el('option', { value: '', text: `＋ ${t('dev_add_goal')}` }), ...GOAL_METRICS.map((m) => el('option', { value: m, text: t(`dev_m_${m}`) }))]))),
+        el('select', { class: 'btn tiny', 'aria-label': t('dev_add_goal'), onchange: (e) => { if (e.target.value) addGoal(e.target.value); e.target.value = ''; } }, [el('option', { value: '', text: `＋ ${t('dev_add_goal')}` }), ...GOAL_METRICS.map((m) => el('option', { value: m, text: t(`dev_m_${m}`) }))]))),
     plan.goals.length ? el('div', { class: 'table-wrap fit' }, el('table', { class: 'proj-tbl dev-goals' }, el('colgroup', {}, ['28%', '11%', '12%', '8%', '13%', '22%', '6%'].map((w) => el('col', { style: `width:${w}` }))),
       el('thead', {}, el('tr', {}, ['dev_c_goal', 'dev_c_base', 'dev_c_target', 'dev_c_weight', 'dev_c_got', 'dev_c_prog', ''].map((k) => el('th', { text: k ? t(k) : '' })))),
       makeSortable(el('tbody', {}, plan.goals.map((g, n) => goalRow(g, prog[n]))), `dev-goals-${id}`))) : el('div', { class: 'empty', text: t('dev_goals_none') }),
@@ -3290,9 +3292,9 @@ function renderKpi() {
   };
   const line = (id) => {
     const n = now(id), p = was(id), on = kpiOpen === id, pos = positionOf(roster(), id, lang);
-    const tr = el('tr', { class: `km-row${on ? ' on' : ''}`, 'data-id': id, tabIndex: 0, 'aria-expanded': String(on), title: t('km_click'),
-      onclick: () => { kpiOpen = on ? null : id; renderKpi(); }, onkeydown: (e) => { if (e.key === 'Enter') { kpiOpen = on ? null : id; renderKpi(); } } },
-      el('td', {}, el('div', { class: 'km-name' }, el('span', { text: nm(id) })), pos ? el('div', { class: 'hint', text: pos }) : null),
+    const tr = el('tr', { class: `km-row${on ? ' on' : ''}`, 'data-id': id, title: t('km_click'),   // ADR-0106: the name is the button that opens and closes (a table row cannot carry «expanded»)
+      onclick: () => { kpiOpen = on ? null : id; renderKpi(); } },
+      el('td', {}, el('div', { class: 'km-name' }, el('button', { type: 'button', class: 'km-name-b', 'aria-expanded': String(on) }, el('span', { text: nm(id) }))), pos ? el('div', { class: 'hint', text: pos }) : null),
       ...cells(n, p, true));
     return on ? [tr, el('tr', { class: 'km-open' }, el('td', { colspan: String(COLS.length + 1) }, detail(id)))] : [tr];
   };
@@ -3393,7 +3395,7 @@ function renderWeights() {
     { id: 'general', title: t('wteam_general'), live: false, rows: fromFile('general').map((k) => ({ key: k, name: (seen.get(k) || {}).name || k })) },
   ];
   const save = async (patch) => { weightsDevice = { ...(weightsDevice || {}), tasks: { ...((weightsDevice || {}).tasks || {}), ...(patch.tasks || {}) }, activities: { ...((weightsDevice || {}).activities || {}), ...(patch.activities || {}) }, editors: { ...((weightsDevice || {}).editors || {}) , ...(patch.editors || {}) } }; await store.putWeights(weightsDevice); renderWeights(); renderKpi(); renderMe(); };
-  const stepSel = (cur, on, enabled) => el('select', { class: 'w-sel', ...(enabled ? {} : { disabled: '' }), onchange: (e) => on(Number(e.target.value)) }, WEIGHT_STEPS.map((w) => el('option', { value: String(w), selected: w === cur, text: String(w) })));
+  const stepSel = (cur, on, enabled) => el('select', { class: 'w-sel', 'aria-label': t('a11y_type_points'), ...(enabled ? {} : { disabled: '' }), onchange: (e) => on(Number(e.target.value)) }, WEIGHT_STEPS.map((w) => el('option', { value: String(w), selected: w === cur, text: String(w) })));
   const tierName = (tr) => (tr ? t(`tier_${tr}`) : t('tier_none'));
   const RR = rulesOf(wt), pctN = (v) => String(Math.round(v * 100)), fx = (v) => String(Math.round(v * 100) / 100);
   const customDesc = (m) => { const cm = RR.methods.find((q) => q.id === m); return !cm ? t('mode_d_gone') : cm.steps.length ? [...cm.steps.map((s) => t('pr_mstep', { p: s.upTo, x: fx(s.x) })), t('pr_mstep_more', { x: fx(cm.beyond) })].join(' · ') : t('mode_d_done'); };

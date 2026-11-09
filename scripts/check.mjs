@@ -432,6 +432,9 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   const { extensionPullScript } = await import(new URL('core.js', root));
   if (!exists('extension/pull.js') || read('extension/pull.js') !== extensionPullScript()) note('extension/pull.js is out of date — run node scripts/build-extension.mjs');
   if (!exists('assets/afaqy-sync-extension.zip')) note('assets/afaqy-sync-extension.zip is missing — zip the extension folder');
+  // ADR-0106: the portal loads no script from another site at run time (offline, and no third party in the page)
+  for (const f of ['app.js', 'core.js', 'index.html']) { const m = read(f).match(/https:\/\/(cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net|unpkg\.com)[^'"\s]*\.js/); if (m) note(`${f} loads a script from another site (${m[0]}) — vendor it under assets/vendor/`); }
+  if (!exists('assets/vendor/xlsx.full.min.js') || !/version="0\.(2\d|[3-9]\d)\.\d+"/.test(read('assets/vendor/xlsx.full.min.js'))) note('assets/vendor/xlsx.full.min.js is missing or older than 0.20 (CVE-2023-30533, CVE-2024-22363)');
   for (const f of ['extension/myafaqy.js', 'extension/portal.js']) if (exists(f) && /eval\(|new Function|innerHTML|document\.write|createElement\(['"]script/.test(read(f))) note(`${f}: the extension must never run text as code`);
 }
 

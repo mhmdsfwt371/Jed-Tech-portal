@@ -1242,6 +1242,7 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   /* ADR-0104 */ .ext-line.warn { color: var(--sig); font-weight: 600; } .ext-old { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   /* ADR-0105: steps in a page's «?» */
   #help-dialog { max-height: min(86vh, 760px); overflow: auto; } @media (max-width: 640px) { #help-dialog[open] { max-height: 100dvh; height: 100dvh; } }   /* a phone: the whole screen, as every window (v9.22) */ .help-steps-h { margin: 14px 0 6px; font-size: 15px; } .help-steps { margin: 0 0 12px; padding-inline-start: 22px; display: grid; gap: 7px; line-height: 1.6; }
+  /* ADR-0106 */ .km-name-b { all: unset; cursor: pointer; display: inline-flex; align-items: center; min-height: 36px; } .km-name-b:focus-visible { outline: 2px solid var(--live-bright); outline-offset: 2px; border-radius: 4px; }
 </style>
 </head>
 <body>

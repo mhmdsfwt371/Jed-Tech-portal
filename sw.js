@@ -1,7 +1,7 @@
 // sw.js — offline shell for the portal. Scope is this folder only (registered with scope './'), so it never touches
 // the other tools that live on the same domain. The shell is served from the cache of this version; version.json is
 // always read from the network so a new release is noticed.
-const VERSION = '9.25';   // stamped by scripts/bump.mjs — never edit by hand
+const VERSION = '9.26';   // stamped by scripts/bump.mjs — never edit by hand
 const CACHE = 'afaqy-portal-' + VERSION;
 const SHELL = [
   './', './index.html', './app.js', './core.js', './i18n/ar.js', './i18n/en.js', './i18n/ur.js', './tour-demo.js', './config.js', './manifest.webmanifest',
@@ -35,6 +35,14 @@ self.addEventListener('fetch', (event) => {
       }
       return response;
     }).catch(() => caches.match(event.request, { ignoreSearch: true })));
+    return;
+  }
+  // ADR-0106: the large libraries (Excel, PST reader) are kept after their first use, so they work offline without weighing on the install
+  if (url.pathname.includes('/assets/vendor/') || url.pathname.endsWith('/assets/pst-worker.js')) {
+    event.respondWith(caches.match(event.request, { ignoreSearch: true }).then((hit) => hit || fetch(event.request).then(async (response) => {
+      if (response.ok) { try { const cache = await caches.open(CACHE); await cache.put(event.request, response.clone()); } catch { /* still served online */ } }
+      return response;
+    })));
     return;
   }
   event.respondWith(caches.match(event.request, { ignoreSearch: true }).then((hit) => hit || fetch(event.request)));

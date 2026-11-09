@@ -17,6 +17,8 @@ export default {
     g_planner_h: 'Team plans',
     g_planner_b: 'The manager’s page only: upload the team structure file (an HTML page) and it shows as it looks, exactly as uploaded. It stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file, or remove it from the device.',
     // ADR-0070: the one monthly place
+    a11y_type_points: 'Points for this type',
+    a11y_goal_measure: 'Goal measure',
     hs_tools: 'Team engineering tools open inside the portal and stay open as you move between pages.\n«Open in its own tab» opens a tool alone; each tool asks for its usual sign-in.\nCompany systems open in a new tab.\nLanguage and light/dark are at the bottom of the menu; on a phone, ☰ opens the menu.',
     hs_weights: 'Each task type has points: 1 a quick action, 2 the customer or a diagnosis, 3 an outside party or field work, 5 multi-stage work.\nChange a number; it stays on this device until you publish it.\nReview the weights every quarter against «Completed in the period» and «Usual time».',
     hs_data: 'Pick the period, or set From and To and press «Use these dates».\nOnce: drag «Pull the team\'s data» to your bookmarks bar.\nOpen MyAFAQY and press it; the data comes back here by itself.\nOr install the sync extension: it pulls when you open MyAFAQY, and «Update now» pulls at once — sign in if MyAFAQY asks.\nPull whole months: a month is compared only with a whole month before it.\n«Sync my devices»: type a passphrase and press «Send to my other device»; on the other device type the same passphrase and press «Receive».\n«Backup»: export one before big changes; restoring merges and deletes nothing.',
