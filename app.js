@@ -253,6 +253,9 @@ const helpQ = (key, titleKey) => el('button', { type: 'button', class: 'help-q',
 function openHelp(key, titleKey, fallbackTitle) {
   $('help-title').textContent = titleKey ? t(titleKey) : (fallbackTitle || '?');
   $('help-text').textContent = t(key);
+  // ADR-0105: a page's «?» also gives its steps, one per line (the after-sales manual, page by page)
+  const sk = String(key || '').replace(/^g_(\w+)_b$/, 'hs_$1'), steps = sk !== key && t(sk) !== sk ? t(sk).split('\n').filter(Boolean) : [];
+  const ol = $('help-steps'); if (ol) { set(ol, steps.map((s) => el('li', { text: s }))); ol.hidden = !steps.length; $('help-steps-h').hidden = !steps.length; }
   $('help-dialog').showModal();
 }
 document.addEventListener('click', (e) => {

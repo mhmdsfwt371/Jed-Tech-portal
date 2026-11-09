@@ -1240,6 +1240,8 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   .sync-row { gap: 8px; flex-wrap: wrap; align-items: center; } .sync-pass { flex: 1 1 220px; min-height: 44px; padding: 8px 12px; } .sync-row .btn { min-height: 44px; }
   .sync-safe { font-size: 12.5px; }
   /* ADR-0104 */ .ext-line.warn { color: var(--sig); font-weight: 600; } .ext-old { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  /* ADR-0105: steps in a page's «?» */
+  #help-dialog { max-height: min(86vh, 760px); overflow: auto; } @media (max-width: 640px) { #help-dialog[open] { max-height: 100dvh; height: 100dvh; } }   /* a phone: the whole screen, as every window (v9.22) */ .help-steps-h { margin: 14px 0 6px; font-size: 15px; } .help-steps { margin: 0 0 12px; padding-inline-start: 22px; display: grid; gap: 7px; line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -1483,7 +1485,7 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   </div>
   <div class="tour-footer"><button type="button" id="tour-back" class="btn"></button><button type="button" id="tour-next" class="btn primary"></button></div>
 </dialog>
-<dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title"><h2 id="help-title"></h2><p id="help-text"></p><form method="dialog"><button class="btn" data-t="close">إغلاق</button></form></dialog>
+<dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title"><h2 id="help-title"></h2><p id="help-text"></p><h3 id="help-steps-h" class="help-steps-h" data-t="help_steps_h" hidden>How to use it</h3><ol id="help-steps" class="help-steps" hidden></ol><form method="dialog"><button class="btn" data-t="close">إغلاق</button></form></dialog>
 <dialog id="install-dialog" class="help-dialog" aria-labelledby="install-title"><h2 id="install-title" data-t="install_app">تثبيت التطبيق</h2><div id="install-steps"></div><form method="dialog"><button class="btn" data-t="close">إغلاق</button></form></dialog>
 <dialog id="news-dialog" aria-labelledby="news-title">
   <h2 id="news-title" data-t="whats_new">ما الجديد في هذه النسخة</h2>

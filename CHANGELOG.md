@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.25 — 2026-11-09
+
+- علامة «?» في كل صفحة من صفحات ما بعد البيع بقت فيها «طريقة الاستخدام» خطوة بخطوة: مؤشراتي، غرفة المتابعة، مؤشرات الفريق، التطوير، ساعات العمل الإضافي، الفريق، البيانات، الأوزان، والأدوات — بالتلات لغات، وعلى رابط المهندس كمان.
+
+<details><summary>English</summary>
+
+- Each after-sales page's «?» now gives «How to use it», step by step: My KPIs, the control room, Team KPIs, Development, Overtime hours, Team, Data, Weights and Tools — in three languages, on the engineer's link too.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- آفٹر سیلز کے ہر صفحے کا «?» اب «استعمال کا طریقہ» قدم بہ قدم دیتا ہے — تینوں زبانوں میں، انجینئر کے لنک پر بھی۔
+
+</div>
+</details>
+
+
 ## v9.24 — 2026-11-09
 
 - «حدّث دلوقتي» ما بقاش بيقف ساكت: لو ماي أفاقي محتاج تسجيل دخول، صفحة «البيانات» بتقولك سجّل في التبويب اللي اتفتح، والسحب بيبدأ لوحده أول ما تدخل. ولو فيه سحب شغال، أو السحب فشل، بيتقال بوضوح.

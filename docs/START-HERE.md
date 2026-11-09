@@ -134,6 +134,7 @@
 | `docs/decisions/0102-cards-filter-one-place-per-number.md` | Every card filters (mouse and finger); one place per number; the chart's MTTR strip |
 | `docs/decisions/0103-sync-my-devices.md` | Sync the laptop and the phone: an encrypted file through the share sheet, merged on arrival |
 | `docs/decisions/0104-sync-extension-says-why-it-waits.md` | «Update now»: the extension waits for the sign-in and says why it waits |
+| `docs/decisions/0105-page-help-steps-after-sales.md` | Each after-sales page's «?» gives its numbered steps |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

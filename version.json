@@ -1,18 +1,15 @@
 {
-  "version": "9.24",
+  "version": "9.25",
   "date": "2026-11-09",
   "notes": {
     "ar": [
-      "«حدّث دلوقتي» ما بقاش بيقف ساكت: لو ماي أفاقي محتاج تسجيل دخول، صفحة «البيانات» بتقولك سجّل في التبويب اللي اتفتح، والسحب بيبدأ لوحده أول ما تدخل. ولو فيه سحب شغال، أو السحب فشل، بيتقال بوضوح.",
-      "إضافة المزامنة الجديدة 1.0.1: لو الإضافة اللي عندك أقدم، صفحة «البيانات» بتقولك ومعاها زرار التنزيل."
+      "علامة «?» في كل صفحة من صفحات ما بعد البيع بقت فيها «طريقة الاستخدام» خطوة بخطوة: مؤشراتي، غرفة المتابعة، مؤشرات الفريق، التطوير، ساعات العمل الإضافي، الفريق، البيانات، الأوزان، والأدوات — بالتلات لغات، وعلى رابط المهندس كمان."
     ],
     "en": [
-      "«Update now» no longer stops in silence: if MyAFAQY needs a sign-in, «Data» tells you to sign in in the tab that opened, and the pull starts by itself once you are in. A pull already running, or a failed one, is said plainly.",
-      "Sync extension 1.0.1: if the one in your browser is older, «Data» says so, with the download."
+      "Each after-sales page's «?» now gives «How to use it», step by step: My KPIs, the control room, Team KPIs, Development, Overtime hours, Team, Data, Weights and Tools — in three languages, on the engineer's link too."
     ],
     "ur": [
-      "«ابھی اپ ڈیٹ کریں» اب خاموشی سے نہیں رکتا: اگر مائی آفاقی کو سائن اِن چاہیے تو «ڈیٹا» بتاتا ہے، اور اندر آتے ہی حصول خود شروع ہوتا ہے۔",
-      "ہم آہنگی ایکسٹینشن 1.0.1: پرانی ہو تو «ڈیٹا» ڈاؤن لوڈ کے ساتھ بتاتا ہے۔"
+      "آفٹر سیلز کے ہر صفحے کا «?» اب «استعمال کا طریقہ» قدم بہ قدم دیتا ہے — تینوں زبانوں میں، انجینئر کے لنک پر بھی۔"
     ]
   }
 }
