@@ -52,7 +52,7 @@ if (!/^\d{4}-\d{2}-\d{2}$/.test(vj.date || '')) note('version.json: date must be
 // 4. No Firebase, and no network except this site's own version.json. CRM data only ever arrives as an uploaded file.
 // The Claude prompt and the my-KPIs bookmark both run on myafaqy's page, not in the portal; they have their own rules (9, 17).
 // The Afaqy PRO page is the one exception in the portal itself (ADR-0011) — it has its own rule (18); everything else holds.
-const appWithoutPro = app.replace(/\/\/ ---------- AFAQY PRO inside the portal[\s\S]*?\/\/ ---------- the side menu ----------/, '').replace(/\/\/ ---------- Outlook inside the portal \(ADR-0029\)[\s\S]*?\/\/ ---------- end Outlook ----------/, '');
+const appWithoutPro = app.replace(/\/\/ ---------- AFAQY PRO inside the portal[\s\S]*?\/\/ ---------- the side menu ----------/, '');
 const coreWithoutPrompt = core.replace(/export function buildPrompt[\s\S]*?\n}\n/, '').replace(/export function buildBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildReportsPrompt[\s\S]*?\n}\n/, '').replace(/export function buildManagerBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildAssignBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildTypesBookmarklet[\s\S]*?\n}\n/, '').replace(/export const MANAGER_PULL_BODY = `[\s\S]*?`;\n/, '');
 for (const [name, src] of [['index.html', html], ['app.js', appWithoutPro], ['core.js', coreWithoutPrompt], ['config.js', cfg]]) {
   if (/firebase/i.test(src)) note(`${name}: Firebase is referenced — the portal runs without it`);
@@ -395,25 +395,15 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
     for (const m of read(f).matchAll(/https?:\/\/(\d{1,3}(?:\.\d{1,3}){3})/g)) if (!/^(127\.|0\.0\.0\.0)/.test(m[1]) && !(['systems.json', 'config.js'].includes(f) && Object.values(APPROVED_RAW).some((a) => a.host === m[1]))) note(`${f}: a raw IP address in a link — the repository is public`);
 }
 
-// 26. ADR-0029: the Outlook section reads the manager's own inbox — Microsoft's two addresses only, read-only scope, PKCE without a
-//     secret, the token never stored, and the stored rows carry no subject, body or address.
+// 26. ADR-0109 (replaces ADR-0029's check): the Microsoft sign-in was removed — the portal talks to no Microsoft address and asks for
+//     no Microsoft scope. Rows stored before (and in old backups) keep their shape: no subject, body or address.
 {
-  const m = app.match(/\/\/ ---------- Outlook inside the portal \(ADR-0029\) ----------[\s\S]*?\/\/ ---------- end Outlook ----------/);
-  if (!m) note('Outlook: the marked section is missing');
-  else {
-    const o = m[0];
-    const hosts = [...o.matchAll(/https:\/\/([a-z0-9.-]+)/g)].map((x) => x[1]).filter((h) => !['login.microsoftonline.com', 'graph.microsoft.com'].includes(h));
-    if (hosts.length) note(`Outlook: talks to ${[...new Set(hosts)].join(', ')} — only login.microsoftonline.com and graph.microsoft.com`);
-    if (!/const MS_SCOPE = 'openid profile Mail\.Read';/.test(o)) note('Outlook: the scope must be exactly openid profile Mail.Read (read-only)');
-    if (/client_secret|Mail\.ReadWrite|Mail\.Send|offline_access/.test(o)) note('Outlook: no secret, no write or send scope, no long-lived refresh');
-    if (!/code_challenge_method: 'S256'/.test(o)) note('Outlook: sign-in must use PKCE (S256)');
-    if (/(localStorage|sessionStorage|store\.\w+)\([^)]*access_token/.test(o) || /setItem\([^)]*token/i.test(o)) note('Outlook: the access token must never be stored');
-    if (!/finally \{ token = null;/.test(o)) note('Outlook: the token must be dropped after the read');
-    for (const f of ['method: \'DELETE\'', 'method: \'PATCH\'', '/sendMail', '/send', 'method: \'PUT\'']) if (o.includes(f)) note(`Outlook: "${f}" — the mailbox is read-only`);
+  for (const [f, src] of [['app.js', app], ['core.js', core], ['index.html', read('index.html')]]) {
+    if (/login\.microsoftonline\.com|graph\.microsoft\.com|Mail\.Read|oauth2\/v2\.0/.test(src)) note(`${f}: talks to Microsoft or asks for a mail scope — removed in ADR-0109`);
   }
   const rowSrc = (core.match(/export function mailRow[\s\S]*?\n}\n/) || [''])[0];
   const keys = [...((rowSrc.match(/return \{([^}]*)\}/) || ['', ''])[1].matchAll(/(\w+):/g))].map((x) => x[1]);
-  if (keys.join(',') !== 'i,t,c,w,k') note(`Outlook: a stored mail row must be exactly { i, t, c, w, k } — found ${keys.join(',')}`);
+  if (keys.join(',') !== 'i,t,c,w,k') note(`stored mail row must be exactly { i, t, c, w, k } — found ${keys.join(',')}`);
 }
 
 // ADR-0053: the «أنواع الفرق» bookmark talks only to crmbackend.afaqy.sa and the portal, reads only the teams, and never hands the token over.

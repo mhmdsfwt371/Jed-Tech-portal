@@ -8,8 +8,7 @@ import {
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, overtimeOf, SOURCES, taskSource, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
-  weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines,
-  mailRow, mailStats, MAIL_CATEGORIES, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
+  weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
   quarterRange, quarterOf, quarterBaseline, quarterGoalProgress, planProgress, suggestQuarterGoals,
   maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply } from './core.js';
@@ -478,107 +477,10 @@ function renderPrivLinks() {
       el('button', { type: 'button', class: 'btn quiet tiny', 'aria-label': t('remove'), text: '✕', onclick: async () => { privLinks = privLinks.filter((y) => y.url !== x.url); await store.putPriv(privLinks); renderPrivLinks(); } })))) : null,
     el('div', { class: 'priv-add' }, nameIn, urlIn, el('button', { type: 'button', class: 'btn', text: t('priv_add'), onclick: add }))));
 }
-// ---------- Outlook inside the portal (ADR-0029) ----------
-// The manager signs in with his own Microsoft account; the portal reads HIS inbox (Mail.Read, read-only) straight from Microsoft,
-// keeps only time / thread hash / who / category, and forgets the token right after the read. Talks to two Microsoft addresses only.
-const MS_LOGIN = 'https://login.microsoftonline.com', MS_GRAPH = 'https://graph.microsoft.com/v1.0';
-const MS_SCOPE = 'openid profile Mail.Read';
-let mailRows = [], mailKind = 'week', mailBusy = false;
-const msCfg = () => { try { return JSON.parse(localStorage.getItem('afaqy-portal:ms') || 'null'); } catch { return null; } };
-const msRedirect = () => location.origin + location.pathname.replace(/index\.html$/, '');
-const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-async function msSignIn() {
-  const cfg = msCfg(); if (!cfg) return;
-  const verifier = b64url(crypto.getRandomValues(new Uint8Array(48))), state = b64url(crypto.getRandomValues(new Uint8Array(16)));
-  const challenge = b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)));
-  sessionStorage.setItem('afaqy-portal:ms-pkce', JSON.stringify({ verifier, state }));
-  const q = new URLSearchParams({ client_id: cfg.clientId, response_type: 'code', redirect_uri: msRedirect(), response_mode: 'query', scope: MS_SCOPE, state, code_challenge: challenge, code_challenge_method: 'S256', prompt: 'select_account' });
-  location.assign(`${MS_LOGIN}/${encodeURIComponent(cfg.tenantId)}/oauth2/v2.0/authorize?${q}`);
-}
-// back from Microsoft: exchange the one-time code, read the mailbox, then drop the token
-async function msReturn() {
-  const p = new URLSearchParams(location.search); const code = p.get('code'), state = p.get('state'), err = p.get('error');
-  if (!code && !err) return false;
-  history.replaceState(null, '', location.pathname + '#mailfile');   // ADR-0070: back to where the mailbox lives; the code never stays in the address or the history
-  const saved = JSON.parse(sessionStorage.getItem('afaqy-portal:ms-pkce') || 'null'); sessionStorage.removeItem('afaqy-portal:ms-pkce');
-  if (err) { toast(t('mail_err_signin', { e: err })); return true; }
-  const cfg = msCfg(); if (!cfg || !saved || saved.state !== state) { toast(t('mail_err_state')); return true; }
-  try {
-    const r = await fetch(`${MS_LOGIN}/${encodeURIComponent(cfg.tenantId)}/oauth2/v2.0/token`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ client_id: cfg.clientId, grant_type: 'authorization_code', code, redirect_uri: msRedirect(), code_verifier: saved.verifier, scope: MS_SCOPE }) });
-    const j = await r.json(); if (!r.ok || !j.access_token) throw new Error(j.error_description || j.error || r.status);
-    await msReadMailbox(j.access_token);
-  } catch (e) { toast(t('mail_err_token', { e: String(e.message || e).slice(0, 120) })); }
-  return true;
-}
-async function msReadMailbox(token) {
-  mailBusy = true; renderMailFile();
-  const since = new Date(Date.now() - 370 * 86400000).toISOString();   // a full year: four quarters
-  const people = [...peopleOf(datasets), ...(me ? me.people : [])].filter((p, i, arr) => arr.findIndex((q) => q.id === p.id) === i);
-  const internal = (addr) => /@afaqy\b|@afaqy[.-]/i.test(addr);
-  let url = `${MS_GRAPH}/me/mailFolders/inbox/messages?$select=id,from,receivedDateTime,conversationId,subject,bodyPreview&$filter=receivedDateTime ge ${since}&$orderby=receivedDateTime desc&$top=100`;
-  let n = 0; const fresh = [];
-  try {
-    for (let page = 0; url && page < 200; page++) {
-      const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-      if (!r.ok) throw new Error(`${r.status}`);
-      const j = await r.json();
-      for (const m of j.value || []) fresh.push(mailRow(m, people, internal));   // subject and preview are read here and never kept
-      n += (j.value || []).length; url = j['@odata.nextLink'] || null;
-      if (page % 5 === 4) toast(t('mail_reading', { n }));
-    }
-    const known = new Set(mailRows.map((r) => r.i));
-    mailRows = [...mailRows, ...fresh.filter((r) => !known.has(r.i))];
-    await store.putMail(mailRows);
-    localStorage.setItem('afaqy-portal:ms-last', new Date().toISOString());
-    toast(t('mail_done', { n }));
-  } catch (e) { toast(t('mail_err_read', { e: String(e.message || e) })); }
-  finally { token = null; mailBusy = false; renderMailFile(); }
-}
-// ---------- end Outlook ----------
-function kpiMailSection(team, peopleById) {
-  const cfg = msCfg(); const nmM = (id) => nameOf(peopleById.get(id), lang) || id;
-  const setup = () => { const cid = el('input', { type: 'text', dir: 'ltr', placeholder: 'Application (client) ID', value: (cfg && cfg.clientId) || '' }), tid = el('input', { type: 'text', dir: 'ltr', placeholder: 'Directory (tenant) ID', value: (cfg && cfg.tenantId) || '' });
-    return el('div', { class: 'mail-setup' }, el('p', { class: 'hint', text: t('mail_setup_sub') }), cid, tid,
-      el('button', { type: 'button', class: 'btn primary', text: t('mail_setup_save'), onclick: () => { const g = /^[0-9a-f-]{36}$/i; if (!g.test(cid.value.trim()) || !g.test(tid.value.trim())) { toast(t('mail_setup_bad')); return; } localStorage.setItem('afaqy-portal:ms', JSON.stringify({ clientId: cid.value.trim(), tenantId: tid.value.trim() })); renderMailFile(); } })); };
-  if (!cfg) return el('section', { class: 'share mail', id: 'k-mail' }, el('h2', {}, t('mail_h'), helpQ('help_mail')), setup());
-  const today = saudiDay(new Date().toISOString());
-  if (mailKind === 'year') {
-    const qs = lastQuarters(today, 4).reverse(); const per = qs.map((q) => mailStats(mailRows, team, q));
-    return el('section', { class: 'share mail', id: 'k-mail' },
-      el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, el('h2', { style: 'margin:0' }, t('mail_h'), helpQ('help_mail')),
-        el('div', {}, periodPicker('year', 0, today, (k) => { mailKind = k; renderMailFile(); }, () => {}))),
-      el('div', { class: 'table-wrap' }, el('table', { class: 'share-table year' },
-        el('thead', {}, el('tr', {}, el('th', { text: t('col_person') }), ...qs.map((q) => el('th', { class: 'num', text: q.label })))),
-        el('tbody', {}, team.map((id) => el('tr', {}, el('td', { text: nmM(id) }), ...per.map((ms) => { const p = ms.people.find((x) => x.id === id);
-          return el('td', { class: 'num', text: p && p.replies ? `${p.replies} · ${t('mail_hard')} ${p.hardPct}%` : '—' }); })))))),);
-  }
-  const win = pickWindow(mailKind, mailQ, today); const ms = mailStats(mailRows, team, win);
-  const last = localStorage.getItem('afaqy-portal:ms-last');
-  const chip = (k, label) => el('button', { type: 'button', class: `pill-btn${mailKind === k ? ' on' : ''}`, text: t(label), onclick: () => { mailKind = k; renderMailFile(); } });
-  const mins = (m) => (m == null ? '—' : m < 60 ? `${Math.round(m)} ${t('mail_min')}` : `${(m / 60).toFixed(1)} ${t('mail_hr')}`);
-  const max = Math.max(1, ...ms.people.map((p) => p.replies));
-  return el('section', { class: 'share mail', id: 'k-mail' },
-    el('div', { class: 'row', style: 'justify-content:space-between;align-items:center' },
-      el('h2', { style: 'margin:0' }, t('mail_h'), helpQ('help_mail')),
-      el('div', {}, periodPicker(mailKind, mailQ, today, (k) => { mailKind = k; renderMailFile(); }, (q) => { mailQ = q; renderMailFile(); }))),
-    el('div', { class: 'row' },
-      el('button', { type: 'button', class: 'btn primary', disabled: mailBusy ? '' : null, text: mailBusy ? t('mail_busy') : t('mail_read_year'), onclick: () => msSignIn() }),
-      el('span', { class: 'hint', text: last ? t('mail_last', { d: last.slice(0, 16).replace('T', ' ') }) : t('mail_never') })),
-    el('details', { class: 'mail-cfg' }, el('summary', { text: t('mail_setup_change') }), setup()),
-    el('p', { class: 'hint', text: t('mail_window', { from: win.from, to: win.to, n: ms.total, c: ms.customerThreads, u: ms.unanswered }) }),
-    ms.total ? el('div', { class: 'table-wrap' }, el('table', { class: 'share-table' },
-      el('thead', {}, el('tr', {}, ['col_person', 'mail_col_replies', 'mail_col_threads', 'mail_col_hard', 'mail_col_mix', 'mail_col_first'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
-      el('tbody', {}, ms.people.filter((p) => p.replies).map((p) => el('tr', {},
-        el('td', { text: nmM(p.id) }),
-        el('td', { class: 'num' }, el('div', { class: 'bar-cell' }, el('b', { text: `${p.replies} · ${p.share}%` }), el('i', {}, el('span', { style: `width:${Math.round((p.replies / max) * 100)}%` })))),
-        el('td', { class: 'num', text: String(p.threads) }),
-        el('td', { class: 'num' }, el('b', { class: p.hardPct >= 40 ? 'ok-t' : p.hardPct <= 10 && p.threads >= 5 ? 'warn-t' : null, text: `${p.hardPct}%` })),
-        el('td', { class: 'num mix', text: `${t('mail_hard')} ${p.cats.hard} · ${t('mail_medium')} ${p.cats.medium} · ${t('mail_easy')} ${p.cats.easy + p.cats.other}` }),
-        el('td', { class: 'num', text: mins(p.firstReplyMin) }))))))
-      : el('div', { class: 'empty', text: mailRows.length ? t('share_none') : t('mail_empty') }),
-    ms.otherColleagues ? el('p', { class: 'hint', text: t('mail_others', { n: ms.otherColleagues }) }) : null,);
-}
+// ---------- Outlook inside the portal (ADR-0029) — removed in ADR-0109 ----------
+// The Microsoft sign-in (read access to the inbox) needed IT's admin consent; that route was dropped on 2026-11-08. Mail comes from a PST file
+// (ADR-0095). Rows read before stay on the device and in the backup, so an old backup still restores cleanly.
+let mailRows = [];
 // ---------- install on Android, iPhone and Windows ----------
 let installPrompt = null;
 const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -2728,7 +2630,6 @@ function kpiLoadSection(team, peopleById) {
 }
 // ---------- the board's sections, each its own function (ADR-0023) ----------
 // the manager's view of each person's slice of the team's work — day / week / month / quarter
-let mailQ = 0;
 // the period picker both sections use: day · week · month · quarter (pick one of the last four) · year (the four side by side)
 function periodPicker(kind, qi, today, onKind, onQ) {
   const qs = lastQuarters(today, 4);
@@ -4000,8 +3901,6 @@ function renderMailFile() {
   const top = el('section', { class: 'dt-quick' },
     el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: `📂 ${t('mf_pick_file')}`, onclick: () => fileIn.click() }), fileIn, el('span', { class: 'hint', text: t('mf_privacy') })), status,
     el('details', { class: 'me-phones' }, el('summary', { text: t('mf_how_h') }), el('p', { class: 'hint', text: t('mf_how') })));
-  // ADR-0070: the Outlook mailbox lives here with the PST file — one place for mail, shown with or without a file
-  const mailbox = datasets.length ? kpiMailSection(currentTeam(scoped(peopleOf(datasets)), allTasks()), new Map(peopleOf(datasets).map((p) => [p.id, p]))) : null;
   const saveRules = async (next) => { st.rules = next; await store.kvPut('mailrules', next); renderMailFile(); };
   const edit = (fn) => { const next = rules.map((x) => ({ ...x, words: [...x.words] })); fn(next); saveRules(cleanMailRules(next)); };
   const rulesBox = el('details', { class: 'me-phones mf-rules', ...(rulesOpen || !st.msgs ? { open: '' } : {}) }, el('summary', { text: t('mf_rules_h') }), el('p', { class: 'hint', text: t('mf_rules_lead') }),
@@ -4019,7 +3918,7 @@ function renderMailFile() {
       el('button', { type: 'button', class: 'btn tiny quiet', text: t('mf_rules_reset'), onclick: () => { if (confirm(t('mf_rules_reset_confirm'))) saveRules(null); } })));
   // ADR-0075 / ADR-0076: how this page counts and its classification rules — shown BEFORE a file is chosen too, so they can be read first
   const howBox = el('details', { class: 'tucked mf-howcount', open: true }, el('summary', { text: t('mf_count_h') }), el('ul', { class: 'defs' }, ['mf_count_1', 'mf_count_2', 'mf_count_3', 'mf_count_4', 'mf_count_5'].map((k) => el('li', { text: t(k) }))));
-  if (!st.msgs) { set(body, mailSrc('pst'), maSection(), mailbox, top, rulesBox, howBox); return; }
+  if (!st.msgs) { set(body, mailSrc('pst'), maSection(), top, rulesBox, howBox); return; }
   const inRange = (m) => (!st.from || (m.date || '').slice(0, 10) >= st.from) && (!st.to || (m.date || '').slice(0, 10) <= st.to);
   const ranged = st.msgs.filter(inRange), counts = new Map(), emails = new Map();
   for (const m of ranged) { counts.set(m.sender, (counts.get(m.sender) || 0) + 1); if (!emails.has(m.sender) && m.email) { const ad = mfAddr(m.email); if (ad) emails.set(m.sender, ad); } }   // ADR-0099: an internal sender shows his Exchange alias
@@ -4054,7 +3953,7 @@ function renderMailFile() {
     el('div', { class: 'row' }, el('div', { class: 'pills' }, [['all', t('mf_all')], ...CATS.map((c) => [c, `${catName(c)} (${tot[c]})`])].map(([k, l]) => el('button', { type: 'button', class: `pill-btn${st.cat === k ? ' on' : ''}`, text: l, onclick: () => { st.cat = k; renderMailFile(); } }))),
       el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('mf_export')}`, onclick: csv })),
     shown.length ? [el('div', { class: 'table-wrap mf-msgs' }, el('table', {}, el('thead', {}, el('tr', {}, [t('mf_col_date'), t('mf_col_sender'), t('mf_col_subject'), t('mf_col_cat'), t('mf_col_folder')].map((h) => el('th', { text: h })))), tbody)), more] : el('div', { class: 'empty', text: t('mf_empty') }));
-  set(body, mailSrc('pst'), maSection(), mailbox, top, dateRow, sendersBox, rulesBox, results, howBox, listBox);
+  set(body, mailSrc('pst'), maSection(), top, dateRow, sendersBox, rulesBox, results, howBox, listBox);
 }
 function route() {
   if (location.hash.startsWith('#rank=')) { takeRankLink(true).then(route); return; }   // a rank link can arrive while the portal is already open (only the hash changes)
@@ -4233,7 +4132,6 @@ $('update-btn').addEventListener('click', () => location.reload());
     } catch { managerImportStatus('mgr_auto_popup', {}, true); }
   }
   keepStorage().then((ok) => { storageKept = ok; renderDatasets(); });
-  if (!isTeamPortal) msReturn();
   loadRelease(); announceUpdate(); showInstall();
   setInterval(loadRelease, 15 * 60 * 1000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) loadRelease(); });

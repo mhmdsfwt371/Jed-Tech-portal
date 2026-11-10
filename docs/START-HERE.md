@@ -138,6 +138,7 @@
 | `docs/decisions/0106-review-vendored-excel-a11y-touch-tooltips.md` | The 2026-11 review: Excel library current and local, accessibility guard, touch tooltips; what is left for a decision |
 | `docs/decisions/0107-publish-only-the-app.md` | The website publishes the app's files only (docs, tests, scripts stay private); the Mail Extractor downloads from the site |
 | `docs/decisions/0108-myafaqy-key-renewal.md` | The MyAFAQY pulls wait for a valid key and renew on a rejection (extension 1.0.2) |
+| `docs/decisions/0109-outlook-box-removed-actions-node24.md` | The Outlook box and its Microsoft sign-in removed; workflows on Node 24 actions |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

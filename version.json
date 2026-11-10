@@ -1,28 +1,19 @@
 {
-  "version": "9.28",
+  "version": "9.29",
   "date": "2026-11-10",
   "notes": {
     "ar": [
-      "السحب من ماي أفاقي ما بقاش بيقف بخطأ HTTP 401: لو مفتاح الدخول منتهي، بيستنى لحد ما ماي أفاقي يجدده وبعدين يكمّل لوحده.",
-      "حدّث الإضافة لـ 1.0.2 (البوابة هتديك الرابط)، واسحب أزرار ماي أفاقي من صفحة البيانات لشريط الإشارات تاني — الزرار القديم بيفضل بالكود القديم. والمهندسين يسحبوا زرار «مؤشراتي» تاني.",
-      "زرار «تنزيل مستخرج البريد» بقى بينزّل البرنامج على طول من البوابة نفسها — كان بيفتح صفحة على GitHub ما بتفتحش إلا لصاحب الحساب.",
-      "الموقع بقى بينشر ملفات البوابة بس: ملفات التوثيق والاختبارات ما بقتش متاحة على العنوان العام."
+      "اتشال صندوق «أوتلوك» اللي كان بيطلب بيانات تطبيق أزور — الطريق ده اتلغى، والبريد بيتقرا من ملف PST. أي بيانات اتقرت قبل كده محفوظة."
     ],
     "en": [
-      "Pulling from MyAFAQY no longer stops with HTTP 401: if the sign-in key has expired, the pull waits for MyAFAQY to renew it and carries on by itself.",
-      "Update the extension to 1.0.2 (the portal gives the link), and drag the MyAFAQY buttons from the Data page to your bookmarks bar again — an old button keeps its old code. Engineers drag «My KPIs» again too.",
-      "«Download the Mail Extractor» now downloads the app straight from the portal — it opened a GitHub page that only the account owner could open.",
-      "The website now publishes the portal's own files only: the documentation and tests are no longer available on the public address."
+      "The «Outlook» box that asked for Azure app details is removed — that route was dropped, and mail is read from a PST file. Anything read before is kept."
     ],
     "ur": [
-      "مائی آفاقی سے حصول اب HTTP 401 پر نہیں رکتا: سائن اِن کی کلید ختم ہو تو مائی آفاقی کے تجدید کرنے تک انتظار کر کے خود جاری رہتا ہے۔",
-      "ایکسٹینشن 1.0.2 پر اپ ڈیٹ کریں، اور ڈیٹا صفحے سے مائی آفاقی کے بٹن دوبارہ بُک مارکس بار میں گھسیٹیں — پرانا بٹن پرانا کوڈ رکھتا ہے۔ انجینئر بھی «میرے اشاریے» دوبارہ گھسیٹیں۔",
-      "«میل ایکسٹریکٹر ڈاؤن لوڈ کریں» اب پروگرام سیدھا پورٹل سے ڈاؤن لوڈ کرتا ہے — پہلے یہ GitHub کا صفحہ کھولتا تھا جو صرف اکاؤنٹ کا مالک کھول سکتا تھا۔",
-      "ویب سائٹ اب صرف پورٹل کی اپنی فائلیں شائع کرتی ہے: دستاویزات اور ٹیسٹ اب عوامی پتے پر دستیاب نہیں۔"
+      "«آؤٹ لک» کا خانہ جو ایزور ایپ کی تفصیل مانگتا تھا ہٹا دیا گیا — وہ راستہ منسوخ ہو گیا، اور ای میل PST فائل سے پڑھی جاتی ہے۔ پہلے پڑھا گیا ڈیٹا محفوظ ہے۔"
     ]
   },
   "counts": {
-    "versions": 153,
-    "decisions": 108
+    "versions": 154,
+    "decisions": 109
   }
 }

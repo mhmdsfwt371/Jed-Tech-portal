@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.29 — 2026-11-10
+
+- اتشال صندوق «أوتلوك» اللي كان بيطلب بيانات تطبيق أزور — الطريق ده اتلغى، والبريد بيتقرا من ملف PST. أي بيانات اتقرت قبل كده محفوظة.
+
+<details><summary>English</summary>
+
+- The «Outlook» box that asked for Azure app details is removed — that route was dropped, and mail is read from a PST file. Anything read before is kept.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «آؤٹ لک» کا خانہ جو ایزور ایپ کی تفصیل مانگتا تھا ہٹا دیا گیا — وہ راستہ منسوخ ہو گیا، اور ای میل PST فائل سے پڑھی جاتی ہے۔ پہلے پڑھا گیا ڈیٹا محفوظ ہے۔
+
+</div>
+</details>
+
+
 ## v9.28 — 2026-11-10
 
 - السحب من ماي أفاقي ما بقاش بيقف بخطأ HTTP 401: لو مفتاح الدخول منتهي، بيستنى لحد ما ماي أفاقي يجدده وبعدين يكمّل لوحده.
