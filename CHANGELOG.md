@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.30 — 2026-11-10
+
+- السحب بقى بيشتغل لأي حساب على ماي أفاقي، مش حسابك بس: لو ماي أفاقي ما سمحش للحساب بقايمة مساعدة، السحب بيكمّل من غيرها، وبتظهر تحت بيانات الشهر في «البيانات المرفوعة» القوايم اللي اتعدّت.
+- حدّث الإضافة لـ 1.0.3، واسحب زرار سحب الفريق من صفحة البيانات لشريط الإشارات تاني.
+
+<details><summary>English</summary>
+
+- The pull now works for any MyAFAQY account, not just the manager's: if MyAFAQY does not allow the account a supporting list, the pull carries on without it, and the month's row in «Uploaded data» names the lists it skipped.
+- Update the extension to 1.0.3, and drag the team pull button from the Data page to your bookmarks bar again.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- حصول اب مائی آفاقی کے کسی بھی اکاؤنٹ سے چلتا ہے: اگر اکاؤنٹ کو کوئی معاون فہرست نہ ملے تو حصول اس کے بغیر جاری رہتا ہے، اور «اپ لوڈ شدہ ڈیٹا» میں مہینے کی سطر چھوڑی گئی فہرستیں بتاتی ہے۔
+- ایکسٹینشن 1.0.3 پر اپ ڈیٹ کریں، اور ٹیم کے حصول کا بٹن ڈیٹا صفحے سے دوبارہ بُک مارکس بار میں گھسیٹیں۔
+
+</div>
+</details>
+
+
 ## v9.29 — 2026-11-10
 
 - اتشال صندوق «أوتلوك» اللي كان بيطلب بيانات تطبيق أزور — الطريق ده اتلغى، والبريد بيتقرا من ملف PST. أي بيانات اتقرت قبل كده محفوظة.

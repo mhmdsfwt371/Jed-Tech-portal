@@ -1,19 +1,22 @@
 {
-  "version": "9.29",
+  "version": "9.30",
   "date": "2026-11-10",
   "notes": {
     "ar": [
-      "اتشال صندوق «أوتلوك» اللي كان بيطلب بيانات تطبيق أزور — الطريق ده اتلغى، والبريد بيتقرا من ملف PST. أي بيانات اتقرت قبل كده محفوظة."
+      "السحب بقى بيشتغل لأي حساب على ماي أفاقي، مش حسابك بس: لو ماي أفاقي ما سمحش للحساب بقايمة مساعدة، السحب بيكمّل من غيرها، وبتظهر تحت بيانات الشهر في «البيانات المرفوعة» القوايم اللي اتعدّت.",
+      "حدّث الإضافة لـ 1.0.3، واسحب زرار سحب الفريق من صفحة البيانات لشريط الإشارات تاني."
     ],
     "en": [
-      "The «Outlook» box that asked for Azure app details is removed — that route was dropped, and mail is read from a PST file. Anything read before is kept."
+      "The pull now works for any MyAFAQY account, not just the manager's: if MyAFAQY does not allow the account a supporting list, the pull carries on without it, and the month's row in «Uploaded data» names the lists it skipped.",
+      "Update the extension to 1.0.3, and drag the team pull button from the Data page to your bookmarks bar again."
     ],
     "ur": [
-      "«آؤٹ لک» کا خانہ جو ایزور ایپ کی تفصیل مانگتا تھا ہٹا دیا گیا — وہ راستہ منسوخ ہو گیا، اور ای میل PST فائل سے پڑھی جاتی ہے۔ پہلے پڑھا گیا ڈیٹا محفوظ ہے۔"
+      "حصول اب مائی آفاقی کے کسی بھی اکاؤنٹ سے چلتا ہے: اگر اکاؤنٹ کو کوئی معاون فہرست نہ ملے تو حصول اس کے بغیر جاری رہتا ہے، اور «اپ لوڈ شدہ ڈیٹا» میں مہینے کی سطر چھوڑی گئی فہرستیں بتاتی ہے۔",
+      "ایکسٹینشن 1.0.3 پر اپ ڈیٹ کریں، اور ٹیم کے حصول کا بٹن ڈیٹا صفحے سے دوبارہ بُک مارکس بار میں گھسیٹیں۔"
     ]
   },
   "counts": {
-    "versions": 154,
-    "decisions": 109
+    "versions": 155,
+    "decisions": 110
   }
 }

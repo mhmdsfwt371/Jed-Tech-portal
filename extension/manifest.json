@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AFAQY Jeddah Portal — Sync",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Refreshes the AFAQY Jeddah technical portal from myafaqy with your own sign-in. Read-only; the data stays in this browser.",
   "permissions": [
     "storage",

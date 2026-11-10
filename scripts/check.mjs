@@ -53,12 +53,14 @@ if (!/^\d{4}-\d{2}-\d{2}$/.test(vj.date || '')) note('version.json: date must be
 // The Claude prompt and the my-KPIs bookmark both run on myafaqy's page, not in the portal; they have their own rules (9, 17).
 // The Afaqy PRO page is the one exception in the portal itself (ADR-0011) — it has its own rule (18); everything else holds.
 const appWithoutPro = app.replace(/\/\/ ---------- AFAQY PRO inside the portal[\s\S]*?\/\/ ---------- the side menu ----------/, '');
-const coreWithoutPrompt = core.replace(/export function buildPrompt[\s\S]*?\n}\n/, '').replace(/export function buildBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildReportsPrompt[\s\S]*?\n}\n/, '').replace(/export function buildManagerBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildAssignBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildTypesBookmarklet[\s\S]*?\n}\n/, '').replace(/export const MANAGER_PULL_BODY = `[\s\S]*?`;\n/, '');
+// TOKEN_JS runs on myafaqy's page inside the pulls (ADR-0108, ADR-0110), like the bookmarks below
+const coreWithoutPrompt = core.replace(/export const TOKEN_JS = "[^\n]*";\n/, '').replace(/export function buildPrompt[\s\S]*?\n}\n/, '').replace(/export function buildBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildReportsPrompt[\s\S]*?\n}\n/, '').replace(/export function buildManagerBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildAssignBookmarklet[\s\S]*?\n}\n/, '').replace(/export function buildTypesBookmarklet[\s\S]*?\n}\n/, '').replace(/export const MANAGER_PULL_BODY = `[\s\S]*?`;\n/, '');
 for (const [name, src] of [['index.html', html], ['app.js', appWithoutPro], ['core.js', coreWithoutPrompt], ['config.js', cfg]]) {
   if (/firebase/i.test(src)) note(`${name}: Firebase is referenced — the portal runs without it`);
   if (/afaqy\.sa|afaqy\.pro\/|crmbackend/.test((name === 'config.js' ? src.replace(/https:\/\/[^\s"']+/g, '') : src.replace(/https:\/\/afaqy\.pro\/'/g, '')))) note(`${name}: an Afaqy API address appeared — the portal never calls an Afaqy API`);
   const calls = [...src.matchAll(/fetch\(\s*([^,)]+)/g)].map((m) => m[1].trim());
-  for (const c of calls) if (!["'./version.json'", "'./team.json'", "'./weights.json'", "'./systems.json'", "'./CHANGELOG.md'", "'./docs/START-HERE.md'"].includes(c)) note(`${name}: network call to ${c} — the only allowed reads are the site's own version.json, team.json and weights.json`);
+  // ADR-0107: the changelog and the decisions are no longer read by the portal, so they are no longer allowed
+  for (const c of calls) if (!["'./version.json'", "'./team.json'", "'./weights.json'", "'./systems.json'"].includes(c)) note(`${name}: network call to ${c} — the only allowed reads are the site's own version.json, team.json and weights.json`);
 }
 
 // 5. The service worker stays inside this folder, so the other tools on the same domain are never taken over.
@@ -426,7 +428,7 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   { const core = await import(new URL('../core.js', import.meta.url).href);
     const scripts = { extension: read('extension/pull.js'), myKpis: decodeURIComponent(core.buildBookmarklet('https://x/', 'en')), types: decodeURIComponent(core.buildTypesBookmarklet('https://x/')), assign: decodeURIComponent(core.buildAssignBookmarklet('en')) };
     for (const [n, s] of Object.entries(scripts)) {
-      if (!s.includes('const freshTok=async(old,ms)') || !/if\(!tokOk\(tk\)\)\{const n=await freshTok\(null,90000\)/.test(s) || !s.includes("const fx=async(u,o)=>{let r=await fetch(u,o);if(r.status===401&&await reauth())")) note(`${n}: the MyAFAQY key wait or the renew-and-retry is missing (ADR-0108)`);
+      if (!s.includes('const freshTok=async(old,ms)') || !/if\(!tokOk\(tk\)\)\{const n=await freshTok\(null,90000\)/.test(s) || !s.includes("const fx=async(u,o)=>{let r=await fetch(u,o);if(r.status!==401)return r;const live=tokOk(tk);const n=await freshTok(tk,live?5000:60000)")) note(`${n}: the MyAFAQY key wait, the renew-and-retry or the permission stop is missing (ADR-0108, ADR-0110)`);
       if (/await fetch\('https:\/\/crmbackend\.afaqy\.sa\//.test(s)) note(`${n}: a MyAFAQY request bypasses the renewing fetch (ADR-0108)`);
     } }
   // ADR-0106: the portal loads no script from another site at run time (offline, and no third party in the page)

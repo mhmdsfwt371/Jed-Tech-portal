@@ -2264,6 +2264,8 @@ window.addEventListener('message', async (e) => {
 });
 
 // ---------- data: upload ----------
+// ADR-0110: the readable name of a MyAFAQY list the pull may skip
+const listName = (p) => { const k = { 'Security/GetAllHierarchyUsersDropDown': 'pl_users', 'Teams/GetAllTeams': 'pl_teams', 'Teams/GetTeamById': 'pl_teams', 'EmployeeIC/GetAllEmployeesGrid': 'pl_employees', 'TechnicianReport/GetTechnicianReportStatic': 'pl_tech', 'ActivityLog/GetTicketsGrid': 'pl_tickets', 'AfterSales/GetAllAfterSalesEngineers': 'pl_as', 'AfterSales/GetAfterSalesRequestGrid': 'pl_as', 'AfterSalesBoardReport/GetAfterSalesAgentsGrid': 'pl_as' }[p]; return k ? t(k) : p; };
 async function ingest(text) {
   const msg = $('read-msg');
   if (!String(text || '').trim()) { msg.className = 'msg err'; msg.textContent = t('paste_empty'); return false; }
@@ -2283,7 +2285,8 @@ async function ingest(text) {
   setTimeout(closeMonths, 0);
   await store.put(datasets);
   msg.className = 'msg';
-  msg.textContent = t('loaded', { n: out.dataset.tasks.length, range: `${out.dataset.range.from} → ${out.dataset.range.to}` }) + (out.skipped ? ` ${t('warn_rows', { n: out.skipped })}` : '');
+  msg.textContent = t('loaded', { n: out.dataset.tasks.length, range: `${out.dataset.range.from} → ${out.dataset.range.to}` }) + (out.skipped ? ` ${t('warn_rows', { n: out.skipped })}` : '')
+    ;   // ADR-0110: lists a pull skipped are shown on the data's own row (renderDatasets), where they stay
   renderDatasets(); renderBlocks();
   return true;
 }
@@ -2312,6 +2315,7 @@ function renderDatasets() {
       d.sample ? el('span', { class: 'pill', text: t('sample_note') }) : null,
       c.known ? el('span', { class: `pill ${c.complete ? 'ok' : 'warn'}`, text: c.complete ? t('complete') : t('incomplete', { got: c.got, want: c.want }) }) : null,
       el('button', { type: 'button', class: 'btn quiet', text: t('remove'), onclick: async () => { datasets = datasets.filter((x) => x.key !== d.key); await store.put(datasets); renderDatasets(); renderBlocks(); } }),
+      (d.skippedLists || []).length ? el('div', { class: 'msg warn ds-skip', role: 'status', text: t('pull_skipped_lists', { lists: d.skippedLists.map(listName).join(t('list_sep')) }) }) : null,   // ADR-0110: stays with the data
     );
   }), ...reportRows]);
 }
@@ -3493,7 +3497,7 @@ function orgCheckBox() {
 // ---------- the sync extension (ADR-0062): the same pull, run by the browser when myafaqy opens — or by one click ----------
 const extOn = () => !isTeamPortal && !!document.documentElement.dataset.afaqyExt;
 let extState = null, extLastAt = null;
-const EXT_NEEDED = '1.0.2';   // ADR-0104: the extension that says why it waits
+const EXT_NEEDED = '1.0.3';   // ADR-0104: the extension that says why it waits
 const monthLast = (ym) => { const d = new Date(Date.parse(`${ym}-01T00:00:00Z`)); d.setUTCMonth(d.getUTCMonth() + 1); d.setUTCDate(0); return d.toISOString().slice(0, 10); };
 const extRecipe = () => { const ym = saudiDay(new Date().toISOString()).slice(0, 7); return managerPullRecipe(`${ymPrev(ym)}-01`, monthLast(ym), pullBranch().code, lang, 'ext'); };
 const extSend = (now) => { if (extOn()) window.postMessage({ type: 'afaqy-ext-recipe', recipe: extRecipe(), now: !!now }, location.origin); };
