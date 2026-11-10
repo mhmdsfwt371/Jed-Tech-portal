@@ -17,6 +17,52 @@
 
 <!-- releases -->
 
+## v9.28 — 2026-11-10
+
+- السحب من ماي أفاقي ما بقاش بيقف بخطأ HTTP 401: لو مفتاح الدخول منتهي، بيستنى لحد ما ماي أفاقي يجدده وبعدين يكمّل لوحده.
+- حدّث الإضافة لـ 1.0.2 (البوابة هتديك الرابط)، واسحب أزرار ماي أفاقي من صفحة البيانات لشريط الإشارات تاني — الزرار القديم بيفضل بالكود القديم. والمهندسين يسحبوا زرار «مؤشراتي» تاني.
+
+<details><summary>English</summary>
+
+- Pulling from MyAFAQY no longer stops with HTTP 401: if the sign-in key has expired, the pull waits for MyAFAQY to renew it and carries on by itself.
+- Update the extension to 1.0.2 (the portal gives the link), and drag the MyAFAQY buttons from the Data page to your bookmarks bar again — an old button keeps its old code. Engineers drag «My KPIs» again too.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- مائی آفاقی سے حصول اب HTTP 401 پر نہیں رکتا: سائن اِن کی کلید ختم ہو تو مائی آفاقی کے تجدید کرنے تک انتظار کر کے خود جاری رہتا ہے۔
+- ایکسٹینشن 1.0.2 پر اپ ڈیٹ کریں، اور ڈیٹا صفحے سے مائی آفاقی کے بٹن دوبارہ بُک مارکس بار میں گھسیٹیں — پرانا بٹن پرانا کوڈ رکھتا ہے۔ انجینئر بھی «میرے اشاریے» دوبارہ گھسیٹیں۔
+
+</div>
+</details>
+
+
+## v9.27 — 2026-11-10
+
+- زرار «تنزيل مستخرج البريد» بقى بينزّل البرنامج على طول من البوابة نفسها — كان بيفتح صفحة على GitHub ما بتفتحش إلا لصاحب الحساب.
+- الموقع بقى بينشر ملفات البوابة بس: ملفات التوثيق والاختبارات ما بقتش متاحة على العنوان العام.
+
+<details><summary>English</summary>
+
+- «Download the Mail Extractor» now downloads the app straight from the portal — it opened a GitHub page that only the account owner could open.
+- The website now publishes the portal's own files only: the documentation and tests are no longer available on the public address.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «میل ایکسٹریکٹر ڈاؤن لوڈ کریں» اب پروگرام سیدھا پورٹل سے ڈاؤن لوڈ کرتا ہے — پہلے یہ GitHub کا صفحہ کھولتا تھا جو صرف اکاؤنٹ کا مالک کھول سکتا تھا۔
+- ویب سائٹ اب صرف پورٹل کی اپنی فائلیں شائع کرتی ہے: دستاویزات اور ٹیسٹ اب عوامی پتے پر دستیاب نہیں۔
+
+</div>
+</details>
+
+
 ## v9.26 — 2026-11-10
 
 - مكتبة الإكسل اتحدثت لإصدار آمن وبقت جزء من البوابة نفسها: التصدير والاستيراد بيشتغلوا من غير إنترنت، والبوابة ما بقتش بتحمّل أي حاجة من موقع تاني.

@@ -31,7 +31,9 @@ const swap = (file, re, value) => {
 };
 swap('config.js', /export const PORTAL_VERSION = '[\d.]+';/, `export const PORTAL_VERSION = '${next}';`);
 swap('sw.js', /const VERSION = '[\d.]+';/, `const VERSION = '${next}';`);
-write('version.json', JSON.stringify({ version: next, date, notes: { ar: notes.ar, en: notes.en, ur: notes.ur } }, null, 2) + '\n');
+// ADR-0107: the About window's counts travel in version.json (the changelog and the decisions are not on the public site)
+const counts = { versions: new Set([...(read('CHANGELOG.md').match(/^## v\d+\.\d+/gm) || []), `## v${next}`]).size, decisions: new Set(read('docs/START-HERE.md').match(/docs\/decisions\/(?!0000)0\d{3}(?=-)/g) || []).size };
+write('version.json', JSON.stringify({ version: next, date, notes: { ar: notes.ar, en: notes.en, ur: notes.ur }, counts }, null, 2) + '\n');
 
 const log = read('CHANGELOG.md');
 const marker = '<!-- releases -->';

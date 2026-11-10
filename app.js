@@ -1139,7 +1139,9 @@ async function openAbout() {
     el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn', text: t('about_news'), onclick: () => { dlg.close(); openNews(); } })));   // the dialog's own top bar closes it
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
   const cnt = async (req, re) => { try { const r = await req; if (!r.ok) return null; const s = await r.text(); return new Set(s.match(re) || []).size; } catch { return null; } };   // the site's own files, read only; distinct entries
-  const [nv, na] = await Promise.all([cnt(fetch('./CHANGELOG.md', { cache: 'no-store' }), /^## v\d+\.\d+/gm), cnt(fetch('./docs/START-HERE.md', { cache: 'no-store' }), /docs\/decisions\/(?!0000)0\d{3}(?=-)/g)]);
+  // ADR-0107: the counts come with version.json (written when the site is built) — the changelog and the decisions are not public
+  const vc = await fetch('./version.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  const nv = vc && vc.counts ? vc.counts.versions : null, na = vc && vc.counts ? vc.counts.decisions : null;
   const q = (c, v) => { const x = dlg.querySelector(c); if (x) x.textContent = v == null ? '—' : String(v); }; q('.about-nv', nv); q('.about-na', na);
 }
 // ---------- ADR-0090: a control-room number opens its detail — tiles, a bar per engineer, the list, Excel ----------
@@ -1224,7 +1226,7 @@ function teamPulse(doneM, doneP, onDay, hasPrev) {   // hasPrev: last month pull
 
 // ---------- ADR-0095: «Email Activity — Manager Inbox» from the extractor's file ----------
 let mailAct = { imports: [], recs: [] }, mailIds = { map: {}, ignored: [] };
-const MA_RELEASES = 'https://github.com/mhmdsfwt371/Jed-Tech-portal/releases?q=extractor&expanded=true';
+const MA_RELEASES = './assets/extractor/AFAQY-Mail-Extractor-win64.zip';   // ADR-0107: on the site itself — the private repository's releases page answers 404 to anyone not signed in
 const maSave = async () => { await store.kvPut('mailact', mailAct); await store.kvPut('mailids', mailIds); };
 const maClassify = (s) => mfCategory(s, mfRules());
 const maCats = () => [...mfRules().map((r) => r.k), 'other'];
@@ -1248,7 +1250,7 @@ async function maImport(f) {
 function maSection() {
   const up = el('input', { type: 'file', accept: '.jsonl.gz,.gz,.jsonl,.json,application/gzip', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) await maImport(f); } });
   const head = el('div', {}, el('h2', { text: t('ma_h') }), el('p', { class: 'hint', text: t('ma_lead') }),
-    el('div', { class: 'row' }, el('a', { class: 'btn', href: MA_RELEASES, target: '_blank', rel: 'noopener noreferrer', text: `⬇ ${t('ma_get')}` }), el('button', { type: 'button', class: 'btn primary ma-import', text: `📥 ${t('ma_import')}`, onclick: () => up.click() }), up));
+    el('div', { class: 'row' }, el('a', { class: 'btn', href: MA_RELEASES, download: 'AFAQY-Mail-Extractor-win64.zip', text: `⬇ ${t('ma_get')}` }), el('button', { type: 'button', class: 'btn primary ma-import', text: `📥 ${t('ma_import')}`, onclick: () => up.click() }), up));
   if (!mailAct.recs.length) return el('section', { class: 'ma-sec' }, head, el('p', { class: 'note', text: t('ma_none') }));
   // the imports, for audit
   const imps = el('details', { class: 'tucked ma-imps' }, el('summary', { text: t('ma_imports', { n: mailAct.imports.length, m: mailAct.recs.length }) }),
@@ -1339,7 +1341,7 @@ function mfParseRecs(recs) {
 function mfFailBox(err) {
   const locked = err && (err.name === 'NotReadableError' || /NotReadable|could not be read|permission/i.test(String(err.message || '')));
   if (locked) return el('div', { class: 'ma-big mf-locked' }, el('p', {}, el('b', { text: t('mf_locked_h') })), el('ol', { class: 'ma-steps' }, ['mf_locked_1', 'mf_locked_2', 'mf_locked_3'].map((k) => el('li', { text: t(k) }))));
-  return el('div', { class: 'note' }, el('p', { text: t('mf_fail') }), el('a', { class: 'linkish', href: MA_RELEASES, target: '_blank', rel: 'noopener noreferrer', text: t('ma_get') }),
+  return el('div', { class: 'note' }, el('p', { text: t('mf_fail') }), el('a', { class: 'linkish', href: MA_RELEASES, download: 'AFAQY-Mail-Extractor-win64.zip', text: t('ma_get') }),
     err ? el('details', { class: 'mf-detail' }, el('summary', { text: t('mf_detail') }), el('code', { dir: 'ltr', text: `${err.name || 'Error'}: ${String(err.message || err).slice(0, 600)}` })) : null);
 }
 
@@ -1447,7 +1449,7 @@ async function renderSync() {
 const MF_BROWSER_MAX = 5 * 1073741824;   // ADR-0097: read from the disk in the background up to 5 GB; beyond that the extractor is faster
 function maTooBig(f) {
   return el('div', { class: 'ma-big' }, el('p', {}, el('b', { text: t('ma_big_h', { gb: (f.size / 1073741824).toFixed(1) }) })), el('ol', { class: 'ma-steps' }, ['ma_step1', 'ma_step2', 'ma_step3', 'ma_step4'].map((k) => el('li', { text: t(k) }))),
-    el('div', { class: 'row' }, el('a', { class: 'btn primary', href: MA_RELEASES, target: '_blank', rel: 'noopener noreferrer', text: `⬇ ${t('ma_get')}` })));
+    el('div', { class: 'row' }, el('a', { class: 'btn primary', href: MA_RELEASES, download: 'AFAQY-Mail-Extractor-win64.zip', text: `⬇ ${t('ma_get')}` })));
 }
 
 // ---------- ADR-0100: a person's KPIs as an interactive dashboard — real numbers, KPI terms, definitions on hover ----------
@@ -3590,7 +3592,7 @@ function orgCheckBox() {
 // ---------- the sync extension (ADR-0062): the same pull, run by the browser when myafaqy opens — or by one click ----------
 const extOn = () => !isTeamPortal && !!document.documentElement.dataset.afaqyExt;
 let extState = null, extLastAt = null;
-const EXT_NEEDED = '1.0.1';   // ADR-0104: the extension that says why it waits
+const EXT_NEEDED = '1.0.2';   // ADR-0104: the extension that says why it waits
 const monthLast = (ym) => { const d = new Date(Date.parse(`${ym}-01T00:00:00Z`)); d.setUTCMonth(d.getUTCMonth() + 1); d.setUTCDate(0); return d.toISOString().slice(0, 10); };
 const extRecipe = () => { const ym = saudiDay(new Date().toISOString()).slice(0, 7); return managerPullRecipe(`${ymPrev(ym)}-01`, monthLast(ym), pullBranch().code, lang, 'ext'); };
 const extSend = (now) => { if (extOn()) window.postMessage({ type: 'afaqy-ext-recipe', recipe: extRecipe(), now: !!now }, location.origin); };

@@ -742,11 +742,14 @@ export function managerPullRecipe(from, to, branch = JEDDAH_BRANCH, lang = 'ar',
     MMS: months.map((m) => ({ month: m.key, yearId: m.yearId, quarterId: m.quarterId, monthId: m.monthId, rd: m.requestDate })), KEEP: TECH_FIELDS };
 }
 export const MANAGER_PULL_KEYS = ['M', 'FROM', 'TO', 'BR', 'DEL', 'PORTAL', 'PACKET', 'FZ', 'TZ', 'NZ', 'LATER', 'JED', 'SCH', 'RSCH', 'MMS', 'KEEP'];
+/** ADR-0108: MyAFAQY's key lives 8 hours and is renewed in the same place a moment after the page opens; a pull that read it
+ *  first got a stale key (HTTP 401). Every pull now waits for a valid key, and on a 401 waits for the renewed one and retries once. */
+export const TOKEN_JS = "const RENEW='Your MyAFAQY session needs renewing: press F5 on this page, then press the button again. · جلسة ماي أفاقي محتاجة تتجدد: اضغط F5 في الصفحة دي وبعدين اضغط الزرار تاني.';const jwtExp=t=>{try{const p=JSON.parse(atob(String(t).split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));return p&&p.exp?p.exp*1000:0}catch(e){return 0}};const tokOk=t=>!!t&&(!jwtExp(t)||jwtExp(t)-Date.now()>60000);const freshTok=async(old,ms)=>{const t0=Date.now();for(;;){const t=localStorage.getItem('token');if(tokOk(t)&&t!==old)return t;if(Date.now()-t0>ms)return null;await new Promise(r=>setTimeout(r,1000))}};";
 /** The pull itself, with no values woven in: it reads only the recipe's names. The bookmark and the extension run this same text. */
 export const MANAGER_PULL_BODY = `const RTO=(()=>{const d=new Date(Date.now()+108e5).toISOString().slice(0,10);return TO>d?d:TO})();
 
 if(location.hostname!=='myafaqy.com'){alert(M[0]);return}
-const tk=localStorage.getItem('token');if(!tk){alert(M[1]);return}
+${TOKEN_JS}let tk=localStorage.getItem('token');if(!tk){alert(M[1]);return}if(!tokOk(tk)){const n=await freshTok(null,90000);if(!n){alert(RENEW);return}tk=n}
 let sink=null,nonce='',ready=false,acked=null,receiver=null;let targetOrigin='';
 if(DEL==='auto'){
   try{
@@ -761,10 +764,10 @@ if(DEL==='auto'){
   }catch(_){sink=null;}
 }/* popup setup finished */
 const box=document.createElement('div');box.style.cssText='position:fixed;inset:auto 16px 16px auto;z-index:2147483647;background:#0F2231;color:#fff;padding:12px 16px;border-radius:10px;font:14px system-ui;max-width:320px';box.textContent=M[2];document.body.append(box);
-const H={'Authorization':'Bearer '+tk,'Content-Type':'application/json','X-Timezone-Offset':'-180','X-Client-Id':localStorage.getItem('browser_client_id')||'','lang':'en'};
+const H={'Authorization':'Bearer '+tk,'Content-Type':'application/json','X-Timezone-Offset':'-180','X-Client-Id':localStorage.getItem('browser_client_id')||'','lang':'en'};const reauth=async()=>{const n=await freshTok(tk,60000);if(!n)return false;tk=n;H['Authorization']='Bearer '+n;return true};const fx=async(u,o)=>{let r=await fetch(u,o);if(r.status===401&&await reauth())r=await fetch(u,o);if(r.status===401)throw new Error(RENEW);return r};
 const say=t=>{box.textContent=t};const wait=ms=>new Promise(r=>setTimeout(r,ms));
-const post=async(path,body)=>{const r=await fetch('https://crmbackend.afaqy.sa/'+path,{method:'POST',headers:H,body:JSON.stringify(body)});if(!r.ok)throw new Error(path+' HTTP '+r.status);const j=await r.json();if(j&&j.success===false)throw new Error(j.message||path+' refused');return j};
-const get=async(path)=>{const r=await fetch('https://crmbackend.afaqy.sa/'+path,{headers:H});if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()};
+const post=async(path,body)=>{const r=await fx('https://crmbackend.afaqy.sa/'+path,{method:'POST',headers:H,body:JSON.stringify(body)});if(!r.ok)throw new Error(path+' HTTP '+r.status);const j=await r.json();if(j&&j.success===false)throw new Error(j.message||path+' refused');return j};
+const get=async(path)=>{const r=await fx('https://crmbackend.afaqy.sa/'+path,{headers:H});if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()};
 const dl=(name,obj)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(obj)],{type:'application/json'}));a.download=name;document.body.append(a);a.click();a.remove()};
 const taskBody=(b,n,size,co,grp)=>({donePageNumber:b==='done'?n:0,donePageSize:b==='done'?size:1,openPageNumber:b==='open'?n:0,openPageSize:b==='open'?size:1,toDoPageNumber:b==='toDo'?n:0,toDoPageSize:b==='toDo'?size:1,orderBy:1,taskGroupId:grp,searchKey:'',tasksGridStatusId:1,assignedBy:[],createdBy:[],agent:[],statusIds:[],type:[],priority:[],assignedOn:[],completedOn:co});
 try{
@@ -837,7 +840,7 @@ export function buildTypesBookmarklet(portalUrl, branch = JEDDAH_BRANCH, lang = 
   }[['en', 'ur'].includes(lang) ? lang : 'ar'];
   const code = `(async()=>{const M=${JSON.stringify(msg)},BR=${JSON.stringify(String(branch))},DEL='auto',PORTAL=${JSON.stringify(targetUrl.origin + targetUrl.pathname)},PACKET=${JSON.stringify(TEAMTYPES_AUTO_SCHEMA)};
 if(location.hostname!=='myafaqy.com'){alert(M[0]);return}
-const tk=localStorage.getItem('token');if(!tk){alert(M[1]);return}
+${TOKEN_JS}let tk=localStorage.getItem('token');if(!tk){alert(M[1]);return}if(!tokOk(tk)){const n=await freshTok(null,90000);if(!n){alert(RENEW);return}tk=n}
 let sink=null,nonce='',ready=false,acked=null,receiver=null;let targetOrigin='';
 if(DEL==='auto'){
   try{
@@ -852,10 +855,10 @@ if(DEL==='auto'){
   }catch(_){sink=null;}
 }/* popup setup finished */
 const box=document.createElement('div');box.style.cssText='position:fixed;inset:auto 16px 16px auto;z-index:2147483647;background:#0F2231;color:#fff;padding:12px 16px;border-radius:10px;font:14px system-ui;max-width:320px';box.textContent=M[2];document.body.append(box);
-const H={'Authorization':'Bearer '+tk,'Content-Type':'application/json','X-Timezone-Offset':'-180','X-Client-Id':localStorage.getItem('browser_client_id')||'','lang':'en'};
+const H={'Authorization':'Bearer '+tk,'Content-Type':'application/json','X-Timezone-Offset':'-180','X-Client-Id':localStorage.getItem('browser_client_id')||'','lang':'en'};const reauth=async()=>{const n=await freshTok(tk,60000);if(!n)return false;tk=n;H['Authorization']='Bearer '+n;return true};const fx=async(u,o)=>{let r=await fetch(u,o);if(r.status===401&&await reauth())r=await fetch(u,o);if(r.status===401)throw new Error(RENEW);return r};
 const say=t=>{box.textContent=t};const wait=ms=>new Promise(r=>setTimeout(r,ms));
-const post=async(path,body)=>{const r=await fetch('https://crmbackend.afaqy.sa/'+path,{method:'POST',headers:H,body:JSON.stringify(body)});if(!r.ok)throw new Error(path+' HTTP '+r.status);const j=await r.json();if(j&&j.success===false)throw new Error(j.message||path+' refused');return j};
-const get=async(path)=>{const r=await fetch('https://crmbackend.afaqy.sa/'+path,{headers:H});if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()};
+const post=async(path,body)=>{const r=await fx('https://crmbackend.afaqy.sa/'+path,{method:'POST',headers:H,body:JSON.stringify(body)});if(!r.ok)throw new Error(path+' HTTP '+r.status);const j=await r.json();if(j&&j.success===false)throw new Error(j.message||path+' refused');return j};
+const get=async(path)=>{const r=await fx('https://crmbackend.afaqy.sa/'+path,{headers:H});if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()};
 try{
 const uname={};const teamsSeen={};
 for(let pg=0;;pg++){const T=await post('Teams/GetAllTeams',{isSearchFilter:false,searchKey:'',search:{},pageSize:50,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const arr=(T.data&&(T.data.data||T.data))||[];for(const t of arr)teamsSeen[String(t.id)]=t;const tot=(T.data&&T.data.totalPages)||1;if(pg+1>=tot||!arr.length)break;await wait(200)}
@@ -894,11 +897,11 @@ export function buildAssignBookmarklet(lang = 'ar', defaultNames = []) {
   }[lang] || {};
   const code = `(async()=>{const M=${JSON.stringify(M)},RTL=${lang === 'en' ? 'false' : 'true'};
 if(location.hostname!=='myafaqy.com'){alert(M.only);return}
-const tk=localStorage.getItem('token');if(!tk){alert(M.login);return}
-const H={'Authorization':'Bearer '+tk,'Content-Type':'application/json','X-Timezone-Offset':'-180','X-Client-Id':localStorage.getItem('browser_client_id')||'','lang':'en'};
+${TOKEN_JS}let tk=localStorage.getItem('token');if(!tk){alert(M.login);return}if(!tokOk(tk)){const n=await freshTok(null,90000);if(!n){alert(RENEW);return}tk=n}
+const H={'Authorization':'Bearer '+tk,'Content-Type':'application/json','X-Timezone-Offset':'-180','X-Client-Id':localStorage.getItem('browser_client_id')||'','lang':'en'};const reauth=async()=>{const n=await freshTok(tk,60000);if(!n)return false;tk=n;H['Authorization']='Bearer '+n;return true};const fx=async(u,o)=>{let r=await fetch(u,o);if(r.status===401&&await reauth())r=await fetch(u,o);if(r.status===401)throw new Error(RENEW);return r};
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
-const get=async(path)=>{const r=await fetch('https://crmbackend.afaqy.sa/'+path,{headers:H});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(path+' '+(j.message||r.status));return j};
-const post=async(path,body)=>{const r=await fetch('https://crmbackend.afaqy.sa/'+path,{method:'POST',headers:H,body:body===undefined?undefined:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(path+' '+(j.message||r.status));return j};
+const get=async(path)=>{const r=await fx('https://crmbackend.afaqy.sa/'+path,{headers:H});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(path+' '+(j.message||r.status));return j};
+const post=async(path,body)=>{const r=await fx('https://crmbackend.afaqy.sa/'+path,{method:'POST',headers:H,body:body===undefined?undefined:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(path+' '+(j.message||r.status));return j};
 const old=document.getElementById('afaqy-assign');if(old)old.remove();
 const box=document.createElement('div');box.id='afaqy-assign';box.dir=RTL?'rtl':'ltr';box.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);width:min(760px,96vw);max-height:92vh;overflow:auto;z-index:2147483647;background:#FFFFFF;color:#0F2231;border:1px solid #C3CED7;border-radius:12px;box-shadow:0 12px 40px rgba(15,34,49,.25);font:14px/1.5 system-ui,sans-serif;padding:16px 18px';
 const el=(t,a,...k)=>{const n=document.createElement(t);for(const[x,v]of Object.entries(a||{})){if(x==='text')n.textContent=v;else if(x.startsWith('on'))n.addEventListener(x.slice(2),v);else n.setAttribute(x,v)}for(const c of k.flat())if(c!=null)n.append(c.nodeType?c:String(c));return n};
@@ -934,15 +937,15 @@ export function buildBookmarklet(portalUrl, lang = 'ar') {
   }[lang] || [];
   const code = `(async()=>{const M=${JSON.stringify(msg)},P=${JSON.stringify(portalUrl)},PO=new URL(P).origin;
 if(location.hostname!=='myafaqy.com'){alert(M[0]);return}
-const tk=localStorage.getItem('token');if(!tk){alert(M[1]);return}
+${TOKEN_JS}let tk=localStorage.getItem('token');if(!tk){alert(M[1]);return}if(!tokOk(tk)){const n=await freshTok(null,90000);if(!n){alert(RENEW);return}tk=n}
 let w=window.open(P+'#me-wait','afaqy-portal');
 const box=document.createElement('div');box.style.cssText='position:fixed;inset:auto 16px 16px auto;z-index:2147483647;background:#0F2231;color:#fff;padding:12px 16px;border-radius:10px;font:14px system-ui';box.textContent=M[2];document.body.append(box);
 try{const u=JSON.parse(decodeURIComponent(escape(atob(tk.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))));const me=String(u.UserId);
-const H={'Authorization':'Bearer '+tk,'Content-Type':'application/json','X-Timezone-Offset':'-180','X-Client-Id':localStorage.getItem('browser_client_id')||'','lang':'en'};
+const H={'Authorization':'Bearer '+tk,'Content-Type':'application/json','X-Timezone-Offset':'-180','X-Client-Id':localStorage.getItem('browser_client_id')||'','lang':'en'};const reauth=async()=>{const n=await freshTok(tk,60000);if(!n)return false;tk=n;H['Authorization']='Bearer '+n;return true};const fx=async(u,o)=>{let r=await fetch(u,o);if(r.status===401&&await reauth())r=await fetch(u,o);if(r.status===401)throw new Error(RENEW);return r};
 const day=86400000,now=Date.now(),sa=d=>new Date(Date.parse(new Date(d+3*3600000).toISOString().slice(0,10)+'T00:00:00+03:00')).toISOString();
 const since=sa(now-${ME_MONTHS}*30.5*day),end=sa(now+day);
-const post=async(path,body)=>{const r=await fetch('https://crmbackend.afaqy.sa/'+path,{method:'POST',headers:H,body:JSON.stringify(body)});if(!r.ok)throw new Error(path+' HTTP '+r.status);const j=await r.json();if(j&&j.success===false)throw new Error(j.message||'refused');return j};
-const get=async(path)=>{const r=await fetch('https://crmbackend.afaqy.sa/'+path,{headers:H});if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()};
+const post=async(path,body)=>{const r=await fx('https://crmbackend.afaqy.sa/'+path,{method:'POST',headers:H,body:JSON.stringify(body)});if(!r.ok)throw new Error(path+' HTTP '+r.status);const j=await r.json();if(j&&j.success===false)throw new Error(j.message||'refused');return j};
+const get=async(path)=>{const r=await fx('https://crmbackend.afaqy.sa/'+path,{headers:H});if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()};
 const soft=async f=>{try{return await f()}catch(e){return null}};
 const base=(g,c,b,n,s)=>({donePageNumber:b==='done'?n:0,donePageSize:b==='done'?s:1,openPageNumber:b==='open'?n:0,openPageSize:b==='open'?s:1,toDoPageNumber:b==='toDo'?n:0,toDoPageSize:b==='toDo'?s:1,orderBy:1,taskGroupId:g,searchKey:'',tasksGridStatusId:1,assignedBy:[],createdBy:[],agent:[],statusIds:[],type:[],priority:[],assignedOn:[],completedOn:c});
 const rows=new Map();let n=0;

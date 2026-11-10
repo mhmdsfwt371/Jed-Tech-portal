@@ -15,9 +15,11 @@
     if (today() > R.TO) { await S.set({ status: 'needs-portal' }); return; }   // a new month: opening the portal once renews the recipe
     const due = !!st.want || !st.lastAt || Date.now() - st.lastAt > 12 * 3600e3;
     if (!due) return;
-    if (!localStorage.getItem('token')) {                               // not signed in: say so, and start by itself once signed in (1.0.1)
+    const jwtExp = (t) => { try { const p = JSON.parse(atob(String(t).split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); return p && p.exp ? p.exp * 1000 : 0; } catch { return 0; } };
+    const tokOk = (t) => !!t && (!jwtExp(t) || jwtExp(t) - Date.now() > 60000);   // 1.0.2: a key that has expired (it lives 8 h) is not a sign-in
+    if (!tokOk(localStorage.getItem('token'))) {                        // not signed in, or the key is being renewed: say so, start by itself once it is valid (1.0.1, 1.0.2)
       await S.set({ status: 'needs-signin' });
-      if (!waiting) { waiting = true; const t0 = Date.now(); const tick = setInterval(() => { if (localStorage.getItem('token')) { clearInterval(tick); waiting = false; attempt(); } else if (Date.now() - t0 > 5 * 60e3) { clearInterval(tick); waiting = false; S.set({ status: 'signin-timeout' }); } }, 2000); }
+      if (!waiting) { waiting = true; const t0 = Date.now(); const tick = setInterval(() => { if (tokOk(localStorage.getItem('token'))) { clearInterval(tick); waiting = false; attempt(); } else if (Date.now() - t0 > 5 * 60e3) { clearInterval(tick); waiting = false; S.set({ status: 'signin-timeout' }); } }, 2000); }
       return;
     }
     if (st.runningAt && Date.now() - st.runningAt < 10 * 60e3) { if (st.want) await S.set({ status: 'busy' }); return; }   // a pull already running: say so (1.0.1)

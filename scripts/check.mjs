@@ -432,6 +432,13 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
   const { extensionPullScript } = await import(new URL('core.js', root));
   if (!exists('extension/pull.js') || read('extension/pull.js') !== extensionPullScript()) note('extension/pull.js is out of date — run node scripts/build-extension.mjs');
   if (!exists('assets/afaqy-sync-extension.zip')) note('assets/afaqy-sync-extension.zip is missing — zip the extension folder');
+  // ADR-0108: every MyAFAQY pull (the extension, the team, types, assignment and My KPIs bookmarks) waits for a valid key and renews-and-retries on a 401
+  { const core = await import(new URL('../core.js', import.meta.url).href);
+    const scripts = { extension: read('extension/pull.js'), myKpis: decodeURIComponent(core.buildBookmarklet('https://x/', 'en')), types: decodeURIComponent(core.buildTypesBookmarklet('https://x/')), assign: decodeURIComponent(core.buildAssignBookmarklet('en')) };
+    for (const [n, s] of Object.entries(scripts)) {
+      if (!s.includes('const freshTok=async(old,ms)') || !/if\(!tokOk\(tk\)\)\{const n=await freshTok\(null,90000\)/.test(s) || !s.includes("const fx=async(u,o)=>{let r=await fetch(u,o);if(r.status===401&&await reauth())")) note(`${n}: the MyAFAQY key wait or the renew-and-retry is missing (ADR-0108)`);
+      if (/await fetch\('https:\/\/crmbackend\.afaqy\.sa\//.test(s)) note(`${n}: a MyAFAQY request bypasses the renewing fetch (ADR-0108)`);
+    } }
   // ADR-0106: the portal loads no script from another site at run time (offline, and no third party in the page)
   for (const f of ['app.js', 'core.js', 'index.html']) { const m = read(f).match(/https:\/\/(cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net|unpkg\.com)[^'"\s]*\.js/); if (m) note(`${f} loads a script from another site (${m[0]}) — vendor it under assets/vendor/`); }
   if (!exists('assets/vendor/xlsx.full.min.js') || !/version="0\.(2\d|[3-9]\d)\.\d+"/.test(read('assets/vendor/xlsx.full.min.js'))) note('assets/vendor/xlsx.full.min.js is missing or older than 0.20 (CVE-2023-30533, CVE-2024-22363)');

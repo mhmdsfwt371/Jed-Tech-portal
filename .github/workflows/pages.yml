@@ -1,0 +1,33 @@
+# ADR-0107 — publishes the website from the app's own files only (scripts/build-site.mjs); the repository's documentation,
+# tests and scripts are not served. Also puts the latest Mail Extractor on the site, so its download works for everyone.
+name: pages
+on:
+  push: { branches: [main] }
+  workflow_dispatch:
+permissions: { contents: read, pages: write, id-token: write }
+concurrency: { group: pages, cancel-in-progress: false }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: node scripts/build-site.mjs
+      - name: The latest Mail Extractor, from the repository's releases
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          tag=$(gh release list --limit 30 --json tagName -q '[.[] | select(.tagName | startswith("extractor-v"))][0].tagName')
+          mkdir -p _site/assets/extractor
+          gh release download "$tag" --pattern 'AFAQY-Mail-Extractor-win64.zip*' --dir _site/assets/extractor
+          (cd _site/assets/extractor && sha256sum -c AFAQY-Mail-Extractor-win64.zip.sha256)
+          echo "{\"tag\":\"$tag\"}" > _site/assets/extractor/latest.json
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: _site }
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: { name: github-pages, url: '${{ steps.d.outputs.page_url }}' }
+    steps:
+      - id: d
+        uses: actions/deploy-pages@v4

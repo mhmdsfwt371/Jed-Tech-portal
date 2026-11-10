@@ -9,3 +9,4 @@ __pycache__/
 tools/mail-extractor/build/
 tools/mail-extractor/dist/
 *.spec
+_site/
