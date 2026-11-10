@@ -20,7 +20,12 @@ jobs:
           tag=$(gh release list --limit 30 --json tagName -q '[.[] | select(.tagName | startswith("extractor-v"))][0].tagName')
           mkdir -p _site/assets/extractor
           gh release download "$tag" --pattern 'AFAQY-Mail-Extractor-win64.zip*' --dir _site/assets/extractor
-          (cd _site/assets/extractor && sha256sum -c AFAQY-Mail-Extractor-win64.zip.sha256)
+          # the release's checksum file is written on Windows: the hash alone, in capitals, with a CRLF — compare the hashes directly
+          cd _site/assets/extractor
+          want=$(tr -d '\r\n \t' < AFAQY-Mail-Extractor-win64.zip.sha256 | cut -c1-64 | tr 'A-F' 'a-f')
+          got=$(sha256sum AFAQY-Mail-Extractor-win64.zip | cut -d' ' -f1)
+          [ ${#want} -eq 64 ] && [ "$want" = "$got" ] || { echo "checksum mismatch: release $want, file $got"; exit 1; }
+          cd - > /dev/null
           echo "{\"tag\":\"$tag\"}" > _site/assets/extractor/latest.json
       - uses: actions/upload-pages-artifact@v3
         with: { path: _site }
