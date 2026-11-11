@@ -17,6 +17,13 @@ export default {
     g_planner_h: 'Team plans',
     g_planner_b: 'The manager’s page only: upload the team structure file (an HTML page) and it shows as it looks, exactly as uploaded. It stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file, or remove it from the device.',
     // ADR-0070: the one monthly place
+    pm_med: 'Team median {v}',
+    pm_med_up: 'Above the team median ({v})',
+    pm_med_down: 'Below the team median ({v})',
+    pm_med_eq: 'At the team median ({v})',
+    pm_med_fast: 'Faster than the team median ({v})',
+    pm_med_slow: 'Slower than the team median ({v})',
+    pm_med_note: 'Team median = the middle value among the {n} of you under the same team lead, for the same period. No colleague’s own number or name is shown.',
     rd_c_over7_d: 'Of the open tasks: those created more than 7 days before the end of the period.',
     rd_c_over7: 'Over 7 days',
     rd_say_mail8: 'The system stamps these times, so they can be relied on.',

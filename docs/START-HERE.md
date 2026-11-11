@@ -142,6 +142,7 @@
 | `docs/decisions/0110-team-pull-for-any-account.md` | The team pull works for any MyAFAQY account: only the tasks list is essential (extension 1.0.3) |
 | `docs/decisions/0111-monthly-readings.md` | «Monthly readings»: the proposal's measurement basis for any pulled month; the workbook correction; the lost working environment and `tests/browser/` |
 | `docs/decisions/0112-engineer-page-and-readings-clarity.md` | The walk-through as an engineer and a team lead: the wrong rank, the phone layout, the wording; what was left for a later decision |
+| `docs/decisions/0113-team-median-on-the-engineers-tiles.md` | The team's median beside the engineer's own numbers; who counts as his team; the three-person floor; state of the recovered suites |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

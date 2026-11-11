@@ -43,9 +43,22 @@ with sync_playwright() as p:
     leg=pg.evaluate("[...document.querySelectorAll('#view-me .pm-legend .pm-lg-l')].map(e=>e.innerText)")
     check(f'M10 the chart\'s labels are readable in full ({leg})', not cut and 'From e-mail' in leg, cut)
     check('M11 «How it is calculated» is folded away until asked for', pg.evaluate("(()=>{const d=document.querySelector('#view-me details.me-defs');return d&&!d.open&&d.querySelectorAll('li').length>3})()"))
+    med=pg.evaluate("[...document.querySelectorAll('#view-me .pm-tile .pm-med')].map(e=>[e.dataset.med, e.innerText, e.className])")
+    mm={k:(t,c) for k,t,c in med}
+    check(f'M14 five tiles carry the team median, each said as better or worse ({[t for _,t,_ in med]})', set(mm)=={'thru','load','rate','mttr','pts'} and mm['load'][0].startswith('Team median ') and all(re.search(r'(Above|Below|At|Faster than|Slower than) the team median ', mm[k][0]) for k in ['thru','rate','mttr','pts']), med)
+    check('M15 it agrees with his rank: rank 5 of 7 by points is below the median, and marked so', mm['pts'][0].startswith('Below the team median') and ' bad' in mm['pts'][1])
+    note=pg.locator('#view-me .pm-med-note').inner_text()
+    check(f'M16 a line says what the median is and that no colleague\'s number is shown ({note[:44]}…)', 'middle value among the 7' in note and 'No colleague' in note)
+    w2=pg.evaluate("[innerWidth, document.documentElement.scrollWidth]")
+    check('M17 the page still fits the phone with the new lines', w2[1]<=w2[0]+2, w2)
     check('M12 no page error', not pg.errs, pg.errs[:2])
     pg.screenshot(path='/tmp/me_after.png', full_page=True); c.close()
     c,pg=open_as(b, phone=False); t2=pg.locator('#view-me').inner_text()
     check('M13 on a computer it says «Hover», and the page still has its six tiles', 'Hover any tile' in t2 and 'Tap any tile' not in t2 and pg.locator('#view-me .pm-tile').count()>=6)
+    pg.evaluate("document.querySelector('.va-exit, #va-exit, [data-va-exit]')?.click()"); pg.wait_for_timeout(300)
+    for bt in pg.locator('button:has-text("Exit")').all():
+        if bt.is_visible(): bt.click(); break
+    pg.wait_for_timeout(900); pg.evaluate("location.hash='#me'"); pg.wait_for_timeout(900)
+    check('M18 the manager\'s own page carries no team median (it is for the engineer\'s page)', not pg.evaluate("document.body.classList.contains('viewing-as')") and pg.locator('#view-me .pm-med').count()==0 and pg.locator('#view-me .pm-tile').count()>=6)
     c.close(); b.close()
 print(f'\n{"ALL PASS" if not fails else str(len(fails))+" FAIL"}'); sys.exit(1 if fails else 0)

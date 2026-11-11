@@ -1400,13 +1400,20 @@ function pmTrend(hist) {   // hist: newest first → drawn oldest to newest. ADR
   for (const [cx, cy, v] of pts) { s.append(svgEl('circle', { cx, cy, r: 3.5, class: 'pm-dot-avg' })); const tx = svgEl('text', { x: cx, y: cy - 7, 'text-anchor': 'middle', class: 'pm-val pm-val-avg' }); tx.textContent = hmOf(v); s.append(tx); }
   return el('div', { class: 'pm-trend-wrap' }, s);
 }
-function pmDash({ n, p, hist, open, share, ml, pml, rdOn = false, flag = null, item = null }) {
+function pmDash({ n, p, hist, open, share, ml, pml, rdOn = false, flag = null, item = null, med = null }) {
   const pct = (a, b) => (b ? Math.round((a / b) * 100) : null), rate = pct(n.closed, n.total), prate = p ? pct(p.closed, p.total) : null;
   const oldest = open.length ? Math.max(...open.map((x) => x.ageHours || 0)) : 0;
   const H = [...hist].reverse(), sp = (f) => H.map((h) => f(h.x));
+  // v9.33: the team's median beside the person's own number (his team = those under the same team lead; never a colleague's own number)
+  const medLine = (key, cur, m, show, better) => { if (!med || m == null || cur == null) return null; const eq = Math.abs(cur - m) < 1e-9, up = cur > m;
+    const k = better === 0 ? 'pm_med' : eq ? 'pm_med_eq' : better < 0 ? (up ? 'pm_med_slow' : 'pm_med_fast') : (up ? 'pm_med_up' : 'pm_med_down');
+    const good = better === 0 || eq ? '' : (better < 0 ? !up : up) ? ' good' : ' bad';
+    return el('small', { class: `pm-med${good}`, 'data-med': key, text: t(k, { v: show(m) }) }); };
+  const MEDS = med ? { thru: medLine('thru', n.closed, med.closed, (v) => String(v), 1), load: medLine('load', n.total, med.total, (v) => String(v), 0), rate: medLine('rate', n.total ? Math.round((n.closed / n.total) * 100) : null, med.rate, (v) => `${v}%`, 1),
+    mttr: medLine('mttr', n.avg, med.avg, (v) => hmOf(v), -1), pts: medLine('pts', n.points, med.points, (v) => String(v), 1) } : {};
   const tile = (key, val, sub, delta, spark, fl) => el('div', { class: 'km-tile pm-tile', tabindex: '0', 'data-kpi': key },
     el('span', { class: 'pm-k' }, el('b', { text: t(`pm_${key}`) }), t(`pm_${key}_term`).toLowerCase().includes(t(`pm_${key}`).toLowerCase()) ? null : el('i', { class: 'pm-term', text: t(`pm_${key}_term`) })),
-    el('strong', { class: 'pm-v', text: val }), sub ? el('small', { class: 'hint', text: sub }) : null, delta, spark, fl ? el('span', { class: 'pm-flag' }, fl) : null);
+    el('strong', { class: 'pm-v', text: val }), sub ? el('small', { class: 'hint', text: sub }) : null, MEDS[key] || null, delta, spark, fl ? el('span', { class: 'pm-flag' }, fl) : null);
   const d = (cur, prev, kind) => (p && prev != null && cur != null ? kmDelta(cur, prev, kind, pml) : null);
   const withTip = (node, key) => { attachTip(node, t(`pm_${key}_def`), false); node.setAttribute('aria-description', t(`pm_${key}_def`)); return node; };   // ADR-0101: the one tooltip
   const F = (lab, k) => (flag ? flag(lab, k) : null);
@@ -1432,6 +1439,7 @@ function pmDash({ n, p, hist, open, share, ml, pml, rdOn = false, flag = null, i
   const trendBox = tr ? el('div', { class: 'pm-card pm-wide' }, el('h4', {}, t('pm_trend_h'), el('i', { class: 'pm-term', text: 'Throughput · MTTR trend' })), tr,
     el('p', { class: 'hint pm-keys' }, el('span', { class: 'pm-key k-total' }), t('km_total'), el('span', { class: 'pm-key k-closed' }), t('km_closed'), el('span', { class: 'pm-key k-avg' }), t('km_avg'))) : null;
   return el('section', { class: 'pm-dash' }, el('p', { class: 'hint pm-period', text: `${p ? `${t('pm_cmp', { m: ml, p: pml })} ` : ''}${t(window.matchMedia && window.matchMedia('(hover: none)').matches ? 'pm_tip_tap' : 'pm_tip_hover')}` }), tiles,
+    med ? el('p', { class: 'hint pm-med-note', text: t('pm_med_note', { n: med.n }) }) : null,
     el('div', { class: `pm-cards${trendBox ? '' : ' no-trend'}` }, trendBox, mixBox, ageBox));
 }
 
@@ -3117,6 +3125,14 @@ function personMonthView({ id, tasks, acts = [], months, ym, head = '', share = 
   const ZERO = { email: 0, self: 0, other: 0, total: 0, closed: 0, avg: null, points: 0 };
   const one = (y) => { const r = periodRangeOf(y); return monthNumbers(factor1(tasks, { range: r, team: [id] }), weightedPoints(tasks, acts, wt, { range: r, team: [id] }), id) || ZERO; };
   const n = one(ym), p = hasPrev ? one(pm) : null;
+  let med = null;
+  if ((isTeamPortal || viewAs) && me && me.user && String(me.user.id) === String(id)) {
+    const ro = roster().people || {}, lead = ro[id] && ro[id].leaderId;
+    const peers = lead ? Object.keys(ro).filter((k) => k === String(id) || (ro[k].leaderId === lead && !ro[k].onLeave)).filter((k) => k === String(id) || tasks.some((x) => x.assigneeId === k)) : [];
+    const rg = periodRangeOf(ym), xs = peers.map((k) => monthNumbers(factor1(tasks, { range: rg, team: [k] }), weightedPoints(tasks, acts, wt, { range: rg, team: [k] }), k)).filter((x) => x && x.total > 0);
+    const mdn = (v) => { const s = v.filter((q) => q != null).sort((x, y) => x - y); if (!s.length) return null; const h = Math.floor(s.length / 2); return Math.round((s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2) * 10) / 10; };
+    if (xs.length >= 3) med = { n: xs.length, closed: mdn(xs.map((x) => x.closed)), total: mdn(xs.map((x) => x.total)), rate: mdn(xs.map((x) => Math.round((x.closed / x.total) * 100))), avg: mdn(xs.map((x) => x.avg)), points: mdn(xs.map((x) => x.points)) };   // fewer than three would show one colleague's own number
+  }
   const rdOn = rdKnownFor(periodRangeOf(ym));
   const rows = [['src_email', 'email', 'n'], ['src_self', 'self', 'n'], ['src_other', 'other', 'n'], ['km_total', 'total', 'n'], ['km_closed', 'closed', 'h'], ['km_avg', 'avg', 'l'], ...(rdOn ? [['km_rd', 'rd', 'n']] : []), ['col_points', 'points', 'h']];
   const fmt = (k, v) => (k === 'avg' ? hmOf(v) : String(v ?? '—'));
@@ -3129,7 +3145,7 @@ function personMonthView({ id, tasks, acts = [], months, ym, head = '', share = 
   const flag = (lab, k) => flagBtn({ who, period: ml, label: t(lab), value: fmt(k, n[k]), prev: p ? fmt(k, p[k]) : '—', def: t(SNAP_DEF[k] || 'km_total'), asOf: dataAsOf() });
   // ADR-0102: one place for each number — the tiles (with ⚑), the ring and the chart; the same numbers as a table for screen readers only
   return el('div', { class: 'km-detail' }, head ? el('p', { class: 'hint km-head', text: head }) : null, maPersonLine(id, ym),
-    pmDash({ n, p, hist, open, share, ml, pml, rdOn, flag, item }),
+    pmDash({ n, p, hist, open, share, ml, pml, rdOn, flag, item, med }),
     el('div', { class: 'km-cmp sr-only' }, el('table', {}, el('caption', { text: t('pm_sr_caption', { m: ml, p: pml }) }),
       el('thead', {}, el('tr', {}, el('th', {}), el('th', { class: 'num', text: ml }), el('th', { class: 'num', text: pml }), el('th', { class: 'num', text: t('km_change') }))),
       el('tbody', {}, rows.map(([lab, k, kind]) => el('tr', {}, el('td', { text: t(lab) }), el('td', { class: 'num' }, el('b', { text: fmt(k, n[k]) })),

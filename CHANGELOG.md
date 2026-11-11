@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.33 — 2026-11-12
+
+- صفحة المهندس: تحت كل رقم من أرقامه بقى مكتوب مكانه من وسيط فريقه (أعلى، أقل، أسرع، أبطأ) ومعاه قيمة الوسيط. الفريق هو اللي تحت نفس قائد الفريق، ومفيش اسم ولا رقم أي زميل بيتعرض.
+
+<details><summary>English</summary>
+
+- The engineer's page: under each of his numbers it now says where he stands against his team's median (above, below, faster, slower), with the median's value. His team is those under the same team lead; no colleague's name or own number is shown.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- انجینئر کا صفحہ: اس کے ہر عدد کے نیچے اب لکھا ہے کہ وہ اپنی ٹیم کے درمیانی کے مقابلے میں کہاں ہے (اوپر، نیچے، تیز، سست)، درمیانی قدر کے ساتھ۔ اس کی ٹیم وہ ہے جو ایک ہی ٹیم لیڈ کے تحت ہے؛ کسی ساتھی کا نام یا اپنا عدد نہیں دکھایا جاتا۔
+
+</div>
+</details>
+
+
 ## v9.32 — 2026-11-12
 
 - تصحيح مهم في صفحة المهندس: الترتيب كان بيتحسب على الشهر الحالي في التقويم مش الشهر المعروض، فكان بيظهر «المركز ١» لكل الناس لو الشهر الحالي لسه ما اتسحبش. دلوقتي الترتيب للشهر اللي على الشاشة، ومكتوب اسمه.

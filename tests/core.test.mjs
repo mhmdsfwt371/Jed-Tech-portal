@@ -1000,6 +1000,22 @@ test('one source per task (self, email, other) and, in the board engine, receive
   assert.equal(s.self.avgHours, 3); assert.equal(s.email.avgHours, 48); assert.equal(s.other.avgHours, 6);
   assert.equal(h.avgHours, 21.6, 'all five done in October: (2 + 4 + 24 + 72 + 6) ÷ 5 = 21.6 h');
 });
+test('overtime marks a day closed in one batch (three or more closes within 15 minutes) and counts those days per person', () => {
+  const T = (id, a, cr, done) => ({ id, title: `t${id}`, assigneeId: a, createdById: 'SYS', createdAt: cr, completedAt: done, state: 'done' });
+  const tasks = [T('1', 'L', '2026-10-03T11:48:00Z', '2026-10-03T11:53:00Z'), T('2', 'L', '2026-10-03T11:49:00Z', '2026-10-03T11:53:30Z'), T('3', 'L', '2026-10-03T11:50:00Z', '2026-10-03T11:54:00Z'),
+    T('4', 'M', '2026-10-03T06:00:00Z', '2026-10-03T08:00:00Z'), T('5', 'M', '2026-10-03T09:00:00Z', '2026-10-03T12:00:00Z')];
+  const o = core.overtimeOf(tasks, { from: '2026-10-01', to: '2026-10-31', people: new Set(['L', 'M']) });
+  assert.equal(o.rows.find((r) => r.pid === 'L').batch, true); assert.equal(o.rows.find((r) => r.pid === 'M').batch, false);
+  assert.equal(o.people.find((x) => x.pid === 'L').batchDays, 1); assert.equal(o.people.find((x) => x.pid === 'M').batchDays, 0);
+});
+test('overtime marks a day closed in one batch (three or more closes within 15 minutes) and counts those days per person', () => {
+  const T = (id, a, cr, done) => ({ id, title: `t${id}`, assigneeId: a, createdById: 'SYS', createdAt: cr, completedAt: done, state: 'done' });
+  const tasks = [T('1', 'L', '2026-10-03T11:48:00Z', '2026-10-03T11:53:00Z'), T('2', 'L', '2026-10-03T11:49:00Z', '2026-10-03T11:53:30Z'), T('3', 'L', '2026-10-03T11:50:00Z', '2026-10-03T11:54:00Z'),
+    T('4', 'M', '2026-10-03T06:00:00Z', '2026-10-03T08:00:00Z'), T('5', 'M', '2026-10-03T09:00:00Z', '2026-10-03T12:00:00Z')];
+  const o = core.overtimeOf(tasks, { from: '2026-10-01', to: '2026-10-31', people: new Set(['L', 'M']) });
+  assert.equal(o.rows.find((r) => r.pid === 'L').batch, true); assert.equal(o.rows.find((r) => r.pid === 'M').batch, false);
+  assert.equal(o.people.find((x) => x.pid === 'L').batchDays, 1); assert.equal(o.people.find((x) => x.pid === 'M').batchDays, 0);
+});
 // The runner sits after every test() so that each one runs; a test added below this line would be counted without running.
 let failed = 0;
 test('one e-mail counts once: copies in two folders share a key; without a Message-ID, sender, time and subject decide (ADR-0075)', () => {

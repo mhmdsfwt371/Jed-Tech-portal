@@ -1,25 +1,19 @@
 {
-  "version": "9.32",
+  "version": "9.33",
   "date": "2026-11-12",
   "notes": {
     "ar": [
-      "تصحيح مهم في صفحة المهندس: الترتيب كان بيتحسب على الشهر الحالي في التقويم مش الشهر المعروض، فكان بيظهر «المركز ١» لكل الناس لو الشهر الحالي لسه ما اتسحبش. دلوقتي الترتيب للشهر اللي على الشاشة، ومكتوب اسمه.",
-      "صفحة المهندس على الموبايل: ما بقتش أعرض من الشاشة، والمهام المفتوحة بقت قبل الرسم، وأسماء الرسم بتظهر كاملة، والتنبيهات اتقالت مرة واحدة وبكلام يناسبه.",
-      "«قراءات الشهر»: ٣ مربعات عليها سطر بيشرح معنى الرقم، و«مفتوح» و«أكتر من ٧ أيام» بقوا عمودين، والمتأخر متعلّم."
+      "صفحة المهندس: تحت كل رقم من أرقامه بقى مكتوب مكانه من وسيط فريقه (أعلى، أقل، أسرع، أبطأ) ومعاه قيمة الوسيط. الفريق هو اللي تحت نفس قائد الفريق، ومفيش اسم ولا رقم أي زميل بيتعرض."
     ],
     "en": [
-      "An important correction on the engineer's page: the rank was computed for today's calendar month, not the month on screen, so everyone read «Rank 1» whenever the current month was not pulled yet. The rank is now of the month shown, and names it.",
-      "The engineer's page on a phone: no longer wider than the screen, open work comes before the chart, the chart's labels show in full, and notices are said once in words that fit him.",
-      "«Monthly readings»: three tiles carry a line on what the number means; «Open» and «Over 7 days» are separate columns, and overdue is marked."
+      "The engineer's page: under each of his numbers it now says where he stands against his team's median (above, below, faster, slower), with the median's value. His team is those under the same team lead; no colleague's name or own number is shown."
     ],
     "ur": [
-      "انجینئر کے صفحے پر اہم درستی: درجہ کیلنڈر کے موجودہ مہینے کا نکالا جاتا تھا، اسکرین پر دکھائے گئے مہینے کا نہیں، اس لیے جب موجودہ مہینہ حاصل نہ ہوا ہو تو سب کو «درجہ 1» نظر آتا تھا۔ اب درجہ دکھائے گئے مہینے کا ہے اور اس کا نام لکھا ہے۔",
-      "فون پر انجینئر کا صفحہ: اب اسکرین سے چوڑا نہیں، کھلے کام چارٹ سے پہلے ہیں، چارٹ کے نام پورے نظر آتے ہیں، اور اطلاعات ایک بار اور اس کے مطابق الفاظ میں ہیں۔",
-      "«ماہانہ ریڈنگز»: تین خانوں پر ایک سطر بتاتی ہے کہ عدد کا مطلب کیا ہے؛ «کھلے» اور «7 دن سے زیادہ» الگ کالم ہیں اور تاخیر والے نشان زد ہیں۔"
+      "انجینئر کا صفحہ: اس کے ہر عدد کے نیچے اب لکھا ہے کہ وہ اپنی ٹیم کے درمیانی کے مقابلے میں کہاں ہے (اوپر، نیچے، تیز، سست)، درمیانی قدر کے ساتھ۔ اس کی ٹیم وہ ہے جو ایک ہی ٹیم لیڈ کے تحت ہے؛ کسی ساتھی کا نام یا اپنا عدد نہیں دکھایا جاتا۔"
     ]
   },
   "counts": {
-    "versions": 157,
-    "decisions": 112
+    "versions": 158,
+    "decisions": 113
   }
 }
