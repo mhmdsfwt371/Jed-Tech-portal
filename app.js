@@ -555,10 +555,16 @@ function progressCard(pm) {
   if (present.length < 2) rankBox = snap ? el('div', { class: 'pg-rank' }, el('b', { class: 'pg-big', text: t('pg_rank', { r: snap.r, n: snap.n }) }), el('span', { class: 'hint', text: t(snap.partial ? 'rk_from_partial' : 'rk_from', { m: monthLabel(snap.ym), d: snap.at || '' }) }),
       el('div', { class: 'pg-gap', text: snap.gap != null ? t('pg_gap', { g: snap.gap }) : snap.lead != null ? t('pg_lead', { g: snap.lead }) : '' }))
     : el('div', { class: 'pg-rank' }, el('p', { class: 'hint', text: t('pg_rank_need') }), el('p', { class: 'hint', text: t('rk_ask') }));
-  else { const now = rankIn(ymNow), before = rankIn(ymShift(ymNow, -1));
+  else {
+    const myRanges = (meDerived || viewAs) ? datasets.map((d) => d.range) : [{ from: saudiDay(me.since || me.extractedAt), to: saudiDay(me.extractedAt) }];
+    const pulledM = pulledPeriods('month', myRanges).map((m) => m.ym);
+    const ymRank = /^\d{4}-\d{2}$/.test(meMonth || '') && pulledM.includes(meMonth) ? meMonth : pulledM.includes(ymNow) ? ymNow : pulledM[0];
+    const now = ymRank ? rankIn(ymRank) : null, prevYm = ymRank ? ymShift(ymRank, -1) : null, before = prevYm && pulledM.includes(prevYm) ? rankIn(prevYm) : { p: 0, r: 0 };
+    if (!now || (now.p === 0 && now.r === 1)) rankBox = el('div', { class: 'pg-rank' }, el('p', { class: 'hint', text: t('pg_rank_empty', { m: ymRank ? monthLabel(ymRank) : '' }) }));
+    else {
     const move = before.p > 0 ? (before.r > now.r ? el('span', { class: 'delta good', text: `▲ ${t('pg_up', { a: before.r })}` }) : before.r < now.r ? el('span', { class: 'delta bad', text: `▼ ${t('pg_down', { a: before.r })}` }) : el('span', { class: 'delta same', text: t('pg_same') })) : null;
-    rankBox = el('div', { class: 'pg-rank' }, el('b', { class: 'pg-big', text: t('pg_rank', { r: now.r, n: now.n }) }), el('span', { class: 'hint', text: t('pg_rank_sub') }),
-      el('div', { class: 'pg-gap', text: now.gap != null ? t('pg_gap', { g: now.gap }) : now.lead != null ? t('pg_lead', { g: now.lead }) : '' }), move); }
+    rankBox = el('div', { class: 'pg-rank', 'data-month': ymRank }, el('b', { class: 'pg-big', text: t('pg_rank', { r: now.r, n: now.n }) }), el('span', { class: 'hint', text: t('pg_rank_in', { m: monthLabel(ymRank) }) }),
+      el('div', { class: 'pg-gap', text: now.gap != null ? t('pg_gap', { g: now.gap }) : now.lead === 0 ? t('pg_tie') : now.lead != null ? t('pg_lead', { g: now.lead }) : '' }), move); } }
   // records — none of them repeat the Today card (current streak, yesterday, this week)
   const mine = me.tasks.filter((x) => x.assigneeId === uid && x.state === 'done' && x.completedAt), byMonth = new Map(), byDay = new Map();
   for (const x of mine) { const d = saudiDay(x.completedAt), m = d.slice(0, 7); byDay.set(d, (byDay.get(d) || 0) + 1);
@@ -686,7 +692,7 @@ function renderMe(waiting = false) {
     !isTeamPortal && !viewAs ? projectsCard() : null,   // the manager's own projects, on his own page only — as in v8.88
     // his place and progress — what his rank link carries: his own numbers and level, no colleague (ADR-0072 keeps it)
     (() => { if (!(isTeamPortal || viewAs)) return null; try { return progressCard(pm); } catch { return null; } })(),
-    el('h2', { text: t('definitions') }), el('ul', { class: 'defs' }, KM_DEFS.map((k) => el('li', { text: t(k) }))),
+    el('details', { class: 'team me-defs' }, el('summary', { text: t('definitions') }), el('ul', { class: 'defs' }, KM_DEFS.map((k) => el('li', { text: t(k) })))),
     el('details', { class: 'team' }, el('summary', { text: t('me_refresh_h') }), el('p', { class: 'hint', text: t('me_refresh') }), ...setup,
       el('button', { type: 'button', class: 'btn va-hide', text: t('me_forget'), onclick: async () => { if (viewAs || meDerived) return; me = null; await store.putMe(null); renderMe(); } })));
 }
@@ -1399,7 +1405,7 @@ function pmDash({ n, p, hist, open, share, ml, pml, rdOn = false, flag = null, i
   const oldest = open.length ? Math.max(...open.map((x) => x.ageHours || 0)) : 0;
   const H = [...hist].reverse(), sp = (f) => H.map((h) => f(h.x));
   const tile = (key, val, sub, delta, spark, fl) => el('div', { class: 'km-tile pm-tile', tabindex: '0', 'data-kpi': key },
-    el('span', { class: 'pm-k' }, el('b', { text: t(`pm_${key}`) }), el('i', { class: 'pm-term', text: t(`pm_${key}_term`) })),
+    el('span', { class: 'pm-k' }, el('b', { text: t(`pm_${key}`) }), t(`pm_${key}_term`).toLowerCase().includes(t(`pm_${key}`).toLowerCase()) ? null : el('i', { class: 'pm-term', text: t(`pm_${key}_term`) })),
     el('strong', { class: 'pm-v', text: val }), sub ? el('small', { class: 'hint', text: sub }) : null, delta, spark, fl ? el('span', { class: 'pm-flag' }, fl) : null);
   const d = (cur, prev, kind) => (p && prev != null && cur != null ? kmDelta(cur, prev, kind, pml) : null);
   const withTip = (node, key) => { attachTip(node, t(`pm_${key}_def`), false); node.setAttribute('aria-description', t(`pm_${key}_def`)); return node; };   // ADR-0101: the one tooltip
@@ -1416,7 +1422,7 @@ function pmDash({ n, p, hist, open, share, ml, pml, rdOn = false, flag = null, i
   const mixBox = el('div', { class: 'pm-card' }, el('h4', {}, t('pm_mix_h'), el('i', { class: 'pm-term', text: 'Work intake mix' })), el('div', { class: 'pm-mix' }, pmDonut(mix),
     el('ul', { class: 'pm-legend' }, mix.map((m) => el('li', { class: m.c, 'data-src': m.k }, el('span', { class: 'pm-sw' }), el('span', { class: 'pm-lg-l', text: m.l }), el('b', { text: String(m.v) }),
       el('small', { class: 'hint', text: n.total ? `${Math.round((m.v / n.total) * 100)}%` : '' }), d(m.v, p && p[m.k], 'n'), F(m.lab, m.k))))),
-    el('p', { class: 'hint', text: t('pm_self_rate', { p: n.total ? Math.round((n.self / n.total) * 100) : 0 }) }));
+    el('p', { class: 'hint', text: t(isTeamPortal && !viewAs ? 'pm_self_rate_me' : 'pm_self_rate', { p: n.total ? Math.round((n.self / n.total) * 100) : 0 }) }));
   const B = [[0, 24, 'pm_age_1'], [24, 72, 'pm_age_2'], [72, 168, 'pm_age_3'], [168, Infinity, 'pm_age_4']].map(([lo, hi, k]) => ({ k, v: open.filter((x) => (x.ageHours || 0) >= lo && (x.ageHours || 0) < hi).length }));
   const bmax = Math.max(1, ...B.map((b) => b.v));
   const ageBox = el('div', { class: 'pm-card pm-open-card' }, el('h4', { class: 'pm-open-h' }, `${t('pf_open')} — ${open.length}`, el('i', { class: 'pm-term', text: 'Backlog aging' })),
@@ -1425,7 +1431,7 @@ function pmDash({ n, p, hist, open, share, ml, pml, rdOn = false, flag = null, i
   const tr = pmTrend(hist);
   const trendBox = tr ? el('div', { class: 'pm-card pm-wide' }, el('h4', {}, t('pm_trend_h'), el('i', { class: 'pm-term', text: 'Throughput · MTTR trend' })), tr,
     el('p', { class: 'hint pm-keys' }, el('span', { class: 'pm-key k-total' }), t('km_total'), el('span', { class: 'pm-key k-closed' }), t('km_closed'), el('span', { class: 'pm-key k-avg' }), t('km_avg'))) : null;
-  return el('section', { class: 'pm-dash' }, el('p', { class: 'hint pm-period', text: p ? t('pm_period', { m: ml, p: pml }) : t('pm_period_np', { m: ml, p: pml }) }), tiles,
+  return el('section', { class: 'pm-dash' }, el('p', { class: 'hint pm-period', text: `${p ? `${t('pm_cmp', { m: ml, p: pml })} ` : ''}${t(window.matchMedia && window.matchMedia('(hover: none)').matches ? 'pm_tip_tap' : 'pm_tip_hover')}` }), tiles,
     el('div', { class: `pm-cards${trendBox ? '' : ' no-trend'}` }, trendBox, mixBox, ageBox));
 }
 
@@ -3144,8 +3150,8 @@ function meMonthParts() {
   return [
     el('div', { class: 'bar km-bar' }, kindPills(renderMe), el('label', {}, el('span', { text: t(kmKind === 'quarter' ? 'km_kind_quarter' : 'km_month') }), el('select', { id: 'me-month', onchange: (e) => { meMonth = e.target.value; renderMe(); } },
       months.map((m) => el('option', { value: m.ym, selected: m.ym === meMonth, text: `${periodLabel(m.ym)}${m.whole ? '' : ' *'}` })))),
-      el('span', { class: 'hint', text: hasPrev ? t('km_vs', { m: periodLabel(pm) }) : t('km_no_prev', { m: periodLabel(pm) }) })),
-    !cov.whole ? el('p', { class: 'note', text: t('km_partial', { got: cov.got, need: cov.need }) }) : null,
+      el('span', { class: 'hint', text: hasPrev ? t('km_vs', { m: periodLabel(pm) }) : t(isTeamPortal || viewAs ? 'km_no_prev_me' : 'km_no_prev', { m: periodLabel(pm) }) })),
+    !cov.whole ? el('p', { class: 'note', text: t(isTeamPortal || viewAs ? 'km_partial_me' : 'km_partial', { got: cov.got, need: cov.need }) }) : null,
     personMonthView({ id: uid, tasks, acts: fromPulls ? allActivities() : [], months, ym: meMonth })];
 }
 function renderKpi() {
@@ -3995,7 +4001,7 @@ function renderReadings() {
   const bar = el('div', { class: 'rd-controls' }, el('label', { class: 'hint', for: 'rd-month', text: t('rd_month') }), sel, names, xl);
   const scope = el('p', { class: 'hint rd-scope', text: t('rd_scope', { n: r.accounts, from: r.from, to: r.to, days: r.workingDays }) });
   // ----- six headline tiles (each number lives here only)
-  const tile = (key, value, sub, prev) => { const c = el('div', { class: 'rd-tile', tabIndex: 0 }, el('span', { class: 'rd-tl', text: t(`rd_t_${key}`) }), el('b', { class: 'rd-tv', text: value }), el('span', { class: 'rd-ts', text: sub }), prev != null ? el('span', { class: 'rd-tp', text: t('rd_prev', { m: rdMonthName(prevM), v: prev }) }) : null); c.dataset.rd = key; attachTip(c, t(`rd_t_${key}_d`), false); return c; };
+  const tile = (key, value, sub, prev) => { const c = el('div', { class: 'rd-tile', tabIndex: 0 }, el('span', { class: 'rd-tl', text: t(`rd_t_${key}`) }), el('b', { class: 'rd-tv', text: value }), el('span', { class: 'rd-ts', text: sub }), ['generic', 'self5', 'mail8'].includes(key) ? el('span', { class: 'rd-say', text: t(`rd_say_${key}`) }) : null, prev != null ? el('span', { class: 'rd-tp', text: t('rd_prev', { m: rdMonthName(prevM), v: prev }) }) : null); c.dataset.rd = key; attachTip(c, t(`rd_t_${key}_d`), false); return c; };
   const tiles = el('div', { class: 'rd-tiles' },
     tile('arrived', F.n(r.arrived), t('rd_t_arrived_s', { p: F.p(r.closureRate) }), p ? F.n(p.arrived) : null),
     tile('generic', F.p(r.genericShare), t('rd_of', { n: F.n(r.generic), m: F.n(r.arrived) }), p ? F.p(p.genericShare) : null),
@@ -4022,11 +4028,11 @@ function renderReadings() {
   // ----- by member
   const peakD = Math.max(r.target, r.dammamMaxPerDay || 0) * 1.1;
   const membersBox = el('section', { class: 'card rd-card' }, el('h2', { text: t('rd_members_h') }), wrap('rd_members_h', el('table', { class: 'rd-table', id: 'rd-members' },
-    el('thead', {}, el('tr', {}, th('rd_c_member'), th('rd_c_arrived'), th('rd_c_closed'), th('rd_c_email'), th('rd_c_self'), th('rd_c_others'), th('rd_c_tierpts', 'rd_h_tier'), th('rd_c_dday', 'rd_t_dmed_d'), th('rd_c_sys8', 'rd_h_sys'), th('rd_c_open'), el('th', { scope: 'col', text: t('rd_c_auto', { n: r.autoPoints }) }))),
+    el('thead', {}, el('tr', {}, th('rd_c_member'), th('rd_c_arrived'), th('rd_c_closed'), th('rd_c_email'), th('rd_c_self'), th('rd_c_others'), th('rd_c_tierpts', 'rd_h_tier'), th('rd_c_dday', 'rd_t_dmed_d'), th('rd_c_sys8', 'rd_h_sys'), th('rd_c_open', 'rd_t_open_d'), th('rd_c_over7', 'rd_c_over7_d'), el('th', { scope: 'col', text: t('rd_c_auto', { n: r.autoPoints }) }))),
     el('tbody', {}, ...r.members.map((m) => el('tr', { 'data-no': m.no }, el('th', { scope: 'row', text: who(m) }), el('td', { class: 'num', text: F.n(m.arrived) }), el('td', { class: 'num', text: F.n(m.closed) }), el('td', { class: 'num', text: F.n(m.email) }), el('td', { class: 'num', text: F.n(m.self) }), el('td', { class: 'num', text: F.n(m.others) }), el('td', { class: 'num', text: F.n(m.points) }),
       el('td', {}, el('span', { class: 'rd-bar rd-bar-t', role: 'img', 'aria-label': `${F.d(m.dammamPerDay)} / ${r.target}` }, el('i', { style: `width:${Math.max(1, (m.dammamPerDay || 0) / peakD * 100).toFixed(1)}%` }), el('u', { style: `inset-inline-start:${(r.target / peakD * 100).toFixed(1)}%` })), el('span', { class: 'rd-barv', text: F.d(m.dammamPerDay) })),
-      el('td', { class: 'num', text: F.p(m.sysLe8hShare) }), el('td', { class: 'num', text: `${F.n(m.open)} (${F.n(m.openOver7)})` }), el('td', { class: 'num', text: m.score.auto.toFixed(1) })))),
-    el('tfoot', {}, el('tr', {}, el('th', { scope: 'row', text: t('rd_team') }), el('td', { class: 'num', text: F.n(r.arrived) }), el('td', { class: 'num', text: F.n(r.closed) }), el('td', { class: 'num', text: F.n(r.email) }), el('td', { class: 'num', text: F.n(r.self) }), el('td', { class: 'num', text: F.n(r.others) }), el('td', { class: 'num', text: F.n(r.points) }), el('td', {}), el('td', { class: 'num', text: F.p(r.sysLe8hShare) }), el('td', { class: 'num', text: `${F.n(r.open)} (${F.n(r.openOver7)})` }), el('td', {}))))),
+      el('td', { class: 'num', text: F.p(m.sysLe8hShare) }), el('td', { class: 'num', text: F.n(m.open) }), el('td', { class: `num${m.openOver7 ? ' rd-late' : ''}`, text: F.n(m.openOver7) }), el('td', { class: 'num', text: m.score.auto.toFixed(1) })))),
+    el('tfoot', {}, el('tr', {}, el('th', { scope: 'row', text: t('rd_team') }), el('td', { class: 'num', text: F.n(r.arrived) }), el('td', { class: 'num', text: F.n(r.closed) }), el('td', { class: 'num', text: F.n(r.email) }), el('td', { class: 'num', text: F.n(r.self) }), el('td', { class: 'num', text: F.n(r.others) }), el('td', { class: 'num', text: F.n(r.points) }), el('td', {}), el('td', { class: 'num', text: F.p(r.sysLe8hShare) }), el('td', { class: 'num', text: F.n(r.open) }), el('td', { class: `num${r.openOver7 ? ' rd-late' : ''}`, text: F.n(r.openOver7) }), el('td', {}))))),
     el('p', { class: 'hint', text: t('rd_members_note', { t: r.target, b: F.n(r.baseTarget) }) }));
   // ----- month by month (the same definitions for every pulled month)
   const monthsBox = M.months.length > 1 ? el('section', { class: 'card rd-card' }, el('h2', { text: t('rd_months_h') }), wrap('rd_months_h', el('table', { class: 'rd-table', id: 'rd-months' },

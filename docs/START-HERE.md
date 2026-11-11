@@ -141,6 +141,7 @@
 | `docs/decisions/0109-outlook-box-removed-actions-node24.md` | The Outlook box and its Microsoft sign-in removed; workflows on Node 24 actions |
 | `docs/decisions/0110-team-pull-for-any-account.md` | The team pull works for any MyAFAQY account: only the tasks list is essential (extension 1.0.3) |
 | `docs/decisions/0111-monthly-readings.md` | «Monthly readings»: the proposal's measurement basis for any pulled month; the workbook correction; the lost working environment and `tests/browser/` |
+| `docs/decisions/0112-engineer-page-and-readings-clarity.md` | The walk-through as an engineer and a team lead: the wrong rank, the phone layout, the wording; what was left for a later decision |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

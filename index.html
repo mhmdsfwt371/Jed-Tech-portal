@@ -1255,6 +1255,10 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   .rd-table tbody th { font-weight: 600; } .rd-table td.num { text-align: end; font-variant-numeric: tabular-nums; } .rd-table tfoot th, .rd-table tfoot td { font-weight: 700; border-bottom: 0; } .rd-table tr.rd-generic th { color: var(--note); } .rd-table tr.on th, .rd-table tr.on td { background: var(--note-wash); }
   .rd-bar { display: inline-block; position: relative; width: 120px; height: 10px; border-radius: 5px; background: var(--line); vertical-align: middle; overflow: hidden; } .rd-bar i { position: absolute; inset-block: 0; inset-inline-start: 0; background: var(--note); border-radius: 5px; }
   .rd-bar-t { overflow: visible; } .rd-bar u { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); } .rd-barv { display: inline-block; min-width: 46px; margin-inline-start: 8px; font-variant-numeric: tabular-nums; }
+  /* v9.32: the engineer's page on a phone — nothing wider than the screen, open work first, labels in full */
+  .km-detail { grid-template-columns: minmax(0, 1fr); } .pm-dash, .pm-card, .pm-cards > * { min-width: 0; }
+  @media (max-width: 700px) { .pm-cards, .pm-cards.no-trend { grid-template-columns: minmax(0, 1fr); } .pm-open-card { order: -1; } .donut-legend > span > span, .pm-legend li, .pm-lg-l { white-space: normal; overflow: visible; } }
+  .rd-say { font-size: 12.5px; color: var(--text); margin-top: 2px; } .rd-table td.rd-late { color: var(--warn); font-weight: 700; }
 </style>
 </head>
 <body>

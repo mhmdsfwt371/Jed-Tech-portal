@@ -26,8 +26,10 @@ with sync_playwright() as p:
     bad={k:(more.get(k),v) for k,v in wm.items() if more.get(k)!=v}
     check(f'R3 the other {len(wm)} readings equal the workbook', not bad, bad)
     mem=pg.evaluate("[...document.querySelectorAll('#rd-members tbody tr')].map(r=>[...r.children].map(c=>c.innerText.trim()))")
-    pts=[int(r[6]) for r in mem]; sc=[float(r[10]) for r in mem]
+    pts=[int(r[6]) for r in mem]; sc=[float(r[11]) for r in mem]; late=[int(r[10]) for r in mem]
     check(f'R4 members: tier points {pts} and automatic scores {sc} equal the workbook', pts==[373,303,207,223,157,111,111,102,97,50] and sc==[60.9,61.8,58.5,57.2,60.8,51.0,54.9,50.9,48.2,42.9], (pts,sc))
+    check(f'R4b open and overdue are separate columns, and the overdue cell is marked ({late})', late==[0,0,0,2,0,0,0,0,0,0] and pg.locator('#rd-members tbody td.rd-late').count()==1)
+    check('R4c three tiles say in plain words what the number means', pg.locator('.rd-tile .rd-say').count()==3 and 'does not say what the work was' in pg.locator('.rd-tile[data-rd=generic] .rd-say').inner_text())
     names_on_screen=pg.evaluate("[...document.querySelectorAll('#rd-members tbody th')].map(c=>c.innerText.trim())")
     check('R5 members are numbered by default (no names on screen)', names_on_screen==[f'Member {i+1}' for i in range(10)])
     pg.locator('#rd-names').click(); pg.wait_for_timeout(500)

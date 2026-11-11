@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.32 — 2026-11-12
+
+- تصحيح مهم في صفحة المهندس: الترتيب كان بيتحسب على الشهر الحالي في التقويم مش الشهر المعروض، فكان بيظهر «المركز ١» لكل الناس لو الشهر الحالي لسه ما اتسحبش. دلوقتي الترتيب للشهر اللي على الشاشة، ومكتوب اسمه.
+- صفحة المهندس على الموبايل: ما بقتش أعرض من الشاشة، والمهام المفتوحة بقت قبل الرسم، وأسماء الرسم بتظهر كاملة، والتنبيهات اتقالت مرة واحدة وبكلام يناسبه.
+- «قراءات الشهر»: ٣ مربعات عليها سطر بيشرح معنى الرقم، و«مفتوح» و«أكتر من ٧ أيام» بقوا عمودين، والمتأخر متعلّم.
+
+<details><summary>English</summary>
+
+- An important correction on the engineer's page: the rank was computed for today's calendar month, not the month on screen, so everyone read «Rank 1» whenever the current month was not pulled yet. The rank is now of the month shown, and names it.
+- The engineer's page on a phone: no longer wider than the screen, open work comes before the chart, the chart's labels show in full, and notices are said once in words that fit him.
+- «Monthly readings»: three tiles carry a line on what the number means; «Open» and «Over 7 days» are separate columns, and overdue is marked.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- انجینئر کے صفحے پر اہم درستی: درجہ کیلنڈر کے موجودہ مہینے کا نکالا جاتا تھا، اسکرین پر دکھائے گئے مہینے کا نہیں، اس لیے جب موجودہ مہینہ حاصل نہ ہوا ہو تو سب کو «درجہ 1» نظر آتا تھا۔ اب درجہ دکھائے گئے مہینے کا ہے اور اس کا نام لکھا ہے۔
+- فون پر انجینئر کا صفحہ: اب اسکرین سے چوڑا نہیں، کھلے کام چارٹ سے پہلے ہیں، چارٹ کے نام پورے نظر آتے ہیں، اور اطلاعات ایک بار اور اس کے مطابق الفاظ میں ہیں۔
+- «ماہانہ ریڈنگز»: تین خانوں پر ایک سطر بتاتی ہے کہ عدد کا مطلب کیا ہے؛ «کھلے» اور «7 دن سے زیادہ» الگ کالم ہیں اور تاخیر والے نشان زد ہیں۔
+
+</div>
+</details>
+
+
 ## v9.31 — 2026-11-12
 
 - صفحة جديدة تحت المؤشرات: «قراءات الشهر» — قراءات أي شهر مسحوب بنفس تعريفات اقتراح جدة: المهام اللي وصلت واتقفلت، نسبة النوعين العامّين، مصدر الشغل، الوقت من الفتح للإغلاق، النقاط بمستوى الجهد، ومقارنة بهدف الدمام.
