@@ -695,6 +695,17 @@ function renderMe(waiting = false) {
     el('details', { class: 'team me-defs' }, el('summary', { text: t('definitions') }), el('ul', { class: 'defs' }, KM_DEFS.map((k) => el('li', { text: t(k) })))),
     el('details', { class: 'team' }, el('summary', { text: t('me_refresh_h') }), el('p', { class: 'hint', text: t('me_refresh') }), ...setup,
       el('button', { type: 'button', class: 'btn va-hide', text: t('me_forget'), onclick: async () => { if (viewAs || meDerived) return; me = null; await store.putMe(null); renderMe(); } })));
+  dLive();
+}
+/** Direction D, after drawing: the rank moves into «your next step» (one place for it), and the headline numbers count up once. */
+function dLive() {
+  const root = $('view-me'), slot = root && root.querySelector('.pm-next-slot'); if (!slot) return;
+  const rk = root.querySelector('.pg-rank'); if (rk) slot.append(rk); else slot.closest('.pm-next').hidden = true;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for (const e of root.querySelectorAll('.pm-d .pm-v, .pm-d .pm-count')) { const m = /^(\d+(?:\.\d+)?)(%?)$/.exec(e.textContent.trim()); if (!m) continue;
+    const end = +m[1], dec = (m[1].split('.')[1] || '').length, t0 = performance.now(), fin = e.textContent;
+    const step = (now) => { const k = Math.min(1, (now - t0) / 650), v = end * (1 - Math.pow(1 - k, 3)); e.textContent = k >= 1 ? fin : `${v.toFixed(dec)}${m[2]}`; if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step); }
 }
 // ---------- My KPIs as a dashboard (ADR-0034): openable tiles, a collapsible block for me and one for my team, tabs for a leader ----------
 let meTab = 'me';
@@ -1379,6 +1390,34 @@ function pmDonut(parts) {
     for (const p of parts) { if (!p.v) continue; const len = (p.v / total) * C; const c = svgEl('circle', { cx: 60, cy: 60, r: 44, class: `pm-seg ${p.c}`, 'stroke-dasharray': `${len} ${C - len}`, 'stroke-dashoffset': `${-acc}`, transform: 'rotate(-90 60 60)' }); c.append(svgEl('title')); c.lastChild.textContent = `${p.l}: ${p.v} (${Math.round((p.v / total) * 100)}%)`; s.append(c); acc += len; } }
   const tx = svgEl('text', { x: 60, y: 64, 'text-anchor': 'middle', class: 'pm-donut-n' }); tx.textContent = String(total); s.append(tx); return s;
 }
+function pmCalendar(tasks, id, ym, asOfDay) {
+  if (!/^\d{4}-\d{2}$/.test(ym)) return null;
+  const by = new Map();
+  for (const x of tasks) { if (x.assigneeId !== id || x.state !== 'done' || !x.completedAt) continue; const d = saudiDay(x.completedAt); if (d.slice(0, 7) !== ym) continue; if (!by.has(d)) by.set(d, []); by.get(d).push(x); }
+  const nDays = +monthLast(ym).slice(8), first = new Date(`${ym}-01T12:00:00Z`).getUTCDay(), max = Math.max(1, ...[...by.values()].map((v) => v.length));
+  const wd = (i) => new Intl.DateTimeFormat(lang === 'ur' ? 'ur' : lang, { weekday: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(2026, 10, 1 + i)));   // 1 Nov 2026 is a Sunday
+  const longDay = (day) => new Intl.DateTimeFormat(lang === 'ur' ? 'ur' : lang, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${day}T12:00:00Z`));
+  const detail = el('div', { class: 'pm-cal-detail', 'aria-live': 'polite' }, el('p', { class: 'hint', text: t('d_cal_pick') }));
+  let work = 0, act = 0; const cells = [];
+  for (let i = 0; i < first; i++) cells.push(el('span', { class: 'pm-cal-pad', 'aria-hidden': 'true' }));
+  for (let dn = 1; dn <= nDays; dn++) {
+    const day = `${ym}-${String(dn).padStart(2, '0')}`, list = by.get(day) || [], dow = new Date(`${day}T12:00:00Z`).getUTCDay(), off = dow === 5 || dow === 6, future = !!asOfDay && day > asOfDay;
+    if (!off && !future) { work++; if (list.length) act++; }
+    const lvl = !list.length ? 0 : list.length / max > 0.75 ? 3 : list.length / max > 0.45 ? 2 : 1;
+    const b = el('button', { type: 'button', class: `pm-cal-day l${lvl}${off ? ' off' : ''}${future ? ' future' : ''}`, style: `--i:${dn}`, 'data-day': day, 'data-n': String(list.length), 'aria-pressed': 'false', 'aria-label': t('d_cal_day', { d: longDay(day), n: list.length }) },
+      el('b', { text: list.length ? String(list.length) : '·' }), el('small', { text: String(dn) }));
+    if (future) b.disabled = true;
+    b.onclick = () => { for (const o of b.parentElement.querySelectorAll('.pm-cal-day')) o.setAttribute('aria-pressed', String(o === b));
+      const rows = [...list].sort((x, y) => String(x.completedAt).localeCompare(String(y.completedAt)));
+      set(detail, el('p', { class: 'pm-cal-dh' }, el('b', { text: longDay(day) }), el('span', { class: 'hint', text: ` · ${t('d_cal_n', { n: list.length })}` })),
+        rows.length ? el('ul', { class: 'pf-open' }, rows.slice(0, 20).map((x) => el('li', {}, el('span', { text: x.title || typeLabel(x.type || '', lang) || '—' }), el('small', { class: 'hint', text: new Date(Date.parse(x.completedAt) + 3 * 3600e3).toISOString().slice(11, 16) }))))
+          : el('p', { class: 'hint', text: t(off ? 'd_cal_off' : 'd_cal_none') }),
+        rows.length > 20 ? el('p', { class: 'hint', text: t('me_open_more', { n: rows.length - 20 }) }) : null); };
+    cells.push(b);
+  }
+  return el('div', { class: 'pm-card pm-cal' }, el('h4', { text: t('d_cal_h') }), el('p', { class: 'hint', text: t('d_cal_sum', { a: act, w: work, m: by.size ? max : 0 }) }),
+    el('div', { class: 'pm-cal-grid', role: 'group', 'aria-label': t('d_cal_h') }, [0, 1, 2, 3, 4, 5, 6].map((i) => el('span', { class: 'pm-cal-wd', 'aria-hidden': 'true', text: wd(i) })), cells), detail);
+}
 function pmTrend(hist) {   // hist: newest first → drawn oldest to newest. ADR-0102: tasks and hours never share an axis
   const H = [...hist].reverse(); if (H.length < 2) return null;
   const W = 520, P = 26, bw = (W - 2 * P) / H.length, TOP = 20, BH = 120, GAP = 26, LH = 54, Ht = TOP + BH + 18 + GAP + LH + 10;
@@ -1400,7 +1439,7 @@ function pmTrend(hist) {   // hist: newest first → drawn oldest to newest. ADR
   for (const [cx, cy, v] of pts) { s.append(svgEl('circle', { cx, cy, r: 3.5, class: 'pm-dot-avg' })); const tx = svgEl('text', { x: cx, y: cy - 7, 'text-anchor': 'middle', class: 'pm-val pm-val-avg' }); tx.textContent = hmOf(v); s.append(tx); }
   return el('div', { class: 'pm-trend-wrap' }, s);
 }
-function pmDash({ n, p, hist, open, share, ml, pml, rdOn = false, flag = null, item = null, med = null }) {
+function pmDash({ n, p, hist, open, share, ml, pml, rdOn = false, flag = null, item = null, med = null, own = false, cal = null, asOf = '' }) {
   const pct = (a, b) => (b ? Math.round((a / b) * 100) : null), rate = pct(n.closed, n.total), prate = p ? pct(p.closed, p.total) : null;
   const oldest = open.length ? Math.max(...open.map((x) => x.ageHours || 0)) : 0;
   const H = [...hist].reverse(), sp = (f) => H.map((h) => f(h.x));
@@ -1411,15 +1450,19 @@ function pmDash({ n, p, hist, open, share, ml, pml, rdOn = false, flag = null, i
     return el('small', { class: `pm-med${good}`, 'data-med': key, text: t(k, { v: show(m) }) }); };
   const MEDS = med ? { thru: medLine('thru', n.closed, med.closed, (v) => String(v), 1), load: medLine('load', n.total, med.total, (v) => String(v), 0), rate: medLine('rate', n.total ? Math.round((n.closed / n.total) * 100) : null, med.rate, (v) => `${v}%`, 1),
     mttr: medLine('mttr', n.avg, med.avg, (v) => hmOf(v), -1), pts: medLine('pts', n.points, med.points, (v) => String(v), 1) } : {};
+  // a bar under the number: the person's own value, with a tick where the team's median sits
+  const bar = (cur, m) => { if (!med || m == null || cur == null) return null; const top = Math.max(cur, m, 1e-9) * 1.12;
+    return el('span', { class: 'pm-bar', 'aria-hidden': 'true' }, el('i', { style: `--w:${Math.min(100, (cur / top) * 100).toFixed(1)}%` }), el('u', { style: `--m:${Math.min(100, (m / top) * 100).toFixed(1)}%` })); };
+  const BARS = med ? { thru: bar(n.closed, med.closed), rate: bar(n.total ? Math.round((n.closed / n.total) * 100) : null, med.rate), mttr: bar(n.avg, med.avg), pts: bar(n.points, med.points) } : {};
   const tile = (key, val, sub, delta, spark, fl) => el('div', { class: 'km-tile pm-tile', tabindex: '0', 'data-kpi': key },
     el('span', { class: 'pm-k' }, el('b', { text: t(`pm_${key}`) }), t(`pm_${key}_term`).toLowerCase().includes(t(`pm_${key}`).toLowerCase()) ? null : el('i', { class: 'pm-term', text: t(`pm_${key}_term`) })),
-    el('strong', { class: 'pm-v', text: val }), sub ? el('small', { class: 'hint', text: sub }) : null, MEDS[key] || null, delta, spark, fl ? el('span', { class: 'pm-flag' }, fl) : null);
+    el('strong', { class: 'pm-v', text: val }), sub ? el('small', { class: 'hint', text: sub }) : null, BARS[key] || null, MEDS[key] || null, delta, spark, fl ? el('span', { class: 'pm-flag' }, fl) : null);
   const d = (cur, prev, kind) => (p && prev != null && cur != null ? kmDelta(cur, prev, kind, pml) : null);
   const withTip = (node, key) => { attachTip(node, t(`pm_${key}_def`), false); node.setAttribute('aria-description', t(`pm_${key}_def`)); return node; };   // ADR-0101: the one tooltip
   const F = (lab, k) => (flag ? flag(lab, k) : null);
   const tiles = el('div', { class: `pm-tiles${rdOn ? ' seven' : ''}` },
     withTip(tile('thru', String(n.closed), t('pm_of', { n: n.total }), d(n.closed, p && p.closed, 'h'), pmSpark(sp((x) => x.closed)), F('km_closed', 'closed')), 'thru'),
-    withTip(tile('load', String(n.total), '', d(n.total, p && p.total, 'n'), pmSpark(sp((x) => x.total)), F('km_total', 'total')), 'load'),
+    own ? null : withTip(tile('load', String(n.total), '', d(n.total, p && p.total, 'n'), pmSpark(sp((x) => x.total)), F('km_total', 'total')), 'load'),
     withTip(tile('rate', rate == null ? '—' : `${rate}%`, '', d(rate, prate, 'h'), pmSpark(sp((x) => pct(x.closed, x.total))), null), 'rate'),
     withTip(tile('mttr', hmOf(n.avg), t('pm_hm'), d(n.avg, p && p.avg, 'l'), pmSpark(sp((x) => x.avg), 'pm-spark-low'), F('km_avg', 'avg')), 'mttr'),
     withTip(tile('pts', String(n.points), share != null ? t('pm_share', { p: share }) : '', d(n.points, p && p.points, 'h'), pmSpark(sp((x) => x.points)), F('col_points', 'points')), 'pts'),
@@ -1438,6 +1481,20 @@ function pmDash({ n, p, hist, open, share, ml, pml, rdOn = false, flag = null, i
   const tr = pmTrend(hist);
   const trendBox = tr ? el('div', { class: 'pm-card pm-wide' }, el('h4', {}, t('pm_trend_h'), el('i', { class: 'pm-term', text: 'Throughput · MTTR trend' })), tr,
     el('p', { class: 'hint pm-keys' }, el('span', { class: 'pm-key k-total' }), t('km_total'), el('span', { class: 'pm-key k-closed' }), t('km_closed'), el('span', { class: 'pm-key k-avg' }), t('km_avg'))) : null;
+  if (own) {   // ADR-0114, direction D: what needs him now → his month against the team's median → his next step → his rhythm
+    for (const tl of [...tiles.children]) if (tl.dataset.kpi === 'backlog') tl.remove();
+    const late = open.filter((x) => (x.ageHours || 0) > 168).length;
+    const nowBox = el('div', { class: 'pm-card pm-now' }, el('h4', { text: t('d_now_h') }),
+      el('p', { class: 'pm-now-top' }, el('strong', { class: 'pm-now-n pm-count', text: String(open.length) }), el('span', { text: !open.length ? t('d_now_none') : late ? t('d_now_late', { n: late }) : t('d_now_ok') })),
+      open.length && item ? el('ul', { class: 'pf-open' }, [...open].sort((x, y) => (y.ageHours || 0) - (x.ageHours || 0)).slice(0, 6).map(item)) : null,
+      open.length > 6 ? el('p', { class: 'hint', text: t('me_open_more', { n: open.length - 6 }) }) : null,
+      asOf ? el('p', { class: 'hint pm-asof', text: t('d_now_asof', { d: asOf }) }) : null);
+    const nextBox = el('div', { class: 'pm-card pm-next' }, el('h4', { text: t('d_next_h') }), el('div', { class: 'pm-next-slot' }));
+    return el('section', { class: 'pm-dash pm-d' }, el('div', { class: 'pm-d-top' }, nowBox, nextBox),
+      el('h4', { class: 'pm-d-h', text: t(med ? 'd_month_h' : 'd_month_h0') }), el('p', { class: 'hint pm-period', text: `${p ? `${t('pm_cmp', { m: ml, p: pml })} ` : ''}${t(window.matchMedia && window.matchMedia('(hover: none)').matches ? 'pm_tip_tap' : 'pm_tip_hover')}` }), tiles,
+      med ? el('p', { class: 'hint pm-med-note', text: t('pm_med_note', { n: med.n }) }) : null, cal,
+      el('div', { class: `pm-cards${trendBox ? '' : ' no-trend'}` }, trendBox, mixBox));
+  }
   return el('section', { class: 'pm-dash' }, el('p', { class: 'hint pm-period', text: `${p ? `${t('pm_cmp', { m: ml, p: pml })} ` : ''}${t(window.matchMedia && window.matchMedia('(hover: none)').matches ? 'pm_tip_tap' : 'pm_tip_hover')}` }), tiles,
     med ? el('p', { class: 'hint pm-med-note', text: t('pm_med_note', { n: med.n }) }) : null,
     el('div', { class: `pm-cards${trendBox ? '' : ' no-trend'}` }, trendBox, mixBox, ageBox));
@@ -3138,14 +3195,19 @@ function personMonthView({ id, tasks, acts = [], months, ym, head = '', share = 
   const fmt = (k, v) => (k === 'avg' ? hmOf(v) : String(v ?? '—'));
   const hist = months.slice(0, 6).map((m) => ({ m, x: one(m.ym) }));
   // every open task, newest first — six shown, the rest one fold away (as «My KPIs» always listed them)
-  const open = openTasks(tasks, id).sort((x, y) => String(y.createdAt || '').localeCompare(String(x.createdAt || '')));
+  const ownPage = (isTeamPortal || !!viewAs) && !!me && !!me.user && String(me.user.id) === String(id);
+  const ownPull = ownPage && !viewAs && !meDerived && me.extractedAt;
+  const asOfMs = Math.min(Date.now(), ownPull ? Date.parse(me.extractedAt) : datasets.length ? Math.max(...datasets.filter((d) => d.range).map((d) => Date.parse(`${d.range.to}T23:59:59+03:00`))) : Date.now());
+  const asOfDay = saudiDay(new Date(asOfMs).toISOString());
+  // an open task's age is counted to the data's last update: counted to today it grew every day the data was not refreshed
+  const open = openTasks(tasks, id).map((x) => ({ ...x, ageHours: x.createdAt ? Math.max(0, (asOfMs - Date.parse(x.createdAt)) / 3600000) : null })).sort((x, y) => String(y.createdAt || '').localeCompare(String(x.createdAt || '')));
   const item = (x) => el('li', {}, el('span', { text: x.title || typeLabel(x.type || '', lang) || '—' }),
     el('small', { class: 'hint', text: x.ageHours == null ? '' : t(x.ageHours < 48 ? 'hours' : 'days', { n: Math.round(x.ageHours < 48 ? x.ageHours : x.ageHours / 24) }) }));
   const who = nameOf(peopleOf(datasets).find((x) => x.id === id) || {}, lang) || (me && me.user && String(me.user.id) === String(id) ? me.user.name : id);
   const flag = (lab, k) => flagBtn({ who, period: ml, label: t(lab), value: fmt(k, n[k]), prev: p ? fmt(k, p[k]) : '—', def: t(SNAP_DEF[k] || 'km_total'), asOf: dataAsOf() });
   // ADR-0102: one place for each number — the tiles (with ⚑), the ring and the chart; the same numbers as a table for screen readers only
   return el('div', { class: 'km-detail' }, head ? el('p', { class: 'hint km-head', text: head }) : null, maPersonLine(id, ym),
-    pmDash({ n, p, hist, open, share, ml, pml, rdOn, flag, item, med }),
+    pmDash({ n, p, hist, open, share, ml, pml, rdOn, flag, item, med, own: ownPage, cal: ownPage ? pmCalendar(tasks, String(id), ym, asOfDay) : null, asOf: asOfDay }),
     el('div', { class: 'km-cmp sr-only' }, el('table', {}, el('caption', { text: t('pm_sr_caption', { m: ml, p: pml }) }),
       el('thead', {}, el('tr', {}, el('th', {}), el('th', { class: 'num', text: ml }), el('th', { class: 'num', text: pml }), el('th', { class: 'num', text: t('km_change') }))),
       el('tbody', {}, rows.map(([lab, k, kind]) => el('tr', {}, el('td', { text: t(lab) }), el('td', { class: 'num' }, el('b', { text: fmt(k, n[k]) })),

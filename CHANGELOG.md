@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.34 — 2026-11-12
+
+- صفحة المهندس بتصميم جديد: أول حاجة «المطلوب منك دلوقتي» (المهام المفتوحة)، وبعدها شهره مقابل وسيط فريقه في ٤ أرقام بأشرطة، وخطوته الجاية (المركز والفرق بالنقاط)، وتقويم الشهر: اضغط على أي يوم تشوف اللي اتقفل فيه.
+- تصحيح: عمر المهمة المفتوحة بقى بيتحسب لحد تاريخ آخر تحديث للبيانات، مش لحد النهارده، والتاريخ مكتوب.
+
+<details><summary>English</summary>
+
+- The engineer's page in a new layout: first «Needed from you now» (his open tasks), then his month against his team's median in four numbers with bars, his next step (the rank and the gap in points), and the month as a calendar: press a day to see what was closed on it.
+- A correction: an open task's age is now counted to the date of the data's last update, not to today, and that date is shown.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- انجینئر کا صفحہ نئے انداز میں: سب سے پہلے «ابھی آپ سے مطلوب» (کھلے ٹاسک)، پھر اس کا مہینہ ٹیم کے درمیانی کے مقابلے میں چار اعداد اور پٹیوں کے ساتھ، اس کا اگلا قدم (درجہ اور پوائنٹس کا فرق)، اور مہینے کا کیلنڈر: کسی دن کو دبائیں اور دیکھیں اس دن کیا بند ہوا۔
+- درستی: کھلے ٹاسک کی عمر اب ڈیٹا کی آخری تازہ کاری کی تاریخ تک گنی جاتی ہے، آج تک نہیں، اور وہ تاریخ دکھائی جاتی ہے۔
+
+</div>
+</details>
+
+
 ## v9.33 — 2026-11-12
 
 - صفحة المهندس: تحت كل رقم من أرقامه بقى مكتوب مكانه من وسيط فريقه (أعلى، أقل، أسرع، أبطأ) ومعاه قيمة الوسيط. الفريق هو اللي تحت نفس قائد الفريق، ومفيش اسم ولا رقم أي زميل بيتعرض.
