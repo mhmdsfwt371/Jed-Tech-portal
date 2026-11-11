@@ -597,7 +597,7 @@
   .dt-steps { margin: 14px 0 6px; padding: 0; list-style: none; counter-reset: dt; display: grid; gap: 12px; }
   .dt-steps li { counter-increment: dt; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 15px; font-weight: 600; }
   .dt-steps li::before { content: counter(dt); flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; }
-  .dt-inline { display: inline-flex; gap: 8px; } .dt-last { margin: 8px 0 0; color: var(--muted); font-weight: 600; }
+  .dt-inline { display: inline-flex; gap: 8px; } .dt-last { margin: 8px 0 0; color: var(--slate); font-weight: 600; }
   .dt-more { margin-top: 22px; } .dt-more > summary { cursor: pointer; font-weight: 700; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); list-style: none; }
   .dt-more > summary::before { content: '▸ '; } .dt-more[open] > summary::before { content: '▾ '; } .dt-more > summary::-webkit-details-marker { display: none; }
   .dt-more[open] > summary { margin-bottom: 14px; }
@@ -616,7 +616,7 @@
   .me-fold[open] > summary { margin-bottom: 12px; } .me-fold .me-card { margin-top: 12px; }
   .ro-val { font-size: 14px; } 
   .answer-line { font-size: 17px; font-weight: 700; color: var(--title); margin: 4px 0 14px; line-height: 1.6; }
-  .strip small { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.4; } .kpi-more { margin-inline-start: auto; }
+  .strip small { display: block; font-size: 12px; color: var(--slate); margin-top: 4px; line-height: 1.4; } .kpi-more { margin-inline-start: auto; }
   .w-per { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px; margin: 10px 0 16px; display: grid; gap: 8px; } .w-per-src { margin: 0; } .w-speedx { display: flex; gap: 8px; align-items: center; } .w-speedx input { width: 80px; }
   .w-simple .w-mode { min-width: 150px; } .w-simple .std-in { width: 90px; }
   .cnt-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 6px 0 14px; }
@@ -1245,6 +1245,16 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   /* ADR-0106 */ .km-name-b { all: unset; cursor: pointer; display: inline-flex; align-items: center; min-height: 36px; } .km-name-b:focus-visible { outline: 2px solid var(--live-bright); outline-offset: 2px; border-radius: 4px; }
   /* ADR-0110: a pull that skipped lists — the palette's own warning colours, light and dark */ .msg.warn { color: var(--warn); background: var(--warn-wash); border-radius: 8px; padding: 8px 12px; font-weight: 600; }
   .ds .ds-skip { flex-basis: 100%; margin-top: 6px; font-size: 13px; line-height: 1.6; }
+  /* ADR-0111: monthly readings */
+  .rd-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 4px 0 6px; } .rd-scope { margin: 0 0 14px; }
+  .rd-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; } @media (max-width: 900px) { .rd-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } } @media (max-width: 520px) { .rd-tiles { grid-template-columns: 1fr; } }
+  .rd-tile { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); min-width: 0; }
+  .rd-tile:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .rd-tl { font-size: 13px; color: var(--slate); } .rd-tv { font-size: 28px; line-height: 1.15; font-variant-numeric: tabular-nums; } .rd-ts, .rd-tp { font-size: 12.5px; color: var(--slate); }
+  .rd-card { margin-bottom: 16px; } .rd-card h2 { margin: 0 0 10px; font-size: 16px; }
+  .rd-table { width: 100%; border-collapse: collapse; font-size: 13.5px; } .rd-table th, .rd-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: start; white-space: nowrap; } .rd-table thead th { font-size: 12.5px; color: var(--slate); font-weight: 600; white-space: normal; vertical-align: bottom; }
+  .rd-table tbody th { font-weight: 600; } .rd-table td.num { text-align: end; font-variant-numeric: tabular-nums; } .rd-table tfoot th, .rd-table tfoot td { font-weight: 700; border-bottom: 0; } .rd-table tr.rd-generic th { color: var(--note); } .rd-table tr.on th, .rd-table tr.on td { background: var(--note-wash); }
+  .rd-bar { display: inline-block; position: relative; width: 120px; height: 10px; border-radius: 5px; background: var(--line); vertical-align: middle; overflow: hidden; } .rd-bar i { position: absolute; inset-block: 0; inset-inline-start: 0; background: var(--note); border-radius: 5px; }
+  .rd-bar-t { overflow: visible; } .rd-bar u { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); } .rd-barv { display: inline-block; min-width: 46px; margin-inline-start: 8px; font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
@@ -1272,6 +1282,7 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
         <a href="#kpi" class="sub" data-view="kpi" data-t="kpi_board">لوحة المؤشرات</a>
         <a href="#dev" class="sub" data-view="dev" data-t="nav_dev">التطوير</a>
         <a href="#overtime" class="sub" data-view="overtime" data-t="nav_overtime">ساعات العمل الإضافي</a>
+        <a href="#readings" class="sub" data-view="readings" data-t="nav_readings">قراءات الشهر</a>
         <a href="#team" class="sub" data-view="team" data-t="nav_team">الفريق</a>
         <a href="#planner" class="sub" data-view="planner" data-t="nav_planner">خطط الفريق</a>
         <a href="#tenders" class="sub" data-view="tenders" data-t="nav_tenders">سجل المناقصات</a>
@@ -1436,6 +1447,10 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   <section id="view-overtime" hidden>
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_overtime">ساعات العمل الإضافي</h1><button type="button" class="help-q" data-help="g_overtime_b" data-help-title="nav_overtime" aria-label="?">?</button></div><p class="lead" data-t="ot_lead"></p></div>
     <div id="overtime-body"></div>
+  </section>
+  <section id="view-readings" hidden>
+    <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_readings">قراءات الشهر</h1><button type="button" class="help-q" data-help="g_readings_b" data-help-title="nav_readings" aria-label="?">?</button></div><p class="lede" data-t="rd_lede"></p></div>
+    <div id="readings-body"></div>
   </section>
   <section id="view-planner" hidden>
     <div class="page-head"><p class="eyebrow" data-t="portal"></p><div class="title-row"><h1 data-t="nav_planner">خطط الفريق</h1><button type="button" class="help-q" data-help="g_planner_b" data-help-title="nav_planner" aria-label="?">?</button></div><p class="lead" data-t="pl_lead"></p></div>

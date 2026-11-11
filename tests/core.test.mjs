@@ -1011,6 +1011,39 @@ test('one e-mail counts once: copies in two folders share a key; without a Messa
   assert.notEqual(core.mailKey(a), core.mailKey({ internetMessageId: '<other@afaqy.com>' }));
 });
 
+// ADR-0111 — monthly readings: invented data only (no real pull may live in the repository)
+test('monthly readings: scope, origin, times, tier points, Dammam points and the automatic score', () => {
+  const people = [{ id: '1', nameEn: 'A', teams: ['Jeddah After sales Team'] }, { id: '2', nameEn: 'B', teams: ['Jeddah After sales Team'] }, { id: '9', nameEn: 'X', teams: ['Jeddah-Sales Team'] }, { id: '7', nameEn: 'System User', teams: ['Jeddah After sales Team'] }];
+  const tk = (id, type, created, closed, by, to, mail = false) => ({ id, type, createdAt: created, completedAt: closed, createdById: by, assigneeId: to, fromEmail: mail, state: closed ? 'done' : 'open' });
+  const tasks = [
+    tk('a', 'Email Customer Activity', '2026-10-04T06:00:00Z', '2026-10-04T08:00:00Z', '7', '1', true),      // e-mail, 2 h
+    tk('b', 'Email Customer Activity', '2026-10-05T06:00:00Z', '2026-10-06T06:00:00Z', '7', '1', true),      // e-mail, 24 h
+    tk('c', 'Manual Task', '2026-10-05T07:00:00Z', '2026-10-05T07:03:00Z', '1', '1'),                        // self, 3 minutes
+    tk('d', 'Training Request | طلب تدريب', '2026-10-06T07:00:00Z', '2026-10-08T07:00:00Z', '2', '1'),        // others, 48 h, tier 4
+    tk('e', 'WASL Link', '2026-10-07T07:00:00Z', null, '1', '2'),                                              // open, created 7 Oct
+    tk('f', 'Manual Task', '2026-10-20T07:00:00Z', '2026-10-20T08:00:00Z', '2', '2'),                        // self, 1 h
+    tk('g', 'Manual Task', '2026-09-30T18:52:00Z', '2026-10-01T07:00:00Z', '2', '2'),                        // 30 Sep 21:52 Saudi time: September, not October
+    tk('h', 'Manual Task', '2026-10-10T07:00:00Z', '2026-10-10T07:30:00Z', '9', '9'),                        // another team
+    tk('i', 'Manual Task', '2026-09-30T21:30:00Z', '2026-10-01T05:00:00Z', '1', '1'),                        // 1 Oct 00:30 Saudi time: October
+  ];
+  const W = { tasks: { 'email customer activity': { w: 2, tier: 'customer' }, 'manual task': { w: 1, tier: 'admin' }, 'training request': { w: 5, tier: 'multistage' }, 'wasl link': { w: 2, tier: 'customer' } } };
+  const r = core.monthReadings(tasks, people, W, { month: '2026-10', to: '2026-10-29' });
+  assert.equal(r.accounts, 2, 'the system account and other teams are outside the scope');
+  assert.equal(r.arrived, 7); assert.equal(r.closed, 6); assert.equal(r.workingDays, 21);
+  assert.deepEqual([r.email, r.self, r.others], [2, 3, 2]);
+  assert.equal(r.generic, 5); assert.equal(r.typeCount, 4);
+  assert.equal(r.selfLe5m, 1); assert.equal(r.selfClosed, 3);
+  assert.equal(r.emailLe8h, 1); assert.equal(r.emailClosed, 2); assert.equal(r.emailLe8hShare, 0.5);
+  const m1 = r.members.find((m) => m.id === '1'), m2 = r.members.find((m) => m.id === '2');
+  assert.equal(m1.no, 1); assert.equal(m1.points, 2 + 2 + 1 + 5 + 1); assert.equal(m1.dammamPoints, 5 + 5 + 3 + 15 + 3);
+  assert.equal(m2.points, 1); assert.equal(m2.open, 1); assert.equal(m2.openOver7, 1, 'open since 7 Oct is over 7 days on 29 Oct');
+  assert.equal(m1.sysClosed, 3); assert.equal(m1.sysLe8h, 1);
+  assert.equal(r.baseTarget, 6); assert.equal(Math.round(m1.score.output), 110, 'output is capped at 110%');
+  assert.equal(r.types.find((x) => x.key === 'training request').points, 5);
+  const sep = core.monthReadings(tasks, people, W, { month: '2026-09' });
+  assert.equal(sep.arrived, 1, 'the 30 Sep 21:52 task belongs to September'); assert.equal(sep.to, '2026-09-30');
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

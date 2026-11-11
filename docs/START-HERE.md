@@ -140,6 +140,7 @@
 | `docs/decisions/0108-myafaqy-key-renewal.md` | The MyAFAQY pulls wait for a valid key and renew on a rejection (extension 1.0.2) |
 | `docs/decisions/0109-outlook-box-removed-actions-node24.md` | The Outlook box and its Microsoft sign-in removed; workflows on Node 24 actions |
 | `docs/decisions/0110-team-pull-for-any-account.md` | The team pull works for any MyAFAQY account: only the tasks list is essential (extension 1.0.3) |
+| `docs/decisions/0111-monthly-readings.md` | «Monthly readings»: the proposal's measurement basis for any pulled month; the workbook correction; the lost working environment and `tests/browser/` |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

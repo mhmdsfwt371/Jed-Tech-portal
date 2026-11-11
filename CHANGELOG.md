@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.31 — 2026-11-12
+
+- صفحة جديدة تحت المؤشرات: «قراءات الشهر» — قراءات أي شهر مسحوب بنفس تعريفات اقتراح جدة: المهام اللي وصلت واتقفلت، نسبة النوعين العامّين، مصدر الشغل، الوقت من الفتح للإغلاق، النقاط بمستوى الجهد، ومقارنة بهدف الدمام.
+- الأعضاء بيظهروا بالأرقام، و«إظهار الأسماء» مقفول افتراضيًا علشان تعرضها بره الفرع. وفيها «تصدير إكسل» ومقارنة شهر بشهر.
+
+<details><summary>English</summary>
+
+- A new page under KPIs: «Monthly readings» — any pulled month by the definitions of the Jeddah proposal: tasks arrived and closed, the share of the two generic types, where work came from, time from open to close, points by effort tier, and the comparison with Dammam's target.
+- Members are numbered, and «Show names» is off by default so the page can be shown outside the branch. It has «Export to Excel» and a month-by-month comparison.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اشاریوں کے تحت نیا صفحہ: «ماہانہ ریڈنگز» — کوئی بھی حاصل شدہ مہینہ جدہ کی تجویز کی تعریفوں کے مطابق: آنے اور بند ہونے والے ٹاسک، دو عمومی اقسام کا حصہ، کام کہاں سے آیا، کھلنے سے بند ہونے کا وقت، محنت کی سطح کے پوائنٹس، اور دمام کے ہدف سے موازنہ۔
+- اراکین نمبر سے دکھائے جاتے ہیں اور «نام دکھائیں» بطورِ طے شدہ بند ہے تاکہ صفحہ برانچ سے باہر دکھایا جا سکے۔ اس میں «ایکسل میں برآمد» اور ماہ بہ ماہ موازنہ ہے۔
+
+</div>
+</details>
+
+
 ## v9.30 — 2026-11-10
 
 - السحب بقى بيشتغل لأي حساب على ماي أفاقي، مش حسابك بس: لو ماي أفاقي ما سمحش للحساب بقايمة مساعدة، السحب بيكمّل من غيرها، وبتظهر تحت بيانات الشهر في «البيانات المرفوعة» القوايم اللي اتعدّت.

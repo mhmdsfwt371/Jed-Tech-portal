@@ -63,7 +63,7 @@ export async function loadStrings(langs = ['ar', 'en', 'ur']) {
 }
 
 // The user guide: one list, read by the page (Guide tab) and by scripts/build-manual.mjs, so they can never differ.
-export const GUIDE = [['g_home_h', 'g_home_b'], ['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_team_h', 'g_team_b'], ['g_weights_h', 'g_weights_b'], ['g_mailfile_h', 'g_mailfile_b'], ['g_dev_h', 'g_dev_b'], ['g_overtime_h', 'g_overtime_b'], ['g_planner_h', 'g_planner_b'], ['g_tenders_h', 'g_tenders_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_sync_h', 'g_sync_b'], ['g_cards_h', 'g_cards_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b']];
+export const GUIDE = [['g_home_h', 'g_home_b'], ['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_team_h', 'g_team_b'], ['g_weights_h', 'g_weights_b'], ['g_mailfile_h', 'g_mailfile_b'], ['g_dev_h', 'g_dev_b'], ['g_overtime_h', 'g_overtime_b'], ['g_planner_h', 'g_planner_b'], ['g_tenders_h', 'g_tenders_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_sync_h', 'g_sync_b'], ['g_cards_h', 'g_cards_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b'], ['g_readings_h', 'g_readings_b']];
 export const DEFINITIONS = ['def_1', 'def_2', 'def_3', 'def_4', 'def_5', 'def_6', 'def_7', 'def_8', 'def_9', 'def_10'];
 
 export function t(lang, key, vars = {}) {
@@ -2100,4 +2100,72 @@ export const maIsReply = (subject) => /^\s*((re|fw|fwd|رد|إعادة توجي�
 export function maCategory(rec, classify) {
   if (rec && rec.b) { const c = classify(rec.b); if (c !== 'other') return c; if (maIsReply(rec.s)) return 'other'; }
   return classify(rec ? rec.s : '');
+}
+
+// ===================== monthly readings — the measurement basis of the Jeddah proposal (ADR-0111) =====================
+/** The team the readings are measured on, as MyAFAQY names it. */
+export const READINGS_TEAM = /jeddah\s+after\s*-?\s*sales\s+team/i;
+/** Points of the four effort tiers (ADR-0111): the tier comes from the Weights page, the points from here. */
+export const TIER_POINTS = { admin: 1, customer: 2, integration: 3, multistage: 5 };
+/** Each MyAFAQY task type valued at its nearest item in Dammam's proposal (catalogue id of v2, or the task type of v1), with its points. */
+export const DAMMAM_MAP = {
+  'email customer activity': ['v1 Email-Integrated Task', 5], 'manual task': ['v1 Manual Task', 3], 'manual task - after sales': ['v1 Manual Task', 3], 'others': ['v1 Manual Task', 3],
+  'wasl link': ['GI-01', 6], 'wasl inquiry': ['GI-03', 5], 'madinty link': ['GI-08 (nearest)', 6], 'rafed link': ['GI-08 (nearest)', 6], 'naqaba link': ['GI-08 (nearest)', 6],
+  'st without tech visit': ['AA-03', 10], 'st with tech visit': ['AA-03', 10], 'mt request': ['IS-06', 12], 'account credentials': ['CS-02', 2], 'view units': ['CS-08', 3],
+  'client units list': ['CS-04', 4], 'client inquiry': ['CS-15', 4], 'training request': ['CS-10', 15], 'tsu request': ['v1 TSU', 20], 'vss account creation': ['CS-01 (nearest)', 3],
+  'cameras checking': ['IS-11', 12], 'active': ['AA-01', 5], 'inactive': ['AA-01', 5], 'mobile app issue': ['IS-01', 8],
+};
+const rdMedian = (a) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), h = Math.floor(s.length / 2); return s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2; };
+const rdShare = (n, d) => (d ? n / d : null);
+/**
+ * The readings of one month for the after-sales team as MyAFAQY lists it — the same definitions as the proposal's workbook:
+ * tasks created in the month (Saudi time) and assigned to the team; origin = e-mail (mail module), self (creator = assignee) or others;
+ * time = creation to closure in clock hours; points = effort tier of the type; Dammam-equivalent = nearest Dammam item of the type.
+ * `to` = the last day the pulls cover in that month (working days and «open at the end» are counted to it).
+ */
+export function monthReadings(tasks, people, weights, { month, to, target = 60, cap = 1.1, backlogPenalty = 25, scoreWeights = { output: 30, timeliness: 25, backlog: 10 } } = {}) {
+  const team = (people || []).filter((p) => (p.teams || []).some((x) => READINGS_TEAM.test(x)) && !/\bsystem\b|مستخدم النظام/i.test(`${p.nameEn || ''} ${p.nameAr || ''}`));
+  const ids = new Set(team.map((p) => p.id));
+  const from = `${month}-01`; const end = to && to.slice(0, 7) === month ? to : (() => { const d = new Date(Date.parse(`${month}-01T00:00:00Z`)); d.setUTCMonth(d.getUTCMonth() + 1); d.setUTCDate(0); return d.toISOString().slice(0, 10); })();
+  const endMs = Date.parse(`${end}T23:59:59+03:00`);
+  let workingDays = 0; for (let d = new Date(Date.parse(`${from}T00:00:00Z`)); d.toISOString().slice(0, 10) <= end; d.setUTCDate(d.getUTCDate() + 1)) if ([0, 1, 2, 3, 4].includes(d.getUTCDay())) workingDays++;
+  const mine = (tasks || []).filter((x) => ids.has(x.assigneeId));
+  const inMonth = mine.filter((x) => x.createdAt && saudiDay(x.createdAt).slice(0, 7) === month);
+  const origin = (x) => (x.fromEmail === true ? 'email' : (x.createdById && x.createdById === x.assigneeId ? 'self' : 'others'));
+  const hours = (x) => (Date.parse(x.completedAt) - Date.parse(x.createdAt)) / 36e5;
+  const closed = inMonth.filter((x) => x.completedAt);
+  const W = (weights && weights.tasks) || {};
+  const tierOf = (k) => (W[k] && TIER_POINTS[W[k].tier] ? W[k].tier : 'admin');
+  const dist = (xs) => { const h = xs.map(hours); const le = (lim) => h.filter((v) => v <= lim).length; return { n: h.length, median: rdMedian(h), le5m: le(5 / 60), le8h: le(8), le24h: le(24), gt7d: h.filter((v) => v > 168).length }; };
+  // types
+  const byType = new Map();
+  for (const x of inMonth) { const k = typeKey(x.type); if (!byType.has(k)) byType.set(k, { key: k, label: String(x.type || '').split('|').map((s) => s.trim()).find((s) => /[a-z]/i.test(s)) || x.type || k, rows: [] }); byType.get(k).rows.push(x); }
+  const types = [...byType.values()].map((g) => { const cl = g.rows.filter((x) => x.completedAt), d = dist(cl), tier = tierOf(g.key), dm = DAMMAM_MAP[g.key] || null;
+    return { key: g.key, label: g.label, arrived: g.rows.length, closed: cl.length, share: rdShare(g.rows.length, inMonth.length), median: d.median, le8h: d.le8h, le8hShare: rdShare(d.le8h, cl.length),
+      tier, tierNo: TIERS.indexOf(tier) + 1, points: TIER_POINTS[tier], weighted: !!W[g.key], dammamItem: dm ? dm[0] : null, dammamPoints: dm ? dm[1] : 0 }; }).sort((a, b) => b.arrived - a.arrived || a.key.localeCompare(b.key));
+  const tp = new Map(types.map((x) => [x.key, x]));
+  const generic = types.filter((x) => x.key === 'email customer activity' || x.key === 'manual task').reduce((s, x) => s + x.arrived, 0);
+  // members
+  const members = team.map((p) => { const s = inMonth.filter((x) => x.assigneeId === p.id), cl = s.filter((x) => x.completedAt), sys = cl.filter((x) => origin(x) !== 'self');
+    const open = mine.filter((x) => x.assigneeId === p.id && x.createdAt && Date.parse(x.createdAt) <= endMs && (!x.completedAt || Date.parse(x.completedAt) > endMs));
+    const o = { email: 0, self: 0, others: 0 }; for (const x of s) o[origin(x)]++;
+    const pts = cl.reduce((a, x) => a + tp.get(typeKey(x.type)).points, 0), dpts = cl.reduce((a, x) => a + tp.get(typeKey(x.type)).dammamPoints, 0);
+    return { id: p.id, arrived: s.length, closed: cl.length, email: o.email, self: o.self, others: o.others, points: pts, pointsPerDay: workingDays ? pts / workingDays : null,
+      dammamPoints: dpts, dammamPerDay: workingDays ? dpts / workingDays : null, sysClosed: sys.length, sysLe8h: sys.filter((x) => hours(x) <= 8).length,
+      sysLe8hShare: rdShare(sys.filter((x) => hours(x) <= 8).length, sys.length), open: open.length, openOver7: open.filter((x) => (endMs - Date.parse(x.createdAt)) / 864e5 > 7).length, median: rdMedian(cl.map(hours)) }; })
+    .sort((a, b) => b.closed - a.closed || b.arrived - a.arrived || a.id.localeCompare(b.id)).map((m, i) => ({ ...m, no: i + 1 }));
+  const baseTarget = rdMedian(members.map((m) => m.points));
+  for (const m of members) { const out = baseTarget ? Math.min(m.points / baseTarget, cap) * 100 : 0, tim = (m.sysLe8hShare ?? 0) * 100, back = Math.max(0, 100 - backlogPenalty * m.openOver7);
+    m.score = { output: out, timeliness: tim, backlog: back, auto: (out * scoreWeights.output + tim * scoreWeights.timeliness + back * scoreWeights.backlog) / 100 }; }
+  const sum = (k) => members.reduce((a, m) => a + m[k], 0);
+  const all = dist(closed), em = dist(closed.filter((x) => origin(x) === 'email')), se = dist(closed.filter((x) => origin(x) === 'self'));
+  const perDay = members.map((m) => m.dammamPerDay).filter((v) => v != null), cl = members.map((m) => m.closed);
+  return { month, from, to: end, workingDays, accounts: team.length, arrived: inMonth.length, closed: closed.length, closureRate: rdShare(closed.length, inMonth.length),
+    genericShare: rdShare(generic, inMonth.length), generic, typeCount: types.length, email: sum('email'), self: sum('self'), others: sum('others'),
+    medianAll: all.median, medianEmail: em.median, medianSelf: se.median, selfLe5m: se.le5m, selfClosed: se.n, selfLe5mShare: rdShare(se.le5m, se.n),
+    emailClosed: em.n, emailLe8h: em.le8h, emailLe8hShare: rdShare(em.le8h, em.n), emailLe24hShare: rdShare(em.le24h, em.n), emailGt7dShare: rdShare(em.gt7d, em.n),
+    sysClosed: sum('sysClosed'), sysLe8h: sum('sysLe8h'), sysLe8hShare: rdShare(sum('sysLe8h'), sum('sysClosed')),
+    points: sum('points'), dammamPoints: sum('dammamPoints'), dammamMedianPerDay: rdMedian(perDay), dammamMaxPerDay: perDay.length ? Math.max(...perDay) : null, target,
+    atTarget: perDay.filter((v) => v >= target).length, spread: cl.length && Math.min(...cl) > 0 ? Math.max(...cl) / Math.min(...cl) : null, open: sum('open'), openOver7: sum('openOver7'),
+    baseTarget, autoPoints: scoreWeights.output + scoreWeights.timeliness + scoreWeights.backlog, scoreWeights, types, members };
 }

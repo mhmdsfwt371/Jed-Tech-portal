@@ -1,22 +1,22 @@
 {
-  "version": "9.30",
-  "date": "2026-11-10",
+  "version": "9.31",
+  "date": "2026-11-12",
   "notes": {
     "ar": [
-      "السحب بقى بيشتغل لأي حساب على ماي أفاقي، مش حسابك بس: لو ماي أفاقي ما سمحش للحساب بقايمة مساعدة، السحب بيكمّل من غيرها، وبتظهر تحت بيانات الشهر في «البيانات المرفوعة» القوايم اللي اتعدّت.",
-      "حدّث الإضافة لـ 1.0.3، واسحب زرار سحب الفريق من صفحة البيانات لشريط الإشارات تاني."
+      "صفحة جديدة تحت المؤشرات: «قراءات الشهر» — قراءات أي شهر مسحوب بنفس تعريفات اقتراح جدة: المهام اللي وصلت واتقفلت، نسبة النوعين العامّين، مصدر الشغل، الوقت من الفتح للإغلاق، النقاط بمستوى الجهد، ومقارنة بهدف الدمام.",
+      "الأعضاء بيظهروا بالأرقام، و«إظهار الأسماء» مقفول افتراضيًا علشان تعرضها بره الفرع. وفيها «تصدير إكسل» ومقارنة شهر بشهر."
     ],
     "en": [
-      "The pull now works for any MyAFAQY account, not just the manager's: if MyAFAQY does not allow the account a supporting list, the pull carries on without it, and the month's row in «Uploaded data» names the lists it skipped.",
-      "Update the extension to 1.0.3, and drag the team pull button from the Data page to your bookmarks bar again."
+      "A new page under KPIs: «Monthly readings» — any pulled month by the definitions of the Jeddah proposal: tasks arrived and closed, the share of the two generic types, where work came from, time from open to close, points by effort tier, and the comparison with Dammam's target.",
+      "Members are numbered, and «Show names» is off by default so the page can be shown outside the branch. It has «Export to Excel» and a month-by-month comparison."
     ],
     "ur": [
-      "حصول اب مائی آفاقی کے کسی بھی اکاؤنٹ سے چلتا ہے: اگر اکاؤنٹ کو کوئی معاون فہرست نہ ملے تو حصول اس کے بغیر جاری رہتا ہے، اور «اپ لوڈ شدہ ڈیٹا» میں مہینے کی سطر چھوڑی گئی فہرستیں بتاتی ہے۔",
-      "ایکسٹینشن 1.0.3 پر اپ ڈیٹ کریں، اور ٹیم کے حصول کا بٹن ڈیٹا صفحے سے دوبارہ بُک مارکس بار میں گھسیٹیں۔"
+      "اشاریوں کے تحت نیا صفحہ: «ماہانہ ریڈنگز» — کوئی بھی حاصل شدہ مہینہ جدہ کی تجویز کی تعریفوں کے مطابق: آنے اور بند ہونے والے ٹاسک، دو عمومی اقسام کا حصہ، کام کہاں سے آیا، کھلنے سے بند ہونے کا وقت، محنت کی سطح کے پوائنٹس، اور دمام کے ہدف سے موازنہ۔",
+      "اراکین نمبر سے دکھائے جاتے ہیں اور «نام دکھائیں» بطورِ طے شدہ بند ہے تاکہ صفحہ برانچ سے باہر دکھایا جا سکے۔ اس میں «ایکسل میں برآمد» اور ماہ بہ ماہ موازنہ ہے۔"
     ]
   },
   "counts": {
-    "versions": 155,
-    "decisions": 110
+    "versions": 156,
+    "decisions": 111
   }
 }

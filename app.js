@@ -6,6 +6,7 @@ import {
   formatHours, formatRate, sampleDataset, GROUP, GUIDE, DEFINITIONS, peopleOf, defaultTeam, nameOf,
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
+  monthReadings, READINGS_TEAM,
   parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, overtimeOf, SOURCES, taskSource, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
@@ -3959,9 +3960,98 @@ function renderMailFile() {
     shown.length ? [el('div', { class: 'table-wrap mf-msgs' }, el('table', {}, el('thead', {}, el('tr', {}, [t('mf_col_date'), t('mf_col_sender'), t('mf_col_subject'), t('mf_col_cat'), t('mf_col_folder')].map((h) => el('th', { text: h })))), tbody)), more] : el('div', { class: 'empty', text: t('mf_empty') }));
   set(body, mailSrc('pst'), maSection(), top, dateRow, sendersBox, rulesBox, results, howBox, listBox);
 }
+// ---------- monthly readings — the measurement basis of the Jeddah proposal (ADR-0111) ----------
+const rdState = { month: null, names: false };
+function rdModel() {
+  const tasks = allTasks(), ppl = peopleOf(datasets);
+  const ids = new Set(ppl.filter((p) => (p.teams || []).some((x) => READINGS_TEAM.test(x))).map((p) => p.id));
+  // only months a pull covers from their first day: a pull of October also carries older tasks that are still open, and those are not «September»
+  const covered = (m) => datasets.some((d) => d.range && d.range.from <= `${m}-01` && d.range.to >= `${m}-01`);
+  const months = [...new Set(tasks.filter((x) => ids.has(x.assigneeId) && x.createdAt).map((x) => saudiDay(x.createdAt).slice(0, 7)))].filter(covered).sort().reverse().slice(0, 24);
+  // the last day the pulls cover in a month: working days and «open at the end» are counted to it
+  const lastDay = (m) => { const ds = datasets.filter((d) => d.range && d.range.from.slice(0, 7) <= m && d.range.to.slice(0, 7) >= m).map((d) => (d.range.to.slice(0, 7) > m ? monthLast(m) : d.range.to)).sort(); return ds.length ? ds[ds.length - 1] : monthLast(m); };
+  const W = weights(), cache = new Map();
+  const of = (m) => { if (!cache.has(m)) cache.set(m, monthReadings(tasks, ppl, W, { month: m, to: lastDay(m) })); return cache.get(m); };
+  return { tasks, ppl, ids, months, of };
+}
+const rdFmt = { n: (v) => (v == null ? '—' : Math.round(v).toLocaleString('en-US')), p: (v) => (v == null ? '—' : `${(v * 100).toFixed(1)}%`), d: (v) => (v == null ? '—' : v.toFixed(1)), h: (v) => (v == null ? '—' : `${v.toFixed(2)} ${t('rd_unit_h')}`), x: (v) => (v == null ? '—' : `${v.toFixed(1)}×`) };
+const rdMonthName = (m) => new Intl.DateTimeFormat(lang === 'ur' ? 'ur' : lang, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${m}-15T12:00:00Z`));
+function renderReadings() {
+  const body = $('readings-body'); if (!body || isTeamPortal) return;
+  const M = rdModel();
+  if (!M.tasks.length) { set(body, el('p', { class: 'note', text: t('ot_nodata') })); return; }
+  if (!M.ids.size || !M.months.length) { set(body, el('p', { class: 'note', text: t('rd_noteam') })); return; }
+  if (!rdState.month || !M.months.includes(rdState.month)) rdState.month = M.months[0];
+  const r = M.of(rdState.month), prevM = M.months[M.months.indexOf(rdState.month) + 1] || null, p = prevM ? M.of(prevM) : null;
+  const F = rdFmt, nm = (id) => nameOf(M.ppl.find((x) => x.id === id) || {}, lang) || id;
+  const who = (m) => (rdState.names ? nm(m.id) : t('rd_member_n', { n: m.no }));
+  // a table that scrolls sideways must be reachable by keyboard and carry a name (WCAG 2.1.1)
+  const wrap = (label, table) => el('div', { class: 'table-wrap', tabIndex: 0, role: 'region', 'aria-label': t(label) }, table);
+  const th = (key, tip) => { const c = el('th', { scope: 'col', text: t(key) }); if (tip) attachTip(c, t(tip), false); return c; };
+  // ----- controls
+  const sel = el('select', { class: 'w-sel', id: 'rd-month', 'aria-label': t('rd_month'), onchange: (e) => { rdState.month = e.target.value; renderReadings(); } }, ...M.months.map((m) => el('option', { value: m, text: rdMonthName(m), ...(m === rdState.month ? { selected: '' } : {}) })));
+  const names = el('button', { type: 'button', class: `pill-btn${rdState.names ? ' on' : ''}`, id: 'rd-names', 'aria-pressed': String(rdState.names), text: t('rd_names'), onclick: () => { rdState.names = !rdState.names; renderReadings(); } });
+  const xl = el('button', { type: 'button', class: 'btn', id: 'rd-xlsx', text: `⬇ ${t('rd_export')}`, onclick: () => rdXlsx(r, who) });
+  const bar = el('div', { class: 'rd-controls' }, el('label', { class: 'hint', for: 'rd-month', text: t('rd_month') }), sel, names, xl);
+  const scope = el('p', { class: 'hint rd-scope', text: t('rd_scope', { n: r.accounts, from: r.from, to: r.to, days: r.workingDays }) });
+  // ----- six headline tiles (each number lives here only)
+  const tile = (key, value, sub, prev) => { const c = el('div', { class: 'rd-tile', tabIndex: 0 }, el('span', { class: 'rd-tl', text: t(`rd_t_${key}`) }), el('b', { class: 'rd-tv', text: value }), el('span', { class: 'rd-ts', text: sub }), prev != null ? el('span', { class: 'rd-tp', text: t('rd_prev', { m: rdMonthName(prevM), v: prev }) }) : null); c.dataset.rd = key; attachTip(c, t(`rd_t_${key}_d`), false); return c; };
+  const tiles = el('div', { class: 'rd-tiles' },
+    tile('arrived', F.n(r.arrived), t('rd_t_arrived_s', { p: F.p(r.closureRate) }), p ? F.n(p.arrived) : null),
+    tile('generic', F.p(r.genericShare), t('rd_of', { n: F.n(r.generic), m: F.n(r.arrived) }), p ? F.p(p.genericShare) : null),
+    tile('self5', F.p(r.selfLe5mShare), t('rd_of', { n: F.n(r.selfLe5m), m: F.n(r.selfClosed) }), p ? F.p(p.selfLe5mShare) : null),
+    tile('mail8', F.p(r.emailLe8hShare), t('rd_of', { n: F.n(r.emailLe8h), m: F.n(r.emailClosed) }), p ? F.p(p.emailLe8hShare) : null),
+    tile('dmed', F.d(r.dammamMedianPerDay), t('rd_t_dmed_s', { t: r.target, h: F.d(r.dammamMaxPerDay) }), p ? F.d(p.dammamMedianPerDay) : null),
+    tile('open', F.n(r.open), t('rd_t_open_s', { n: F.n(r.openOver7) }), p ? F.n(p.open) : null));
+  // ----- the rest of the readings
+  const more = [['accounts', F.n(r.accounts), 'count'], ['days', F.n(r.workingDays), 'cal'], ['types', F.n(r.typeCount), 'count'], ['email', F.n(r.email), 'count'], ['self', F.n(r.self), 'count'], ['others', F.n(r.others), 'count'],
+    ['med_all', F.h(r.medianAll), 'clock'], ['med_email', F.h(r.medianEmail), 'clock'], ['med_self', F.h(r.medianSelf), 'clock'], ['mail24', F.p(r.emailLe24hShare), 'clock'], ['mail7d', F.p(r.emailGt7dShare), 'clock'],
+    ['sys8', F.p(r.sysLe8hShare), 'sys'], ['dmax', F.d(r.dammamMaxPerDay), 'dammam'], ['attarget', `${F.n(r.atTarget)} / ${F.n(r.accounts)}`, 'dammam'], ['spread', F.x(r.spread), 'count'], ['points', F.n(r.points), 'tier']];
+  const moreBox = el('section', { class: 'card rd-card' }, el('h2', { text: t('rd_more_h') }), wrap('rd_more_h', el('table', { class: 'rd-table', id: 'rd-more' }, el('thead', {}, el('tr', {}, th('rd_c_reading'), th('rd_c_value'), th('rd_c_how'))),
+    el('tbody', {}, ...more.map(([k, v, how]) => el('tr', { 'data-rd': k }, el('th', { scope: 'row', text: t(`rd_r_${k}`) }), el('td', { class: 'num', text: v }), el('td', { class: 'hint', text: t(`rd_h_${how}`) })))))));
+  // ----- by task type
+  const peakT = Math.max(...r.types.map((x) => x.arrived), 1);
+  const unweighted = r.types.filter((x) => !x.weighted).map((x) => x.label);
+  const typesBox = el('section', { class: 'card rd-card' }, el('h2', { text: t('rd_types_h') }), wrap('rd_types_h', el('table', { class: 'rd-table', id: 'rd-types' },
+    el('thead', {}, el('tr', {}, th('rd_c_type'), th('rd_c_arrived'), th('rd_c_share'), th('rd_c_closed'), th('rd_c_median', 'rd_h_clock'), th('rd_c_le8', 'rd_h_clock'), th('rd_c_tier', 'rd_h_tier'), th('rd_c_pts'), th('rd_c_ditem', 'rd_h_dammam'), th('rd_c_dpts'))),
+    el('tbody', {}, ...r.types.map((x) => el('tr', { 'data-type': x.key, class: x.key === 'email customer activity' || x.key === 'manual task' ? 'rd-generic' : '' }, el('th', { scope: 'row', text: x.label }), el('td', { class: 'num', text: F.n(x.arrived) }),
+      el('td', {}, el('span', { class: 'rd-bar', role: 'img', 'aria-label': F.p(x.share) }, el('i', { style: `width:${Math.max(1, x.arrived / peakT * 100).toFixed(1)}%` })), el('span', { class: 'rd-barv', text: F.p(x.share) })),
+      el('td', { class: 'num', text: F.n(x.closed) }), el('td', { class: 'num', text: x.median == null ? '—' : x.median.toFixed(2) }), el('td', { class: 'num', text: F.p(x.le8hShare) }),
+      (() => { const c = el('td', { class: 'num rd-tier', tabIndex: 0, text: String(x.tierNo) }); attachTip(c, t(`tier_${x.tier}`), false); return c; })(), el('td', { class: 'num', text: F.n(x.points) }), el('td', { text: x.dammamItem || '—' }), el('td', { class: 'num', text: x.dammamItem ? F.n(x.dammamPoints) : '—' })))))),
+    unweighted.length ? el('p', { class: 'hint', text: t('rd_unweighted', { list: unweighted.join(t('list_sep')) }) }) : null);
+  // ----- by member
+  const peakD = Math.max(r.target, r.dammamMaxPerDay || 0) * 1.1;
+  const membersBox = el('section', { class: 'card rd-card' }, el('h2', { text: t('rd_members_h') }), wrap('rd_members_h', el('table', { class: 'rd-table', id: 'rd-members' },
+    el('thead', {}, el('tr', {}, th('rd_c_member'), th('rd_c_arrived'), th('rd_c_closed'), th('rd_c_email'), th('rd_c_self'), th('rd_c_others'), th('rd_c_tierpts', 'rd_h_tier'), th('rd_c_dday', 'rd_t_dmed_d'), th('rd_c_sys8', 'rd_h_sys'), th('rd_c_open'), el('th', { scope: 'col', text: t('rd_c_auto', { n: r.autoPoints }) }))),
+    el('tbody', {}, ...r.members.map((m) => el('tr', { 'data-no': m.no }, el('th', { scope: 'row', text: who(m) }), el('td', { class: 'num', text: F.n(m.arrived) }), el('td', { class: 'num', text: F.n(m.closed) }), el('td', { class: 'num', text: F.n(m.email) }), el('td', { class: 'num', text: F.n(m.self) }), el('td', { class: 'num', text: F.n(m.others) }), el('td', { class: 'num', text: F.n(m.points) }),
+      el('td', {}, el('span', { class: 'rd-bar rd-bar-t', role: 'img', 'aria-label': `${F.d(m.dammamPerDay)} / ${r.target}` }, el('i', { style: `width:${Math.max(1, (m.dammamPerDay || 0) / peakD * 100).toFixed(1)}%` }), el('u', { style: `inset-inline-start:${(r.target / peakD * 100).toFixed(1)}%` })), el('span', { class: 'rd-barv', text: F.d(m.dammamPerDay) })),
+      el('td', { class: 'num', text: F.p(m.sysLe8hShare) }), el('td', { class: 'num', text: `${F.n(m.open)} (${F.n(m.openOver7)})` }), el('td', { class: 'num', text: m.score.auto.toFixed(1) })))),
+    el('tfoot', {}, el('tr', {}, el('th', { scope: 'row', text: t('rd_team') }), el('td', { class: 'num', text: F.n(r.arrived) }), el('td', { class: 'num', text: F.n(r.closed) }), el('td', { class: 'num', text: F.n(r.email) }), el('td', { class: 'num', text: F.n(r.self) }), el('td', { class: 'num', text: F.n(r.others) }), el('td', { class: 'num', text: F.n(r.points) }), el('td', {}), el('td', { class: 'num', text: F.p(r.sysLe8hShare) }), el('td', { class: 'num', text: `${F.n(r.open)} (${F.n(r.openOver7)})` }), el('td', {}))))),
+    el('p', { class: 'hint', text: t('rd_members_note', { t: r.target, b: F.n(r.baseTarget) }) }));
+  // ----- month by month (the same definitions for every pulled month)
+  const monthsBox = M.months.length > 1 ? el('section', { class: 'card rd-card' }, el('h2', { text: t('rd_months_h') }), wrap('rd_months_h', el('table', { class: 'rd-table', id: 'rd-months' },
+    el('thead', {}, el('tr', {}, th('rd_month'), th('rd_t_arrived'), th('rd_c_closedp'), th('rd_t_generic', 'rd_t_generic_d'), th('rd_t_self5', 'rd_t_self5_d'), th('rd_t_mail8', 'rd_t_mail8_d'), th('rd_t_dmed', 'rd_t_dmed_d'), th('rd_t_open', 'rd_t_open_d'))),
+    el('tbody', {}, ...M.months.map((m) => { const x = M.of(m); return el('tr', { class: m === rdState.month ? 'on' : '', 'data-month': m }, el('th', { scope: 'row' }, el('button', { type: 'button', class: 'linkish', text: rdMonthName(m), onclick: () => { rdState.month = m; renderReadings(); } })),
+      el('td', { class: 'num', text: F.n(x.arrived) }), el('td', { class: 'num', text: F.p(x.closureRate) }), el('td', { class: 'num', text: F.p(x.genericShare) }), el('td', { class: 'num', text: F.p(x.selfLe5mShare) }), el('td', { class: 'num', text: F.p(x.emailLe8hShare) }), el('td', { class: 'num', text: F.d(x.dammamMedianPerDay) }), el('td', { class: 'num', text: F.n(x.open) })); }))))) : null;
+  set(body, bar, scope, tiles, typesBox, membersBox, moreBox, monthsBox);
+}
+async function rdXlsx(r, who) {
+  let X; try { X = await loadXlsx(); } catch { toast(t('proj_x_fail')); return; }
+  const wb = X.utils.book_new(), pct = (v) => (v == null ? '' : +(v * 100).toFixed(1)), h2 = (v) => (v == null ? '' : +v.toFixed(2));
+  const readings = [[t('rd_c_reading'), t('rd_c_value')], [t('rd_month'), r.month], [t('rd_xl_period'), `${r.from} → ${r.to}`], [t('rd_r_accounts'), r.accounts], [t('rd_r_days'), r.workingDays], [t('rd_t_arrived'), r.arrived], [t('rd_c_closed'), r.closed], [t('rd_c_closedp'), pct(r.closureRate)],
+    [`${t('rd_t_generic')} (%)`, pct(r.genericShare)], [t('rd_r_types'), r.typeCount], [t('rd_r_email'), r.email], [t('rd_r_self'), r.self], [t('rd_r_others'), r.others], [t('rd_r_med_all'), h2(r.medianAll)], [t('rd_r_med_email'), h2(r.medianEmail)], [t('rd_r_med_self'), h2(r.medianSelf)],
+    [`${t('rd_t_self5')} (%)`, pct(r.selfLe5mShare)], [`${t('rd_t_mail8')} (%)`, pct(r.emailLe8hShare)], [`${t('rd_r_mail24')} (%)`, pct(r.emailLe24hShare)], [`${t('rd_r_mail7d')} (%)`, pct(r.emailGt7dShare)], [`${t('rd_r_sys8')} (%)`, pct(r.sysLe8hShare)],
+    [t('rd_t_dmed'), h2(r.dammamMedianPerDay)], [t('rd_r_dmax'), h2(r.dammamMaxPerDay)], [t('rd_r_attarget'), r.atTarget], [t('rd_r_spread'), h2(r.spread)], [t('rd_t_open'), r.open], [t('rd_r_points'), r.points]];
+  const types = [[t('rd_c_type'), t('rd_c_arrived'), `${t('rd_c_share')} (%)`, t('rd_c_closed'), t('rd_c_median'), `${t('rd_c_le8')} (%)`, t('rd_c_tier'), t('rd_c_pts'), t('rd_c_ditem'), t('rd_c_dpts')],
+    ...r.types.map((x) => [x.label, x.arrived, pct(x.share), x.closed, h2(x.median), pct(x.le8hShare), x.tierNo, x.points, x.dammamItem || '', x.dammamItem ? x.dammamPoints : ''])];
+  const members = [[t('rd_c_member'), t('rd_c_arrived'), t('rd_c_closed'), t('rd_c_email'), t('rd_c_self'), t('rd_c_others'), t('rd_c_tierpts'), t('rd_c_dday'), `${t('rd_c_sys8')} (%)`, t('rd_t_open'), t('rd_xl_over7'), t('rd_c_auto', { n: r.autoPoints })],
+    ...r.members.map((m) => [who(m), m.arrived, m.closed, m.email, m.self, m.others, m.points, h2(m.dammamPerDay), pct(m.sysLe8hShare), m.open, m.openOver7, +m.score.auto.toFixed(1)])];
+  for (const [name, rows, widths] of [[t('rd_xl_readings'), readings, [54, 22]], [t('rd_xl_types'), types, [32, 10, 10, 10, 12, 12, 8, 8, 24, 14]], [t('rd_xl_members'), members, [26, 10, 10, 10, 10, 10, 12, 18, 14, 10, 12, 16]]]) { const ws = X.utils.aoa_to_sheet(rows); ws['!cols'] = widths.map((w) => ({ wch: w })); X.utils.book_append_sheet(wb, ws, name.slice(0, 31)); }
+  X.writeFile(wb, `afaqy-readings-${r.month}.xlsx`);
+}
 function route() {
   if (location.hash.startsWith('#rank=')) { takeRankLink(true).then(route); return; }   // a rank link can arrive while the portal is already open (only the hash changes)
-  const views = ['home', 'tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'guide', 'mailfile', 'overtime', 'planner', 'tenders'];
+  const views = ['home', 'tools', 'me', 'pro', 'data', 'kpi', 'team', 'weights', 'dev', 'guide', 'mailfile', 'overtime', 'planner', 'tenders', 'readings'];
   const requested = location.hash.slice(1);
   let hash = portalRoute(requested, isTeamPortal);
   if (requested !== hash) history.replaceState(null, '', '#' + hash);
@@ -3979,7 +4069,7 @@ function route() {
   for (const id of [...views, 'module']) $(`view-${id}`).hidden = id !== v;
   document.body.classList.toggle('in-module', v === 'module');
   if (mod) openModule(mod);
-  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', dev: 'nav_dev', home: 'cr_title', guide: 'nav_guide' , overtime: 'nav_overtime', planner: 'nav_planner', mailfile: 'nav_mailfile', tenders: 'nav_tenders' }[v]); currentModule = null; }
+  else { document.title = `${t('brand')} — ${t('portal')} — ${t(isTeamPortal ? 'title_team' : 'title_admin')}`; $('page-title').textContent = t({ tools: 'portal', me: 'nav_me', pro: 'nav_pro', data: 'nav_data', kpi: 'kpi_board', team: 'nav_team', weights: 'nav_weights', dev: 'nav_dev', home: 'cr_title', guide: 'nav_guide' , overtime: 'nav_overtime', readings: 'nav_readings', planner: 'nav_planner', mailfile: 'nav_mailfile', tenders: 'nav_tenders' }[v]); currentModule = null; }
   $('module-open').hidden = v !== 'module';
   // one item in the menu is current — the open module, or the page — and its group is the open one
   let current = null;
@@ -3998,6 +4088,7 @@ function route() {
   if (v === 'tenders') renderTenders();
   if (v === 'data') renderSync();   // ADR-0103 (route() also runs on the first load, so a bookmark to «Data» draws it)
   if (v === 'overtime') renderOvertime();
+  if (v === 'readings') renderReadings();
   if (v === 'pro' && proToken.get() && !proUnits && !proBusy) proLoad();
   if (v === 'team') renderTeam();
   if (v === 'weights') renderWeights();

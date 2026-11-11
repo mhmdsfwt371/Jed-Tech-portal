@@ -91,6 +91,10 @@
 
 على هذا الجهاز وفي هذا المتصفح فقط، ولا يُرسل منها شيء لأي جهة. لنقلها إلى جهاز آخر أو الاحتفاظ بنسخة استخدم «تصدير نسخة احتياطية» ثم «استعادة نسخة». مسح بيانات المتصفح يمسحها.
 
+### قراءات الشهر
+
+القراءات الفعلية لشهر واحد لفريق ما بعد البيع زي ما ماي أفاقي مسجّله — وهي أساس القياس في اقتراح جدة: كام مهمة وصلت واتقفلت، وكام من الشغل متسجل بنوع عام، وجاي منين، وفضل مفتوح قد إيه، والنقاط بمستوى الجهد. نفس التعريفات بتتطبق على كل شهر مسحوب، فالشهور تتقارن ببعض على نفس الأساس.
+
 ### طريقة الحساب
 
 - المهمة تُحسب للمسؤول عنها في ماي أفاقي.
@@ -191,6 +195,10 @@ The one place for every employee’s numbers in a month. Pick the month from the
 
 On this device and in this browser only; nothing is sent anywhere. To move it to another device or keep a copy, use “Export a backup” then “Restore a backup”. Clearing the browser’s data clears it.
 
+### Monthly readings
+
+The measured readings of one month for the after-sales team as MyAFAQY lists it — the measurement basis of the Jeddah proposal: how many tasks arrived and closed, how much of the work carries a generic task type, where it came from, how long it stayed open, and points by effort tier. The same definitions apply to every pulled month, so months compare like for like.
+
 ### How it is calculated
 
 - A task counts for its assignee in myafaqy.
@@ -290,6 +298,10 @@ On this device and in this browser only; nothing is sent anywhere. To move it to
 ### ڈیٹا کہاں محفوظ رہتا ہے
 
 صرف اسی ڈیوائس اور اسی براؤزر میں؛ کہیں بھی کچھ نہیں بھیجا جاتا۔ کسی دوسری ڈیوائس پر منتقل کرنے یا نقل رکھنے کے لیے «بیک اپ برآمد کریں» اور پھر «بیک اپ بحال کریں» استعمال کریں۔ براؤزر کا ڈیٹا صاف کرنے سے یہ بھی مٹ جاتا ہے۔
+
+### ماہانہ ریڈنگز
+
+آفٹر سیلز ٹیم کی ایک مہینے کی اصل ریڈنگز، جیسا کہ مائی آفاقی میں ٹیم درج ہے — یہ جدہ کی تجویز کی پیمائش کی بنیاد ہے: کتنے ٹاسک آئے اور بند ہوئے، کتنا کام عمومی قسم کے ساتھ درج ہے، کہاں سے آیا، کتنی دیر کھلا رہا، اور محنت کی سطح کے پوائنٹس۔ ہر حاصل شدہ مہینے پر ایک ہی تعریفیں لاگو ہوتی ہیں، اس لیے مہینوں کا موازنہ ایک ہی بنیاد پر ہوتا ہے۔
 
 ### حساب کا طریقہ
 
