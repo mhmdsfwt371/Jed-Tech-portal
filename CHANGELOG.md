@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.36 — 2026-11-13
+
+- اللي بيسحب بحسابه من رابط المدير بيشوف في «مؤشرات الفريق» الناس اللي تحته هو بس: من قايمة الموظفين في ماي أفاقي لو السحبة فيها القايمة، وإلا من ملف الفريق. واللوحة مكتوب فيها فريق مين، وكام واحد، والقايمة جاية منين.
+- لو في حد تحتك في ماي أفاقي واسمه ما اتطابقش مع حساب مهام، اسمه بيتكتب في نفس السطر بدل ما يختفي.
+- تصحيح في سحب المهندس لنفسه: لو ماي أفاقي رفض قايمة البحث والتطوير للحساب، السحب بيكمل ويوصل بدل ما يقف. أعد سحب زر «مؤشراتي» لشريط الإشارات.
+
+<details><summary>English</summary>
+
+- Whoever pulls with his own account from the manager link now sees in «Team KPIs» only the people under him: from MyAFAQY's employees list when the pull carries it, otherwise from the team file. The board says whose team it is, how many, and where the list came from.
+- If someone is under you in MyAFAQY and his name matches no task account, he is named in that same line instead of disappearing.
+- A correction to the engineer's own pull: when MyAFAQY refuses the R&D queue to the account, the pull now finishes and arrives instead of stopping. Drag the «My KPIs» button to the bookmarks bar again.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- جو شخص مینیجر کے لنک سے اپنے اکاؤنٹ سے ڈیٹا حاصل کرتا ہے، وہ «ٹیم کے اشاریے» میں صرف اپنے ماتحت افراد دیکھتا ہے: مائی آفاقی کی ملازمین کی فہرست سے اگر وہ ڈیٹا میں ہو، ورنہ ٹیم فائل سے۔ بورڈ پر لکھا ہے کہ یہ کس کی ٹیم ہے، کتنے افراد ہیں اور فہرست کہاں سے آئی۔
+- اگر مائی آفاقی میں آپ کے تحت کوئی ہے اور اس کا نام کسی ٹاسک اکاؤنٹ سے نہیں ملتا تو اس کا نام اسی سطر میں لکھا جاتا ہے، وہ غائب نہیں ہوتا۔
+- انجینئر کے اپنے حصول میں درستی: اگر مائی آفاقی اس اکاؤنٹ کو تحقیق و ترقی کی فہرست نہ دے تو حصول رکنے کے بجائے مکمل ہو کر پہنچ جاتا ہے۔ «میرے اشاریے» کا بٹن دوبارہ بُک مارکس بار پر گھسیٹیں۔
+
+</div>
+</details>
+
+
 ## v9.35 — 2026-11-12
 
 - تصحيح مهم: لما حد غير المدير يسحب بحسابه من رابط المدير (زي قائد الفريق)، «مؤشراتي» كانت بتعرض صفحة المدير. دلوقتي السحبة بتسجّل الحساب اللي سحب، والبوابة بتعرض صفحة صاحب الحساب وصلاحياته هو.

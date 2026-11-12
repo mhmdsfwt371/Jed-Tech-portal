@@ -1,25 +1,25 @@
 {
-  "version": "9.35",
-  "date": "2026-11-12",
+  "version": "9.36",
+  "date": "2026-11-13",
   "notes": {
     "ar": [
-      "تصحيح مهم: لما حد غير المدير يسحب بحسابه من رابط المدير (زي قائد الفريق)، «مؤشراتي» كانت بتعرض صفحة المدير. دلوقتي السحبة بتسجّل الحساب اللي سحب، والبوابة بتعرض صفحة صاحب الحساب وصلاحياته هو.",
-      "في «البيانات المرفوعة» كل سحبة مكتوب تحتها بحساب مين. ولو رفعت ملف بإيدك وكان بحسابك، اضغط «ده حسابي» مرة واحدة.",
-      "الإضافة بقت 1.0.4: نزّلها وحدّثها، وأعد سحب زر السحب لشريط الإشارات."
+      "اللي بيسحب بحسابه من رابط المدير بيشوف في «مؤشرات الفريق» الناس اللي تحته هو بس: من قايمة الموظفين في ماي أفاقي لو السحبة فيها القايمة، وإلا من ملف الفريق. واللوحة مكتوب فيها فريق مين، وكام واحد، والقايمة جاية منين.",
+      "لو في حد تحتك في ماي أفاقي واسمه ما اتطابقش مع حساب مهام، اسمه بيتكتب في نفس السطر بدل ما يختفي.",
+      "تصحيح في سحب المهندس لنفسه: لو ماي أفاقي رفض قايمة البحث والتطوير للحساب، السحب بيكمل ويوصل بدل ما يقف. أعد سحب زر «مؤشراتي» لشريط الإشارات."
     ],
     "en": [
-      "An important correction: when someone other than the manager pulled with his own account from the manager link (a team lead, for one), «My KPIs» showed the manager's page. A pull now names the account that made it, and the portal shows that person's own page and gives him his own rights.",
-      "In «Uploaded data» each pull says whose account made it. If you bring a file in by hand and it is from your account, press «This is my account» once.",
-      "The extension is now 1.0.4: download and update it, and drag the pull button to the bookmarks bar again."
+      "Whoever pulls with his own account from the manager link now sees in «Team KPIs» only the people under him: from MyAFAQY's employees list when the pull carries it, otherwise from the team file. The board says whose team it is, how many, and where the list came from.",
+      "If someone is under you in MyAFAQY and his name matches no task account, he is named in that same line instead of disappearing.",
+      "A correction to the engineer's own pull: when MyAFAQY refuses the R&D queue to the account, the pull now finishes and arrives instead of stopping. Drag the «My KPIs» button to the bookmarks bar again."
     ],
     "ur": [
-      "اہم درستی: جب مینیجر کے علاوہ کوئی (مثلاً ٹیم لیڈ) مینیجر کے لنک سے اپنے اکاؤنٹ سے ڈیٹا حاصل کرتا تھا تو «میرے اشاریے» مینیجر کا صفحہ دکھاتا تھا۔ اب ہر حصول اپنے اکاؤنٹ کا نام درج کرتا ہے، اور پورٹل اسی شخص کا صفحہ اور اسی کے اختیارات دکھاتا ہے۔",
-      "«اپ لوڈ شدہ ڈیٹا» میں ہر حصول کے نیچے لکھا ہے کہ کس اکاؤنٹ سے ہے۔ اگر آپ فائل ہاتھ سے لائیں اور وہ آپ کے اکاؤنٹ کی ہو تو ایک بار «یہ میرا اکاؤنٹ ہے» دبائیں۔",
-      "ایکسٹینشن اب 1.0.4 ہے: اسے ڈاؤن لوڈ کر کے تازہ کریں، اور حصول کا بٹن دوبارہ بُک مارکس بار پر گھسیٹیں۔"
+      "جو شخص مینیجر کے لنک سے اپنے اکاؤنٹ سے ڈیٹا حاصل کرتا ہے، وہ «ٹیم کے اشاریے» میں صرف اپنے ماتحت افراد دیکھتا ہے: مائی آفاقی کی ملازمین کی فہرست سے اگر وہ ڈیٹا میں ہو، ورنہ ٹیم فائل سے۔ بورڈ پر لکھا ہے کہ یہ کس کی ٹیم ہے، کتنے افراد ہیں اور فہرست کہاں سے آئی۔",
+      "اگر مائی آفاقی میں آپ کے تحت کوئی ہے اور اس کا نام کسی ٹاسک اکاؤنٹ سے نہیں ملتا تو اس کا نام اسی سطر میں لکھا جاتا ہے، وہ غائب نہیں ہوتا۔",
+      "انجینئر کے اپنے حصول میں درستی: اگر مائی آفاقی اس اکاؤنٹ کو تحقیق و ترقی کی فہرست نہ دے تو حصول رکنے کے بجائے مکمل ہو کر پہنچ جاتا ہے۔ «میرے اشاریے» کا بٹن دوبارہ بُک مارکس بار پر گھسیٹیں۔"
     ]
   },
   "counts": {
-    "versions": 160,
-    "decisions": 115
+    "versions": 161,
+    "decisions": 116
   }
 }

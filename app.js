@@ -237,7 +237,8 @@ const managerIdOf = () => { const e = Object.entries(roster().people || {}).find
 /** ADR-0115: whose device this is on the manager link — the account whose pull last arrived here straight from MyAFAQY (the bookmark or
  *  the extension). An uploaded or synced file never changes it. With no such pull yet, the manager named in the team file, as before. */
 const ownerId = () => { const o = pref('ownerId'); return o && (peopleOf(datasets).some((p) => p.id === o) || (roster().people || {})[o]) ? o : managerIdOf(); };
-const setOwnerFrom = (ds) => { if (ds && ds.pulledBy && ds.pulledBy.id) pref('ownerId', ds.pulledBy.id); };
+const setOwner = (id) => { if (pref('ownerId') !== String(id)) { pref('ownerId', String(id)); pref('team', ''); } };
+const setOwnerFrom = (ds) => { if (ds && ds.pulledBy && ds.pulledBy.id) setOwner(ds.pulledBy.id); };
 function startViewAs(id) {
   const fake = meFromPulls(id);
   if (!fake) return;
@@ -2393,7 +2394,7 @@ function renderDatasets() {
       el('button', { type: 'button', class: 'btn quiet', text: t('remove'), onclick: async () => { datasets = datasets.filter((x) => x.key !== d.key); await store.put(datasets); renderDatasets(); renderBlocks(); } }),
       d.pulledBy ? el('div', { class: 'hint ds-by' }, el('span', { text: t('ds_pulled_by', { name: nameOf(peopleOf(datasets).find((p) => p.id === d.pulledBy.id) || {}, lang) || d.pulledBy.name || d.pulledBy.id }) }),
         // an uploaded or synced file never changes whose device this is: the person says so himself, once (ADR-0115)
-        !isTeamPortal && d.pulledBy.id !== ownerId() ? el('button', { type: 'button', class: 'btn tiny ds-mine', text: t('ds_mine'), onclick: () => { pref('ownerId', d.pulledBy.id); toast(t('ds_mine_done')); renderDatasets(); renderKpi(); renderMe(); } }) : null) : null,
+        !isTeamPortal && d.pulledBy.id !== ownerId() ? el('button', { type: 'button', class: 'btn tiny ds-mine', text: t('ds_mine'), onclick: () => { setOwner(d.pulledBy.id); toast(t('ds_mine_done')); renderDatasets(); renderKpi(); renderMe(); } }) : null) : null,
       (d.skippedLists || []).length ? el('div', { class: 'msg warn ds-skip', role: 'status', text: t('pull_skipped_lists', { lists: d.skippedLists.map(listName).join(t('list_sep')) }) }) : null,   // ADR-0110: stays with the data
     );
   }), ...reportRows]);
@@ -2408,7 +2409,28 @@ let kpiKey = null;
 // The team counted: chosen once and kept on this device. Until chosen, the Jeddah-branch teams from myafaqy.
 // people the portal shows: the team file's people when it has any, else everyone in the data
 const scopeOn = (people) => scopeApplies(roster(), people.map((p) => p.id));
-const scoped = (people) => (scopeOn(people) ? people.filter((p) => inScope(roster(), p.id)) : people);
+/** ADR-0116: for a device whose owner is not the manager named in the team file, «the team» is the people under the owner —
+ *  everyone below him in MyAFAQY's employees list when the pull carries it and names him, otherwise in the team file.
+ *  null = the owner is that manager (or nobody is named yet): the team file's scope applies, as before. */
+let ownerTeamMemo = null;
+const ownerTeam = () => {
+  if (isTeamPortal) return null;
+  const o = ownerId(), m = managerIdOf(); if (!o || o === m) return null;
+  const od = orgData(), ro = roster().people || {}, sig = `${o}|${od ? `${od.at}:${od.n}` : ''}|${datasets.length}|${Object.keys(ro).length}`;
+  if (ownerTeamMemo && ownerTeamMemo.sig === sig) return ownerTeamMemo.v;
+  let ids = [], from = 'none', unmatched = [];
+  if (od && od.org.hasRow(o)) { const u = od.org.under(o); if (u.length) { ids = u.map((n) => n.pid).filter((x) => x != null).map(String); unmatched = od.org.unmatchedUnder(o); from = 'myafaqy'; } }
+  if (from === 'none') { const q = [o], seen = new Set(q); while (q.length) { const k = q.shift(); for (const [id, r] of Object.entries(ro)) if (r && r.leaderId === k && !seen.has(id)) { seen.add(id); ids.push(id); q.push(id); } } if (ids.length) from = 'file'; }
+  ownerTeamMemo = { sig, v: { owner: o, ids: new Set(ids), from, unmatched, at: od ? od.at : '' } };
+  return ownerTeamMemo.v;
+};
+const scoped = (people) => { const ot = ownerTeam(); if (ot) return people.filter((p) => ot.ids.has(p.id) || (!ot.ids.size && p.id === ot.owner)); return scopeOn(people) ? people.filter((p) => inScope(roster(), p.id)) : people; };
+/** The line on the board that says whose team this is and where the list came from. */
+const ownerTeamNote = () => { const ot = ownerTeam(); if (!ot) return null;
+  const who = nameOf(peopleOf(datasets).find((p) => p.id === ot.owner) || {}, lang) || ot.owner;
+  return el('div', { class: 'note info km-own-team', role: 'status', 'data-from': ot.from, 'data-n': String(ot.ids.size) },
+    el('span', { text: t(`own_team_${ot.from}`, { n: ot.ids.size, name: who, d: ot.at }) }),
+    ot.unmatched.length ? el('span', { class: 'hint', text: ` ${t('own_team_unmatched', { n: ot.unmatched.length, list: ot.unmatched.slice(0, 8).join(t('list_sep')) })}` }) : null); };
 // ---------- MyAFAQY's own hierarchy (ADR-0060): who reports to whom, from the employee list in the pull ----------
 let orgMemo = null;
 const orgData = () => {
@@ -2425,6 +2447,7 @@ let kpiMoreCols = false, teamEdit = false;   // ADR-0059: the board shows five c
 function currentTeam(people, tasks, force) {   // force: 'org' or 'file' computes that default and ignores a saved manual choice (the preview uses it)
   const allowed = new Set(scoped(people).map((p) => p.id));
   if (!force) try { const saved = JSON.parse(pref('team') || 'null'); if (Array.isArray(saved)) { const kept = saved.filter((id) => allowed.has(id)); if (kept.length) return kept; } } catch { /* fall through */ }
+  if (!force && ownerTeam()) return [...allowed];   // ADR-0116: everyone under the owner, leads included — the list is MyAFAQY's, not a comparison of engineers
   const ro = roster().people || {}, leads = new Set(Object.values(ro).map((p) => p && p.leaderId).filter(Boolean));
   const isLead = (id) => leads.has(id) || !!(ro[id] && ro[id].covers);   // ADR-0059: team figures compare engineers with engineers
   const og = (force ? force === 'org' : pref('orgTeam') === '1') ? orgEngineerSet() : null;   // ADR-0060: the team MyAFAQY's hierarchy gives, once the manager chose it
@@ -3245,6 +3268,7 @@ function renderKpi() {
   const body = $('kpi-body');
   const months = datasets.length ? pulledPeriods(kmKind) : [];
   if (!months.length) { set(body, el('div', { class: 'empty', text: t('no_data') })); return; }
+  { const ot = ownerTeam(); if (ot && ot.from === 'none') { set(body, ownerTeamNote(), el('p', {}, el('a', { class: 'btn primary', href: '#me', text: t('own_team_go') }))); return; } }   // ADR-0116: nobody under the owner — say so, draw no empty tables
   const thisMonth = saudiDay(new Date().toISOString()).slice(0, 7);
   const nowKey = kmKind === 'quarter' ? qOf(thisMonth) : thisMonth;
   if (!kpiMonth || !months.some((m) => m.ym === kpiMonth)) kpiMonth = (months.find((m) => m.ym === nowKey) || months[0]).ym;
@@ -3337,6 +3361,7 @@ function renderKpi() {
       el('label', { class: 'km-va' }, el('span', { text: `👁 ${t('km_viewas_pick')}` }), el('select', { id: 'kpi-viewas', onchange: (e) => { const v = e.target.value; e.target.value = ''; if (v) startViewAs(v); } },
         el('option', { value: '', text: '—' }), peopleOf(datasets).filter((x) => !/\bsystem\b|مستخدم النظام/i.test(`${x.nameEn || ''} ${x.nameAr || ''}`)).map((x) => ({ x, n: nameOf(x, lang) || x.id }))
           .sort((a, b) => a.n.localeCompare(b.n, lang)).map(({ x, n }) => el('option', { value: x.id, text: n }))))),
+    ownerTeamNote(),
     renderTeamPicker(people, team),
     datasets.some((d) => d.sample) ? el('p', { class: 'note sample', text: t('sample_note') }) : null,
     !cov.whole ? el('p', { class: 'note', text: t('km_partial', { got: cov.got, need: cov.need }) }) : null,

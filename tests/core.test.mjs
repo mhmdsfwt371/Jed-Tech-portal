@@ -1075,6 +1075,14 @@ test('the team pull names the account that made it; the portal keeps a clean id 
   assert.equal(merged[0].pulledBy.id, '124', 'a later file of the same period that names no account does not erase it');
 });
 
+// ADR-0116 — an engineer's own pull does not stop when MyAFAQY refuses the R&D queue
+test("the engineer's pull treats the main queue as essential and the R&D queue as optional", () => {
+  const code = decodeURIComponent(core.buildBookmarklet('https://x/', 'en').slice(11));
+  assert.doesNotThrow(() => new Function(code));
+  assert.ok(code.includes('for(const g of[100000,100001]){try{'), 'each queue is read inside its own guard');
+  assert.ok(code.includes('catch(e){if(g===100000)throw e}'), 'a refusal of the main queue still stops the pull; a refusal of the R&D queue does not');
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

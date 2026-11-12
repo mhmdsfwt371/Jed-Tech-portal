@@ -17,6 +17,11 @@ export default {
     g_planner_h: 'Team plans',
     g_planner_b: 'The manager’s page only: upload the team structure file (an HTML page) and it shows as it looks, exactly as uploaded. It stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file, or remove it from the device.',
     // ADR-0070: the one monthly place
+    own_team_go: 'Open «My KPIs»',
+    own_team_myafaqy: 'Your team as MyAFAQY lists it: {n} people under {name} (employees list of {d}).',
+    own_team_file: 'Your team from the portal’s team file: {n} people under {name}. Your pull carries no employees list from MyAFAQY, so the team file is used.',
+    own_team_none: 'Nobody is listed under {name}, in MyAFAQY or in the team file, so there is no team to show here. Your own numbers are on «My KPIs».',
+    own_team_unmatched: '{n} more are under you in MyAFAQY but could not be tied to a task account by name: {list}.',
     ds_mine: 'This is my account',
     ds_mine_done: 'Done: the portal now treats this device as yours.',
     ds_pulled_by: 'Pulled with the account of {name}.',
