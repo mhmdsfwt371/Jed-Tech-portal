@@ -412,6 +412,20 @@
         "ar": "فوتا  JIMI",
         "en": "Jimi Fota"
       }
+    },
+    {
+      "id": "custom_262390a774b3484bb42dfc8167de1399",
+      "category": "afaqy",
+      "url": "https://can-records.web.app/",
+      "name": {
+        "ar": "can-records",
+        "en": "can-records",
+        "ur": "can-records"
+      },
+      "desc": {
+        "ar": "can-records",
+        "en": "can-records"
+      }
     }
   ]
 }
