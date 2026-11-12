@@ -1,22 +1,25 @@
 {
-  "version": "9.34",
+  "version": "9.35",
   "date": "2026-11-12",
   "notes": {
     "ar": [
-      "صفحة المهندس بتصميم جديد: أول حاجة «المطلوب منك دلوقتي» (المهام المفتوحة)، وبعدها شهره مقابل وسيط فريقه في ٤ أرقام بأشرطة، وخطوته الجاية (المركز والفرق بالنقاط)، وتقويم الشهر: اضغط على أي يوم تشوف اللي اتقفل فيه.",
-      "تصحيح: عمر المهمة المفتوحة بقى بيتحسب لحد تاريخ آخر تحديث للبيانات، مش لحد النهارده، والتاريخ مكتوب."
+      "تصحيح مهم: لما حد غير المدير يسحب بحسابه من رابط المدير (زي قائد الفريق)، «مؤشراتي» كانت بتعرض صفحة المدير. دلوقتي السحبة بتسجّل الحساب اللي سحب، والبوابة بتعرض صفحة صاحب الحساب وصلاحياته هو.",
+      "في «البيانات المرفوعة» كل سحبة مكتوب تحتها بحساب مين. ولو رفعت ملف بإيدك وكان بحسابك، اضغط «ده حسابي» مرة واحدة.",
+      "الإضافة بقت 1.0.4: نزّلها وحدّثها، وأعد سحب زر السحب لشريط الإشارات."
     ],
     "en": [
-      "The engineer's page in a new layout: first «Needed from you now» (his open tasks), then his month against his team's median in four numbers with bars, his next step (the rank and the gap in points), and the month as a calendar: press a day to see what was closed on it.",
-      "A correction: an open task's age is now counted to the date of the data's last update, not to today, and that date is shown."
+      "An important correction: when someone other than the manager pulled with his own account from the manager link (a team lead, for one), «My KPIs» showed the manager's page. A pull now names the account that made it, and the portal shows that person's own page and gives him his own rights.",
+      "In «Uploaded data» each pull says whose account made it. If you bring a file in by hand and it is from your account, press «This is my account» once.",
+      "The extension is now 1.0.4: download and update it, and drag the pull button to the bookmarks bar again."
     ],
     "ur": [
-      "انجینئر کا صفحہ نئے انداز میں: سب سے پہلے «ابھی آپ سے مطلوب» (کھلے ٹاسک)، پھر اس کا مہینہ ٹیم کے درمیانی کے مقابلے میں چار اعداد اور پٹیوں کے ساتھ، اس کا اگلا قدم (درجہ اور پوائنٹس کا فرق)، اور مہینے کا کیلنڈر: کسی دن کو دبائیں اور دیکھیں اس دن کیا بند ہوا۔",
-      "درستی: کھلے ٹاسک کی عمر اب ڈیٹا کی آخری تازہ کاری کی تاریخ تک گنی جاتی ہے، آج تک نہیں، اور وہ تاریخ دکھائی جاتی ہے۔"
+      "اہم درستی: جب مینیجر کے علاوہ کوئی (مثلاً ٹیم لیڈ) مینیجر کے لنک سے اپنے اکاؤنٹ سے ڈیٹا حاصل کرتا تھا تو «میرے اشاریے» مینیجر کا صفحہ دکھاتا تھا۔ اب ہر حصول اپنے اکاؤنٹ کا نام درج کرتا ہے، اور پورٹل اسی شخص کا صفحہ اور اسی کے اختیارات دکھاتا ہے۔",
+      "«اپ لوڈ شدہ ڈیٹا» میں ہر حصول کے نیچے لکھا ہے کہ کس اکاؤنٹ سے ہے۔ اگر آپ فائل ہاتھ سے لائیں اور وہ آپ کے اکاؤنٹ کی ہو تو ایک بار «یہ میرا اکاؤنٹ ہے» دبائیں۔",
+      "ایکسٹینشن اب 1.0.4 ہے: اسے ڈاؤن لوڈ کر کے تازہ کریں، اور حصول کا بٹن دوبارہ بُک مارکس بار پر گھسیٹیں۔"
     ]
   },
   "counts": {
-    "versions": 159,
-    "decisions": 114
+    "versions": 160,
+    "decisions": 115
   }
 }

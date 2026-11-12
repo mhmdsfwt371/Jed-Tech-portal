@@ -17,6 +17,9 @@ export default {
     g_planner_h: 'Team plans',
     g_planner_b: 'The manager’s page only: upload the team structure file (an HTML page) and it shows as it looks, exactly as uploaded. It stays on your device only, is not on the team link, and edits inside it are not kept — to update, upload the newer file, or remove it from the device.',
     // ADR-0070: the one monthly place
+    ds_mine: 'This is my account',
+    ds_mine_done: 'Done: the portal now treats this device as yours.',
+    ds_pulled_by: 'Pulled with the account of {name}.',
     d_now_h: 'Needed from you now',
     d_now_none: 'Nothing is open — you are clear.',
     d_now_ok: 'open, none older than 7 days',

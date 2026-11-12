@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.35 — 2026-11-12
+
+- تصحيح مهم: لما حد غير المدير يسحب بحسابه من رابط المدير (زي قائد الفريق)، «مؤشراتي» كانت بتعرض صفحة المدير. دلوقتي السحبة بتسجّل الحساب اللي سحب، والبوابة بتعرض صفحة صاحب الحساب وصلاحياته هو.
+- في «البيانات المرفوعة» كل سحبة مكتوب تحتها بحساب مين. ولو رفعت ملف بإيدك وكان بحسابك، اضغط «ده حسابي» مرة واحدة.
+- الإضافة بقت 1.0.4: نزّلها وحدّثها، وأعد سحب زر السحب لشريط الإشارات.
+
+<details><summary>English</summary>
+
+- An important correction: when someone other than the manager pulled with his own account from the manager link (a team lead, for one), «My KPIs» showed the manager's page. A pull now names the account that made it, and the portal shows that person's own page and gives him his own rights.
+- In «Uploaded data» each pull says whose account made it. If you bring a file in by hand and it is from your account, press «This is my account» once.
+- The extension is now 1.0.4: download and update it, and drag the pull button to the bookmarks bar again.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اہم درستی: جب مینیجر کے علاوہ کوئی (مثلاً ٹیم لیڈ) مینیجر کے لنک سے اپنے اکاؤنٹ سے ڈیٹا حاصل کرتا تھا تو «میرے اشاریے» مینیجر کا صفحہ دکھاتا تھا۔ اب ہر حصول اپنے اکاؤنٹ کا نام درج کرتا ہے، اور پورٹل اسی شخص کا صفحہ اور اسی کے اختیارات دکھاتا ہے۔
+- «اپ لوڈ شدہ ڈیٹا» میں ہر حصول کے نیچے لکھا ہے کہ کس اکاؤنٹ سے ہے۔ اگر آپ فائل ہاتھ سے لائیں اور وہ آپ کے اکاؤنٹ کی ہو تو ایک بار «یہ میرا اکاؤنٹ ہے» دبائیں۔
+- ایکسٹینشن اب 1.0.4 ہے: اسے ڈاؤن لوڈ کر کے تازہ کریں، اور حصول کا بٹن دوبارہ بُک مارکس بار پر گھسیٹیں۔
+
+</div>
+</details>
+
+
 ## v9.34 — 2026-11-12
 
 - صفحة المهندس بتصميم جديد: أول حاجة «المطلوب منك دلوقتي» (المهام المفتوحة)، وبعدها شهره مقابل وسيط فريقه في ٤ أرقام بأشرطة، وخطوته الجاية (المركز والفرق بالنقاط)، وتقويم الشهر: اضغط على أي يوم تشوف اللي اتقفل فيه.

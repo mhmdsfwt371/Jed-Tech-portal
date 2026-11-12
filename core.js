@@ -299,6 +299,7 @@ export function parseDataset(text) {
       crmTotal: v2 ? null : num(src.crmTotal),
       notes: Array.isArray(raw.notes) ? raw.notes.map(String).slice(0, 50) : [],
       // ADR-0110: lists MyAFAQY refused for the account that pulled (the pull went on without them)
+      pulledBy: raw.pulledBy && /^\d{1,12}$/.test(String(raw.pulledBy.id)) ? { id: String(raw.pulledBy.id), name: String(raw.pulledBy.name || '').slice(0, 80) } : null,   // ADR-0115: the account that pulled
       skippedLists: Array.isArray(raw.skippedLists) ? raw.skippedLists.map((x) => String(x).slice(0, 80)).filter((x) => /^[A-Za-z]+\/[A-Za-z]+$/.test(x)).slice(0, 20) : [],
       part: typeof raw.part === 'string' ? raw.part : null, sample: raw.sample === true,
       people, tasks: markRd(tasks, raw.rdTaskIds),
@@ -341,6 +342,7 @@ export function mergeDataset(list, incoming) {
       notes: [...new Set([...(out[i].notes || []), ...(incoming.notes || [])])],
       parts: [...new Set([...(out[i].parts || []), ...(incoming.part ? [incoming.part] : [])])],
       extractedAt: incoming.extractedAt || out[i].extractedAt,
+      pulledBy: incoming.pulledBy || out[i].pulledBy || null,
       skippedLists: incoming.skippedLists || [],   // ADR-0110: the latest pull of the period decides — a full pull clears the warning
       sample: out[i].sample && incoming.sample,
       teamTypes: incoming.teamTypes && Object.keys(incoming.teamTypes).length ? incoming.teamTypes : out[i].teamTypes,
@@ -756,6 +758,7 @@ export const MANAGER_PULL_BODY = `const RTO=(()=>{const d=new Date(Date.now()+10
 
 if(location.hostname!=='myafaqy.com'){alert(M[0]);return}
 ${TOKEN_JS}let tk=localStorage.getItem('token');if(!tk){alert(M[1]);return}if(!tokOk(tk)){const n=await freshTok(null,90000);if(!n){alert(RENEW);return}tk=n}
+const WHO=(()=>{try{const p=JSON.parse(decodeURIComponent(escape(atob(tk.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))));return p&&p.UserId!=null?{id:String(p.UserId),name:String(p.UserName||'').slice(0,80)}:null}catch(e){return null}})();
 let sink=null,nonce='',ready=false,acked=null,receiver=null;let targetOrigin='';
 if(DEL==='auto'){
   try{
@@ -793,7 +796,7 @@ const mapTask=x=>{const uid=String(x.assigneeId||'');const tt=teamOf[uid]||{team
 const seenId=new Set();const taskRows=[];for(const x of tasks){if(seenId.has(x.i))continue;seenId.add(x.i);taskRows.push(mapTask(x))}
 const pids=new Set();taskRows.forEach(t=>{if(t.assigneeId)pids.add(t.assigneeId);if(t.createdById)pids.add(t.createdById)});for(const[uid,tt]of Object.entries(teamOf))if(tt.jeddah)pids.add(uid);
 for(const id of pids){const u=uname[id]||{};const tt=teamOf[id]||{teams:[],branchCode:null};people.push({id,nameEn:String(u.nameEn||''),nameAr:String(u.nameAr||''),teams:tt.teams,branchCode:tt.branchCode})}
-const tasksFile={schema:SCH,range:{from:FROM,to:RTO},skippedLists:SKIP,extractedAt:new Date().toISOString(),taskGroupId:100001,source:{endpoint:'POST https://crmbackend.afaqy.sa/Task/GetMyTasksGrid',doneInRangeTotal:doneTotal,openTotal:openTotal,pageSize:500},people,tasks:taskRows,rdTaskIds:rdIds,teamTypes,employees,notes:['manager bookmark; times UTC with Z added']};
+const tasksFile={schema:SCH,range:{from:FROM,to:RTO},skippedLists:SKIP,pulledBy:WHO,extractedAt:new Date().toISOString(),taskGroupId:100001,source:{endpoint:'POST https://crmbackend.afaqy.sa/Task/GetMyTasksGrid',doneInRangeTotal:doneTotal,openTotal:openTotal,pageSize:500},people,tasks:taskRows,rdTaskIds:rdIds,teamTypes,employees,notes:['manager bookmark; times UTC with Z added']};
 say(M[2]+'reports');const techPoints=[];const MM=MMS;
 
 for(const mo of MM){const rows=[];for(let pg=1;;pg++){const R=await postO('TechnicianReport/GetTechnicianReportStatic',{pageNumber:pg,pageSize:100,searchKey:'',isSearchFilter:true,search:{yearId:mo.yearId,quarterId:mo.quarterId,monthId:mo.monthId,branchIds:BR,userIds:[],requestDate:mo.rd}});const g=(R.data&&R.data.gridResult)||{};const arr=g.data||[];for(const r of arr){const o={technicianId:r.technicianId,employeeId:r.employeeId,nameEn:r.nameEn,nameAr:r.nameAr};for(const f of KEEP)o[f]=r[f]||0;rows.push(o)}const tot=g.totalPages||1;if(pg>=tot||!arr.length)break;await wait(200)}techPoints.push({month:mo.month,listCount:rows.length,rows})}

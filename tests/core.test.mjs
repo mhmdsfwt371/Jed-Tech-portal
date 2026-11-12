@@ -1060,6 +1060,21 @@ test('monthly readings: scope, origin, times, tier points, Dammam points and the
   assert.equal(sep.arrived, 1, 'the 30 Sep 21:52 task belongs to September'); assert.equal(sep.to, '2026-09-30');
 });
 
+// ADR-0115 — a pull names the account that made it
+test('the team pull names the account that made it; the portal keeps a clean id and nothing else', () => {
+  const code = decodeURIComponent(core.buildManagerBookmarklet('2026-11-01', '2026-11-12').slice(11));
+  assert.ok(code.includes('pulledBy:WHO') && code.includes('p.UserId'), 'the tasks file carries the account from the session key');
+  assert.ok(!/pulledBy:tk|token:tk|"tk"/.test(code), 'the key itself is never put in the file');
+  assert.ok(!decodeURIComponent(core.buildTypesBookmarklet('https://x/').slice(11)).includes('WHO'), 'the types bookmark is not changed');
+  const base = { schema: core.SCHEMA, range: { from: '2026-11-01', to: '2026-11-12' }, extractedAt: '2026-11-12T10:00:00.000Z', taskGroupId: 100001, people: [{ id: '124', nameEn: 'A', teams: [] }], tasks: [] };
+  const ok = core.parseDataset({ ...base, pulledBy: { id: 124, name: 'n'.repeat(300) } });
+  assert.deepEqual([ok.dataset.pulledBy.id, ok.dataset.pulledBy.name.length], ['124', 80]);
+  assert.equal(core.parseDataset({ ...base, pulledBy: { id: '<script>', name: 'x' } }).dataset.pulledBy, null, 'a malformed id is dropped');
+  assert.equal(core.parseDataset(base).dataset.pulledBy, null, 'an older pull names no account');
+  const merged = core.mergeDataset([ok.dataset], core.parseDataset({ ...base, extractedAt: '2026-11-12T11:00:00.000Z' }).dataset);
+  assert.equal(merged[0].pulledBy.id, '124', 'a later file of the same period that names no account does not erase it');
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

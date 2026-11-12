@@ -144,6 +144,7 @@
 | `docs/decisions/0112-engineer-page-and-readings-clarity.md` | The walk-through as an engineer and a team lead: the wrong rank, the phone layout, the wording; what was left for a later decision |
 | `docs/decisions/0113-team-median-on-the-engineers-tiles.md` | The team's median beside the engineer's own numbers; who counts as his team; the three-person floor; state of the recovered suites |
 | `docs/decisions/0114-direction-d-on-the-engineers-page.md` | Direction D: now → month against the median → next step → rhythm calendar; motion; open-task ages counted to the data's date |
+| `docs/decisions/0115-whose-device-on-the-manager-link.md` | A pull names its account; the manager link shows that person, not the team-file manager; uploads never change the owner; «This is my account» |
 | `docs/design.md` | ألوان الهوية ودرجاتها، فاتح وداكن |
 | `docs/crm-api.md` | مسارات ماي أفاقي وحقوله وما لا يُستعمل منها — من التقاط ٢٨ أكتوبر |
 | `scripts/check-commit-title.mjs` | فحص عنوان الالتزام |

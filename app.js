@@ -234,6 +234,10 @@ function meFromPulls(id) {
 }
 // the manager: the team-file entry that covers departments (ADR-0045)
 const managerIdOf = () => { const e = Object.entries(roster().people || {}).find(([, p]) => Array.isArray(p.covers) && p.covers.length); return e ? e[0] : null; };
+/** ADR-0115: whose device this is on the manager link — the account whose pull last arrived here straight from MyAFAQY (the bookmark or
+ *  the extension). An uploaded or synced file never changes it. With no such pull yet, the manager named in the team file, as before. */
+const ownerId = () => { const o = pref('ownerId'); return o && (peopleOf(datasets).some((p) => p.id === o) || (roster().people || {})[o]) ? o : managerIdOf(); };
+const setOwnerFrom = (ds) => { if (ds && ds.pulledBy && ds.pulledBy.id) pref('ownerId', ds.pulledBy.id); };
 function startViewAs(id) {
   const fake = meFromPulls(id);
   if (!fake) return;
@@ -621,7 +625,7 @@ function renderMe(waiting = false) {
   ];
   if (waiting) { set(body, el('div', { class: 'empty', text: t('me_wait') })); return; }
   if (meDerived && !viewAs) { me = null; meDerived = false; }
-  if (!me && !isTeamPortal && datasets.length) { const mid = managerIdOf(); if (mid) { const m = meFromPulls(mid); if (m) { me = m; meDerived = true; } } }
+  if (!me && !isTeamPortal && datasets.length) { const mid = ownerId(); if (mid) { const m = meFromPulls(mid); if (m) { me = m; meDerived = true; } } }
   const vaBar = (() => {
     if (isTeamPortal || !datasets.length) return null;
     if (viewAs) { const ppl = peopleOf(datasets), nmV = nameOf(ppl.find((p) => p.id === viewAs) || {}, lang) || viewAs;
@@ -2315,7 +2319,7 @@ window.addEventListener('message', async (e) => {
       return;
     }
     // Both files are validated before either is stored. Never accept a mismatched reporting period.
-    datasets = mergeDataset(datasets, result.dataset);
+    datasets = mergeDataset(datasets, result.dataset); setOwnerFrom(result.dataset);
     reports = [...supersede(reports, result.reports).filter((x) => x.key !== result.reports.key), result.reports]
       .sort((a, b) => (a.range.from < b.range.from ? 1 : -1));
     await store.put(datasets);
@@ -2387,6 +2391,9 @@ function renderDatasets() {
       d.sample ? el('span', { class: 'pill', text: t('sample_note') }) : null,
       c.known ? el('span', { class: `pill ${c.complete ? 'ok' : 'warn'}`, text: c.complete ? t('complete') : t('incomplete', { got: c.got, want: c.want }) }) : null,
       el('button', { type: 'button', class: 'btn quiet', text: t('remove'), onclick: async () => { datasets = datasets.filter((x) => x.key !== d.key); await store.put(datasets); renderDatasets(); renderBlocks(); } }),
+      d.pulledBy ? el('div', { class: 'hint ds-by' }, el('span', { text: t('ds_pulled_by', { name: nameOf(peopleOf(datasets).find((p) => p.id === d.pulledBy.id) || {}, lang) || d.pulledBy.name || d.pulledBy.id }) }),
+        // an uploaded or synced file never changes whose device this is: the person says so himself, once (ADR-0115)
+        !isTeamPortal && d.pulledBy.id !== ownerId() ? el('button', { type: 'button', class: 'btn tiny ds-mine', text: t('ds_mine'), onclick: () => { pref('ownerId', d.pulledBy.id); toast(t('ds_mine_done')); renderDatasets(); renderKpi(); renderMe(); } }) : null) : null,
       (d.skippedLists || []).length ? el('div', { class: 'msg warn ds-skip', role: 'status', text: t('pull_skipped_lists', { lists: d.skippedLists.map(listName).join(t('list_sep')) }) }) : null,   // ADR-0110: stays with the data
     );
   }), ...reportRows]);
@@ -2410,7 +2417,7 @@ const orgData = () => {
   if (!orgMemo || orgMemo.sig !== sig) orgMemo = { sig, v: { at: String(ds.extractedAt || '').slice(0, 10), n: ds.employees.length, org: buildOrg(ds.employees, peopleOf(datasets)) } };
   return orgMemo.v;
 };
-const orgRootId = (od) => { const saved = pref('orgRoot'); if (saved && od.org.under(saved).length) return saved; const mid = managerIdOf(); if (mid && od.org.under(mid).length) return mid; const m = od.org.managers()[0]; return m ? m.pid : null; };
+const orgRootId = (od) => { const saved = pref('orgRoot'); if (saved && od.org.under(saved).length) return saved; const mid = ownerId(); if (mid && od.org.under(mid).length) return mid; const m = od.org.managers()[0]; return m ? m.pid : null; };
 // ADR-0061: the branch a pull filters teams by — the chosen manager's own row in MyAFAQY, Jeddah until a list exists
 const pullBranch = () => { const od = orgData(); const r = od && orgRootId(od), b = r && od.org.branchOf(r); return b ? { ...b, from: 'myafaqy' } : { code: JEDDAH_BRANCH, name: '', from: 'default' }; };
 const orgEngineerSet = () => { const od = orgData(); if (!od) return null; const r = orgRootId(od); return r ? new Set(od.org.engineersOf(r)) : null; };
@@ -2848,7 +2855,7 @@ function pointsRulesBox(wt, admin) {
   return el('details', { class: 'pr-box', open: '' }, el('summary', { text: t('pr_h') }), steps, calcBox, el('h3', { text: t('pr_rules_h') }), editor);
 }
 { const withRules = (fn) => function weightsWithRules(...args) { const out = fn.apply(this, args);
-    try { const body = $('weights-body'), wt = weights(), uid = (me && me.user ? me.user.id : null) || (!isTeamPortal ? managerIdOf() : null); if (body && wt) { const top = body.querySelector('.w-adv-top') || body; top.prepend(pointsRulesBox(wt, isWeightsAdmin(wt, uid))); if (!isTeamPortal) top.querySelector('.pr-box').after(typesBox(wt)); }
+    try { const body = $('weights-body'), wt = weights(), uid = (me && me.user ? me.user.id : null) || (!isTeamPortal ? ownerId() : null); if (body && wt) { const top = body.querySelector('.w-adv-top') || body; top.prepend(pointsRulesBox(wt, isWeightsAdmin(wt, uid))); if (!isTeamPortal) top.querySelector('.pr-box').after(typesBox(wt)); }
       // each cell carries its column's name, so on a phone a row reads as a card: the type on top, every field named under it (ADR-0049)
       if (body) body.querySelectorAll('table').forEach((tb) => { const hs = [...tb.querySelectorAll('thead th')].map((th) => th.textContent.trim()); tb.classList.add('w-cards');
         tb.querySelectorAll('tbody tr').forEach((tr) => [...tr.children].forEach((td, i) => { if (hs[i]) td.dataset.label = hs[i]; })); }); } catch (e) { console.error(e); }
@@ -3248,7 +3255,7 @@ function renderKpi() {
   // ADR-0072: «مؤشرات الفريق» is the team without the one using the portal — his own numbers are on «مؤشراتي»
   // who «me» is, known from the first moment: the profile if built, else (manager link) the one the team file says covers the teams —
   // the same rule «مؤشراتي» uses; before, he showed until «مؤشراتي» had been built once, then vanished
-  const selfId = String((((viewAs ? realMe : me) || {}).user || {}).id || (!isTeamPortal ? managerIdOf() || '' : ''));
+  const selfId = String((((viewAs ? realMe : me) || {}).user || {}).id || (!isTeamPortal ? ownerId() || '' : ''));
   const team = currentTeam(people, tasks).filter((x) => String(x) !== selfId);
   const f = factor1(tasks, { range, team }), wp = weightedPoints(tasks, acts, wt, { range, team });
   const fp = pcov ? factor1(tasks, { range: prange, team }) : null, wpp = pcov ? weightedPoints(tasks, acts, wt, { range: prange, team }) : null;
@@ -3372,7 +3379,7 @@ function renderWeights() {
   const seen = new Map();
   if (ds) for (const x of ds.tasks) { const k = typeKey(x.type); if (!k) continue; const v = seen.get(k) || { name: x.type, n: 0 }; v.n++; seen.set(k, v); }
   // who is looking: the person whose profile is on this device; rights come from the weights file
-  const uid = (me && me.user ? me.user.id : null) || (!isTeamPortal ? managerIdOf() : null);   // on a phone with no bookmark profile, the manager is known from the team file
+  const uid = (me && me.user ? me.user.id : null) || (!isTeamPortal ? ownerId() : null);   // with no bookmark profile: the account that pulled here, else the manager in the team file (ADR-0115)
   const admin = isWeightsAdmin(wt, uid);
   const mayEdit = (k) => canEditWeight(wt, uid, k);
   // the groups: linked types as myafaqy lists them per team (from the latest file), else the weights file's own tags
@@ -3582,7 +3589,7 @@ function orgCheckBox() {
 // ---------- the sync extension (ADR-0062): the same pull, run by the browser when myafaqy opens — or by one click ----------
 const extOn = () => !isTeamPortal && !!document.documentElement.dataset.afaqyExt;
 let extState = null, extLastAt = null;
-const EXT_NEEDED = '1.0.3';   // ADR-0104: the extension that says why it waits
+const EXT_NEEDED = '1.0.4';   // ADR-0104: the extension that says why it waits
 const monthLast = (ym) => { const d = new Date(Date.parse(`${ym}-01T00:00:00Z`)); d.setUTCMonth(d.getUTCMonth() + 1); d.setUTCDate(0); return d.toISOString().slice(0, 10); };
 const extRecipe = () => { const ym = saudiDay(new Date().toISOString()).slice(0, 7); return managerPullRecipe(`${ymPrev(ym)}-01`, monthLast(ym), pullBranch().code, lang, 'ext'); };
 const extSend = (now) => { if (extOn()) window.postMessage({ type: 'afaqy-ext-recipe', recipe: extRecipe(), now: !!now }, location.origin); };
@@ -3593,7 +3600,7 @@ window.addEventListener('message', async (e) => {
     extLastAt = e.data.at;   // the same checks as a bookmark pull: both files, their schemas, one period, every row parsed
     const r = parseManagerTransfer({ type: MANAGER_AUTO_SCHEMA, nonce: 'e'.repeat(32), tasks: e.data.packet.tasks, reports: e.data.packet.reports });
     if (r.error) { toast(t(r.error)); return; }
-    datasets = mergeDataset(datasets, r.dataset);
+    datasets = mergeDataset(datasets, r.dataset); setOwnerFrom(r.dataset);
     reports = [...supersede(reports, r.reports).filter((x) => x.key !== r.reports.key), r.reports].sort((p, q) => (p.range.from < q.range.from ? 1 : -1));
     await store.put(datasets); await store.putReports(reports);
     setTimeout(closeMonths, 0);
