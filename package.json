@@ -6,11 +6,12 @@
   "scripts": {
     "test": "node tests/core.test.mjs",
     "check": "node scripts/check.mjs",
-    "verify": "node tests/core.test.mjs && node tests/systems.test.mjs && node tests/mailact.test.mjs && npm run test:tenders && node scripts/check.mjs",
+    "verify": "node tests/core.test.mjs && node tests/systems.test.mjs && node tests/mailact.test.mjs && npm run test:tenders && npm run test:projects && node scripts/check.mjs",
     "test:tenders": "node tests/tender-documents.test.mjs && node tests/tender-integration.test.mjs",
     "bump": "node scripts/bump.mjs",
     "preview": "python3 scripts/build-preview.py",
-    "links": "node scripts/check-links.mjs"
+    "links": "node scripts/check-links.mjs",
+    "test:projects": "node tests/project-reports.test.mjs && node tests/project-integration.test.mjs"
   },
   "devDependencies": {
     "@napi-rs/canvas": "1.0.13",

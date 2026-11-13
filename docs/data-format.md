@@ -126,3 +126,8 @@ domains). No bodies, no attachments, no recipient addresses. Kept on the manager
 Tender records may include the original Outlook messages, classified attachments, deadline candidates, activity entries and removed file IDs. The portal stores files as Blobs in IndexedDB. Version 2 backups encode their bytes as data URLs and continue to accept earlier backups.
 
 From v9.38 a file may also include `kindManual`, `kindAt` and optional `analysis`: `state`, `format`, `readAt`, `highlights` (`topic`, original `text`, page/sheet `locator`), `schedule` (`due`/`askDue` date, time and locator) and bounded `tables`. This is extracted evidence, not a complete analysis. `dateSources` also accepts `document`; explicit `manual` dates remain authoritative. The additive fields survive existing version 2 backups. Deletion tombstones remove the matching file and its extracted evidence on merge.
+
+
+## Project follow-up (v9.40)
+
+Optional `projectwork` in portal v2 backups uses `afaqy-project-followup/v1`: `revision`, `items[]` with stable `id`, explicit project/tender `refs[]`, `owner`, `action`, `actionOwner`, `actionDue`, `risk`, `execution`, nullable `award` and `collected`, weighted `milestones[]` and `history[]`. Events carry `id`, ISO `at`, a note and before/after field changes. IndexedDB stores the document at `projectwork` with a compare-and-swap revision in the same transaction. Existing backups without this field remain supported. Restore retains local current fields, merges unique event IDs and references, and rejects ambiguous identity merges. Current project totals and action state are snapshots, never reconstructed historical balances. Event date ranges use Saudi calendar days. HTML and Excel export file metadata only.

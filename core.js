@@ -63,7 +63,7 @@ export async function loadStrings(langs = ['ar', 'en', 'ur']) {
 }
 
 // The user guide: one list, read by the page (Guide tab) and by scripts/build-manual.mjs, so they can never differ.
-export const GUIDE = [['g_home_h', 'g_home_b'], ['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_team_h', 'g_team_b'], ['g_weights_h', 'g_weights_b'], ['g_mailfile_h', 'g_mailfile_b'], ['g_dev_h', 'g_dev_b'], ['g_overtime_h', 'g_overtime_b'], ['g_planner_h', 'g_planner_b'], ['g_tenders_h', 'g_tenders_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_sync_h', 'g_sync_b'], ['g_cards_h', 'g_cards_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b'], ['g_readings_h', 'g_readings_b']];
+export const GUIDE = [['g_home_h', 'g_home_b'], ['g_tools_h', 'g_tools_b'], ['g_me_h', 'g_me_b'], ['g_projects_h', 'g_projects_b'], ['g_team_h', 'g_team_b'], ['g_weights_h', 'g_weights_b'], ['g_mailfile_h', 'g_mailfile_b'], ['g_dev_h', 'g_dev_b'], ['g_overtime_h', 'g_overtime_b'], ['g_planner_h', 'g_planner_b'], ['g_tenders_h', 'g_tenders_b'], ['g_mgr_h', 'g_mgr_b'], ['g_pro_h', 'g_pro_b'], ['g_data_h', 'g_data_b'], ['g_sync_h', 'g_sync_b'], ['g_cards_h', 'g_cards_b'], ['g_parts_h', 'g_parts_b'], ['g_kpi_h', 'g_kpi_b'], ['g_privacy_h', 'g_privacy_b'], ['g_readings_h', 'g_readings_b']];
 export const DEFINITIONS = ['def_1', 'def_2', 'def_3', 'def_4', 'def_5', 'def_6', 'def_7', 'def_8', 'def_9', 'def_10'];
 
 export function t(lang, key, vars = {}) {
@@ -2365,4 +2365,85 @@ export function mergeTenderDetails(base, other) {
     removedFiles,
     activity: union(base.activity,other.activity,'id').sort((a,b) => b.at.localeCompare(a.at)),
   };
+}
+// Project follow-up is additive: tender decisions and original register fields remain the source.
+const PW_SCHEMA = 'afaqy-project-followup/v1';
+const PW_FIELDS = ['owner','action','actionOwner','actionDue','risk','execution','award','collected','milestones'];
+const pwText = (s,n=500) => String(s ?? '').trim().slice(0,n);
+const pwDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || '') && !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().slice(0,10) === s;
+const pwMailRef = (s) => 'm:'+String(s||'').replace(/^\s*((re|fw|fwd)\s*:|رد\s*:|إعادة توجيه\s*:)\s*/gi,'').replace(/\s+/g,' ').trim().toLowerCase();
+const pwRefs = (r) => [...new Set([r.id,r.tender && `t:${r.tender}`,...(r.threads||[]).filter(p=>p.project).map(p=>pwMailRef(p.project))].filter(Boolean))];
+const pwMoney = (v) => v === '' || v == null ? null : Number.isFinite(Number(v)) && Number(v) >= 0 ? Math.round(Number(v)*100)/100 : null;
+export function cleanProjectWork(raw) {
+  const items = Array.isArray(raw?.items) ? raw.items : [];
+  return {schema:PW_SCHEMA,revision:pwText(raw?.revision,120),items:items.filter(x=>x && typeof x.id==='string' && Array.isArray(x.refs)).map(x=>({
+    id:pwText(x.id,200),refs:[...new Set(x.refs.map(s=>pwText(s,1000)).filter(Boolean))],owner:pwText(x.owner,120),action:pwText(x.action),actionOwner:pwText(x.actionOwner,120),actionDue:pwDate(x.actionDue)?x.actionDue:'',risk:pwText(x.risk),
+    execution:['not_started','ongoing','on_hold','delivered'].includes(x.execution)?x.execution:'not_started',award:pwMoney(x.award),collected:pwMoney(x.collected),
+    milestones:(Array.isArray(x.milestones)?x.milestones:[]).filter(m=>m && pwText(m.title,160)).map(m=>({id:pwText(m.id,120),title:pwText(m.title,160),weight:Number.isFinite(Number(m.weight))?Math.max(0,Number(m.weight)):0,done:!!m.done})),
+    history:(Array.isArray(x.history)?x.history:[]).filter(e=>e && e.id && !Number.isNaN(Date.parse(e.at))).map(e=>({id:pwText(e.id,200),at:String(e.at),note:pwText(e.note,1000),changes:Object.fromEntries(Object.entries(e.changes||{}).filter(([k,v])=>PW_FIELDS.includes(k) && v && typeof v==='object').map(([k,v])=>[k,{before:v.before,after:v.after}]))}))
+  }))};
+}
+export function projectWorkFind(data,row) {
+  const refs = pwRefs(row), hits = (data?.items || []).filter(x=>x.refs.some(ref=>refs.includes(ref)));
+  if(hits.length>1) throw Error('project identity conflict');
+  return hits[0] || null;
+}
+export function projectProgress(work) {
+  const list=work?.milestones || [], total=list.reduce((n,m)=>n+m.weight,0);
+  return total>0?Math.round(100*list.filter(m=>m.done).reduce((n,m)=>n+m.weight,0)/total):null;
+}
+export function projectWorkUpdate(raw,row,patch,{at,id,note=''}={}) {
+  if(!id || Number.isNaN(Date.parse(at))) throw Error('event required');
+  const data=cleanProjectWork(raw), existing=projectWorkFind(data,row);
+  const before=existing || cleanProjectWork({items:[{id,refs:pwRefs(row),execution:['ongoing','delivered'].includes(row.status)?row.status:'not_started'}]}).items[0];
+  if(patch.actionDue && !pwDate(patch.actionDue)) throw Error('invalid date');
+  for(const k of ['award','collected']) if(patch[k]!==undefined && patch[k]!==null && patch[k]!=='' && pwMoney(patch[k])===null) throw Error('invalid money');
+  if(patch.execution && !['not_started','ongoing','on_hold','delivered'].includes(patch.execution)) throw Error('invalid execution');
+  const merged={...before,...Object.fromEntries(PW_FIELDS.filter(k=>k in patch).map(k=>[k,patch[k]])),refs:[...new Set([...before.refs,...pwRefs(row)])]};
+  if(merged.execution!=='not_started' && !['won','ongoing','delivered'].includes(row.bidStatus || row.status)) throw Error('award required');
+  if((merged.milestones||[]).some(m=>!pwText(m.title,160)|| !Number.isFinite(Number(m.weight)) || Number(m.weight)<=0)) throw Error('invalid milestones');
+  const next=cleanProjectWork({items:[merged]}).items[0];
+  if(next.execution==='delivered' && next.milestones.some(m=>!m.done)) throw Error('unfinished milestones');
+  const changes={};for(const key of PW_FIELDS) if(JSON.stringify(before[key])!==JSON.stringify(next[key])) changes[key]={before:before[key],after:next[key]};
+  if(!Object.keys(changes).length && !pwText(note,1000) && existing && JSON.stringify(before.refs)===JSON.stringify(next.refs)) return data;
+  next.history=[...before.history,{id,at,note:pwText(note,1000),changes}];
+  if(existing) data.items[data.items.indexOf(existing)]=next;else data.items.push(next);
+  return data;
+}
+export function mergeProjectWork(base,incoming) {
+  const result=cleanProjectWork(base);
+  for(const other of cleanProjectWork(incoming).items) {
+    const hits=result.items.filter(x=>x.id===other.id || x.refs.some(ref=>other.refs.includes(ref)));
+    if(hits.length>1) throw Error('project identity conflict');
+    if(!hits.length) {result.items.push(other);continue;}
+    const local=hits[0], seen=new Set(local.history.map(e=>e.id));
+    // Local current fields win restore conflicts; unique history is retained as evidence.
+    local.history=[...local.history,...other.history.filter(e=>!seen.has(e.id))].sort((a,b)=>a.at.localeCompare(b.at));
+    local.refs=[...new Set([...local.refs,...other.refs])];
+  }
+  return result;
+}
+export function projectReport(rows,work,filters={},today=saudiDay(new Date().toISOString())) {
+  if((filters.from && !pwDate(filters.from)) || (filters.to && !pwDate(filters.to)) || (filters.from && filters.to && filters.from>filters.to)) throw Error('invalid date range');
+  const unique=new Map();
+  for(const row of rows) {
+    if(unique.has(row.id)) continue;
+    const followup=projectWorkFind(work,row) || cleanProjectWork({items:[{id:row.id,refs:pwRefs(row),execution:['ongoing','delivered'].includes(row.status)?row.status:'not_started'}]}).items[0];
+    const bidStatus=row.bidStatus || row.status;
+    const status=['won','ongoing','delivered'].includes(bidStatus) && ['ongoing','delivered'].includes(followup.execution)?followup.execution:row.status;
+    const r={...row,bidStatus,status,followup,progress:projectProgress(followup)};
+    if(filters.client && r.client!==filters.client || filters.owner && followup.owner!==filters.owner || filters.status && r.status!==filters.status) continue;
+    if(filters.q && !`${r.name} ${r.client||''} ${followup.owner} ${followup.action}`.toLowerCase().includes(filters.q.toLowerCase())) continue;
+    unique.set(row.id,r);
+  }
+  const selected=[...unique.values()], events=[], actions=[];
+  const within=at=>{const day=saudiDay(at);return (!filters.from||day>=filters.from)&&(!filters.to||day<=filters.to);};
+  for(const r of selected) {
+    for(const e of r.followup.history) if(within(e.at)) events.push({...e,projectId:r.id,project:r.name,source:'followup'});
+    for(const e of r.tenderActivity||[]) if(e.at && within(e.at)) events.push({id:e.id||`${r.id}:${e.at}:${e.action}`,at:e.at,note:e.label||'',action:e.action,projectId:r.id,project:r.name,source:'tender',changes:{}});
+    if(r.followup.action) actions.push({projectId:r.id,project:r.name,action:r.followup.action,owner:r.followup.actionOwner||r.followup.owner,due:r.followup.actionDue,overdue:!!r.followup.actionDue && r.followup.actionDue<today});
+  }
+  actions.sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));events.sort((a,b)=>b.at.localeCompare(a.at));
+  const sum=fn=>selected.reduce((n,r)=>n+(Number(fn(r))||0),0);
+  return {rows:selected,events,actions,filters:{...filters},today,totals:{count:selected.length,offer:sum(r=>r.value),award:sum(r=>r.followup.award),collected:sum(r=>r.followup.collected),awardMissing:selected.filter(r=>['won','ongoing','delivered'].includes(r.status)&&r.followup.award==null).length,overdue:actions.filter(a=>a.overdue).length}};
 }

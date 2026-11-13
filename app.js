@@ -14,6 +14,7 @@ import {
   quarterRange, quarterOf, quarterBaseline, quarterGoalProgress, planProgress, suggestQuarterGoals,
   maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply,
   tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS,
+  cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails } from './core.js';
 
 import { validateSystems } from './systems-core.js';
@@ -90,6 +91,15 @@ const store = (() => {
           tx.onabort = () => reject(tx.error || new Error('tender revision changed'));
         });
       } finally { db.close(); }
+    },
+    async getProjectFiles(id) { return (await run('readonly', s => s.get('pf:'+id))) || []; },
+    async putProjectWork(next, revision) {
+      const db=await open();
+      try { await new Promise((resolve,reject)=>{
+        const tx=db.transaction('kv','readwrite'), records=tx.objectStore('kv'), previous=records.get('projectwork');let conflict=false;
+        previous.onsuccess=()=>{if((previous.result?.revision||'')!==revision){conflict=true;tx.abort();return;}records.put(next,'projectwork');};
+        tx.oncomplete=resolve;tx.onabort=()=>reject(conflict?new Error('project revision changed'):tx.error||new Error('project storage failed'));
+      }); } finally { db.close(); }
     },
     async getRegister() { try { return (await run('readonly', (s) => s.get('register'))) || null; } catch { return memReg; } },
     async putRegister(v) { try { await run('readwrite', (s) => s.put(v, 'register')); } catch { memReg = v; } },
@@ -663,7 +673,7 @@ function renderMe(waiting = false) {
   { const ic = $('intro-card-me'); if (ic) ic.classList.toggle('intro-compact', !!(me || (isTeamPortal && mySnapId && rankSnaps[mySnapId]))); }   // ADR-0087: his numbers first
   if (!me) { const snap = isTeamPortal && mySnapId ? rankSnaps[mySnapId] : null;   // ADR-0078: his numbers as his manager sent them
     if (snap && snap.m) { set(body, snapView(snap), el('details', { class: 'me-again' }, el('summary', { text: t('ms_full') }), el('section', { class: 'dt-quick me-setup' }, ...setup))); return; }
-    set(body, vaBar, el('section', { class: 'dt-quick me-setup' }, ...setup)); return; }   // the two steps carry their own numbers
+    set(body, vaBar, !isTeamPortal ? projectsCard() : null, el('section', { class: 'dt-quick me-setup' }, ...setup)); return; }   // projects also work without a personal KPI import
   const qs = myProfile(me);
   const pm = profileMonths(me, new Date(), roster(), meKind);
   const fmtDate = (iso) => (iso ? `\u2066${iso.slice(0, 10)}\u2069` : '');
@@ -1990,12 +2000,156 @@ function projectsModel() {
         period: (i.submittedOn || i.date).slice(0, 4), date: i.submittedOn || i.date, threads: [], first: i.date, last: i.stageAt || i.date, messages: 0, me: 0, akram: 0, shaarawi: 0,
         worked: true, manual: true, aibrahim: !!i.byFrom, kraasa: !!i.byKr, rules: [], reason: i.reason || '' }); }
   }
-  return rows;
+  return isTeamPortal ? rows : projectReport(rows,projectWork).rows;
 }
 const PROJ_RANK = { delivered: 7, ongoing: 6, won: 5, lost: 4, submitted: 3, studied: 2, worked: 1, seen: 0 };
 const WONISH = ['won', 'ongoing', 'delivered'], BIDISH = ['submitted', 'won', 'ongoing', 'delivered', 'lost'];
 const regEnsure = () => { if (!myRegister) myRegister = { schema: 'afaqy-projects-register/v1', asOf: new Date().toISOString().slice(0, 10), sources: [], h1: {}, items: [], board: [], mail: {} }; if (!myRegister.mail) myRegister.mail = {}; return myRegister; };
 const projSave = async () => { await store.putRegister(myRegister); projRefresh(); };
+// ADR-0118: one report snapshot, separate execution state, explicit local history.
+let projectWork = cleanProjectWork(null), pwFilters = {q:'',client:'',owner:'',status:''};
+async function pwCommit(next,expected=projectWork.revision) {
+  if(isTeamPortal) throw Error('manager view required');
+  const saved={...cleanProjectWork(next),revision:crypto.randomUUID()};
+  await store.putProjectWork(saved,expected); projectWork=saved;
+}
+function pwModel(rows) {
+  return rows.map(r=>{const td=tenders?.items.find(x=>x.id===r.tender);return {...r,tenderActivity:td?.activity||[],tenderFiles:td?.files||[]};});
+}
+function pwYearRows() {
+  const year=((myProjects?.to)||(myRegister?.asOf)||saudiDay(new Date().toISOString())).slice(0,4);
+  return projectsModel().filter(r=>projAll || (r.deck ? String(r.period||'').includes(year) || String(r.date||'').slice(0,4)===year : String(r.last||r.date||'').slice(0,4)===year));
+}
+function pwScreenRows() {
+  let rows=pwYearRows();
+  const q=r=>!projQuery || `${r.name} ${r.client||''} ${r.tender||''} ${r.threads.map(p=>p.project).join(' ')}`.toLowerCase().includes(projQuery.toLowerCase());
+  if(projView==='followup') return projectReport(pwModel(rows),projectWork,pwFilters).rows;
+  if(projView==='bids') rows=rows.filter(r=>BIDISH.includes(r.status) && (!projStatus||r.status===projStatus) && q(r));
+  if(projView==='mail') rows=rows.map(r=>({...r,threads:r.threads.filter(p=>(!projOnlyMine||p.worked)&&(!projQuery||`${r.name} ${p.project}`.toLowerCase().includes(projQuery.toLowerCase())))})).filter(r=>r.threads.length);
+  if(projView==='clients') rows=rows.filter(r=>!projQuery||String(r.client||'').toLowerCase().includes(projQuery.toLowerCase()));
+  return rows;
+}
+const pwMoneyText=v=>v==null?'—':`${Number(v).toLocaleString('en-US',{maximumFractionDigits:2})} ${t('sar')}`;
+const pwFieldLabel=k=>t(`pw_${k}`);
+function pwFieldValue(k,v) {
+  if(k==='milestones') return (v||[]).map(m=>`${m.done?'✓':'○'} ${m.title} (${m.weight})`).join(' · ');
+  if(k==='execution') return t(`pw_exec_${v}`);
+  if(k==='award'||k==='collected') return pwMoneyText(v);
+  return String(v??'')||'—';
+}
+function pwEventText(e) {
+  if(e.source==='tender') return `${t('pw_tender_history')} · ${e.action==='stage'?t(`td_st_${e.note}`):e.action||''} · ${e.action==='stage'?'':e.note||''}`;
+  return [e.note,...Object.entries(e.changes||{}).map(([k,v])=>`${pwFieldLabel(k)}: ${pwFieldValue(k,v.before)} → ${pwFieldValue(k,v.after)}`)].filter(Boolean).join(' | ');
+}
+function pwTable(head,rows) {
+  return el('div',{class:'table-wrap'},el('table',{class:'proj-tbl'},el('thead',{},el('tr',{},head.map(h=>el('th',{text:h})))),el('tbody',{},rows.length?rows.map(cells=>el('tr',{},cells.map(v=>el('td',{},v??'—')))):el('tr',{},el('td',{colspan:head.length,text:t('pw_empty')})))));
+}
+function pwDialog(title,cls='proj-edit') {
+  const dlg=el('dialog',{class:cls},el('h2',{text:title}));
+  dlg.addEventListener('close',()=>dlg.remove());document.body.append(dlg);return dlg;
+}
+function pwFollowupPage(scope) {
+  const report=projectReport(pwModel(scope),projectWork,pwFilters), rows=report.rows;
+  const choose=(key,options)=>el('label',{},el('span',{text:pwFieldLabel(key)}),el('select',{'aria-label':pwFieldLabel(key),onchange:e=>{pwFilters[key]=e.target.value;projRefresh();}},el('option',{value:'',text:t('proj_st_all')}),options.map(([v,l])=>el('option',{value:v,selected:pwFilters[key]===v,text:l}))));
+  const form=el('form',{class:'form-grid',onsubmit:e=>{e.preventDefault();pwFilters.q=form.querySelector('input').value;projRefresh();}},
+    el('label',{},el('span',{text:t('proj_find')}),el('input',{type:'search',value:pwFilters.q,'aria-label':t('proj_find')})),
+    choose('client',[...new Set(scope.map(r=>r.client).filter(Boolean))].sort().map(v=>[v,v])),
+    choose('owner',[...new Set(scope.map(r=>projectWorkFind(projectWork,r)?.owner).filter(Boolean))].sort().map(v=>[v,v])),
+    choose('status',['seen','worked','studied','submitted','won','ongoing','delivered','lost'].map(v=>[v,t(`proj_f_${v}`)])),
+    el('button',{type:'submit',class:'btn',text:t('pw_apply')}),el('button',{type:'button',class:'btn quiet',text:t('pw_reset'),onclick:()=>{pwFilters={q:'',client:'',owner:'',status:''};projRefresh();}}));
+  return el('div',{class:'pw-followup'},el('p',{class:'hint',text:t('pw_intro')}),form,
+    el('div',{class:'sm-row'},[['pw_projects',rows.length],['pw_overdue',report.totals.overdue],['pw_collected',pwMoneyText(report.totals.collected)]].map(([key,value])=>el('div',{class:'sm-card'},el('span',{text:t(key)}),el('b',{text:String(value)})))),
+    pwTable([t('proj_c_name'),t('pw_owner'),t('pw_execution'),t('pw_progress'),t('pw_action'),t('pw_actionOwner'),t('pw_actionDue'),t('pw_risk'),t('pw_followup')],rows.map(r=>[el('div',{},el('b',{text:r.name}),el('div',{class:'hint',text:`${r.client||'—'} · ${t(`proj_f_${r.bidStatus}`)}`})),r.followup.owner||'—',t(`pw_exec_${r.followup.execution}`),r.progress==null?'—':`${r.progress}%`,r.followup.action||'—',r.followup.actionOwner||r.followup.owner||'—',el('span',{text:r.followup.actionDue||'—',class:r.followup.actionDue && r.followup.action && r.followup.actionDue<report.today?'st-pill st-lost':''}),r.followup.risk||'—',el('button',{type:'button',class:'btn tiny',text:t('pw_open'),onclick:()=>pwEdit(r)})])));
+}
+function pwEdit(row) {
+  if(isTeamPortal)return;
+  const fresh=projectsModel().find(r=>r.id===row.id)||row, report=projectReport(pwModel([fresh]),projectWork), r=report.rows[0], initial=projectWork.revision;
+  const draft=JSON.parse(JSON.stringify(r.followup)), dlg=pwDialog(r.name), body=el('form',{'data-pw-form':'',onsubmit:e=>{e.preventDefault();save();}});
+  const field=(key,type='text')=>el('label',{},el('span',{text:pwFieldLabel(key)}),el('input',{type,value:draft[key]??'','data-pw':key,...(type==='number'?{min:'0',step:'0.01'}:{}),maxlength:type==='text'?'500':null,oninput:e=>{draft[key]=e.target.value;}}));
+  const eligible=WONISH.includes(r.bidStatus), exec=el('select',{'data-pw':'execution',onchange:e=>{draft.execution=e.target.value;}},['not_started','ongoing','on_hold','delivered'].map(v=>el('option',{value:v,selected:draft.execution===v,disabled:v!=='not_started'&&!eligible,text:t(`pw_exec_${v}`)})));
+  const milestones=el('div',{'data-pw-milestones':''}), paint=()=>set(milestones,draft.milestones.map((m,i)=>el('div',{class:'row',style:'gap:8px;flex-wrap:wrap'},el('input',{type:'checkbox',checked:m.done,'aria-label':`${t('pw_complete')} ${i+1}`,onchange:e=>{m.done=e.target.checked;}}),el('input',{value:m.title,required:true,maxlength:'160','aria-label':`${t('pw_milestone')} ${i+1}`,oninput:e=>{m.title=e.target.value;}}),el('input',{type:'number',min:'1',step:'1',required:true,value:m.weight,style:'width:90px','aria-label':`${t('pw_weight')} ${i+1}`,oninput:e=>{m.weight=Number(e.target.value);}}),el('button',{type:'button',class:'btn quiet tiny',text:t('pw_remove'),onclick:()=>{draft.milestones.splice(i,1);paint();}}))));paint();
+  const note=el('textarea',{rows:'2',maxlength:'1000','data-pw':'note'}), error=el('p',{role:'alert',class:'hint'}), saveButton=el('button',{type:'submit',class:'btn primary',text:t('save')});
+  const save=async()=>{
+    if(!body.reportValidity())return;
+    saveButton.disabled=true;error.textContent='';
+    try {
+      const next=projectWorkUpdate(projectWork,fresh,draft,{at:new Date().toISOString(),id:crypto.randomUUID(),note:note.value});
+      await pwCommit(next,initial);dlg.close();projRefresh();toast(t('proj_saved'));
+    } catch(e) {error.textContent=t(e.message.includes('revision')?'pw_stale':e.message.includes('award')?'pw_award_required':e.message.includes('milestones')?'pw_milestone_error':e.message.includes('date')?'pw_date_error':e.message.includes('money')?'pw_money_error':'pw_save_error');} finally{saveButton.disabled=false;}
+  };
+  set(body,el('p',{class:'hint',text:t('pw_separate')}),el('div',{class:'form-grid'},field('owner'),field('action'),field('actionOwner'),field('actionDue','date'),field('risk'),el('label',{},el('span',{text:t('pw_execution')}),exec),field('award','number'),field('collected','number')),
+    eligible && draft.execution==='not_started'?el('button',{type:'button',class:'btn',text:t('pw_start'),onclick:()=>{draft.execution='ongoing';exec.value='ongoing';}}):null,
+    draft.action?el('button',{type:'button',class:'btn quiet',text:t('pw_action_done'),onclick:()=>{note.value=[note.value,`${t('pw_action_done')}: ${draft.action}`].filter(Boolean).join('\n');for(const k of ['action','actionOwner','actionDue']) {draft[k]='';body.querySelector(`[data-pw="${k}"]`).value='';}}}):null,
+    el('h3',{text:t('pw_milestones')}),el('p',{class:'hint',text:t('pw_weights_hint')}),milestones,el('button',{type:'button',class:'btn tiny',text:t('pw_add_milestone'),onclick:()=>{draft.milestones.push({id:crypto.randomUUID(),title:'',weight:1,done:false});paint();}}),
+    el('label',{},el('span',{text:t('pw_note')}),note),error,el('div',{class:'row'},saveButton,el('button',{type:'button',class:'btn quiet',text:t('cancel'),onclick:()=>dlg.close()})),
+    el('h3',{text:t('pw_history')}),el('p',{class:'hint',text:t('pw_history_hint')}),pwTable([t('pw_time'),t('pw_change')],report.events.map(e=>[e.at,pwEventText(e)])));
+  dlg.append(body);dlg.showModal();
+}
+async function pwFileIndex(rows) {
+  const files=[];
+  for(const r of rows) {
+    const list=[...(r.tenderFiles||[]),...(r.item ? await store.getProjectFiles(r.item.id):[])];
+    for(const f of list) files.push({projectId:r.id,project:r.name,name:f.name||'',kind:f.kind||'other',size:f.blob?.size ?? f.size ?? '',at:f.at||'',available:!!f.blob});
+  }
+  return files;
+}
+function pwReports(preferred='html') {
+  if(isTeamPortal)return;
+  const scopeLabel=[t(`pw_scope_${projView}`),projAll?t('proj_all'):t('proj_year',{y:((myProjects?.to)||(myRegister?.asOf)||saudiDay(new Date().toISOString())).slice(0,4)}),projView==='followup'?Object.values(pwFilters).filter(Boolean).join(' · '):projView==='summary'?'':[projStatus,projQuery].filter(Boolean).join(' · ')].filter(Boolean).join(' · ');
+  const rows=pwModel(pwScreenRows()), selected=new Set(rows.map(r=>r.id)), snapshot=structuredClone(projectWork), generatedAt=new Date().toISOString(), day=saudiDay(generatedAt), from=new Date(`${day}T12:00:00Z`);from.setUTCDate(from.getUTCDate()-6);
+  const filters={from:from.toISOString().slice(0,10),to:day,client:'',owner:'',status:'',q:''};
+  const dlg=pwDialog(t('pw_reports'),'proj-layer pw-report-dialog'), body=el('div',{class:'pl-body'}), controls=el('form',{class:'form-grid'}), preview=el('div',{'data-pw-preview':''}), error=el('p',{role:'alert'});let result;
+  const paint=()=>{try{const candidates=projectReport(rows,snapshot,filters,day);result=projectReport(rows.filter(r=>selected.has(r.id)),snapshot,filters,day);set(preview,el('p',{text:t('pw_report_count',{n:result.rows.length,e:result.events.length,a:result.actions.length})}),pwTable([t('pw_select'),t('proj_c_name'),t('pw_owner'),t('proj_c_status'),t('pw_award'),t('pw_collected')],candidates.rows.map(r=>[el('input',{type:'checkbox',checked:selected.has(r.id),'aria-label':`${t('pw_select')} ${r.name}`,onchange:e=>{if(e.target.checked)selected.add(r.id);else selected.delete(r.id);paint();}}),r.name,r.followup.owner||'—',t(`proj_f_${r.status}`),pwMoneyText(r.followup.award),pwMoneyText(r.followup.collected)])));error.textContent='';}catch{result=null;error.textContent=t('pw_date_error');}};
+  for(const k of ['from','to']) controls.append(el('label',{},el('span',{text:t(`pw_${k}`)}),el('input',{type:'date',value:filters[k],onchange:e=>{filters[k]=e.target.value;paint();}})));
+  for(const [k,options] of [['client',[...new Set(rows.map(r=>r.client).filter(Boolean))]],['owner',[...new Set(rows.map(r=>projectWorkFind(snapshot,r)?.owner).filter(Boolean))]],['status',[...new Set(rows.map(r=>r.status))]]]) controls.append(el('label',{},el('span',{text:pwFieldLabel(k)}),el('select',{onchange:e=>{filters[k]=e.target.value;paint();}},el('option',{value:'',text:t('proj_st_all')}),options.sort().map(v=>el('option',{value:v,text:k==='status'?t(`proj_f_${v}`):v})))));
+  controls.append(el('label',{},el('span',{text:t('proj_find')}),el('input',{type:'search',oninput:e=>{filters.q=e.target.value;paint();}})));controls.addEventListener('submit',e=>e.preventDefault());
+  const choices=el('div',{class:'row',style:'flex-wrap:wrap'});
+  for(const [mode,label] of [['xlsx','proj_excel'],['pdf','proj_pdf'],['html','pw_html']]) choices.append(el('button',{type:'button',class:`btn ${preferred===mode?'primary':''}`,text:t(label),onclick:async e=>{
+    if(!result)return;const button=e.currentTarget, printWindow=mode==='pdf'?window.open('','_blank'):null;if(mode==='pdf'&&!printWindow){error.textContent=t('rep_popup');return;}button.disabled=true;
+    try{const exportData={...structuredClone(result),generatedAt,scope:scopeLabel,files:await pwFileIndex(result.rows)};if(mode==='xlsx')await pwXlsx(exportData);else{const html=pwHtml(exportData,mode==='html');if(mode==='pdf')openReport(html,'pdf','AFAQY-project-report',printWindow);else openReport(html,'html',`AFAQY-project-dashboard-${day}`);}toast(t('pw_exported'));}
+    catch(e){printWindow?.close();console.error(e);error.textContent=t('pw_export_error');}finally{button.disabled=false;}
+  }}));
+  body.append(el('p',{class:'hint',text:t('pw_report_hint')}),el('p',{class:'hint',text:`${t('pw_generated')}: ${generatedAt} · ${scopeLabel}`}),controls,choices,error,preview);dlg.append(body);paint();dlg.showModal();
+}
+function pwReportTables(r) {
+  return [
+    {name:t('proj_p_summary'),headers:[t('proj_c_item'),t('pw_value')],rows:[['pw_projects',r.totals.count],['pw_offer',r.totals.offer],['pw_award',r.totals.award],['pw_collected',r.totals.collected],['pw_award_missing',r.totals.awardMissing],['pw_overdue',r.totals.overdue],['pw_from',r.filters.from||'—'],['pw_to',r.filters.to||'—'],['pw_generated',r.generatedAt],['pw_scope',r.scope||''],['pw_client',r.filters.client||t('proj_st_all')],['pw_owner',r.filters.owner||t('proj_st_all')],['pw_status',r.filters.status?t(`proj_f_${r.filters.status}`):t('proj_st_all')]].map(([k,v])=>[t(k),v])},
+    {name:t('pw_projects'),headers:['ID',t('proj_c_name'),t('proj_c_client'),t('proj_c_status'),t('pw_execution'),t('pw_owner'),t('pw_offer'),t('pw_award'),t('pw_collected'),t('pw_progress'),t('pw_risk')],rows:r.rows.map(x=>[x.id,x.name,x.client||'',t(`proj_f_${x.status}`),t(`pw_exec_${x.followup.execution}`),x.followup.owner,x.value,x.followup.award,x.followup.collected,x.progress==null?'':x.progress/100,x.followup.risk])},
+    {projectIds:r.events.map(e=>e.projectId),name:t('pw_history'),headers:[t('pw_time'),t('proj_c_name'),t('pw_change')],rows:r.events.map(e=>[e.at,e.project,pwEventText(e)])},
+    {projectIds:r.actions.map(e=>e.projectId),name:t('pw_actions'),headers:[t('proj_c_name'),t('pw_action'),t('pw_actionOwner'),t('pw_actionDue'),t('pw_overdue')],rows:r.actions.map(a=>[a.project,a.action,a.owner,a.due,a.overdue?'✓':''])},
+    {projectIds:r.rows.flatMap(x=>x.followup.milestones.map(()=>x.id)),name:t('pw_milestones'),headers:[t('proj_c_name'),t('pw_milestone'),t('pw_weight'),t('pw_complete')],rows:r.rows.flatMap(x=>x.followup.milestones.map(m=>[x.name,m.title,m.weight,m.done?'✓':'']))},
+    {projectIds:(r.files||[]).map(f=>f.projectId),name:t('pw_file_index'),headers:[t('proj_c_name'),t('pw_filename'),t('pw_file_kind'),t('pw_bytes'),t('pw_time')],rows:(r.files||[]).map(f=>[f.project,f.name,t(tdFileKind[f.kind] || (f.kind==='photo'?'proj_fk_photo':`td_file_${f.kind}`)),f.size,f.at])}
+  ];
+}
+async function pwXlsx(report) {
+  const X=await loadXlsx(), wb=X.utils.book_new();wb.Workbook={Views:[{RTL:lang!=='en'}]};
+  for(const [i,table] of pwReportTables(report).entries()) {
+    const ws=X.utils.aoa_to_sheet([table.headers,...table.rows]);ws['!autofilter']={ref:ws['!ref']};ws['!cols']=table.headers.map((h,n)=>({wch:n===0?25:Math.min(55,Math.max(16,h.length))}));
+    if(i===1) for(let n=2;n<table.rows.length+2;n++) if(ws[`J${n}`]?.t==='n')ws[`J${n}`].z='0%';
+    X.utils.book_append_sheet(wb,ws,table.name.replace(/[\\/?*\[\]:]/g,' ').slice(0,31));
+  }
+  X.writeFile(wb,`AFAQY-project-report-${report.today}.xlsx`);
+}
+function pwHtml(report,interactive) {
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const tables=pwReportTables(report), labels={search:t('proj_find'),all:t('proj_st_all'),empty:t('pw_empty'),count:t('pw_projects'),offer:t('pw_offer'),award:t('pw_award'),collected:t('pw_collected')};
+  const renderTable=table=>`<div class="scroll"><table><thead><tr>${table.headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${table.rows.length?table.rows.map((row,i)=>`<tr${table.projectIds?.[i]?' data-project-id="'+esc(table.projectIds[i])+'"':''}>${row.map((c,n)=>`<td>${esc(table===tables[1]&&n===9&&typeof c==='number'?Math.round(c*100)+'%':c)}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${table.headers.length}">${esc(t('pw_empty'))}</td></tr>`}</tbody></table></div>`;
+  const projectRows=report.rows.map(r=>({id:r.id,name:r.name,client:r.client||'',owner:r.followup.owner,status:t(`proj_f_${r.status}`),execution:t(`pw_exec_${r.followup.execution}`),offer:r.value||0,award:r.followup.award,collected:r.followup.collected,progress:r.progress,action:r.followup.action,due:r.followup.actionDue,risk:r.followup.risk,awardMissing:WONISH.includes(r.status)&&r.followup.award==null}));
+  // JSON is inert data; '<' is escaped so filenames and notes cannot terminate its script element.
+  const data=JSON.stringify({rows:projectRows,labels}).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
+  const script=interactive?`<script type="application/json" id="report-data">${data}</script><script>
+  const data=JSON.parse(document.getElementById('report-data').textContent), q=document.getElementById('search'), status=document.getElementById('status'), client=document.getElementById('client'), owner=document.getElementById('owner');
+  for(const [control,key] of [[status,'status'],[client,'client'],[owner,'owner']])for(const value of [...new Set(data.rows.map(r=>r[key]).filter(Boolean))].sort()){const option=document.createElement('option');option.value=value;option.textContent=value;control.append(option);}
+  function paint(){const rows=data.rows.filter(r=>(!q.value||[r.name,r.client,r.owner,r.action].join(' ').toLowerCase().includes(q.value.toLowerCase()))&&(!status.value||r.status===status.value)&&(!client.value||r.client===client.value)&&(!owner.value||r.owner===owner.value));const ids=new Set(rows.map(r=>r.id));for(const tr of document.querySelectorAll('[data-project-id]'))tr.hidden=!ids.has(tr.dataset.projectId);document.getElementById('award-missing').textContent=rows.filter(r=>r.awardMissing).length;const body=document.getElementById('projects-body');body.replaceChildren();for(const r of rows){const tr=document.createElement('tr');for(const value of [r.name,r.client,r.owner,r.status,r.execution,r.offer,r.award??'—',r.collected??'—',r.progress==null?'—':r.progress+'%',r.action,r.due,r.risk]){const td=document.createElement('td');td.textContent=value;tr.append(td);}body.append(tr);}for(const key of ['count','offer','award','collected'])document.getElementById('kpi-'+key).textContent=(key==='count'?rows.length:rows.reduce((n,r)=>n+(r[key]||0),0)).toLocaleString();}
+  for(const c of [q,status,client,owner])c.addEventListener('input',paint);paint();
+  </script>`:'';
+  const kpis=[['count',report.totals.count],['offer',report.totals.offer],['award',report.totals.award],['collected',report.totals.collected]];
+  const interactiveTable=`<div class="filters"><input id="search" type="search" placeholder="${esc(labels.search)}" aria-label="${esc(labels.search)}">${[['status','pw_status'],['client','pw_client'],['owner','pw_owner']].map(([id,k])=>`<label>${esc(t(k))}<select id="${id}"><option value="">${esc(labels.all)}</option></select></label>`).join('')}</div><div class="scroll"><table><thead><tr>${['proj_c_name','pw_client','pw_owner','pw_status','pw_execution','pw_offer','pw_award','pw_collected','pw_progress','pw_action','pw_actionDue','pw_risk'].map(k=>`<th>${esc(t(k))}</th>`).join('')}</tr></thead><tbody id="projects-body"></tbody></table></div>`;
+  return `<!doctype html><html lang="${lang}" dir="${dirOf(lang)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(t('pw_reports'))}</title><style>
+  *{box-sizing:border-box}body{margin:0;background:#F2F4F7;color:#18232E;font-family:'Segoe UI',Tahoma,sans-serif;line-height:1.7}main{max-width:1500px;margin:auto;padding:24px}header{border-bottom:4px solid #2A7130;display:flex;gap:22px;align-items:center;padding-bottom:18px}header img{width:130px}h1{margin:0;font-size:26px}h2{font-size:20px}p{color:#5C6B78}section{background:#FFFFFF;border:1px solid #E3EAF0;border-radius:16px;padding:20px;margin:18px 0}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.cards>div{padding:18px;background:#FFFFFF;border:1px solid #E3EAF0;border-top:4px solid #0E7C86;border-radius:12px}.cards b{display:block;font-size:28px}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}th{text-align:start;background:#1C1E3D;color:#FFFFFF;padding:10px}td{padding:10px;border-bottom:1px solid #E3EAF0;vertical-align:top;overflow-wrap:anywhere;max-width:380px}.filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}input,select{font:inherit;border:1px solid #8797A3;border-radius:8px;padding:8px;background:#FFFFFF;max-width:100%}label{display:flex;gap:8px;align-items:center}footer{font-size:12px;color:#5C6B78}@media(max-width:700px){main{padding:12px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}header{align-items:flex-start}header img{width:80px}}@media print{body{background:#FFFFFF}main{padding:0}.filters{display:none}section{break-inside:auto;border:0;padding:0}thead{display:table-header-group}tr{break-inside:avoid}.scroll{overflow:visible}table{font-size:10px}.cards b{font-size:20px}@page{size:A4 landscape;margin:10mm}}
+  </style></head><body><main><header><img src="${logoDataUrl()}" alt="AFAQY"><div><h1>${esc(t('pw_reports'))}</h1><div>${esc(t('pw_generated'))}: ${esc(report.generatedAt)}</div><div>${esc(report.scope)}</div></div></header><p>${esc(t('pw_snapshot'))}</p><div class="cards">${kpis.map(([key,v])=>`<div>${esc(labels[key])}<b id="kpi-${key}">${Number(v).toLocaleString('en-US')}</b></div>`).join('')}</div><p>${esc(t('pw_currency'))} · ${esc(t('pw_award_missing'))}: <span id="award-missing">${report.totals.awardMissing}</span></p><p>${esc(t('pw_report_hint'))} ${esc(report.filters.from||'—')} → ${esc(report.filters.to||'—')}</p><section><h2>${esc(t('pw_projects'))}</h2>${interactive?interactiveTable:renderTable(tables[1])}</section>${tables.slice(2).map(table=>`<section><h2>${esc(table.name)}</h2>${renderTable(table)}</section>`).join('')}<footer>${esc(t('pw_export_footer'))} · AFAQY Jeddah · v${PORTAL_VERSION}</footer></main>${script}</body></html>`;
+}
+
 function projWorkspaceBody() {
   const up = el('input', { type: 'file', hidden: true, onchange: async (e) => { const f = e.target.files[0]; if (!f) return; e.target.value = ''; await projTakeFile(f, up.dataset.kind || ''); } });   // ADR-0101: one picker, the chosen kind
   const pick = (kind, accept) => { up.dataset.kind = kind; up.accept = accept; up.click(); };
@@ -2010,13 +2164,13 @@ function projWorkspaceBody() {
   const head = el('div', { class: 'row', style: 'justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px' }, el('h2', { style: 'margin:0' }, t('proj_h'), helpQ('help_proj')),
     el('div', { class: 'row proj-actions' }, el('button', { type: 'button', class: 'btn primary tiny', text: `＋ ${t('proj_add')}`, onclick: () => projEdit(null) }),
       el('button', { type: 'button', class: 'btn tiny', text: `⇩ ${t('proj_pull')}`, onclick: projPrompt }), el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('proj_excel')}`, onclick: projXlsx }),
-      el('button', { type: 'button', class: 'btn tiny', text: `🖨 ${t('proj_pdf')}`, onclick: projReport }), impMenu, up));
+      el('button', { type: 'button', class: 'btn tiny', text: `🖨 ${t('proj_pdf')}`, onclick: projReport }), el('button',{type:'button',class:'btn tiny',text:t('pw_reports'),onclick:()=>pwReports()}), impMenu, up));
   // ADR-0092/0093: the tender register alone is enough to open the workspace; the empty state still says where the data goes in
   if (!myProjects && !myRegister && !(tenders && tenders.items.length)) return el('section', { class: 'proj' }, head, mailSrc('projects'), el('div', { class: 'empty', text: t('proj_none') }));
   const year = ((myProjects && myProjects.to) || (myRegister && myRegister.asOf) || '2026').slice(0, 4), y0 = `${year}-01-01`;
-  const all = projectsModel(), inYear = (r) => (r.deck ? ((r.period || '').includes(year) || (r.date || '') >= y0) : (r.last || '') >= y0), scope = all.filter((r) => projAll || inYear(r));
+  const all = projectsModel(), scope = pwYearRows();
   const sar = (v) => `${Math.round(v).toLocaleString('en-US')} ${t('sar')}`, sumV = (l) => l.reduce((x, r) => x + r.value, 0);
-  const tabs = el('div', { class: 'pills proj-pages' }, [['mail', 'proj_p_mail'], ['bids', 'proj_p_bids'], ['summary', 'proj_p_summary'], ['clients', 'proj_v_clients']].map(([k, l]) =>
+  const tabs = el('div', { class: 'pills proj-pages' }, [['followup', 'pw_followup'], ['mail', 'proj_p_mail'], ['bids', 'proj_p_bids'], ['summary', 'proj_p_summary'], ['clients', 'proj_v_clients']].map(([k, l]) =>
     el('button', { type: 'button', class: `pill-btn${projView === k ? ' on' : ''}`, text: t(l), onclick: () => { projView = k; projRefresh(); } })));
   const period = el('div', { class: 'pills' }, el('button', { type: 'button', class: `pill-btn${projAll ? '' : ' on'}`, text: t('proj_year', { y: year }), onclick: () => { projAll = false; projRefresh(); } }),
     el('button', { type: 'button', class: `pill-btn${projAll ? ' on' : ''}`, text: t('proj_all'), onclick: () => { projAll = true; projRefresh(); } }));
@@ -2024,6 +2178,7 @@ function projWorkspaceBody() {
   const q = (r) => !projQuery || `${r.name} ${r.client} ${r.tender || ''} ${r.threads.map((p) => p.project).join(' ')}`.toLowerCase().includes(projQuery.toLowerCase());
   const pill = (st) => el('span', { class: `st-pill st-${st}`, text: t(`proj_f_${st}`) });
   const acts = (r, { attach = false } = {}) => el('td', { class: 'row-acts' },
+    el('button',{type:'button',class:'icon-btn',title:t('pw_followup'),text:'↗',onclick:()=>pwEdit(r)}),
     el('button', { type: 'button', class: `icon-btn${r.ok ? ' on' : ''}`, title: t('proj_ok'), text: '✓', onclick: () => projToggleOk(r) }),
     el('button', { type: 'button', class: 'icon-btn', title: t('proj_edit'), text: '✎', onclick: () => projEdit(r) }),
     el('button', { type: 'button', class: 'icon-btn', title: t('proj_files'), text: r.files ? `📎${r.files}` : '📎', onclick: () => projFiles(r) }),
@@ -2031,7 +2186,8 @@ function projWorkspaceBody() {
     el('button', { type: 'button', class: 'icon-btn', title: t('proj_delete'), text: '✕', onclick: () => projDelete(r) }));
   const ordered = (rows, key) => { const ids = sortByOrder(rows.map((r) => r.id), key); const pos = new Map(ids.map((id, n) => [id, n])); return [...rows].sort((x, y) => pos.get(x.id) - pos.get(y.id)); };
   let page;
-  if (projView === 'mail') {
+  if (projView === 'followup') { page=pwFollowupPage(scope);
+  } else if (projView === 'mail') {
     // page 1 — every project thread from the mail, each in its row, with the project it belongs to
     const rows = [];
     for (const r of scope) for (const p of r.threads) rows.push({ r, p });
@@ -2138,20 +2294,7 @@ async function loadXlsx() {
     X.__byAuthor = true; }
   return X;
 }
-async function projXlsx() {
-  let X; try { X = await loadXlsx(); } catch { toast(t('proj_x_fail')); projCsv(projectsModel()); return; }
-  const rows = projectsModel(), wb = X.utils.book_new(), st = (s) => t(`proj_f_${s}`);
-  const mail = []; for (const r of rows) for (const p of r.threads) mail.push({ ID: r.id, [t('proj_c_subject')]: p.project, [t('proj_c_name')]: r.name, [t('proj_c_status')]: st(r.status), [t('proj_c_first')]: p.first, [t('proj_c_last')]: p.last, [t('proj_c_msgs')]: p.messages, [t('proj_c_me')]: p.me, [t('proj_c_akram')]: p.akram, [t('proj_c_shaarawi')]: p.shaarawi, [t('proj_c_why')]: projWhy({ aibrahim: p.aibrahim, kraasa: p.kraasa, rules: p.rules }), [t('proj_ok')]: r.ok ? '✓' : '' });
-  const bidRow = (r) => ({ ID: r.id, [t('proj_c_name')]: r.name, [t('proj_c_client')]: r.client, [t('proj_c_status')]: st(r.status), [t('proj_c_value')]: r.value || 0, [t('proj_c_date')]: r.date || '', [t('proj_c_period')]: r.period || '', [t('proj_c_line')]: r.line || '', [t('proj_c_note')]: r.note || '', [t('proj_c_threads')]: r.threads.length, [t('proj_files')]: r.files || 0, [t('proj_ok')]: r.ok ? '✓' : '' });
-  const bids = rows.filter((r) => BIDISH.includes(r.status));
-  const add = (data, name) => { const ws = X.utils.json_to_sheet(data.length ? data : [{ ID: '' }]); ws['!cols'] = Object.keys(data[0] || { ID: 1 }).map((k) => ({ wch: k === 'ID' ? 8 : Math.min(60, Math.max(12, ...data.map((d) => String(d[k] ?? '').length))) })); ws['!views'] = [{ RTL: lang !== 'en' }]; X.utils.book_append_sheet(wb, ws, name.slice(0, 31)); };
-  add(mail, t('proj_p_mail')); add(bids.filter((r) => r.kind === 'commercial').map(bidRow), `${t('proj_p_bids')} — ${t('proj_g_clients_s')}`); add(bids.filter((r) => r.kind !== 'commercial').map(bidRow), `${t('proj_p_bids')} — ${t('proj_g_big_s')}`);
-  const cnt = (f) => rows.filter(f).length, val = (f) => rows.filter(f).reduce((x, r) => x + r.value, 0);
-  add([['proj_s_bid', (r) => BIDISH.includes(r.status)], ['proj_s_won', (r) => WONISH.includes(r.status)], ['proj_f_ongoing', (r) => r.status === 'ongoing'], ['proj_f_delivered', (r) => r.status === 'delivered'], ['proj_f_submitted', (r) => r.status === 'submitted'], ['proj_f_lost', (r) => r.status === 'lost'], ['proj_s_worked', (r) => r.worked]]
-    .map(([k, f]) => ({ [t('proj_c_item')]: t(k), [t('proj_c_count')]: cnt(f), [t('proj_c_value')]: val(f) })), t('proj_p_summary'));
-  X.writeFile(wb, `AFAQY-projects-${new Date().toISOString().slice(0, 10)}.xlsx`);
-  toast(t('proj_x_done'));
-}
+async function projXlsx() { pwReports('xlsx'); }
 // ---------- ADR-0101: «My projects» imports — four kinds said plainly; a file of another place is sent there ----------
 async function projTakeFile(f, kind) {
   const nm = f.name.toLowerCase();
@@ -2258,6 +2401,7 @@ function projDetail(k, scope) {
 }
 // add or edit: a mail thread that gets edited becomes a project of its own, linked to that thread
 function projEdit(r) {
+  if(r?.fromTender) { pwEdit(r); return; }
   const it = r && r.item ? r.item : null;
   const f = { name: r ? r.name : '', client: r ? r.client || '' : '', line: it ? it.line : '', kind: r ? r.kind || 'commercial' : 'commercial', status: r ? (r.status === 'seen' ? 'worked' : r.status) : 'worked',
     value: r ? r.value || '' : '', date: it ? it.date || r.last || '' : r ? r.last || '' : new Date().toISOString().slice(0, 10), period: it ? it.period : '', note: it ? it.note : '', match: it ? it.match.join(', ') : '' };
@@ -2272,7 +2416,7 @@ function projEdit(r) {
     else if (r && r.key && ['worked', 'studied'].includes(rec.status) && !rec.value && !rec.client) { R.mail[r.key] = { ...(R.mail[r.key] || {}), name: rec.name, status: rec.status }; }
     else { const id = `U${Date.now().toString(36)}`; R.items.push({ id, ...rec, not: [], source: t('proj_why_manual'), manual: true }); if (r && r.key) R.mail[r.key] = { item: id }; }
     dlg.close(); toast(t('proj_saved')); await projSave(); };
-  dlg.append(el('h2', { text: r ? t('proj_edit_h') : t('proj_add_h') }),
+  set(dlg,el('h2', { text: r ? t('proj_edit_h') : t('proj_add_h') }),
     r && r.threads && r.threads.length ? el('p', { class: 'hint', text: t('proj_edit_threads', { n: r.threads.length, s: r.threads.slice(0, 2).map((p) => p.project).join(' | ') }) }) : null,
     el('div', { class: 'form-grid' },
       el('label', {}, el('span', { text: t('proj_c_name') }), inp('name')), el('label', {}, el('span', { text: t('proj_c_client') }), inp('client')),
@@ -2346,28 +2490,7 @@ If a search or folder failed, say exactly which one.`;
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
 }
 // my projects report: AFAQY pages, each project in its place by status
-function projReport() {
-  const rows = projectsModel(), esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-  const logo = logoDataUrl(), rtl = lang !== 'en', fontUrl = (f) => new URL(`assets/fonts/${f}`, location.href).href, sum = (l) => l.reduce((x, r) => x + r.value, 0), f0 = (v) => v.toLocaleString('en-US');
-  const by = (st) => rows.filter((r) => r.status === st).sort((x, y) => y.value - x.value || (y.last || '').localeCompare(x.last || ''));
-  const groups = ['delivered', 'ongoing', 'won', 'submitted', 'lost', 'studied', 'worked'].map((st) => ({ st, list: by(st) })).filter((g) => g.list.length);
-  const kpi = [['s_worked', rows.filter((r) => r.worked).length], ['s_bid', rows.filter((r) => BIDISH.includes(r.status)).length], ['s_won', rows.filter((r) => WONISH.includes(r.status)).length], ['f_delivered', by('delivered').length]];
-  const table = (list) => `<table><thead><tr><th>${esc(t('proj_c_name'))}</th><th>${esc(t('proj_c_client'))}</th><th>${esc(t('proj_c_kind'))}</th><th>${esc(t('proj_c_value'))}</th><th>${esc(t('proj_c_last'))}</th><th>${esc(t('proj_c_why'))}</th></tr></thead><tbody>${list.map((r) => `<tr><td>${esc(r.name)}${r.note ? `<div class="n">${esc(r.note)}</div>` : ''}</td><td>${esc(r.client && r.client !== r.name ? r.client : '')}</td><td>${esc(r.kind ? t(`proj_k_${r.kind}`) : '')}</td><td class="v">${r.value ? f0(r.value) : '—'}</td><td class="d">${esc(r.last || '—')}</td><td>${esc(projWhy(r))}</td></tr>`).join('')}</tbody></table>`;
-  const html = `<!doctype html><html lang="${lang}" dir="${rtl ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>${esc(t('proj_pdf_title'))}</title><style>
-  @font-face{font-family:NS;src:url('${fontUrl('NotoSansArabic-Regular.woff2')}')}@font-face{font-family:NS;font-weight:700;src:url('${fontUrl('NotoSansArabic-Bold.woff2')}')}
-  body{margin:0;font-family:NS,'Segoe UI',Tahoma,sans-serif;color:#1C1E3D;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{padding:14mm;page-break-after:always}
-  header{display:flex;align-items:center;gap:14px;border-bottom:4px solid #2A7130;padding-bottom:10px;margin-bottom:14px}header img{height:34px}h1{font-size:22px;margin:0}h2{font-size:16px;margin:16px 0 8px;border-inline-start:5px solid #2A7130;padding-inline-start:8px}
-  .k{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.k div{background:#F1F5F8;border-radius:10px;padding:10px;border-top:4px solid #0E7C86}.k b{display:block;font-size:24px}.k .w{border-top-color:#2A7130}
-  .v4{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.v4 div{border:1px solid #E3EAF0;border-radius:10px;padding:10px}.v4 b{display:block;font-size:18px}
-  table{width:100%;border-collapse:collapse;font-size:11.5px}th{background:#1C1E3D;color:#FFFFFF;padding:6px;text-align:start}td{padding:5px 6px;border-bottom:1px solid #E3EAF0;vertical-align:top}tr:nth-child(even) td{background:#F1F5F8}.v{text-align:end;white-space:nowrap;font-weight:700}.d{white-space:nowrap}.n{color:#5A6B78;font-size:10.5px}
-  footer{margin-top:14px;font-size:9.5px;color:#8797A3}@page{size:A4;margin:0}</style></head><body>
-  <section class="page"><header><img src="${logo}" alt="AFAQY"><div><h1>${esc(t('proj_pdf_title'))}</h1><div>${esc(new Date().toISOString().slice(0, 10))}</div></div></header>
-  <div class="k">${kpi.map(([k, v]) => `<div class="${k === 's_won' ? 'w' : ''}"><b>${v}</b>${esc(t(`proj_${k}`))}</div>`).join('')}</div>
-  <div class="v4"><div>${esc(t('proj_v_won'))}<b>${f0(sum(rows.filter((r) => WONISH.includes(r.status))))} ${esc(t('sar'))}</b></div><div>${esc(t('proj_v_com'))}<b>${f0(sum(by('submitted').filter((r) => r.kind === 'commercial')))} ${esc(t('sar'))}</b></div><div>${esc(t('proj_v_ten'))}<b>${f0(sum(by('submitted').filter((r) => r.kind === 'tender')))} ${esc(t('sar'))}</b></div></div>
-  ${groups.map((g) => `<h2>${esc(t(`proj_f_${g.st}`))} — ${g.list.length}${sum(g.list) ? ` · ${f0(sum(g.list))} ${esc(t('sar'))}` : ''}</h2>${table(g.list)}`).join('')}
-  <footer>${esc(t('proj_pdf_foot'))}</footer></section></body></html>`;
-  openReport(html, 'pdf', 'AFAQY-my-projects');
-}
+function projReport() { pwReports('pdf'); }
 async function receiveMe(fragment) {
   const r = await parseMe(fragment);
   history.replaceState(null, '', '#me');            // the data never stays in the address or the history
@@ -2996,9 +3119,9 @@ function reportHtml(D, { single = false, summaryOnly = false } = {}) {
   return `<!doctype html><html lang="${lang}" dir="${rtl ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(single ? `${t('rep_title_one')} — ${D.people[0] ? D.people[0].name : ''}` : t('rep_title_team'))}</title><style>${css}</style></head>
     <body>${cover}${summaryOnly ? '' : D.people.map(personPage).join('')}<script>${js}<\/script></body></html>`;
 }
-function openReport(html, mode, fileBase) {
+function openReport(html, mode, fileBase, existingWindow) {
   if (mode === 'html') { const a = el('a', { href: URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' })), download: `${fileBase}.html` }); document.body.append(a); a.click(); a.remove(); toast(t('rep_saved_html')); return; }
-  const w = window.open('', '_blank'); if (!w) { toast(t('rep_popup')); return; }
+  const w = existingWindow || window.open('', '_blank'); if (!w) { toast(t('rep_popup')); return; }
   w.document.open(); w.document.write(html.replace('</body>', '<script>window.addEventListener("load",()=>setTimeout(()=>window.print(),600))<\/script></body>')); w.document.close();
 }
 function kpiReportSection(ds, team, peopleById) {
@@ -4579,7 +4702,7 @@ function tdRestoreData(state) {
 async function buildBackup() {
   if (plannerFile === undefined) plannerFile = (await store.getPlanner()) || null;   // ADR-0071: the planner travels with the backup
   const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION, planner: plannerFile || null, tenders: isTeamPortal ? null : await tdBackupData(tenders || await store.kvGet('tenders')), mailrules: mfState.rules || (await store.kvGet('mailrules')) || null, mailact: mailAct, mailids: mailIds,
-    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: (viewAs ? (meDerived ? null : realMe) : (meDerived ? null : me)) || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projfiles: await projFilesExport(), devplans: devPlans };
+    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: (viewAs ? (meDerived ? null : realMe) : (meDerived ? null : me)) || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projectwork:isTeamPortal?null:projectWork, projfiles: await projFilesExport(), devplans: devPlans };
   return all;
 }
 $('export-btn').addEventListener('click', async () => { try { download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(await buildBackup(), null, 1)); } catch (error) { console.error(error); toast(t('td_store_failed')); } });
@@ -4604,6 +4727,7 @@ async function applyBackup(j) {
       for (const x of Array.isArray(j.privlinks) ? j.privlinks : []) { const v = cleanPrivLink(x); if (v && !known.has(v.url)) privLinks.push(v); }
       if (j.projfiles && typeof j.projfiles === 'object') await projFilesImport(j.projfiles);
       if (j.devplans && typeof j.devplans === 'object') { for (const [q, ppl] of Object.entries(j.devplans)) devPlans[q] = { ...(ppl || {}), ...(devPlans[q] || {}) }; await store.kvPut('devplans', devPlans); }
+      if (!isTeamPortal && j.projectwork) await pwCommit(mergeProjectWork(projectWork,j.projectwork));
       if (j.register) { const r = cleanRegister(j.register); if (r) { if (!myRegister) myRegister = r; else { const have = new Set(myRegister.items.map((x) => x.id)); for (const x of r.items) if (!have.has(x.id)) myRegister.items.push(x); } await store.putRegister(myRegister); } }   // ADR-0103: merged
       // ADR-0077: the mail rules come back with the backup when this device has none of its own
       { const mr = cleanMailRules(j.mailrules); if (mr && !(await store.kvGet('mailrules'))) { mfState.rules = mr; await store.kvPut('mailrules', mr); } }
@@ -4673,6 +4797,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   myProjects = await store.getProjects(); tenders = isTeamPortal ? null : cleanTenders(await store.kvGet('tenders'));
   mailAct = (await store.kvGet('mailact')) || { imports: [], recs: [] }; mailIds = (await store.kvGet('mailids')) || { map: {}, ignored: [] };   // ADR-0095
   myRegister = await store.getRegister();
+  projectWork=isTeamPortal?cleanProjectWork(null):cleanProjectWork(await store.kvGet('projectwork'));
   devPlans = (await store.kvGet('devplans')) || {};
   teamTypesLive = (await store.kvGet('teamtypes')) || null;
   rankSnaps = (await store.kvGet('rankcards')) || {}; mySnapId = (await store.kvGet('mysnap')) || null; await takeRankLink();

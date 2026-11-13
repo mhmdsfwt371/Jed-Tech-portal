@@ -1,22 +1,25 @@
 {
-  "version": "9.39",
-  "date": "2026-11-13",
+  "version": "9.40",
+  "date": "2026-11-14",
   "notes": {
     "ar": [
-      "تحسين ثبات سجل المناقصات بعد اختبارات الاستيراد والمرفقات والمراحل والنسخ الاحتياطي. نتائج قراءة الملفات وتصنيفاتها اليدوية تبقى عند دمج نسخة أقدم.",
-      "تظهر الرسائل المستوردة كمصدر بريد وتظهر ملفات PDF المختلطة بين نص وصور كقراءة جزئية. المقتطفات لا تضم الجملة التالية إلا إذا كانت تكملة عنوان."
+      "متابعة المشاريع: المسؤول والخطوة القادمة والموعد والعوائق ومراحل تنفيذ موزونة مع سجل تغييرات وبدء التنفيذ بعد الفوز.",
+      "تقارير المشاريع تتبع الفلاتر والمشاريع المختارة: Excel من ٦ صفحات وPDF وDashboard تفاعلية تعمل بلا اتصال. الترسية والتحصيل قيمتان منفصلتان.",
+      "المتابعة محفوظة على الجهاز وتدخل في النسخة الاحتياطية. يمنع الحفظ من تبويب قديم الكتابة فوق تعديل أحدث."
     ],
     "en": [
-      "Tender Register reliability improved after import, attachment, lifecycle and backup tests. Extracted document information and manual file categories survive merging an older backup.",
-      "Imported messages are labelled as email sources, and PDFs mixing text and image-only pages are marked as partial. Excerpts include the following line only when completing a heading."
+      "Project follow-up adds owners, next actions, deadlines, blockers and weighted milestones, with change history and execution after winning.",
+      "Reports follow selected projects and filters: six-sheet Excel, PDF and an offline interactive dashboard. Award and collection amounts remain separate.",
+      "Follow-up stays on the device and is included in backups. Saving from a stale tab cannot overwrite newer changes."
     ],
     "ur": [
-      "درآمد، منسلکات، مراحل اور بیک اپ کے امتحانات کے بعد ٹینڈر رجسٹر کا اعتبار بہتر بنایا گیا۔ پرانا بیک اپ ملانے پر فائلوں سے حاصل شدہ معلومات اور دستی قسمیں محفوظ رہتی ہیں۔",
-      "درآمد شدہ پیغامات کا ماخذ ای میل دکھتا ہے اور متن اور تصویری صفحات والے PDF کا مطالعہ جزوی ظاہر ہوتا ہے۔ اقتباس میں اگلی سطر صرف تب شامل ہوتی ہے جب وہ عنوان کی تکمیل ہو۔"
+      "منصوبوں کی پیروی میں ذمہ دار، اگلے کام، آخری تاریخ، رکاوٹیں اور وزنی مراحل شامل ہیں، ساتھ تبدیلیوں کا تاریخچہ اور جیتنے کے بعد عمل درآمد۔",
+      "رپورٹیں منتخب منصوبوں اور فلٹر کے مطابق ہیں: چھ صفحات کا Excel، PDF اور آف لائن انٹرایکٹو ڈیش بورڈ۔ معاہدے اور وصولی کی رقوم الگ رہتی ہیں۔",
+      "پیروی آلے پر محفوظ ہے اور بیک اپ میں شامل ہے۔ پرانے ٹیب سے محفوظ کرنے پر نئی تبدیلی مٹ نہیں سکتی۔"
     ]
   },
   "counts": {
-    "versions": 164,
+    "versions": 165,
     "decisions": 118
   }
 }

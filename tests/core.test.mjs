@@ -1162,6 +1162,15 @@ test('document analysis and explicit classification survive merging an older sam
   }
 });
 
+test('project follow-up keeps execution separate and reports nullable cash amounts', () => {
+  const row={id:'sample:followup-core',name:'sample: Tender',status:'won',value:900,threads:[]};
+  const data=core.projectWorkUpdate(null,row,{execution:'ongoing',collected:120},{id:'sample:event',at:'2026-11-14T09:00:00Z'});
+  const report=core.projectReport([row],data);
+  assert.equal(row.status,'won');assert.equal(report.rows[0].status,'ongoing');
+  assert.equal(report.rows[0].followup.award,null);assert.equal(report.totals.collected,120);
+  assert.equal(report.events.length,1);
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

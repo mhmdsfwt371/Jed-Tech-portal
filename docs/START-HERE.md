@@ -155,6 +155,7 @@
 | `.githooks/` · `.github/workflows/verify.yml` | البوابة محليًّا وعلى جيتهب |
 | `docs/decisions/` | سجل القرارات |
 | `docs/decisions/0117-tender-register-email-files.md` | Outlook messages, deadlines and files in the Tender Register |
+| `docs/decisions/0118-project-followup-reports.md` | Separate project execution, local history and a common filtered report snapshot |
 | `docs/decisions/0118-tender-document-evidence.md` | Local document excerpts, table previews, file categories and deadline sources |
 
 ## في عشر دقائق: ابنِ وافحص

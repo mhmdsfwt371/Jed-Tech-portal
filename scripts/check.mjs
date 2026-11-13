@@ -3,6 +3,7 @@
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 
 const root = new URL('../', import.meta.url);
 const problems = [];
@@ -21,7 +22,7 @@ const exists = (f) => existsSync(new URL(f, root));
 
 // 1. Syntax of every script that ships.
 for (const f of ['core.js', 'app.js', 'tour-demo.js', 'config.js', 'sw.js', 'scripts/bump.mjs', 'scripts/check-commit-title.mjs', 'scripts/check-links.mjs']) {
-  try { execFileSync(process.execPath, ['--check', new URL(f, root).pathname], { stdio: 'pipe' }); }
+  try { execFileSync(process.execPath, ['--check', fileURLToPath(new URL(f, root))], { stdio: 'pipe' }); }
   catch (e) { note(`${f}: syntax error\n${e.stderr}`); }
 }
 

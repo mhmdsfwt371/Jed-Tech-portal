@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.40 — 2026-11-14
+
+- متابعة المشاريع: المسؤول والخطوة القادمة والموعد والعوائق ومراحل تنفيذ موزونة مع سجل تغييرات وبدء التنفيذ بعد الفوز.
+- تقارير المشاريع تتبع الفلاتر والمشاريع المختارة: Excel من ٦ صفحات وPDF وDashboard تفاعلية تعمل بلا اتصال. الترسية والتحصيل قيمتان منفصلتان.
+- المتابعة محفوظة على الجهاز وتدخل في النسخة الاحتياطية. يمنع الحفظ من تبويب قديم الكتابة فوق تعديل أحدث.
+
+<details><summary>English</summary>
+
+- Project follow-up adds owners, next actions, deadlines, blockers and weighted milestones, with change history and execution after winning.
+- Reports follow selected projects and filters: six-sheet Excel, PDF and an offline interactive dashboard. Award and collection amounts remain separate.
+- Follow-up stays on the device and is included in backups. Saving from a stale tab cannot overwrite newer changes.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- منصوبوں کی پیروی میں ذمہ دار، اگلے کام، آخری تاریخ، رکاوٹیں اور وزنی مراحل شامل ہیں، ساتھ تبدیلیوں کا تاریخچہ اور جیتنے کے بعد عمل درآمد۔
+- رپورٹیں منتخب منصوبوں اور فلٹر کے مطابق ہیں: چھ صفحات کا Excel، PDF اور آف لائن انٹرایکٹو ڈیش بورڈ۔ معاہدے اور وصولی کی رقوم الگ رہتی ہیں۔
+- پیروی آلے پر محفوظ ہے اور بیک اپ میں شامل ہے۔ پرانے ٹیب سے محفوظ کرنے پر نئی تبدیلی مٹ نہیں سکتی۔
+
+</div>
+</details>
+
+
 ## v9.39 — 2026-11-13
 
 - تحسين ثبات سجل المناقصات بعد اختبارات الاستيراد والمرفقات والمراحل والنسخ الاحتياطي. نتائج قراءة الملفات وتصنيفاتها اليدوية تبقى عند دمج نسخة أقدم.
