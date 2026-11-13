@@ -1,0 +1,5 @@
+# Preserve upstream license text and the generated encrypted PDF fixture byte for byte.
+assets/vendor/cmaps/LICENSE -whitespace
+assets/vendor/standard_fonts/LICENSE* -whitespace
+assets/vendor/wasm/LICENSE* -whitespace
+tests/fixtures/*.pdf binary

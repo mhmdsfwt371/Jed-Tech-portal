@@ -1029,6 +1029,26 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   /* ADR-0083: the tender lifecycle */
   .td-row { cursor: pointer; } .td-row.on { background: var(--accent-wash); } .td-row.td-closed .td-subj { color: var(--slate); } .td-tog { color: var(--slate); }
   .td-detail { padding: 10px 6px 4px; } .td-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px 12px; margin-bottom: 10px; }
+  .td-mail-drop { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px; margin-block: 8px; border: 1px dashed var(--line); border-radius: var(--radius-sm); }
+  .td-mail-drop.on { border-color: var(--accent); background: var(--accent-wash); }
+  .td-subpanel { border: 1px solid var(--line); border-radius: var(--radius-sm); margin-block: 8px; padding: 10px; }
+  .td-subpanel summary { color: var(--accent); cursor: pointer; font-weight: 600; }
+  .td-file-controls { flex-wrap: wrap; gap: 8px; margin-block: 8px; }
+  .td-file { grid-template-columns: auto minmax(0, 1fr) auto auto auto; }
+  .td-file .pf-ico { width: 32px; height: 36px; }
+  .td-file-kind { max-width: 100%; margin-block: 4px; }
+  .td-doc-dialog { width: min(980px, 94vw); max-width: 94vw; }
+  .td-fact { border-block-start: 1px solid var(--line); padding-block: 10px; }
+  .td-fact-text { white-space: pre-wrap; overflow-wrap: anywhere; margin-block: 5px; }
+  .td-date-source { display: block; max-width: 360px; overflow-wrap: anywhere; margin-block: 4px; }
+  @media (max-width: 620px) {
+    .td-file { grid-template-columns: auto minmax(0, 1fr) auto; }
+    .td-file .td-file-view { grid-column: 2; }
+    .td-file-controls input[type="search"] { min-width: 0; width: 100%; }
+  }
+  .td-study-text { width: 100%; margin-block-start: 8px; box-sizing: border-box; }
+  .td-search { width: min(100%, 260px); }
+  .td-history-entry { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding-block: 5px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
   .td-lab { display: grid; gap: 3px; font-size: .82rem; color: var(--slate); } .td-lab input { width: 100%; box-sizing: border-box; }
   .td-cd { white-space: nowrap; } .td-green { border-color: var(--ok); color: var(--ok); } .td-amber { border-color: var(--sig); color: var(--warn); } .td-red { border-color: #B42318; color: #B42318; }
   .td-wait { color: #B42318; font-weight: 700; } .km-tile.td-hot { border-top: 3px solid var(--sig); } .td-stage { max-width: 190px; }

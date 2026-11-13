@@ -17,6 +17,72 @@
 
 <!-- releases -->
 
+## v9.39 — 2026-11-13
+
+- تحسين ثبات سجل المناقصات بعد اختبارات الاستيراد والمرفقات والمراحل والنسخ الاحتياطي. نتائج قراءة الملفات وتصنيفاتها اليدوية تبقى عند دمج نسخة أقدم.
+- تظهر الرسائل المستوردة كمصدر بريد وتظهر ملفات PDF المختلطة بين نص وصور كقراءة جزئية. المقتطفات لا تضم الجملة التالية إلا إذا كانت تكملة عنوان.
+
+<details><summary>English</summary>
+
+- Tender Register reliability improved after import, attachment, lifecycle and backup tests. Extracted document information and manual file categories survive merging an older backup.
+- Imported messages are labelled as email sources, and PDFs mixing text and image-only pages are marked as partial. Excerpts include the following line only when completing a heading.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- درآمد، منسلکات، مراحل اور بیک اپ کے امتحانات کے بعد ٹینڈر رجسٹر کا اعتبار بہتر بنایا گیا۔ پرانا بیک اپ ملانے پر فائلوں سے حاصل شدہ معلومات اور دستی قسمیں محفوظ رہتی ہیں۔
+- درآمد شدہ پیغامات کا ماخذ ای میل دکھتا ہے اور متن اور تصویری صفحات والے PDF کا مطالعہ جزوی ظاہر ہوتا ہے۔ اقتباس میں اگلی سطر صرف تب شامل ہوتی ہے جب وہ عنوان کی تکمیل ہو۔
+
+</div>
+</details>
+
+
+## v9.38 — 2026-11-13
+
+- سجل المناقصات يقرأ النصوص المتاحة في ملفات الكراسة والدراسة والبنود ويعرض مقتطفات مهمة ومصدرها ومعاينة الجداول. الملفات المصورة أو المتعذرة تظل محفوظة وتظهر للمراجعة اليدوية.
+- مواعيد الملفات تدخل المراجعة مع مواعيد البريد. يمكنك تعديل تصنيف المرفقات والبحث والفلترة بينها. حذف ملف يزيل معلوماته المستخرجة مع الحفاظ على المواعيد التي اخترتها يدويا.
+
+<details><summary>English</summary>
+
+- The Tender Register reads available text in terms, study and BOQ files, showing important source excerpts and table previews. Scanned or unreadable files remain saved and are marked for manual review.
+- Document deadlines join the email date review. Change attachment categories or search and filter files. Removing a file removes its extracted evidence while keeping manually chosen dates.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹینڈر رجسٹر شرائط، مطالعے اور بنود کی فائلوں کا دستیاب متن پڑھ کر اہم اصل اقتباسات اور جدولوں کا پیش منظر دکھاتا ہے۔ اسکین شدہ یا ناقابل مطالعہ فائلیں محفوظ رہتی ہیں اور دستی جائزے کے لیے واضح کی جاتی ہیں۔
+- فائلوں کی تاریخیں ای میل کی تاریخوں کے ساتھ جائزے میں آتی ہیں۔ منسلکات کی قسم بدلیں یا فائلوں میں تلاش اور چھانٹی کریں۔ فائل ہٹانے سے اس کی حاصل کردہ معلومات ہٹتی ہیں جبکہ دستی منتخب تاریخیں برقرار رہتی ہیں۔
+
+</div>
+</details>
+
+
+## v9.37 — 2026-11-13
+
+- سجل المناقصات يستقبل رسائل Outlook ومرفقاتها ويقترح مواعيد التقديم والاستفسارات. أضف دراسة المناقصة والعرضين وراجع سجل النشاط من نفس الصفحة.
+
+<details><summary>English</summary>
+
+- The Tender Register imports Outlook messages and attachments and suggests submission and inquiry dates. Add the study and both offers and review the activity history on the same page.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹینڈر رجسٹر آؤٹ لک کے پیغامات اور منسلکات درآمد کرتا ہے اور پیشکش اور سوالات کی تاریخیں تجویز کرتا ہے۔ اسی صفحے پر مطالعہ، دونوں پیشکشیں اور سرگرمیوں کی تفصیل دیکھیں۔
+
+</div>
+</details>
+
+
 ## v9.36 — 2026-11-13
 
 - اللي بيسحب بحسابه من رابط المدير بيشوف في «مؤشرات الفريق» الناس اللي تحته هو بس: من قايمة الموظفين في ماي أفاقي لو السحبة فيها القايمة، وإلا من ملف الفريق. واللوحة مكتوب فيها فريق مين، وكام واحد، والقايمة جاية منين.

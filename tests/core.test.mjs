@@ -1083,6 +1083,85 @@ test("the engineer's pull treats the main queue as essential and the R&D queue a
   assert.ok(code.includes('catch(e){if(g===100000)throw e}'), 'a refusal of the main queue still stops the pull; a refusal of the R&D queue does not');
 });
 
+test('tender email reads Arabic schedule tables, validates dates and leaves conflicting deadlines for review', () => {
+  const schedule = core.tenderEmailSchedule('', '<table><tr><td>الاستفسارات</td><td>06/06/1448</td><td>١٦/١١/٢٠٢٦</td></tr><tr><td>التقديم</td><td>17/11/2026 الساعة 2:30 م</td></tr></table>');
+  assert.deepEqual(schedule, { askDue: [{ date: '2026-11-16', time: '' }], due: [{ date: '2026-11-17', time: '14:30' }] });
+  const followup = core.tenderEmailSchedule('Submission deadline: 2026-11-19 at 9:30 AM\nClarification deadline: 31/02/2026');
+  const item = { due: '', askDue: '2026-11-15', messages: [{ schedule }] };
+  const filled = core.applyTenderEmailDates(item);
+  assert.equal(filled.dueTime, '14:30');
+  assert.equal(item.due, '');
+  assert.equal(filled.askDue, '2026-11-15');
+  const conflicted = core.applyTenderEmailDates({ ...filled, messages: [...filled.messages, { schedule: followup }] });
+  assert.equal(conflicted.due, '');
+  assert.equal(conflicted.dueTime, '');
+  assert.deepEqual(core.tenderDeadlineCandidates(conflicted, 'due').map((d) => d.date), ['2026-11-17', '2026-11-19']);
+  assert.equal(followup.askDue.length, 0);
+  assert.equal(core.applyTenderEmailDates({ ...conflicted, due: '2026-11-19', dateSources: { due: 'manual' } }).due, '2026-11-19');
+});
+
+test('tender file backup merge honours a removed attachment and requires both offer files for a new bid', () => {
+  const original = { id: 'mail', name: 'message.eml', kind: 'original', blob: new Blob(['mail']) };
+  const photo = { id: 'photo', name: 'logo.png', kind: 'other', blob: new Blob(['image']) };
+  const technical = { id: 'technical', name: 'technical.pdf', kind: 'technical', blob: new Blob(['tech']) };
+  const financial = { id: 'financial', name: 'financial.pdf', kind: 'financial', blob: new Blob(['finance']) };
+  const before = core.cleanTenderDetails({ files: [original, photo, technical] });
+  const after = core.cleanTenderDetails({ files: [original, technical, financial], removedFiles: ['photo'] });
+  assert.equal(core.tenderCanAdvance(before, 'ready'), false);
+  assert.equal(core.tenderCanAdvance(before, 'submitted'), false);
+  assert.equal(core.tenderCanAdvance(before, 'prep'), true);
+  assert.equal(core.tenderCanAdvance(after, 'ready'), true);
+  for (const merged of [core.mergeTenderDetails(before, after), core.mergeTenderDetails(after, before)]) {
+    assert.deepEqual(merged.files.map((f) => f.id).sort(), ['financial', 'mail', 'technical']);
+    assert.deepEqual(merged.removedFiles, ['photo']);
+  }
+});
+
+test('document insights quote source text, keep Arabic evidence and never invent missing facts', () => {
+  const result = core.tenderDocumentInsights([{ locator: '3', text: 'كراسة الشروط والمواصفات\nالزيارة الميدانية إلزامية قبل تقديم العرض\nمدة التنفيذ 90 يوما\nالضمان الابتدائي 1%\nSubmission deadline: 2026-12-04 at 10:00 AM' }]);
+  assert.equal(result.kind, 'booklet');
+  assert.ok(result.highlights.some(x => x.topic === 'visit' && x.locator === '3' && x.text.includes('إلزامية')));
+  assert.ok(result.highlights.some(x => x.topic === 'duration' && x.text.includes('90')));
+  assert.deepEqual(result.schedule.due.map(x => [x.date,x.time,x.locator]), [['2026-12-04','10:00','3']]);
+  assert.equal(core.tenderDocumentInsights([{text:'Logo only',locator:'1'}]).highlights.length, 0);
+  assert.equal(core.tenderDocumentInsights([{text:'الزيارة الميدانية غير مطلوبة',locator:'2'}]).highlights[0].text, 'الزيارة الميدانية غير مطلوبة');
+});
+test('document deadlines retain provenance, reveal conflict, preserve manual dates and clear removed sources', () => {
+  const file = { id:'f',name:'terms.pdf',kind:'booklet',analysis:{state:'read',schedule:{due:[{date:'2026-12-04',time:'10:00',locator:'3'}]}} };
+  const filled = core.applyTenderEmailDates({ files:[file],due:'' });
+  assert.equal(filled.due, '2026-12-04');
+  assert.equal(filled.dateSources.due, 'document');
+  assert.equal(core.tenderDeadlineCandidates(filled,'due')[0].sources[0].label, 'terms.pdf');
+  const conflict = core.applyTenderEmailDates({...filled,messages:[{key:'m',subject:'extension',schedule:{due:[{date:'2026-12-08',time:''}]}}]});
+  assert.equal(conflict.due, '');
+  assert.equal(core.applyTenderEmailDates({...filled,files:[]}).due, '');
+  assert.equal(core.applyTenderEmailDates({...filled,files:[],dateSources:{due:'manual'}}).due, '2026-12-04');
+});
+test('document findings survive sanitization with bounded tables and safe field names', () => {
+  const file = {id:'f',name:'BOQ.xlsx',kind:'boq',blob:new Blob(['x']),analysis:{state:'read',format:'sheet',readAt:'2026-11-12T00:00:00Z',highlights:[{topic:'bond',text:'Bid bond 1%',locator:'Terms'}],schedule:{due:[{date:'2026-12-04',time:'10:00',locator:'Terms'}]},tables:[{name:'BOQ',rows:[['Item','Qty'],['Camera','30']]}]}};
+  const cleaned = core.cleanTenderDetails({files:[file],dateSources:{due:'document'}});
+  assert.equal(cleaned.files[0].analysis.tables[0].rows[1][1], '30');
+  assert.equal(cleaned.files[0].analysis.highlights[0].topic, 'bond');
+  assert.equal(cleaned.dateSources.due, 'document');
+  assert.equal(core.cleanTenderDetails({files:[{...file,analysis:{state:'invented'}}]}).files[0].analysis, undefined);
+});
+
+test('a short complete evidence sentence does not absorb the next requirement', () => {
+  const result = core.tenderDocumentInsights([{locator:'1',text:'Site visit is not required.\nContract duration: 90 days.'}]);
+  assert.equal(result.highlights.find(x=>x.topic==='visit').text,'Site visit is not required.');
+  const heading = core.tenderDocumentInsights([{text:'Contract duration:\n90 calendar days',locator:'1'}]);
+  assert.equal(heading.highlights[0].text,'Contract duration:\n90 calendar days');
+});
+test('document analysis and explicit classification survive merging an older same-file backup', () => {
+  const blob = new Blob(['bytes']);
+  const oldFile = {id:'f',name:'terms.pdf',kind:'other',blob};
+  const editedFile = {...oldFile,kind:'study',kindManual:true,kindAt:'2026-11-13T10:00:00Z',analysis:{state:'read',readAt:'2026-11-13T09:00:00Z',highlights:[{topic:'visit',text:'Visit required',locator:'1'}]}};
+  for (const [base,other] of [[oldFile,editedFile],[editedFile,oldFile]]) {
+    const file = core.mergeTenderDetails({files:[base]},{files:[other]}).files[0];
+    assert.equal(file.kind,'study');assert.equal(file.analysis.highlights[0].text,'Visit required');
+  }
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

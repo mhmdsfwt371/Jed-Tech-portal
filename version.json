@@ -1,25 +1,22 @@
 {
-  "version": "9.36",
+  "version": "9.39",
   "date": "2026-11-13",
   "notes": {
     "ar": [
-      "اللي بيسحب بحسابه من رابط المدير بيشوف في «مؤشرات الفريق» الناس اللي تحته هو بس: من قايمة الموظفين في ماي أفاقي لو السحبة فيها القايمة، وإلا من ملف الفريق. واللوحة مكتوب فيها فريق مين، وكام واحد، والقايمة جاية منين.",
-      "لو في حد تحتك في ماي أفاقي واسمه ما اتطابقش مع حساب مهام، اسمه بيتكتب في نفس السطر بدل ما يختفي.",
-      "تصحيح في سحب المهندس لنفسه: لو ماي أفاقي رفض قايمة البحث والتطوير للحساب، السحب بيكمل ويوصل بدل ما يقف. أعد سحب زر «مؤشراتي» لشريط الإشارات."
+      "تحسين ثبات سجل المناقصات بعد اختبارات الاستيراد والمرفقات والمراحل والنسخ الاحتياطي. نتائج قراءة الملفات وتصنيفاتها اليدوية تبقى عند دمج نسخة أقدم.",
+      "تظهر الرسائل المستوردة كمصدر بريد وتظهر ملفات PDF المختلطة بين نص وصور كقراءة جزئية. المقتطفات لا تضم الجملة التالية إلا إذا كانت تكملة عنوان."
     ],
     "en": [
-      "Whoever pulls with his own account from the manager link now sees in «Team KPIs» only the people under him: from MyAFAQY's employees list when the pull carries it, otherwise from the team file. The board says whose team it is, how many, and where the list came from.",
-      "If someone is under you in MyAFAQY and his name matches no task account, he is named in that same line instead of disappearing.",
-      "A correction to the engineer's own pull: when MyAFAQY refuses the R&D queue to the account, the pull now finishes and arrives instead of stopping. Drag the «My KPIs» button to the bookmarks bar again."
+      "Tender Register reliability improved after import, attachment, lifecycle and backup tests. Extracted document information and manual file categories survive merging an older backup.",
+      "Imported messages are labelled as email sources, and PDFs mixing text and image-only pages are marked as partial. Excerpts include the following line only when completing a heading."
     ],
     "ur": [
-      "جو شخص مینیجر کے لنک سے اپنے اکاؤنٹ سے ڈیٹا حاصل کرتا ہے، وہ «ٹیم کے اشاریے» میں صرف اپنے ماتحت افراد دیکھتا ہے: مائی آفاقی کی ملازمین کی فہرست سے اگر وہ ڈیٹا میں ہو، ورنہ ٹیم فائل سے۔ بورڈ پر لکھا ہے کہ یہ کس کی ٹیم ہے، کتنے افراد ہیں اور فہرست کہاں سے آئی۔",
-      "اگر مائی آفاقی میں آپ کے تحت کوئی ہے اور اس کا نام کسی ٹاسک اکاؤنٹ سے نہیں ملتا تو اس کا نام اسی سطر میں لکھا جاتا ہے، وہ غائب نہیں ہوتا۔",
-      "انجینئر کے اپنے حصول میں درستی: اگر مائی آفاقی اس اکاؤنٹ کو تحقیق و ترقی کی فہرست نہ دے تو حصول رکنے کے بجائے مکمل ہو کر پہنچ جاتا ہے۔ «میرے اشاریے» کا بٹن دوبارہ بُک مارکس بار پر گھسیٹیں۔"
+      "درآمد، منسلکات، مراحل اور بیک اپ کے امتحانات کے بعد ٹینڈر رجسٹر کا اعتبار بہتر بنایا گیا۔ پرانا بیک اپ ملانے پر فائلوں سے حاصل شدہ معلومات اور دستی قسمیں محفوظ رہتی ہیں۔",
+      "درآمد شدہ پیغامات کا ماخذ ای میل دکھتا ہے اور متن اور تصویری صفحات والے PDF کا مطالعہ جزوی ظاہر ہوتا ہے۔ اقتباس میں اگلی سطر صرف تب شامل ہوتی ہے جب وہ عنوان کی تکمیل ہو۔"
     ]
   },
   "counts": {
-    "versions": 161,
-    "decisions": 116
+    "versions": 164,
+    "decisions": 118
   }
 }

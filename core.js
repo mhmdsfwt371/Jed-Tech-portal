@@ -2172,3 +2172,197 @@ export function monthReadings(tasks, people, weights, { month, to, target = 60, 
     atTarget: perDay.filter((v) => v >= target).length, spread: cl.length && Math.min(...cl) > 0 ? Math.max(...cl) / Math.min(...cl) : null, open: sum('open'), openOver7: sum('openOver7'),
     baseTarget, autoPoints: scoreWeights.output + scoreWeights.timeliness + scoreWeights.backlog, scoreWeights, types, members };
 }
+
+// Tender mail is read as text, without rendering any message HTML.
+export const tenderDigits = (value) => String(value || '').trim().replace(/[٠-٩۰-۹]/g, (digit) => String(digit.charCodeAt(0) % 16));
+const tenderDeadlineFields = {
+  due: {
+    pattern: /(?:اخر\s*(?:موعد|تاريخ)\s*)?(?:ل?تقديم|ل?تسليم)\s*(?:العروض|العرض|العطاءات)|موعد\s+(?:التقديم|التسليم)|^\s*(?:التقديم|تقديم)(?=\s|:|$)|\b(?:bid|proposal|tender)\s+(?:submission\s+)?deadline\b|\bsubmission\s+(?:deadline|date)\b|\b(?:deadline|due date)\s+for\s+(?:bid\s+)?submission\b/
+  },
+  askDue: {
+    pattern: /(?:اخر\s*(?:موعد|تاريخ)\s*(?:ل(?:رفع|طرح|تقديم|ارسال|استقبال)\s*)?|موعد\s*)(?:ال|لل|ل)?(?:استفسارات|استيضاحات|اسئله)|^\s*(?:الاستفسارات|الاستيضاحات|الاسئله)(?=\s|:|$)|\b(?:inquiries|inquiry|enquiries|enquiry|clarifications?|questions?)\s+(?:deadline|due date)\b|\b(?:deadline|due date)\s+for\s+(?:inquiries|enquiries|clarifications?|questions?)\b/
+  }
+};
+export function tenderEmailSchedule(body, html) {
+  // Keep table rows intact and strip markup without loading remote content.
+  const htmlText = String(html || '').slice(0,300000)
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,'')
+    .replace(/<\/tr\s*>|<br\s*\/?>|<\/(?:p|div|li)\s*>/gi,'\n')
+    .replace(/<[^>]+>/g,' ')
+    .replace(/&(?:nbsp|rlm|lrm);|&#(?:160|8206|8207);/gi,' ')
+    .replace(/&#(\d+);|&#x([0-9a-f]+);/gi,(raw,decimal,hex) => {
+      const code = decimal ? Number(decimal) : parseInt(hex,16);
+      return code <= 0x10ffff ? String.fromCodePoint(code) : raw;
+    });
+  const months = ['يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر'];
+  const pattern = new RegExp('\\b(?:(20\\d{2})[-/.](\\d{1,2})[-/.](\\d{1,2})|(\\d{1,2})[-/.](\\d{1,2})[-/.](20\\d{2}))\\b|(?<!\\d)(\\d{1,2})\\s+('+months.join('|')+')\\s+(20\\d{2})\\b','g');
+  const result = {due:[],askDue:[]};
+  const fields = Object.entries(tenderDeadlineFields);
+  for (const text of [body,htmlText]) {
+    const lines = tenderDigits(String(text || '').slice(0,180000)).normalize('NFKC')
+      .replace(/[إأآ]/g,'ا').replace(/ة/g,'ه').replace(/[ـً-ْ\u200e\u200f\u202a-\u202e]/g,'')
+      .toLowerCase().split(/\r?\n/);
+    for (const [index,line] of lines.entries()) {
+      const hits = fields.flatMap(([field,{pattern}]) =>
+        [...line.matchAll(new RegExp(pattern.source,'g'))].map(match => ({field,match}))
+      ).sort((a,b) => a.match.index - b.match.index);
+      for (const [position,{field,match}] of hits.entries()) {
+        let section = line.slice(match.index + match[0].length,hits[position+1]?.match.index);
+        if (!position && ![...section.matchAll(pattern)].length) {
+          const before = line.slice(0,match.index);
+          if (/^\s*\d/.test(before) && [...before.matchAll(pattern)].length) section = before;
+          else if (/^[\s:–-]*$/.test(section)) {
+            const next = lines[index+1] || '';
+            if (/^\s*(?:\d{1,2}[-/.]\d|20\d{2}[-/.]|\d{1,2}\s+\p{L})/u.test(next)) section = next;
+          }
+        }
+        const dates = [...section.matchAll(pattern)];
+        for (const [offset,date] of dates.entries()) {
+          const [,isoYear,isoMonth,isoDay,day,month,year,namedDay,namedMonth,namedYear] = date;
+          const value = [isoYear || year || namedYear,String(isoMonth || month || months.indexOf(namedMonth)+1).padStart(2,'0'),String(isoDay || day || namedDay).padStart(2,'0')].join('-');
+          const parsed = new Date(value+'T00:00:00Z');
+          if (Number.isNaN(parsed.valueOf()) || parsed.toISOString().slice(0,10) !== value) continue;
+          const tail = section.slice(date.index+date[0].length,dates[offset+1]?.index).replace(/^[مM](?=\s|$)/,'');
+          const clock = tail.match(/^[\s(),،:|–-]*(?:الساعه\s*|at\s+)?(\d{1,2}):(\d{2})(?:\s*(am|pm|صباحا|مساء|ص|م)(?![\p{L}]))?/u);
+          const hour = clock ? Number(clock[1]) : -1;
+          const period = clock?.[3];
+          const adjusted = period && hour <= 12 ? hour % 12 + (/^(pm|م)/.test(period) ? 12 : 0) : hour;
+          const time = clock && adjusted >= 0 && adjusted < 24 && Number(clock[2]) < 60 ? String(adjusted).padStart(2,'0')+':'+clock[2] : '';
+          if (!result[field].some(entry => entry.date === value && entry.time === time)) result[field].push({date:value,time});
+        }
+      }
+    }
+  }
+  return result;
+}
+export function tenderDeadlineCandidates(item, field) {
+  const entries = [
+    ...(item.messages || []).flatMap(mail => (mail.schedule?.[field] || []).map(entry => ({...entry, source:{kind:'mail',id:mail.key || '',label:mail.subject || '',locator:''}}))),
+    ...(item.files || []).flatMap(file => (file.analysis?.schedule?.[field] || []).map(entry => ({...entry, source:{kind:'file',id:file.id,label:file.name,locator:entry.locator || ''}})))
+  ];
+  const byDate = new Map();
+  for (const entry of entries) {
+    const key = entry.date+' '+entry.time;
+    const candidate = byDate.get(key) || {date:entry.date,time:entry.time,sources:[]};
+    candidate.sources.push(entry.source); byDate.set(key,candidate);
+  }
+  const unique = [...byDate.values()];
+  // A date-only source supports an explicit time on the same day; it must remain visible as evidence.
+  for (const candidate of unique) if (candidate.time) candidate.sources.push(...unique.filter(other => other.date === candidate.date && !other.time).flatMap(other => other.sources));
+  return unique.filter(entry => entry.time || !unique.some(other => other.date === entry.date && other.time));
+}
+export function applyTenderEmailDates(item) {
+  item = {...item,dateSources:{...item.dateSources}};
+  for (const field of Object.keys(tenderDeadlineFields)) {
+    if (item.dateSources[field] === 'manual' || (item[field] && !['mail','document'].includes(item.dateSources[field]))) continue;
+    const candidates = tenderDeadlineCandidates(item,field);
+    if (!candidates.length) {
+      if (['mail','document'].includes(item.dateSources[field])) { item[field] = ''; item[field+'Time'] = ''; delete item.dateSources[field]; }
+      continue;
+    }
+    item.dateSources[field] = candidates.some(candidate => candidate.sources.some(source => source.kind === 'mail')) ? 'mail' : 'document';
+    item[field] = candidates.length === 1 ? candidates[0].date : '';
+    item[field+'Time'] = candidates.length === 1 ? candidates[0].time : '';
+  }
+  return item;
+}
+
+export const TENDER_FILE_KINDS = ['original', 'booklet', 'boq', 'sheet', 'other', 'study', 'technical', 'financial', 'proof'];
+export const TENDER_INSIGHT_TOPICS = ['scope','visit','duration','bond','evaluation','delivery','requirements'];
+const tenderNormalizeText = text => tenderDigits(text).normalize('NFKC').replace(/[إأآ]/g,'ا').replace(/ة/g,'ه').replace(/[ـً-ْ\u200e\u200f\u202a-\u202e]/g,'').toLowerCase();
+/** Evidence snippets, not an inferred bid decision: negations, quantities and wording remain intact. */
+export function tenderDocumentInsights(segments) {
+  const patterns = {
+    scope: /نطاق (?:العمل|المشروع)|وصف (?:العمل|المشروع)|scope of (?:work|supply)|project (?:scope|description)/,
+    visit: /زيار[هت] (?:الموقع|ميدانيه)|الزياره الميدانيه|site (?:visit|survey|inspection)/,
+    duration: /مده (?:التنفيذ|العقد|المشروع)|فتره (?:التنفيذ|العقد)|(?:contract|project) (?:duration|period)|execution (?:period|duration)|delivery (?:period|time)/,
+    bond: /ضمان (?:الابتدائي|النهائي|البنكي)|(?:bid|performance|bank) (?:bond|guarantee)|initial guarantee/,
+    evaluation: /(?:معايير|اوزان|نسبه) التقييم|التقييم (?:الفني|المالي)|(?:technical|financial) (?:evaluation|weight)|evaluation criteria/,
+    delivery: /(?:تشغيل|اختبار|استلام|تسليم|صيان[هت]|تدريب)|commissioning|acceptance|handover|maintenance|training/,
+    requirements: /(?:يلتزم|يجب|اشتراط|متطلبات|شهادات)|\b(?:mandatory|shall|must|required|certification)\b/,
+  };
+  const highlights = [], schedule = {due:[],askDue:[]};
+  const seen = new Set(); let kind = '', count = 0;
+  for (const segment of (Array.isArray(segments) ? segments : []).slice(0,120)) {
+    const text = String(segment.text || '').slice(0, Math.max(0,180000-count)); count += text.length;
+    const norm = tenderNormalizeText(text), locator = String(segment.locator || '').slice(0,120);
+    if (/كراسه الشروط|شروط ومواصفات|terms and conditions|tender specification/.test(norm)) kind ||= 'booklet';
+    if ((/جدول (?:الكميات|البنود)|bill of quantities|\bboq\b/.test(norm)) || (/\b(?:qty|quantity)\b|الكميه/.test(norm) && /\b(?:item|description|unit)\b|وصف البند|وحده القياس/.test(norm))) kind = 'boq';
+    const dates = tenderEmailSchedule(text);
+    for (const field of ['due','askDue']) for (const date of dates[field]) schedule[field].push({...date,locator});
+    const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    for (const [index,line] of lines.entries()) {
+      const normalized = tenderNormalizeText(line);
+      for (const [topic,pattern] of Object.entries(patterns)) {
+        if (!pattern.test(normalized) || highlights.filter(entry => entry.topic === topic).length >= 3) continue;
+        const match = normalized.match(pattern);
+        const headingOnly = /^[\s:：-]*$/.test(normalized.slice(match.index+match[0].length));
+        const snippet = (headingOnly && lines[index+1] ? line+'\n'+lines[index+1] : line).slice(0,700);
+        const key = topic+' '+snippet;
+        if (!seen.has(key)) { highlights.push({topic,text:snippet,locator}); seen.add(key); }
+        break;
+      }
+    }
+  }
+  return {kind,highlights,schedule};
+}
+export function cleanTenderAnalysis(value) {
+  if (!value || !['read','partial','empty','unsupported','large','error','locked'].includes(value.state)) return undefined;
+  const str = (v,n) => typeof v === 'string' ? v.slice(0,n) : '';
+  const list = v => Array.isArray(v) ? v : [];
+  return {
+    state:value.state, format:['pdf','docx','sheet','text'].includes(value.format) ? value.format : '', readAt:str(value.readAt,35),
+    highlights:list(value.highlights).filter(h => h && TENDER_INSIGHT_TOPICS.includes(h.topic)).slice(0,21).map(h => ({topic:h.topic,text:str(h.text,700),locator:str(h.locator,120)})),
+    schedule:Object.fromEntries(['due','askDue'].map(field => [field,list(value.schedule?.[field]).filter(d => d && /^20\d{2}-\d{2}-\d{2}$/.test(d.date) && !Number.isNaN(Date.parse(d.date+'T00:00:00Z')) && new Date(d.date+'T00:00:00Z').toISOString().slice(0,10) === d.date).slice(0,100).map(d => ({date:d.date,time:/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(d.time) ? d.time : '',locator:str(d.locator,120)}))])),
+    tables:list(value.tables).filter(table => table && Array.isArray(table.rows)).slice(0,5).map(table => ({name:str(table.name,120),rows:table.rows.slice(0,31).map(row => list(row).slice(0,16).map(cell => str(String(cell ?? ''),300)))})),
+  };
+}
+export function tenderCanAdvance(item, nextStage) {
+  return !['ready', 'submitted', 'won', 'lost'].includes(nextStage) ||
+    ['technical', 'financial'].every((kind) => item.files?.some((file) => file.kind === kind && file.blob.size > 0));
+}
+export function cleanTenderDetails(item) {
+  const string = (value, max) => typeof value === 'string' ? value.slice(0, max) : '';
+  const list = (value) => Array.isArray(value) ? value : [];
+  const time = (value) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value) ? value : '';
+  const day = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '';
+  const fields = ['due', 'askDue'];
+  return {
+    dateSource: ['received','sent','manual'].includes(item.dateSource) ? item.dateSource : '',
+    studySummary: string(item.studySummary, 4000),
+    dueTime: item.due ? time(item.dueTime) : '', askDueTime: item.askDue ? time(item.askDueTime) : '',
+    dateSources: Object.fromEntries(fields.filter((key) => ['mail','document','manual'].includes(item.dateSources?.[key])).map((key) => [key,item.dateSources[key]])),
+    messages: list(item.messages).filter((m) => m && string(m.key, 400)).map((m) => ({
+      key: string(m.key, 400), messageId: string(m.messageId, 320), hash: string(m.hash, 64),
+      subject: string(m.subject, 300), sender: string(m.sender, 120), date: day(m.date), warnings: Number.isSafeInteger(m.warnings) && m.warnings > 0 ? m.warnings : 0,
+      schedule: Object.fromEntries(fields.map((key) => [key,list(m.schedule?.[key]).filter((entry) => entry && day(entry.date)).map((entry) => ({date:day(entry.date),time:time(entry.time)}))]))
+    })),
+    files: list(item.files).filter((file) => file && string(file.id, 150) && TENDER_FILE_KINDS.includes(file.kind) && file.blob instanceof Blob).map((file) => ({
+      id: string(file.id, 150), name: string(file.name, 240) || 'attachment', kind: file.kind, kindManual:!!file.kindManual, kindAt:string(file.kindAt,35), mailKey: string(file.mailKey, 400), blob:file.blob,
+      ...(cleanTenderAnalysis(file.analysis) ? {analysis:cleanTenderAnalysis(file.analysis)} : {})
+    })),
+    removedFiles: [...new Set(list(item.removedFiles).filter((id) => typeof id === 'string' && id.length && id.length <= 150))],
+    activity: list(item.activity).filter((entry) => entry && string(entry.id, 150) && ['email','add','remove','stage','date','study','read','category'].includes(entry.action)).map((entry) => ({
+      id: string(entry.id, 150), action: entry.action, at: string(entry.at, 35), label: string(entry.label, 300)
+    })),
+  };
+}
+export function mergeTenderDetails(base, other) {
+  const union = (a, b, key) => [...new Map([...(b || []), ...(a || [])].map((entry) => [entry[key], entry])).values()];
+  const removedFiles = [...new Set([...(base.removedFiles || []), ...(other.removedFiles || [])])];
+  const removed = new Set(removedFiles);
+  const byFile = new Map((other.files || []).map(file => [file.id,file]));
+  for (const file of base.files || []) {
+    const older = byFile.get(file.id);
+    if (!older) { byFile.set(file.id,file); continue; }
+    const classification = [file,older].filter(entry=>entry.kindManual).sort((a,b)=>String(b.kindAt || '').localeCompare(String(a.kindAt || '')))[0] || file;
+    const analysis = [file.analysis,older.analysis].filter(Boolean).sort((a,b)=>String(b.readAt || '').localeCompare(String(a.readAt || '')))[0];
+    byFile.set(file.id,{...file,kind:classification.kind,kindManual:!!classification.kindManual,kindAt:classification.kindAt || '',...(analysis ? {analysis} : {})});
+  }
+  return {
+    messages: union(base.messages,other.messages,'key'),
+    files: [...byFile.values()].filter((file) => !removed.has(file.id)),
+    removedFiles,
+    activity: union(base.activity,other.activity,'id').sort((a,b) => b.at.localeCompare(a.at)),
+  };
+}

@@ -12,7 +12,9 @@ import {
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
   quarterRange, quarterOf, quarterBaseline, quarterGoalProgress, planProgress, suggestQuarterGoals,
-  maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply } from './core.js';
+  maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply,
+  tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS,
+  tenderCanAdvance, cleanTenderDetails, mergeTenderDetails } from './core.js';
 
 import { validateSystems } from './systems-core.js';
 
@@ -74,6 +76,21 @@ const store = (() => {
     async putProjects(v) { try { await run('readwrite', (s) => s.put(v, 'projects')); } catch { memProj = v; } },
     async kvGet(k) { try { return (await run('readonly', (s) => s.get(k))) || null; } catch { return null; } },
     async kvPut(k, v) { try { await run('readwrite', (s) => (v == null ? s.delete(k) : s.put(v, k))); } catch { /* storage unavailable */ } },
+    async putTenders(next, revision) {
+      const db = await open();
+      try {
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction('kv', 'readwrite'), records = tx.objectStore('kv');
+          const previous = records.get('tenders');
+          previous.onsuccess = () => {
+            if ((previous.result?.revision || '') !== revision) { tx.abort(); return; }
+            records.put(next, 'tenders');
+          };
+          tx.oncomplete = resolve;
+          tx.onabort = () => reject(tx.error || new Error('tender revision changed'));
+        });
+      } finally { db.close(); }
+    },
     async getRegister() { try { return (await run('readonly', (s) => s.get('register'))) || null; } catch { return memReg; } },
     async putRegister(v) { try { await run('readwrite', (s) => s.put(v, 'register')); } catch { memReg = v; } },
     async getMail() { try { return (await run('readonly', (s) => s.get('mailrows'))) || []; } catch { return memMail; } },
@@ -778,6 +795,7 @@ function rankFor(id, ym) {   // his team: the same team leader in the team file,
 // ---------- ADR-0081: the tender register — original tender mails from Outlook, one row each, his status and his dates ----------
 let tenders = null;   // { items: [...], to, pulledAt } — on this device, carried by the backup
 let tdKind = pref('tdkind') || 'month', tdPick = '', tdFrom = '', tdTo = '', tdBusy = '', tdOpenId = null, tdStageF = null, tdCardF = null;   // ADR-0102: a card's filter
+let tdQuery = '', tdMailResult = null;
 const TD_FROM = 'a.ibrahim@afaqy.com';
 // ADR-0083: the lifecycle. Open stages in order, then the closed ones. declined/lost need a reason.
 const TD_STAGES = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted', 'won', 'lost', 'cancelled', 'declined'];
@@ -830,7 +848,7 @@ const tdDay = (iso) => (/^\d{4}-\d{2}-\d{2}/.test(String(iso || '')) ? saudiDay(
 /** Check what Claude brought against the rules here too: originals only, from a.ibrahim or carrying the booklet. */
 function tdImport(j) {
   if (!j || j.schema !== 'afaqy-tenders-from-mail/v1' || !Array.isArray(j.tenders)) return { err: 'td_bad' };
-  const cur = tenders || { items: [] }, byKey = new Map(cur.items.map((x) => [x.id, x])); let added = 0, merged = 0, replies = 0, other = 0;
+  const cur = tenders || { items: [] }, byKey = new Map(cur.items.map((x) => [x.id, { ...x }])); let added = 0, merged = 0, replies = 0, other = 0;
   for (const m of j.tenders) {
     const subject = String((m && m.subject) || '').trim().slice(0, 300), date = tdDay(m && m.received), from = String((m && m.from_address) || '').trim().toLowerCase().slice(0, 120);
     const att = (Array.isArray(m && m.attachments) ? m.attachments : []).map((x) => String(x).slice(0, 200)).slice(0, 20);
@@ -845,9 +863,8 @@ function tdImport(j) {
   }
   const items = [...byKey.values()].sort((x, y) => (x.date < y.date ? 1 : -1));
   const to = [cur.to, /^\d{4}-\d{2}-\d{2}$/.test(String(j.to || '')) ? j.to : null].filter(Boolean).sort().pop() || null;
-  return { state: { items, to, pulledAt: new Date().toISOString() }, added, merged, replies, other };
+  return { state: { ...cur, items, to, pulledAt: new Date().toISOString() }, added, merged, replies, other };
 }
-const tdSave = async () => { await store.kvPut('tenders', tenders); };
 /** ADR-0088: the result from any assistant — a file, or text pasted from its chat (code fences and words around it are fine). */
 function tdParse(text) {
   const s = String(text || ''), fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i), body = fence ? fence[1] : s;
@@ -856,7 +873,8 @@ function tdParse(text) {
 }
 async function tdTake(text) {
   const j = tdParse(text); if (!j) { toast(t('td_bad')); return false; }
-  const r = tdImport(j); if (r.err) { toast(t(r.err)); return false; } tenders = r.state; await tdSave();
+  const r = tdImport(j); if (r.err) { toast(t(r.err)); return false; } if (tdBusy) return false;
+  try { await tdCommit(r.state); } catch { toast(t('td_store_failed')); return false; }
   toast(t('td_loaded', { a: r.added, m: r.merged, r: r.replies, o: r.other })); renderTenders(); return true;
 }
 function tdPasteDialog() {
@@ -875,8 +893,8 @@ function cleanTenders(x) {
     stage: TD_STAGES.includes(i.stage) ? i.stage : (i.status === 'ready' ? 'ready' : 'received'), stageAt: d(i.stageAt) || d(i.readyOn) || i.date,
     reason: String(i.reason || '').slice(0, 300), owner: String(i.owner || '').slice(0, 80), etimadNo: String(i.etimadNo || '').slice(0, 40),
     value: Number.isFinite(Number(i.value)) && Number(i.value) >= 0 ? Number(i.value) : null, fees: Number.isFinite(Number(i.fees)) && Number(i.fees) >= 0 ? Number(i.fees) : null, bond: String(i.bond || '').slice(0, 120),
-    askDue: d(i.askDue), openAt: d(i.openAt), submittedOn: d(i.submittedOn), submitNo: String(i.submitNo || '').slice(0, 60), decidedOn: d(i.decidedOn), study: String(i.study || '').slice(0, 300) }));
-  return { items, to: d(x.to) || null, pulledAt: String(x.pulledAt || '') };
+    askDue: d(i.askDue), openAt: d(i.openAt), submittedOn: d(i.submittedOn), submitNo: String(i.submitNo || '').slice(0, 60), decidedOn: d(i.decidedOn), study: String(i.study || '').slice(0, 300), ...cleanTenderDetails(i) }));
+  return { items, to: d(x.to) || null, pulledAt: String(x.pulledAt || ''), revision: String(x.revision || '') };
 }
 const tdPeriodOf = (date, kind) => (kind === 'year' ? date.slice(0, 4) : kind === 'quarter' ? `${date.slice(0, 4)}-Q${Math.floor((Number(date.slice(5, 7)) - 1) / 3) + 1}` : kind === 'month' ? date.slice(0, 7) : 'all');
 const tdLabel = (k) => (k === 'all' ? t('td_all') : /^\d{4}$/.test(k) ? k : periodLabel(k));
@@ -929,7 +947,7 @@ async function tdFromPst(f) {
         const addr = String(m.senderEmailAddress || '').trim();
         if (tdIsAI(addr) || tdHasKraasa(att)) out.push({ subject: String(m.subject || ''), from_address: addr, received: d, attachments: att }); } }
     const r = tdImport({ schema: 'afaqy-tenders-from-mail/v1', from, to: tdTo || saudiDay(new Date().toISOString()), tenders: out }); if (r.err) throw new Error(r.err);
-    tenders = r.state; await tdSave(); tdBusy = '';
+    await tdCommit(r.state); tdBusy = '';
     toast(`${t('td_pst_read', { n: read, w: withAtt })} ${t('td_loaded', { a: r.added, m: r.merged, r: r.replies, o: r.other })}`);
   } catch (err) { console.error(err); tdBusy = ''; toast(err && err.name === 'NotReadableError' ? t('mf_locked_h') : t('td_pst_fail')); }
   renderTenders();
@@ -937,23 +955,32 @@ async function tdFromPst(f) {
 /** One tender by hand — a tender with no mail, or one the pull missed. */
 function tdAddManual() {
   const today = saudiDay(new Date().toISOString());
+  const files = el('input', { type: 'file', multiple: '' });
   const s = el('input', { type: 'text', class: 'td-m-subject', required: '', maxlength: 300, dir: 'auto' }), d = el('input', { type: 'date', class: 'td-m-date', value: today, max: today }),
     w = el('input', { type: 'text', class: 'td-m-from', maxlength: 120, dir: 'auto', placeholder: t('td_m_from_ph') });
   const dlg = el('dialog', { class: 'proj-edit td-add', 'aria-labelledby': 'td-add-h' }, el('h2', { id: 'td-add-h', text: t('td_add_h') }),
     el('label', { class: 'fl-label' }, el('span', { text: t('td_col_subject') }), s), el('label', { class: 'fl-label' }, el('span', { text: t('td_col_date') }), d),
     el('label', { class: 'fl-label' }, el('span', { text: t('td_col_from') }), w),
+    el('label', { class: 'fl-label' }, el('span', { text: t('td_file_add') }), files),
     el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary td-m-save', text: t('td_add_save'), onclick: async () => {
       const subject = s.value.trim(), date = d.value; if (!subject || !/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast(t('td_add_need')); return; }
       if (tenders && tenders.items.some((i) => i.id === tdKey(subject))) { toast(t('td_add_exists')); return; }
       const r = tdImport({ schema: 'afaqy-tenders-from-mail/v1', to: (tenders && tenders.to) || null, tenders: [{ subject, from_address: w.value.trim(), received: `${date}T12:00:00+03:00`, attachments: [], manual: true }] });
-      if (r.err || !r.added) { toast(t('td_add_need')); return; } tenders = { ...r.state, to: (tenders && tenders.to) || null }; await tdSave(); dlg.close(); toast(t('td_add_done')); renderTenders(); } }),
+      if (r.err || !r.added) { toast(t('td_add_need')); return; }
+      const next = { ...r.state, to: tenders?.to || null };
+      const added = next.items.find((item) => item.id === tdKey(subject));
+      added.files = [...files.files].map((file) => tdNewFile(file, 'other'));
+      if (added.files.length) added.activity = [tdActivity('add', added.files.map((file) => file.name).join(', '))];
+      try { await tdCommit(next); } catch { toast(t('td_store_failed')); return; }
+      tdOpenId = added.id; tdPick = tdPeriodOf(added.date, tdKind); tdStageF = tdCardF = null; tdQuery = '';
+      dlg.close(); toast(t('td_add_done')); renderTenders(); await tdAnalyzeFiles(added.id,(added.files || []).map(file=>file.id)); } }),
       el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() })));
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal(); s.focus();
 }
 async function tdExcel(rows) {
   const X = await loadXlsx(), today = saudiDay(new Date().toISOString());
   const H = ['td_col_subject', 'td_col_date', 'td_col_from', 'td_col_why', 'td_col_stage', 'td_col_stageAt', 'td_col_days', 'td_col_reason', 'td_col_owner', 'td_col_etimadNo', 'td_col_value', 'td_col_fees', 'td_col_bond', 'td_col_askDue', 'td_col_visit', 'td_col_due', 'td_col_openAt', 'td_col_submittedOn', 'td_col_submitNo', 'td_col_decidedOn', 'td_col_study', 'td_col_note'].map((k) => t(k));
-  const why = (i) => [i.byFrom ? t('td_why_from') : '', i.byKr ? t('td_why_kr') : '', i.manual ? t('td_why_manual') : ''].filter(Boolean).join(' + ');
+  const why = (i) => [i.messages?.length ? t('td_why_email') : '', i.byFrom ? t('td_why_from') : '', i.byKr ? t('td_why_kr') : '', i.manual ? t('td_why_manual') : ''].filter(Boolean).join(' + ');
   const ws = X.utils.aoa_to_sheet([H, ...rows.map((i) => [i.subject, i.date, i.from, why(i), t(`td_st_${i.stage}`), i.stageAt, tdDaysBetween(i.stageAt, today), i.reason, i.owner, i.etimadNo, i.value, i.fees, i.bond, i.askDue, i.visit, i.due, i.openAt, i.submittedOn, i.submitNo, i.decidedOn, i.study, i.note])]);
   ws['!cols'] = [60, 12, 26, 24, 18, 12, 8, 30, 16, 16, 14, 12, 18, 14, 14, 14, 14, 14, 16, 14, 30, 40].map((w) => ({ wch: w })); ws['!views'] = [{ RTL: lang !== 'en' }];
   const months = [...new Set(tenders.items.map((i) => i.date.slice(0, 7)))].sort();
@@ -962,6 +989,258 @@ async function tdExcel(rows) {
   sum['!views'] = [{ RTL: lang !== 'en' }]; const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, t('td_sheet')); X.utils.book_append_sheet(wb, sum, t('td_sheet_sum'));
   X.writeFile(wb, `AFAQY-tenders-${today}.xlsx`);
 }
+let tdMailParser, tdDocumentReader;
+const tdFileFilters = new Map();
+const tdActivity = (action, label) => ({ id: crypto.randomUUID(), action, label, at: new Date().toISOString() });
+const tdNewFile = (blob, kind, mailKey = '', id = crypto.randomUUID()) => ({ id, name: blob.name, kind, mailKey, blob });
+const tdFileKind = { technical: 'proj_fk_technical', financial: 'proj_fk_financial' };
+function tdDateText(day, time) { return day + (time ? ' · ' + time : ''); }
+
+async function tdCommit(next) {
+  const saved = { ...next, revision: crypto.randomUUID() };
+  await store.putTenders(saved, next.revision || '');
+  tenders = saved;
+}
+async function tdUpdate(id, patch, activity = null) {
+  const item = tenders?.items.find((row) => row.id === id);
+  if (!item) return false;
+  const edited = { ...item, ...patch, ...(activity ? { activity: [activity, ...(item.activity || [])] } : {}) };
+  try {
+    await tdCommit({ ...tenders, items: tenders.items.map((row) => row.id === id ? edited : row) });
+    return true;
+  } catch {
+    toast(t('td_store_failed'));
+    return false;
+  }
+}
+async function tdAnalyzeFiles(id, ids) {
+  if (tdBusy || !ids.length) return;
+  tdBusy = t('td_doc_reading'); renderTenders();
+  try {
+    const reader = await (tdDocumentReader ||= import('./assets/tender-documents.js').catch(error => { tdDocumentReader = null; throw error; }));
+    for (const fileId of ids) {
+      const current = tenders?.items.find(row => row.id === id);
+      const file = current?.files?.find(entry => entry.id === fileId && entry.kind !== 'original');
+      if (!file) continue;
+      tdBusy = t('td_doc_reading_file', {name:file.name}); renderTenders();
+      const result = await reader.readTenderDocument({ name:file.name, size:file.blob.size,
+        arrayBuffer:()=>file.blob.arrayBuffer(), text:()=>file.blob.text() }, { loadXlsx });
+      const latest = tenders.items.find(row => row.id === id);
+      if (!latest) break;
+      const files = latest.files.map(entry => entry.id === fileId ? {...entry,analysis:result.analysis,
+        kind:!entry.kindManual && ['other','sheet'].includes(entry.kind) && result.kind ? result.kind : entry.kind} : entry);
+      const dated = applyTenderEmailDates({...latest,files});
+      if (!await tdUpdate(id, {files,due:dated.due,askDue:dated.askDue,dueTime:dated.dueTime,askDueTime:dated.askDueTime,dateSources:dated.dateSources}, tdActivity('read',file.name))) break;
+      await new Promise(resolve => setTimeout(resolve,0));
+    }
+  } catch { toast(t('td_doc_error')); }
+  finally { tdBusy = ''; renderTenders(); }
+}
+async function tdImportEmails(files, id = '') {
+  if (tdBusy || !files.length) return;
+  const imported = [];
+  let added = 0, linked = 0, skipped = 0, failed = 0, warnings = 0;
+  const failures = [];
+  tdBusy = t('td_mail_reading');
+  renderTenders();
+  try {
+    tdMailParser ||= import('./assets/vendor/tender-mail.min.js').catch((error) => { tdMailParser = null; throw error; });
+    const { parse, classify } = await tdMailParser;
+    for (const file of files) {
+      try {
+        const mail = await parse(file);
+        const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', await file.arrayBuffer())), (byte) => byte.toString(16).padStart(2, '0')).join('');
+        const messageId = mail.id.slice(0, 320), key = messageId ? 'id:' + messageId : 'sha:' + hash;
+        const state = tenders || { items: [], to: null, pulledAt: '' };
+        if (state.items.some((row) => row.messages?.some((m) => m.key === key || m.hash === hash))) { skipped++; continue; }
+        const number = tenderDigits(mail.number);
+        const subject = mail.subject.slice(0, 300), subjectKey = tdKey(subject);
+        const byNumber = number ? state.items.filter((row) => tenderDigits(row.etimadNo) === number) : [];
+        const byThread = state.items.filter((row) => row.messages?.some((m) => mail.references.includes(m.messageId) && m.messageId));
+        const bySubject = state.items.filter((row) => tdKey(row.subject) === subjectKey);
+        const candidates = id ? state.items.filter((row) => row.id === id) : byNumber.length ? byNumber : byThread.length ? byThread : bySubject;
+        if (candidates.length > 1 || (id && !candidates.length)) throw new Error('td_mail_ambiguous');
+        const existing = candidates[0];
+        if (existing?.etimadNo && number && tenderDigits(existing.etimadNo) !== number) throw new Error('td_mail_ambiguous');
+        // A missing receipt date must not turn today's import into a false arrival.
+        if (!existing && (!subjectKey || !mail.date)) throw new Error('td_mail_missing_date');
+        const filesToSave = [tdNewFile(file, 'original', key)];
+        for (const attachment of mail.attachments) filesToSave.push(tdNewFile(attachment, await classify(attachment), key));
+        const dateSource = mail.dateSource === 'ورود' ? 'received' : 'sent';
+        const first = existing || {
+          id: subjectKey, subject, date: mail.date, dateSource, from: mail.sender.slice(0, 120),
+          byFrom: tdIsAI(mail.sender), byKr: filesToSave.some((entry) => entry.kind === 'booklet'), att: [],
+          status: 'open', stage: 'received', stageAt: mail.date,
+        };
+        const message = { key, messageId, hash, subject, sender: mail.sender.slice(0, 120), date: mail.date,
+          schedule: tenderEmailSchedule(mail.body, mail.html), warnings: mail.warnings.length };
+        const entry = applyTenderEmailDates({ ...first, etimadNo: first.etimadNo || number,
+          ...(dateSource === 'received' && (first.dateSource === 'sent' || (first.dateSource === 'received' && mail.date < first.date)) ? { date: mail.date, dateSource } : {}),
+          messages: [...(first.messages || []), message], files: [...(first.files || []), ...filesToSave],
+          activity: [tdActivity('email', subject), ...(first.activity || [])],
+        });
+        await tdCommit({ ...state, items: [entry, ...state.items.filter((row) => row.id !== entry.id)].sort((a, b) => b.date.localeCompare(a.date)) });
+        imported.push(entry.id);
+        if (existing) linked++; else added++;
+        warnings += mail.warnings.length;
+      } catch (error) {
+        failures.push({ name: file.name, key: ['td_mail_ambiguous','td_mail_missing_date'].includes(error.message) ? error.message : 'td_mail_failed' });
+        failed++;
+      }
+    }
+  } catch {
+    failures.push({ name: '', key: 'td_mail_failed' });
+    failed += files.length;
+  } finally {
+    tdBusy = '';
+  }
+  if (imported.length) {
+    const last = tenders.items.find((row) => row.id === imported.at(-1));
+    tdOpenId = last.id;
+    tdPick = tdPeriodOf(last.date, tdKind);
+    tdStageF = tdCardF = null;
+    tdQuery = '';
+  }
+  tdMailResult = { a: added, l: linked, s: skipped, f: failed, w: warnings, failures };
+  renderTenders();
+  for (const tenderId of new Set(imported)) {
+    const item = tenders.items.find(row => row.id === tenderId);
+    await tdAnalyzeFiles(tenderId, (item.files || []).filter(file => file.kind !== 'original' && !file.analysis).map(file => file.id));
+  }
+}
+function tdEmailPicker(id = '') {
+  const input = el('input', { type: 'file', accept: '.msg,.eml', multiple: '', hidden: true, onchange: async (event) => {
+    const files = [...event.target.files]; event.target.value = ''; await tdImportEmails(files, id);
+  } });
+  const drop = el('div', { class: 'td-mail-drop', ondragover: (event) => {
+    event.preventDefault(); if (!tdBusy) event.currentTarget.classList.add('on');
+  }, ondragleave: (event) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.classList.remove('on');
+  }, ondrop: (event) => {
+    event.preventDefault(); event.currentTarget.classList.remove('on');
+    const files = [...event.dataTransfer.files];
+    if (!files.length) { toast(t('td_mail_drop_failed')); return; }
+    void tdImportEmails(files, id);
+  } },
+  el('button', { type: 'button', class: id ? 'btn tiny' : 'btn primary', disabled: !!tdBusy,
+    text: t(id ? 'td_mail_link' : 'td_mail_import'), onclick: () => input.click() }), input,
+  el('span', { class: 'hint', text: t('td_mail_hint') }));
+  return drop;
+}
+function tdDownload(file) {
+  const url = URL.createObjectURL(file.blob);
+  const link = el('a', { href: url, download: file.name }); document.body.append(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+const tdLocator = (file, locator) => locator ? t(file.analysis?.format === 'pdf' ? 'td_doc_page' : file.analysis?.format === 'sheet' ? 'td_doc_sheet' : 'td_doc_section', {value:locator}) : file.name;
+function tdDocumentView(file) {
+  const analysis = file.analysis;
+  const dlg = el('dialog', {class:'proj-edit td-doc-dialog'}, el('h2',{text:file.name,dir:'auto'}),
+    el('p',{class:'hint',text:t('td_doc_evidence')}),
+    el('p',{class:'hint',text:t(`td_doc_${analysis?.state || 'pending'}`)}),
+    ...(analysis?.highlights || []).map(fact => el('div',{class:'td-subpanel'},
+      el('b',{text:t(`td_fact_${fact.topic}`)}), el('p',{class:'td-fact-text',dir:'auto',text:fact.text}),
+      el('small',{class:'hint',text:tdLocator(file,fact.locator)}))),
+    ...(analysis?.tables || []).map(table => el('section',{},el('h3',{dir:'auto',text:table.name || t('td_doc_table')}),
+      el('p',{class:'hint',text:t('td_doc_table_limit')}),
+      el('div',{class:'table-wrap'},el('table',{class:'td-table'},el('tbody',{},table.rows.map((row,index) => el('tr',{},row.map(cell => el(index ? 'td' : 'th',{text:cell,dir:'auto'}))))))))),
+    el('div',{class:'row'},el('button',{type:'button',class:'btn',text:t('proj_f_dl'),onclick:()=>tdDownload(file)}),
+      el('button',{type:'button',class:'btn quiet',text:t('close'),onclick:()=>dlg.close()})));
+  dlg.addEventListener('close',()=>dlg.remove()); document.body.append(dlg); dlg.showModal();
+}
+function tdInsightsPanel(item) {
+  const files = (item.files || []).filter(file => file.kind !== 'original');
+  if (!files.length) return null;
+  return el('details',{class:'td-subpanel',open:''},el('summary',{text:t('td_doc_title')}),
+    el('p',{class:'hint',text:t('td_doc_evidence')}),
+    el('button',{type:'button',class:'btn tiny',disabled:!!tdBusy,text:t('td_doc_read_all'),onclick:()=>tdAnalyzeFiles(item.id,files.map(file=>file.id))}),
+    ...files.filter(file => !file.analysis || file.analysis.state !== 'read').map(file => el('p',{class:'hint',dir:'auto',text:file.name+' · '+t(`td_doc_${file.analysis?.state || 'pending'}`)})),
+    ...files.flatMap(file => (file.analysis?.highlights || []).slice(0,5).map(fact => el('div',{class:'td-fact'},
+      el('b',{text:t(`td_fact_${fact.topic}`)}),el('p',{class:'td-fact-text',text:fact.text,dir:'auto'}),
+      el('button',{type:'button',class:'btn tiny quiet',text:fact.locator ? file.name+' · '+tdLocator(file,fact.locator) : file.name,onclick:()=>tdDocumentView(file)})))));
+}
+function tdFilesPanel(item) {
+  const kinds = TENDER_FILE_KINDS.filter((kind) => kind !== 'original');
+  const label = (kind) => t(tdFileKind[kind] || ('td_file_' + kind));
+  const pick = el('input', { type: 'file', multiple: '', hidden: true, onchange: async (e) => {
+    const files = [...e.target.files]; e.target.value = '';
+    const current = tenders.items.find((row) => row.id === item.id);
+    if (!files.length || !current || tdBusy) return;
+    const selected = kind.value;
+    const upload = files.map((file) => ({...tdNewFile(file, selected === 'auto' ? 'other' : selected),kindManual:selected !== 'auto'}));
+    if (await tdUpdate(item.id, { files: [...(current.files || []), ...upload] }, tdActivity('add', files.map((file) => file.name).join(', ')))) {
+      renderTenders(); await tdAnalyzeFiles(item.id,upload.map(file => file.id));
+    }
+  } });
+  const kind = el('select', { class: 'td-pick', 'aria-label': t('td_file_type'),disabled:!!tdBusy },
+    el('option',{value:'auto',text:t('td_file_auto')}), kinds.map((k) => el('option', { value: k, text: label(k) })));
+  const showFile = (file) => {
+    const original = file.kind === 'original';
+    return el('div', { class: 'pf-item td-file' },
+      el('span', { class: 'pf-ico', text: original ? '✉' : '📎', 'aria-hidden': 'true' }),
+      el('div', { class: 'pf-meta' }, el('b', { text: file.name, dir: 'auto', title: file.name }),
+        original ? el('small', { class: 'hint', text: label(file.kind) }) : el('select',{class:'td-file-kind','aria-label':t('td_file_type')+' '+file.name,disabled:!!tdBusy,onchange:async event=>{
+          const current = tenders.items.find(row=>row.id===item.id); if (!current || tdBusy) return;
+          const files = current.files.map(entry=>entry.id===file.id ? {...entry,kind:event.target.value,kindManual:true,kindAt:new Date().toISOString()} : entry);
+          if (current.stage === 'ready' && tenderCanAdvance(current,'ready') && !tenderCanAdvance({files},'ready')) { toast(t('td_offers_required')); renderTenders(); return; }
+          await tdUpdate(item.id,{files},tdActivity('category',file.name)); renderTenders();
+        }},kinds.map(k=>el('option',{value:k,text:label(k),selected:k===file.kind}))),
+        !original ? el('small',{class:'hint',text:t(`td_doc_${file.analysis?.state || 'pending'}`)}) : null),
+      original ? null : el('button',{type:'button',class:'btn tiny td-file-view',text:t('td_doc_view'),onclick:()=>tdDocumentView(file)}),
+      el('button', { type: 'button', class: 'icon-btn', text: '⬇', title: t('proj_f_dl'), 'aria-label': t('proj_f_dl') + ' ' + file.name, onclick: () => tdDownload(file) }),
+      original ? null : el('button', { type: 'button', class: 'icon-btn', text: '✕', title: t('proj_delete'), 'aria-label': t('proj_delete') + ' ' + file.name, onclick: async () => {
+        const current = tenders.items.find((row) => row.id === item.id);
+        if (!current || tdBusy || !confirm(t('proj_f_del_q', { n: file.name }))) return;
+        const files = (current.files || []).filter((entry) => entry.id !== file.id);
+        if (current.stage === 'ready' && tenderCanAdvance(current, 'ready') && !tenderCanAdvance({ files }, 'ready')) { toast(t('td_offers_required')); return; }
+        const dated = applyTenderEmailDates({...current,files});
+        if (await tdUpdate(item.id, { files, removedFiles: [...(current.removedFiles || []), file.id],due:dated.due,askDue:dated.askDue,
+          dueTime:dated.dueTime,askDueTime:dated.askDueTime,dateSources:dated.dateSources }, tdActivity('remove', file.name))) renderTenders();
+      } }));
+  };
+  const files = item.files || [];
+  const filter = tdFileFilters.get(item.id) || {kind:'all',query:'',limit:40};
+  const ordered = TENDER_FILE_KINDS.flatMap((kind) => files.filter((file) => file.kind === kind))
+    .filter(file=>(filter.kind==='all'||file.kind===filter.kind)&&tdNorm(file.name).includes(tdNorm(filter.query)));
+  const search = el('input',{type:'search',value:filter.query,placeholder:t('td_file_search'),'aria-label':t('td_file_search')});
+  const fileFilters = el('form',{class:'row td-file-controls',onsubmit:event=>{event.preventDefault();tdFileFilters.set(item.id,{...filter,query:search.value,limit:40});renderTenders();}},
+    el('select',{'aria-label':t('td_file_filter'),onchange:event=>{tdFileFilters.set(item.id,{...filter,kind:event.target.value,limit:40});renderTenders();}},
+      ['all',...TENDER_FILE_KINDS].map(k=>el('option',{value:k,text:k==='all'?t('td_file_all'):label(k),selected:k===filter.kind}))),search,
+    el('button',{type:'submit',class:'btn tiny',text:t('td_file_search')}),el('span',{class:'hint',text:t('td_file_count',{n:ordered.length,all:files.length})}));
+  return el('details', { class: 'td-subpanel', open: '' },
+    el('summary', { text: t('td_file_title', { n: files.length }) }),
+    el('div', { class: 'row td-file-controls' }, kind, el('button', { type: 'button', class: 'btn tiny', disabled: !!tdBusy, text: t('td_file_add'), onclick: () => pick.click() }), pick,
+      ['technical', 'financial'].map((key) => el('button', { type: 'button', class: 'btn tiny quiet', disabled: !!tdBusy,
+        text: '＋ ' + label(key), onclick: () => { kind.value = key; pick.click(); } }))),
+    tdEmailPicker(item.id),
+    fileFilters,
+    ordered.length ? el('div', { class: 'pf-list' }, ordered.slice(0,filter.limit).map(showFile)) : el('p', { class: 'hint', text: t('proj_f_none') }),
+    ordered.length > filter.limit ? el('button',{type:'button',class:'btn tiny',text:t('td_file_more'),onclick:()=>{tdFileFilters.set(item.id,{...filter,limit:filter.limit+40});renderTenders();}}) : null,
+    (item.messages || []).map((mail) => el('div', {}, el('p', { class: 'hint', dir: 'auto', text: [mail.subject, mail.sender, mail.date].filter(Boolean).join(' · ') }), mail.warnings ? el('p', { class: 'hint', text: t('td_mail_warnings') }) : null)));
+}
+function tdDateReview(item) {
+  return ['due', 'askDue'].map((field) => {
+    const dates = tenderDeadlineCandidates(item, field);
+    if (!dates.length) return null;
+    return el('div', { class: 'td-subpanel' }, el('strong', { text: t('td_date_review', { date: t(`td_col_${field}`) }) }),
+      el('div', { class: 'row td-file-controls' }, dates.map((candidate) => el('div',{},el('button', { type: 'button', class: 'btn tiny', disabled: !!tdBusy,
+        text: t('td_date_pick', { date: tdDateText(candidate.date, candidate.time) }), onclick: async () => {
+          const current = tenders.items.find((row) => row.id === item.id);
+          if (tdBusy || !current) return;
+          if (await tdUpdate(item.id, { [field]: candidate.date, [field+'Time']: candidate.time, dateSources: {...current.dateSources, [field]: 'manual'} },
+            tdActivity('date', tdDateText(candidate.date, candidate.time)))) renderTenders();
+        } }),el('small',{class:'td-date-source hint',dir:'auto',text:candidate.sources.map(source=>source.label+(source.locator?' · '+source.locator:'')).join(' / ')})))));
+  });
+}
+function tdHistory(item) {
+  return el('details', { class: 'td-subpanel' },
+    el('summary', { text: t('td_history') }),
+    el('p', { class: 'hint', text: t('td_history_first', { date: item.date }) }),
+    (item.activity || []).map((entry) => el('div', { class: 'td-history-entry' },
+      el('span', { text: t(`td_history_${entry.action}`, { value: entry.action === 'stage' ? t(`td_st_${entry.label}`) : entry.label }) }),
+      el('small', { class: 'hint', text: new Date(entry.at).toLocaleString(lang === 'ur' ? 'ur-PK' : lang === 'ar' ? 'ar-SA' : 'en-GB', { timeZone: 'Asia/Riyadh', calendar: 'gregory' }) }))));
+}
+
 function renderTenders() {
   const body = $('tenders-body'); if (!body || isTeamPortal) return; const today = saudiDay(new Date().toISOString());
   const up = el('input', { type: 'file', accept: '.json,.txt,application/json,text/plain', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; await tdTake(await f.text()); } });
@@ -971,14 +1250,18 @@ function renderTenders() {
   // ADR-0085: one compact bar — the period and the five actions; how each way works is folded, open only while the register is empty
   const pull = el('section', { class: 'dt-quick td-pull' },
     el('div', { class: 'td-pull-head' }, el('h2', { text: t('td_pull_h') }), tenders && tenders.pulledAt ? el('span', { class: 'hint', text: t('td_last', { to: tenders.to || '—', n: tenders.items.length }) }) : null),
+    tdEmailPicker(),
+    tdMailResult ? el('div', { role: 'status' },
+      el('p', { class: 'hint', text: t('td_mail_result', tdMailResult) }),
+      tdMailResult.failures.map(({ name, key }) => el('p', { class: 'hint', dir: 'auto', text: [name, t(key)].filter(Boolean).join(' · ') }))) : null,
     el('div', { class: 'row td-period' }, el('span', { text: t('td_from') }), dIn2('td-from', tdFrom || tdDefaultFrom(), (v) => { tdFrom = v; }), el('span', { text: t('td_to') }), dIn2('td-to', tdTo || today, (v) => { tdTo = v; })),
     el('div', { class: 'td-actions' },
       el('button', { type: 'button', class: 'btn primary td-copy', text: `📋 ${t('td_copy')}`, onclick: () => copyText(tdPrompt(), t('td_copied')) }),
       el('a', { class: 'btn td-bm', href: tdBookmarklet(), title: t('td_bm_hint'), onclick: (e) => { e.preventDefault(); toast(t('td_bm_hint')); }, text: `📌 ${t('td_bm')}` }),
-      el('button', { type: 'button', class: 'btn', text: `⬆ ${t('td_upload')}`, onclick: () => up.click() }), up,
-      el('button', { type: 'button', class: 'btn td-paste-btn', text: `📥 ${t('td_paste')}`, onclick: tdPasteDialog }),
+      el('button', { type: 'button', class: 'btn', disabled: !!tdBusy, text: `⬆ ${t('td_upload')}`, onclick: () => up.click() }), up,
+      el('button', { type: 'button', class: 'btn td-paste-btn', disabled: !!tdBusy, text: `📥 ${t('td_paste')}`, onclick: tdPasteDialog }),
       el('button', { type: 'button', class: 'btn td-pst-btn', disabled: !!tdBusy, text: `📂 ${t('td_pst_pick')}`, onclick: () => pst.click() }), pst,
-      el('button', { type: 'button', class: 'btn td-add-btn', text: `＋ ${t('td_add')}`, onclick: tdAddManual })),
+      el('button', { type: 'button', class: 'btn td-add-btn', disabled: !!tdBusy, text: `＋ ${t('td_add')}`, onclick: tdAddManual })),
     tdBusy ? el('p', { class: 'note td-busy', role: 'status', text: tdBusy }) : null,
     el('details', { class: 'td-how', ...(empty ? { open: '' } : {}) }, el('summary', { text: t('td_how') }),
       el('div', { class: 'td-way' }, el('h3', { text: t('td_way_claude') }), el('p', { class: 'hint', text: t('td_pull_lead', { from: tdFrom || tdDefaultFrom() }) }), el('p', { class: 'hint', text: t('td_bm_hint') }),
@@ -991,7 +1274,9 @@ function renderTenders() {
   const rowsAll = tenders.items.filter((i) => tdKind === 'all' || tdPeriodOf(i.date, tdKind) === tdPick), K = tdKpis(rowsAll, today);
   if (tdStageF && !rowsAll.some((i) => i.stage === tdStageF)) tdStageF = null;
   const CARD = { waiting: (i) => ['received', 'screen', 'decide'].includes(i.stage), soon: (i) => TD_OPEN.includes(i.stage) && tdNextDate(i, today) && tdDaysBetween(today, tdNextDate(i, today)[1]) <= 7, decided: (i) => ['won', 'lost'].includes(i.stage) };
-  const rows = tdStageF ? rowsAll.filter((i) => i.stage === tdStageF) : tdCardF ? rowsAll.filter(CARD[tdCardF]) : rowsAll;
+  const stageRows = tdStageF ? rowsAll.filter((i) => i.stage === tdStageF) : tdCardF ? rowsAll.filter(CARD[tdCardF]) : rowsAll;
+  const query = tdNorm(tenderDigits(tdQuery));
+  const rows = query ? stageRows.filter((i) => [i.subject, i.etimadNo, i.from, i.owner, ...(i.files || []).map((file) => file.name)].some((value) => tdNorm(tenderDigits(value)).includes(query))) : stageRows;
   // ADR-0086: the pipeline — each stage with its count; the lines between run while tenders move through; a stage pulses when something waits there over 3 days
   const stale = (s) => ['received', 'screen', 'decide'].includes(s) && rowsAll.some((i) => i.stage === s && tdDaysBetween(i.stageAt, today) > 3);
   const cnt = (s) => rowsAll.filter((i) => i.stage === s).length, flow = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted'];
@@ -1006,38 +1291,66 @@ function renderTenders() {
   const tile = (cls, n, l, sub, f) => el('button', { type: 'button', class: `km-tile crm-tile-f ${cls}${(f === 'all' ? !tdCardF && !tdStageF : tdCardF === f) ? ' on' : ''}`, 'aria-pressed': String(f === 'all' ? !tdCardF && !tdStageF : tdCardF === f), 'data-card': f,
     title: t(f === 'all' ? 'crm_show_all' : tdCardF === f ? 'crm_f_off' : 'crm_f_on'), onclick: () => { if (f === 'all') { tdCardF = null; tdStageF = null; } else { tdCardF = tdCardF === f ? null : f; tdStageF = null; } renderTenders(); } },
     el('b', { text: String(n) }), el('span', { text: t(l) }), sub ? el('small', { class: 'hint', text: sub }) : null);
-  const save = async (i, patch) => { Object.assign(i, patch); await tdSave(); };
+
   const cd = (i) => { const nx = tdNextDate(i, today); if (!nx || !TD_OPEN.includes(i.stage)) return el('span', { class: 'hint', text: '—' }); const d = tdDaysBetween(today, nx[1]);
-    return el('span', { class: `chip td-cd ${d <= 3 ? 'td-red' : d <= 7 ? 'td-amber' : 'td-green'}`, title: nx[1], text: `${t(`td_col_${nx[0]}`)}: ${t('td_in_days', { n: d })}` }); };
+    return el('span', { class: `chip td-cd ${d <= 3 ? 'td-red' : d <= 7 ? 'td-amber' : 'td-green'}`, title: tdDateText(nx[1], i[nx[0]+'Time']), text: `${t(`td_col_${nx[0]}`)}: ${t('td_in_days', { n: d })}` }); };
   const fld = (i, k, type = 'text', extra = {}) => el('input', { type, class: `td-f td-${k}`, value: i[k] == null ? '' : String(i[k]), dir: 'auto', 'aria-label': t(`td_col_${k}`), ...extra,
-    onchange: async (e) => { const v = e.target.value; await save(i, { [k]: type === 'number' ? (v === '' ? null : Number(v)) : v.trim() }); renderTenders(); } });
+    disabled: !!tdBusy, onchange: async (e) => {
+      const v = e.target.value;
+      if (k === 'date' && !v) { e.target.value = i.date; return; }
+      const patch = { [k]: type === 'number' ? (v === '' ? null : Number(v)) : v.trim() };
+      const field = ['due','askDue'].find((field) => k === field || k === field+'Time');
+      if (field) {
+        if (k === field && !v) patch[field+'Time'] = '';
+        patch.dateSources = { ...i.dateSources, [field]: 'manual' };
+      }
+      if (k === 'date') { patch.dateSource = 'manual'; tdPick = tdPeriodOf(v, tdKind); }
+      await tdUpdate(i.id, patch, field || k === 'date' ? tdActivity('date', v) : null);
+      renderTenders();
+    } });
   const lab = (k, node) => el('label', { class: 'td-lab' }, el('span', { text: t(`td_col_${k}`) }), node);
-  const stageSel = (i) => el('select', { class: 'td-stage', 'aria-label': t('td_col_stage'), onchange: async (e) => { const st = e.target.value, patch = { stage: st, stageAt: today };
+  const stageSel = (i) => el('select', { class: 'td-stage', disabled: !!tdBusy, 'aria-label': t('td_col_stage'), onchange: async (e) => { const st = e.target.value, patch = { stage: st, stageAt: today };
+      if (!['ready', 'submitted', 'won', 'lost'].includes(i.stage) && !tenderCanAdvance(i, st)) {
+        e.target.value = i.stage; tdOpenId = i.id; renderTenders(); toast(t('td_offers_required')); return;
+      }
       if (TD_NEED_REASON.includes(st)) { const r = window.prompt(t(st === 'lost' ? 'td_why_lost' : 'td_why_declined'), i.reason || ''); if (r == null || !r.trim()) { e.target.value = i.stage; return; } patch.reason = r.trim().slice(0, 300); }
       if (['prep', 'ready', 'submitted', 'declined'].includes(st) && !i.decidedOn) patch.decidedOn = today;
       if (st === 'ready' && !i.readyOn) patch.readyOn = today; if (st === 'submitted' && !i.submittedOn) patch.submittedOn = today;
-      patch.status = st === 'ready' ? 'ready' : i.status; await save(i, patch); renderTenders(); } },
+      patch.status = st === 'ready' ? 'ready' : i.status; await tdUpdate(i.id, patch, tdActivity('stage', st)); renderTenders(); } },
     TD_STAGES.map((s) => el('option', { value: s, text: t(`td_st_${s}`), ...(i.stage === s ? { selected: '' } : {}) })));
   const detail = (i) => el('div', { class: 'td-detail' },
     el('div', { class: 'td-grid' },
-      lab('reason', fld(i, 'reason')), lab('owner', fld(i, 'owner')), lab('etimadNo', fld(i, 'etimadNo')), lab('value', fld(i, 'value', 'number', { min: 0, step: 1 })), lab('fees', fld(i, 'fees', 'number', { min: 0, step: 1 })), lab('bond', fld(i, 'bond')),
-      lab('askDue', fld(i, 'askDue', 'date')), lab('visit', fld(i, 'visit', 'date')), lab('due', fld(i, 'due', 'date')), lab('openAt', fld(i, 'openAt', 'date')), lab('submittedOn', fld(i, 'submittedOn', 'date')), lab('submitNo', fld(i, 'submitNo')),
+      lab('date', fld(i, 'date', 'date', { required: '' })), lab('reason', fld(i, 'reason')), lab('owner', fld(i, 'owner')), lab('etimadNo', fld(i, 'etimadNo')), lab('value', fld(i, 'value', 'number', { min: 0, step: 1 })), lab('fees', fld(i, 'fees', 'number', { min: 0, step: 1 })), lab('bond', fld(i, 'bond')),
+      lab('askDue', fld(i, 'askDue', 'date')), lab('askDueTime', fld(i, 'askDueTime', 'time', { disabled: !!tdBusy || !i.askDue })), lab('visit', fld(i, 'visit', 'date')), lab('due', fld(i, 'due', 'date')), lab('dueTime', fld(i, 'dueTime', 'time', { disabled: !!tdBusy || !i.due })), lab('openAt', fld(i, 'openAt', 'date')), lab('submittedOn', fld(i, 'submittedOn', 'date')), lab('submitNo', fld(i, 'submitNo')),
       lab('decidedOn', fld(i, 'decidedOn', 'date')), lab('readyOn', fld(i, 'readyOn', 'date')), lab('study', fld(i, 'study')), lab('note', fld(i, 'note'))),
+    tdDateReview(i), tdInsightsPanel(i), tdFilesPanel(i),
+    el('details', { class: 'td-subpanel', ...(i.studySummary ? { open: '' } : {}) },
+      el('summary', { text: t('td_study_summary') }),
+      el('textarea', { class: 'td-study-text', rows: 3, maxlength: 4000, dir: 'auto', disabled: !!tdBusy,
+        'aria-label': t('td_study_summary'), placeholder: t('td_study_placeholder'), onchange: async (event) => {
+          if (await tdUpdate(i.id, { studySummary: event.target.value.trim() }, tdActivity('study', ''))) renderTenders();
+        } }, i.studySummary || '')),
+    tdHistory(i),
     el('div', { class: 'row' },
       el('button', { type: 'button', class: 'btn tiny td-ics', disabled: !(i.askDue || i.visit || i.due || i.openAt), text: `📅 ${t('td_ics')}`, onclick: () => { const b = new Blob([tdIcs(i)], { type: 'text/calendar' }), u = URL.createObjectURL(b); const x = el('a', { href: u, download: `tender-${(i.etimadNo || i.date).replace(/[^\w-]/g, '')}.ics` }); document.body.append(x); x.click(); x.remove(); setTimeout(() => URL.revokeObjectURL(u), 5000); } }),
       el('span', { class: 'hint', text: i.from }),
-      el('button', { type: 'button', class: 'btn tiny quiet', text: `✕ ${t('td_del')}`, onclick: async () => { if (!confirm(t('td_del_confirm', { s: i.subject }))) return; tenders.items = tenders.items.filter((x) => x !== i); await tdSave(); renderTenders(); } })));
+      el('button', { type: 'button', class: 'btn tiny quiet', disabled: !!tdBusy, text: `✕ ${t('td_del')}`, onclick: async () => { if (!confirm(t('td_del_confirm', { s: i.subject }))) return; try { await tdCommit({ ...tenders, items: tenders.items.filter((x) => x.id !== i.id) }); renderTenders(); } catch { toast(t('td_store_failed')); } } })));
   const table = el('div', { class: 'table-wrap' }, el('table', { class: 'td-table' },
     el('thead', {}, el('tr', {}, ['td_col_subject', 'td_col_date', 'td_col_stage', 'td_col_days', 'td_col_next', ''].map((k) => el('th', { text: k ? t(k) : '' })))),
     el('tbody', {}, rows.flatMap((i) => { const open = tdOpenId === i.id, days = tdDaysBetween(i.stageAt, today);
       return [el('tr', { 'data-id': i.id, class: `td-row${open ? ' on' : ''}${TD_OPEN.includes(i.stage) ? '' : ' td-closed'}`, onclick: (e) => { if (e.target.closest('select, input, button, a')) return; tdOpenId = open ? null : i.id; renderTenders(); } },
-        el('td', {}, el('div', { class: 'td-subj', text: i.subject, dir: 'auto' }), el('div', {}, i.byFrom ? el('span', { class: 'chip', text: t('td_why_from') }) : null, i.byKr ? el('span', { class: 'chip', text: t('td_why_kr') }) : null, i.manual ? el('span', { class: 'chip td-manual', text: t('td_why_manual') }) : null, i.etimadNo ? el('span', { class: 'chip', text: i.etimadNo }) : null)),
-        el('td', { class: 'num', text: i.date }), el('td', {}, stageSel(i)),
+        el('td', {}, el('div', { class: 'td-subj', text: i.subject, dir: 'auto' }), el('div', {}, i.messages?.length ? el('span', { class: 'chip', text: t('td_why_email') }) : null, i.byFrom ? el('span', { class: 'chip', text: t('td_why_from') }) : null, i.byKr ? el('span', { class: 'chip', text: t('td_why_kr') }) : null, i.manual ? el('span', { class: 'chip td-manual', text: t('td_why_manual') }) : null, i.etimadNo ? el('span', { class: 'chip', text: i.etimadNo }) : null)),
+        el('td', { class: 'num' }, i.date, i.dateSource === 'sent' ? el('div', { class: 'hint', text: t('td_sent_date') }) : null), el('td', {}, stageSel(i)),
         el('td', { class: `num${TD_OPEN.includes(i.stage) && ['received', 'screen', 'decide'].includes(i.stage) && days > 3 ? ' td-wait' : ''}`, text: TD_OPEN.includes(i.stage) ? String(days) : '—', title: t('td_col_days') }),
         el('td', {}, cd(i)), el('td', { class: 'num td-tog', text: open ? '▾' : '▸' })),
         open ? el('tr', { class: 'td-detail-row' }, el('td', { colspan: 6 }, detail(i))) : null]; }))));
+  const search = el('input', { name: 'q', type: 'search', class: 'td-f td-search', value: tdQuery, placeholder: t('td_search'), 'aria-label': t('td_search') });
+  const searchForm = el('form', { class: 'row td-file-controls', onsubmit: (event) => {
+    event.preventDefault(); tdQuery = search.value; renderTenders();
+  } }, search, el('button', { type: 'submit', class: 'btn tiny', text: t('td_search_go') }));
   set(body, mailSrc('tenders'), pull,
-    el('div', { class: 'row td-filter' }, kinds, pick),
+    el('div', { class: 'row td-filter' }, kinds, pick, searchForm),
+
     pipe,
     el('div', { class: 'km-tiles td-tiles' },
       tile('km-total', K.n, 'td_k_in_all', t('td_k_in_all_sub'), 'all'), tile(K.waiting ? 'km-other td-hot' : 'km-other', K.waiting, 'td_k_waiting', K.waiting ? t('td_k_waitmax', { d: K.waitMax }) : '', 'waiting'),
@@ -1305,7 +1618,13 @@ function syncTenders(local, inc) {
   const rank = (x) => TD_STAGES.indexOf(x.stage), filled = (x) => Object.values(x).filter((v) => v !== '' && v != null).length, by = new Map(local.items.map((x) => [x.id, x]));
   for (const x of inc.items) { const y = by.get(x.id); if (!y) { by.set(x.id, x); continue; }
     const [base, other] = rank(x) > rank(y) || (rank(x) === rank(y) && filled(x) > filled(y)) ? [x, y] : [y, x];   // the further stage wins, then the fuller copy
-    const m = { ...base }; for (const [k, v] of Object.entries(other)) if ((m[k] === '' || m[k] == null) && v !== '' && v != null) m[k] = v; by.set(x.id, m); }
+    const m = { ...base }; for (const [k, v] of Object.entries(other)) if ((m[k] === '' || m[k] == null) && v !== '' && v != null) m[k] = v;
+    const dateSources = { ...other.dateSources, ...base.dateSources };
+    for (const field of ['due','askDue']) {
+      const manual = [base, other].find((row) => row.dateSources?.[field] === 'manual');
+      if (manual) { m[field] = manual[field]; m[field+'Time'] = manual[field+'Time']; dateSources[field] = 'manual'; }
+    }
+    by.set(x.id, applyTenderEmailDates({ ...m, ...mergeTenderDetails(base, other), dateSources })); }
   return { ...local, items: [...by.values()].sort((p, q) => (p.date < q.date ? 1 : -1)), to: [local.to, inc.to].filter(Boolean).sort().pop() || null };
 }
 function syncMailAct(local, inc) {
@@ -1342,7 +1661,9 @@ async function syncUnpack(buf, pass) {
 const syncCount = (j) => ({ tasks: (j.datasets || []).reduce((s, d) => s + (d.tasks || []).length, 0), tenders: j.tenders && j.tenders.items ? j.tenders.items.length : 0, mail: j.mailact && j.mailact.recs ? j.mailact.recs.length : 0 });
 async function syncSend(pass) {
   if (String(pass || '').length < 6) { toast(t('sync_pass_short')); return; }
-  const all = await buildBackup(), blob = await syncPack(all, pass), stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
+  let all, blob;
+  try { all = await buildBackup(); blob = await syncPack(all, pass); } catch { toast(t('td_store_failed')); return; }
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
   const file = new File([blob], `afaqy-sync-${stamp}.afqs`, { type: 'application/octet-stream' }), c = syncCount(all);
   const last = { sentAt: new Date().toISOString(), ...c, kb: Math.round(blob.size / 1024) }; await store.kvPut('syncsent', last);
   if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: t('sync_share_title') }); toast(t('sync_sent', { kb: last.kb })); renderSync(); return; } catch (e) { if (e && e.name === 'AbortError') { renderSync(); return; } } }
@@ -1352,7 +1673,9 @@ async function syncSend(pass) {
 async function syncReceive(f, pass) {
   if (String(pass || '').length < 6) { toast(t('sync_pass_short')); return false; }
   let j; try { j = await syncUnpack(await f.arrayBuffer(), pass); } catch (e) { toast(t(e && /^sync_/.test(e.message) ? e.message : 'sync_not_file')); return false; }
-  const before = syncCount({ datasets, tenders, mailact: mailAct }); await applyBackup(j); const after = syncCount({ datasets, tenders, mailact: mailAct });
+  const before = syncCount({ datasets, tenders, mailact: mailAct });
+  try { await applyBackup(j); } catch { toast(t('td_store_failed')); return false; }
+  const after = syncCount({ datasets, tenders, mailact: mailAct });
   const got = { receivedAt: new Date().toISOString(), from: j.exportedAt || '', tasks: after.tasks - before.tasks, tenders: after.tenders - before.tenders, mail: after.mail - before.mail };
   await store.kvPut('syncgot', got); toast(t('sync_got', { t: got.tasks, d: got.tenders, m: got.mail })); renderSync(); return true;
 }
@@ -4227,13 +4550,39 @@ $('file-in').addEventListener('change', async (e) => { for (const f of e.target.
 // The device backup carries EVERYTHING this device holds — data, reports, closed month cards, one-to-ones, the repair list,
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
 /** ADR-0103: everything this device holds — the backup file and the sync file carry the same thing. */
+async function tdBackupData(state) {
+  if (!state) return null;
+  const items = await Promise.all(state.items.map(async (item) => {
+    const files = await Promise.all((item.files || []).map(({ blob, ...file }) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve({ ...file, data: reader.result });
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    })));
+    return { ...item, files };
+  }));
+  return { ...state, items };
+}
+function tdRestoreData(state) {
+  if (!state || !Array.isArray(state.items)) return null;
+  return cleanTenders({ ...state, items: state.items.map((item) => {
+    if (!item || !Array.isArray(item.files)) return item;
+    const files = item.files.filter((file) => file && typeof file === 'object').flatMap(({ data, ...file }) => {
+      const match = /^data:([^;,]*);base64,([\w+/=]*)$/.exec(data || '');
+      if (!match) return [];
+      try { return [{ ...file, blob: new Blob([Uint8Array.from(atob(match[2]), (char) => char.charCodeAt(0))], { type: match[1] }) }]; }
+      catch { return []; }
+    });
+    return { ...item, files };
+  }) });
+}
 async function buildBackup() {
   if (plannerFile === undefined) plannerFile = (await store.getPlanner()) || null;   // ADR-0071: the planner travels with the backup
-  const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION, planner: plannerFile || null, tenders: tenders || (await store.kvGet('tenders')) || null, mailrules: mfState.rules || (await store.kvGet('mailrules')) || null, mailact: mailAct, mailids: mailIds,
+  const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION, planner: plannerFile || null, tenders: isTeamPortal ? null : await tdBackupData(tenders || await store.kvGet('tenders')), mailrules: mfState.rules || (await store.kvGet('mailrules')) || null, mailact: mailAct, mailids: mailIds,
     datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: (viewAs ? (meDerived ? null : realMe) : (meDerived ? null : me)) || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projfiles: await projFilesExport(), devplans: devPlans };
   return all;
 }
-$('export-btn').addEventListener('click', async () => { download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(await buildBackup(), null, 1)); });
+$('export-btn').addEventListener('click', async () => { try { download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(await buildBackup(), null, 1)); } catch (error) { console.error(error); toast(t('td_store_failed')); } });
 
 /** Restore or sync: merge, never overwrite. Settings (weights, team file, profile, rules, planner) stay as this device has them. */
 async function applyBackup(j) {
@@ -4262,7 +4611,7 @@ async function applyBackup(j) {
       if (j.mailids && j.mailids.map) { mailIds = { map: { ...j.mailids.map, ...mailIds.map }, ignored: [...new Set([...(mailIds.ignored || []), ...(j.mailids.ignored || [])])] }; await store.kvPut('mailids', mailIds); }   // ADR-0103: this device's choice wins a clash
       if (plannerFile === undefined) plannerFile = (await store.getPlanner()) || null;
       if (j.planner && typeof j.planner.html === 'string' && !plannerFile && isHtml(j.planner.html)) { plannerFile = { name: String(j.planner.name || 'planner.html'), at: String(j.planner.at || new Date().toISOString()), html: j.planner.html }; await store.putPlanner(plannerFile); }
-      { const td = cleanTenders(j.tenders); if (td) { tenders = syncTenders(tenders, td); await store.kvPut('tenders', tenders); } }   // ADR-0081 · ADR-0103: merged tender by tender
+      { const td = isTeamPortal ? null : tdRestoreData(j.tenders); if (td) await tdCommit({ ...syncTenders(tenders, td), revision: tenders?.revision || '' }); }   // ADR-0081 · ADR-0103: merged tender by tender
       if (j.projects) { const p = cleanProjects(j.projects); if (p) { myProjects = syncProjects(myProjects, p); await store.putProjects(myProjects); } }   // ADR-0103: merged
       if (Array.isArray(j.pending)) { const have = new Set(pendingList().map((x) => x.name.toLowerCase())); localStorage.setItem(PENDING_KEY, JSON.stringify([...pendingList(), ...j.pending.map(cleanPending).filter((x) => x && !have.has(x.name.toLowerCase()))])); }
       if (j.names && typeof j.names === 'object') { const fx = nameFixes(); for (const [id, v] of Object.entries(j.names)) if (/^\d+$/.test(id) && v && typeof v === 'object' && !fx[id]) fx[id] = { ar: String(v.ar || '').slice(0, 80), en: String(v.en || '').slice(0, 80) }; localStorage.setItem(NAME_KEY, JSON.stringify(fx)); }
@@ -4276,6 +4625,7 @@ async function applyBackup(j) {
       if (j.me && !me) { const m = upgradeMe(j.me); if (m) { me = m; await store.putMe(me); } }
     }
     renderDatasets(); renderBlocks(); renderKpi(); renderMe(); renderTeam(); renderWeights(); renderPrivLinks();
+  if (location.hash === '#tenders') renderTenders();
 }
 $('import-in').addEventListener('change', async (e) => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
@@ -4320,7 +4670,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   repairs = (await store.getRepairs()) || [];
   privLinks = (await store.getPriv()) || [];
   mailRows = (await store.getMail()) || [];
-  myProjects = await store.getProjects(); tenders = cleanTenders(await store.kvGet('tenders'));
+  myProjects = await store.getProjects(); tenders = isTeamPortal ? null : cleanTenders(await store.kvGet('tenders'));
   mailAct = (await store.kvGet('mailact')) || { imports: [], recs: [] }; mailIds = (await store.kvGet('mailids')) || { map: {}, ignored: [] };   // ADR-0095
   myRegister = await store.getRegister();
   devPlans = (await store.kvGet('devplans')) || {};
