@@ -13,7 +13,7 @@ import {
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
   quarterRange, quarterOf, quarterBaseline, quarterGoalProgress, planProgress, suggestQuarterGoals,
   maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply,
-  tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds, parseTenderStudy, matchTenderStudy, applyTenderStudy,
+  tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds, parseTenderStudy, matchTenderStudy, applyTenderStudy, tenderAutoStage, tenderStudyFromSheet,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts } from './core.js';
 
@@ -1008,34 +1008,91 @@ let tdMailParser, tdDocumentReader;
 const tdFileFilters = new Map();
 const tdActivity = (action, label) => ({ id: crypto.randomUUID(), action, label, at: new Date().toISOString() });
 const tdNewFile = (blob, kind, mailKey = '', id = crypto.randomUUID()) => ({ id, name: blob.name, kind, mailKey, blob });
-const tdFileKind = { technical: 'proj_fk_technical', financial: 'proj_fk_financial' };
+const tdFileKind = { technical: 'proj_fk_technical', financial: 'proj_fk_financial' };   // other kinds: td_file_<kind>
 function tdDateText(day, time) { return day + (time ? ' · ' + time : ''); }
 
 async function tdCommit(next) {
+  // ADR-0127: the manager's name goes on every open tender that has no owner, so «file owner» is never a field to fill
+  const own = (pref('tdowner') || '').trim();
+  if (own) next = { ...next, items: next.items.map((i) => (!i.owner && !['won', 'lost', 'cancelled', 'declined'].includes(i.stage) ? { ...i, owner: own.slice(0, 80) } : i)) };
   const saved = { ...next, revision: crypto.randomUUID() };
   await store.putTenders(saved, next.revision || '');
   tenders = saved;
 }
 // ADR-0126: the Tender Analyzer's study files. From the toolbar each study finds its row by Etimad number, then subject; from a
 // tender's window the study is applied to that tender. Only empty fields are filled; differences are listed, never overwritten.
+const tdToday = () => saudiDay(new Date().toISOString());
+// ADR-0127: a file moved the tender by itself — say so in its history and remember how to put it back
+async function tdAutoMove(id, event, res) {
+  const row = tenders?.items.find((i) => i.id === id); if (!row) return;
+  const mv = tenderAutoStage(row, event, tdToday()); if (!mv) return;
+  if (await tdUpdate(id, mv.patch, tdActivity('stage', t('td_auto_stage', { s: t(`td_st_${mv.patch.stage}`) })))) res.moves.push({ id, subject: row.subject, to: mv.patch.stage, back: mv.back });
+}
+async function tdReadStudyFile(f) {
+  if (/\.(xlsx|xlsm)$/i.test(f.name)) {
+    const X = await loadXlsx(), wb = X.read(await f.arrayBuffer(), { type: 'array', cellDates: true }), name = wb.SheetNames.find((n) => n.trim().toLowerCase() === 'tender-register');
+    if (!name) return { error: 'nosheet' };
+    const raw = tenderStudyFromSheet(X.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: true, defval: '' }), f.name);
+    return raw ? { ...parseTenderStudy(raw), keep: true } : { error: 'schema' };
+  }
+  return parseTenderStudy(await f.text());
+}
 async function tdImportStudies(files, onlyId = null) {
-  const res = { tenders: 0, fields: 0, differs: [], unmatched: [], bad: [] };
+  const res = { tenders: 0, fields: 0, differs: [], unmatched: [], bad: [], nosheet: [], moves: [] };
   for (const f of files) {
-    let st; try { st = parseTenderStudy(await f.text()); } catch { st = { error: 'json' }; }
-    if (st.error) { res.bad.push(f.name); continue; }
+    let st; try { st = await tdReadStudyFile(f); } catch { st = { error: 'json' }; }
+    if (st.error) { (st.error === 'nosheet' ? res.nosheet : res.bad).push(f.name); continue; }
     for (const study of st.tenders) {
       const items = tenders ? tenders.items : [];
       const row = onlyId ? (st.tenders.length === 1 ? items.find((i) => i.id === onlyId) : (matchTenderStudy(items, study, tdKey)?.id === onlyId ? items.find((i) => i.id === onlyId) : null)) : matchTenderStudy(items, study, tdKey);
       if (!row) { if (!onlyId) res.unmatched.push(study.subject || study.etimadNo); continue; }
       const { patch, filled, differs } = applyTenderStudy(row, study);
+      if (st.keep && !(row.files || []).some((x) => x.name === f.name && x.kind === 'study')) patch.files = [...(row.files || []), { ...tdNewFile(f, 'study'), kindManual: true }];   // the study workbook stays with its tender
       if (Object.keys(patch).length && await tdUpdate(row.id, patch, tdActivity('study', t('td_study_act', { n: filled.length, tool: st.tool || t('td_analyzer') })))) { res.tenders++; res.fields += filled.length; }
       for (const d of differs) res.differs.push({ subject: row.subject, ...d });
+      if (study.decision) await tdAutoMove(row.id, { type: 'study', decision: study.decision, why: study.why }, res);
     }
   }
   tdStudyResult = res; renderTenders();
   toast(t('td_study_done', { n: res.fields, m: res.tenders, d: res.differs.length, u: res.unmatched.length }));
 }
-const tdStudyInput = (onlyId = null) => el('input', { type: 'file', accept: '.json,application/json', multiple: onlyId ? null : '', hidden: '', onchange: (e) => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) tdImportStudies(fs, onlyId); } });
+// ADR-0127: the final offer (one file, or several) goes onto its tender and makes it ready
+async function tdAddFilesAs(id, files, kind) {
+  const cur = tenders?.items.find((i) => i.id === id); if (!cur || !files.length) return;
+  const upload = files.map((f) => ({ ...tdNewFile(f, kind), kindManual: true }));
+  if (!await tdUpdate(id, { files: [...(cur.files || []), ...upload] }, tdActivity('add', files.map((f) => f.name).join(', ')))) return;
+  const res = tdStudyResult && tdStudyResult.moves ? tdStudyResult : { tenders: 0, fields: 0, differs: [], unmatched: [], bad: [], nosheet: [], moves: [] };
+  if (kind === 'offer') await tdAutoMove(id, { type: 'offer' }, res);
+  tdStudyResult = res; renderTenders(); toast(t('td_drop_added', { n: files.length, k: t(tdFileKind[kind] || `td_file_${kind}`) }));
+  if (kind !== 'offer' && kind !== 'study') void tdAnalyzeFiles(id, upload.map((x) => x.id));
+}
+// ADR-0127: one place to drop anything. Mails register tenders, a study fills its tender, and any other file is asked about once:
+// which tender, and what it is — the tender whose window is open, or the only one being prepared, is offered first.
+async function tdRouteDrop(files, hintId = null) {
+  if (tdBusy || !files.length) return;
+  const mails = files.filter((f) => /\.(msg|eml)$/i.test(f.name)), rest = files.filter((f) => !mails.includes(f)), studies = [], other = [];
+  for (const f of rest) { if (/\.json$/i.test(f.name)) studies.push(f); else if (/\.(xlsx|xlsm)$/i.test(f.name)) { let ok = false; try { const X = await loadXlsx(); ok = X.read(await f.arrayBuffer(), { type: 'array', bookSheets: true }).SheetNames.some((n) => n.trim().toLowerCase() === 'tender-register'); } catch { ok = false; } (ok ? studies : other).push(f); } else other.push(f); }
+  if (mails.length) await tdImportEmails(mails, hintId || '');
+  if (studies.length) await tdImportStudies(studies, hintId);
+  if (other.length) tdDropAsk(other, hintId);
+}
+function tdDropAsk(files, hintId) {
+  const open = (tenders ? tenders.items : []).filter((i) => !['won', 'lost', 'cancelled', 'declined'].includes(i.stage));
+  if (!open.length) { toast(t('td_drop_no_tender')); return; }
+  const prep = open.filter((i) => i.stage === 'prep'), guess = hintId || (prep.length === 1 ? prep[0].id : (open.find((i) => i.etimadNo && files.some((f) => f.name.includes(i.etimadNo))) || {}).id) || '';
+  const sel = el('select', { class: 'td-drop-tender', 'aria-label': t('td_drop_which') }, guess ? null : el('option', { value: '', text: t('td_drop_pick') }), open.map((i) => el('option', { value: i.id, selected: i.id === guess ? '' : null, text: `${i.subject.slice(0, 90)} — ${t(`td_st_${i.stage}`)}` })));
+  const kind = el('select', { class: 'td-drop-kind', 'aria-label': t('td_file_type') }, ['offer', 'study', 'booklet', 'boq', 'proof', 'other'].map((k) => el('option', { value: k, text: t(tdFileKind[k] || `td_file_${k}`) })));
+  const dlg = el('dialog', { class: 'proj-edit td-drop-dlg', 'aria-labelledby': 'td-drop-h' }, el('h2', { id: 'td-drop-h', text: t('td_drop_h') }),
+    el('p', { class: 'hint', dir: 'auto', text: files.map((f) => f.name).join(' · ').slice(0, 300) }),
+    el('div', { class: 'form-grid' }, el('label', { class: 'wide' }, el('span', { text: t('td_drop_which') }), sel), el('label', { class: 'wide' }, el('span', { text: t('td_file_type') }), kind)),
+    el('p', { class: 'hint', text: t('td_drop_note') }),
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary td-drop-ok', text: t('td_drop_ok'), onclick: async () => { if (!sel.value) { toast(t('td_drop_pick')); return; } const id = sel.value, k = kind.value; dlg.close(); await tdAddFilesAs(id, files, k); } }),
+      el('button', { type: 'button', class: 'btn quiet', text: t('cancel'), onclick: () => dlg.close() })));
+  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
+}
+const tdDropBind = (node, hint) => { node.addEventListener('dragover', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files') && !e.target.closest('.td-mail-drop')) e.preventDefault(); });
+  node.addEventListener('drop', (e) => { if (e.target.closest('.td-mail-drop') || !e.dataTransfer || !e.dataTransfer.files.length) return; e.preventDefault(); void tdRouteDrop([...e.dataTransfer.files], hint ? hint() : null); }); };
+const tdStudyInput = (onlyId = null) => el('input', { type: 'file', accept: '.json,application/json,.xlsx,.xlsm', multiple: onlyId ? null : '', hidden: '', onchange: (e) => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) tdImportStudies(fs, onlyId); } });
 async function tdUpdate(id, patch, activity = null) {
   const item = tenders?.items.find((row) => row.id === id);
   if (!item) return false;
@@ -1286,10 +1343,14 @@ function renderTenders() {
   const pull = el('section', { class: 'dt-quick td-pull' },
     el('div', { class: 'td-pull-head' }, el('h2', { text: t('td_pull_h') }), tenders && tenders.pulledAt ? el('span', { class: 'hint', text: t('td_last', { to: tenders.to || '—', n: tenders.items.length }) }) : null),
     tdEmailPicker(),
+    el('p', { class: 'hint td-drop-any', text: `⤓ ${t('td_drop_any')}` }),
     tdStudyResult ? el('div', { role: 'status', class: 'td-study-res' }, el('p', { class: 'hint', text: t('td_study_done', { n: tdStudyResult.fields, m: tdStudyResult.tenders, d: tdStudyResult.differs.length, u: tdStudyResult.unmatched.length }) }),
       tdStudyResult.differs.length ? el('ul', { class: 'td-study-diff' }, tdStudyResult.differs.slice(0, 30).map((d) => el('li', { dir: 'auto', text: t('td_study_diff', { s: d.subject, f: t(`td_col_${d.field}`), h: d.have, v: d.study }) }))) : null,
       tdStudyResult.unmatched.length ? el('p', { class: 'note', dir: 'auto', text: t('td_study_unmatched', { list: tdStudyResult.unmatched.slice(0, 10).join(' · ') }) }) : null,
-      tdStudyResult.bad.length ? el('p', { class: 'note', dir: 'auto', text: t('td_study_bad', { list: tdStudyResult.bad.join(' · ') }) }) : null) : null,
+      tdStudyResult.bad.length ? el('p', { class: 'note', dir: 'auto', text: t('td_study_bad', { list: tdStudyResult.bad.join(' · ') }) }) : null,
+      (tdStudyResult.nosheet || []).length ? el('p', { class: 'note', dir: 'auto', text: t('td_study_nosheet', { list: tdStudyResult.nosheet.join(' · ') }) }) : null,
+      (tdStudyResult.moves || []).map((m) => el('p', { class: 'td-move', dir: 'auto' }, el('span', { text: t('td_moved', { s: m.subject.slice(0, 80), to: t(`td_st_${m.to}`) }) }), ' ',
+        el('button', { type: 'button', class: 'btn tiny quiet td-undo', text: t('td_undo'), onclick: async () => { if (await tdUpdate(m.id, m.back, tdActivity('stage', t('td_undone')))) { tdStudyResult.moves = tdStudyResult.moves.filter((x) => x !== m); renderTenders(); } } })))) : null,
     tdMailResult ? el('div', { role: 'status' },
       el('p', { class: 'hint', text: t('td_mail_result', tdMailResult) }),
       tdMailResult.failures.map(({ name, key }) => el('p', { class: 'hint', dir: 'auto', text: [name, t(key)].filter(Boolean).join(' · ') }))) : null,
@@ -1301,6 +1362,7 @@ function renderTenders() {
       el('button', { type: 'button', class: 'btn td-paste-btn', disabled: !!tdBusy, text: `📥 ${t('td_paste')}`, onclick: tdPasteDialog }),
       el('button', { type: 'button', class: 'btn td-pst-btn', disabled: !!tdBusy, text: `📂 ${t('td_pst_pick')}`, onclick: () => pst.click() }), pst,
       el('button', { type: 'button', class: 'btn td-add-btn', disabled: !!tdBusy, text: `＋ ${t('td_add')}`, onclick: tdAddManual }),
+      el('label', { class: 'td-owner-def' }, el('span', { class: 'hint', text: t('td_owner_def') }), el('input', { type: 'text', class: 'td-owner-in', value: pref('tdowner') || '', placeholder: t('td_owner_ph'), onchange: async (e) => { pref('tdowner', e.target.value.trim().slice(0, 80)); if (tenders) { await tdCommit(tenders); renderTenders(); } } })),
       (() => { const inp = tdStudyInput(); return el('span', {}, el('button', { type: 'button', class: 'btn td-study-btn', disabled: !!tdBusy, text: `📊 ${t('td_study_import')}`, onclick: () => inp.click() }), inp); })()),
     tdBusy ? el('p', { class: 'note td-busy', role: 'status', text: tdBusy }) : null,
     el('details', { class: 'td-how', ...(empty ? { open: '' } : {}) }, el('summary', { text: t('td_how') }),
@@ -1409,9 +1471,11 @@ function renderTenders() {
     rows.length ? table : el('p', { class: 'note', text: t('td_none_period') }));
   // v9.47 (ADR-0122): a tender's details open in a window over the list, not as a long panel inside it. The window stays open
   // while a field saves and the list behind redraws; focus returns to the field the manager moved to.
+  if (!body.dataset.tdDrop) { body.dataset.tdDrop = '1'; tdDropBind(body, null); }
   const cur = tdOpenId ? (tenders ? tenders.items : []).find((x) => x.id === tdOpenId) : null;
   if (!cur) { if (tdDlg && tdDlg.open) { const d = tdDlg; tdOpenId = null; d.close(); } return; }
   if (!tdDlg) { tdDlg = el('dialog', { class: 'td-dlg', 'aria-labelledby': 'td-dlg-h' }, el('div', { class: 'td-dlg-body' }));
+    tdDropBind(tdDlg, () => tdOpenId);
     tdDlg.addEventListener('close', () => { if (tdOpenId) { tdOpenId = null; renderTenders(); } }); document.body.append(tdDlg); }
   const box = tdDlg.querySelector('.td-dlg-body'), act = document.activeElement, was = act && box.contains(act) ? [...act.classList].find((c) => /^td-(?!f$|need$)/.test(c)) : '';
   const needs = tenderNeeds(cur);

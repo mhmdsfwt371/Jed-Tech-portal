@@ -2399,7 +2399,7 @@ export function applyTenderEmailDates(item) {
   return item;
 }
 
-export const TENDER_FILE_KINDS = ['original', 'booklet', 'boq', 'sheet', 'other', 'study', 'technical', 'financial', 'proof'];
+export const TENDER_FILE_KINDS = ['original', 'booklet', 'boq', 'sheet', 'other', 'study', 'technical', 'financial', 'offer', 'proof'];
 export const TENDER_INSIGHT_TOPICS = ['scope','visit','duration','bond','evaluation','delivery','requirements'];
 const tenderNormalizeText = text => tenderDigits(text).normalize('NFKC').replace(/[إأآ]/g,'ا').replace(/ة/g,'ه').replace(/[ـً-ْ\u200e\u200f\u202a-\u202e]/g,'').toLowerCase();
 /** Evidence snippets, not an inferred bid decision: negations, quantities and wording remain intact. */
@@ -2529,7 +2529,36 @@ export function projectDeletePlan(rows) {
 }
 export function tenderCanAdvance(item, nextStage) {
   return !['ready', 'submitted', 'won', 'lost'].includes(nextStage) ||
-    ['technical', 'financial'].every((kind) => item.files?.some((file) => file.kind === kind && file.blob.size > 0));
+    ['technical', 'financial'].every((kind) => item.files?.some((file) => file.kind === kind && file.blob.size > 0)) ||
+    !!item.files?.some((file) => file.kind === 'offer' && file.blob.size > 0);   // ADR-0127: one file that holds the technical and the financial offer
+}
+/** ADR-0127: the stage a tender moves to by itself when a file arrives, or null. A study that says «bid» moves a tender that is
+ *  still before preparation into preparation; «do not bid» declines it with the study's reason (no reason, no move); the final
+ *  offer file makes it ready. A tender already past that point, or closed, is never moved back or reopened. `back` holds what
+ *  to restore on undo. Won, lost and submitted stay the manager's. */
+export function tenderAutoStage(item, event, today) {
+  const st = item.stage || 'received', early = ['received', 'screen', 'decide'];
+  const back = { stage: st, stageAt: item.stageAt || '', decidedOn: item.decidedOn || '', reason: item.reason || '', readyOn: item.readyOn || '', status: item.status || 'open' };
+  const base = { stageAt: today, decidedOn: item.decidedOn || today };
+  if (event.type === 'study' && early.includes(st)) {
+    if (event.decision === 'go') return { patch: { ...base, stage: 'prep' }, back };
+    if (event.decision === 'no-go' && String(event.why || '').trim()) return { patch: { ...base, stage: 'declined', reason: String(event.why).trim().slice(0, 300) }, back };
+  }
+  if (event.type === 'offer' && [...early, 'prep'].includes(st)) return { patch: { ...base, stage: 'ready', readyOn: today, status: 'ready' }, back };
+  return null;
+}
+/** ADR-0127: the study workbook can carry the register's data itself, in a sheet named «tender-register»: rows of
+ *  [key, value, source file, page, quote]. This turns those rows into one `afaqy-tender-study/v1` file for parseTenderStudy(). */
+export function tenderStudyFromSheet(rows, fileName = '') {
+  const m = new Map(), ev = {};
+  for (const r of rows || []) { const k = String((r && r[0]) ?? '').trim(); if (!k || m.has(k)) continue; m.set(k, r[1]);
+    if (r[2] || r[4]) ev[k] = { file: String(r[2] ?? ''), page: Number.isSafeInteger(Number(r[3])) && Number(r[3]) > 0 ? Number(r[3]) : null, quote: String(r[4] ?? '') }; }
+  if (m.get('schema') !== 'afaqy-tender-study/v1') return null;
+  const txt = (k) => (m.get(k) == null ? '' : String(m.get(k)).trim()), num = (k) => { const v = m.get(k); if (v == null || v === '') return null; const n = typeof v === 'number' ? v : Number(String(v).replace(/,/g, '')); return Number.isFinite(n) ? n : null; };
+  const day = (k) => { const v = m.get(k); if (v instanceof Date && !Number.isNaN(+v)) return new Date(+v + 3 * 36e5).toISOString().slice(0, 10); return txt(k).slice(0, 10); };
+  const dates = {}; for (const k of TENDER_DATE_FIELDS) if (day(k)) dates[k] = { date: day(k), time: txt(`${k}Time`) };
+  return { schema: 'afaqy-tender-study/v1', generatedAt: txt('generatedAt'), tool: txt('tool'), tenders: [{ subject: txt('subject'), etimadNo: txt('etimadNo'), entity: txt('entity'), dates,
+    fees: num('fees'), bond: txt('bond'), value: num('value'), decision: txt('decision'), decisionWhy: txt('decisionWhy'), summary: txt('summary'), studyFile: txt('studyFile') || fileName, evidence: ev }] };
 }
 export function cleanTenderDetails(item) {
   const string = (value, max) => typeof value === 'string' ? value.slice(0, max) : '';

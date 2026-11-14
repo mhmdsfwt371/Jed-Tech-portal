@@ -165,6 +165,7 @@
 | `docs/decisions/0124-first-start-times.md` | The manager pull reads each recent task’s activity log for its first start; the daily table shows «started after the limit» where known |
 | `docs/decisions/0125-projects-lines-and-delete-all.md` | My projects split into tenders / upselling / not sorted; «Delete all shown» with a backup first and a restore |
 | `docs/decisions/0126-tender-analyzer-study-file.md` | The Tender Analyzer writes `afaqy-tender-study/v1`; the register fills empty fields from it with evidence (format: `docs/tender-study-format.md`) |
+| `docs/decisions/0127-tender-flow-by-files.md` | Drop anything anywhere: mail registers, study fills and moves the stage, one-file final offer makes it ready; default owner; Undo for every automatic move |
 
 ## في عشر دقائق: ابنِ وافحص
 ```bash

@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.53 — 2026-11-14
+
+- سجل المناقصات بأقل تدخل: اسحب أي ملف في أي مكان من الصفحة. الإيميل يسجّل المناقصة، وملف الدراسة يملأ بياناتها وينقلها إلى «قيد التحضير» أو يعتذر عنها بسبب الدراسة، والعرض النهائي يجعلها «جاهز». كل انتقال تلقائي معه زر «تراجع».
+- ملف إكسل الدراسة نفسه يُقرأ إذا أضاف المحلل فيه ورقة باسم «tender-register»، ويبقى مرفقًا بمناقصته. والعرض الفني والمالي في ملف واحد صار كافيًا للانتقال إلى «جاهز».
+- «مسؤول الملف الافتراضي»: اكتب اسمك مرة فيُملأ في كل مناقصة مفتوحة. والفوز والخسارة والتقديم تبقى يدوية.
+
+<details><summary>English</summary>
+
+- The tender register with the least touch: drop any file anywhere on the page. An email registers the tender, the study file fills its data and moves it to «In preparation» or declines it with the study’s reason, and the final offer makes it «Ready». Every automatic move comes with an «Undo» button.
+- The study workbook itself is read when the analyzer adds a sheet named «tender-register» to it, and it stays attached to its tender. A technical and financial offer in one file is now enough to move to «Ready».
+- «Default file owner»: type your name once and it is filled on every open tender. Won, lost and submitted stay manual.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- کم سے کم مداخلت کے ساتھ ٹینڈر رجسٹر: صفحے پر کہیں بھی کوئی بھی فائل ڈالیں۔ ای میل ٹینڈر درج کرتی ہے، مطالعے کی فائل اس کا ڈیٹا بھرتی ہے اور اسے «تیاری میں» لے جاتی ہے یا مطالعے کی وجہ کے ساتھ معذرت کر دیتی ہے، اور حتمی پیشکش اسے «تیار» کر دیتی ہے۔ ہر خودکار منتقلی کے ساتھ «واپس کریں» کا بٹن آتا ہے۔
+- مطالعے کی ایکسل فائل خود پڑھی جاتی ہے جب تجزیہ کار اس میں «tender-register» نام کی شیٹ شامل کرے، اور وہ اپنے ٹینڈر کے ساتھ منسلک رہتی ہے۔ ایک ہی فائل میں تکنیکی اور مالی پیشکش اب «تیار» تک جانے کے لیے کافی ہے۔
+- «فائل کا طے شدہ ذمہ دار»: اپنا نام ایک بار لکھیں تو وہ ہر کھلے ٹینڈر میں بھر جاتا ہے۔ جیت، ہار اور جمع کرانا دستی رہتے ہیں۔
+
+</div>
+</details>
+
+
 ## v9.52 — 2026-11-14
 
 - سجل المناقصات: زر جديد «استيراد دراسة المحلل». محلل المناقصات يكتب ملفًا صغيرًا بجانب دراسته، والسجل يقرؤه ويملأ الخانات الفارغة: رقم اعتماد، وقيمة الكراسة، والضمان، والقيمة التقديرية، ومواعيد الاستفسارات وزيارة الموقع والتقديم وفتح العروض.

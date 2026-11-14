@@ -49,3 +49,20 @@ How the register uses it
 - Fills only empty fields; a field already filled with another value is listed as a difference, never replaced.
 - Each filled field shows «from the analyzer», with the file, page and quote on hover. Typing over it makes it the manager's.
 - `decision` shows in the tender's window and in the Excel export; it does not move the tender's stage.
+
+## The same data inside the study workbook (v9.53, ADR-0127)
+
+So the manager uploads one file — the study — the analyzer may also put the data in the study workbook, in a sheet named exactly
+`tender-register`, one row per key, columns `key | value | source file | page | quote`:
+
+| key | value |
+|---|---|
+| `schema` | `afaqy-tender-study/v1` (required, or the sheet is ignored) |
+| `tool`, `generatedAt`, `subject`, `etimadNo`, `entity` | text |
+| `askDue`, `visit`, `due`, `openAt` | `YYYY-MM-DD` text or a date cell |
+| `askDueTime`, `visitTime`, `dueTime`, `openAtTime` | `HH:MM` |
+| `fees`, `value` | number, or empty |
+| `bond`, `decision`, `decisionWhy`, `summary`, `studyFile` | text |
+
+Columns 3–5 on a value's row are its evidence. The register reads the sheet, fills the tender, keeps the workbook attached as the
+tender's study, and — if `decision` is `go` or `no-go` — moves a tender that is still before preparation.

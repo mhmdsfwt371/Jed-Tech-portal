@@ -1375,6 +1375,31 @@ test('tender study file: read strictly, matched by Etimad number then subject, f
   assert.equal(cleaned.fieldSources.fees, 'analyzer'); assert.equal(cleaned.dateSources.visit, 'analyzer'); assert.equal(cleaned.studyDecision, 'go'); assert.equal(cleaned.evidence.fees.quote, 'قيمة وثائق المنافسة 1500 ريال');
 });
 
+test('tender auto stage, one-file offer and the study sheet: files move a tender forward only, never back, never reopen', () => {
+  const T = '2026-11-15', I = (stage, o = {}) => ({ stage, stageAt: '2026-11-01', decidedOn: '', reason: '', readyOn: '', status: 'open', ...o });
+  assert.deepEqual(core.tenderAutoStage(I('received'), { type: 'study', decision: 'go' }, T).patch, { stageAt: T, decidedOn: T, stage: 'prep' });
+  const no = core.tenderAutoStage(I('decide', { decidedOn: '2026-11-10' }), { type: 'study', decision: 'no-go', why: 'خارج النطاق' }, T);
+  assert.deepEqual(no.patch, { stageAt: T, decidedOn: '2026-11-10', stage: 'declined', reason: 'خارج النطاق' }); assert.equal(no.back.stage, 'decide');
+  assert.equal(core.tenderAutoStage(I('received'), { type: 'study', decision: 'no-go', why: ' ' }, T), null, 'declining needs the study’s reason');
+  assert.equal(core.tenderAutoStage(I('received'), { type: 'study', decision: 'review' }, T), null);
+  assert.equal(core.tenderAutoStage(I('prep'), { type: 'study', decision: 'no-go', why: 'x' }, T), null, 'already preparing: a study does not pull it back');
+  assert.equal(core.tenderAutoStage(I('declined'), { type: 'study', decision: 'go' }, T), null, 'a closed tender is not reopened');
+  assert.deepEqual(core.tenderAutoStage(I('prep', { decidedOn: '2026-11-05' }), { type: 'offer' }, T).patch, { stageAt: T, decidedOn: '2026-11-05', stage: 'ready', readyOn: T, status: 'ready' });
+  assert.equal(core.tenderAutoStage(I('submitted'), { type: 'offer' }, T), null);
+  const blob = { size: 5 };
+  assert.equal(core.tenderCanAdvance({ files: [{ kind: 'offer', blob }] }, 'ready'), true, 'one offer file is enough');
+  assert.equal(core.tenderCanAdvance({ files: [{ kind: 'technical', blob }] }, 'ready'), false);
+  assert.equal(core.tenderCanAdvance({ files: [{ kind: 'offer', blob: { size: 0 } }] }, 'ready'), false);
+  const rows = [['schema', 'afaqy-tender-study/v1'], ['tool', 'Tender Analyzer 2.1'], ['subject', 'منافسة كاميرات'], ['etimadNo', 123456], ['fees', '1,500', 'كراسة.pdf', 4, 'قيمة الوثائق 1500'],
+    ['due', '2026-12-01', 'كراسة.pdf', 9, 'آخر موعد'], ['dueTime', '14:30'], ['visit', new Date('2026-11-21T21:00:00Z')], ['value', ''], ['decision', 'go'], ['decisionWhy', 'ضمن النطاق']];
+  const st = core.parseTenderStudy(core.tenderStudyFromSheet(rows, 'الدراسة.xlsx'));
+  const s0 = st.tenders[0];
+  assert.deepEqual([s0.etimadNo, s0.fees, s0.value, s0.decision, s0.studyFile], ['123456', 1500, null, 'go', 'الدراسة.xlsx']);
+  assert.deepEqual(s0.dates, { due: { date: '2026-12-01', time: '14:30' }, visit: { date: '2026-11-22', time: '' } }, 'a spreadsheet date cell is read as its Saudi day');
+  assert.equal(s0.evidence.fees.page, 4);
+  assert.equal(core.tenderStudyFromSheet([['subject', 'x']]), null, 'a sheet without the schema row is not a study');
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }
