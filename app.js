@@ -3609,7 +3609,7 @@ function renderHome() {
     TK && TK.soon && { k: 'old', title: t('cr_att_td_soon', { n: TK.soon }), detail: tdSoonList(), href: '#tenders', prep: () => { tdKind = 'all'; } },
     red.length && { k: 'red', title: t('cr_att_red', { n: red.length }), detail: names(red), href: '#dev' },
     noPlan.length && { k: 'plan', title: t('cr_att_plan', { n: noPlan.length, m: active.length, q: qNext.label }), detail: names(noPlan), href: '#dev', prep: () => { devQ = 'next'; pref('devq', 'next'); } },
-    old.length && { k: 'old', title: t('cr_att_old', { n: old.length }), detail: oldBy.slice(0, 3).map(([id, n]) => `${nm(id)} ${n}`).join('، '), href: '#kpi', prep: () => { kpiMore = true; } },
+    old.length && { k: 'old', title: t('cr_att_old', { n: old.length }), detail: oldBy.slice(0, 3).map(([id, n]) => `${nm(id)} ${n}`).join('، '), href: '#kpi', prep: () => { secWant = 'kpi:week'; } },
     pending && { k: 'pending', title: t('cr_att_pending', { n: pending }), detail: '', href: '#team' },
     (() => { const f = newTypes(wt); return f.length ? { k: 'types', title: t('cr_att_types', { n: f.length }), detail: f.slice(0, 4).join('، '), href: '#weights' } : null; })(),
     (() => { const od = orgData(); if (!od) return null; const r = orgRootId(od); if (!r) return null; const fa = Object.keys(roster().people || {}).some((id) => od.org.hasRow(id)), c = fa ? compareOrg(od.org, roster(), r) : { leader: [], missingInFile: [], notInOrg: [], inactive: [], unmatched: od.org.unmatchedUnder(r) }, n = c.leader.length + c.missingInFile.length + c.notInOrg.length + c.inactive.length + c.unmatched.length; return n ? { k: 'org', title: t('cr_att_org', { n }), detail: '', href: '#team' } : null; })(),
@@ -3653,7 +3653,7 @@ function renderHome() {
       : el('div', { class: 'cr-calm', text: t('cr_att_none') }),
     el('h2', { class: 'cr-h', text: t('cr_jobs_h') }),
     el('div', { class: 'cr-jobs' }, job(t('kpi_board'), '#kpi'), job(t('nav_dev'), '#dev'), job(t('nav_team'), '#team'),
-      job(t('cr_job_reports'), '#kpi', () => { kpiMore = true; }), job(t('cr_job_viewas'), '#kpi')));
+      job(t('cr_job_reports'), '#kpi', () => { secWant = 'kpi:report'; }), job(t('cr_job_viewas'), '#kpi')));
 }
 function renderDev() {
   const body = $('dev-body'); if (!body) return;
@@ -3810,7 +3810,7 @@ function coverageSection(rep, team, nm) { const cv = coverageTotals(rep, team); 
 // once (allTasks() and allActivities() keep every record once). Every number here comes from factor1 (the three sources
 // and the time to close) and weightedPoints (points) — the engine every other page reads. An employee has no page of his
 // own: his row opens in place, this month against the month before.
-let kpiMonth = pref('kpimonth') || null, kpiOpen = null, kpiMore = false, kpiMSort = 'points', kpiTileF = null;   // ADR-0102: a tile's filter
+let kpiMonth = pref('kpimonth') || null, kpiOpen = null, kpiMSort = 'points', kpiTileF = null;   // ADR-0102: a tile's filter
 function allActivities() {
   const seen = new Set();
   return [...reports].sort((a, b) => String(b.extractedAt || '').localeCompare(String(a.extractedAt || '')))
@@ -3934,6 +3934,22 @@ function meMonthParts() {
     !cov.whole ? el('p', { class: 'note', text: t(isTeamPortal || viewAs ? 'km_partial_me' : 'km_partial', { got: cov.got, need: cov.need }) }) : null,
     personMonthView({ id: uid, tasks, acts: fromPulls ? allActivities() : [], months, ym: meMonth })];
 }
+// ADR-0123: section cards. Each card shows its section's headline and opens the section in one shared window. The section's nodes
+// are built with the page, as before; when the page redraws while the window is open, the window takes the fresh nodes of the same
+// section, so sorting or toggling inside it keeps working. `secWant` (page:id) opens a card on arrival from another page.
+let secDlg = null, secOpen = '', secWant = '';
+function secCards(page, secs) {
+  const show = (x) => { if (!secDlg) { secDlg = el('dialog', { class: 'sec-dlg', 'aria-label': '' }, el('div', { class: 'sec-dlg-body' }));
+      secDlg.addEventListener('close', () => { secOpen = ''; }); document.body.append(secDlg); }
+    secOpen = `${page}:${x.id}`; secDlg.setAttribute('aria-label', x.title); set(secDlg.querySelector('.sec-dlg-body'), x.node); if (!secDlg.open) secDlg.showModal(); };
+  const open = secOpen.startsWith(`${page}:`) && secDlg && secDlg.open ? secs.find((x) => `${page}:${x.id}` === secOpen) : null;
+  if (open) set(secDlg.querySelector('.sec-dlg-body'), open.node);
+  const want = secWant.startsWith(`${page}:`) ? secs.find((x) => `${page}:${x.id}` === secWant) : null;
+  if (want) { secWant = ''; requestAnimationFrame(() => show(want)); }
+  return el('section', { class: 'sec-cards-box' }, el('h2', { class: 'cr-h', text: t('sc_more_h') }),
+    el('div', { class: 'sec-cards' }, secs.map((x) => el('button', { type: 'button', class: 'sec-card', 'data-sec': x.id, title: t('cr_num_open'), onclick: () => show(x) },
+      el('span', { class: 'sec-t', text: x.title }), x.v ? el('b', { text: x.v }) : null, x.sub ? el('small', { text: x.sub }) : null, el('span', { class: 'cr-num-arrow', 'aria-hidden': 'true', text: '↗' })))));
+}
 function renderKpi() {
   applyNameFixes();
   applyPending().then((changed) => { if (changed) { renderTeam(); renderKpi(); renderMe(); } });
@@ -4010,20 +4026,23 @@ function renderKpi() {
   // what is not «who did what in the month» stays one fold away, each in its one place
   const rep = [...reports].filter((r) => r.range && r.range.from <= range.to && r.range.to >= range.from).sort((a, b) => String(b.extractedAt || '').localeCompare(String(a.extractedAt || '')))[0];
   const teamMonths = months.slice(0, 6).map((m) => { const r = periodRangeOf(m.ym); return { m, x: monthNumbers(factor1(tasks, { range: r, team }), weightedPoints(tasks, acts, wt, { range: r, team }), 'team') }; });
-  const more = el('details', { class: 'km-more', open: kpiMore || null, ontoggle: (e) => { kpiMore = e.target.open; } },
-    el('summary', { text: t('km_more') }),
-    el('h2', { text: t('km_team_months') }),
-    el('div', { class: 'table-wrap' }, el('table', {},
-      el('thead', {}, el('tr', {}, el('th', { text: t('km_month') }), ['src_email', 'src_self', 'src_other', 'km_total', 'km_closed', 'km_avg', 'col_points'].map((k) => el('th', { class: 'num', text: t(k) })))),
-      el('tbody', {}, teamMonths.map(({ m, x }) => el('tr', { class: m.ym === ym ? 'total' : null }, el('td', { text: `${periodLabel(m.ym)}${m.whole ? '' : ' *'}` }),
-        [x.email, x.self, x.other, x.total, x.closed].map((v) => el('td', { class: 'num', text: String(v) })), el('td', { class: 'num', text: hmOf(x.avg) }), el('td', { class: 'num', text: String(x.points) })))))),
-    kpiWeekSection(team, peopleById),
-    kpiLoadSection(team, peopleById),
-    kpiReportSection({ key: `m:${ym}`, range, tasks, activities: acts }, team, peopleById),
-    rep ? [el('p', { class: 'hint km-from', text: t('km_tickets_from', { a: rep.range.from, b: rep.range.to }) }), renderReports(rep.key, team)] : null,
-    rankLinksSection(),
-    el('h2', { text: t('definitions') }),
-    el('ul', { class: 'defs' }, KM_DEFS.map((k) => el('li', { text: t(k) }))));
+  // ADR-0123: what is not «who did what in the month» is one card each; a card opens its section in a window, nothing unfolds down the page
+  const wkD = (() => { try { return weeklyDigest(allTasks(), weights(), team, new Date(), { ...CARD_DEFAULTS, ...(weights().card || {}) }); } catch { return null; } })();
+  const tm0 = teamMonths[0];
+  const secs = [
+    { id: 'months', title: t('km_team_months'), v: tm0 ? String(tm0.x.total) : '—', sub: tm0 ? t('sc_months_sub', { m: periodLabel(tm0.m.ym), c: tm0.x.closed }) : '',
+      node: [el('h2', { text: t('km_team_months') }), el('div', { class: 'table-wrap' }, el('table', {},
+        el('thead', {}, el('tr', {}, el('th', { text: t('km_month') }), ['src_email', 'src_self', 'src_other', 'km_total', 'km_closed', 'km_avg', 'col_points'].map((k) => el('th', { class: 'num', text: t(k) })))),
+        el('tbody', {}, teamMonths.map(({ m, x }) => el('tr', { class: m.ym === ym ? 'total' : null }, el('td', { text: `${periodLabel(m.ym)}${m.whole ? '' : ' *'}` }),
+          [x.email, x.self, x.other, x.total, x.closed].map((v) => el('td', { class: 'num', text: String(v) })), el('td', { class: 'num', text: hmOf(x.avg) }), el('td', { class: 'num', text: String(x.points) }))))))] },
+    { id: 'week', title: t('week_h'), v: wkD ? String(wkD.total) : '—', sub: wkD ? t('week_total', { p: wkD.total, q: wkD.prevTotal }) : '', node: kpiWeekSection(team, peopleById) },
+    { id: 'load', title: t('load_h'), v: '', sub: t('sc_load_sub'), node: kpiLoadSection(team, peopleById) },
+    { id: 'report', title: t('rep_h', { from: range.from, to: range.to }), v: '', sub: t('sc_report_sub'), node: kpiReportSection({ key: `m:${ym}`, range, tasks, activities: acts }, team, peopleById) },
+    rep ? { id: 'tickets', title: t('sc_tickets_h'), v: '', sub: t('km_tickets_from', { a: rep.range.from, b: rep.range.to }), node: renderReports(rep.key, team) } : null,
+    { id: 'ranks', title: t('rk_h'), v: '', sub: t('sc_ranks_sub'), node: rankLinksSection() },
+    { id: 'defs', title: t('definitions'), v: String(KM_DEFS.length), sub: t('sc_defs_sub'), node: [el('h2', { text: t('definitions') }), el('ul', { class: 'defs' }, KM_DEFS.map((k) => el('li', { text: t(k) })))] },
+  ].filter((x) => x && x.node && (!Array.isArray(x.node) || x.node.some(Boolean)));
+  const more = secCards('kpi', secs);
   set(body,
     el('div', { class: 'bar km-bar' }, kindPills(renderKpi),
       el('label', {}, el('span', { text: t(kmKind === 'quarter' ? 'km_kind_quarter' : 'km_month') }), el('select', { id: 'kpi-month', onchange: (e) => { kpiMonth = e.target.value; if (!isQ(kpiMonth)) pref('kpimonth', kpiMonth); kpiOpen = kpiOpen; renderKpi(); } },
@@ -5075,7 +5094,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches; if (still || !('IntersectionObserver' in window)) return;
   const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('bt-seen'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -6% 0px', threshold: .08 });
   const SEL = '.table-wrap, details.km-more, .cr-alerts > *, .me-card, .proj-card, section.share, .km-detail';
-  const scan = () => document.querySelectorAll(SEL).forEach((n) => { if (n.dataset.btRv) return; n.dataset.btRv = '1';
+  const scan = () => document.querySelectorAll(SEL).forEach((n) => { if (n.dataset.btRv) return; n.dataset.btRv = '1'; if (n.closest('dialog')) return;   // inside a window everything is shown at once (v9.48)
     const r = n.getBoundingClientRect(); if (r.top < innerHeight * .94) return;   // what is already on screen is simply there
     n.classList.add('bt-rv'); io.observe(n); });
   new MutationObserver(() => requestAnimationFrame(scan)).observe(document.body, { childList: true, subtree: true }); scan();

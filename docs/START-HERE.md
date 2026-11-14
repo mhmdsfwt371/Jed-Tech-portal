@@ -161,6 +161,7 @@
 | `docs/decisions/0120-after-sales-accounts-board.md` | The Team page shows MyAFAQY’s whole Jeddah accounts list: totals, segments, accounts per engineer, and systems by customer from two server lists joined by exact address |
 | `docs/decisions/0121-tasks-per-day-and-start-limit.md` | Control room table per day: arrived, closed same day / later, not started, past the manager’s start limit (working-hour clock), started and open, cancelled |
 | `docs/decisions/0122-tender-details-in-a-window.md` | Tender details open in a window; fields the stage needs are marked «to fill»; site visit and bid opening read like the other two dates |
+| `docs/decisions/0123-sections-as-cards.md` | A long page’s secondary sections become cards that open in one window; started on Team KPIs |
 
 ## في عشر دقائق: ابنِ وافحص
 ```bash

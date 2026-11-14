@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.48 — 2026-11-14
+
+- مؤشرات الفريق: القسم الطويل «المزيد» تحت اللوحة صار بطاقات. كل بطاقة تعرض رقمها الأساسي، وبالضغط عليها يفتح القسم في نافذة بدل أن ينفرد في الصفحة وتضطر للنزول.
+- التنبيه «مهام مفتوحة أكثر من ٧ أيام» وزر «تقارير الإدارة» في غرفة التحكم يفتحان الآن البطاقة المقصودة مباشرة.
+- الجداول داخل النوافذ تظهر كاملة فورًا، بدل أن تبدأ باهتة وتظهر تدريجيًا.
+
+<details><summary>English</summary>
+
+- Team KPIs: the long «More» section under the board is now a set of cards. Each card shows its headline number, and clicking it opens the section in a window instead of unfolding it down the page.
+- The control room’s «tasks open more than 7 days» alert and «Management reports» button now open the right card directly.
+- Tables inside windows now show in full at once, instead of starting faded and appearing gradually.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹیم کے اشاریے: بورڈ کے نیچے لمبا حصہ «مزید» اب کارڈز کا مجموعہ ہے۔ ہر کارڈ اپنا بنیادی عدد دکھاتا ہے، اور اس پر کلک کرنے سے وہ حصہ ایک ونڈو میں کھلتا ہے، صفحے میں نیچے تک نہیں پھیلتا۔
+- کنٹرول روم کا انتباہ «7 دن سے زیادہ کھلے ٹاسک» اور بٹن «انتظامیہ کی رپورٹیں» اب سیدھا متعلقہ کارڈ کھولتے ہیں۔
+- ونڈوز کے اندر جدول اب فوراً پورے دکھتے ہیں، دھندلے شروع ہو کر آہستہ آہستہ ظاہر نہیں ہوتے۔
+
+</div>
+</details>
+
+
 ## v9.47 — 2026-11-14
 
 - سجل المناقصات: تفاصيل المناقصة تفتح الآن في نافذة فوق القائمة بدل أن تنفرد تحت الصف وتطوّل الصفحة.
