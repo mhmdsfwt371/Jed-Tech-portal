@@ -7,6 +7,7 @@
     "test": "node tests/core.test.mjs",
     "check": "node scripts/check.mjs",
     "verify": "node tests/core.test.mjs && node tests/systems.test.mjs && node tests/mailact.test.mjs && npm run test:tenders && npm run test:projects && node scripts/check.mjs",
+    "test:browser": "node scripts/browser-suites.mjs",
     "test:tenders": "node tests/tender-documents.test.mjs && node tests/tender-integration.test.mjs",
     "bump": "node scripts/bump.mjs",
     "preview": "python3 scripts/build-preview.py",
@@ -15,6 +16,7 @@
   },
   "devDependencies": {
     "@napi-rs/canvas": "1.0.13",
+    "axe-core": "4.10.2",
     "fake-indexeddb": "6.2.8",
     "jsdom": "31.0.0",
     "pdf-lib": "1.17.1"

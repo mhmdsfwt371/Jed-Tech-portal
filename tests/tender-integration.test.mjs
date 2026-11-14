@@ -31,7 +31,7 @@ async function setup(team=false) {
   const source=readFileSync(new URL('app.js',root),'utf8').replace(/^import[\s\S]*?from\s+'[^']+';\s*$/gm,match=>{
     const names=match.slice(match.indexOf('{')+1,match.lastIndexOf('}')).split(',').map(x=>x.trim().replace(/\s+as\s+/,': '));return 'const {'+names.join(',')+'}=injected;';
   }).replaceAll("import('./assets/vendor/tender-mail.min.js')","imp('./assets/vendor/tender-mail.min.js')").replaceAll("import('./assets/tender-documents.js')","imp('./assets/tender-documents.js')");
-  w.eval(source+'\nwindow.qa={store,tdCommit,tdUpdate,tdImportEmails,tdAnalyzeFiles,tdDocumentView,buildBackup,applyBackup,projectsModel,renderTenders,tdStartAlerts,route,busy:()=>tdBusy,get:()=>tenders};');
+  w.eval(source+'\nwindow.qa={store,tdCommit,tdUpdate,tdImportEmails,tdImportStudies,tdAnalyzeFiles,tdDocumentView,buildBackup,applyBackup,projectsModel,renderTenders,tdStartAlerts,route,busy:()=>tdBusy,get:()=>tenders};');
   await wait(()=>w.document.querySelector('#tenders-body')?.childElementCount || team&&w.document.querySelector('#version').textContent==='v'+config.PORTAL_VERSION,'boot');
   return dom;
 }
@@ -99,6 +99,31 @@ try {
   for(const lang of ['ar','ur','en']) {const langSelect=select('#lang-select');langSelect.value=lang;langSelect.dispatchEvent(event());await wait(()=>d.documentElement.lang===lang,'language '+lang);}
   const priorTheme=d.documentElement.dataset.theme;select('#theme-btn').click();assert.notEqual(d.documentElement.dataset.theme,priorTheme);
   const team=await setup(true);assert.equal(team.window.qa.get(),null);assert.equal((await team.window.qa.buildBackup()).tenders,null);team.window.close();
+  // ---- v9.55, the audit's findings. Each of these failed on v9.54. ----
+  // (1) A site visit and a bid opening read from an attached document reach the record — they were worked out and then dropped.
+  const mk=(id,subject,text)=>({id,subject,date:'2026-11-12',stage:'received',stageAt:'2026-11-12',status:'open',att:[],files:[{id:id+':f',name:'terms.txt',kind:'other',blob:new Blob([text])}]});
+  await qa.tdCommit({...qa.get(),items:[mk('sample:dates','sample: dates from the booklet','Site visit date: 2026-11-20\nBid opening: 2026-12-01\nSubmission deadline: 2026-11-30'),...qa.get().items]});
+  await qa.tdAnalyzeFiles('sample:dates',['sample:dates:f']);
+  const dated=()=>qa.get().items.find(x=>x.id==='sample:dates');
+  assert.equal(dated().due,'2026-11-30');assert.equal(dated().visit,'2026-11-20','the site visit read from a document is saved');assert.equal(dated().openAt,'2026-12-01','the bid opening read from a document is saved');
+  assert.equal(dated().dateSources.visit,'document');
+  // (2) The same study imported twice writes one history line, not two.
+  const studyFile=()=>new File([JSON.stringify({schema:'afaqy-tender-study/v1',tool:'QA analyzer',tenders:[{subject:'sample: dates from the booklet',etimadNo:'777001',fees:'1,500',value:'see the BOQ',decision:'review',decisionWhy:'needs a partner',dates:{askDue:'2026-11-18',visit:'20/11/2026'}}]})],'study.json');
+  await qa.tdImportStudies([studyFile()]);
+  assert.equal(dated().etimadNo,'777001');assert.equal(dated().fees,1500,'an amount written as text is read');assert.equal(dated().askDue,'2026-11-18','a date written as plain text is read');assert(dated().value==null,'words are not an amount');
+  const lines=dated().activity.filter(a=>a.action==='study').length;assert.equal(lines,1);
+  // (3) What the study held but the register could not read is said on the page, by field name.
+  assert(select('.td-study-res .td-study-skip')?.textContent.includes('Estimated value'),'the unread value is named');assert(select('.td-study-res .td-study-skip').textContent.includes('Site-visit'),'the day-first date is named');
+  await qa.tdImportStudies([studyFile()]);
+  assert.equal(dated().activity.filter(a=>a.action==='study').length,lines,'a repeated import adds no history line');
+  // (4) The result block can be put away.
+  select('.td-study-res .td-study-close').click();assert.equal(select('.td-study-res'),null,'the import result closes');
+  // (5) An empty amount stays empty across reloads: it used to come back as 0 after a save, hiding «to fill» and blocking the study.
+  const again=await setup();assert.equal(again.window.qa.get().items.find(x=>x.id==='sample:dates').value,null);
+  await again.window.qa.tdUpdate('sample:dates',{note:'saved after a reload'});again.window.close();
+  const third=await setup(), kept=third.window.qa.get().items.find(x=>x.id==='sample:dates');
+  assert.equal(kept.value,null,'an empty estimated value is still empty after reload, save, reload');assert.equal(kept.fees,1500);
+  assert(core.tenderNeeds(kept).includes('due')===false&&core.tenderNeeds({...kept,stage:'prep'}).includes('value'),'and it is still asked for while preparing');third.window.close();
   assert.deepEqual(errors,[],'uncaught UI errors');
   console.log('tender-integration: passed Outlook import, source dates, conflict review, categories, table preview, filtering, deletion, deduplication, offer gates, stage transitions, My Projects, alerts, backup/restore, reload, stale tabs, 120-file reading/pagination/search, storage-failure reporting, missing-date rejection, literal HTML display, all management routes, languages, theme and team separation');
 } finally { for(const dom of instances) dom.window.close(); }

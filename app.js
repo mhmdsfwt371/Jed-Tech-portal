@@ -13,7 +13,7 @@ import {
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
   quarterRange, quarterOf, quarterBaseline, quarterGoalProgress, planProgress, suggestQuarterGoals,
   maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply,
-  tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds, parseTenderStudy, matchTenderStudy, applyTenderStudy, tenderAutoStage, tenderStudyFromSheet,
+  tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds, tenderAmount, tenderDatePatch, backupDue, parseTenderStudy, matchTenderStudy, applyTenderStudy, tenderAutoStage, tenderStudyFromSheet,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts } from './core.js';
 
@@ -176,7 +176,7 @@ function renderMeTour() {
   const count = t('tour_count', { n: state.step + 1, total: state.total });
   $('tour-count').textContent = count;
   $('tour-progress').setAttribute('aria-valuenow', String(state.progress));
-  $('tour-progress').setAttribute('aria-valuetext', count);
+  $('tour-progress').setAttribute('aria-valuetext', count); $('tour-progress').setAttribute('aria-label', t('tour_progress'));
   $('tour-progress-bar').style.width = state.progress + '%';
   const titles = ['tour_0_title', 'tour_1_title', 'tour_2_title', 'tour_3_title', 'tour_4_title'];
   const descs = [
@@ -810,7 +810,7 @@ function rankFor(id, ym) {   // his team: the same team leader in the team file,
 let tenders = null;   // { items: [...], to, pulledAt } — on this device, carried by the backup
 let tdDlg = null;   // the tender's detail window (ADR-0122)
 let tdKind = pref('tdkind') || 'month', tdPick = '', tdFrom = '', tdTo = '', tdBusy = '', tdOpenId = null, tdStageF = null, tdCardF = null;   // ADR-0102: a card's filter
-let tdQuery = '', tdMailResult = null, tdStudyResult = null;   // tdStudyResult: the last analyzer import (ADR-0126)
+let tdQuery = '', tdMailResult = null, tdStudyResult = null, tdMoreOpen = pref('tdmore') === '1';   // tdStudyResult: the last analyzer import (ADR-0126)
 const TD_FROM = 'a.ibrahim@afaqy.com';
 // ADR-0083: the lifecycle. Open stages in order, then the closed ones. declined/lost need a reason.
 const TD_STAGES = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted', 'won', 'lost', 'cancelled', 'declined'];
@@ -907,7 +907,7 @@ function cleanTenders(x) {
     // ADR-0083: the lifecycle — older rows get their stage from the old status
     stage: TD_STAGES.includes(i.stage) ? i.stage : (i.status === 'ready' ? 'ready' : 'received'), stageAt: d(i.stageAt) || d(i.readyOn) || i.date,
     reason: String(i.reason || '').slice(0, 300), owner: String(i.owner || '').slice(0, 80), etimadNo: String(i.etimadNo || '').slice(0, 40),
-    value: Number.isFinite(Number(i.value)) && Number(i.value) >= 0 ? Number(i.value) : null, fees: Number.isFinite(Number(i.fees)) && Number(i.fees) >= 0 ? Number(i.fees) : null, bond: String(i.bond || '').slice(0, 120),
+    value: tenderAmount(i.value), fees: tenderAmount(i.fees), bond: String(i.bond || '').slice(0, 120),
     askDue: d(i.askDue), openAt: d(i.openAt), submittedOn: d(i.submittedOn), submitNo: String(i.submitNo || '').slice(0, 60), decidedOn: d(i.decidedOn), study: String(i.study || '').slice(0, 300), ...cleanTenderDetails(i) }));
   return { items, to: d(x.to) || null, pulledAt: String(x.pulledAt || ''), revision: String(x.revision || '') };
 }
@@ -1037,8 +1037,16 @@ async function tdReadStudyFile(f) {
   }
   return parseTenderStudy(await f.text());
 }
+const bidi = (x) => `\u2068${x}\u2069`;   // a name in another script, kept as one piece inside the sentence around it
+const tdNewResult = () => ({ tenders: 0, fields: 0, differs: [], unmatched: [], bad: [], nosheet: [], skipped: [], moves: [] });
+// v9.55: one test for «is this the analyzer's study?», used by the drop, the toolbar and a tender's own «add file»
+async function tdIsStudyFile(f) {
+  if (/\.json$/i.test(f.name)) return true;
+  if (!/\.(xlsx|xlsm)$/i.test(f.name)) return false;
+  try { const X = await loadXlsx(); return X.read(await f.arrayBuffer(), { type: 'array', bookSheets: true }).SheetNames.some((n) => n.trim().toLowerCase() === 'tender-register'); } catch { return false; }
+}
 async function tdImportStudies(files, onlyId = null) {
-  const res = { tenders: 0, fields: 0, differs: [], unmatched: [], bad: [], nosheet: [], moves: [] };
+  const res = tdNewResult();
   for (const f of files) {
     let st; try { st = await tdReadStudyFile(f); } catch { st = { error: 'json' }; }
     if (st.error) { (st.error === 'nosheet' ? res.nosheet : res.bad).push(f.name); continue; }
@@ -1047,6 +1055,7 @@ async function tdImportStudies(files, onlyId = null) {
       const row = onlyId ? (st.tenders.length === 1 ? items.find((i) => i.id === onlyId) : (matchTenderStudy(items, study, tdKey)?.id === onlyId ? items.find((i) => i.id === onlyId) : null)) : matchTenderStudy(items, study, tdKey);
       if (!row) { if (!onlyId) res.unmatched.push(study.subject || study.etimadNo); continue; }
       const { patch, filled, differs } = applyTenderStudy(row, study);
+      if (study.skipped && study.skipped.length) res.skipped.push({ subject: row.subject, fields: study.skipped });   // v9.55: the incomplete is declared
       if (st.keep && !(row.files || []).some((x) => x.name === f.name && x.kind === 'study')) patch.files = [...(row.files || []), { ...tdNewFile(f, 'study'), kindManual: true }];   // the study workbook stays with its tender
       if (Object.keys(patch).length && await tdUpdate(row.id, patch, tdActivity('study', t('td_study_act', { n: filled.length, tool: st.tool || t('td_analyzer') })))) { res.tenders++; res.fields += filled.length; }
       for (const d of differs) res.differs.push({ subject: row.subject, ...d });
@@ -1061,17 +1070,19 @@ async function tdAddFilesAs(id, files, kind) {
   const cur = tenders?.items.find((i) => i.id === id); if (!cur || !files.length) return;
   const upload = files.map((f) => ({ ...tdNewFile(f, kind), kindManual: true }));
   if (!await tdUpdate(id, { files: [...(cur.files || []), ...upload] }, tdActivity('add', files.map((f) => f.name).join(', ')))) return;
-  const res = tdStudyResult && tdStudyResult.moves ? tdStudyResult : { tenders: 0, fields: 0, differs: [], unmatched: [], bad: [], nosheet: [], moves: [] };
+  const res = tdStudyResult && tdStudyResult.moves ? tdStudyResult : tdNewResult();
   if (kind === 'offer') await tdAutoMove(id, { type: 'offer' }, res);
-  tdStudyResult = res; renderTenders(); toast(t('td_drop_added', { n: files.length, k: t(tdFileKind[kind] || `td_file_${kind}`) }));
+  if (res.moves.length) tdStudyResult = res;
+  renderTenders(); toast(t('td_drop_added', { n: files.length, k: t(tdFileKind[kind] || `td_file_${kind}`) }));
   if (kind !== 'offer' && kind !== 'study') void tdAnalyzeFiles(id, upload.map((x) => x.id));
 }
 // ADR-0127: one place to drop anything. Mails register tenders, a study fills its tender, and any other file is asked about once:
 // which tender, and what it is — the tender whose window is open, or the only one being prepared, is offered first.
 async function tdRouteDrop(files, hintId = null) {
-  if (tdBusy || !files.length) return;
+  if (!files.length) return;
+  if (tdBusy) { toast(t('td_busy_wait')); return; }   // v9.55: files dropped while the page was reading others vanished without a word
   const mails = files.filter((f) => /\.(msg|eml)$/i.test(f.name)), rest = files.filter((f) => !mails.includes(f)), studies = [], other = [];
-  for (const f of rest) { if (/\.json$/i.test(f.name)) studies.push(f); else if (/\.(xlsx|xlsm)$/i.test(f.name)) { let ok = false; try { const X = await loadXlsx(); ok = X.read(await f.arrayBuffer(), { type: 'array', bookSheets: true }).SheetNames.some((n) => n.trim().toLowerCase() === 'tender-register'); } catch { ok = false; } (ok ? studies : other).push(f); } else other.push(f); }
+  for (const f of rest) (await tdIsStudyFile(f) ? studies : other).push(f);
   if (mails.length) await tdImportEmails(mails, hintId || '');
   if (studies.length) await tdImportStudies(studies, hintId);
   if (other.length) tdDropAsk(other, hintId);
@@ -1122,7 +1133,7 @@ async function tdAnalyzeFiles(id, ids) {
       const files = latest.files.map(entry => entry.id === fileId ? {...entry,analysis:result.analysis,
         kind:!entry.kindManual && ['other','sheet'].includes(entry.kind) && result.kind ? result.kind : entry.kind} : entry);
       const dated = applyTenderEmailDates({...latest,files});
-      if (!await tdUpdate(id, {files,due:dated.due,askDue:dated.askDue,dueTime:dated.dueTime,askDueTime:dated.askDueTime,dateSources:dated.dateSources}, tdActivity('read',file.name))) break;
+      if (!await tdUpdate(id, {files,...tenderDatePatch(dated)}, tdActivity('read',file.name))) break;
       await new Promise(resolve => setTimeout(resolve,0));
     }
   } catch { toast(t('td_doc_error')); }
@@ -1259,8 +1270,16 @@ function tdFilesPanel(item) {
     const current = tenders.items.find((row) => row.id === item.id);
     if (!files.length || !current || tdBusy) return;
     const selected = kind.value;
-    const upload = files.map((file) => ({...tdNewFile(file, selected === 'auto' ? 'other' : selected),kindManual:selected !== 'auto'}));
-    if (await tdUpdate(item.id, { files: [...(current.files || []), ...upload] }, tdActivity('add', files.map((file) => file.name).join(', ')))) {
+    // v9.55: the same file means the same thing wherever it is added. The analyzer's study fills the tender, and a file added
+    // as «final offer» makes it ready — until now only a drop did that, and a phone cannot drop.
+    if (selected === 'offer') { await tdAddFilesAs(item.id, files, 'offer'); return; }
+    const studies = [], plain = [];
+    if (selected === 'auto' || selected === 'study') for (const f of files) (await tdIsStudyFile(f) ? studies : plain).push(f); else plain.push(...files);
+    if (studies.length) await tdImportStudies(studies, item.id);
+    const now = tenders.items.find((row) => row.id === item.id);
+    if (!plain.length || !now) return;
+    const upload = plain.map((file) => ({...tdNewFile(file, selected === 'auto' ? 'other' : selected),kindManual:selected !== 'auto'}));
+    if (await tdUpdate(item.id, { files: [...(now.files || []), ...upload] }, tdActivity('add', plain.map((file) => file.name).join(', ')))) {
       renderTenders(); await tdAnalyzeFiles(item.id,upload.map(file => file.id));
     }
   } });
@@ -1274,7 +1293,10 @@ function tdFilesPanel(item) {
         original ? el('small', { class: 'hint', text: label(file.kind) }) : el('select',{class:'td-file-kind','aria-label':t('td_file_type')+' '+file.name,disabled:!!tdBusy,onchange:async event=>{
           const current = tenders.items.find(row=>row.id===item.id); if (!current || tdBusy) return;
           const files = current.files.map(entry=>entry.id===file.id ? {...entry,kind:event.target.value,kindManual:true,kindAt:new Date().toISOString()} : entry);
-          await tdUpdate(item.id,{files},tdActivity('category',file.name)); renderTenders();
+          if (!await tdUpdate(item.id,{files},tdActivity('category',file.name))) { renderTenders(); return; }
+          // v9.55: naming a file «final offer» is the same act as adding one
+          if (event.target.value === 'offer') { const res = tdStudyResult && tdStudyResult.moves ? tdStudyResult : tdNewResult(); await tdAutoMove(item.id, { type: 'offer' }, res); if (res.moves.length) tdStudyResult = res; }
+          renderTenders();
         }},kinds.map(k=>el('option',{value:k,text:label(k),selected:k===file.kind}))),
         !original ? el('small',{class:'hint',text:t(`td_doc_${file.analysis?.state || 'pending'}`)}) : null),
       original ? null : el('button',{type:'button',class:'btn tiny td-file-view',text:t('td_doc_view'),onclick:()=>tdDocumentView(file)}),
@@ -1284,8 +1306,7 @@ function tdFilesPanel(item) {
         if (!current || tdBusy || !confirm(t('proj_f_del_q', { n: file.name }))) return;
         const files = (current.files || []).filter((entry) => entry.id !== file.id);
         const dated = applyTenderEmailDates({...current,files});
-        if (await tdUpdate(item.id, { files, removedFiles: [...(current.removedFiles || []), file.id],due:dated.due,askDue:dated.askDue,
-          dueTime:dated.dueTime,askDueTime:dated.askDueTime,dateSources:dated.dateSources }, tdActivity('remove', file.name))) renderTenders();
+        if (await tdUpdate(item.id, { files, removedFiles: [...(current.removedFiles || []), file.id], ...tenderDatePatch(dated) }, tdActivity('remove', file.name))) renderTenders();
       } }));
   };
   const files = item.files || [];
@@ -1333,7 +1354,7 @@ function tdHistory(item) {
 
 function renderTenders() {
   const body = $('tenders-body'); if (!body || isTeamPortal) return; const today = saudiDay(new Date().toISOString());
-  const up = el('input', { type: 'file', accept: '.json,.txt,application/json,text/plain', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; await tdTake(await f.text()); } });
+  const up = el('input', { type: 'file', class: 'td-up-in', accept: '.json,.txt,application/json,text/plain', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; await tdTake(await f.text()); } });
   const pst = el('input', { type: 'file', accept: '.pst,.ost', hidden: true, onchange: (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; if (f.size > MF_BROWSER_MAX) { toast(t('td_pst_big', { gb: (f.size / 1073741824).toFixed(1) })); return; } tdFromPst(f); } });   // ADR-0096: a file the browser cannot hold is not tried
   const dIn2 = (cls, val, on) => el('input', { type: 'date', class: cls, 'aria-label': t(cls === 'td-from' ? 'td_from' : 'td_to'), value: val, max: today, onchange: (e) => on(e.target.value) });
   const empty = !tenders || !tenders.items.length;
@@ -1341,32 +1362,44 @@ function renderTenders() {
   const pull = el('section', { class: 'dt-quick td-pull' },
     el('div', { class: 'td-pull-head' }, el('h2', { text: t('td_pull_h') }), tenders && tenders.pulledAt ? el('span', { class: 'hint', text: t('td_last', { to: tenders.to || '—', n: tenders.items.length }) }) : null),
     tdEmailPicker(),
-    el('p', { class: 'hint td-drop-any', text: `⤓ ${t('td_drop_any')}` }),
-    tdStudyResult ? el('div', { role: 'status', class: 'td-study-res' }, el('p', { class: 'hint', text: t('td_study_done', { n: tdStudyResult.fields, m: tdStudyResult.tenders, d: tdStudyResult.differs.length, u: tdStudyResult.unmatched.length }) }),
-      tdStudyResult.differs.length ? el('ul', { class: 'td-study-diff' }, tdStudyResult.differs.slice(0, 30).map((d) => el('li', { dir: 'auto', text: t('td_study_diff', { s: d.subject, f: t(`td_col_${d.field}`), h: d.have, v: d.study }) }))) : null,
-      tdStudyResult.unmatched.length ? el('p', { class: 'note', dir: 'auto', text: t('td_study_unmatched', { list: tdStudyResult.unmatched.slice(0, 10).join(' · ') }) }) : null,
-      tdStudyResult.bad.length ? el('p', { class: 'note', dir: 'auto', text: t('td_study_bad', { list: tdStudyResult.bad.join(' · ') }) }) : null,
-      (tdStudyResult.nosheet || []).length ? el('p', { class: 'note', dir: 'auto', text: t('td_study_nosheet', { list: tdStudyResult.nosheet.join(' · ') }) }) : null,
-      (tdStudyResult.moves || []).map((m) => el('p', { class: 'td-move', dir: 'auto' }, el('span', { text: t('td_moved', { s: m.subject.slice(0, 80), to: t(`td_st_${m.to}`) }) }), ' ',
+    (() => { const any = el('input', { type: 'file', multiple: '', hidden: true, onchange: (e) => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) void tdRouteDrop(fs, null); } });
+      return el('p', { class: 'hint td-drop-any' }, el('span', { text: `⤓ ${t('td_drop_any')}` }), ' ', el('button', { type: 'button', class: 'btn tiny td-any-btn', disabled: !!tdBusy, text: t('td_any_pick'), onclick: () => any.click() }), any); })(),
+    tdStudyResult ? el('div', { role: 'status', class: 'td-study-res' },
+      el('button', { type: 'button', class: 'icon-btn td-study-close', text: '✕', title: t('td_res_close'), 'aria-label': t('td_res_close'), onclick: () => { tdStudyResult = null; renderTenders(); } }),
+      el('p', { class: 'hint', text: t('td_study_done', { n: tdStudyResult.fields, m: tdStudyResult.tenders, d: tdStudyResult.differs.length, u: tdStudyResult.unmatched.length }) }),
+      // v9.55: a tender's Arabic name inside an English sentence took the whole line's direction with it («dir: auto» reads the
+      // first strong letter) — the sentence came out back to front. The line keeps the page's direction; the name is isolated.
+      (tdStudyResult.skipped || []).map((x) => el('p', { class: 'note td-study-skip', text: t('td_study_skip', { s: bidi(x.subject.slice(0, 80)), list: x.fields.map((k) => t(`td_col_${k}`)).join(' · ') }) })),
+      tdStudyResult.differs.length ? el('ul', { class: 'td-study-diff' }, tdStudyResult.differs.slice(0, 30).map((d) => el('li', { text: t('td_study_diff', { s: bidi(d.subject), f: t(`td_col_${d.field}`), h: bidi(d.have), v: bidi(d.study) }) }))) : null,
+      tdStudyResult.unmatched.length ? el('p', { class: 'note', text: t('td_study_unmatched', { list: tdStudyResult.unmatched.slice(0, 10).map(bidi).join(' · ') }) }) : null,
+      tdStudyResult.bad.length ? el('p', { class: 'note', text: t('td_study_bad', { list: tdStudyResult.bad.map(bidi).join(' · ') }) }) : null,
+      (tdStudyResult.nosheet || []).length ? el('p', { class: 'note', text: t('td_study_nosheet', { list: tdStudyResult.nosheet.map(bidi).join(' · ') }) }) : null,
+      (tdStudyResult.moves || []).map((m) => el('p', { class: 'td-move' }, el('span', { text: t('td_moved', { s: bidi(m.subject.slice(0, 80)), to: t(`td_st_${m.to}`) }) }), ' ',
         el('button', { type: 'button', class: 'btn tiny quiet td-undo', text: t('td_undo'), onclick: async () => { if (await tdUpdate(m.id, m.back, tdActivity('stage', t('td_undone')))) { tdStudyResult.moves = tdStudyResult.moves.filter((x) => x !== m); renderTenders(); } } })))) : null,
     tdMailResult ? el('div', { role: 'status' },
       el('p', { class: 'hint', text: t('td_mail_result', tdMailResult) }),
       tdMailResult.failures.map(({ name, key }) => el('p', { class: 'hint', dir: 'auto', text: [name, t(key)].filter(Boolean).join(' · ') }))) : null,
-    el('div', { class: 'row td-period' }, el('span', { text: t('td_from') }), dIn2('td-from', tdFrom || tdDefaultFrom(), (v) => { tdFrom = v; }), el('span', { text: t('td_to') }), dIn2('td-to', tdTo || today, (v) => { tdTo = v; })),
-    el('div', { class: 'td-actions' },
-      el('button', { type: 'button', class: 'btn primary td-copy', text: `📋 ${t('td_copy')}`, onclick: () => copyText(tdPrompt(), t('td_copied')) }),
-      el('a', { class: 'btn td-bm', href: tdBookmarklet(), title: t('td_bm_hint'), onclick: (e) => { e.preventDefault(); toast(t('td_bm_hint')); }, text: `📌 ${t('td_bm')}` }),
-      el('button', { type: 'button', class: 'btn', disabled: !!tdBusy, text: `⬆ ${t('td_upload')}`, onclick: () => up.click() }), up,
-      el('button', { type: 'button', class: 'btn td-paste-btn', disabled: !!tdBusy, text: `📥 ${t('td_paste')}`, onclick: tdPasteDialog }),
-      el('button', { type: 'button', class: 'btn td-pst-btn', disabled: !!tdBusy, text: `📂 ${t('td_pst_pick')}`, onclick: () => pst.click() }), pst,
-      el('button', { type: 'button', class: 'btn td-add-btn', disabled: !!tdBusy, text: `＋ ${t('td_add')}`, onclick: tdAddManual }),
-      el('label', { class: 'td-owner-def' }, el('span', { class: 'hint', text: t('td_owner_def') }), el('input', { type: 'text', class: 'td-owner-in', value: pref('tdowner') || '', placeholder: t('td_owner_ph'), onchange: async (e) => { pref('tdowner', e.target.value.trim().slice(0, 80)); if (tenders) { await tdCommit(tenders); renderTenders(); } } })),
-      (() => { const inp = tdStudyInput(); return el('span', {}, el('button', { type: 'button', class: 'btn td-study-btn', disabled: !!tdBusy, text: `📊 ${t('td_study_import')}`, onclick: () => inp.click() }), inp); })()),
+    (() => { const st = backupState(); if (!st.due || empty) return null;
+      return el('p', { class: 'note td-backup' }, el('span', { text: st.days == null ? t('bk_never') : t('bk_old', { n: st.days }) }), ' ', el('button', { type: 'button', class: 'btn tiny td-backup-btn', text: `⬇ ${t('bk_now')}`, onclick: () => $('export-btn').click() })); })(),
     tdBusy ? el('p', { class: 'note td-busy', role: 'status', text: tdBusy }) : null,
-    el('details', { class: 'td-how', ...(empty ? { open: '' } : {}) }, el('summary', { text: t('td_how') }),
-      el('div', { class: 'td-way' }, el('h3', { text: t('td_way_claude') }), el('p', { class: 'hint', text: t('td_pull_lead', { from: tdFrom || tdDefaultFrom() }) }), el('p', { class: 'hint', text: t('td_bm_hint') }),
+    // v9.55: the page is built around the least-touch flow — drop (or choose) the mail, the study, the final offer. Every other
+    // way in, and the one setting, sit folded below: open while the register is empty, and they stay as the manager left them.
+    el('details', { class: 'td-how', ...(empty || tdMoreOpen ? { open: '' } : {}), ontoggle: (e) => { if (!empty) { tdMoreOpen = e.target.open; pref('tdmore', tdMoreOpen ? '1' : ''); } } }, el('summary', { text: t('td_more') }),
+      el('label', { class: 'td-owner-def' }, el('span', { class: 'hint', text: t('td_owner_def') }), el('input', { type: 'text', class: 'td-owner-in', value: pref('tdowner') || '', placeholder: t('td_owner_ph'), onchange: async (e) => { pref('tdowner', e.target.value.trim().slice(0, 80)); if (tenders) { await tdCommit(tenders); renderTenders(); } } })),
+      el('div', { class: 'td-actions' },
+        el('button', { type: 'button', class: 'btn td-add-btn', disabled: !!tdBusy, text: `＋ ${t('td_add')}`, onclick: tdAddManual }),
+        (() => { const inp = tdStudyInput(); return el('span', {}, el('button', { type: 'button', class: 'btn td-study-btn', disabled: !!tdBusy, text: `📊 ${t('td_study_import')}`, onclick: () => inp.click() }), inp); })()),
+      el('div', { class: 'td-way' }, el('h3', { text: t('td_way_claude') }), el('p', { class: 'hint', text: t('td_pull_lead', { from: tdFrom || tdDefaultFrom() }) }),
+        el('div', { class: 'row td-period' }, el('span', { text: t('td_from') }), dIn2('td-from', tdFrom || tdDefaultFrom(), (v) => { tdFrom = v; }), el('span', { text: t('td_to') }), dIn2('td-to', tdTo || today, (v) => { tdTo = v; })),
+        el('div', { class: 'td-actions' },
+          el('button', { type: 'button', class: 'btn primary td-copy', text: `📋 ${t('td_copy')}`, onclick: () => copyText(tdPrompt(), t('td_copied')) }),
+          el('a', { class: 'btn td-bm', href: tdBookmarklet(), title: t('td_bm_hint'), onclick: (e) => { e.preventDefault(); toast(t('td_bm_hint')); }, text: `📌 ${t('td_bm')}` }),
+          el('button', { type: 'button', class: 'btn', disabled: !!tdBusy, text: `⬆ ${t('td_upload')}`, onclick: () => up.click() }), up,
+          el('button', { type: 'button', class: 'btn td-paste-btn', disabled: !!tdBusy, text: `📥 ${t('td_paste')}`, onclick: tdPasteDialog })),
+        el('p', { class: 'hint', text: t('td_bm_hint') }),
         el('a', { class: 'btn tiny', href: 'https://outlook.office.com/mail/', target: '_blank', rel: 'noopener', text: t('proj_open_outlook') })),
-      el('div', { class: 'td-way' }, el('h3', { text: t('td_way_pst') }), el('p', { class: 'hint', text: t('td_pst_lead') })),
+      el('div', { class: 'td-way' }, el('h3', { text: t('td_way_pst') }), el('p', { class: 'hint', text: t('td_pst_lead') }),
+        el('button', { type: 'button', class: 'btn td-pst-btn', disabled: !!tdBusy, text: `📂 ${t('td_pst_pick')}`, onclick: () => pst.click() }), pst),
       el('div', { class: 'td-way' }, el('h3', { text: t('td_way_manual') }), el('p', { class: 'hint', text: t('td_manual_lead') }))));
   if (!tenders || !tenders.items.length) { set(body, mailSrc('tenders'), pull, el('p', { class: 'note', text: t('td_empty') })); return; }
   const periods = [...new Set(tenders.items.map((i) => tdPeriodOf(i.date, tdKind)))].sort().reverse();
@@ -1450,7 +1483,7 @@ function renderTenders() {
   const searchForm = el('form', { class: 'row td-file-controls', onsubmit: (event) => {
     event.preventDefault(); tdQuery = search.value; renderTenders();
   } }, search, el('button', { type: 'submit', class: 'btn tiny', text: t('td_search_go') }));
-  set(body, mailSrc('tenders'), pull,
+  set(body, mailSrc('tenders', false), pull,
     el('div', { class: 'row td-filter' }, kinds, pick, searchForm),
 
     pipe,
@@ -1477,7 +1510,7 @@ function renderTenders() {
   const needs = tenderNeeds(cur);
   set(box, el('h2', { id: 'td-dlg-h', class: 'td-dlg-h', dir: 'auto', text: cur.subject }),
     el('div', { class: 'row td-dlg-top' }, el('span', { class: 'hint', text: t('td_col_stage') }), stageSel(cur), el('span', { class: 'hint', text: `${t('td_col_date')}: ${cur.date}` })),
-    cur.studyDecision ? el('p', { class: `td-study-dec td-dec-${cur.studyDecision}`, dir: 'auto', text: t('td_study_dec', { d: t(`td_dec_${cur.studyDecision.replace("-", "")}`), why: cur.studyWhy || '—', at: String(cur.studyAt || '').slice(0, 10) }) }) : null,
+    cur.studyDecision ? el('p', { class: `td-study-dec td-dec-${cur.studyDecision}`, text: t('td_study_dec', { d: t(`td_dec_${cur.studyDecision.replace("-", "")}`), why: bidi(cur.studyWhy || '—'), at: String(cur.studyAt || '').slice(0, 10) }) }) : null,
     (() => { const inp = tdStudyInput(cur.id); return el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny quiet', text: `📊 ${t('td_study_import_one')}`, onclick: () => inp.click() }), inp); })(),
     el('p', { class: `td-needs ${needs.length ? 'some' : 'none'}`, text: needs.length ? t('td_needs_line', { n: needs.length, list: needs.map((k) => t(`td_col_${k}`)).join(lang === 'en' ? ', ' : '، ') }) : t('td_needs_none') }),
     detail(cur));
@@ -1510,7 +1543,7 @@ function crModal({ title, lead, tiles = [], bars = [], bar = null, head = [], ro
   const keep = () => rows.map((r, k) => k).filter((k) => (st.tile < 0 || !tiles[st.tile][3] || tiles[st.tile][3](k)) && (!st.who || (bar && bar(k)[0] === st.who)));
   const label = () => [st.tile >= 0 ? tiles[st.tile][0] : '', st.who].filter(Boolean).join(' · ');
   const xl = async () => { const ks = keep(), X = await loadXlsx(), ws = X.utils.aoa_to_sheet([head, ...ks.map((k) => rows[k])]); ws['!views'] = [{ RTL: lang !== 'en' }]; ws['!cols'] = head.map((h, k) => ({ wch: k === 0 ? 50 : 16 })); const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, title.slice(0, 30)); X.writeFile(wb, `${file}${label() ? '-filtered' : ''}-${saudiDay(new Date().toISOString())}.xlsx`); };
-  const tilesBox = tiles.length ? el('div', { class: 'crm-tiles' }) : null, barsBox = el('div', { class: 'crm-bars', role: 'img', 'aria-label': t('crm_bars') }), info = el('div', { class: 'crm-filter', hidden: true }), listBox = el('div');
+  const tilesBox = tiles.length ? el('div', { class: 'crm-tiles' }) : null, barsBox = el('div', { class: 'crm-bars', role: 'group', 'aria-label': t('crm_bars') }), info = el('div', { class: 'crm-filter', hidden: true }), listBox = el('div');
   const draw = () => {
     const ks = keep(), on = st.tile >= 0 || st.who;
     if (tilesBox) set(tilesBox, tiles.map(([l, v, s, f], ti) => f ? el('button', { type: 'button', class: `km-tile crm-tile-f${st.tile === ti ? ' on' : ''}`, 'aria-pressed': String(st.tile === ti), title: t(st.tile === ti ? 'crm_f_off' : 'crm_f_on'), onclick: () => { st.tile = st.tile === ti ? -1 : ti; draw(); } },
@@ -1536,10 +1569,12 @@ const MAIL_SRC = {
   pst: { ic: '📨', go: () => { location.hash = '#mailfile'; } },
   projects: { ic: '🗂', go: () => { location.hash = '#me'; setTimeout(() => { projView = 'mail'; projOpen(); }, 300); } },
   tenders: { ic: '📑', go: () => { location.hash = '#tenders'; } } };
-function mailSrc(kind) {
+// v9.55: once the page holds data the explanation is one line that opens — it used to fill the whole first screen of a phone,
+// above the work, on every visit. With nothing on the page yet it is open: that is when it is needed.
+function mailSrc(kind, open = true) {
   const other = Object.keys(MAIL_SRC).filter((k) => k !== kind);
-  return el('section', { class: `mail-src mail-src-${kind}`, 'aria-label': t('msrc_aria') },
-    el('div', { class: 'msrc-head' }, el('span', { class: 'msrc-ic', 'aria-hidden': 'true', text: MAIL_SRC[kind].ic }), el('b', { text: t(`msrc_${kind}_name`) }), el('span', { class: 'chip msrc-n', text: t('msrc_one_of') })),
+  return el('details', { class: `mail-src mail-src-${kind}`, 'aria-label': t('msrc_aria'), ...(open ? { open: '' } : {}) },
+    el('summary', { class: 'msrc-head' }, el('span', { class: 'msrc-ic', 'aria-hidden': 'true', text: MAIL_SRC[kind].ic }), el('b', { text: t(`msrc_${kind}_name`) }), el('span', { class: 'chip msrc-n', text: t('msrc_one_of') })),
     el('dl', { class: 'msrc-dl' }, el('dt', { text: t('msrc_answers') }), el('dd', { text: t(`msrc_${kind}_q`) }), el('dt', { text: t('msrc_in') }), el('dd', { text: t(`msrc_${kind}_in`) }),
       el('dt', { text: t('msrc_shows') }), el('dd', { text: t(`msrc_${kind}_out`) }), el('dt', { text: t('msrc_not') }), el('dd', {}, other.map((k, n) => [n ? ' · ' : '', el('button', { type: 'button', class: 'linkish', text: `${MAIL_SRC[k].ic} ${t(`msrc_${k}_name`)}`, onclick: MAIL_SRC[k].go })]))));
 }
@@ -2056,9 +2091,9 @@ function rankLinksSection() {
     el('td', { text: nm(id) }), el('td', { class: 'num', text: t('pg_rank', { r: s.r, n: s.n }) }), el('td', { text: s.gap != null ? t('pg_gap', { g: s.gap }) : s.lead != null ? t('pg_lead', { g: s.lead }) : '—' }),
     (() => { const n = numsFor(id, wk), pr = prevWeekRange(wk), p = rangePulled(pr) ? numsFor(id, pr) : null; return el('td', { class: 'wk-cell' }, t('wk_cell', { n: n[3], p: n[6] }), ' ', p ? kmDelta(n[6], p[6], 'h', t('ms_prev_week')) : null); })(),
     el('td', {}, el('button', { type: 'button', class: 'btn tiny rk-copy', text: `📋 ${t('rk_copy')}`, onclick: () => copyRankMessage(id, ym, nm, wk) }), ' ', el('button', { type: 'button', class: 'btn tiny wk-copy', text: `🗓 ${t('wk_copy')}`, onclick: () => copyWeekMessage(id, ym, nm, wk) })))));
-  const sel = el('select', { class: 'rk-month', onchange: (e) => { ym = e.target.value; draw(); } }, [[cur, t('rk_cur', { m: monthLabel(cur) })], [ymPrev(cur), monthLabel(ymPrev(cur))]].map(([v, l]) => el('option', { value: v, selected: v === ym ? '' : null, text: l })));
+  const sel = el('select', { class: 'rk-month', 'aria-label': t('rk_month'), onchange: (e) => { ym = e.target.value; draw(); } }, [[cur, t('rk_cur', { m: monthLabel(cur) })], [ymPrev(cur), monthLabel(ymPrev(cur))]].map(([v, l]) => el('option', { value: v, selected: v === ym ? '' : null, text: l })));
   draw();
-  return el('section', { class: 'rk-sec', id: 'k-ranks' }, el('h2', { text: t('rk_h') }), el('p', { class: 'hint', text: t('rk_lead') }), el('div', { class: 'row' }, el('span', { text: t('rk_month') }), sel, el('span', { text: t('wk_week') }), el('select', { class: 'wk-week', onchange: (e) => { wk = weekRange(Number(e.target.value)); draw(); } }, [[1, t('wk_last')], [0, t('wk_this')]].map(([v, l]) => el('option', { value: String(v), text: l })))),
+  return el('section', { class: 'rk-sec', id: 'k-ranks' }, el('h2', { text: t('rk_h') }), el('p', { class: 'hint', text: t('rk_lead') }), el('div', { class: 'row' }, el('span', { text: t('rk_month') }), sel, el('span', { text: t('wk_week') }), el('select', { class: 'wk-week', 'aria-label': t('wk_week'), onchange: (e) => { wk = weekRange(Number(e.target.value)); draw(); } }, [[1, t('wk_last')], [0, t('wk_this')]].map(([v, l]) => el('option', { value: String(v), text: l })))),
     el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('col_person'), t('rk_col_rank'), t('rk_col_gap'), t('wk_col'), ''].map((x) => el('th', { text: x })))), body)));
 }
 // ---------- my projects from mail (ADR-0039): imported from the file Claude in Chrome builds from Outlook web — device only ----------
@@ -2365,7 +2400,7 @@ function projWorkspaceBody() {
       el('p', { class: 'hint', text: t('proj_s_note') }));
   }
   const src = el('p', { class: 'hint' }, [myRegister ? t('proj_src_reg', { d: myRegister.asOf, n: myRegister.items.length, b: myRegister.board.length }) : t('proj_src_noreg'), myProjects ? ` · ${t('proj_src', { from: myProjects.from, to: myProjects.to, d: myProjects.importedAt })}` : ` · ${t('proj_src_nomail')}`].join(''));
-  return el('section', { class: 'proj' }, head, projView === 'mail' ? mailSrc('projects') : null, src, el('div', { class: 'row proj-tools' }, tabs, period), el('div', { class: 'row proj-tools' }, lines, delAll), page);
+  return el('section', { class: 'proj' }, head, projView === 'mail' ? mailSrc('projects', false) : null, src, el('div', { class: 'row proj-tools' }, tabs, period), el('div', { class: 'row proj-tools' }, lines, delAll), page);
 }
 async function projFilesExport() {
   const out = {}; for (const it of (myRegister ? myRegister.items : [])) { if (!it.files) continue; const files = (await store.kvGet(`pf:${it.id}`)) || [];
@@ -3103,7 +3138,7 @@ function renderDatasets() {
     $('dt-branch').textContent = b.from === 'myafaqy' ? t('dt_branch_org', { name: b.name || b.code, code: b.code }) : t('dt_branch_default'); }
   if ($('dt-last')) { const d = [...datasets].sort((x, y) => String(y.extractedAt || '').localeCompare(String(x.extractedAt || '')))[0];
     $('dt-last').textContent = d ? t('dt_last', { d: saudiDay(d.extractedAt || new Date().toISOString()), n: (d.tasks || []).length }) : t('dt_last_none'); }
-  storageNote();
+  storageNote(); backupNote();
   if (!datasets.length && !reports.length) { set($('datasets'), el('div', { class: 'empty', text: t('none_yet') })); return; }
   const reportRows = reports.map((r) => el('div', { class: 'ds' },
     el('span', { class: 'k ltr', text: `${r.range.from} → ${r.range.to}` }),
@@ -4273,9 +4308,9 @@ function renderWeights() {
     return [
       r.x && !r.x.f ? el('td', { class: 'hint', text: t('w_direct') }) : el('td', { class: 'factors' }, el('div', { class: 'f-row' }, FACTORS.map((k, i) => el('label', {}, el('span', { text: t(`factor_short_${k}`) }), fsel(i))))),
       el('td', { class: 'num' }, el('b', { class: 'base', text: String(x.w) }), el('div', { class: 'hint', text: tierName(x.tier) })),
-      el('td', {}, el('select', { class: 'w-sel', ...(can ? {} : { disabled: '' }), onchange: (e) => put({ mode: e.target.value }) }, [...POINT_MODES.map((m) => [m, t(`mode_${m}`)]), ...RR.methods.map((m) => [m.id, m.name]), ...(isCustomMode(x.mode) && !RR.methods.some((m) => m.id === x.mode) ? [[x.mode, t('mode_gone')]] : [])].map(([m, label]) => el('option', { value: m, selected: m === (x.mode || 'done'), text: label }))), el('div', { class: 'hint', text: modeDesc(x.mode || 'done') })),
+      el('td', {}, el('select', { class: 'w-sel', 'aria-label': t('w_col_mode'), ...(can ? {} : { disabled: '' }), onchange: (e) => put({ mode: e.target.value }) }, [...POINT_MODES.map((m) => [m, t(`mode_${m}`)]), ...RR.methods.map((m) => [m.id, m.name]), ...(isCustomMode(x.mode) && !RR.methods.some((m) => m.id === x.mode) ? [[x.mode, t('mode_gone')]] : [])].map(([m, label]) => el('option', { value: m, selected: m === (x.mode || 'done'), text: label }))), el('div', { class: 'hint', text: modeDesc(x.mode || 'done') })),
       el('td', { class: 'num' }, (x.mode || 'done') === 'done' ? [el('span', { class: 'hint', text: '—' }), medHint(r.key)] : [
-        el('input', { type: 'number', min: '0.25', max: '400', step: '0.25', class: 'std-in', value: String(x.std || ''), ...(can ? {} : { disabled: '' }), onchange: (e) => { const v = Number(e.target.value); if (v > 0 && v <= 400) put({ std: v }); } }),
+        el('input', { type: 'number', min: '0.25', max: '400', step: '0.25', class: 'std-in', 'aria-label': t('w_col_std'), value: String(x.std || ''), ...(can ? {} : { disabled: '' }), onchange: (e) => { const v = Number(e.target.value); if (v > 0 && v <= 400) put({ std: v }); } }),
         el('div', { class: 'hint', text: x.stdSrc === 'est' ? t('std_est') : x.stdSrc === 'oct' ? t('std_oct') : t('std_set') }), medHint(r.key)]),
     ];
   };
@@ -4902,7 +4937,7 @@ function renderMailFile() {
     el('div', { class: 'row' }, el('div', { class: 'pills' }, [['all', t('mf_all')], ...CATS.map((c) => [c, `${catName(c)} (${tot[c]})`])].map(([k, l]) => el('button', { type: 'button', class: `pill-btn${st.cat === k ? ' on' : ''}`, text: l, onclick: () => { st.cat = k; renderMailFile(); } }))),
       el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('mf_export')}`, onclick: csv })),
     shown.length ? [el('div', { class: 'table-wrap mf-msgs' }, el('table', {}, el('thead', {}, el('tr', {}, [t('mf_col_date'), t('mf_col_sender'), t('mf_col_subject'), t('mf_col_cat'), t('mf_col_folder')].map((h) => el('th', { text: h })))), tbody)), more] : el('div', { class: 'empty', text: t('mf_empty') }));
-  set(body, mailSrc('pst'), maSection(), top, dateRow, sendersBox, rulesBox, results, howBox, listBox);
+  set(body, mailSrc('pst', false), maSection(), top, dateRow, sendersBox, rulesBox, results, howBox, listBox);
 }
 // ---------- monthly readings — the measurement basis of the Jeddah proposal (ADR-0111) ----------
 const rdState = { month: null, names: false };
@@ -5087,7 +5122,13 @@ async function buildBackup() {
     datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: (viewAs ? (meDerived ? null : realMe) : (meDerived ? null : me)) || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projectwork:isTeamPortal?null:projectWork, projfiles: await projFilesExport(), devplans: devPlans };
   return all;
 }
-$('export-btn').addEventListener('click', async () => { try { download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(await buildBackup(), null, 1)); } catch (error) { console.error(error); toast(t('td_store_failed')); } });
+// v9.55: the backup is the only other copy of what the manager typed and attached — the device remembers when it was last saved
+$('export-btn').addEventListener('click', async () => { try { download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(await buildBackup(), null, 1)); pref('bkat', new Date().toISOString()); backupNote(); if (location.hash === '#tenders') renderTenders(); } catch (error) { console.error(error); toast(t('td_store_failed')); } });
+const backupState = () => backupDue(pref('bkat') || '', new Date().toISOString(), { items: ((tenders && tenders.items.length) || 0) + ((myRegister && myRegister.items && myRegister.items.length) || 0) });
+function backupNote() {
+  const n = $('bk-last'); if (!n) return; const at = pref('bkat'), st = backupState();
+  n.textContent = at ? t('bk_last', { d: saudiDay(at), n: st.days == null ? 0 : st.days }) : t('bk_never_short'); n.className = `hint${st.due ? ' bk-due' : ''}`;
+}
 
 /** Restore or sync: merge, never overwrite. Settings (weights, team file, profile, rules, planner) stay as this device has them. */
 async function applyBackup(j) {
@@ -5221,6 +5262,29 @@ $('update-btn').addEventListener('click', () => location.reload());
     ind.style.opacity = 1; ind.style.width = `${a.offsetWidth}px`; ind.style.height = `${a.offsetHeight}px`; ind.style.transform = `translateY(${a.offsetTop}px)`; };
   new MutationObserver(place).observe(nav, { subtree: true, attributes: true, attributeFilter: ['aria-current', 'aria-expanded', 'class'] });
   addEventListener('resize', place); addEventListener('hashchange', () => setTimeout(place, 60)); setTimeout(place, 300);
+})();
+// v9.55 (the audit): two things every page gets without each page asking. (1) A box that scrolls — a wide table on a phone, the
+// tender pipeline — can be reached and scrolled from the keyboard; without this a keyboard user cannot see the columns off screen.
+// (2) An input whose only name is the grey hint inside it reads that hint to a screen reader; a hint alone is not a name.
+(() => {
+  const SCROLLERS = '.table-wrap, .td-pipe, .crm-list';
+  const named = (n) => n.hasAttribute('aria-labelledby') || n.title || (n.id && document.querySelector(`label[for="${window.CSS && CSS.escape ? CSS.escape(n.id) : n.id}"]`)) || n.closest('label');
+  const scan = () => {
+    document.querySelectorAll(SCROLLERS).forEach((n) => {
+      const over = n.scrollWidth > n.clientWidth + 2 || n.scrollHeight > n.clientHeight + 2;
+      if (over && !n.hasAttribute('tabindex')) { n.tabIndex = 0; n.dataset.scrollKb = '1'; if (!n.hasAttribute('role')) { n.setAttribute('role', 'region'); if (!n.hasAttribute('aria-label')) n.setAttribute('aria-label', t('scroll_region')); } }
+      else if (!over && n.dataset.scrollKb) { n.removeAttribute('tabindex'); delete n.dataset.scrollKb; if (n.getAttribute('aria-label') === t('scroll_region')) { n.removeAttribute('aria-label'); n.removeAttribute('role'); } }
+    });
+    document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach((n) => {
+      if (n.dataset.phName) { if (n.getAttribute('aria-label') !== n.placeholder) n.setAttribute('aria-label', n.placeholder); return; }
+      if (n.type === 'hidden' || n.hasAttribute('aria-label') || named(n) || !n.placeholder.trim()) return;
+      n.dataset.phName = '1'; n.setAttribute('aria-label', n.placeholder);
+    });
+  };
+  const raf = window.requestAnimationFrame ? (f) => requestAnimationFrame(f) : (f) => setTimeout(f, 16);
+  let due = 0; const later = () => { if (due) return; due = raf(() => { due = 0; scan(); }); };
+  new MutationObserver(later).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['placeholder', 'open'] });
+  addEventListener('resize', later); scan();
 })();
 // sections come into view once as you scroll; the light that follows the pointer on the tiles
 (() => {

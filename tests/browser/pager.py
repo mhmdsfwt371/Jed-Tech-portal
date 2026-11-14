@@ -1,3 +1,4 @@
+# suite: alone — it measures frames and fades; run with the machine to itself (scripts/browser-suites.mjs)
 # ADR-0119 — a window with a long scroll turns into pages. Built windows first (every property measured), then every window the
 # portal itself opens on the real October data, found by pressing what is on each page.
 import threading, http.server, socketserver, functools, json, os, sys, pathlib
@@ -84,8 +85,13 @@ with sync_playwright() as p:
         hp.append(d.evaluate("d=>{ const f=d.querySelector('.dlg-pager').getBoundingClientRect().top; return [...d.querySelectorAll('h3')].filter(h=>{ const r=h.getBoundingClientRect(), n=h.nextElementSibling.getBoundingClientRect(); return r.bottom<=f+1 && r.top>0 && n.top>=f-1 }).map(h=>h.textContent) }"))
         if k<st['pages']-1: d.locator('.dlg-pager .dp-next').click()
     check('W11 no heading is left alone at the foot of a page', not any(hp), [x for x in hp if x])
-    d.evaluate("d=>{ const sc=__sc(d); for(let i=0;i<400;i++){ const b=sc.querySelector(':scope > .dlg-pager .dp-prev'); if(b.disabled) break; b.click(); } }"); d.evaluate("d=>d.querySelector('#f22').focus()"); pg.wait_for_timeout(200)
-    fo=d.evaluate("d=>{ const r=d.querySelector('#f22').getBoundingClientRect(), f=d.querySelector('.dlg-pager').getBoundingClientRect().top, x=d.querySelector('.dlg-bar').getBoundingClientRect().bottom; return [__state(d).page, r.top>=x-1 && r.bottom<=f+1] }")
+    d.evaluate("d=>{ const sc=__sc(d); for(let i=0;i<400;i++){ const b=sc.querySelector(':scope > .dlg-pager .dp-prev'); if(b.disabled) break; b.click(); } }"); d.evaluate("d=>d.querySelector('#f22').focus()")
+    # the page follows the focus on the next frame; on a busy machine that frame can be later than any fixed wait (this check failed
+    # one run in five when four suites ran at once) — so wait for the page to arrive, up to three seconds, instead of guessing
+    for _ in range(30):
+        pg.wait_for_timeout(100)
+        fo=d.evaluate("d=>{ const r=d.querySelector('#f22').getBoundingClientRect(), f=d.querySelector('.dlg-pager').getBoundingClientRect().top, x=d.querySelector('.dlg-bar').getBoundingClientRect().bottom; return [__state(d).page, r.top>=x-1 && r.bottom<=f+1] }")
+        if fo[0]>1 and fo[1]: break
     pg.keyboard.type('abc'); pg.keyboard.press('Home'); tv=d.evaluate("d=>[d.querySelector('#f22').value, __state(d).page]")
     check(f'W12 moving to a field on another page brings its page (page {fo[0]}, the field whole in view); Home while typing stays in the field', fo[0]>1 and fo[1] and tv==['abc', fo[0]], (fo,tv))
     d.evaluate("d=>d.close()"); pg.wait_for_timeout(100); cl=pg.evaluate("(()=>{ const d=document.getElementById('t-dlg'); return [d.querySelectorAll('.dlg-pager, .dlg-pad').length, d.hasAttribute('data-paged'), d.style.overflowY] })()")

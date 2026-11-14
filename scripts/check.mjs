@@ -197,6 +197,29 @@ for (const f of ['docs/crm-api.md', 'docs/data-format.md', 'docs/kpi-factors.md'
   }
 }
 
+// 15b. A text colour must be readable in the dark too (v9.55, the audit). The palette rule above says which colours exist; it
+//      cannot say that «page 1 of 4» was written in the dark theme's card colour on a card. Every `color: var(--token)` is
+//      resolved with the dark theme's values; a token that comes out as dark ink there may not colour text.
+{
+  const css = html.slice(html.indexOf('<style'), html.indexOf('</style>'));
+  const darkAt = css.indexOf(':root[data-theme="dark"] {'), darkBlock = css.slice(darkAt, css.indexOf('}', darkAt));
+  const defs = (text) => Object.fromEntries([...text.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map((m) => [m[1], m[2].trim()]));
+  const light = defs(css.replace(/@media \(prefers-color-scheme: dark\) \{[^}]*\{[^}]*\}\s*\}/, '').replace(darkBlock, '')), dark = { ...light, ...defs(darkBlock) };
+  const resolve = (v, n = 0) => { const m = /^var\((--[\w-]+)\)$/.exec(v || ''); return m && n < 6 ? resolve(dark[m[1]], n + 1) : v; };
+  const lum = (hex) => { const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  const ON_BRIGHT = new Set(['--on-accent', '--card']);   // text meant for a filled surface (the accent, the title ink) that turns bright in the dark theme
+  if (!Object.keys(defs(darkBlock)).length) note('index.html: the dark theme block was not found — the dark text-colour check cannot run');
+  const seen = new Set();
+  for (const m of css.matchAll(/(?<![-\w])color:\s*var\((--[\w-]+)\)/g)) {
+    const tok = m[1], val = resolve(`var(${tok})`); if (seen.has(tok) || ON_BRIGHT.has(tok)) continue; seen.add(tok);
+    if (/^#[0-9A-Fa-f]{6}$/.test(val || '') && lum(val) < 0.14) note(`index.html: text coloured with ${tok} is ${val} in the dark theme — dark ink on a dark card. Use a token that has a light dark-theme value (--slate, --note, --ok, --accent-dark)`);
+  }
+  // a text colour written as a number has no dark value at all: the status reds were #B42318 on dark cards, 2.5 to 1
+  for (const c of new Set([...css.matchAll(/(?<![-\w])color:\s*(#[0-9A-Fa-f]{6})/g)].map((m) => m[1].toUpperCase()))) {
+    if (lum(c) < 0.14) note(`index.html: text is coloured ${c} by number — unreadable on the dark theme's cards. Use the token (--fail, --warn, --ok, --note)`);
+  }
+}
+
 // 16. The side menu (ADR-0009): the reference app's folding menu on the start side, mirrored by direction on phones.
 if (!/<aside class="sidebar"/.test(html) || !/data-nav-group-toggle/.test(html)) note('index.html: the side menu with folding groups is gone');
 if (!/html\[dir="rtl"\] \.sidebar \{ transform: translateX\(100%\); \}/.test(html)) note('index.html: the phone menu no longer slides from the start side in Arabic and Urdu');

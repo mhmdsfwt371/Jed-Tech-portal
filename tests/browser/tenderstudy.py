@@ -26,7 +26,7 @@ with sync_playwright() as p:
     b=p.chromium.launch(); c=b.new_context(viewport={'width':1366,'height':900}, service_workers='block'); pg=c.new_page(); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)[:200]))
     pg.goto(f'http://127.0.0.1:{PORT}/'); pg.wait_for_timeout(1500); pg.select_option('#lang-select','en'); pg.wait_for_timeout(300)
     pg.evaluate("location.hash='#tenders'"); pg.wait_for_timeout(800)
-    pg.locator('#tenders-body input[type=file][accept^=".json"]').first.set_input_files(reg); pg.wait_for_timeout(1500)
+    pg.locator('#tenders-body input.td-up-in').set_input_files(reg); pg.wait_for_timeout(1500)
     # the deadline typed by hand before the study arrives must stay
     pg.locator('.td-table tr.td-row', has_text='كاميرات').locator('.td-subj').click(); pg.wait_for_timeout(800)
     pg.locator('dialog.td-dlg input.td-due').fill('2026-11-30'); pg.locator('dialog.td-dlg input.td-due').dispatch_event('change'); pg.wait_for_timeout(600)

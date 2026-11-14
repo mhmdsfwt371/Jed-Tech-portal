@@ -21,7 +21,7 @@ with sync_playwright() as p:
         pg.goto(f'http://127.0.0.1:{PORT}/'); pg.wait_for_timeout(1500)
         pg.select_option('#lang-select','en'); pg.wait_for_timeout(300)
         pg.evaluate("location.hash='#tenders'"); pg.wait_for_timeout(800)
-        pg.locator('#tenders-body input[type=file][accept^=".json"]').first.set_input_files(f); pg.wait_for_timeout(1500)
+        pg.locator('#tenders-body input.td-up-in').set_input_files(f); pg.wait_for_timeout(1500)
         r=pg.evaluate("""()=>[...document.querySelectorAll('.td-table tr.td-row')].map(tr=>{const s=tr.cells[0].querySelector('.td-subj')||tr.cells[0];return {sw:s.scrollWidth,cw:s.clientWidth}})""")
         check(f'T1 {dev}: both tenders listed', len(r)==2, r)
         check(f'T2 {dev}: each subject fits its cell (wraps instead of running over the next column)', r and all(x['sw']<=x['cw']+1 for x in r), r)

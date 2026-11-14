@@ -152,6 +152,8 @@
 | `scripts/check-links.mjs` | كل أداة تفتح وما زالت هي نفسها — على جيتهب و`npm run links` |
 | `scripts/build-preview.py` | ملف واحد للمعاينة في `dist/` |
 | `tests/core.test.mjs` | اختبارات المنطق |
+| `tests/browser/` و`scripts/browser-suites.mjs` | اختبارات المتصفح كلها بأمر واحد: `npm run test:browser` — ومنها `audit.py` الذي يفتح كل نوافذ البوابة (القرار 0129) |
+| `docs/qa-policy.md` | سياسة الجودة: ما معنى «تم»، وما الذي يُفحص مع كل تعديل، وكيف يُكتب التقرير |
 | `.githooks/` · `.github/workflows/verify.yml` | البوابة محليًّا وعلى جيتهب |
 | `docs/decisions/` | سجل القرارات |
 | `docs/decisions/0117-tender-register-email-files.md` | Outlook messages, deadlines and files in the Tender Register |
@@ -167,6 +169,7 @@
 | `docs/decisions/0126-tender-analyzer-study-file.md` | The Tender Analyzer writes `afaqy-tender-study/v1`; the register fills empty fields from it with evidence (format: `docs/tender-study-format.md`) |
 | `docs/decisions/0127-tender-flow-by-files.md` | Drop anything anywhere: mail registers, study fills and moves the stage, one-file final offer makes it ready; default owner; Undo for every automatic move |
 | `docs/decisions/0128-manual-tender-fields-optional.md` | Nothing the manager fills by hand blocks a tender’s stage; closed tenders ask for nothing |
+| `docs/decisions/0129-audit-and-qa-policy.md` | The audit of 9.55: defects found in windows, dark mode, reloads and repeats; the tender page rebuilt around drop-or-choose; the backup reminder; the QA policy |
 
 ## في عشر دقائق: ابنِ وافحص
 ```bash

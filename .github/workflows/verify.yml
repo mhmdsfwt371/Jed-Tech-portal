@@ -1,5 +1,7 @@
 # Runs the unit tests and the guard on every push and pull request. GitHub Pages deploys regardless;
 # a red mark here means something the team relies on changed — fix it before telling anyone.
+# v9.55 (ADR-0129): the browser suites run here too. The ones that need the real October pull are skipped and say so —
+# that pull holds names and customers and never enters the repository; they are run before each release on the machine that has it.
 name: verify
 on: [push, pull_request]
 jobs:
@@ -12,3 +14,15 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run verify
       - run: npm run links        # every tool link still opens the right tool
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: 24 }
+      - run: npm ci --ignore-scripts
+      - uses: actions/setup-python@v7
+        with: { python-version: '3.13' }
+      - run: pip install playwright==1.63.0 openpyxl==3.1.5 pillow==12.3.0
+      - run: python -m playwright install --with-deps chromium
+      - run: npm run test:browser

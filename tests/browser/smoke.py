@@ -3,7 +3,7 @@
 import threading, http.server, socketserver, functools, re, os, sys, pathlib
 from playwright.sync_api import sync_playwright
 ROOT=str(pathlib.Path(__file__).resolve().parents[2]); PORT=int(os.environ.get('PORT','9292'))
-OCT=os.environ.get('OCT_PULL','/mnt/user-data/uploads/afaqy-tasks-2026-10-01_2026-10-29.json'); AXE=os.environ.get('AXE_JS','/mnt/user-data/outputs/_work/axe.min.js')
+OCT=os.environ.get('OCT_PULL','/mnt/user-data/uploads/afaqy-tasks-2026-10-01_2026-10-29.json'); AXE=os.environ.get('AXE_JS') or os.path.join(ROOT,'node_modules','axe-core','axe.min.js')   # the pinned dev dependency (npm ci)
 class Q(http.server.SimpleHTTPRequestHandler):
     def log_message(self,*a): pass
 socketserver.TCPServer.allow_reuse_address=True
@@ -52,7 +52,7 @@ with sync_playwright() as p:
             lum=lambda c: sum(w*((v/255/12.92) if v/255<=0.03928 else ((v/255+0.055)/1.055)**2.4) for w,v in zip((0.2126,0.7152,0.0722),c))
             a,z=sorted([lum(fg),lum(bg)],reverse=True); ratio=(a+0.05)/(z+0.05)
             check(f'S4 {mode}: the by-line\'s real contrast, measured from the pixels, is {ratio:.1f}:1 (4.5 needed)', ratio>=4.5, (fg,bg)); cx.close()
-    else: print('NOTE  the accessibility scan was skipped: set AXE_JS to axe.min.js')
+    else: print('NOTE  the accessibility scan was skipped: run npm ci, or set AXE_JS to axe.min.js')
     m=b.new_context(viewport={'width':390,'height':844}, is_mobile=True, has_touch=True, service_workers='block'); mp=m.new_page(); mp.goto(f'http://127.0.0.1:{PORT}/'); mp.wait_for_timeout(1200)
     if os.path.exists(OCT): mp.evaluate("location.hash='#data'"); mp.wait_for_timeout(400); mp.set_input_files('#file-in',OCT); mp.wait_for_timeout(2000)
     wide=[]

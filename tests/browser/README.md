@@ -21,7 +21,13 @@ is served.
 | `projlines.py` | My projects: tenders / upselling / not sorted counts and filter, line chosen in Edit, «Delete all shown» saves a backup then deletes only the shown rows, the backup restores them | A made-up register built inside the test |
 | `tenderstudy.py` | The analyzer’s study file fills empty tender fields, keeps hand-typed ones and lists differences, tags the evidence, shows the decision, reports unmatched and bad files, and imports into one tender from its window | Made-up tenders and study files built inside the test |
 | `tenderflow.py` | The least-touch flow: default owner, a study workbook dropped on the page fills, attaches and moves its tender (Undo), a «do not bid» study declines, any other file asks once, a one-file final offer makes it Ready | Made-up tenders, a workbook built with openpyxl, and files built inside the test |
-| `smoke.py` | Every page opens in three languages with no page error, no failed request and no raw text key; the WCAG 2.1 A and AA scan passes on every page; the phone has no sideways scroll | `AXE_JS=/path/to/axe.min.js` for the scan (skipped with a note when absent) |
+| `smoke.py` | Every page opens in three languages with no page error, no failed request and no raw text key; the WCAG 2.1 A and AA scan passes on every page; the phone has no sideways scroll | `npm ci` for the scanner (skipped with a note when absent) |
+| `audit.py` | v9.55, ADR-0129: every **window** the portal opens — in dark/English, light/Arabic, dark/Urdu and on a phone — has names on its controls, focus inside, closes on Escape, shows no raw key and no unreadable text (measured against what is painted behind it), and passes the scanner; then: scroll boxes reachable by keyboard, hint-only inputs named, print shows unscrolled sections, the backup note | The real October pull for the full set of windows; without it the suite runs on the portal’s sample data |
 
-Run: `python3 tests/browser/readings.py` and `python3 tests/browser/smoke.py` from the repository root. No real pull, name or
+Run them all: `npm run test:browser` (`node scripts/browser-suites.mjs`, each suite on its own port, four at a time; name suites
+to run only those: `node scripts/browser-suites.mjs smoke audit`). A suite that needs the real pull and does not find it is
+reported as **skipped**, never as passed. The accessibility scanner is the pinned dev dependency `axe-core` (`npm ci`); `AXE_JS`
+overrides its path. CI runs the same command without the pull (job `browser` in `verify.yml`).
+
+One suite alone: `python3 tests/browser/readings.py` from the repository root. No real pull, name or
 customer may be committed: suites read real data from a path outside the repository, or invent it.

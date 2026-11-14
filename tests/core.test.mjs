@@ -1367,7 +1367,7 @@ test('tender study file: read strictly, matched by Etimad number then subject, f
   const row = { id: 'r', etimadNo: '', fees: null, bond: '5%', value: null, askDue: '', askDueTime: '', visit: '', due: '2026-12-01', dueTime: '', openAt: '', study: '', studySummary: '', dateSources: { due: 'manual' } };
   const { patch, filled, differs } = core.applyTenderStudy(row, s0, '2026-11-14T18:01:00Z');
   assert.deepEqual(filled.sort(), ['askDue', 'dueTime', 'etimadNo', 'fees', 'study', 'studySummary', 'visit'].sort());
-  assert.equal(patch.fees, 1500); assert.equal(patch.visitTime, '10:00'); assert.equal(patch.due, undefined, 'a deadline typed by hand stays');
+  assert.equal(patch.fees, 1500); assert.ok(!('visitTime' in patch), 'v9.55: the register keeps no hour for the visit, so none is written'); assert.equal(patch.due, undefined, 'a deadline typed by hand stays');
   assert.equal(patch.fieldSources.fees, 'analyzer'); assert.equal(patch.dateSources.askDue, 'analyzer'); assert.equal(patch.dateSources.due, 'manual');
   assert.equal(patch.evidence.fees.page, 4); assert.equal(patch.studyDecision, 'go');
   assert.deepEqual(differs, [{ field: 'bond', have: '5%', study: '2% من قيمة العرض' }]);
@@ -1404,6 +1404,72 @@ test('ADR-0128: a closed tender asks for nothing; what is left open is a reminde
   assert.deepEqual(core.tenderNeeds({ stage: 'won', owner: '', etimadNo: '', due: '', value: null, submittedOn: '' }), []);
   assert.deepEqual(core.tenderNeeds({ stage: 'lost', owner: '', etimadNo: '' }), []);
   assert.deepEqual(core.tenderNeeds({ stage: 'ready', owner: 'a', etimadNo: '1', due: '2026-12-01', value: null, bond: '' }), ['value', 'bond']);
+});
+
+// ---- v9.55: the audit's findings in the tender register ----
+test('tender amounts: nothing stays nothing — null and an empty box never become 0; a number written as text is read, words are not', () => {
+  for (const v of [null, undefined, '', 'about two million', '12,34', -5, NaN]) assert.equal(core.tenderAmount(v), null, String(v));
+  assert.equal(core.tenderAmount(0), 0, 'a real zero is a value');
+  assert.equal(core.tenderAmount(1500.456), 1500.46);
+  assert.equal(core.tenderAmount('1,500'), 1500); assert.equal(core.tenderAmount('2,450,000.50'), 2450000.5);
+  assert.equal(core.tenderAmount('١٥٠٠ ريال'), 1500); assert.equal(core.tenderAmount('SAR 2000'), 2000);
+});
+
+test('tender study: the same study read twice changes nothing the second time; a changed decision does', () => {
+  const study = core.parseTenderStudy({ schema: 'afaqy-tender-study/v1', tenders: [{ subject: 's', etimadNo: '5', fees: 1500, decision: 'go', decisionWhy: 'in scope', dates: { due: { date: '2026-12-01', time: '14:30' } } }] }).tenders[0];
+  const item = { id: 's', subject: 's', etimadNo: '', fees: null, due: '', dueTime: '' };
+  const first = core.applyTenderStudy(item, study, '2026-11-14T10:00:00Z');
+  assert.deepEqual(first.filled, ['etimadNo', 'fees', 'due']); assert.equal(first.patch.studyDecision, 'go');
+  assert.equal(first.patch.dueTime, '14:30');
+  const visit = core.applyTenderStudy({ id: 's', subject: 's', visit: '' }, { ...study, dates: { visit: { date: '2026-11-25', time: '10:00' } } });
+  assert.equal(visit.patch.visit, '2026-11-25'); assert.ok(!('visitTime' in visit.patch), 'an hour the register does not keep is not written for one session only');
+  const second = core.applyTenderStudy({ ...item, ...first.patch }, study, '2026-11-15T10:00:00Z');
+  assert.deepEqual(second.patch, {}, 'nothing to save, so no history line and no new stamp');
+  assert.deepEqual(second.filled, []); assert.deepEqual(second.differs, []);
+  const third = core.applyTenderStudy({ ...item, ...first.patch }, { ...study, decision: 'no-go', why: 'out of scope' }, '2026-11-16T10:00:00Z');
+  assert.equal(third.patch.studyDecision, 'no-go'); assert.equal(third.patch.studyAt, '2026-11-16T10:00:00Z');
+});
+
+test('tender study: a date written as plain text and an amount written as text are read; what cannot be read is listed, never guessed', () => {
+  const r = core.parseTenderStudy({ schema: 'afaqy-tender-study/v1', tenders: [{ subject: 's', fees: '1,500', value: 'تقريبا مليون', bond: 2,
+    dates: { due: '2026-12-05 14:30', askDue: '2026-11-20', visit: '05/12/2026', openAt: { date: '2026-12-10' }, }, }] }).tenders[0];
+  assert.deepEqual(r.dates, { due: { date: '2026-12-05', time: '14:30' }, askDue: { date: '2026-11-20', time: '' }, openAt: { date: '2026-12-10', time: '' } });
+  assert.equal(r.fees, 1500); assert.equal(r.value, null); assert.equal(r.bond, '2');
+  assert.deepEqual(r.skipped.sort(), ['value', 'visit'], 'a day-first date and words are reported as left out');
+  const clean = core.parseTenderStudy({ schema: 'afaqy-tender-study/v1', tenders: [{ subject: 's', fees: null, value: null, dates: { due: null, visit: { date: null } } }] }).tenders[0];
+  assert.deepEqual(clean.skipped, [], '«not found» is not an error');
+  const words = core.parseTenderStudy({ schema: 'afaqy-tender-study/v1', tenders: [{ subject: 's', fees: 'غير مذكور', value: 'N/A', dates: { due: 'not stated', visit: { date: 'غير محدد' }, openAt: 'حسب ما هو محدد في منصة اعتماد', askDue: '—' } }] }).tenders[0];
+  assert.deepEqual(words.skipped, [], '«not found» in words fills nothing and is not reported'); assert.deepEqual(words.dates, {}); assert.equal(words.fees, null);
+  assert.equal(core.parseTenderStudy({ schema: 'afaqy-tender-study/v1', tenders: [{ subject: 's', dates: { due: '2026-02-30' } }] }).tenders[0].skipped[0], 'due', 'a day that does not exist');
+  // the workbook form goes through the same reader
+  const sheet = core.tenderStudyFromSheet([['schema', 'afaqy-tender-study/v1'], ['subject', 's'], ['fees', '1,500 ريال'], ['value', 'see BOQ'], ['due', '2026-12-05 14:30'], ['askDue', new Date('2026-11-19T21:00:00Z')], ['visit', '2026-12-01'], ['visitTime', '10:00']]);
+  const fromSheet = core.parseTenderStudy(sheet).tenders[0];
+  assert.equal(fromSheet.fees, 1500); assert.deepEqual(fromSheet.skipped, ['value']);
+  assert.deepEqual(fromSheet.dates, { due: { date: '2026-12-05', time: '14:30' }, askDue: { date: '2026-11-20', time: '' }, visit: { date: '2026-12-01', time: '10:00' } });
+});
+
+test('tender dates: the patch that saves what was read carries every date field — the site visit and the bid opening too', () => {
+  const file = { id: 'f', name: 'terms.txt', analysis: { schedule: { due: [{ date: '2026-11-30', time: '10:00' }], askDue: [], visit: [{ date: '2026-11-20', time: '' }], openAt: [{ date: '2026-12-01', time: '' }] } } };
+  const dated = core.applyTenderEmailDates({ due: '', askDue: '', visit: '', openAt: '', files: [file] });
+  const patch = core.tenderDatePatch(dated);
+  assert.equal(patch.visit, '2026-11-20'); assert.equal(patch.openAt, '2026-12-01'); assert.equal(patch.due, '2026-11-30'); assert.equal(patch.dueTime, '10:00');
+  assert.equal(patch.askDue, ''); assert.equal(patch.askDueTime, '');
+  assert.deepEqual(patch.dateSources, { due: 'document', visit: 'document', openAt: 'document' });
+  // the file is removed: what it filled is emptied again, in the same patch
+  const gone = core.tenderDatePatch(core.applyTenderEmailDates({ ...dated, files: [] }));
+  assert.deepEqual([gone.visit, gone.openAt, gone.due, gone.dueTime], ['', '', '', '']); assert.deepEqual(gone.dateSources, {});
+});
+
+test('backup reminder: nothing to lose asks nothing; never saved, or a week old, asks; a fresh one does not', () => {
+  const now = '2026-11-14T20:00:00Z';
+  assert.deepEqual(core.backupDue('', now, { items: 0 }), { due: false, days: null }, 'an empty register is not nagged');
+  assert.deepEqual(core.backupDue('', now, { items: 3 }), { due: true, days: null }, 'never saved');
+  assert.deepEqual(core.backupDue('not a date', now, { items: 3 }), { due: true, days: null });
+  assert.deepEqual(core.backupDue('2026-11-10T09:00:00Z', now, { items: 3 }), { due: false, days: 4 });
+  assert.deepEqual(core.backupDue('2026-11-07T20:00:00Z', now, { items: 3 }), { due: true, days: 7 });
+  assert.deepEqual(core.backupDue('2026-10-01T00:00:00Z', now, { items: 1 }), { due: true, days: 44 });
+  assert.deepEqual(core.backupDue('2026-11-20T00:00:00Z', now, { items: 1 }), { due: false, days: 0 }, 'a clock set wrong never shows a negative age');
+  assert.equal(core.backupDue('2026-11-12T20:00:00Z', now, { items: 1, every: 2 }).due, true);
 });
 
 for (const [name, fn] of tests) {

@@ -2399,6 +2399,25 @@ export function applyTenderEmailDates(item) {
   return item;
 }
 
+/** v9.55: how old the only safe copy is. The register keeps its emails, booklets and offers on one device; the backup file is
+ *  the only other copy. With nothing typed or attached there is nothing to lose and nothing is asked. `days` is null when no
+ *  backup was ever saved from this device. A clock set wrong (a backup «in the future») counts as saved today. */
+export function backupDue(lastIso, nowIso, { items = 0, every = 7 } = {}) {
+  if (!(items > 0)) return { due: false, days: null };
+  const last = Date.parse(lastIso || ''), now = Date.parse(nowIso);
+  if (Number.isNaN(last) || Number.isNaN(now)) return { due: true, days: null };
+  const days = Math.max(0, Math.floor((now - last) / 864e5));
+  return { due: days >= every, days };
+}
+/** v9.55: what applyTenderEmailDates() decided, as the patch to save — every date field, not only the two the register began with.
+ *  Until now the pages saved «due» and «askDue» by name, so a site visit or a bid opening read from an attached booklet was
+ *  worked out and then dropped. */
+export function tenderDatePatch(dated) {
+  const patch = { dateSources: { ...(dated.dateSources || {}) } };
+  for (const k of Object.keys(tenderDeadlineFields)) patch[k] = dated[k] || '';
+  patch.dueTime = dated.due ? dated.dueTime || '' : ''; patch.askDueTime = dated.askDue ? dated.askDueTime || '' : '';
+  return patch;
+}
 export const TENDER_FILE_KINDS = ['original', 'booklet', 'boq', 'sheet', 'other', 'study', 'technical', 'financial', 'offer', 'proof'];
 export const TENDER_INSIGHT_TOPICS = ['scope','visit','duration','bond','evaluation','delivery','requirements'];
 const tenderNormalizeText = text => tenderDigits(text).normalize('NFKC').replace(/[إأآ]/g,'ا').replace(/ة/g,'ه').replace(/[ـً-ْ\u200e\u200f\u202a-\u202e]/g,'').toLowerCase();
@@ -2454,19 +2473,42 @@ export function cleanTenderAnalysis(value) {
 // fills only what is empty; a value typed by hand, or read from the mail with a different value, is never replaced — it is listed
 // as a difference to check. «Not found» and «as stated on Etimad» arrive as null and fill nothing.
 export const TENDER_STUDY_FIELDS = ['etimadNo', 'fees', 'bond', 'value'];
+/** v9.55: an amount as the register keeps it — a number, or nothing. An empty box, null and a missing value are all «nothing»;
+ *  they must never turn into 0 (a tender worth 0 riyals is a value, and it hides the field from «still to fill»). A number
+ *  written as text is read when it is only a number: digits, thousands commas, and the riyal's name around it. */
+export function tenderAmount(v) {
+  if (v === '' || v == null) return null;
+  if (typeof v === 'number') return Number.isFinite(v) && v >= 0 ? Math.round(v * 100) / 100 : null;
+  if (typeof v !== 'string') return null;
+  const x = tenderDigits(v).replace(/\u066c/g, ',').replace(/\u066b/g, '.').replace(/(?:sar|sr|ريال(?:\s*سعودي)?|ر\.?\s*س\.?)/gi, '').replace(/\s+/g, '');
+  if (!/^(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?$/.test(x)) return null;
+  return Math.round(Number(x.replace(/,/g, '')) * 100) / 100;
+}
 export function parseTenderStudy(raw) {
   let j = raw; if (typeof raw === 'string') { try { j = JSON.parse(raw); } catch { return { error: 'json' }; } }
   if (!j || j.schema !== 'afaqy-tender-study/v1' || !Array.isArray(j.tenders)) return { error: 'schema' };
-  const str = (v, n) => (typeof v === 'string' ? v.trim().slice(0, n) : ''), day = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) && !Number.isNaN(Date.parse(`${v}T00:00:00Z`)) ? v : '');
-  const time = (v) => (/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(v || '')) ? v : ''), money = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.round(v * 100) / 100 : null);
+  const str = (v, n) => (typeof v === 'string' ? v.trim().slice(0, n) : ''), day = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) && !Number.isNaN(Date.parse(`${v}T00:00:00Z`)) && new Date(`${v}T00:00:00Z`).toISOString().slice(0, 10) === v ? v : '');
+  // «not found», written out in words, is the same as an empty value: it fills nothing and is not reported as unreadable
+  const NONE = /^(?:[-–—.]+|n\/?a|none|null|nil|tbd|not\s+(?:found|stated|mentioned|specified|available|applicable)|غير\s+(?:مذكور[هة]?|محدد[هة]?|متوفر[هة]?|موجود[هة]?|متاح[هة]?)|لا\s+يوجد|لم\s+(?:يذكر|يحدد|ترد)|حسب\s.{0,40}اعتماد.{0,20})$/i;
+  const time = (v) => (/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(v || '')) ? v : ''), given = (v) => !(v === '' || v == null || (typeof v === 'string' && (!v.trim() || NONE.test(v.trim()))));
+  // v9.55: a date may come as {date, time} or as plain text «2026-12-05» / «2026-12-05 14:30» — the same value, written the short way.
+  // Anything else (a day-first date, words) is not guessed at: it is listed in `skipped` so the register can say what it left out.
+  const when = (d) => {
+    if (d && typeof d === 'object') return day(d.date) ? { date: day(d.date), time: time(d.time) } : null;
+    const m = typeof d === 'string' ? d.trim().match(/^(\d{4}-\d{2}-\d{2})(?:[T\s]+(\d{2}:\d{2})(?::\d{2})?)?$/) : null;
+    return m && day(m[1]) ? { date: m[1], time: time(m[2]) } : null;
+  };
   const tenders = j.tenders.slice(0, 200).map((x) => {
     if (!x || typeof x !== 'object') return null;
-    const dates = {}; for (const k of TENDER_DATE_FIELDS) { const d = x.dates && x.dates[k]; if (d && day(d.date)) dates[k] = { date: day(d.date), time: time(d.time) }; }
+    const dates = {}, skipped = [];
+    for (const k of TENDER_DATE_FIELDS) { const d = x.dates && x.dates[k]; if (!given(d) || (typeof d === 'object' && !given(d.date))) continue; const w = when(d); if (w) dates[k] = w; else skipped.push(k); }
+    const money = (k) => { if (!given(x[k])) return null; const n = tenderAmount(x[k]); if (n == null) skipped.push(k); return n; };
     const evidence = {}; for (const [k, v] of Object.entries(x.evidence && typeof x.evidence === 'object' ? x.evidence : {})) if ([...TENDER_STUDY_FIELDS, ...TENDER_DATE_FIELDS].includes(k) && v && typeof v === 'object')
       evidence[k] = { file: str(v.file, 160), page: Number.isSafeInteger(v.page) && v.page > 0 ? v.page : null, quote: str(v.quote, 240) };
-    return { subject: str(x.subject, 300), etimadNo: str(String(x.etimadNo ?? ''), 40).replace(/[^\d]/g, '') ? String(x.etimadNo).replace(/[^\d]/g, '').slice(0, 40) : '',
-      entity: str(x.entity, 160), dates, fees: money(x.fees), bond: str(x.bond, 120), value: money(x.value),
-      decision: ['go', 'no-go', 'review'].includes(x.decision) ? x.decision : '', why: str(x.decisionWhy, 400), summary: str(x.summary, 4000), studyFile: str(x.studyFile, 300), evidence };
+    const no = String(x.etimadNo ?? '').replace(/[^\d]/g, '').slice(0, 40), fees = money('fees'), value = money('value');
+    return { subject: str(x.subject, 300), etimadNo: no,
+      entity: str(x.entity, 160), dates, fees, bond: str(typeof x.bond === 'number' ? String(x.bond) : x.bond, 120), value,
+      decision: ['go', 'no-go', 'review'].includes(x.decision) ? x.decision : '', why: str(x.decisionWhy, 400), summary: str(x.summary, 4000), studyFile: str(x.studyFile, 300), evidence, skipped };
   }).filter((x) => x && (x.subject || x.etimadNo));
   return tenders.length ? { tenders, generatedAt: str(j.generatedAt, 35), tool: str(j.tool, 80) } : { error: 'empty' };
 }
@@ -2478,6 +2520,7 @@ export function matchTenderStudy(items, study, keyOf) {
   const bySubject = items.filter((i) => i.id === k || keyOf(i.subject) === k); return bySubject.length === 1 ? bySubject[0] : null;
 }
 /** What a study changes on a row: `patch` holds only empty fields it fills; `differs` lists fields that already hold another value. */
+const TENDER_TIMED = ['due', 'askDue'];   // the two dates the register keeps an hour for; an hour written for the others was held until the next reload, then lost
 export function applyTenderStudy(item, study, at = new Date().toISOString()) {
   const patch = {}, filled = [], differs = [], empty = (v) => v === '' || v == null;
   const fieldSources = { ...(item.fieldSources || {}) }, dateSources = { ...(item.dateSources || {}) }, evidence = { ...(item.evidence || {}) };
@@ -2488,14 +2531,16 @@ export function applyTenderStudy(item, study, at = new Date().toISOString()) {
   }
   for (const k of TENDER_DATE_FIELDS) {
     const d = study.dates[k]; if (!d) continue;
-    if (empty(item[k])) { patch[k] = d.date; if (d.time) patch[`${k}Time`] = d.time; dateSources[k] = 'analyzer'; if (study.evidence[k]) evidence[k] = study.evidence[k]; filled.push(k); }
+    if (empty(item[k])) { patch[k] = d.date; if (d.time && TENDER_TIMED.includes(k)) patch[`${k}Time`] = d.time; dateSources[k] = 'analyzer'; if (study.evidence[k]) evidence[k] = study.evidence[k]; filled.push(k); }
     else if (item[k] !== d.date) differs.push({ field: k, have: item[k], study: d.date });
     else if (d.time && empty(item[`${k}Time`]) && `${k}Time` in item) { patch[`${k}Time`] = d.time; filled.push(`${k}Time`); }   // same day, the study adds the hour
   }
   if (study.summary && empty(item.studySummary)) { patch.studySummary = study.summary; filled.push('studySummary'); }
   if (study.studyFile && empty(item.study)) { patch.study = study.studyFile; filled.push('study'); }
-  if (study.decision) { patch.studyDecision = study.decision; patch.studyWhy = study.why; patch.studyAt = at; }
-  if (filled.length || study.decision) Object.assign(patch, { fieldSources, dateSources, evidence });
+  // v9.55: the same study read again is not news — no new stamp, no history line. Only a decision or a reason that changed is written.
+  const decided = !!study.decision && (item.studyDecision !== study.decision || (item.studyWhy || '') !== (study.why || ''));
+  if (decided) { patch.studyDecision = study.decision; patch.studyWhy = study.why; patch.studyAt = at; }
+  if (filled.length) Object.assign(patch, { fieldSources, dateSources, evidence });
   return { patch, filled, differs };
 }
 
@@ -2555,11 +2600,12 @@ export function tenderStudyFromSheet(rows, fileName = '') {
   for (const r of rows || []) { const k = String((r && r[0]) ?? '').trim(); if (!k || m.has(k)) continue; m.set(k, r[1]);
     if (r[2] || r[4]) ev[k] = { file: String(r[2] ?? ''), page: Number.isSafeInteger(Number(r[3])) && Number(r[3]) > 0 ? Number(r[3]) : null, quote: String(r[4] ?? '') }; }
   if (m.get('schema') !== 'afaqy-tender-study/v1') return null;
-  const txt = (k) => (m.get(k) == null ? '' : String(m.get(k)).trim()), num = (k) => { const v = m.get(k); if (v == null || v === '') return null; const n = typeof v === 'number' ? v : Number(String(v).replace(/,/g, '')); return Number.isFinite(n) ? n : null; };
-  const day = (k) => { const v = m.get(k); if (v instanceof Date && !Number.isNaN(+v)) return new Date(+v + 3 * 36e5).toISOString().slice(0, 10); return txt(k).slice(0, 10); };
-  const dates = {}; for (const k of TENDER_DATE_FIELDS) if (day(k)) dates[k] = { date: day(k), time: txt(`${k}Time`) };
+  const txt = (k) => (m.get(k) == null ? '' : String(m.get(k)).trim()), amt = (k) => { const v = m.get(k); return v == null || v === '' ? null : v; };
+  // a date cell arrives as a date (Excel) or as text; a time in its own «…Time» row wins over one written beside the date
+  const when = (k) => { const v = m.get(k); if (v == null || v === '') return null; const d = v instanceof Date && !Number.isNaN(+v) ? new Date(+v + 3 * 36e5).toISOString().slice(0, 10) : String(v).trim(); return txt(`${k}Time`) && /^\d{4}-\d{2}-\d{2}$/.test(d) ? { date: d, time: txt(`${k}Time`) } : d; };
+  const dates = {}; for (const k of TENDER_DATE_FIELDS) { const w = when(k); if (w) dates[k] = w; }
   return { schema: 'afaqy-tender-study/v1', generatedAt: txt('generatedAt'), tool: txt('tool'), tenders: [{ subject: txt('subject'), etimadNo: txt('etimadNo'), entity: txt('entity'), dates,
-    fees: num('fees'), bond: txt('bond'), value: num('value'), decision: txt('decision'), decisionWhy: txt('decisionWhy'), summary: txt('summary'), studyFile: txt('studyFile') || fileName, evidence: ev }] };
+    fees: amt('fees'), bond: txt('bond'), value: amt('value'), decision: txt('decision'), decisionWhy: txt('decisionWhy'), summary: txt('summary'), studyFile: txt('studyFile') || fileName, evidence: ev }] };
 }
 export function cleanTenderDetails(item) {
   const string = (value, max) => typeof value === 'string' ? value.slice(0, max) : '';

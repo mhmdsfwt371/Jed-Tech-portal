@@ -18,7 +18,7 @@ with sync_playwright() as p:
         c=b.new_context(viewport={'width':w,'height':hh}, service_workers='block'); pg=c.new_page(); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)[:200]))
         pg.goto(f'http://127.0.0.1:{PORT}/'); pg.wait_for_timeout(1500); pg.select_option('#lang-select','en'); pg.wait_for_timeout(300)
         pg.evaluate("location.hash='#tenders'"); pg.wait_for_timeout(800)
-        pg.locator('#tenders-body input[type=file][accept^=".json"]').first.set_input_files(f); pg.wait_for_timeout(1500)
+        pg.locator('#tenders-body input.td-up-in').set_input_files(f); pg.wait_for_timeout(1500)
         chip=pg.locator('.td-table .td-need-chip').first.inner_text()
         check(f'W1 {dev}: the list says how many fields are still to fill (3)', chip.startswith('3'), chip)
         pg.locator('.td-table tr.td-row .td-subj').first.click(); pg.wait_for_timeout(900)

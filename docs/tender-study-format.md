@@ -43,6 +43,16 @@ Rules
 - `evidence` has one entry per filled field: `askDue`, `visit`, `due`, `openAt`, `etimadNo`, `fees`, `bond`, `value`.
 - No names of people, no prices of our own, nothing from AFAQY's internal costing.
 
+What the reader tolerates, and what it will not guess (v9.55, ADR-0129)
+- The forms above are the ones to write. The reader also accepts a date as plain text — `"due": "2026-12-05"` or
+  `"2026-12-05 14:30"` — and an amount as text that is only a number: `"1,500"`, `"1500 ريال"`, `"SAR 2000"`.
+- «Not found» written out — `غير مذكور`, `غير محدد`, `لا يوجد`, `not stated`, `N/A`, `—`, `حسب … اعتماد` — is treated as empty.
+- Anything else is **not** guessed: a day-first date (`05/12/2026` could be May or December), a day that does not exist, an
+  amount in words. The field is left empty and the register names it on the page («the study holds values the register could
+  not read»), so the manager knows it was there and was not taken.
+- The register keeps an hour for `due` and `askDue` only; an hour written for `visit` or `openAt` is read and not stored.
+- Importing the same file again changes nothing and writes nothing in the tender's history.
+
 How the register uses it
 - Matches a tender by `etimadNo`, then by `subject` (RE:/FW: and spacing ignored). From a tender's own window the study goes into
   that tender whatever its title.

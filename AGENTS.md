@@ -63,6 +63,12 @@
 5. `npm run verify` أخضر، ثم ادفع. عنوان الالتزام يبدأ بالرقم: `v5.1 — وصف ما تغيّر` (يفحصه `commit-msg`).
 6. النصوص الأردية الجديدة يقرؤها مهندس لغته الأم الأردية قبل أن يعتمد عليها الفريق.
 
+## ٣ب. الجودة — ما معنى «تم» (القرار 0129)
+`docs/qa-policy.md` ملزمة مثل هذا الملف. خلاصتها: الاختبار يفشل على القديم أولًا · `npm run verify` أخضر · `npm run test:browser`
+أخضر والسحب الحقيقي موجود (المتخطَّى لا يُحسب ناجحًا) · فحص النوافذ `tests/browser/audit.py` ناجح · جيتهب أخضر على الالتزام نفسه.
+وكل تعديل على الصفحة يُنظر فيه: النوافذ لا الصفحات وحدها، الفاتح والداكن، اللغات الثلاث، الجوال، بعد إعادة الفتح، وعند التكرار.
+والتقرير لصاحب المشروع ثلاث قوائم: ما تحقّق باختبار، ما لم يُتحقَّق منه هنا، وما يحتاجه هو.
+
 ## ٤. قواعد الشيفرة
 - كل نص ظاهر يمر بـ `t()`؛ المفتاح موجود في اللغات الثلاث (يفحصه الحارس).
 - كل `$('id')` في `app.js` له عنصر في `index.html` (يفحصه الحارس).
@@ -90,6 +96,7 @@
 | لوحة التعيين (القرار 0018) | `buildAssignBookmarklet()` |
 | جودة الإصلاح (القرار 0022) | `repairCheck()`، `parseRepairLines()` |
 | لوحة حسابات ما بعد البيع والأنظمة (القرار 0120) | `accountsBoard()`، `serverIpMap()`، `attachSystems()` |
+| تدقيق 9.55 (القرار 0129) | `tenderAmount()`، `tenderDatePatch()`، `backupDue()` — و`docs/qa-policy.md`، و`tests/browser/audit.py`، و`scripts/browser-suites.mjs` |
 | دراسة محلل المناقصات في السجل (القرار 0126، 0127) | `parseTenderStudy()`، `matchTenderStudy()`، `applyTenderStudy()`، `tenderStudyFromSheet()`، `tenderAutoStage()` — والصيغة `docs/tender-study-format.md` |
 | مشاريعي: مناقصات وأبسيلنج والحذف الجماعي (القرار 0125) | `projectLine()`، `projectDeletePlan()` |
 | المهام يومًا بيوم وحد البدء (القرار 0121، 0124) | `RESPONSE_RULE`، `startDue()`، `dailyIntake()`، `coveredFrom()`، `firstStart()` |
