@@ -56,5 +56,11 @@ with sync_playwright() as p:
     r=pg.evaluate(ROW,'كاميرات'); check('F8 the final offer makes the tender «Ready» with no other file', r and r['stage'].startswith('Ready'), r)
     drop(pg,'#tenders-body',['BOQ.xlsx']); pg.wait_for_timeout(1500)
     d=pg.locator('dialog.td-drop-dlg').count(); check('F9 a workbook without the register sheet is asked about, not read as a study', d==1, d)
+    pg.keyboard.press('Escape'); pg.wait_for_timeout(400)
+    # ADR-0128: everything the manager fills is optional — an empty tender closes as «Lost» with no reason and no files
+    pg.locator('#tenders-body .pills button', has_text='All').first.click(); pg.wait_for_timeout(500)
+    pg.once('dialog', lambda d: d.accept(''))
+    sel=pg.locator('.td-table tr.td-row', has_text='ألياف').locator('select.td-stage'); sel.select_option('lost'); pg.wait_for_timeout(1000)
+    r=pg.evaluate(ROW,'ألياف'); check('F11 a tender closes as «Lost» with an empty reason, no offer files and empty fields — and asks for nothing after', r and r['stage']=='Lost' and not r['need'], r)
     check('F10 no page error', not errs, errs[:2])
 print(f'\n{len(fails)} failed' if fails else '\nall passed'); sys.exit(1 if fails else 0)

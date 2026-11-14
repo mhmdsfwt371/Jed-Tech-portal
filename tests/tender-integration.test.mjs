@@ -59,14 +59,14 @@ try {
   const beforeDuplicate=await qa.buildBackup();
   await qa.tdImportEmails([message]);assert.equal(row().files.length,4);assert(select('.td-pull [role=status]').textContent.includes('Duplicates 1'));
   const stage=async (value,expected=value)=>{const input=select('.td-row.on .td-stage');input.value=value;input.dispatchEvent(event());await wait(()=>row().stage===expected,'stage '+value);};
-  await stage('ready','received');assert.equal(row().stage,'received');
+  // v9.54 (ADR-0128): the offer files are optional — a tender moves to «ready» without them, and back for the rest of this run
+  await stage('ready');assert.equal(row().stage,'ready');await stage('received');
   const upload=async(kind,file)=>{const control=select('.td-detail .td-file-controls select');control.value=kind;choose('.td-detail .td-file-controls input',[file]);await wait(()=>row().files.some(f=>f.name===file.name)&&!qa.busy(),'upload '+file.name);};
   await upload('technical',new File([await f.pdf.arrayBuffer()],'technical.pdf'));
-  await stage('ready','received');assert.equal(row().stage,'received');
   await upload('financial',new File([await f.sheet.arrayBuffer()],'financial.xlsx'));
   await stage('prep');await stage('ready');assert.equal(row().stage,'ready');
   const removeTech=[...d.querySelectorAll('.td-file button')].find(x=>x.textContent==='✕'&&x.getAttribute('aria-label').endsWith('technical.pdf'));removeTech.click();
-  await new Promise(r=>setTimeout(r,20));assert(row().files.some(f=>f.name==='technical.pdf'),'cannot remove final required offer while ready');
+  await wait(()=>!row().files.some(f=>f.name==='technical.pdf'),'an offer file can be removed while ready');assert.equal(row().stage,'ready');
   await stage('submitted');assert.equal(row().stage,'submitted');assert.equal(qa.projectsModel().filter(p=>p.tender===row().id).length,1);assert(qa.tdStartAlerts());
   for (const next of ['received','screen','decide','prep','ready','submitted','won','lost','cancelled','declined','submitted']) {
     await stage(next);assert.equal(row().stage,next,'lifecycle '+next);

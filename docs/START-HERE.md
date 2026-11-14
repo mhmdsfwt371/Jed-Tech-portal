@@ -166,6 +166,7 @@
 | `docs/decisions/0125-projects-lines-and-delete-all.md` | My projects split into tenders / upselling / not sorted; «Delete all shown» with a backup first and a restore |
 | `docs/decisions/0126-tender-analyzer-study-file.md` | The Tender Analyzer writes `afaqy-tender-study/v1`; the register fills empty fields from it with evidence (format: `docs/tender-study-format.md`) |
 | `docs/decisions/0127-tender-flow-by-files.md` | Drop anything anywhere: mail registers, study fills and moves the stage, one-file final offer makes it ready; default owner; Undo for every automatic move |
+| `docs/decisions/0128-manual-tender-fields-optional.md` | Nothing the manager fills by hand blocks a tender’s stage; closed tenders ask for nothing |
 
 ## في عشر دقائق: ابنِ وافحص
 ```bash

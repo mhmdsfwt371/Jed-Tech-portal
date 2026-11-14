@@ -2504,9 +2504,10 @@ export function applyTenderStudy(item, study, at = new Date().toISOString()) {
  *  guarantee. Once submitted: when and under which number. Closed without joining (declined, cancelled): nothing is asked. */
 export function tenderNeeds(item) {
   const st = item.stage || 'received', empty = (k) => item[k] === '' || item[k] == null;
-  const want = ['declined', 'cancelled'].includes(st) ? [] : ['owner', 'etimadNo', 'due',
-    ...(['prep', 'ready', 'submitted', 'won', 'lost'].includes(st) ? ['value', 'bond'] : []),
-    ...(['submitted', 'won', 'lost'].includes(st) ? ['submittedOn', 'submitNo'] : [])];
+  // ADR-0128: a closed tender (won, lost, declined, cancelled) asks for nothing; the rest is a reminder, never a condition
+  const want = ['declined', 'cancelled', 'won', 'lost'].includes(st) ? [] : ['owner', 'etimadNo', 'due',
+    ...(['prep', 'ready', 'submitted'].includes(st) ? ['value', 'bond'] : []),
+    ...(st === 'submitted' ? ['submittedOn', 'submitNo'] : [])];
   return want.filter(empty);
 }
 /** ADR-0125: which line a project belongs to — a tender (a public bid) or upselling (more work for a customer we already serve).

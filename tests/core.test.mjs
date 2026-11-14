@@ -1400,6 +1400,12 @@ test('tender auto stage, one-file offer and the study sheet: files move a tender
   assert.equal(core.tenderStudyFromSheet([['subject', 'x']]), null, 'a sheet without the schema row is not a study');
 });
 
+test('ADR-0128: a closed tender asks for nothing; what is left open is a reminder only', () => {
+  assert.deepEqual(core.tenderNeeds({ stage: 'won', owner: '', etimadNo: '', due: '', value: null, submittedOn: '' }), []);
+  assert.deepEqual(core.tenderNeeds({ stage: 'lost', owner: '', etimadNo: '' }), []);
+  assert.deepEqual(core.tenderNeeds({ stage: 'ready', owner: 'a', etimadNo: '1', due: '2026-12-01', value: null, bond: '' }), ['value', 'bond']);
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

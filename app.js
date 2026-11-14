@@ -1274,7 +1274,6 @@ function tdFilesPanel(item) {
         original ? el('small', { class: 'hint', text: label(file.kind) }) : el('select',{class:'td-file-kind','aria-label':t('td_file_type')+' '+file.name,disabled:!!tdBusy,onchange:async event=>{
           const current = tenders.items.find(row=>row.id===item.id); if (!current || tdBusy) return;
           const files = current.files.map(entry=>entry.id===file.id ? {...entry,kind:event.target.value,kindManual:true,kindAt:new Date().toISOString()} : entry);
-          if (current.stage === 'ready' && tenderCanAdvance(current,'ready') && !tenderCanAdvance({files},'ready')) { toast(t('td_offers_required')); renderTenders(); return; }
           await tdUpdate(item.id,{files},tdActivity('category',file.name)); renderTenders();
         }},kinds.map(k=>el('option',{value:k,text:label(k),selected:k===file.kind}))),
         !original ? el('small',{class:'hint',text:t(`td_doc_${file.analysis?.state || 'pending'}`)}) : null),
@@ -1284,7 +1283,6 @@ function tdFilesPanel(item) {
         const current = tenders.items.find((row) => row.id === item.id);
         if (!current || tdBusy || !confirm(t('proj_f_del_q', { n: file.name }))) return;
         const files = (current.files || []).filter((entry) => entry.id !== file.id);
-        if (current.stage === 'ready' && tenderCanAdvance(current, 'ready') && !tenderCanAdvance({ files }, 'ready')) { toast(t('td_offers_required')); return; }
         const dated = applyTenderEmailDates({...current,files});
         if (await tdUpdate(item.id, { files, removedFiles: [...(current.removedFiles || []), file.id],due:dated.due,askDue:dated.askDue,
           dueTime:dated.dueTime,askDueTime:dated.askDueTime,dateSources:dated.dateSources }, tdActivity('remove', file.name))) renderTenders();
@@ -1417,10 +1415,8 @@ function renderTenders() {
       ['mail', 'document'].includes(src) ? el('i', { class: 'td-auto-tag', text: t(src === 'mail' ? 'td_auto_mail' : 'td_auto_doc') }) : null,
       i && i[k] != null && i[k] !== '' && (src === 'analyzer' || (i.fieldSources && i.fieldSources[k] === 'analyzer')) ? el('i', { class: 'td-auto-tag td-auto-an', title: (() => { const e = i.evidence && i.evidence[k]; return e ? `${e.file}${e.page ? ` · ${t('td_page', { p: e.page })}` : ''}${e.quote ? ` — «${e.quote}»` : ''}` : ''; })(), text: t('td_auto_an') }) : null), node); };
   const stageSel = (i) => el('select', { class: 'td-stage', disabled: !!tdBusy, 'aria-label': t('td_col_stage'), onchange: async (e) => { const st = e.target.value, patch = { stage: st, stageAt: today };
-      if (!['ready', 'submitted', 'won', 'lost'].includes(i.stage) && !tenderCanAdvance(i, st)) {
-        e.target.value = i.stage; tdOpenId = i.id; renderTenders(); toast(t('td_offers_required')); return;
-      }
-      if (TD_NEED_REASON.includes(st)) { const r = window.prompt(t(st === 'lost' ? 'td_why_lost' : 'td_why_declined'), i.reason || ''); if (r == null || !r.trim()) { e.target.value = i.stage; return; } patch.reason = r.trim().slice(0, 300); }
+      // ADR-0128: nothing the manager fills by hand blocks a stage — offer files and the reason are optional
+      if (TD_NEED_REASON.includes(st)) { const r = window.prompt(t(st === 'lost' ? 'td_why_lost' : 'td_why_declined'), i.reason || ''); if (r == null) { e.target.value = i.stage; return; } if (r.trim()) patch.reason = r.trim().slice(0, 300); }
       if (['prep', 'ready', 'submitted', 'declined'].includes(st) && !i.decidedOn) patch.decidedOn = today;
       if (st === 'ready' && !i.readyOn) patch.readyOn = today; if (st === 'submitted' && !i.submittedOn) patch.submittedOn = today;
       patch.status = st === 'ready' ? 'ready' : i.status; await tdUpdate(i.id, patch, tdActivity('stage', st)); renderTenders(); } },
