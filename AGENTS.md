@@ -90,7 +90,7 @@
 | لوحة التعيين (القرار 0018) | `buildAssignBookmarklet()` |
 | جودة الإصلاح (القرار 0022) | `repairCheck()`، `parseRepairLines()` |
 | لوحة حسابات ما بعد البيع والأنظمة (القرار 0120) | `accountsBoard()`، `serverIpMap()`، `attachSystems()` |
-| المهام يومًا بيوم وحد البدء (القرار 0121) | `RESPONSE_RULE`، `startDue()`، `dailyIntake()`، `coveredFrom()` |
+| المهام يومًا بيوم وحد البدء (القرار 0121، 0124) | `RESPONSE_RULE`، `startDue()`، `dailyIntake()`، `coveredFrom()`، `firstStart()` |
 | الأسبوع والأهداف والمسار والتغطية (القرار 0021) | `weeklyDigest()`، `goalProgress()`، `patternPath()`، `coverageTotals()` |
 | الترجمات (القرار 0023) | `i18n/ar.js`، `i18n/en.js`، `i18n/ur.js` — تُحمّل بـ`loadStrings()`؛ أضف المفتاح في الثلاثة |
 | بطاقة الشهر (القرار 0020) | `monthCard()`، `teamMonth()`، `closableMonths()` |

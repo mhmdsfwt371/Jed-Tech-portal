@@ -1315,6 +1315,29 @@ test('tender dates: the site visit and the bid opening are read from labelled li
   assert.deepEqual(core.tenderNeeds({ stage: 'declined' }), []);
 });
 
+test('firstStart and dailyIntake: the first Start (or Complete) from the activity log; «started after the limit» only where the start is known', () => {
+  assert.equal(core.firstStart([{ actionId: 1, createDate: '2026-11-15T06:00:00' }, { actionId: 8, createDate: '2026-11-15T08:30:00.12' }, { actionId: 9, createDate: '2026-11-15T09:00:00' }, { actionId: 10, createDate: '2026-11-15T10:00:00' }, { actionId: 8, createDate: '2026-11-15T07:45:00' }]), '2026-11-15T07:45:00.000Z');
+  assert.equal(core.firstStart([{ actionId: 1, createDate: '2026-11-15T06:00:00' }, { actionId: 11, createDate: '2026-11-15T09:00:00' }]), '2026-11-15T09:00:00.000Z', 'closed without Start: it left To-Do on closing');
+  assert.equal(core.firstStart([{ actionId: 7, createDate: '2026-11-15T09:00:00' }]), null);
+  assert.equal(core.firstStart(null), null);
+  const X = (id, c, o = {}) => ({ id, assigneeId: 'A', createdAt: c, state: 'done', bucket: 'done', completedAt: '2026-11-15T15:00:00+03:00', ...o });
+  const r = core.dailyIntake([
+    X('1', '2026-11-15T10:00:00+03:00', { startedAt: '2026-11-15T10:40:00+03:00' }),
+    X('2', '2026-11-15T10:00:00+03:00', { startedAt: '2026-11-15T12:30:00+03:00' }),
+    X('3', '2026-11-15T10:00:00+03:00')], { from: '2026-11-15', to: '2026-11-15', asOf: '2026-11-15T16:00:00+03:00' });
+  const d = r.days[0];
+  assert.deepEqual([d.startKnown, d.startedLate, d.waitMedianH], [2, 1, 1.6], 'task 2 started 2.5 h after arriving (limit 1 h); task 3 has no known start and is not counted');
+  assert.deepEqual([r.total.startKnown, r.total.startedLate], [2, 1]);
+  const code = decodeURIComponent(core.buildManagerBookmarklet('2026-11-01', '2026-11-15', '2', 'ar'));
+  assert.ok(code.includes("getO('Task/GetTask/'+t.id)") && code.includes('const firstStart=function firstStart'), 'the bookmark reads the log with the tested function');
+  assert.ok(/t\.bucket==='toDo'\)continue/.test(code), 'a task still in To-Do is not asked about: it has no start');
+  assert.doesNotThrow(() => new Function(code.replace(/^javascript:/, '')));
+  const ds = core.parseDataset(JSON.stringify({ schema: core.SCHEMA || 'afaqy-crm-tasks/v2', range: { from: '2026-11-01', to: '2026-11-15' }, extractedAt: '2026-11-15T12:00:00Z', people: [{ id: 'A', nameEn: 'a' }],
+    tasks: [{ id: '1', title: 'x', assigneeId: 'A', createdAt: '2026-11-15T07:00:00Z', state: 'done', completedAt: '2026-11-15T09:00:00Z', startedAt: '2026-11-15T07:40:00Z', moduleId: 1, bucket: 'done' }] }));
+  const one = (ds.dataset || ds).tasks;
+  assert.ok(one && one[0] && one[0].startedAt === '2026-11-15T07:40:00.000Z', JSON.stringify(ds).slice(0, 200));
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

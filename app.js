@@ -2950,7 +2950,7 @@ window.addEventListener('message', async (e) => {
 
 // ---------- data: upload ----------
 // ADR-0110: the readable name of a MyAFAQY list the pull may skip
-const listName = (p) => { const k = { 'Security/GetAllHierarchyUsersDropDown': 'pl_users', 'Teams/GetAllTeams': 'pl_teams', 'Teams/GetTeamById': 'pl_teams', 'EmployeeIC/GetAllEmployeesGrid': 'pl_employees', 'TechnicianReport/GetTechnicianReportStatic': 'pl_tech', 'ActivityLog/GetTicketsGrid': 'pl_tickets', 'AfterSales/GetAllAfterSalesEngineers': 'pl_as', 'AfterSales/GetAfterSalesRequestGrid': 'pl_as', 'AfterSalesBoardReport/GetAfterSalesAgentsGrid': 'pl_as' }[p]; return k ? t(k) : p; };
+const listName = (p) => { const k = { 'Security/GetAllHierarchyUsersDropDown': 'pl_users', 'Teams/GetAllTeams': 'pl_teams', 'Teams/GetTeamById': 'pl_teams', 'EmployeeIC/GetAllEmployeesGrid': 'pl_employees', 'TechnicianReport/GetTechnicianReportStatic': 'pl_tech', 'ActivityLog/GetTicketsGrid': 'pl_tickets', 'AfterSales/GetAllAfterSalesEngineers': 'pl_as', 'AfterSales/GetAfterSalesRequestGrid': 'pl_as', 'AfterSalesBoardReport/GetAfterSalesAgentsGrid': 'pl_as', 'Task/GetTask': 'pl_start', 'TechniqueSystem/GetGridServerIPs': 'pl_servers', 'CustomerServerAccount/GetAllCustomerAccounts': 'pl_servers' }[p]; return k ? t(k) : p; };
 async function ingest(text) {
   const msg = $('read-msg');
   if (!String(text || '').trim()) { msg.className = 'msg err'; msg.textContent = t('paste_empty'); return false; }
@@ -3561,26 +3561,29 @@ function dailySection(tasks, team, nm, latest) {
   const wd = (d) => new Date(`${d}T12:00:00Z`).toLocaleDateString(loc, { weekday: 'short', timeZone: 'UTC' });
   const stOf = (x) => (x.state === 'done' ? t('di_st_done') : x.state === 'cancelled' ? t('di_st_cancel') : x.bucket === 'toDo' ? t('di_st_todo') : t('di_st_open'));
   const isLate = (x) => x.state === 'open' && x.bucket === 'toDo' && startDue(x.createdAt) && Date.parse(startDue(x.createdAt)) < Date.parse(asOf);
+  const startedLate = (x) => !!x.startedAt && !!startDue(x.createdAt) && Date.parse(x.startedAt) > Date.parse(startDue(x.createdAt));   // ADR-0124
   const listModal = (title, file, L) => { L = [...L].sort((p, q) => (p.createdAt < q.createdAt ? -1 : 1));
     crModal({ title, file, lead: t('di_asof', { t: sT(asOf) }),
       tiles: [[t('di_arrived'), L.length], [t('di_notstarted'), L.filter((x) => x.state === 'open' && x.bucket === 'toDo').length, '', (k) => L[k].state === 'open' && L[k].bucket === 'toDo'],
-        [t('di_late'), L.filter(isLate).length, '', (k) => isLate(L[k])], [t('di_sameday'), L.filter((x) => x.state === 'done' && saudiDay(x.completedAt) === saudiDay(x.createdAt)).length, '', (k) => L[k].state === 'done' && saudiDay(L[k].completedAt) === saudiDay(L[k].createdAt)]],
-      bar: (k) => [nm(L[k].assigneeId), 1], head: [t('crm_task'), t('col_person'), t('di_c_in'), t('di_c_due'), t('di_c_state')], hot: (row, k) => isLate(L[k]),   // five columns: a sixth pushed the table past the window and the page bar out of sight
-      rows: L.map((x) => [x.title || x.id, nm(x.assigneeId), sT(x.createdAt), sT(startDue(x.createdAt)), x.completedAt ? `${stOf(x)} ${sT(x.completedAt)}` : stOf(x)]) }); };
+        [t('di_late'), L.filter(isLate).length, '', (k) => isLate(L[k])], ...(L.some((x) => x.startedAt) ? [[t('di_started_late'), L.filter(startedLate).length, t('di_of_known', { n: L.filter((x) => x.startedAt).length }), (k) => startedLate(L[k])]] : []), [t('di_sameday'), L.filter((x) => x.state === 'done' && saudiDay(x.completedAt) === saudiDay(x.createdAt)).length, '', (k) => L[k].state === 'done' && saudiDay(L[k].completedAt) === saudiDay(L[k].createdAt)]],
+      bar: (k) => [nm(L[k].assigneeId), 1], head: [t('crm_task'), t('col_person'), t('di_c_in'), t('di_c_due'), t('di_c_state')], hot: (row, k) => isLate(L[k]) || startedLate(L[k]),   // five columns: a sixth pushed the table past the window and the page bar out of sight
+      rows: L.map((x) => [x.title || x.id, nm(x.assigneeId), sT(x.createdAt), x.startedAt ? `${sT(startDue(x.createdAt))} · ${t('di_started_at', { t: sT(x.startedAt).slice(11) || sT(x.startedAt) })}` : sT(startDue(x.createdAt)), x.completedAt ? `${stOf(x)} ${sT(x.completedAt)}` : stOf(x)]) }); };
   const dayModal = (d) => listModal(t('di_day_h', { d: `${wd(d.day)} ${d.day}` }), `arrived-${d.day}`, d.ids.map((id) => byId.get(id)).filter(Boolean));
   const lateL = r.lateNow.map((x) => byId.get(x.id)).filter(Boolean);
   const cell = (v, cls) => el('td', { class: `num${cls && v ? ` ${cls}` : ''}`, text: String(v) });
   const anyPart = r.days.some((d) => !d.complete);
+  const known = r.days.some((d) => d.startKnown > 0), sl = (d) => (d.startKnown ? `${d.startedLate} / ${d.startKnown}` : '—');
   return el('section', { class: 'di-box' },
     el('h2', { class: 'cr-h' }, t('di_h'), helpQ('help_di')),
     el('button', { type: 'button', class: `di-now${r.lateNow.length ? ' late' : ''}`, onclick: () => (lateL.length ? listModal(t('di_late_h'), 'not-started-late', lateL) : null) },
       el('b', { text: t('di_now', { n: r.waiting, l: r.lateNow.length }) }), el('span', { text: t('di_asof', { t: sT(asOf) }) })),
     r.days.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'di-table' },
-      el('thead', {}, el('tr', {}, ['di_c_day', 'di_arrived', 'di_sameday', 'di_later', 'di_notstarted', 'di_late', 'di_open', 'di_cancel'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+      el('thead', {}, el('tr', {}, ['di_c_day', 'di_arrived', 'di_sameday', 'di_later', 'di_notstarted', 'di_late', ...(known ? ['di_started_late'] : []), 'di_open', 'di_cancel'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
       el('tbody', {}, r.days.map((d) => el('tr', { class: 'di-row', tabindex: '0', title: t('cr_num_open'), onclick: () => dayModal(d), onkeydown: (e) => { if (e.key === 'Enter') dayModal(d); } },
-        el('td', { text: `${wd(d.day)} ${d.day}${d.complete ? '' : ' *'}` }), cell(d.arrived), cell(d.sameDay), cell(d.later), cell(d.notStarted), cell(d.late, 'di-bad'), cell(d.open), cell(d.cancelled)))),
-      el('tfoot', {}, el('tr', { class: 'total' }, el('td', { text: t('team') }), ...['arrived', 'sameDay', 'later', 'notStarted', 'late', 'open', 'cancelled'].map((k) => cell(r.total[k])))))) : el('div', { class: 'empty', text: t('di_none') }),
+        el('td', { text: `${wd(d.day)} ${d.day}${d.complete ? '' : ' *'}` }), cell(d.arrived), cell(d.sameDay), cell(d.later), cell(d.notStarted), cell(d.late, 'di-bad'), ...(known ? [el('td', { class: `num${d.startedLate ? ' di-bad' : ''}`, title: d.waitMedianH == null ? '' : t('di_wait_med', { h: d.waitMedianH }), text: sl(d) })] : []), cell(d.open), cell(d.cancelled)))),
+      el('tfoot', {}, el('tr', { class: 'total' }, el('td', { text: t('team') }), ...['arrived', 'sameDay', 'later', 'notStarted', 'late'].map((k) => cell(r.total[k])), ...(known ? [el('td', { class: 'num', text: `${r.total.startedLate} / ${r.total.startKnown}` })] : []), ...['open', 'cancelled'].map((k) => cell(r.total[k])))))) : el('div', { class: 'empty', text: t('di_none') }),
     anyPart ? el('p', { class: 'hint', text: t('di_partial') }) : null,
+    el('p', { class: 'hint', text: known ? t('di_known_note') : t('di_unknown_note') }),
     el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn quiet tiny', text: diDays === 14 ? t('di_more') : t('di_less'), onclick: () => { diDays = diDays === 14 ? 31 : 14; renderHome(); } })));
 }
 function renderHome() {
@@ -4309,7 +4312,7 @@ function orgCheckBox() {
 // ---------- the sync extension (ADR-0062): the same pull, run by the browser when myafaqy opens — or by one click ----------
 const extOn = () => !isTeamPortal && !!document.documentElement.dataset.afaqyExt;
 let extState = null, extLastAt = null;
-const EXT_NEEDED = '1.0.5';   // ADR-0104: the extension that says why it waits; 1.0.5 also reads the server lists (ADR-0120)
+const EXT_NEEDED = '1.0.6';   // ADR-0104: the extension that says why it waits; 1.0.5 reads the server lists (ADR-0120), 1.0.6 the start times (ADR-0124)
 const monthLast = (ym) => { const d = new Date(Date.parse(`${ym}-01T00:00:00Z`)); d.setUTCMonth(d.getUTCMonth() + 1); d.setUTCDate(0); return d.toISOString().slice(0, 10); };
 const extRecipe = () => { const ym = saudiDay(new Date().toISOString()).slice(0, 7); return managerPullRecipe(`${ymPrev(ym)}-01`, monthLast(ym), pullBranch().code, lang, 'ext'); };
 const extSend = (now) => { if (extOn()) window.postMessage({ type: 'afaqy-ext-recipe', recipe: extRecipe(), now: !!now }, location.origin); };

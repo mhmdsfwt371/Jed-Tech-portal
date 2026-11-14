@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.50 — 2026-11-14
+
+- المهام يومًا بيوم: لآخر ٧ أيام صار يظهر عمود «بدأت بعد الحد»: كم مهمة بدأها أحد بعد الحد المسموح، من كل المهام التي عُرف وقت بدئها، ونافذة اليوم تعرض وقت البدء لكل مهمة.
+- لذلك يقرأ سحب المدير سجل نشاط مهام آخر ٧ أيام من ماي أفاقي (قراءة فقط)، فيطول السحب دقيقة أو دقيقتين. إضافة المزامنة صارت 1.0.6.
+
+<details><summary>English</summary>
+
+- Tasks per day: for the last 7 days a «Started after the limit» column now shows how many tasks were started after the allowed time, out of those whose start is known, and the day’s window shows each task’s start time.
+- For this the manager pull reads the activity log of the last 7 days’ tasks in MyAFAQY (read only), which adds a minute or two. The sync extension is now 1.0.6.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- روزانہ ٹاسک: آخری 7 دنوں کے لیے اب «حد کے بعد شروع ہوئے» کا کالم دکھاتا ہے کہ جن ٹاسکس کا شروع ہونے کا وقت معلوم ہے ان میں سے کتنے مقررہ وقت کے بعد شروع ہوئے، اور دن کی ونڈو ہر ٹاسک کا شروع ہونے کا وقت دکھاتی ہے۔
+- اس کے لیے مینیجر کا پل مائی آفاقی میں آخری 7 دنوں کے ٹاسکس کا سرگرمی ریکارڈ پڑھتا ہے (صرف پڑھنا)، جس سے پل میں ایک دو منٹ بڑھ جاتے ہیں۔ ہم آہنگی کی ایکسٹینشن اب 1.0.6 ہے۔
+
+</div>
+</details>
+
+
 ## v9.49 — 2026-11-14
 
 - صفحة الفريق: لوحة التعيين تبقى في الأعلى، والباقي بطاقات تفتح في نافذة: ملف الفريق، وحسابات ما بعد البيع، والمقارنة مع ماي أفاقي. تعديل الفريق يعمل داخل النافذة نفسها.

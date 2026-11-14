@@ -283,6 +283,7 @@ export function parseDataset(text) {
       fromEmail: v2 ? moduleId === EMAIL_MODULE : (r.fromEmail === true ? true : r.fromEmail === false ? false : null),
       moduleId, customer: r.customer == null ? null : String(r.customer),
       bucket: ['done', 'open', 'toDo'].includes(r.bucket) ? r.bucket : null,
+      ...(toIso(r.startedAt) ? { startedAt: toIso(r.startedAt) } : {}),   // ADR-0124: when someone first started it (last 7 days only)
     });
   }
   const people = Array.isArray(raw.people) ? raw.people.filter((p) => p && p.id != null).map((p) => ({
@@ -833,9 +834,10 @@ if(LATER){const late=await walk(100001,[TZ,NZ],false,['done']);const seen=new Se
 const rdq=await walk(12,[FROM&&FZ||'',TO&&TZ||''],true,['done']);const rdo=await walk(12,[],true,['open','toDo']);const rdIds=[...new Set([...rdq.rd,...rdo.rd])];
 const mapTask=x=>{const uid=String(x.assigneeId||'');const tt=teamOf[uid]||{teams:[],branchCode:null};return{id:String(x.i),title:String(x.title||''),typeId:x.taskSettingId??null,type:String(x.taskType||''),statusId:x.statusId,state:x.isCancelled?'cancelled':x.statusId===3?'done':'open',createdAt:x.createdOn?x.createdOn+'Z':null,createdById:x.createUserId==null?null:String(x.createUserId),assigneeId:uid,completedAt:x.statusId===3&&!x.isCancelled&&x.closeDate?x.closeDate+'Z':null,moduleId:x.moduleId,customer:x.customerTag||null,bucket:x.bucket}};
 const seenId=new Set();const taskRows=[];for(const x of tasks){if(seenId.has(x.i))continue;seenId.add(x.i);taskRows.push(mapTask(x))}
+say(M[2]+'start times');const firstStart=${firstStart.toString()};const since7=Date.now()-7*864e5;let stRead=0,stAsked=0;for(const t of taskRows){if(!t.createdAt||Date.parse(t.createdAt)<since7||t.state==='cancelled'||t.bucket==='toDo')continue;if(stAsked>=800)break;stAsked++;const d=await getO('Task/GetTask/'+t.id);const acts=d&&d.data&&Array.isArray(d.data.activities)?d.data.activities:null;if(acts){stRead++;const f=firstStart(acts);if(f)t.startedAt=f}if(stAsked%25===0)say(M[2]+'start times '+stAsked);await wait(120)}
 const pids=new Set();taskRows.forEach(t=>{if(t.assigneeId)pids.add(t.assigneeId);if(t.createdById)pids.add(t.createdById)});for(const[uid,tt]of Object.entries(teamOf))if(tt.jeddah)pids.add(uid);
 for(const id of pids){const u=uname[id]||{};const tt=teamOf[id]||{teams:[],branchCode:null};people.push({id,nameEn:String(u.nameEn||''),nameAr:String(u.nameAr||''),teams:tt.teams,branchCode:tt.branchCode})}
-const tasksFile={schema:SCH,range:{from:FROM,to:RTO},skippedLists:SKIP,pulledBy:WHO,extractedAt:new Date().toISOString(),taskGroupId:100001,source:{endpoint:'POST https://crmbackend.afaqy.sa/Task/GetMyTasksGrid',doneInRangeTotal:doneTotal,openTotal:openTotal,pageSize:500},people,tasks:taskRows,rdTaskIds:rdIds,teamTypes,employees,notes:['manager bookmark; times UTC with Z added']};
+const tasksFile={schema:SCH,range:{from:FROM,to:RTO},skippedLists:SKIP,pulledBy:WHO,extractedAt:new Date().toISOString(),taskGroupId:100001,source:{endpoint:'POST https://crmbackend.afaqy.sa/Task/GetMyTasksGrid',doneInRangeTotal:doneTotal,openTotal:openTotal,pageSize:500},people,tasks:taskRows,rdTaskIds:rdIds,teamTypes,employees,notes:['manager bookmark; times UTC with Z added'],startTimes:{since:new Date(since7).toISOString(),asked:stAsked,read:stRead}};
 say(M[2]+'reports');const techPoints=[];const MM=MMS;
 
 for(const mo of MM){const rows=[];for(let pg=1;;pg++){const R=await postO('TechnicianReport/GetTechnicianReportStatic',{pageNumber:pg,pageSize:100,searchKey:'',isSearchFilter:true,search:{yearId:mo.yearId,quarterId:mo.quarterId,monthId:mo.monthId,branchIds:BR,userIds:[],requestDate:mo.rd}});const g=(R.data&&R.data.gridResult)||{};const arr=g.data||[];for(const r of arr){const o={technicianId:r.technicianId,employeeId:r.employeeId,nameEn:r.nameEn,nameAr:r.nameAr};for(const f of KEEP)o[f]=r[f]||0;rows.push(o)}const tot=g.totalPages||1;if(pg>=tot||!arr.length)break;await wait(200)}techPoints.push({month:mo.month,listCount:rows.length,rows})}
@@ -1114,6 +1116,10 @@ export function startDue(createdIso, rule = RESPONSE_RULE) {
   }
   return null;
 }
+/** ADR-0124: when a task first left MyAFAQY's To-Do column, from its activity log (GET Task/GetTask/{id} → data.activities):
+ *  the earliest «Start» (actionId 8) or «Complete» (11) — a task closed without pressing Start left To-Do when it was closed.
+ *  MyAFAQY writes the time in UTC without a zone; «Z» is added, as for every other time in the pull. */
+export function firstStart(activities) { let best = null; for (const a of activities || []) { if (!a || (a.actionId !== 8 && a.actionId !== 11)) continue; const v = String(a.createDate || ''); if (!/^\d{4}-\d{2}-\d{2}T/.test(v)) continue; const z = /Z|[+-]\d{2}:?\d{2}$/.test(v) ? v : v + 'Z'; if (!best || Date.parse(z) < Date.parse(best)) best = z; } return best ? new Date(Date.parse(best)).toISOString() : null; }
 /** Each day of [from, to] for the team: what arrived and where it stands at `asOf` (the pull's time — the To-Do column is
  *  only known as it was then). The columns add up: arrived = closed the same day + closed later + not started + open + cancelled.
  *  `complete(day)` says whether the pulls hold every task of that day (a later close needs a pull that covers it). */
@@ -1121,22 +1127,24 @@ export function dailyIntake(tasks, { from, to, asOf, team = null, rule = RESPONS
   const at = Date.parse(asOf), inTeam = (x) => !team || team.includes(x.assigneeId);
   const due = (x) => startDue(x.createdAt, rule), late = (x) => { const d = due(x); return !!d && Date.parse(d) < at; };
   const notStarted = (x) => x.state === 'open' && x.bucket === 'toDo';
-  const rows = new Map(), blank = (d) => ({ day: d, arrived: 0, sameDay: 0, later: 0, notStarted: 0, late: 0, open: 0, cancelled: 0, email: 0, ids: [] });
+  const rows = new Map(), blank = (d) => ({ day: d, arrived: 0, sameDay: 0, later: 0, notStarted: 0, late: 0, open: 0, cancelled: 0, email: 0, ids: [], startKnown: 0, startedLate: 0, waitH: [] });
   for (let d = from, g = 0; d <= to && g < 400; d = nextDay(d), g++) rows.set(d, blank(d));   // a day with nothing (a Friday) is a row too
   for (const x of tasks || []) {
     if (!x.createdAt || !inTeam(x)) continue; const d = saudiDay(x.createdAt); if (d < from || d > to) continue;
     if (!rows.has(d)) rows.set(d, blank(d));
     const r = rows.get(d); r.arrived++; r.ids.push(x.id); if (x.fromEmail === true) r.email++;
+    if (x.startedAt) { const du = due(x); r.startKnown++; if (du && Date.parse(x.startedAt) > Date.parse(du)) r.startedLate++; r.waitH.push(Math.max(0, (Date.parse(x.startedAt) - Date.parse(x.createdAt)) / 36e5)); }
     if (x.state === 'done') { if (x.completedAt && saudiDay(x.completedAt) === d) r.sameDay++; else r.later++; }
     else if (x.state === 'cancelled') r.cancelled++;
     else if (notStarted(x)) { r.notStarted++; if (late(x)) r.late++; }
     else r.open++;
   }
-  const days = [...rows.values()].map((r) => ({ ...r, complete: !!complete(r.day) })).sort((a, b) => (a.day < b.day ? 1 : -1));
+  const med = (v) => { if (!v.length) return null; const q = [...v].sort((a, b) => a - b), h = Math.floor(q.length / 2); return Math.round((q.length % 2 ? q[h] : (q[h - 1] + q[h]) / 2) * 10) / 10; };
+  const days = [...rows.values()].map(({ waitH, ...r }) => ({ ...r, waitMedianH: med(waitH), complete: !!complete(r.day) })).sort((a, b) => (a.day < b.day ? 1 : -1));
   const lateNow = (tasks || []).filter((x) => inTeam(x) && notStarted(x) && x.createdAt && late(x)).map((x) => ({ id: x.id, due: due(x) }));
   const waiting = (tasks || []).filter((x) => inTeam(x) && notStarted(x)).length;
   const sum = (k) => days.reduce((s, r) => s + r[k], 0);
-  return { days, lateNow, waiting, total: { arrived: sum('arrived'), sameDay: sum('sameDay'), later: sum('later'), notStarted: sum('notStarted'), late: sum('late'), open: sum('open'), cancelled: sum('cancelled') } };
+  return { days, lateNow, waiting, total: { startKnown: sum('startKnown'), startedLate: sum('startedLate'), arrived: sum('arrived'), sameDay: sum('sameDay'), later: sum('later'), notStarted: sum('notStarted'), late: sum('late'), open: sum('open'), cancelled: sum('cancelled') } };
 }
 /** Whether pulled ranges cover every day from `day` to `last` — so a task that arrived on `day` and closed later is in hand. */
 export function coveredFrom(ranges, day, last) {

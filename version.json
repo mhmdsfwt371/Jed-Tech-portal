@@ -1,25 +1,22 @@
 {
-  "version": "9.49",
+  "version": "9.50",
   "date": "2026-11-14",
   "notes": {
     "ar": [
-      "صفحة الفريق: لوحة التعيين تبقى في الأعلى، والباقي بطاقات تفتح في نافذة: ملف الفريق، وحسابات ما بعد البيع، والمقارنة مع ماي أفاقي. تعديل الفريق يعمل داخل النافذة نفسها.",
-      "صفحة الأوزان: الإعدادات المتقدمة صارت بطاقة تفتح في نافذة بدل قسم مطوي طويل.",
-      "مؤشراتي: «تحديث أرقامي» و«طريقة الحساب» صارا بطاقتين. وزر «الإعداد من جديد» في الأعلى كان يفتح قسمًا فارغًا؛ صار يفتح خطوات الإعداد."
+      "المهام يومًا بيوم: لآخر ٧ أيام صار يظهر عمود «بدأت بعد الحد»: كم مهمة بدأها أحد بعد الحد المسموح، من كل المهام التي عُرف وقت بدئها، ونافذة اليوم تعرض وقت البدء لكل مهمة.",
+      "لذلك يقرأ سحب المدير سجل نشاط مهام آخر ٧ أيام من ماي أفاقي (قراءة فقط)، فيطول السحب دقيقة أو دقيقتين. إضافة المزامنة صارت 1.0.6."
     ],
     "en": [
-      "Team page: the assignment panel stays on top, and the rest are cards that open in a window: the team file, the after-sales accounts, and the comparison with MyAFAQY. Editing the team works inside the window.",
-      "Weights page: the advanced settings are now a card that opens in a window instead of a long fold.",
-      "My KPIs: «Update my numbers» and «How it is calculated» are now cards. The «Set up again» button at the top used to open an empty section; it now opens the setup steps."
+      "Tasks per day: for the last 7 days a «Started after the limit» column now shows how many tasks were started after the allowed time, out of those whose start is known, and the day’s window shows each task’s start time.",
+      "For this the manager pull reads the activity log of the last 7 days’ tasks in MyAFAQY (read only), which adds a minute or two. The sync extension is now 1.0.6."
     ],
     "ur": [
-      "ٹیم کا صفحہ: تفویض کا پینل اوپر رہتا ہے، اور باقی کارڈز ہیں جو ونڈو میں کھلتے ہیں: ٹیم فائل، آفٹر سیلز اکاؤنٹس، اور مائی آفاقی سے موازنہ۔ ٹیم میں ترمیم اسی ونڈو کے اندر ہوتی ہے۔",
-      "اوزان کا صفحہ: تفصیلی ترتیبات اب ایک کارڈ ہیں جو ونڈو میں کھلتا ہے، لمبا تہہ شدہ حصہ نہیں۔",
-      "میرے اشاریے: «میرے اعداد تازہ کریں» اور «حساب کا طریقہ» اب کارڈز ہیں۔ اوپر کا بٹن «دوبارہ سیٹ اپ» ایک خالی حصہ کھولتا تھا؛ اب وہ سیٹ اپ کے مراحل کھولتا ہے۔"
+      "روزانہ ٹاسک: آخری 7 دنوں کے لیے اب «حد کے بعد شروع ہوئے» کا کالم دکھاتا ہے کہ جن ٹاسکس کا شروع ہونے کا وقت معلوم ہے ان میں سے کتنے مقررہ وقت کے بعد شروع ہوئے، اور دن کی ونڈو ہر ٹاسک کا شروع ہونے کا وقت دکھاتی ہے۔",
+      "اس کے لیے مینیجر کا پل مائی آفاقی میں آخری 7 دنوں کے ٹاسکس کا سرگرمی ریکارڈ پڑھتا ہے (صرف پڑھنا)، جس سے پل میں ایک دو منٹ بڑھ جاتے ہیں۔ ہم آہنگی کی ایکسٹینشن اب 1.0.6 ہے۔"
     ]
   },
   "counts": {
-    "versions": 174,
-    "decisions": 123
+    "versions": 175,
+    "decisions": 124
   }
 }

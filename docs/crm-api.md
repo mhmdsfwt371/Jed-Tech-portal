@@ -86,6 +86,9 @@
 حسابات ما بعد البيع `AfterSales/GetAfterSalesRequestGrid` (صف: `customerId`، `branchCode`، `afterSalesManIds[]`، `connectedDevices`،
 `segment`)؛ قائمة المهندسين `AfterSales/GetAllAfterSalesEngineers`؛ **والتعيين** `POST AfterSales/AssignAfterSales`
 `{customerId, afterSalesIds[]}` — القائمة **تحلّ محل** القديمة (القرار 0018). لا مفتاح فرع مؤكد في `search`.
+**سجل نشاط المهمة (التقاط ٣١ أكتوبر، القرار 0124):** `GET Task/GetTask/{taskId}` بلا جسم — الشاشة نفسها ترسله عند فتح المهمة.
+السجل في `data.activities`؛ للصف `actionId` و`createDate` (UTC بلا منطقة). ٨ = بدء، ١١ = إنجاز، ٧ = إعادة إسناد، ٩/١٠ = إيقاف/استئناف.
+وقت مغادرة عمود «لم يبدأ» = أول ٨ أو ١١. طلب لكل مهمة، لذلك يقرؤه سحب المدير لمهام آخر ٧ أيام فقط (حتى ٨٠٠ مهمة)، ولا يسأل عن مهمة ما زالت في «لم يبدأ».
 **التقاط ١٤ نوفمبر (السيرفرات، القرار 0120):** «إدارة السيرفرات ← حسابات سيرفرات العملاء»
 `POST CustomerServerAccount/GetAllCustomerAccounts` بجسم القوائم المعتاد (صف: `customerId` رقم العميل نفسه في قائمة ما بعد
 البيع، `customerAux` رقم دولفين، `serverIp`، `status` = Working أو Blocked أو Disabled، و`system` فارغ دائمًا فلا يُعتمد عليه).
