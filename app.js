@@ -13,7 +13,7 @@ import {
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
   quarterRange, quarterOf, quarterBaseline, quarterGoalProgress, planProgress, suggestQuarterGoals,
   maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply,
-  tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds,
+  tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds, parseTenderStudy, matchTenderStudy, applyTenderStudy,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts } from './core.js';
 
@@ -810,7 +810,7 @@ function rankFor(id, ym) {   // his team: the same team leader in the team file,
 let tenders = null;   // { items: [...], to, pulledAt } — on this device, carried by the backup
 let tdDlg = null;   // the tender's detail window (ADR-0122)
 let tdKind = pref('tdkind') || 'month', tdPick = '', tdFrom = '', tdTo = '', tdBusy = '', tdOpenId = null, tdStageF = null, tdCardF = null;   // ADR-0102: a card's filter
-let tdQuery = '', tdMailResult = null;
+let tdQuery = '', tdMailResult = null, tdStudyResult = null;   // tdStudyResult: the last analyzer import (ADR-0126)
 const TD_FROM = 'a.ibrahim@afaqy.com';
 // ADR-0083: the lifecycle. Open stages in order, then the closed ones. declined/lost need a reason.
 const TD_STAGES = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted', 'won', 'lost', 'cancelled', 'declined'];
@@ -994,10 +994,10 @@ function tdAddManual() {
 }
 async function tdExcel(rows) {
   const X = await loadXlsx(), today = saudiDay(new Date().toISOString());
-  const H = ['td_col_subject', 'td_col_date', 'td_col_from', 'td_col_why', 'td_col_stage', 'td_col_stageAt', 'td_col_days', 'td_col_reason', 'td_col_owner', 'td_col_etimadNo', 'td_col_value', 'td_col_fees', 'td_col_bond', 'td_col_askDue', 'td_col_visit', 'td_col_due', 'td_col_openAt', 'td_col_submittedOn', 'td_col_submitNo', 'td_col_decidedOn', 'td_col_study', 'td_col_note'].map((k) => t(k));
+  const H = ['td_col_subject', 'td_col_date', 'td_col_from', 'td_col_why', 'td_col_stage', 'td_col_stageAt', 'td_col_days', 'td_col_reason', 'td_col_owner', 'td_col_etimadNo', 'td_col_value', 'td_col_fees', 'td_col_bond', 'td_col_askDue', 'td_col_visit', 'td_col_due', 'td_col_openAt', 'td_col_submittedOn', 'td_col_submitNo', 'td_col_decidedOn', 'td_col_study', 'td_col_studyDecision', 'td_col_note'].map((k) => t(k));
   const why = (i) => [i.messages?.length ? t('td_why_email') : '', i.byFrom ? t('td_why_from') : '', i.byKr ? t('td_why_kr') : '', i.manual ? t('td_why_manual') : ''].filter(Boolean).join(' + ');
-  const ws = X.utils.aoa_to_sheet([H, ...rows.map((i) => [i.subject, i.date, i.from, why(i), t(`td_st_${i.stage}`), i.stageAt, tdDaysBetween(i.stageAt, today), i.reason, i.owner, i.etimadNo, i.value, i.fees, i.bond, i.askDue, i.visit, i.due, i.openAt, i.submittedOn, i.submitNo, i.decidedOn, i.study, i.note])]);
-  ws['!cols'] = [60, 12, 26, 24, 18, 12, 8, 30, 16, 16, 14, 12, 18, 14, 14, 14, 14, 14, 16, 14, 30, 40].map((w) => ({ wch: w })); ws['!views'] = [{ RTL: lang !== 'en' }];
+  const ws = X.utils.aoa_to_sheet([H, ...rows.map((i) => [i.subject, i.date, i.from, why(i), t(`td_st_${i.stage}`), i.stageAt, tdDaysBetween(i.stageAt, today), i.reason, i.owner, i.etimadNo, i.value, i.fees, i.bond, i.askDue, i.visit, i.due, i.openAt, i.submittedOn, i.submitNo, i.decidedOn, i.study, i.studyDecision ? t(`td_dec_${i.studyDecision.replace("-", "")}`) : '', i.note])]);
+  ws['!cols'] = [60, 12, 26, 24, 18, 12, 8, 30, 16, 16, 14, 12, 18, 14, 14, 14, 14, 14, 16, 14, 30, 14, 40].map((w) => ({ wch: w })); ws['!views'] = [{ RTL: lang !== 'en' }];
   const months = [...new Set(tenders.items.map((i) => i.date.slice(0, 7)))].sort();
   const sum = X.utils.aoa_to_sheet([[t('td_col_month'), t('td_k_in'), t('td_k_joined'), t('td_st_declined'), t('td_k_submitted'), t('td_st_won'), t('td_st_lost'), t('td_k_winrate'), t('td_k_decision'), t('td_k_ontime')],
     ...months.map((m) => { const k = tdKpis(tenders.items.filter((i) => i.date.startsWith(m)), today); return [m, k.n, k.joined, k.declined, k.submitted, k.won, k.closed - k.won, k.winRate == null ? '' : `${k.winRate}%`, k.avgDecision == null ? '' : k.avgDecision, k.onTime == null ? '' : `${k.onTime}%`]; })]);
@@ -1016,6 +1016,26 @@ async function tdCommit(next) {
   await store.putTenders(saved, next.revision || '');
   tenders = saved;
 }
+// ADR-0126: the Tender Analyzer's study files. From the toolbar each study finds its row by Etimad number, then subject; from a
+// tender's window the study is applied to that tender. Only empty fields are filled; differences are listed, never overwritten.
+async function tdImportStudies(files, onlyId = null) {
+  const res = { tenders: 0, fields: 0, differs: [], unmatched: [], bad: [] };
+  for (const f of files) {
+    let st; try { st = parseTenderStudy(await f.text()); } catch { st = { error: 'json' }; }
+    if (st.error) { res.bad.push(f.name); continue; }
+    for (const study of st.tenders) {
+      const items = tenders ? tenders.items : [];
+      const row = onlyId ? (st.tenders.length === 1 ? items.find((i) => i.id === onlyId) : (matchTenderStudy(items, study, tdKey)?.id === onlyId ? items.find((i) => i.id === onlyId) : null)) : matchTenderStudy(items, study, tdKey);
+      if (!row) { if (!onlyId) res.unmatched.push(study.subject || study.etimadNo); continue; }
+      const { patch, filled, differs } = applyTenderStudy(row, study);
+      if (Object.keys(patch).length && await tdUpdate(row.id, patch, tdActivity('study', t('td_study_act', { n: filled.length, tool: st.tool || t('td_analyzer') })))) { res.tenders++; res.fields += filled.length; }
+      for (const d of differs) res.differs.push({ subject: row.subject, ...d });
+    }
+  }
+  tdStudyResult = res; renderTenders();
+  toast(t('td_study_done', { n: res.fields, m: res.tenders, d: res.differs.length, u: res.unmatched.length }));
+}
+const tdStudyInput = (onlyId = null) => el('input', { type: 'file', accept: '.json,application/json', multiple: onlyId ? null : '', hidden: '', onchange: (e) => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) tdImportStudies(fs, onlyId); } });
 async function tdUpdate(id, patch, activity = null) {
   const item = tenders?.items.find((row) => row.id === id);
   if (!item) return false;
@@ -1266,6 +1286,10 @@ function renderTenders() {
   const pull = el('section', { class: 'dt-quick td-pull' },
     el('div', { class: 'td-pull-head' }, el('h2', { text: t('td_pull_h') }), tenders && tenders.pulledAt ? el('span', { class: 'hint', text: t('td_last', { to: tenders.to || '—', n: tenders.items.length }) }) : null),
     tdEmailPicker(),
+    tdStudyResult ? el('div', { role: 'status', class: 'td-study-res' }, el('p', { class: 'hint', text: t('td_study_done', { n: tdStudyResult.fields, m: tdStudyResult.tenders, d: tdStudyResult.differs.length, u: tdStudyResult.unmatched.length }) }),
+      tdStudyResult.differs.length ? el('ul', { class: 'td-study-diff' }, tdStudyResult.differs.slice(0, 30).map((d) => el('li', { dir: 'auto', text: t('td_study_diff', { s: d.subject, f: t(`td_col_${d.field}`), h: d.have, v: d.study }) }))) : null,
+      tdStudyResult.unmatched.length ? el('p', { class: 'note', dir: 'auto', text: t('td_study_unmatched', { list: tdStudyResult.unmatched.slice(0, 10).join(' · ') }) }) : null,
+      tdStudyResult.bad.length ? el('p', { class: 'note', dir: 'auto', text: t('td_study_bad', { list: tdStudyResult.bad.join(' · ') }) }) : null) : null,
     tdMailResult ? el('div', { role: 'status' },
       el('p', { class: 'hint', text: t('td_mail_result', tdMailResult) }),
       tdMailResult.failures.map(({ name, key }) => el('p', { class: 'hint', dir: 'auto', text: [name, t(key)].filter(Boolean).join(' · ') }))) : null,
@@ -1276,7 +1300,8 @@ function renderTenders() {
       el('button', { type: 'button', class: 'btn', disabled: !!tdBusy, text: `⬆ ${t('td_upload')}`, onclick: () => up.click() }), up,
       el('button', { type: 'button', class: 'btn td-paste-btn', disabled: !!tdBusy, text: `📥 ${t('td_paste')}`, onclick: tdPasteDialog }),
       el('button', { type: 'button', class: 'btn td-pst-btn', disabled: !!tdBusy, text: `📂 ${t('td_pst_pick')}`, onclick: () => pst.click() }), pst,
-      el('button', { type: 'button', class: 'btn td-add-btn', disabled: !!tdBusy, text: `＋ ${t('td_add')}`, onclick: tdAddManual })),
+      el('button', { type: 'button', class: 'btn td-add-btn', disabled: !!tdBusy, text: `＋ ${t('td_add')}`, onclick: tdAddManual }),
+      (() => { const inp = tdStudyInput(); return el('span', {}, el('button', { type: 'button', class: 'btn td-study-btn', disabled: !!tdBusy, text: `📊 ${t('td_study_import')}`, onclick: () => inp.click() }), inp); })()),
     tdBusy ? el('p', { class: 'note td-busy', role: 'status', text: tdBusy }) : null,
     el('details', { class: 'td-how', ...(empty ? { open: '' } : {}) }, el('summary', { text: t('td_how') }),
       el('div', { class: 'td-way' }, el('h3', { text: t('td_way_claude') }), el('p', { class: 'hint', text: t('td_pull_lead', { from: tdFrom || tdDefaultFrom() }) }), el('p', { class: 'hint', text: t('td_bm_hint') }),
@@ -1314,6 +1339,7 @@ function renderTenders() {
       const v = e.target.value;
       if (k === 'date' && !v) { e.target.value = i.date; return; }
       const patch = { [k]: type === 'number' ? (v === '' ? null : Number(v)) : v.trim() };
+      if (i.fieldSources && i.fieldSources[k]) { const fs = { ...i.fieldSources }; delete fs[k]; patch.fieldSources = fs; }   // typed by hand: no longer the analyzer's
       const field = TENDER_DATE_FIELDS.find((field) => k === field || k === field+'Time');
       if (field) {
         if (k === field && !v) patch[field+'Time'] = '';
@@ -1326,7 +1352,8 @@ function renderTenders() {
   // v9.47: a field the stage still needs is marked «to fill»; a date the portal read itself says where it came from
   const lab = (k, node, i = null) => { const need = i && tenderNeeds(i).includes(k), src = i && i[k] && i.dateSources ? i.dateSources[k] : '';
     return el('label', { class: `td-lab${need ? ' td-lab-need' : ''}` }, el('span', {}, t(`td_col_${k}`), need ? el('b', { class: 'td-need-tag', text: t('td_need_tag') }) : null,
-      ['mail', 'document'].includes(src) ? el('i', { class: 'td-auto-tag', text: t(src === 'mail' ? 'td_auto_mail' : 'td_auto_doc') }) : null), node); };
+      ['mail', 'document'].includes(src) ? el('i', { class: 'td-auto-tag', text: t(src === 'mail' ? 'td_auto_mail' : 'td_auto_doc') }) : null,
+      i && i[k] != null && i[k] !== '' && (src === 'analyzer' || (i.fieldSources && i.fieldSources[k] === 'analyzer')) ? el('i', { class: 'td-auto-tag td-auto-an', title: (() => { const e = i.evidence && i.evidence[k]; return e ? `${e.file}${e.page ? ` · ${t('td_page', { p: e.page })}` : ''}${e.quote ? ` — «${e.quote}»` : ''}` : ''; })(), text: t('td_auto_an') }) : null), node); };
   const stageSel = (i) => el('select', { class: 'td-stage', disabled: !!tdBusy, 'aria-label': t('td_col_stage'), onchange: async (e) => { const st = e.target.value, patch = { stage: st, stageAt: today };
       if (!['ready', 'submitted', 'won', 'lost'].includes(i.stage) && !tenderCanAdvance(i, st)) {
         e.target.value = i.stage; tdOpenId = i.id; renderTenders(); toast(t('td_offers_required')); return;
@@ -1390,6 +1417,8 @@ function renderTenders() {
   const needs = tenderNeeds(cur);
   set(box, el('h2', { id: 'td-dlg-h', class: 'td-dlg-h', dir: 'auto', text: cur.subject }),
     el('div', { class: 'row td-dlg-top' }, el('span', { class: 'hint', text: t('td_col_stage') }), stageSel(cur), el('span', { class: 'hint', text: `${t('td_col_date')}: ${cur.date}` })),
+    cur.studyDecision ? el('p', { class: `td-study-dec td-dec-${cur.studyDecision}`, dir: 'auto', text: t('td_study_dec', { d: t(`td_dec_${cur.studyDecision.replace("-", "")}`), why: cur.studyWhy || '—', at: String(cur.studyAt || '').slice(0, 10) }) }) : null,
+    (() => { const inp = tdStudyInput(cur.id); return el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny quiet', text: `📊 ${t('td_study_import_one')}`, onclick: () => inp.click() }), inp); })(),
     el('p', { class: `td-needs ${needs.length ? 'some' : 'none'}`, text: needs.length ? t('td_needs_line', { n: needs.length, list: needs.map((k) => t(`td_col_${k}`)).join(lang === 'en' ? ', ' : '، ') }) : t('td_needs_none') }),
     detail(cur));
   if (!tdDlg.open) tdDlg.showModal();

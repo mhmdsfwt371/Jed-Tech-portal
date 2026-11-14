@@ -1348,6 +1348,33 @@ test('projectLine and projectDeletePlan: tenders vs upselling from clear signals
   assert.deepEqual(p, { items: ['1'], keys: ['a'], kept: ['t:9'] });
 });
 
+test('tender study file: read strictly, matched by Etimad number then subject, fills only empty fields, lists differences', () => {
+  const file = { schema: 'afaqy-tender-study/v1', generatedAt: '2026-11-14T18:00:00Z', tool: 'Tender Analyzer 2.1', tenders: [
+    { subject: 'منافسة توريد كاميرات', etimadNo: '2026-123 456', entity: 'جهة', fees: 1500, bond: '2% من قيمة العرض', value: null,
+      dates: { askDue: { date: '2026-11-20', time: '' }, visit: { date: '2026-11-22', time: '10:00' }, due: { date: '2026-12-01', time: '14:30' }, openAt: { date: 'غير مذكور' } },
+      decision: 'go', decisionWhy: 'ضمن نطاق أفاقي', summary: 'ملخص', studyFile: 'دراسة.pptx', evidence: { fees: { file: 'كراسة.pdf', page: 4, quote: 'قيمة وثائق المنافسة 1500 ريال' }, junk: { file: 'x' } } },
+    { subject: '' }, 'nonsense'] };
+  const st = core.parseTenderStudy(JSON.stringify(file));
+  assert.equal(st.tenders.length, 1); const s0 = st.tenders[0];
+  assert.equal(s0.etimadNo, '2026123456'); assert.deepEqual(Object.keys(s0.dates).sort(), ['askDue', 'due', 'visit'], 'a date that is not a date is dropped');
+  assert.deepEqual(Object.keys(s0.evidence), ['fees']); assert.equal(s0.value, null);
+  assert.deepEqual(core.parseTenderStudy('{"schema":"other"}'), { error: 'schema' }); assert.deepEqual(core.parseTenderStudy('nope'), { error: 'json' });
+  const key = (x) => String(x).trim();
+  const items = [{ id: 'منافسة توريد كاميرات', subject: 'منافسة توريد كاميرات', etimadNo: '' }, { id: 'أخرى', subject: 'أخرى', etimadNo: '2026123456' }];
+  assert.equal(core.matchTenderStudy(items, s0, key).id, 'أخرى', 'the Etimad number wins over the subject');
+  assert.equal(core.matchTenderStudy([items[0]], s0, key).id, 'منافسة توريد كاميرات');
+  assert.equal(core.matchTenderStudy([items[0], { ...items[0], id: 'x' }], { ...s0, etimadNo: '' }, key), null, 'two rows with that subject: none is chosen');
+  const row = { id: 'r', etimadNo: '', fees: null, bond: '5%', value: null, askDue: '', askDueTime: '', visit: '', due: '2026-12-01', dueTime: '', openAt: '', study: '', studySummary: '', dateSources: { due: 'manual' } };
+  const { patch, filled, differs } = core.applyTenderStudy(row, s0, '2026-11-14T18:01:00Z');
+  assert.deepEqual(filled.sort(), ['askDue', 'dueTime', 'etimadNo', 'fees', 'study', 'studySummary', 'visit'].sort());
+  assert.equal(patch.fees, 1500); assert.equal(patch.visitTime, '10:00'); assert.equal(patch.due, undefined, 'a deadline typed by hand stays');
+  assert.equal(patch.fieldSources.fees, 'analyzer'); assert.equal(patch.dateSources.askDue, 'analyzer'); assert.equal(patch.dateSources.due, 'manual');
+  assert.equal(patch.evidence.fees.page, 4); assert.equal(patch.studyDecision, 'go');
+  assert.deepEqual(differs, [{ field: 'bond', have: '5%', study: '2% من قيمة العرض' }]);
+  const cleaned = core.cleanTenderDetails({ ...row, ...patch });
+  assert.equal(cleaned.fieldSources.fees, 'analyzer'); assert.equal(cleaned.dateSources.visit, 'analyzer'); assert.equal(cleaned.studyDecision, 'go'); assert.equal(cleaned.evidence.fees.quote, 'قيمة وثائق المنافسة 1500 ريال');
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

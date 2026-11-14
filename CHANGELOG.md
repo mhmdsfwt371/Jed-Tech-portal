@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.52 — 2026-11-14
+
+- سجل المناقصات: زر جديد «استيراد دراسة المحلل». محلل المناقصات يكتب ملفًا صغيرًا بجانب دراسته، والسجل يقرؤه ويملأ الخانات الفارغة: رقم اعتماد، وقيمة الكراسة، والضمان، والقيمة التقديرية، ومواعيد الاستفسارات وزيارة الموقع والتقديم وفتح العروض.
+- بجانب كل خانة امتلأت «من المحلل» ومعها الصفحة والجملة التي جاءت منها. ما كتبته بيدك لا يتغير؛ والقيمة المختلفة تظهر في قائمة لتراجعها. وقرار الدراسة (ندخل / لا ندخل / يحتاج مراجعة) يظهر في نافذة المناقصة وفي ملف الإكسل.
+
+<details><summary>English</summary>
+
+- Tender register: a new «Import the analyzer’s study» button. The Tender Analyzer writes a small file beside its study, and the register reads it to fill the empty fields: Etimad number, booklet fee, guarantee, estimated value, and the inquiries, site-visit, submission and opening dates.
+- Each filled field says «from the analyzer», with the page and sentence it came from. What you typed by hand never changes; a different value is listed for you to check. The study’s decision (bid / do not bid / needs review) shows in the tender’s window and in the Excel file.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹینڈر رجسٹر: نیا بٹن «تجزیہ کار کا مطالعہ درآمد کریں»۔ ٹینڈر تجزیہ کار اپنے مطالعے کے ساتھ ایک چھوٹی فائل لکھتا ہے، اور رجسٹر اسے پڑھ کر خالی خانے بھرتا ہے: اعتماد نمبر، کتابچے کی قیمت، ضمانت، تخمینی مالیت، اور استفسارات، سائٹ کے دورے، جمع کرانے اور بولی کھلنے کی تاریخیں۔
+- ہر بھرے گئے خانے کے ساتھ «تجزیہ کار سے» لکھا ہوتا ہے، اور وہ صفحہ اور جملہ جہاں سے آیا۔ جو آپ نے ہاتھ سے لکھا وہ کبھی نہیں بدلتا؛ مختلف قیمت آپ کے جائزے کے لیے فہرست میں آتی ہے۔ مطالعے کا فیصلہ (بولی دیں / نہ دیں / جائزہ درکار) ٹینڈر کی ونڈو اور ایکسل فائل میں دکھتا ہے۔
+
+</div>
+</details>
+
+
 ## v9.51 — 2026-11-14
 
 - مشاريعي: تقسيم جديد أعلى كل صفحة: مناقصات وأبسيلنج (لعملاء حاليين) وغير مصنّف. التقسيم من إشارات واضحة فقط، وتختار مسار أي مشروع بنفسك من ✎ تعديل.

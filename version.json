@@ -1,22 +1,22 @@
 {
-  "version": "9.51",
+  "version": "9.52",
   "date": "2026-11-14",
   "notes": {
     "ar": [
-      "مشاريعي: تقسيم جديد أعلى كل صفحة: مناقصات وأبسيلنج (لعملاء حاليين) وغير مصنّف. التقسيم من إشارات واضحة فقط، وتختار مسار أي مشروع بنفسك من ✎ تعديل.",
-      "زر «احذف كل المعروض» في صفحات الإيميل والعروض والمتابعة: يحذف ما تعرضه الصفحة فقط بعد التأكيد، ويحفظ قبلها ملف نسخة احتياطية ترفعه لإرجاع كل شيء. صفوف سجل المناقصات تُحذف من سجل المناقصات نفسه."
+      "سجل المناقصات: زر جديد «استيراد دراسة المحلل». محلل المناقصات يكتب ملفًا صغيرًا بجانب دراسته، والسجل يقرؤه ويملأ الخانات الفارغة: رقم اعتماد، وقيمة الكراسة، والضمان، والقيمة التقديرية، ومواعيد الاستفسارات وزيارة الموقع والتقديم وفتح العروض.",
+      "بجانب كل خانة امتلأت «من المحلل» ومعها الصفحة والجملة التي جاءت منها. ما كتبته بيدك لا يتغير؛ والقيمة المختلفة تظهر في قائمة لتراجعها. وقرار الدراسة (ندخل / لا ندخل / يحتاج مراجعة) يظهر في نافذة المناقصة وفي ملف الإكسل."
     ],
     "en": [
-      "My projects: a new split at the top of every page: tenders, upselling (existing customers) and not sorted. The split comes from clear signals only, and you choose any project’s line yourself in ✎ Edit.",
-      "A «Delete all shown» button on the mail, bids and follow-up pages: it deletes only what the page shows, after you confirm, and first saves a backup file you can upload to put everything back. Rows from the tender register are deleted in the tender register itself."
+      "Tender register: a new «Import the analyzer’s study» button. The Tender Analyzer writes a small file beside its study, and the register reads it to fill the empty fields: Etimad number, booklet fee, guarantee, estimated value, and the inquiries, site-visit, submission and opening dates.",
+      "Each filled field says «from the analyzer», with the page and sentence it came from. What you typed by hand never changes; a different value is listed for you to check. The study’s decision (bid / do not bid / needs review) shows in the tender’s window and in the Excel file."
     ],
     "ur": [
-      "میرے پروجیکٹس: ہر صفحے کے اوپر نئی تقسیم: ٹینڈرز، اپ سیلنگ (موجودہ کسٹمرز) اور غیر درجہ بند۔ تقسیم صرف واضح علامات سے ہوتی ہے، اور کسی بھی پروجیکٹ کی لائن آپ خود ✎ ترمیم سے چنتے ہیں۔",
-      "ای میل، بولیوں اور فالو اپ کے صفحات پر بٹن «دکھائے گئے سب حذف کریں»: یہ تصدیق کے بعد صرف وہی حذف کرتا ہے جو صفحہ دکھا رہا ہو، اور پہلے ایک بیک اپ فائل محفوظ کرتا ہے جسے اپ لوڈ کر کے سب واپس لایا جا سکتا ہے۔ ٹینڈر رجسٹر کی قطاریں ٹینڈر رجسٹر ہی میں حذف ہوتی ہیں۔"
+      "ٹینڈر رجسٹر: نیا بٹن «تجزیہ کار کا مطالعہ درآمد کریں»۔ ٹینڈر تجزیہ کار اپنے مطالعے کے ساتھ ایک چھوٹی فائل لکھتا ہے، اور رجسٹر اسے پڑھ کر خالی خانے بھرتا ہے: اعتماد نمبر، کتابچے کی قیمت، ضمانت، تخمینی مالیت، اور استفسارات، سائٹ کے دورے، جمع کرانے اور بولی کھلنے کی تاریخیں۔",
+      "ہر بھرے گئے خانے کے ساتھ «تجزیہ کار سے» لکھا ہوتا ہے، اور وہ صفحہ اور جملہ جہاں سے آیا۔ جو آپ نے ہاتھ سے لکھا وہ کبھی نہیں بدلتا؛ مختلف قیمت آپ کے جائزے کے لیے فہرست میں آتی ہے۔ مطالعے کا فیصلہ (بولی دیں / نہ دیں / جائزہ درکار) ٹینڈر کی ونڈو اور ایکسل فائل میں دکھتا ہے۔"
     ]
   },
   "counts": {
-    "versions": 176,
-    "decisions": 125
+    "versions": 177,
+    "decisions": 126
   }
 }

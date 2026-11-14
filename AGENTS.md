@@ -90,6 +90,7 @@
 | لوحة التعيين (القرار 0018) | `buildAssignBookmarklet()` |
 | جودة الإصلاح (القرار 0022) | `repairCheck()`، `parseRepairLines()` |
 | لوحة حسابات ما بعد البيع والأنظمة (القرار 0120) | `accountsBoard()`، `serverIpMap()`، `attachSystems()` |
+| دراسة محلل المناقصات في السجل (القرار 0126) | `parseTenderStudy()`، `matchTenderStudy()`، `applyTenderStudy()` — والصيغة `docs/tender-study-format.md` |
 | مشاريعي: مناقصات وأبسيلنج والحذف الجماعي (القرار 0125) | `projectLine()`، `projectDeletePlan()` |
 | المهام يومًا بيوم وحد البدء (القرار 0121، 0124) | `RESPONSE_RULE`، `startDue()`، `dailyIntake()`، `coveredFrom()`، `firstStart()` |
 | الأسبوع والأهداف والمسار والتغطية (القرار 0021) | `weeklyDigest()`، `goalProgress()`، `patternPath()`، `coverageTotals()` |

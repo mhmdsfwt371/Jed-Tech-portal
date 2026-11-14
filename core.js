@@ -2449,6 +2449,56 @@ export function cleanTenderAnalysis(value) {
     tables:list(value.tables).filter(table => table && Array.isArray(table.rows)).slice(0,5).map(table => ({name:str(table.name,120),rows:table.rows.slice(0,31).map(row => list(row).slice(0,16).map(cell => str(String(cell ?? ''),300)))})),
   };
 }
+// ===================== the Tender Analyzer's study file (ADR-0126) =====================
+// The analyzer reads the whole booklet with Claude and writes `afaqy-tender-study/v1` beside its study. The register reads it and
+// fills only what is empty; a value typed by hand, or read from the mail with a different value, is never replaced — it is listed
+// as a difference to check. «Not found» and «as stated on Etimad» arrive as null and fill nothing.
+export const TENDER_STUDY_FIELDS = ['etimadNo', 'fees', 'bond', 'value'];
+export function parseTenderStudy(raw) {
+  let j = raw; if (typeof raw === 'string') { try { j = JSON.parse(raw); } catch { return { error: 'json' }; } }
+  if (!j || j.schema !== 'afaqy-tender-study/v1' || !Array.isArray(j.tenders)) return { error: 'schema' };
+  const str = (v, n) => (typeof v === 'string' ? v.trim().slice(0, n) : ''), day = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) && !Number.isNaN(Date.parse(`${v}T00:00:00Z`)) ? v : '');
+  const time = (v) => (/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(v || '')) ? v : ''), money = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.round(v * 100) / 100 : null);
+  const tenders = j.tenders.slice(0, 200).map((x) => {
+    if (!x || typeof x !== 'object') return null;
+    const dates = {}; for (const k of TENDER_DATE_FIELDS) { const d = x.dates && x.dates[k]; if (d && day(d.date)) dates[k] = { date: day(d.date), time: time(d.time) }; }
+    const evidence = {}; for (const [k, v] of Object.entries(x.evidence && typeof x.evidence === 'object' ? x.evidence : {})) if ([...TENDER_STUDY_FIELDS, ...TENDER_DATE_FIELDS].includes(k) && v && typeof v === 'object')
+      evidence[k] = { file: str(v.file, 160), page: Number.isSafeInteger(v.page) && v.page > 0 ? v.page : null, quote: str(v.quote, 240) };
+    return { subject: str(x.subject, 300), etimadNo: str(String(x.etimadNo ?? ''), 40).replace(/[^\d]/g, '') ? String(x.etimadNo).replace(/[^\d]/g, '').slice(0, 40) : '',
+      entity: str(x.entity, 160), dates, fees: money(x.fees), bond: str(x.bond, 120), value: money(x.value),
+      decision: ['go', 'no-go', 'review'].includes(x.decision) ? x.decision : '', why: str(x.decisionWhy, 400), summary: str(x.summary, 4000), studyFile: str(x.studyFile, 300), evidence };
+  }).filter((x) => x && (x.subject || x.etimadNo));
+  return tenders.length ? { tenders, generatedAt: str(j.generatedAt, 35), tool: str(j.tool, 80) } : { error: 'empty' };
+}
+/** The register row a study belongs to: the same Etimad number first, then the same subject key (the key the register files
+ *  tenders by). Several rows with that subject: none is chosen — the manager imports it from the tender's own window. */
+export function matchTenderStudy(items, study, keyOf) {
+  if (study.etimadNo) { const byNo = items.filter((i) => String(i.etimadNo || '').replace(/[^\d]/g, '') === study.etimadNo); if (byNo.length === 1) return byNo[0]; if (byNo.length > 1) return null; }
+  const k = study.subject ? keyOf(study.subject) : ''; if (!k) return null;
+  const bySubject = items.filter((i) => i.id === k || keyOf(i.subject) === k); return bySubject.length === 1 ? bySubject[0] : null;
+}
+/** What a study changes on a row: `patch` holds only empty fields it fills; `differs` lists fields that already hold another value. */
+export function applyTenderStudy(item, study, at = new Date().toISOString()) {
+  const patch = {}, filled = [], differs = [], empty = (v) => v === '' || v == null;
+  const fieldSources = { ...(item.fieldSources || {}) }, dateSources = { ...(item.dateSources || {}) }, evidence = { ...(item.evidence || {}) };
+  for (const k of TENDER_STUDY_FIELDS) {
+    const v = study[k]; if (empty(v)) continue;
+    if (empty(item[k])) { patch[k] = v; fieldSources[k] = 'analyzer'; if (study.evidence[k]) evidence[k] = study.evidence[k]; filled.push(k); }
+    else if (String(item[k]).replace(/[^\d.]/g, '') !== String(v).replace(/[^\d.]/g, '') || (k === 'bond' && String(item[k]).trim() !== String(v).trim())) differs.push({ field: k, have: String(item[k]), study: String(v) });
+  }
+  for (const k of TENDER_DATE_FIELDS) {
+    const d = study.dates[k]; if (!d) continue;
+    if (empty(item[k])) { patch[k] = d.date; if (d.time) patch[`${k}Time`] = d.time; dateSources[k] = 'analyzer'; if (study.evidence[k]) evidence[k] = study.evidence[k]; filled.push(k); }
+    else if (item[k] !== d.date) differs.push({ field: k, have: item[k], study: d.date });
+    else if (d.time && empty(item[`${k}Time`]) && `${k}Time` in item) { patch[`${k}Time`] = d.time; filled.push(`${k}Time`); }   // same day, the study adds the hour
+  }
+  if (study.summary && empty(item.studySummary)) { patch.studySummary = study.summary; filled.push('studySummary'); }
+  if (study.studyFile && empty(item.study)) { patch.study = study.studyFile; filled.push('study'); }
+  if (study.decision) { patch.studyDecision = study.decision; patch.studyWhy = study.why; patch.studyAt = at; }
+  if (filled.length || study.decision) Object.assign(patch, { fieldSources, dateSources, evidence });
+  return { patch, filled, differs };
+}
+
 /** v9.47: what the manager still has to fill on a tender, by its stage — the fields the detail window marks and the list counts.
  *  Before a decision: who owns the file, the Etimad number and the submission deadline. While preparing: also the value and the
  *  guarantee. Once submitted: when and under which number. Closed without joining (declined, cancelled): nothing is asked. */
@@ -2491,7 +2541,11 @@ export function cleanTenderDetails(item) {
     dateSource: ['received','sent','manual'].includes(item.dateSource) ? item.dateSource : '',
     studySummary: string(item.studySummary, 4000),
     dueTime: item.due ? time(item.dueTime) : '', askDueTime: item.askDue ? time(item.askDueTime) : '',
-    dateSources: Object.fromEntries(fields.filter((key) => ['mail','document','manual'].includes(item.dateSources?.[key])).map((key) => [key,item.dateSources[key]])),
+    dateSources: Object.fromEntries(fields.filter((key) => ['mail','document','manual','analyzer'].includes(item.dateSources?.[key])).map((key) => [key,item.dateSources[key]])),
+    // ADR-0126: what the Tender Analyzer filled, its evidence, and its bid decision
+    fieldSources: Object.fromEntries(TENDER_STUDY_FIELDS.filter((key) => item.fieldSources?.[key] === 'analyzer').map((key) => [key,'analyzer'])),
+    evidence: Object.fromEntries(Object.entries(item.evidence && typeof item.evidence === 'object' ? item.evidence : {}).filter(([key]) => [...TENDER_STUDY_FIELDS, ...fields].includes(key)).map(([key, v]) => [key, { file: string(v?.file, 160), page: Number.isSafeInteger(v?.page) && v.page > 0 ? v.page : null, quote: string(v?.quote, 240) }])),
+    studyDecision: ['go','no-go','review'].includes(item.studyDecision) ? item.studyDecision : '', studyWhy: string(item.studyWhy, 400), studyAt: string(item.studyAt, 35),
     messages: list(item.messages).filter((m) => m && string(m.key, 400)).map((m) => ({
       key: string(m.key, 400), messageId: string(m.messageId, 320), hash: string(m.hash, 64),
       subject: string(m.subject, 300), sender: string(m.sender, 120), date: day(m.date), warnings: Number.isSafeInteger(m.warnings) && m.warnings > 0 ? m.warnings : 0,

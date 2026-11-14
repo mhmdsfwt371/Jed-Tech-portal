@@ -19,6 +19,7 @@ is served.
 | `tenderwin.py` | A tender’s details open in a window; fields still to fill are marked and counted; filling one keeps the window open and focus in place — laptop and phone | A made-up tender built inside the test |
 | `kpicards.py` | Team KPIs: the fold is gone, every section card opens its window with content and closes — three languages, laptop and phone; the control-room alert opens the week card | The real October pull (`OCT_PULL`) |
 | `projlines.py` | My projects: tenders / upselling / not sorted counts and filter, line chosen in Edit, «Delete all shown» saves a backup then deletes only the shown rows, the backup restores them | A made-up register built inside the test |
+| `tenderstudy.py` | The analyzer’s study file fills empty tender fields, keeps hand-typed ones and lists differences, tags the evidence, shows the decision, reports unmatched and bad files, and imports into one tender from its window | Made-up tenders and study files built inside the test |
 | `smoke.py` | Every page opens in three languages with no page error, no failed request and no raw text key; the WCAG 2.1 A and AA scan passes on every page; the phone has no sideways scroll | `AXE_JS=/path/to/axe.min.js` for the scan (skipped with a note when absent) |
 
 Run: `python3 tests/browser/readings.py` and `python3 tests/browser/smoke.py` from the repository root. No real pull, name or

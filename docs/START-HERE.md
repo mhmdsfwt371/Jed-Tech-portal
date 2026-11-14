@@ -164,6 +164,7 @@
 | `docs/decisions/0123-sections-as-cards.md` | A long page’s secondary sections become cards that open in one window; started on Team KPIs |
 | `docs/decisions/0124-first-start-times.md` | The manager pull reads each recent task’s activity log for its first start; the daily table shows «started after the limit» where known |
 | `docs/decisions/0125-projects-lines-and-delete-all.md` | My projects split into tenders / upselling / not sorted; «Delete all shown» with a backup first and a restore |
+| `docs/decisions/0126-tender-analyzer-study-file.md` | The Tender Analyzer writes `afaqy-tender-study/v1`; the register fills empty fields from it with evidence (format: `docs/tender-study-format.md`) |
 
 ## في عشر دقائق: ابنِ وافحص
 ```bash
