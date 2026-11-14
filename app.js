@@ -13,7 +13,7 @@ import {
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
   quarterRange, quarterOf, quarterBaseline, quarterGoalProgress, planProgress, suggestQuarterGoals,
   maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply,
-  tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS,
+  tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts } from './core.js';
 
@@ -804,6 +804,7 @@ function rankFor(id, ym) {   // his team: the same team leader in the team file,
 
 // ---------- ADR-0081: the tender register — original tender mails from Outlook, one row each, his status and his dates ----------
 let tenders = null;   // { items: [...], to, pulledAt } — on this device, carried by the backup
+let tdDlg = null;   // the tender's detail window (ADR-0122)
 let tdKind = pref('tdkind') || 'month', tdPick = '', tdFrom = '', tdTo = '', tdBusy = '', tdOpenId = null, tdStageF = null, tdCardF = null;   // ADR-0102: a card's filter
 let tdQuery = '', tdMailResult = null;
 const TD_FROM = 'a.ibrahim@afaqy.com';
@@ -1229,7 +1230,7 @@ function tdFilesPanel(item) {
     (item.messages || []).map((mail) => el('div', {}, el('p', { class: 'hint', dir: 'auto', text: [mail.subject, mail.sender, mail.date].filter(Boolean).join(' · ') }), mail.warnings ? el('p', { class: 'hint', text: t('td_mail_warnings') }) : null)));
 }
 function tdDateReview(item) {
-  return ['due', 'askDue'].map((field) => {
+  return TENDER_DATE_FIELDS.map((field) => {
     const dates = tenderDeadlineCandidates(item, field);
     if (!dates.length) return null;
     return el('div', { class: 'td-subpanel' }, el('strong', { text: t('td_date_review', { date: t(`td_col_${field}`) }) }),
@@ -1304,12 +1305,12 @@ function renderTenders() {
 
   const cd = (i) => { const nx = tdNextDate(i, today); if (!nx || !TD_OPEN.includes(i.stage)) return el('span', { class: 'hint', text: '—' }); const d = tdDaysBetween(today, nx[1]);
     return el('span', { class: `chip td-cd ${d <= 3 ? 'td-red' : d <= 7 ? 'td-amber' : 'td-green'}`, title: tdDateText(nx[1], i[nx[0]+'Time']), text: `${t(`td_col_${nx[0]}`)}: ${t('td_in_days', { n: d })}` }); };
-  const fld = (i, k, type = 'text', extra = {}) => el('input', { type, class: `td-f td-${k}`, value: i[k] == null ? '' : String(i[k]), dir: 'auto', 'aria-label': t(`td_col_${k}`), ...extra,
+  const fld = (i, k, type = 'text', extra = {}) => el('input', { type, class: `td-f td-${k}${tenderNeeds(i).includes(k) ? ' td-need' : ''}`, value: i[k] == null ? '' : String(i[k]), dir: 'auto', 'aria-label': t(`td_col_${k}`), ...extra,
     disabled: !!tdBusy, onchange: async (e) => {
       const v = e.target.value;
       if (k === 'date' && !v) { e.target.value = i.date; return; }
       const patch = { [k]: type === 'number' ? (v === '' ? null : Number(v)) : v.trim() };
-      const field = ['due','askDue'].find((field) => k === field || k === field+'Time');
+      const field = TENDER_DATE_FIELDS.find((field) => k === field || k === field+'Time');
       if (field) {
         if (k === field && !v) patch[field+'Time'] = '';
         patch.dateSources = { ...i.dateSources, [field]: 'manual' };
@@ -1318,7 +1319,10 @@ function renderTenders() {
       await tdUpdate(i.id, patch, field || k === 'date' ? tdActivity('date', v) : null);
       renderTenders();
     } });
-  const lab = (k, node) => el('label', { class: 'td-lab' }, el('span', { text: t(`td_col_${k}`) }), node);
+  // v9.47: a field the stage still needs is marked «to fill»; a date the portal read itself says where it came from
+  const lab = (k, node, i = null) => { const need = i && tenderNeeds(i).includes(k), src = i && i[k] && i.dateSources ? i.dateSources[k] : '';
+    return el('label', { class: `td-lab${need ? ' td-lab-need' : ''}` }, el('span', {}, t(`td_col_${k}`), need ? el('b', { class: 'td-need-tag', text: t('td_need_tag') }) : null,
+      ['mail', 'document'].includes(src) ? el('i', { class: 'td-auto-tag', text: t(src === 'mail' ? 'td_auto_mail' : 'td_auto_doc') }) : null), node); };
   const stageSel = (i) => el('select', { class: 'td-stage', disabled: !!tdBusy, 'aria-label': t('td_col_stage'), onchange: async (e) => { const st = e.target.value, patch = { stage: st, stageAt: today };
       if (!['ready', 'submitted', 'won', 'lost'].includes(i.stage) && !tenderCanAdvance(i, st)) {
         e.target.value = i.stage; tdOpenId = i.id; renderTenders(); toast(t('td_offers_required')); return;
@@ -1330,9 +1334,9 @@ function renderTenders() {
     TD_STAGES.map((s) => el('option', { value: s, text: t(`td_st_${s}`), ...(i.stage === s ? { selected: '' } : {}) })));
   const detail = (i) => el('div', { class: 'td-detail' },
     el('div', { class: 'td-grid' },
-      lab('date', fld(i, 'date', 'date', { required: '' })), lab('reason', fld(i, 'reason')), lab('owner', fld(i, 'owner')), lab('etimadNo', fld(i, 'etimadNo')), lab('value', fld(i, 'value', 'number', { min: 0, step: 1 })), lab('fees', fld(i, 'fees', 'number', { min: 0, step: 1 })), lab('bond', fld(i, 'bond')),
-      lab('askDue', fld(i, 'askDue', 'date')), lab('askDueTime', fld(i, 'askDueTime', 'time', { disabled: !!tdBusy || !i.askDue })), lab('visit', fld(i, 'visit', 'date')), lab('due', fld(i, 'due', 'date')), lab('dueTime', fld(i, 'dueTime', 'time', { disabled: !!tdBusy || !i.due })), lab('openAt', fld(i, 'openAt', 'date')), lab('submittedOn', fld(i, 'submittedOn', 'date')), lab('submitNo', fld(i, 'submitNo')),
-      lab('decidedOn', fld(i, 'decidedOn', 'date')), lab('readyOn', fld(i, 'readyOn', 'date')), lab('study', fld(i, 'study')), lab('note', fld(i, 'note'))),
+      lab('date', fld(i, 'date', 'date', { required: '' }), i), lab('reason', fld(i, 'reason'), i), lab('owner', fld(i, 'owner'), i), lab('etimadNo', fld(i, 'etimadNo'), i), lab('value', fld(i, 'value', 'number', { min: 0, step: 1 }), i), lab('fees', fld(i, 'fees', 'number', { min: 0, step: 1 }), i), lab('bond', fld(i, 'bond'), i),
+      lab('askDue', fld(i, 'askDue', 'date'), i), lab('askDueTime', fld(i, 'askDueTime', 'time', { disabled: !!tdBusy || !i.askDue }), i), lab('visit', fld(i, 'visit', 'date'), i), lab('due', fld(i, 'due', 'date'), i), lab('dueTime', fld(i, 'dueTime', 'time', { disabled: !!tdBusy || !i.due }), i), lab('openAt', fld(i, 'openAt', 'date'), i), lab('submittedOn', fld(i, 'submittedOn', 'date'), i), lab('submitNo', fld(i, 'submitNo'), i),
+      lab('decidedOn', fld(i, 'decidedOn', 'date'), i), lab('readyOn', fld(i, 'readyOn', 'date'), i), lab('study', fld(i, 'study'), i), lab('note', fld(i, 'note'), i)),
     tdDateReview(i), tdInsightsPanel(i), tdFilesPanel(i),
     el('details', { class: 'td-subpanel', ...(i.studySummary ? { open: '' } : {}) },
       el('summary', { text: t('td_study_summary') }),
@@ -1348,12 +1352,11 @@ function renderTenders() {
   const table = el('div', { class: 'table-wrap' }, el('table', { class: 'td-table' },
     el('thead', {}, el('tr', {}, ['td_col_subject', 'td_col_date', 'td_col_stage', 'td_col_days', 'td_col_next', ''].map((k) => el('th', { text: k ? t(k) : '' })))),
     el('tbody', {}, rows.flatMap((i) => { const open = tdOpenId === i.id, days = tdDaysBetween(i.stageAt, today);
-      return [el('tr', { 'data-id': i.id, class: `td-row${open ? ' on' : ''}${TD_OPEN.includes(i.stage) ? '' : ' td-closed'}`, onclick: (e) => { if (e.target.closest('select, input, button, a')) return; tdOpenId = open ? null : i.id; renderTenders(); } },
-        el('td', {}, el('div', { class: 'td-subj', text: i.subject, dir: 'auto' }), el('div', {}, i.messages?.length ? el('span', { class: 'chip', text: t('td_why_email') }) : null, i.byFrom ? el('span', { class: 'chip', text: t('td_why_from') }) : null, i.byKr ? el('span', { class: 'chip', text: t('td_why_kr') }) : null, i.manual ? el('span', { class: 'chip td-manual', text: t('td_why_manual') }) : null, i.etimadNo ? el('span', { class: 'chip', text: i.etimadNo }) : null)),
+      return [el('tr', { 'data-id': i.id, class: `td-row${open ? ' on' : ''}${TD_OPEN.includes(i.stage) ? '' : ' td-closed'}`, tabindex: '0', onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) { tdOpenId = i.id; renderTenders(); } }, onclick: (e) => { if (e.target.closest('select, input, button, a')) return; tdOpenId = i.id; renderTenders(); } },
+        el('td', {}, el('div', { class: 'td-subj', text: i.subject, dir: 'auto' }), el('div', {}, i.messages?.length ? el('span', { class: 'chip', text: t('td_why_email') }) : null, i.byFrom ? el('span', { class: 'chip', text: t('td_why_from') }) : null, i.byKr ? el('span', { class: 'chip', text: t('td_why_kr') }) : null, i.manual ? el('span', { class: 'chip td-manual', text: t('td_why_manual') }) : null, i.etimadNo ? el('span', { class: 'chip', text: i.etimadNo }) : null, tenderNeeds(i).length ? el('span', { class: 'chip td-need-chip', text: t('td_need_n', { n: tenderNeeds(i).length }) }) : null)),
         el('td', { class: 'num' }, i.date, i.dateSource === 'sent' ? el('div', { class: 'hint', text: t('td_sent_date') }) : null), el('td', {}, stageSel(i)),
         el('td', { class: `num${TD_OPEN.includes(i.stage) && ['received', 'screen', 'decide'].includes(i.stage) && days > 3 ? ' td-wait' : ''}`, text: TD_OPEN.includes(i.stage) ? String(days) : '—', title: t('td_col_days') }),
-        el('td', {}, cd(i)), el('td', { class: 'num td-tog', text: open ? '▾' : '▸' })),
-        open ? el('tr', { class: 'td-detail-row' }, el('td', { colspan: 6 }, detail(i))) : null]; }))));
+        el('td', {}, cd(i)), el('td', { class: 'num td-tog', text: '↗', title: t('td_open_win') }))]; }))));
   const search = el('input', { name: 'q', type: 'search', class: 'td-f td-search', value: tdQuery, placeholder: t('td_search'), 'aria-label': t('td_search') });
   const searchForm = el('form', { class: 'row td-file-controls', onsubmit: (event) => {
     event.preventDefault(); tdQuery = search.value; renderTenders();
@@ -1373,6 +1376,20 @@ function renderTenders() {
     tdStageF ? el('div', { class: 'row td-filtered' }, el('span', { class: 'chip', text: t('td_pipe_on', { s: t(`td_st_${tdStageF}`), n: rows.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: `✕ ${t('td_pipe_clear')}`, onclick: () => { tdStageF = null; renderTenders(); } })) : null,
     !tdStageF && tdCardF ? el('div', { class: 'row td-filtered' }, el('span', { class: 'chip', text: t('crm_filtered', { f: t({ waiting: 'td_k_waiting', soon: 'td_k_soon', decided: 'td_k_decided' }[tdCardF]), n: rows.length, all: rowsAll.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: t('crm_show_all'), onclick: () => { tdCardF = null; renderTenders(); } })) : null,
     rows.length ? table : el('p', { class: 'note', text: t('td_none_period') }));
+  // v9.47 (ADR-0122): a tender's details open in a window over the list, not as a long panel inside it. The window stays open
+  // while a field saves and the list behind redraws; focus returns to the field the manager moved to.
+  const cur = tdOpenId ? (tenders ? tenders.items : []).find((x) => x.id === tdOpenId) : null;
+  if (!cur) { if (tdDlg && tdDlg.open) { const d = tdDlg; tdOpenId = null; d.close(); } return; }
+  if (!tdDlg) { tdDlg = el('dialog', { class: 'td-dlg', 'aria-labelledby': 'td-dlg-h' }, el('div', { class: 'td-dlg-body' }));
+    tdDlg.addEventListener('close', () => { if (tdOpenId) { tdOpenId = null; renderTenders(); } }); document.body.append(tdDlg); }
+  const box = tdDlg.querySelector('.td-dlg-body'), act = document.activeElement, was = act && box.contains(act) ? [...act.classList].find((c) => /^td-(?!f$|need$)/.test(c)) : '';
+  const needs = tenderNeeds(cur);
+  set(box, el('h2', { id: 'td-dlg-h', class: 'td-dlg-h', dir: 'auto', text: cur.subject }),
+    el('div', { class: 'row td-dlg-top' }, el('span', { class: 'hint', text: t('td_col_stage') }), stageSel(cur), el('span', { class: 'hint', text: `${t('td_col_date')}: ${cur.date}` })),
+    el('p', { class: `td-needs ${needs.length ? 'some' : 'none'}`, text: needs.length ? t('td_needs_line', { n: needs.length, list: needs.map((k) => t(`td_col_${k}`)).join(lang === 'en' ? ', ' : '، ') }) : t('td_needs_none') }),
+    detail(cur));
+  if (!tdDlg.open) tdDlg.showModal();
+  else if (was) { const again = box.querySelector(`.${was}`); if (again && !again.disabled) again.focus(); }
 }
 
 // ---------- ADR-0090: authorship — who designed and built the portal (not a claim of ownership: built for AFAQY's work) ----------
@@ -1630,7 +1647,7 @@ function syncTenders(local, inc) {
     const [base, other] = rank(x) > rank(y) || (rank(x) === rank(y) && filled(x) > filled(y)) ? [x, y] : [y, x];   // the further stage wins, then the fuller copy
     const m = { ...base }; for (const [k, v] of Object.entries(other)) if ((m[k] === '' || m[k] == null) && v !== '' && v != null) m[k] = v;
     const dateSources = { ...other.dateSources, ...base.dateSources };
-    for (const field of ['due','askDue']) {
+    for (const field of TENDER_DATE_FIELDS) {
       const manual = [base, other].find((row) => row.dateSources?.[field] === 'manual');
       if (manual) { m[field] = manual[field]; m[field+'Time'] = manual[field+'Time']; dateSources[field] = 'manual'; }
     }
@@ -2403,6 +2420,9 @@ const pgScroller = (dlg) => { let best = null;                   // the part of 
   walk(dlg, 0);
   // only a small frame runs over: its pages belong to the window around it, which takes the frame's rows once the frame is opened
   if (best && best.clientHeight < dlg.clientHeight * 0.5) for (let n = best.parentElement; n; n = n.parentElement) { if (can(n) && n.clientHeight >= dlg.clientHeight * 0.5) { best = n; break; } if (n === dlg) break; }
+  // v9.47: a frame inside a window that itself runs far over (tiles and bars above a list) would put its pager below the fold —
+  // the frame cannot give up that much height, so the window around it takes the pages
+  if (best && best !== dlg) for (let n = best.parentElement; n; n = n.parentElement) { if (can(n)) { const over = n.scrollHeight - n.clientHeight; if (over > 8 && best.clientHeight - over <= 240) best = n; } if (n === dlg) break; }
   return best; };
 const pgBack = (node) => { for (let n = node; n && n.nodeType === 1; n = n.parentElement) { const c = getComputedStyle(n).backgroundColor; if (c && !/rgba\(.*,\s*0\)|transparent/.test(c)) return c; } return ''; };
 function pagerRefresh(dlg) {
@@ -3542,8 +3562,8 @@ function dailySection(tasks, team, nm, latest) {
     crModal({ title, file, lead: t('di_asof', { t: sT(asOf) }),
       tiles: [[t('di_arrived'), L.length], [t('di_notstarted'), L.filter((x) => x.state === 'open' && x.bucket === 'toDo').length, '', (k) => L[k].state === 'open' && L[k].bucket === 'toDo'],
         [t('di_late'), L.filter(isLate).length, '', (k) => isLate(L[k])], [t('di_sameday'), L.filter((x) => x.state === 'done' && saudiDay(x.completedAt) === saudiDay(x.createdAt)).length, '', (k) => L[k].state === 'done' && saudiDay(L[k].completedAt) === saudiDay(L[k].createdAt)]],
-      bar: (k) => [nm(L[k].assigneeId), 1], head: [t('crm_task'), t('col_person'), t('di_c_in'), t('di_c_due'), t('di_c_state'), t('crm_closed'), t('crm_type')], hot: (row, k) => isLate(L[k]),
-      rows: L.map((x) => [x.title || x.id, nm(x.assigneeId), sT(x.createdAt), sT(startDue(x.createdAt)), stOf(x), x.completedAt ? sT(x.completedAt) : '', x.type || '']) }); };
+      bar: (k) => [nm(L[k].assigneeId), 1], head: [t('crm_task'), t('col_person'), t('di_c_in'), t('di_c_due'), t('di_c_state')], hot: (row, k) => isLate(L[k]),   // five columns: a sixth pushed the table past the window and the page bar out of sight
+      rows: L.map((x) => [x.title || x.id, nm(x.assigneeId), sT(x.createdAt), sT(startDue(x.createdAt)), x.completedAt ? `${stOf(x)} ${sT(x.completedAt)}` : stOf(x)]) }); };
   const dayModal = (d) => listModal(t('di_day_h', { d: `${wd(d.day)} ${d.day}` }), `arrived-${d.day}`, d.ids.map((id) => byId.get(id)).filter(Boolean));
   const lateL = r.lateNow.map((x) => byId.get(x.id)).filter(Boolean);
   const cell = (v, cls) => el('td', { class: `num${cls && v ? ` ${cls}` : ''}`, text: String(v) });

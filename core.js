@@ -2296,8 +2296,17 @@ const tenderDeadlineFields = {
   },
   askDue: {
     pattern: /(?:اخر\s*(?:موعد|تاريخ)\s*(?:ل(?:رفع|طرح|تقديم|ارسال|استقبال)\s*)?|موعد\s*)(?:ال|لل|ل)?(?:استفسارات|استيضاحات|اسئله)|^\s*(?:الاستفسارات|الاستيضاحات|الاسئله)(?=\s|:|$)|\b(?:inquiries|inquiry|enquiries|enquiry|clarifications?|questions?)\s+(?:deadline|due date)\b|\b(?:deadline|due date)\s+for\s+(?:inquiries|enquiries|clarifications?|questions?)\b/
+  },
+  // v9.47: the site visit and the bid opening are read the same way — a labelled line with a date; one clear date fills the field
+  visit: {
+    pattern: /(?:اخر\s*(?:موعد|تاريخ)\s*)?(?:ل|ال)?(?:زياره|معاينه)\s*(?:ال)?(?:موقع|مواقع|ميدانيه)|موعد\s+الزياره|\bsite\s+(?:visit|survey|inspection)(?:\s+(?:date|deadline))?\b/
+  },
+  openAt: {
+    pattern: /(?:(?:تاريخ|موعد)\s*)?فتح\s*(?:العروض|المظاريف|العطاءات)|\b(?:bids?|tender|proposals?)\s+opening(?:\s+date)?\b|\bopening\s+of\s+(?:the\s+)?(?:bids|offers|proposals|envelopes)\b/
   }
 };
+export const TENDER_DATE_FIELDS = Object.keys(tenderDeadlineFields);
+const tenderNoDates = () => Object.fromEntries(TENDER_DATE_FIELDS.map((k) => [k, []]));
 export function tenderEmailSchedule(body, html) {
   // Keep table rows intact and strip markup without loading remote content.
   const htmlText = String(html || '').slice(0,300000)
@@ -2311,7 +2320,7 @@ export function tenderEmailSchedule(body, html) {
     });
   const months = ['يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر'];
   const pattern = new RegExp('\\b(?:(20\\d{2})[-/.](\\d{1,2})[-/.](\\d{1,2})|(\\d{1,2})[-/.](\\d{1,2})[-/.](20\\d{2}))\\b|(?<!\\d)(\\d{1,2})\\s+('+months.join('|')+')\\s+(20\\d{2})\\b','g');
-  const result = {due:[],askDue:[]};
+  const result = tenderNoDates();
   const fields = Object.entries(tenderDeadlineFields);
   for (const text of [body,htmlText]) {
     const lines = tenderDigits(String(text || '').slice(0,180000)).normalize('NFKC')
@@ -2396,7 +2405,7 @@ export function tenderDocumentInsights(segments) {
     delivery: /(?:تشغيل|اختبار|استلام|تسليم|صيان[هت]|تدريب)|commissioning|acceptance|handover|maintenance|training/,
     requirements: /(?:يلتزم|يجب|اشتراط|متطلبات|شهادات)|\b(?:mandatory|shall|must|required|certification)\b/,
   };
-  const highlights = [], schedule = {due:[],askDue:[]};
+  const highlights = [], schedule = tenderNoDates();
   const seen = new Set(); let kind = '', count = 0;
   for (const segment of (Array.isArray(segments) ? segments : []).slice(0,120)) {
     const text = String(segment.text || '').slice(0, Math.max(0,180000-count)); count += text.length;
@@ -2404,7 +2413,7 @@ export function tenderDocumentInsights(segments) {
     if (/كراسه الشروط|شروط ومواصفات|terms and conditions|tender specification/.test(norm)) kind ||= 'booklet';
     if ((/جدول (?:الكميات|البنود)|bill of quantities|\bboq\b/.test(norm)) || (/\b(?:qty|quantity)\b|الكميه/.test(norm) && /\b(?:item|description|unit)\b|وصف البند|وحده القياس/.test(norm))) kind = 'boq';
     const dates = tenderEmailSchedule(text);
-    for (const field of ['due','askDue']) for (const date of dates[field]) schedule[field].push({...date,locator});
+    for (const field of TENDER_DATE_FIELDS) for (const date of dates[field]) schedule[field].push({...date,locator});
     const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
     for (const [index,line] of lines.entries()) {
       const normalized = tenderNormalizeText(line);
@@ -2428,9 +2437,19 @@ export function cleanTenderAnalysis(value) {
   return {
     state:value.state, format:['pdf','docx','sheet','text'].includes(value.format) ? value.format : '', readAt:str(value.readAt,35),
     highlights:list(value.highlights).filter(h => h && TENDER_INSIGHT_TOPICS.includes(h.topic)).slice(0,21).map(h => ({topic:h.topic,text:str(h.text,700),locator:str(h.locator,120)})),
-    schedule:Object.fromEntries(['due','askDue'].map(field => [field,list(value.schedule?.[field]).filter(d => d && /^20\d{2}-\d{2}-\d{2}$/.test(d.date) && !Number.isNaN(Date.parse(d.date+'T00:00:00Z')) && new Date(d.date+'T00:00:00Z').toISOString().slice(0,10) === d.date).slice(0,100).map(d => ({date:d.date,time:/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(d.time) ? d.time : '',locator:str(d.locator,120)}))])),
+    schedule:Object.fromEntries(TENDER_DATE_FIELDS.map(field => [field,list(value.schedule?.[field]).filter(d => d && /^20\d{2}-\d{2}-\d{2}$/.test(d.date) && !Number.isNaN(Date.parse(d.date+'T00:00:00Z')) && new Date(d.date+'T00:00:00Z').toISOString().slice(0,10) === d.date).slice(0,100).map(d => ({date:d.date,time:/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(d.time) ? d.time : '',locator:str(d.locator,120)}))])),
     tables:list(value.tables).filter(table => table && Array.isArray(table.rows)).slice(0,5).map(table => ({name:str(table.name,120),rows:table.rows.slice(0,31).map(row => list(row).slice(0,16).map(cell => str(String(cell ?? ''),300)))})),
   };
+}
+/** v9.47: what the manager still has to fill on a tender, by its stage — the fields the detail window marks and the list counts.
+ *  Before a decision: who owns the file, the Etimad number and the submission deadline. While preparing: also the value and the
+ *  guarantee. Once submitted: when and under which number. Closed without joining (declined, cancelled): nothing is asked. */
+export function tenderNeeds(item) {
+  const st = item.stage || 'received', empty = (k) => item[k] === '' || item[k] == null;
+  const want = ['declined', 'cancelled'].includes(st) ? [] : ['owner', 'etimadNo', 'due',
+    ...(['prep', 'ready', 'submitted', 'won', 'lost'].includes(st) ? ['value', 'bond'] : []),
+    ...(['submitted', 'won', 'lost'].includes(st) ? ['submittedOn', 'submitNo'] : [])];
+  return want.filter(empty);
 }
 export function tenderCanAdvance(item, nextStage) {
   return !['ready', 'submitted', 'won', 'lost'].includes(nextStage) ||
@@ -2441,7 +2460,7 @@ export function cleanTenderDetails(item) {
   const list = (value) => Array.isArray(value) ? value : [];
   const time = (value) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value) ? value : '';
   const day = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '';
-  const fields = ['due', 'askDue'];
+  const fields = TENDER_DATE_FIELDS;
   return {
     dateSource: ['received','sent','manual'].includes(item.dateSource) ? item.dateSource : '',
     studySummary: string(item.studySummary, 4000),

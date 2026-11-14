@@ -1085,7 +1085,7 @@ test("the engineer's pull treats the main queue as essential and the R&D queue a
 
 test('tender email reads Arabic schedule tables, validates dates and leaves conflicting deadlines for review', () => {
   const schedule = core.tenderEmailSchedule('', '<table><tr><td>الاستفسارات</td><td>06/06/1448</td><td>١٦/١١/٢٠٢٦</td></tr><tr><td>التقديم</td><td>17/11/2026 الساعة 2:30 م</td></tr></table>');
-  assert.deepEqual(schedule, { askDue: [{ date: '2026-11-16', time: '' }], due: [{ date: '2026-11-17', time: '14:30' }] });
+  assert.deepEqual(schedule, { askDue: [{ date: '2026-11-16', time: '' }], due: [{ date: '2026-11-17', time: '14:30' }], visit: [], openAt: [] });
   const followup = core.tenderEmailSchedule('Submission deadline: 2026-11-19 at 9:30 AM\nClarification deadline: 31/02/2026');
   const item = { due: '', askDue: '2026-11-15', messages: [{ schedule }] };
   const filled = core.applyTenderEmailDates(item);
@@ -1296,6 +1296,23 @@ test('dailyIntake: each day\'s arrivals add up, «not started» and «late» are
   assert.ok(core.coveredFrom([{ from: '2026-10-01', to: '2026-10-31' }, { from: '2026-11-01', to: '2026-11-16' }], '2026-10-20', '2026-11-16'));
   assert.ok(!core.coveredFrom([{ from: '2026-10-01', to: '2026-10-29' }, { from: '2026-11-01', to: '2026-11-16' }], '2026-10-20', '2026-11-16'), 'a gap on 30–31 October');
   assert.ok(!core.coveredFrom([{ from: '2026-11-03', to: '2026-11-16' }], '2026-11-01', '2026-11-16'));
+});
+
+test('tender dates: the site visit and the bid opening are read from labelled lines; a manual value is never replaced; needs follow the stage', () => {
+  const s = core.tenderEmailSchedule('آخر موعد لزيارة الموقع: 20/11/2026\nتاريخ فتح العروض 01/12/2026 الساعة 10:00 ص\nآخر موعد لتقديم العروض: 30/11/2026\nSite visit date: 2026-11-20\nBid opening: 2026-12-01');
+  assert.deepEqual(s.visit, [{ date: '2026-11-20', time: '' }]);
+  assert.deepEqual(s.openAt.map((d) => d.date), ['2026-12-01', '2026-12-01']);
+  assert.deepEqual(s.due, [{ date: '2026-11-30', time: '' }], 'the opening line is not mistaken for the submission deadline');
+  const filled = core.applyTenderEmailDates({ visit: '', openAt: '', due: '', askDue: '', messages: [{ key: 'm', subject: 'x', schedule: s }] });
+  assert.equal(filled.visit, '2026-11-20'); assert.equal(filled.openAt, '2026-12-01'); assert.equal(filled.dateSources.visit, 'mail');
+  const kept = core.applyTenderEmailDates({ visit: '2026-11-25', openAt: '', due: '', askDue: '', messages: [{ key: 'm', subject: 'x', schedule: s }] });
+  assert.equal(kept.visit, '2026-11-25', 'a visit date typed by hand before this version stays');
+  assert.equal(core.applyTenderEmailDates({ ...filled, visit: '2026-11-22', dateSources: { ...filled.dateSources, visit: 'manual' } }).visit, '2026-11-22');
+  assert.deepEqual(core.tenderEmailSchedule('حسب ما هو محدد في منصة اعتماد: زيارة الموقع').visit, [], 'a booklet that points to the platform gives no date');
+  assert.deepEqual(core.tenderNeeds({ stage: 'received', owner: '', etimadNo: '', due: '' }), ['owner', 'etimadNo', 'due']);
+  assert.deepEqual(core.tenderNeeds({ stage: 'prep', owner: 'a', etimadNo: '1', due: '2026-11-30', value: null, bond: '5%' }), ['value']);
+  assert.deepEqual(core.tenderNeeds({ stage: 'submitted', owner: 'a', etimadNo: '1', due: '2026-11-30', value: 5, bond: '5%', submittedOn: '', submitNo: '' }), ['submittedOn', 'submitNo']);
+  assert.deepEqual(core.tenderNeeds({ stage: 'declined' }), []);
 });
 
 for (const [name, fn] of tests) {

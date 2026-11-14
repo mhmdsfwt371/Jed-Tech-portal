@@ -17,6 +17,35 @@
 
 <!-- releases -->
 
+## v9.47 — 2026-11-14
+
+- سجل المناقصات: تفاصيل المناقصة تفتح الآن في نافذة فوق القائمة بدل أن تنفرد تحت الصف وتطوّل الصفحة.
+- الخانات التي ما زالت تنقص في مرحلة المناقصة تُعلَّم «للتعبئة» بلون واضح، وعددها يظهر على الصف وفي أعلى النافذة، فتعرف ما عليك دون قراءة كل الخانات.
+- موعد زيارة الموقع وتاريخ فتح العروض يُقرآن الآن من الإيميل والكراسة مثل موعد التقديم والاستفسارات، وبجانب كل تاريخ مقروء مصدره. ما تكتبه بيدك لا يُستبدل.
+- نافذة مهام اليوم في غرفة التحكم: شريط الصفحات كان ينزل تحت حافة النافذة فلا يُرى. الآن يبقى ظاهرًا في أسفلها.
+
+<details><summary>English</summary>
+
+- Tender register: a tender’s details now open in a window over the list instead of unfolding under the row and making the page long.
+- The fields a tender still needs at its stage are marked «to fill» in a clear colour, and their count shows on the row and at the top of the window, so you know what is yours without reading every field.
+- The site-visit deadline and the bid opening date are now read from the email and the booklet like the submission and inquiries deadlines, and each date that was read says where it came from. What you type by hand is never replaced.
+- The day’s tasks window in the control room: the page bar dropped below the window’s edge and could not be seen. It now stays visible at the bottom.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹینڈر رجسٹر: ٹینڈر کی تفصیلات اب فہرست کے اوپر ایک ونڈو میں کھلتی ہیں، قطار کے نیچے پھیل کر صفحہ لمبا نہیں کرتیں۔
+- جو خانے ٹینڈر کے مرحلے میں ابھی باقی ہیں ان پر واضح رنگ میں «بھرنا ہے» کا نشان آتا ہے، اور ان کی گنتی قطار پر اور ونڈو کے اوپر دکھتی ہے، تاکہ ہر خانہ پڑھے بغیر معلوم ہو کہ آپ کے ذمے کیا ہے۔
+- سائٹ کے دورے کی آخری تاریخ اور بولی کھلنے کی تاریخ اب ای میل اور کتابچے سے اسی طرح پڑھی جاتی ہیں جیسے جمع کرانے اور استفسارات کی تاریخیں، اور ہر پڑھی گئی تاریخ کے ساتھ اس کا ماخذ لکھا ہوتا ہے۔ جو آپ ہاتھ سے لکھیں وہ کبھی نہیں بدلا جاتا۔
+- کنٹرول روم میں دن کے ٹاسک کی ونڈو: صفحات کی پٹی ونڈو کے کنارے سے نیچے چلی جاتی تھی اور دکھتی نہیں تھی۔ اب وہ نیچے نظر آتی رہتی ہے۔
+
+</div>
+</details>
+
+
 ## v9.46 — 2026-11-14
 
 - سجل المناقصات: عنوان المناقصة الطويل كان يخرج من خانته ويركب فوق «أول وصول». الآن ينزل على أكثر من سطر داخل خانته.

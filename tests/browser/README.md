@@ -16,6 +16,7 @@ is served.
 | `accounts.py` | The after-sales accounts board on the Team page: totals, systems counted by customer, families, accounts per engineer, a part-read server list showing no system figure — three languages, laptop and phone | The real October pull (`OCT_PULL`) plus a made-up manager pull built inside the test |
 | `daily.py` | «Tasks per day» on the control room: every day adds up, «past the limit» never exceeds «not started», a day opens its own tasks, the late line opens the late list — three languages, laptop and phone | The real October pull (`OCT_PULL`) |
 | `tenderwrap.py` | A long tender subject wraps inside its cell and never runs over the date column — wide screen, laptop and phone | Made-up tenders built inside the test |
+| `tenderwin.py` | A tender’s details open in a window; fields still to fill are marked and counted; filling one keeps the window open and focus in place — laptop and phone | A made-up tender built inside the test |
 | `smoke.py` | Every page opens in three languages with no page error, no failed request and no raw text key; the WCAG 2.1 A and AA scan passes on every page; the phone has no sideways scroll | `AXE_JS=/path/to/axe.min.js` for the scan (skipped with a note when absent) |
 
 Run: `python3 tests/browser/readings.py` and `python3 tests/browser/smoke.py` from the repository root. No real pull, name or
