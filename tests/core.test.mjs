@@ -1264,6 +1264,40 @@ test('accounts board: systems come from joining the server-account list to the S
   assert.doesNotThrow(() => new Function(code.replace(/^javascript:/, '')));
 });
 
+test('startDue: the manager\'s response rule — 1 working hour Sun–Thu (09–18, 19–22), 3 on Saturday (09–18), Friday off', () => {
+  const at = (s) => core.startDue(s), z = (s) => new Date(s).toISOString();
+  assert.equal(at('2026-11-15T10:00:00+03:00'), z('2026-11-15T11:00:00+03:00'), 'Sunday morning: one hour');
+  assert.equal(at('2026-11-15T17:30:00+03:00'), z('2026-11-15T19:30:00+03:00'), 'half an hour before 18:00, the rest after 19:00');
+  assert.equal(at('2026-11-15T18:20:00+03:00'), z('2026-11-15T20:00:00+03:00'), 'the break 18–19 does not count');
+  assert.equal(at('2026-11-15T21:45:00+03:00'), z('2026-11-16T09:45:00+03:00'), 'fifteen minutes at night, the rest next morning');
+  assert.equal(at('2026-11-15T07:00:00+03:00'), z('2026-11-15T10:00:00+03:00'), 'before opening: from 09:00');
+  assert.equal(at('2026-11-19T23:00:00+03:00'), z('2026-11-21T12:00:00+03:00'), 'Thursday night → Friday off → Saturday 09:00 + 3 h');
+  assert.equal(at('2026-11-20T10:00:00+03:00'), z('2026-11-21T12:00:00+03:00'), 'Friday: from Saturday 09:00, Saturday\'s 3 hours');
+  assert.equal(at('2026-11-21T16:00:00+03:00'), z('2026-11-22T10:00:00+03:00'), 'Saturday 16:00: two hours to 18:00, no Saturday evening, the third hour Sunday');
+  assert.equal(at('2026-11-19T21:30:00+03:00'), z('2026-11-21T09:30:00+03:00'), 'Thursday 21:30: half an hour Thursday, the other half Saturday');
+  assert.equal(at('nonsense'), null);
+});
+test('dailyIntake: each day\'s arrivals add up, «not started» and «late» are judged at the pull\'s time, other teams left out', () => {
+  const X = (id, c, o = {}) => ({ id, assigneeId: 'A', createdAt: c, state: 'open', bucket: 'open', ...o });
+  const tasks = [
+    X('1', '2026-11-15T10:00:00+03:00', { state: 'done', bucket: 'done', completedAt: '2026-11-15T15:00:00+03:00' }),
+    X('2', '2026-11-15T11:00:00+03:00', { state: 'done', bucket: 'done', completedAt: '2026-11-16T09:30:00+03:00' }),
+    X('3', '2026-11-15T12:00:00+03:00', { bucket: 'toDo' }),
+    X('4', '2026-11-16T09:10:00+03:00', { bucket: 'toDo', fromEmail: true }),
+    X('5', '2026-11-16T09:20:00+03:00'),
+    X('6', '2026-11-16T09:30:00+03:00', { state: 'cancelled', bucket: 'done' }),
+    X('7', '2026-11-16T09:40:00+03:00', { bucket: 'toDo', assigneeId: 'B' })];
+  const r = core.dailyIntake(tasks, { from: '2026-11-15', to: '2026-11-16', asOf: '2026-11-16T09:50:00+03:00', team: ['A'], complete: (d) => d === '2026-11-16' });
+  assert.deepEqual(r.days.map((d) => [d.day, d.arrived, d.sameDay, d.later, d.notStarted, d.late, d.open, d.cancelled, d.email, d.complete]),
+    [['2026-11-16', 3, 0, 0, 1, 0, 1, 1, 1, true], ['2026-11-15', 3, 1, 1, 1, 1, 0, 0, 0, false]], 'task 4 is 40 minutes old: not late yet; task 3 is a day old: late');
+  for (const d of r.days) assert.equal(d.arrived, d.sameDay + d.later + d.notStarted + d.open + d.cancelled);
+  assert.deepEqual(core.dailyIntake([], { from: '2026-11-19', to: '2026-11-21', asOf: '2026-11-21T12:00:00Z' }).days.map((d) => [d.day, d.arrived]), [['2026-11-21', 0], ['2026-11-20', 0], ['2026-11-19', 0]], 'a day with nothing is still a row');
+  assert.deepEqual(r.lateNow.map((x) => x.id), ['3']); assert.equal(r.waiting, 2);
+  assert.ok(core.coveredFrom([{ from: '2026-10-01', to: '2026-10-31' }, { from: '2026-11-01', to: '2026-11-16' }], '2026-10-20', '2026-11-16'));
+  assert.ok(!core.coveredFrom([{ from: '2026-10-01', to: '2026-10-29' }, { from: '2026-11-01', to: '2026-11-16' }], '2026-10-20', '2026-11-16'), 'a gap on 30–31 October');
+  assert.ok(!core.coveredFrom([{ from: '2026-11-03', to: '2026-11-16' }], '2026-11-01', '2026-11-16'));
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

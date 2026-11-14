@@ -1091,6 +1091,62 @@ export function openTasks(tasks, assigneeId = null) {
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
+// ===================== tasks per day: arrived, started, late (ADR-0121) =====================
+// The manager's response rule (14 November 2026): a task must be started (moved out of MyAFAQY's To-Do column) within its
+// allowance of WORKING time. Sunday–Thursday the clock runs 09:00–18:00 and 19:00–22:00 with 1 hour allowed; Saturday
+// 09:00–18:00 with 3 hours; Friday is off. A task that arrives outside these hours starts its clock at the next opening, and
+// the allowance is the one of the day the clock starts on. Saudi time throughout.
+export const RESPONSE_RULE = { windows: { 0: [[9, 18], [19, 22]], 1: [[9, 18], [19, 22]], 2: [[9, 18], [19, 22]], 3: [[9, 18], [19, 22]], 4: [[9, 18], [19, 22]], 5: [], 6: [[9, 18]] },
+  allow: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 0, 6: 3 } };
+/** The instant (ISO, UTC) by which a task created at `createdIso` must be started under `rule`; null for a bad date. */
+export function startDue(createdIso, rule = RESPONSE_RULE) {
+  const t0 = Date.parse(createdIso); if (!Number.isFinite(t0)) return null;
+  const H = 3600000, off = 3 * H, D = 24 * H;
+  let day = Math.floor((t0 + off) / D) * D - off, left = null;           // midnight Saudi of the creation day, as UTC ms
+  for (let guard = 0; guard < 60; guard++, day += D) {
+    const dow = new Date(day + off).getUTCDay();
+    for (const [a, b] of rule.windows[dow] || []) {
+      const ws = Math.max(day + a * H, t0), we = day + b * H; if (we <= ws) continue;
+      if (left == null) left = (rule.allow[dow] || 0) * H;                 // the allowance of the day the clock starts on
+      if (ws + left <= we) return new Date(ws + left).toISOString();
+      left -= we - ws;
+    }
+  }
+  return null;
+}
+/** Each day of [from, to] for the team: what arrived and where it stands at `asOf` (the pull's time — the To-Do column is
+ *  only known as it was then). The columns add up: arrived = closed the same day + closed later + not started + open + cancelled.
+ *  `complete(day)` says whether the pulls hold every task of that day (a later close needs a pull that covers it). */
+export function dailyIntake(tasks, { from, to, asOf, team = null, rule = RESPONSE_RULE, complete = () => true }) {
+  const at = Date.parse(asOf), inTeam = (x) => !team || team.includes(x.assigneeId);
+  const due = (x) => startDue(x.createdAt, rule), late = (x) => { const d = due(x); return !!d && Date.parse(d) < at; };
+  const notStarted = (x) => x.state === 'open' && x.bucket === 'toDo';
+  const rows = new Map(), blank = (d) => ({ day: d, arrived: 0, sameDay: 0, later: 0, notStarted: 0, late: 0, open: 0, cancelled: 0, email: 0, ids: [] });
+  for (let d = from, g = 0; d <= to && g < 400; d = nextDay(d), g++) rows.set(d, blank(d));   // a day with nothing (a Friday) is a row too
+  for (const x of tasks || []) {
+    if (!x.createdAt || !inTeam(x)) continue; const d = saudiDay(x.createdAt); if (d < from || d > to) continue;
+    if (!rows.has(d)) rows.set(d, blank(d));
+    const r = rows.get(d); r.arrived++; r.ids.push(x.id); if (x.fromEmail === true) r.email++;
+    if (x.state === 'done') { if (x.completedAt && saudiDay(x.completedAt) === d) r.sameDay++; else r.later++; }
+    else if (x.state === 'cancelled') r.cancelled++;
+    else if (notStarted(x)) { r.notStarted++; if (late(x)) r.late++; }
+    else r.open++;
+  }
+  const days = [...rows.values()].map((r) => ({ ...r, complete: !!complete(r.day) })).sort((a, b) => (a.day < b.day ? 1 : -1));
+  const lateNow = (tasks || []).filter((x) => inTeam(x) && notStarted(x) && x.createdAt && late(x)).map((x) => ({ id: x.id, due: due(x) }));
+  const waiting = (tasks || []).filter((x) => inTeam(x) && notStarted(x)).length;
+  const sum = (k) => days.reduce((s, r) => s + r[k], 0);
+  return { days, lateNow, waiting, total: { arrived: sum('arrived'), sameDay: sum('sameDay'), later: sum('later'), notStarted: sum('notStarted'), late: sum('late'), open: sum('open'), cancelled: sum('cancelled') } };
+}
+/** Whether pulled ranges cover every day from `day` to `last` — so a task that arrived on `day` and closed later is in hand. */
+export function coveredFrom(ranges, day, last) {
+  const rs = (ranges || []).filter((r) => r && r.from && r.to).sort((a, b) => (a.from < b.from ? -1 : 1));
+  let reach = null;
+  for (const r of rs) { if (r.to < day) continue; if (reach == null) { if (r.from > day) return false; reach = r.to; } else if (r.from <= nextDay(reach)) { if (r.to > reach) reach = r.to; } else break; }
+  return reach != null && reach >= last;
+}
+const nextDay = (d) => new Date(Date.parse(`${d}T00:00:00Z`) + 86400000).toISOString().slice(0, 10);
+
 // ===================== the team file: positions and leaders, by myafaqy id, never by name (ADR-0015) =====================
 // team.json lives in the repository (public), so it holds ids, positions and who reports to whom — the names arrive from
 // myafaqy with the bookmark. The manager fills it on the Team page; each device may also hold its own copy.

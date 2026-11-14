@@ -7,7 +7,7 @@ import {
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
   monthReadings, READINGS_TEAM,
-  parseWeights, mergeWeights, weightedPoints, typeKey, typeNameOf, accountsBoard, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, overtimeOf, SOURCES, taskSource, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, typeNameOf, accountsBoard, dailyIntake, startDue, coveredFrom, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, overtimeOf, SOURCES, taskSource, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
@@ -3028,7 +3028,7 @@ const orgRootId = (od) => { const saved = pref('orgRoot'); if (saved && od.org.u
 // ADR-0061: the branch a pull filters teams by — the chosen manager's own row in MyAFAQY, Jeddah until a list exists
 const pullBranch = () => { const od = orgData(); const r = od && orgRootId(od), b = r && od.org.branchOf(r); return b ? { ...b, from: 'myafaqy' } : { code: JEDDAH_BRANCH, name: '', from: 'default' }; };
 const orgEngineerSet = () => { const od = orgData(); if (!od) return null; const r = orgRootId(od); return r ? new Set(od.org.engineersOf(r)) : null; };
-let kpiMoreCols = false, teamEdit = false;   // ADR-0059: the board shows five columns until asked for more
+let kpiMoreCols = false, teamEdit = false, diDays = 14;   // diDays: days shown in «tasks per day» (ADR-0121)   // ADR-0059: the board shows five columns until asked for more
 function currentTeam(people, tasks, force) {   // force: 'org' or 'file' computes that default and ignores a saved manual choice (the preview uses it)
   const allowed = new Set(scoped(people).map((p) => p.id));
   if (!force) try { const saved = JSON.parse(pref('team') || 'null'); if (Array.isArray(saved)) { const kept = saved.filter((id) => allowed.has(id)); if (kept.length) return kept; } } catch { /* fall through */ }
@@ -3526,6 +3526,40 @@ function tdStartAlerts() {
 }
 /** ADR-0090: the authorship line at the foot of every page. */
 function pageBy() { document.querySelectorAll('section[id^="view-"]').forEach((sec) => { if (sec.querySelector(':scope > .page-by')) return; sec.append(el('p', { class: 'page-by' }, el('button', { type: 'button', onclick: openAbout }, el('span', { 'data-t': 'page_by', text: t('page_by') }), ` · v${PORTAL_VERSION}`))); }); }   // data-t: the language system fills and refreshes it (the hand-built text showed the raw key)
+// ADR-0121: tasks per day — what arrived, what was closed, what nobody has started, and what passed the manager's start limit.
+function dailySection(tasks, team, nm, latest) {
+  const asOf = latest.extractedAt || `${latest.range.to}T21:00:00Z`, to = latest.range.to;
+  const from = new Date(Date.parse(`${to}T00:00:00Z`) - (diDays - 1) * 864e5).toISOString().slice(0, 10);
+  const ranges = datasets.map((d) => d.range).filter(Boolean);
+  const r = dailyIntake(tasks, { from, to, asOf, team, complete: (d) => coveredFrom(ranges, d, to) });
+  const byId = new Map(tasks.map((x) => [x.id, x]));
+  const sT = (iso) => (iso ? new Date(Date.parse(iso) + 3 * 36e5).toISOString().slice(0, 16).replace('T', ' ') : '');
+  const loc = lang === 'en' ? 'en-GB' : lang === 'ur' ? 'ur-PK' : 'ar-EG';
+  const wd = (d) => new Date(`${d}T12:00:00Z`).toLocaleDateString(loc, { weekday: 'short', timeZone: 'UTC' });
+  const stOf = (x) => (x.state === 'done' ? t('di_st_done') : x.state === 'cancelled' ? t('di_st_cancel') : x.bucket === 'toDo' ? t('di_st_todo') : t('di_st_open'));
+  const isLate = (x) => x.state === 'open' && x.bucket === 'toDo' && startDue(x.createdAt) && Date.parse(startDue(x.createdAt)) < Date.parse(asOf);
+  const listModal = (title, file, L) => { L = [...L].sort((p, q) => (p.createdAt < q.createdAt ? -1 : 1));
+    crModal({ title, file, lead: t('di_asof', { t: sT(asOf) }),
+      tiles: [[t('di_arrived'), L.length], [t('di_notstarted'), L.filter((x) => x.state === 'open' && x.bucket === 'toDo').length, '', (k) => L[k].state === 'open' && L[k].bucket === 'toDo'],
+        [t('di_late'), L.filter(isLate).length, '', (k) => isLate(L[k])], [t('di_sameday'), L.filter((x) => x.state === 'done' && saudiDay(x.completedAt) === saudiDay(x.createdAt)).length, '', (k) => L[k].state === 'done' && saudiDay(L[k].completedAt) === saudiDay(L[k].createdAt)]],
+      bar: (k) => [nm(L[k].assigneeId), 1], head: [t('crm_task'), t('col_person'), t('di_c_in'), t('di_c_due'), t('di_c_state'), t('crm_closed'), t('crm_type')], hot: (row, k) => isLate(L[k]),
+      rows: L.map((x) => [x.title || x.id, nm(x.assigneeId), sT(x.createdAt), sT(startDue(x.createdAt)), stOf(x), x.completedAt ? sT(x.completedAt) : '', x.type || '']) }); };
+  const dayModal = (d) => listModal(t('di_day_h', { d: `${wd(d.day)} ${d.day}` }), `arrived-${d.day}`, d.ids.map((id) => byId.get(id)).filter(Boolean));
+  const lateL = r.lateNow.map((x) => byId.get(x.id)).filter(Boolean);
+  const cell = (v, cls) => el('td', { class: `num${cls && v ? ` ${cls}` : ''}`, text: String(v) });
+  const anyPart = r.days.some((d) => !d.complete);
+  return el('section', { class: 'di-box' },
+    el('h2', { class: 'cr-h' }, t('di_h'), helpQ('help_di')),
+    el('button', { type: 'button', class: `di-now${r.lateNow.length ? ' late' : ''}`, onclick: () => (lateL.length ? listModal(t('di_late_h'), 'not-started-late', lateL) : null) },
+      el('b', { text: t('di_now', { n: r.waiting, l: r.lateNow.length }) }), el('span', { text: t('di_asof', { t: sT(asOf) }) })),
+    r.days.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'di-table' },
+      el('thead', {}, el('tr', {}, ['di_c_day', 'di_arrived', 'di_sameday', 'di_later', 'di_notstarted', 'di_late', 'di_open', 'di_cancel'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+      el('tbody', {}, r.days.map((d) => el('tr', { class: 'di-row', tabindex: '0', title: t('cr_num_open'), onclick: () => dayModal(d), onkeydown: (e) => { if (e.key === 'Enter') dayModal(d); } },
+        el('td', { text: `${wd(d.day)} ${d.day}${d.complete ? '' : ' *'}` }), cell(d.arrived), cell(d.sameDay), cell(d.later), cell(d.notStarted), cell(d.late, 'di-bad'), cell(d.open), cell(d.cancelled)))),
+      el('tfoot', {}, el('tr', { class: 'total' }, el('td', { text: t('team') }), ...['arrived', 'sameDay', 'later', 'notStarted', 'late', 'open', 'cancelled'].map((k) => cell(r.total[k])))))) : el('div', { class: 'empty', text: t('di_none') }),
+    anyPart ? el('p', { class: 'hint', text: t('di_partial') }) : null,
+    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn quiet tiny', text: diDays === 14 ? t('di_more') : t('di_less'), onclick: () => { diDays = diDays === 14 ? 31 : 14; renderHome(); } })));
+}
 function renderHome() {
   const body = $('home-body'); if (!body) return;
   if (!datasets.length) { set(body, tdStartAlerts(), el('div', { class: 'cr-start' }, el('h2', { text: t('cr_start_h') }), el('p', { text: t('cr_start_b') }), el('a', { class: 'btn primary', href: '#data', text: `${t('cr_pull')} ↗` }))); return; }
@@ -3592,6 +3626,7 @@ function renderHome() {
     el('div', { class: 'cr-nums' }, num('cr_nums_done', doneM.length, hasPrev ? t('cr_nums_last', { n: doneP.length }) : t('cr_nums_nolast'), 'done'), num('cr_nums_points', Math.round(doneM.reduce((s, x) => s + taskPoints(wt, x), 0)), hasPrev ? t('cr_nums_last', { n: Math.round(doneP.reduce((s, x) => s + taskPoints(wt, x), 0)) }) : t('cr_nums_nolast'), 'points'),
       num('cr_nums_open', openNow.length, openNow.length ? t('cr_nums_oldest_sub', { d: Math.max(...openNow.map((x) => ageD(x) || 0)) }) : '', 'open'), num('cr_nums_team', team.length, '', 'team')),
     teamPulse(doneM, doneP, (day) => { const L = doneM.filter((x) => saudiDay(x.completedAt) === day); crModal({ title: t('tp_day_h', { d: day }), file: `closed-${day}`, tiles: [[t('cr_nums_done'), L.length], [t('cr_nums_points'), Math.round(L.reduce((s, x) => s + taskPoints(wt, x), 0))], [t('crm_people'), new Set(L.map((x) => x.assigneeId)).size]], bar: (k) => [nm(L[k].assigneeId), 1], head: [t('crm_task'), t('col_person'), t('col_points'), t('crm_type')], rows: L.map((x) => [x.title || x.id, nm(x.assigneeId), Math.round(taskPoints(wt, x) * 10) / 10, x.type || '']) }); }, hasPrev),
+    dailySection(tasks, team, nm, latest),
     el('h2', { class: 'cr-h', text: t('cr_att_h') }),
     att.length ? el('div', { class: 'cr-att' }, att.map((x) => el('button', { type: 'button', class: `cr-item k-${x.k}`, onclick: go(x.href, x.prep) },
       el('div', {}, el('b', { text: x.title }), x.detail ? el('span', { text: x.detail }) : null), el('span', { class: 'cr-go', text: `${t('cr_go')} ↗` }))))
