@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.49 — 2026-11-14
+
+- صفحة الفريق: لوحة التعيين تبقى في الأعلى، والباقي بطاقات تفتح في نافذة: ملف الفريق، وحسابات ما بعد البيع، والمقارنة مع ماي أفاقي. تعديل الفريق يعمل داخل النافذة نفسها.
+- صفحة الأوزان: الإعدادات المتقدمة صارت بطاقة تفتح في نافذة بدل قسم مطوي طويل.
+- مؤشراتي: «تحديث أرقامي» و«طريقة الحساب» صارا بطاقتين. وزر «الإعداد من جديد» في الأعلى كان يفتح قسمًا فارغًا؛ صار يفتح خطوات الإعداد.
+
+<details><summary>English</summary>
+
+- Team page: the assignment panel stays on top, and the rest are cards that open in a window: the team file, the after-sales accounts, and the comparison with MyAFAQY. Editing the team works inside the window.
+- Weights page: the advanced settings are now a card that opens in a window instead of a long fold.
+- My KPIs: «Update my numbers» and «How it is calculated» are now cards. The «Set up again» button at the top used to open an empty section; it now opens the setup steps.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹیم کا صفحہ: تفویض کا پینل اوپر رہتا ہے، اور باقی کارڈز ہیں جو ونڈو میں کھلتے ہیں: ٹیم فائل، آفٹر سیلز اکاؤنٹس، اور مائی آفاقی سے موازنہ۔ ٹیم میں ترمیم اسی ونڈو کے اندر ہوتی ہے۔
+- اوزان کا صفحہ: تفصیلی ترتیبات اب ایک کارڈ ہیں جو ونڈو میں کھلتا ہے، لمبا تہہ شدہ حصہ نہیں۔
+- میرے اشاریے: «میرے اعداد تازہ کریں» اور «حساب کا طریقہ» اب کارڈز ہیں۔ اوپر کا بٹن «دوبارہ سیٹ اپ» ایک خالی حصہ کھولتا تھا؛ اب وہ سیٹ اپ کے مراحل کھولتا ہے۔
+
+</div>
+</details>
+
+
 ## v9.48 — 2026-11-14
 
 - مؤشرات الفريق: القسم الطويل «المزيد» تحت اللوحة صار بطاقات. كل بطاقة تعرض رقمها الأساسي، وبالضغط عليها يفتح القسم في نافذة بدل أن ينفرد في الصفحة وتضطر للنزول.

@@ -1,4 +1,4 @@
-# ADR-0123: on Team KPIs the old long fold is gone; each section is a card that opens in a window. Every card opens with content,
+# ADR-0123: on Team KPIs, Team, Weights and My KPIs the long folds are gone; each section is a card that opens in a window. Every card opens with content,
 # in three languages, laptop and phone; no raw key, no page error, no sideways scroll; Escape closes it; the control-room
 # «open more than 7 days» item lands on the page with the week's window already open.
 import threading, http.server, socketserver, functools, os, sys, re, pathlib
@@ -35,6 +35,21 @@ with sync_playwright() as p:
                 pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
                 if pg.locator('dialog.sec-dlg[open]').count(): bad.append((sid,'did not close'))
             check(f'K2 {dev} {L}: every card opens its section in a window with content, no raw key, no sideways scroll, and closes', not bad, bad)
+        for view,want in [('team',['roster','accounts']),('weights',['adv'])]:
+            pg.select_option('#lang-select','en'); pg.evaluate(f"location.hash='#{view}'"); pg.wait_for_timeout(1200)
+            ids=pg.evaluate(f"[...document.querySelectorAll('#{view}-body .sec-card')].map(x=>x.dataset.sec)"); bad=[]
+            for sid in ids:
+                pg.locator(f'#{view}-body .sec-card[data-sec="{sid}"]').click(); pg.wait_for_timeout(900)
+                r=pg.evaluate("()=>{const d=document.querySelector('dialog.sec-dlg');return {open:!!(d&&d.open),len:d&&d.open?d.innerText.length:0,page:document.scrollingElement.scrollWidth-document.scrollingElement.clientWidth}}")
+                if not r['open'] or r['len']<40 or r['page']>1: bad.append((sid,r))
+                pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
+            check(f'K5 {dev} {view}: cards {ids} include {want}, and each opens with content', all(w in ids for w in want) and not bad, (ids,bad))
+        pg.evaluate("location.hash='#team'"); pg.wait_for_timeout(900)
+        pg.locator('#team-body .sec-card[data-sec=roster]').click(); pg.wait_for_timeout(700)
+        pg.locator('dialog.sec-dlg .team-edit-btn').click(); pg.wait_for_timeout(900)
+        r=pg.evaluate("()=>{const d=document.querySelector('dialog.sec-dlg');return {open:d.open,inputs:d.querySelectorAll('.team-table input').length,add:!!d.querySelector('.team-add:not([hidden])')}}")
+        check(f'K6 {dev}: «Edit team» inside the window keeps it open and turns the list into fields', r['open'] and r['inputs']>0 and r['add'], r)
+        pg.locator('dialog.sec-dlg .team-edit-btn').click(); pg.wait_for_timeout(700); pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
         pg.select_option('#lang-select','en'); pg.evaluate("location.hash='#home'"); pg.wait_for_timeout(1000)
         item=pg.locator('#home-body .cr-item.k-old')
         if item.count():

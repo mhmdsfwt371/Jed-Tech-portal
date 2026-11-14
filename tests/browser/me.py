@@ -42,7 +42,8 @@ with sync_playwright() as p:
     cut=pg.evaluate("[...document.querySelectorAll('#view-me .pm-legend .pm-lg-l')].filter(e=>e.scrollWidth>e.clientWidth+1).map(e=>e.innerText)")
     leg=pg.evaluate("[...document.querySelectorAll('#view-me .pm-legend .pm-lg-l')].map(e=>e.innerText)")
     check(f'M10 the chart\'s labels are readable in full ({leg})', not cut and 'From e-mail' in leg, cut)
-    check('M11 «How it is calculated» is folded away until asked for', pg.evaluate("(()=>{const d=document.querySelector('#view-me details.me-defs');return d&&!d.open&&d.querySelectorAll('li').length>3})()"))
+    # since v9.49 (ADR-0123) it is a card that opens in a window, not a fold on the page
+    check('M11 «How it is calculated» stays off the page until asked for, then opens in a window', pg.evaluate("(()=>{const c=document.querySelector('#view-me .sec-card[data-sec=defs]');if(!c||document.querySelector('#view-me ul.defs'))return false;c.click();const d=document.querySelector('dialog.sec-dlg[open]');const ok=!!d&&d.querySelectorAll('li').length>3;if(d)d.close();return ok})()"))
     med=pg.evaluate("[...document.querySelectorAll('#view-me .pm-tile .pm-med')].map(e=>[e.dataset.med, e.innerText, e.className])")
     mm={k:(t,c) for k,t,c in med}
     check(f'M14 the four tiles carry the team median, each said as better or worse ({[t for _,t,_ in med]})', set(mm)=={'thru','rate','mttr','pts'} and all(re.search(r'(Above|Below|At|Faster than|Slower than) the team median ', mm[k][0]) for k in ['thru','rate','mttr','pts']), med)

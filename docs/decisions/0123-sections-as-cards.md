@@ -16,5 +16,10 @@ it ran for several screens.
   opens the week, «Management reports» opens the report.
 - Inside a window nothing fades in on scroll; it is shown whole at once.
 
-## Next
-The same cards for the Team page (accounts board, roster), the Weights page's advanced settings and «My KPIs».
+## v9.49 — the other long pages
+- Team: the assignment panel stays on the page (it is an action, not a detail). The team file, the accounts board and the
+  comparison with MyAFAQY are cards; signatures are a card only while editing the team, as they were only shown then. The
+  read-only pass that turns the team list into text works on the team file's own node, wherever it is shown.
+- Weights: the advanced settings are one card; the rules and types boxes are added into that node (`wAdvNode`) after drawing.
+- My KPIs: «Update my numbers» and the definitions are cards. The top «Set up again» fold had been empty since its nodes were
+  appended again further down; it now opens the update card.

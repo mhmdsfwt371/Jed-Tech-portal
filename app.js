@@ -708,7 +708,7 @@ function renderMe(waiting = false) {
   const bar = (v, max) => el('div', { class: 'bar-cell' }, el('b', { text: String(v) }), el('i', {}, el('span', { style: `width:${Math.round((v / max) * 100)}%` })));
   set(body, vaBar,
     el('div', { class: 'row', style: 'justify-content:space-between;margin-bottom:12px' },
-      el('details', { class: 'me-again va-hide' }, el('summary', { text: t('me_setup_again') }), ...setup),
+      el('button', { type: 'button', class: 'btn quiet me-again va-hide', text: t('me_setup_again'), onclick: () => { const c = document.querySelector('#me-body .sec-card[data-sec=refresh]'); if (c) c.click(); } }),
       el('a', { class: 'btn primary va-hide', href: 'https://myafaqy.com/', target: '_blank', rel: 'noopener', text: `↻ ${t('me_update')}`, onclick: () => toast(t('me_refresh_hint')) })),
     el('div', { class: 'me-card' },
       el('div', {}, el('h2', { class: 'me-name', text: who }),
@@ -724,9 +724,12 @@ function renderMe(waiting = false) {
     !isTeamPortal && !viewAs ? projectsCard() : null,   // the manager's own projects, on his own page only — as in v8.88
     // his place and progress — what his rank link carries: his own numbers and level, no colleague (ADR-0072 keeps it)
     (() => { if (!(isTeamPortal || viewAs)) return null; try { return progressCard(pm); } catch { return null; } })(),
-    el('details', { class: 'team me-defs' }, el('summary', { text: t('definitions') }), el('ul', { class: 'defs' }, KM_DEFS.map((k) => el('li', { text: t(k) })))),
-    el('details', { class: 'team' }, el('summary', { text: t('me_refresh_h') }), el('p', { class: 'hint', text: t('me_refresh') }), ...setup,
-      el('button', { type: 'button', class: 'btn va-hide', text: t('me_forget'), onclick: async () => { if (viewAs || meDerived) return; me = null; await store.putMe(null); renderMe(); } })));
+    // ADR-0123: the definitions and «update my numbers» are cards that open in a window
+    secCards('me', [
+      { id: 'refresh', title: t('me_refresh_h'), v: '', sub: t('sc_me_refresh_sub'), node: el('div', { class: 'me-refresh' }, el('h2', { text: t('me_refresh_h') }), el('p', { class: 'hint', text: t('me_refresh') }), ...setup,
+        el('button', { type: 'button', class: 'btn va-hide', text: t('me_forget'), onclick: async () => { if (viewAs || meDerived) return; me = null; await store.putMe(null); secDlg && secDlg.open && secDlg.close(); renderMe(); } })) },
+      { id: 'defs', title: t('definitions'), v: String(KM_DEFS.length), sub: t('sc_defs_sub'), node: [el('h2', { text: t('definitions') }), el('ul', { class: 'defs' }, KM_DEFS.map((k) => el('li', { text: t(k) })))] },
+    ]));
   dLive();
 }
 /** Direction D, after drawing: the rank moves into «your next step» (one place for it), and the headline numbers count up once. */
@@ -3483,9 +3486,9 @@ function pointsRulesBox(wt, admin) {
   return el('details', { class: 'pr-box', open: '' }, el('summary', { text: t('pr_h') }), steps, calcBox, el('h3', { text: t('pr_rules_h') }), editor);
 }
 { const withRules = (fn) => function weightsWithRules(...args) { const out = fn.apply(this, args);
-    try { const body = $('weights-body'), wt = weights(), uid = (me && me.user ? me.user.id : null) || (!isTeamPortal ? ownerId() : null); if (body && wt) { const top = body.querySelector('.w-adv-top') || body; top.prepend(pointsRulesBox(wt, isWeightsAdmin(wt, uid))); if (!isTeamPortal) top.querySelector('.pr-box').after(typesBox(wt)); }
+    try { const body = $('weights-body'), wt = weights(), uid = (me && me.user ? me.user.id : null) || (!isTeamPortal ? ownerId() : null); if (body && wt) { const top = (wAdvNode && wAdvNode.querySelector('.w-adv-top')) || body.querySelector('.w-adv-top') || body; top.prepend(pointsRulesBox(wt, isWeightsAdmin(wt, uid))); if (!isTeamPortal) top.querySelector('.pr-box').after(typesBox(wt)); }
       // each cell carries its column's name, so on a phone a row reads as a card: the type on top, every field named under it (ADR-0049)
-      if (body) body.querySelectorAll('table').forEach((tb) => { const hs = [...tb.querySelectorAll('thead th')].map((th) => th.textContent.trim()); tb.classList.add('w-cards');
+      if (body) [body, wAdvNode].filter(Boolean).flatMap((root) => [...root.querySelectorAll('table')]).forEach((tb) => { const hs = [...tb.querySelectorAll('thead th')].map((th) => th.textContent.trim()); tb.classList.add('w-cards');
         tb.querySelectorAll('tbody tr').forEach((tr) => [...tr.children].forEach((td, i) => { if (hs[i]) td.dataset.label = hs[i]; })); }); } catch (e) { console.error(e); }
     return out; };
   renderWeights = withRules(renderWeights); }
@@ -3937,7 +3940,7 @@ function meMonthParts() {
 // ADR-0123: section cards. Each card shows its section's headline and opens the section in one shared window. The section's nodes
 // are built with the page, as before; when the page redraws while the window is open, the window takes the fresh nodes of the same
 // section, so sorting or toggling inside it keeps working. `secWant` (page:id) opens a card on arrival from another page.
-let secDlg = null, secOpen = '', secWant = '';
+let secDlg = null, secOpen = '', secWant = '', wAdvNode = null;   // wAdvNode: the Weights page's advanced part, which lives in the window
 function secCards(page, secs) {
   const show = (x) => { if (!secDlg) { secDlg = el('dialog', { class: 'sec-dlg', 'aria-label': '' }, el('div', { class: 'sec-dlg-body' }));
       secDlg.addEventListener('close', () => { secOpen = ''; }); document.body.append(secDlg); }
@@ -4236,10 +4239,11 @@ function renderWeights() {
       admin ? el('button', { type: 'button', class: 'btn', text: t('weights_upload'), onclick: () => upload.click() }) : null, upload,
       weightsDevice ? el('button', { type: 'button', class: 'btn quiet', text: t('weights_reset'), onclick: async () => { weightsDevice = null; await store.putWeights(null); renderWeights(); renderKpi(); renderMe(); } }) : null,
       el('span', { class: 'hint', text: wt.reviewed ? t('weights_reviewed', { d: wt.reviewed }) : '' })),
-    el('details', { class: 'w-adv', ...(advOpen ? { open: '' } : {}) }, el('summary', { text: t('w_adv') }), el('p', { class: 'hint', text: t('w_adv_lead') }), el('div', { class: 'w-adv-top' }),
+    // ADR-0123: the advanced settings are a card that opens in a window; the rules and types boxes are added into it after the page is drawn
+    secCards('weights', [{ id: 'adv', title: t('w_adv'), v: '', sub: t('w_adv_lead'), node: (wAdvNode = el('div', { class: 'w-adv' }, el('div', { class: 'w-adv-top' }),
       el('div', { class: 'tiers' }, TIERS.map((tr) => el('div', { class: 'tier' }, el('b', { text: String((weightsRepo && weightsRepo.tiers && weightsRepo.tiers[tr]) || { admin: 1, customer: 2, integration: 3, multistage: 5 }[tr]) }), el('div', {}, el('strong', { text: t(`tier_${tr}`) }), el('p', { text: t(`tier_${tr}_why`) }))))),
       groups.map(table),
-      el('p', { class: 'hint', text: t('weights_seen_note', { range: ds ? `${ds.range.from} → ${ds.range.to}` : '—' }) }), maWeightsLocked()));
+      el('p', { class: 'hint', text: t('weights_seen_note', { range: ds ? `${ds.range.from} → ${ds.range.to}` : '—' }) }), maWeightsLocked())) }]));
 }
 
 // ---------- the Team page: positions and leaders by myafaqy id, kept on this device and exportable as team.json ----------
@@ -4441,20 +4445,21 @@ function renderTeam() {
   // the panel lists the whole team as set here (names stay on this device; the panel matches them in myafaqy's list) — nothing pre-ticked
   const afterSalesNames = scopeIds(ro).filter((id) => /after-sales/i.test((ro.people[id] || {}).positionEn || '')).map((id) => (known.get(id) || {}).nameEn).filter(Boolean);
   const ab = buildAssignBookmarklet(lang, afterSalesNames);
-  set(body,
-    orgCheckBox(),
-    el('section', { class: 'assign-box' },
+  const orgNode = orgCheckBox();
+  const assignNode =     el('section', { class: 'assign-box' },
       el('h2', {}, t('assign_h'), helpQ('help_assign')),
       el('ol', { class: 'assign-steps' }, ['assign_s1', 'assign_s2', 'assign_s3', 'assign_s4'].map((k) => el('li', { text: t(k) }))),
       el('div', { class: 'row' },
         el('a', { class: 'btn primary bm', href: ab, draggable: 'true', text: `⚙ ${t('assign_bm')}`, onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } }),
         el('button', { type: 'button', class: 'btn', text: t('me_copy'), onclick: async () => { try { await navigator.clipboard.writeText(decodeURIComponent(ab)); toast(t('me_copied')); } catch { toast(t('me_copy_fail')); } } })),
-      el('p', { class: 'note', text: t('assign_warn') })),
+      el('p', { class: 'note', text: t('assign_warn') }));
     // ADR-0120: the accounts board sits under the panel that changes it — the newest manager pull that carries the accounts list
-    (() => { const rep = [...reports].filter((r) => (r.accounts || []).length).sort((x, y) => String(y.extractedAt || '').localeCompare(String(x.extractedAt || '')))[0];
+  const accRep = [...reports].filter((r) => (r.accounts || []).length).sort((x, y) => String(y.extractedAt || '').localeCompare(String(x.extractedAt || '')))[0];
+  const accNode = (() => { const rep = [...reports].filter((r) => (r.accounts || []).length).sort((x, y) => String(y.extractedAt || '').localeCompare(String(x.extractedAt || '')))[0];
       const sec = rep ? accountsBoardSection(rep, (id) => nameOf(known.get(id) || {}, lang) || id) : null;
-      return el('section', { class: 'ab-box', id: 'accounts-board' }, sec || [el('h2', {}, t('ab_title'), helpQ('help_ab')), el('p', { class: 'empty', text: t('ab_none') })]); })(),
-    renderSignatures(),
+      return el('section', { class: 'ab-box', id: 'accounts-board' }, sec || [el('h2', {}, t('ab_title'), helpQ('help_ab')), el('p', { class: 'empty', text: t('ab_none') })]); })();
+  const signNode = renderSignatures();
+  const rosterBox = el('div', { class: 'roster-box' },
     el('h2', {}, t('team_roster_h'), helpQ('help_roster')),
     el('div', { class: 'row', style: 'margin-bottom:14px' },
       el('button', { type: 'button', class: `btn${teamEdit ? ' primary' : ''} team-edit-btn`, text: teamEdit ? `✓ ${t('team_edit_done')}` : `✎ ${t('team_edit')}`, onclick: () => { teamEdit = !teamEdit; renderTeam(); } }),
@@ -4496,13 +4501,21 @@ function renderTeam() {
       return el('div', { class: 'row team-add' }, el('b', { text: t('team_add_h') }), pick, posAr, posEn,
         el('button', { type: 'button', class: 'btn tiny', text: t('team_add_btn'), onclick: () => { const id = pick.value;
           if (!id || !(posAr.value.trim() || posEn.value.trim())) { toast(t('team_add_bad2')); return; } save(id, { position: posAr.value.trim(), positionEn: posEn.value.trim() }); } })); })());
+  // ADR-0123: the assignment panel stays on the page; everything else is a card that opens in a window
+  const accB = accRep ? accountsBoard(accRep) : null;
+  set(body, assignNode, secCards('team', [
+    { id: 'roster', title: t('team_roster_h'), v: String(people.length), sub: t('sc_roster_sub'), node: rosterBox },
+    { id: 'accounts', title: t('ab_title'), v: accB ? accB.total.accounts.toLocaleString('en-US') : '—', sub: accB ? t('sc_acc_sub', { d: accB.total.devices.toLocaleString('en-US'), e: accB.engineers.length }) : t('ab_none'), node: accNode },
+    orgNode ? { id: 'org', title: t('sc_org_h'), v: '', sub: t('sc_org_sub'), node: orgNode } : null,
+    signNode && teamEdit ? { id: 'signs', title: t('sc_signs_h'), v: '', sub: t('sc_signs_sub'), node: signNode } : null,   // signatures are edited with the team, as before
+  ].filter(Boolean)));
   // ADR-0059: the list reads as text until «Edit team»; editing shows the fields, the ✎ buttons and the file buttons
-  if (!teamEdit) { const tb = body.querySelector('.team-table');
+  if (!teamEdit) { const tb = rosterBox.querySelector('.team-table');
     if (tb) { for (const c of tb.querySelectorAll('input, select')) c.replaceWith(el('span', { class: 'ro-val', text: c.tagName === 'SELECT' ? (c.selectedOptions[0] && c.value ? c.selectedOptions[0].text : '—') : (c.value || '—') }));
       for (const b of tb.querySelectorAll('button')) b.remove(); }
-    for (const n of body.querySelectorAll('.team-add, .signs')) n.hidden = true;
-    for (const b of body.querySelectorAll('button')) if (b.textContent.trim() === t('pending_upload')) b.hidden = true;
-    for (const b of body.querySelectorAll('.team-edit-btn ~ .btn, .team-edit-btn ~ input[type=file]')) b.hidden = true; }
+    for (const n of rosterBox.querySelectorAll('.team-add')) n.hidden = true;
+    for (const b of rosterBox.querySelectorAll('button')) if (b.textContent.trim() === t('pending_upload')) b.hidden = true;
+    for (const b of rosterBox.querySelectorAll('.team-edit-btn ~ .btn, .team-edit-btn ~ input[type=file]')) b.hidden = true; }
 }
 
 // ---------- Factor 2 (technician points) and Factor 3 (after-sales tickets), from the reports file of the same period ----------
