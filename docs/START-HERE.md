@@ -158,6 +158,7 @@
 | `docs/decisions/0118-project-followup-reports.md` | Separate project execution, local history and a common filtered report snapshot |
 | `docs/decisions/0118-tender-document-evidence.md` | Local document excerpts, table previews, file categories and deadline sources |
 | `docs/decisions/0119-long-windows-turn-into-pages.md` | Any window with more than 1.5 screens of content opens in pages; nothing is cut between pages; short windows unchanged |
+| `docs/decisions/0120-after-sales-accounts-board.md` | The Team page shows MyAFAQY’s whole Jeddah accounts list: totals, segments, accounts per engineer, and systems by customer from two server lists joined by exact address |
 
 ## في عشر دقائق: ابنِ وافحص
 ```bash

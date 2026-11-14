@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.44 — 2026-11-14
+
+- صفحة الفريق: لوحة جديدة لحسابات ما بعد البيع تحت لوحة التعيين: عدد الحسابات والأجهزة، والشرائح، وكم حسابًا على كل مهندس، وكم عميلًا على كل نظام (مثل afaqy.pro أو أحد سيرفرات VSS). تُبنى من سحب المدير؛ بعد أي تعيين شغّل السحب مرة أخرى فتتحدّث.
+- سحب المدير يقرأ الآن قائمتي السيرفرات في ماي أفاقي ليعرف نظام كل عميل، بدل فتح أكثر من ألفي عميل واحدًا واحدًا. إن لم تُقرأ القائمة كلها لا يظهر رقم للأنظمة. إضافة المزامنة صارت 1.0.5.
+
+<details><summary>English</summary>
+
+- Team page: a new after-sales accounts board under the assignment panel: accounts and devices, segments, how many accounts each engineer carries, and how many customers are on each system (for example afaqy.pro or one of the VSS servers). It is built from the manager pull; after any assignment, run the pull again and it updates.
+- The manager pull now reads MyAFAQY’s two server lists to know each customer’s system, instead of opening more than two thousand customers one by one. If the list is not read to the end, no system figure is shown. The sync extension is now 1.0.5.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹیم کا صفحہ: تفویض کے پینل کے نیچے آفٹر سیلز اکاؤنٹس کا نیا بورڈ: اکاؤنٹس اور ڈیوائسز، سیگمنٹس، ہر انجینئر کے پاس کتنے اکاؤنٹس ہیں، اور ہر سسٹم پر کتنے کسٹمرز ہیں (مثلاً afaqy.pro یا VSS کا کوئی سرور)۔ یہ مینیجر کے پل سے بنتا ہے؛ کسی بھی تفویض کے بعد پل دوبارہ چلائیں تو یہ اپ ڈیٹ ہو جائے گا۔
+- مینیجر کا پل اب مائی آفاقی کی سرورز کی دو فہرستیں پڑھتا ہے تاکہ ہر کسٹمر کا سسٹم معلوم ہو، بجائے دو ہزار سے زیادہ کسٹمرز کو ایک ایک کر کے کھولنے کے۔ اگر فہرست آخر تک نہ پڑھی جائے تو سسٹمز کا کوئی عدد نہیں دکھایا جاتا۔ ہم آہنگی کی ایکسٹینشن اب 1.0.5 ہے۔
+
+</div>
+</details>
+
+
 ## v9.43 — 2026-11-14
 
 - صفحة الأوزان: اسم نوع المهمة كان يتكرر مرتين في كل صف ويجبرك على التمرير يمينًا ويسارًا. الآن يظهر مرة واحدة بلغتك، والجداول كلها — البسيطة والمتقدمة — تبقى داخل الشاشة على الكمبيوتر والجوال.

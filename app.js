@@ -7,7 +7,7 @@ import {
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
   monthReadings, READINGS_TEAM,
-  parseWeights, mergeWeights, weightedPoints, typeKey, typeNameOf, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, overtimeOf, SOURCES, taskSource, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, typeNameOf, accountsBoard, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, overtimeOf, SOURCES, taskSource, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
@@ -3709,6 +3709,38 @@ function kpiMapPlanSection(ds, team, peopleById) { const ym = ds.range.to.slice(
           el('tbody', {}, tm.cards.sort((x, y) => y.points - x.points).map((c) => el('tr', {}, el('td', { text: nmB(c.personId) }), ...TIERS.map((k) => cell(c.tiers.mine[k])), el('td', { class: 'num', text: String(c.points) }), el('td', { text: t(`arch_${c.archetype}`) })))))),
         el('h2', { id: 'k-plan' }, t('plan_h'), helpQ('help_plan')),
         tm.plan.length ? makeSortable(el('div', { class: 'cards-grid' }, sortByOrder(tm.plan.map((p) => p.id), 'plan').map((id) => { const c = tm.cards.find((x) => x.personId === id); const n = renderCard(c, nmB(id), { showRank: true, showSuggestions: true, compact: true }); if (n) n.dataset.id = id; return n; })), 'plan') : el('div', { class: 'empty', text: t('plan_none') })]; }
+// ADR-0120: the After-Sales Accounts board — MyAFAQY's whole Jeddah list on the day of the manager pull, not only the scope's people.
+function accountsBoardSection(rep, nm) {
+  const b = accountsBoard(rep); if (!b.total.accounts) return null;
+  const N = (v) => Number(v || 0).toLocaleString('en-US'), eng = rep.accEng || {};
+  const who = (id) => (eng[id] ? ((lang === 'en' ? eng[id].en : eng[id].ar) || eng[id].en || eng[id].ar) : nm(id));
+  const maxE = Math.max(1, ...b.engineers.map((r) => r.accounts)), sysName = (n) => (n === '?' ? t('ab_unknown_sys') : n);
+  const tile = (v, k) => el('div', {}, el('b', { text: N(v) }), el('span', { text: t(k) }));
+  const sysPart = b.hasSystems ? [
+    el('p', { class: 'hint', text: t('ab_with_server', { n: N(b.total.withServer), w: N(b.total.withWorking), z: N(b.total.noServer) }) }),
+    ...b.families.map((f) => el('p', { class: 'hint ab-family', text: t('ab_family', { fam: `\u2068${f.id.toUpperCase()}\u2069`, members: `\u2068${f.members.join(' + ')}\u2069`, n: N(f.customers), w: N(f.working) }) })),
+    el('div', { class: 'table-wrap' }, el('table', { class: 'ab-sys' },
+      el('thead', {}, el('tr', {}, ['ab_col_system', 'ab_col_customers', 'ab_col_working', 'ab_col_servers', 'ab_col_devices'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+      el('tbody', {}, b.systems.map((r) => el('tr', {}, el('td', { class: 'ltr', text: sysName(r.name) }), el('td', { class: 'num', text: N(r.customers) }), el('td', { class: 'num', text: N(r.working) }),
+        el('td', { class: 'num', text: N(r.servers) }), el('td', { class: 'num', text: N(r.devices) }))))))]
+    : [el('p', { class: 'note', text: b.systemsRead && b.systemsRead.total ? t('ab_sys_partial', { read: N(b.systemsRead.read), total: N(b.systemsRead.total) }) : b.systemsRead ? t('ab_sys_refused') : t('ab_sys_none') })];
+  return [el('h2', {}, t('ab_title'), helpQ('help_ab')),
+    el('p', { class: 'hint', text: t('ab_sub', { date: saudiDay(rep.extractedAt) || '—' }) }),
+    el('div', { class: 'strip' }, tile(b.total.accounts, 'ab_accounts'), tile(b.total.devices, 'ab_devices'), tile(b.total.zero, 'ab_zero'), tile(b.total.unassigned, 'ab_unassigned')),
+    el('h3', { text: t('ab_sys_h') }), ...sysPart,
+    el('h3', { text: t('ab_seg_h') }),
+    el('div', { class: 'donuts' }, donut(t('ab_seg_h'), b.segments.map((g) => ({ label: g.name || t('ab_seg_blank'), value: g.accounts })), { fmt: N })),
+    el('div', { class: 'table-wrap' }, el('table', {},
+      el('thead', {}, el('tr', {}, ['ab_seg_col', 'ab_col_accounts', 'ab_col_devices'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+      el('tbody', {}, b.segments.map((g) => el('tr', {}, el('td', { text: g.name || t('ab_seg_blank') }), el('td', { class: 'num', text: N(g.accounts) }), el('td', { class: 'num', text: N(g.devices) })))))),
+    el('h3', { text: t('ab_eng_h') }),
+    el('div', { class: 'table-wrap' }, el('table', {},
+      el('thead', {}, el('tr', {}, ['col_person', 'ab_col_accounts', 'ab_col_devices', 'f5_solo'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+      el('tbody', {}, b.engineers.map((r) => el('tr', {}, el('td', { text: who(r.id) }),
+        el('td', { class: 'num' }, el('div', { class: 'bar-cell' }, el('b', { text: N(r.accounts) }), el('i', {}, el('span', { style: `width:${Math.round((r.accounts / maxE) * 100)}%` })))),
+        el('td', { class: 'num', text: N(r.devices) }), el('td', { class: 'num', text: N(r.solo) })))))),
+    el('p', { class: 'hint', text: t('ab_refresh') })];
+}
 function coverageSection(rep, team, nm) { const cv = coverageTotals(rep, team); if (!cv.people.length && !cv.total.accounts) return null;
       const maxA = Math.max(1, ...cv.people.map((r) => r.accounts));
       return [el('h2', {}, t('f5_title'), helpQ('help_f5')), el('p', { class: 'hint', text: t('f5_sub', { n: cv.total.accounts, d: cv.total.devices, u: cv.total.uncovered, z: cv.total.zeroDevices }) }),
@@ -4199,7 +4231,7 @@ function orgCheckBox() {
 // ---------- the sync extension (ADR-0062): the same pull, run by the browser when myafaqy opens — or by one click ----------
 const extOn = () => !isTeamPortal && !!document.documentElement.dataset.afaqyExt;
 let extState = null, extLastAt = null;
-const EXT_NEEDED = '1.0.4';   // ADR-0104: the extension that says why it waits
+const EXT_NEEDED = '1.0.5';   // ADR-0104: the extension that says why it waits; 1.0.5 also reads the server lists (ADR-0120)
 const monthLast = (ym) => { const d = new Date(Date.parse(`${ym}-01T00:00:00Z`)); d.setUTCMonth(d.getUTCMonth() + 1); d.setUTCDate(0); return d.toISOString().slice(0, 10); };
 const extRecipe = () => { const ym = saudiDay(new Date().toISOString()).slice(0, 7); return managerPullRecipe(`${ymPrev(ym)}-01`, monthLast(ym), pullBranch().code, lang, 'ext'); };
 const extSend = (now) => { if (extOn()) window.postMessage({ type: 'afaqy-ext-recipe', recipe: extRecipe(), now: !!now }, location.origin); };
@@ -4344,6 +4376,10 @@ function renderTeam() {
         el('a', { class: 'btn primary bm', href: ab, draggable: 'true', text: `⚙ ${t('assign_bm')}`, onclick: (e) => { e.preventDefault(); toast(t('me_drag')); } }),
         el('button', { type: 'button', class: 'btn', text: t('me_copy'), onclick: async () => { try { await navigator.clipboard.writeText(decodeURIComponent(ab)); toast(t('me_copied')); } catch { toast(t('me_copy_fail')); } } })),
       el('p', { class: 'note', text: t('assign_warn') })),
+    // ADR-0120: the accounts board sits under the panel that changes it — the newest manager pull that carries the accounts list
+    (() => { const rep = [...reports].filter((r) => (r.accounts || []).length).sort((x, y) => String(y.extractedAt || '').localeCompare(String(x.extractedAt || '')))[0];
+      const sec = rep ? accountsBoardSection(rep, (id) => nameOf(known.get(id) || {}, lang) || id) : null;
+      return el('section', { class: 'ab-box', id: 'accounts-board' }, sec || [el('h2', {}, t('ab_title'), helpQ('help_ab')), el('p', { class: 'empty', text: t('ab_none') })]); })(),
     renderSignatures(),
     el('h2', {}, t('team_roster_h'), helpQ('help_roster')),
     el('div', { class: 'row', style: 'margin-bottom:14px' },

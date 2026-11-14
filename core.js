@@ -628,9 +628,13 @@ export function parseReports(text) {
     categoryId: r.categoryId == null ? null : String(r.categoryId), category: String(r.category || '').slice(0, 60), caseId: r.caseId == null ? null : String(r.caseId), caseName: String(r.case || r.caseName || '').slice(0, 60),
     statusId: r.statusId == null ? null : String(r.statusId), status: String(r.status || '').slice(0, 40), createdById: r.createdById == null ? null : String(r.createdById), createdAt: toIso(r.createDate) }));
   const accounts = (raw.accounts && Array.isArray(raw.accounts.rows) ? raw.accounts.rows : []).filter((r) => r && r.c != null).slice(0, 20000)
-    .map((r) => ({ c: String(r.c), a: (Array.isArray(r.a) ? r.a : []).map(String).slice(0, 40), d: Number(r.d) || 0, s: r.s == null ? null : String(r.s) }));
+    .map((r) => ({ c: String(r.c), a: (Array.isArray(r.a) ? r.a : []).map(String).slice(0, 40), d: Number(r.d) || 0, s: r.s == null ? null : String(r.s), g: String(r.g || '').slice(0, 40),
+      ...(Array.isArray(r.y) ? { y: r.y.filter((p) => Array.isArray(p) && p.length >= 1).slice(0, 40).map((p) => [String(p[0] || '?').slice(0, 40), String(p[1] || '').slice(0, 20)]) } : {}) }));
+  // ADR-0120: who the unmatched engineers are (names stay on the device, never in the repo) and how much of the server-account list was read
+  const accEng = raw.accounts && raw.accounts.eng && typeof raw.accounts.eng === 'object' ? Object.fromEntries(Object.entries(raw.accounts.eng).slice(0, 200).map(([k, v]) => [String(k), { en: String((v && v.en) || '').slice(0, 60), ar: String((v && v.ar) || '').slice(0, 60) }])) : {};
+  const ss = raw.accounts && raw.accounts.systems, accSystems = ss && typeof ss === 'object' ? { read: Number(ss.read) || 0, total: Number(ss.total) || 0, complete: ss.complete === true } : null;
   return { reports: { key: rangeKey({ from, to }), schema: REPORTS_SCHEMA, range: { from, to }, branch: String(raw.branch || ''),
-    extractedAt: toIso(raw.extractedAt), techPoints, afterSales: rows, activities, accounts, notes: Array.isArray(raw.notes) ? raw.notes.map(String).slice(0, 30) : [] } };
+    extractedAt: toIso(raw.extractedAt), techPoints, afterSales: rows, activities, accounts, accEng, accSystems, notes: Array.isArray(raw.notes) ? raw.notes.map(String).slice(0, 30) : [] } };
 }
 
 /** Factor 2: technician points over the period — the months summed per technician; people with no field work left out. */
@@ -683,6 +687,41 @@ export function coverageTotals(reports, team = null, tasks = []) {
   }).filter((p) => p.accounts > 0).sort((a, b) => b.accounts - a.accounts);
   const uncovered = acc.filter((r) => !r.a.some((x) => ids.has(x))).length;
   return { people, total: { accounts: acc.length, devices: acc.reduce((s, r) => s + r.d, 0), uncovered, zeroDevices: acc.filter((r) => !r.d).length } };
+}
+
+// ADR-0120: the two steps of reading systems inside MyAFAQY, kept here so the tests run the very code the bookmark runs.
+// The server-account list carries the server's address, not its system; the Server IP list names the system for each address.
+// The match is exact, port included (212.70.48.37:9966 is vss_37); MyAFAQY leaves line breaks after some addresses, so both sides are trimmed.
+export function serverIpMap(rows, into) { for (const r of rows || []) { const ip = String((r && r.serverIP) || '').trim(); if (ip && !(ip in into)) into[ip] = String(r.systemName || '').trim().slice(0, 40) || '?'; } return into; }
+export function attachSystems(byCustomer, rows, ipSys) { let n = 0; for (const r of rows || []) { const x = byCustomer.get(String(r && r.customerId)); if (!x) continue; const ip = String(r.serverIp || '').trim(); (x.y || (x.y = [])).push([ip in ipSys ? ipSys[ip] : '?', String(r.status || '').slice(0, 20)]); n++; } return n; }
+/** ADR-0120: the After-Sales Accounts board — the whole Jeddah list as MyAFAQY holds it on the day of the pull: accounts, devices,
+ * segments, servers by system, and how many accounts each engineer carries. A system is counted by customers (one customer on two
+ * vss servers is one VSS customer), never by adding rows. Systems are only claimed when the whole server-account list was read. */
+export function accountsBoard(reports) {
+  const acc = reports.accounts || [], sys = reports.accSystems || null;
+  const total = { accounts: acc.length, devices: acc.reduce((s, r) => s + r.d, 0), zero: acc.filter((r) => !r.d).length, unassigned: acc.filter((r) => !r.a.length).length };
+  const segBy = new Map();
+  for (const r of acc) { const k = r.g || ''; const v = segBy.get(k) || { name: k, accounts: 0, devices: 0 }; v.accounts++; v.devices += r.d; segBy.set(k, v); }
+  const segments = [...segBy.values()].sort((a, b) => b.accounts - a.accounts);
+  const engBy = new Map();
+  for (const r of acc) for (const id of new Set(r.a)) { const v = engBy.get(id) || { id, accounts: 0, devices: 0, solo: 0 }; v.accounts++; v.devices += r.d; if (r.a.length === 1) v.solo++; engBy.set(id, v); }
+  const engineers = [...engBy.values()].sort((a, b) => b.accounts - a.accounts || b.devices - a.devices);
+  const hasSystems = !!(sys && sys.complete && acc.some((r) => Array.isArray(r.y)));
+  const working = (st) => /^working$/i.test(st);
+  const sysBy = new Map(), fam = new Map(), FAMS = [['vss', /^vss_/i], ['cms', /^cms_/i]];
+  let withServer = 0, withWorking = 0;
+  if (hasSystems) for (const r of acc) {
+    const y = r.y || []; if (y.length) withServer++; if (y.some(([, st]) => working(st))) withWorking++;
+    const names = new Set(y.map(([n]) => n));
+    for (const n of names) { const v = sysBy.get(n) || { name: n, customers: 0, working: 0, servers: 0, devices: 0 }; v.customers++; v.devices += r.d; if (y.some(([m, st]) => m === n && working(st))) v.working++; sysBy.set(n, v); }
+    for (const [n] of y) sysBy.get(n).servers++;
+    for (const [f, re] of FAMS) { const mine = y.filter(([n]) => re.test(n)); if (!mine.length) continue;
+      const v = fam.get(f) || { id: f, customers: 0, working: 0, members: new Set() }; v.customers++; if (mine.some(([, st]) => working(st))) v.working++; mine.forEach(([n]) => v.members.add(n)); fam.set(f, v); }
+  }
+  const systems = [...sysBy.values()].sort((a, b) => b.customers - a.customers || a.name.localeCompare(b.name));
+  const families = [...fam.values()].map((v) => ({ ...v, members: [...v.members].sort() }));
+  return { total: { ...total, withServer, withWorking, noServer: hasSystems ? acc.length - withServer : null }, segments, engineers, systems, families, hasSystems,
+    systemsRead: sys ? { read: sys.read, total: sys.total, complete: sys.complete } : null };
 }
 
 export function afterSalesTotals(reports) {
@@ -801,10 +840,14 @@ say(M[2]+'reports');const techPoints=[];const MM=MMS;
 
 for(const mo of MM){const rows=[];for(let pg=1;;pg++){const R=await postO('TechnicianReport/GetTechnicianReportStatic',{pageNumber:pg,pageSize:100,searchKey:'',isSearchFilter:true,search:{yearId:mo.yearId,quarterId:mo.quarterId,monthId:mo.monthId,branchIds:BR,userIds:[],requestDate:mo.rd}});const g=(R.data&&R.data.gridResult)||{};const arr=g.data||[];for(const r of arr){const o={technicianId:r.technicianId,employeeId:r.employeeId,nameEn:r.nameEn,nameAr:r.nameAr};for(const f of KEEP)o[f]=r[f]||0;rows.push(o)}const tot=g.totalPages||1;if(pg>=tot||!arr.length)break;await wait(200)}techPoints.push({month:mo.month,listCount:rows.length,rows})}
 say(M[2]+'activity log');const acts=[];for(let pg=0;pg<200;pg++){const R=await postO('ActivityLog/GetTicketsGrid',{isSearchFilter:false,searchKey:'',search:{},pageSize:500,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const arr=(R.data&&(R.data.data||R.data))||[];if(!arr.length)break;let older=0;for(const r of arr){const d=String(r.createDate||'').slice(0,10);if(d<FROM){older++;continue}if(d>TO)continue;acts.push({ticketId:r.ticketId,taskId:r.taskId??null,customerId:r.customerId??null,categoryId:r.categoryId??null,category:r.category||'',caseId:r.caseId??null,case:r.case||'',statusId:r.statusId??null,status:r.status||'',createdById:r.createdById??null,createDate:r.createDate?r.createDate+'Z':null})}if(older===arr.length||(R.data&&R.data.totalPages&&pg+1>=R.data.totalPages))break;await wait(250)}
-say(M[2]+'accounts');const ENG=((await postO('AfterSales/GetAllAfterSalesEngineers')).data||[]);const byName={};for(const[uid,u]of Object.entries(uname)){const n=String((u&&u.nameEn)||'').trim().toLowerCase();if(n)byName[n]=uid}const emp2uid={};for(const e of ENG){const u=byName[String(e.nameEn||'').trim().toLowerCase()];if(u)emp2uid[String(e.id)]=u}const accts=[];let asz=500;for(let pg=0;pg<60;pg++){const R=await postO('AfterSales/GetAfterSalesRequestGrid',{isSearchFilter:false,searchKey:'',search:{},pageSize:asz,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const d=R.data||{};const arr=d.data||[];if(pg===0&&d.pageSize&&d.pageSize<asz)asz=d.pageSize;for(const r of arr)if(String(r.branchCode)===BR)accts.push({c:String(r.customerId??r.id),a:(r.afterSalesManIds||[]).map(String).map(x=>emp2uid[x]||('e'+x)),d:+r.connectedDevices||0,s:r.segmentId??null});if(!arr.length||(pg+1)*asz>=(d.listCount||0))break;await wait(200)}
+say(M[2]+'accounts');const ENG=((await postO('AfterSales/GetAllAfterSalesEngineers')).data||[]);const byName={};for(const[uid,u]of Object.entries(uname)){const n=String((u&&u.nameEn)||'').trim().toLowerCase();if(n)byName[n]=uid}const emp2uid={};for(const e of ENG){const u=byName[String(e.nameEn||'').trim().toLowerCase()];if(u)emp2uid[String(e.id)]=u}const accts=[];let asz=500;for(let pg=0;pg<60;pg++){const R=await postO('AfterSales/GetAfterSalesRequestGrid',{isSearchFilter:false,searchKey:'',search:{},pageSize:asz,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const d=R.data||{};const arr=d.data||[];if(pg===0&&d.pageSize&&d.pageSize<asz)asz=d.pageSize;for(const r of arr)if(String(r.branchCode)===BR)accts.push({c:String(r.customerId??r.id),a:(r.afterSalesManIds||[]).map(String).map(x=>emp2uid[x]||('e'+x)),d:+r.connectedDevices||0,s:r.segmentId??null,g:String(r.segment||'').slice(0,40)});if(!arr.length||(pg+1)*asz>=(d.listCount||0))break;await wait(200)}
+const engN={};for(const e of ENG)if(!emp2uid[String(e.id)])engN['e'+e.id]={en:String(e.nameEn||'').slice(0,60),ar:String(e.nameAr||'').slice(0,60)};
+say(M[2]+'systems');const serverIpMap=${serverIpMap.toString()};const attachSystems=${attachSystems.toString()};const LB=(pg,sz)=>({isSearchFilter:false,searchKey:'',search:{},pageSize:sz,pageNumber:pg,searchCriteria:'',dateRangeIntialDaysCount:0});const ipSys={};let isz=100;for(let pg=0;pg<20;pg++){const R=await postO('TechniqueSystem/GetGridServerIPs',LB(pg,isz));const d=R.data||{};const arr=d.data||[];if(pg===0&&d.pageSize&&d.pageSize<isz)isz=d.pageSize;serverIpMap(arr,ipSys);if(!arr.length||(pg+1)*isz>=(d.listCount||0))break;await wait(200)}
+const jed=new Map(accts.map(x=>[x.c,x]));let sysRows=0,sysTotal=0,ssz=500,sysDone=false;if(Object.keys(ipSys).length){for(let pg=0;pg<400;pg++){const R=await postO('CustomerServerAccount/GetAllCustomerAccounts',LB(pg,ssz));const d=R.data||{};const arr=d.data||[];if(pg===0){sysTotal=d.listCount||0;if(d.pageSize&&d.pageSize<ssz)ssz=d.pageSize}sysRows+=arr.length;attachSystems(jed,arr,ipSys);if(pg%5===4)say(M[2]+'systems '+sysRows+' / '+sysTotal);if(!arr.length||(pg+1)*ssz>=sysTotal){sysDone=sysRows>=sysTotal;break}await wait(200)}}
+
 const AS=await postO('AfterSalesBoardReport/GetAfterSalesAgentsGrid',{categoryId:null,createDate:[FZ,TZ],branch:BR,afterSalesId:null});
 const asArr=(AS.data&&(AS.data.data||AS.data))||[];const afterSales={rows:asArr.map(r=>({id:r.id,name:r.afterSalesName,open:r.openTickets||0,pending:r.pendingTickets||0,done:r.doneTickets||0,total:r.totalTickets||0}))};
-const repFile={schema:RSCH,range:{from:FROM,to:RTO},branch:BR,extractedAt:new Date().toISOString(),techPoints,afterSales,activities:{rows:acts},accounts:{rows:accts,unmatched:ENG.filter(e=>!emp2uid[String(e.id)]).length},notes:['manager bookmark']};
+const repFile={schema:RSCH,range:{from:FROM,to:RTO},branch:BR,extractedAt:new Date().toISOString(),techPoints,afterSales,activities:{rows:acts},accounts:{rows:accts,unmatched:ENG.filter(e=>!emp2uid[String(e.id)]).length,eng:engN,systems:{read:sysRows,total:sysTotal,complete:sysDone}},notes:['manager bookmark']};
 if(DEL==='ext'){window.postMessage({type:PACKET,ext:true,tasks:tasksFile,reports:repFile},location.origin);box.style.background='#0A5F67';say(M[5]);setTimeout(()=>box.remove(),6000);return}
 if(DEL==='auto'&&sink){
   say(M[7]);

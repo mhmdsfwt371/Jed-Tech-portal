@@ -86,6 +86,13 @@
 حسابات ما بعد البيع `AfterSales/GetAfterSalesRequestGrid` (صف: `customerId`، `branchCode`، `afterSalesManIds[]`، `connectedDevices`،
 `segment`)؛ قائمة المهندسين `AfterSales/GetAllAfterSalesEngineers`؛ **والتعيين** `POST AfterSales/AssignAfterSales`
 `{customerId, afterSalesIds[]}` — القائمة **تحلّ محل** القديمة (القرار 0018). لا مفتاح فرع مؤكد في `search`.
+**التقاط ١٤ نوفمبر (السيرفرات، القرار 0120):** «إدارة السيرفرات ← حسابات سيرفرات العملاء»
+`POST CustomerServerAccount/GetAllCustomerAccounts` بجسم القوائم المعتاد (صف: `customerId` رقم العميل نفسه في قائمة ما بعد
+البيع، `customerAux` رقم دولفين، `serverIp`، `status` = Working أو Blocked أو Disabled، و`system` فارغ دائمًا فلا يُعتمد عليه).
+للعميل صف لكل سيرفر. و«إدارة السيرفرات ← عناوين السيرفرات» `POST TechniqueSystem/GetGridServerIPs` (٣٣ صفًّا: `systemName`،
+`serverIP`، `status`). العنوان يُطابَق **حرفيًّا بالمنفذ** (العنوان نفسه بمنفذ وبلا منفذ نظامان مختلفان)، وبعض العناوين
+تنتهي بسطر جديد فيُقصّ. أكبر صفحة تعرضها الشاشة ١٠٠؛ الإشارة تطلب ٥٠٠ وتنزل لما يرده الخادم. عدد الأجهزة لكل نظام ليس في هاتين
+القائمتين (هو في `CustomerProfile/GetCustomerProfileAccountInfo` لكل عميل على حدة)، فلا تعرضه البوابة.
 
 ### الطوابير
 `Task/GetUsersTasksGroups`: يدوية ٣، تشغيل ٥، مالية ٧، ما بعد البيع ٨، **البحث والتطوير ١٢**، DVR ١٤، ومهامي ١٠٠٠٠٠،

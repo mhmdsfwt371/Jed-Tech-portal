@@ -1234,6 +1234,36 @@ test('buildOrg: a person «On Leave» in MyAFAQY stays on his manager\'s team an
   assert.deepEqual(cmp.inactive, ['40']); assert.deepEqual(cmp.onLeave, ['20'], 'only the leave the team file does not already mark');
 });
 
+test('accounts board: systems come from joining the server-account list to the Server IP list, port included, counted by customer', () => {
+  const ipSys = core.serverIpMap([{ serverIP: '10.0.0.110', systemName: 'afaqy.pro' }, { serverIP: '10.0.0.37:9966\n', systemName: 'vss_37' }, { serverIP: '10.0.0.37', systemName: 'camera.x' },
+    { serverIP: 'OfflineDVR', systemName: 'OfflineDVR' }, { serverIP: '10.0.0.17', systemName: 'vss_17' }], {});
+  assert.equal(ipSys['10.0.0.37:9966'], 'vss_37', 'a trailing line break is not part of the address');
+  const accts = [{ c: '1', a: ['u1'], d: 10, g: 'Medium' }, { c: '2', a: ['u1', 'u2'], d: 0, g: 'Individual & Small' }, { c: '3', a: [], d: 5, g: 'Individual & Small' }];
+  const jed = new Map(accts.map((x) => [x.c, x]));
+  const n = core.attachSystems(jed, [{ customerId: 1, serverIp: '10.0.0.110', status: 'Working' }, { customerId: 1, serverIp: '10.0.0.37:9966', status: 'Working' },
+    { customerId: 1, serverIp: '10.0.0.17', status: 'Blocked' }, { customerId: 2, serverIp: '10.0.0.37', status: 'Working' }, { customerId: 2, serverIp: '9.9.9.9', status: 'Disabled' },
+    { customerId: 77, serverIp: '10.0.0.110', status: 'Working' }], ipSys);
+  assert.equal(n, 5, 'a customer outside Jeddah is skipped');
+  const raw = JSON.parse(REP({ accounts: { rows: accts, eng: { e9: { en: 'Left Engineer', ar: 'م' } }, systems: { read: 6, total: 6, complete: true } } }));
+  const rep = parseReports(JSON.stringify(raw)).reports;
+  assert.deepEqual(rep.accounts[0].y, [['afaqy.pro', 'Working'], ['vss_37', 'Working'], ['vss_17', 'Blocked']]);
+  assert.equal(rep.accEng.e9.en, 'Left Engineer');
+  const b = core.accountsBoard(rep);
+  assert.deepEqual(b.total, { accounts: 3, devices: 15, zero: 1, unassigned: 1, withServer: 2, withWorking: 2, noServer: 1 });
+  assert.deepEqual(b.segments.map((x) => [x.name, x.accounts, x.devices]), [['Individual & Small', 2, 5], ['Medium', 1, 10]]);
+  assert.deepEqual(b.engineers.map((x) => [x.id, x.accounts, x.devices, x.solo]), [['u1', 2, 10, 1], ['u2', 1, 0, 0]]);
+  assert.deepEqual(b.systems.map((x) => [x.name, x.customers, x.working, x.servers]), [['?', 1, 0, 1], ['afaqy.pro', 1, 1, 1], ['camera.x', 1, 1, 1], ['vss_17', 1, 0, 1], ['vss_37', 1, 1, 1]]);
+  assert.deepEqual(b.families.map((x) => [x.id, x.customers, x.working, x.members]), [['vss', 1, 1, ['vss_17', 'vss_37']]], 'one customer on two VSS servers is one VSS customer');
+  const half = core.accountsBoard(parseReports(JSON.stringify({ ...raw, accounts: { ...raw.accounts, systems: { read: 3, total: 6, complete: false } } })).reports);
+  assert.equal(half.hasSystems, false, 'a list read only in part claims no system figure');
+  const old = core.accountsBoard(parseReports(REP({ accounts: { rows: [{ c: '1', a: ['u1'], d: 2, s: 1 }] } })).reports);
+  assert.equal(old.hasSystems, false); assert.equal(old.total.accounts, 1, 'an older pull without systems still reads');
+  const code = decodeURIComponent(core.buildManagerBookmarklet('2026-10-01', '2026-10-31', '2', 'ar'));
+  assert.ok(code.includes("'TechniqueSystem/GetGridServerIPs'") && code.includes("'CustomerServerAccount/GetAllCustomerAccounts'"), 'the two lists the screens themselves send');
+  assert.ok(code.includes('const attachSystems=function attachSystems'), 'the bookmark runs the tested join');
+  assert.doesNotThrow(() => new Function(code.replace(/^javascript:/, '')));
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

@@ -1,22 +1,22 @@
 {
-  "version": "9.43",
+  "version": "9.44",
   "date": "2026-11-14",
   "notes": {
     "ar": [
-      "صفحة الأوزان: اسم نوع المهمة كان يتكرر مرتين في كل صف ويجبرك على التمرير يمينًا ويسارًا. الآن يظهر مرة واحدة بلغتك، والجداول كلها — البسيطة والمتقدمة — تبقى داخل الشاشة على الكمبيوتر والجوال.",
-      "صفحة الفريق: من حالته في ماي أفاقي «On Leave» كان يُكتب عنه «غير نشط» كأنه ترك العمل. الآن يبقى من الفريق ويُذكر أنه في إجازة، ولا يُنبَّه إلا على من حالته تقول إنه لم يعد على رأس العمل، مع ذكر الحالة كما هي في ماي أفاقي."
+      "صفحة الفريق: لوحة جديدة لحسابات ما بعد البيع تحت لوحة التعيين: عدد الحسابات والأجهزة، والشرائح، وكم حسابًا على كل مهندس، وكم عميلًا على كل نظام (مثل afaqy.pro أو أحد سيرفرات VSS). تُبنى من سحب المدير؛ بعد أي تعيين شغّل السحب مرة أخرى فتتحدّث.",
+      "سحب المدير يقرأ الآن قائمتي السيرفرات في ماي أفاقي ليعرف نظام كل عميل، بدل فتح أكثر من ألفي عميل واحدًا واحدًا. إن لم تُقرأ القائمة كلها لا يظهر رقم للأنظمة. إضافة المزامنة صارت 1.0.5."
     ],
     "en": [
-      "Weights page: each task type’s name was printed twice in every row and forced you to scroll sideways. It now appears once, in your language, and every table — the simple ones and the advanced ones — stays inside the screen on a computer and on a phone.",
-      "Team page: a person whose status in MyAFAQY is «On Leave» was described as «inactive», as if he had left. He now stays on the team and is shown as on leave; only a status that says someone is no longer at work is flagged, quoting the status exactly as MyAFAQY writes it."
+      "Team page: a new after-sales accounts board under the assignment panel: accounts and devices, segments, how many accounts each engineer carries, and how many customers are on each system (for example afaqy.pro or one of the VSS servers). It is built from the manager pull; after any assignment, run the pull again and it updates.",
+      "The manager pull now reads MyAFAQY’s two server lists to know each customer’s system, instead of opening more than two thousand customers one by one. If the list is not read to the end, no system figure is shown. The sync extension is now 1.0.5."
     ],
     "ur": [
-      "اوزان کا صفحہ: ہر قطار میں ٹاسک کی قسم کا نام دو بار لکھا آتا تھا اور آپ کو دائیں بائیں اسکرول کرنا پڑتا تھا۔ اب نام ایک بار، آپ کی زبان میں آتا ہے، اور تمام جدول — سادہ بھی اور تفصیلی بھی — کمپیوٹر اور موبائل دونوں پر اسکرین کے اندر رہتے ہیں۔",
-      "ٹیم کا صفحہ: جس شخص کی حالت مائی آفاقی میں «On Leave» تھی اسے «غیر فعال» لکھا جاتا تھا، گویا وہ کام چھوڑ گیا ہو۔ اب وہ ٹیم میں رہتا ہے اور چھٹی پر دکھایا جاتا ہے؛ صرف وہ حالت نمایاں ہوتی ہے جو بتائے کہ کوئی اب کام پر نہیں، اور حالت ویسے ہی لکھی جاتی ہے جیسے مائی آفاقی میں ہے۔"
+      "ٹیم کا صفحہ: تفویض کے پینل کے نیچے آفٹر سیلز اکاؤنٹس کا نیا بورڈ: اکاؤنٹس اور ڈیوائسز، سیگمنٹس، ہر انجینئر کے پاس کتنے اکاؤنٹس ہیں، اور ہر سسٹم پر کتنے کسٹمرز ہیں (مثلاً afaqy.pro یا VSS کا کوئی سرور)۔ یہ مینیجر کے پل سے بنتا ہے؛ کسی بھی تفویض کے بعد پل دوبارہ چلائیں تو یہ اپ ڈیٹ ہو جائے گا۔",
+      "مینیجر کا پل اب مائی آفاقی کی سرورز کی دو فہرستیں پڑھتا ہے تاکہ ہر کسٹمر کا سسٹم معلوم ہو، بجائے دو ہزار سے زیادہ کسٹمرز کو ایک ایک کر کے کھولنے کے۔ اگر فہرست آخر تک نہ پڑھی جائے تو سسٹمز کا کوئی عدد نہیں دکھایا جاتا۔ ہم آہنگی کی ایکسٹینشن اب 1.0.5 ہے۔"
     ]
   },
   "counts": {
-    "versions": 168,
-    "decisions": 119
+    "versions": 169,
+    "decisions": 120
   }
 }
