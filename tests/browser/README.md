@@ -10,6 +10,7 @@ is served.
 | `me.py` | The engineer's own page on a phone: fits the screen, the rank is of the month shown and agrees with the achievements, plain wording, open work first | The real October pull (`OCT_PULL`) |
 | `owner.py` | Whose device this is on the manager link (ADR-0115): a lead's pull shows the lead's own page and rights, not the manager's | The real October pull (`OCT_PULL`) |
 | `ownerteam.py` | «Team KPIs» follows the device's owner (ADR-0116): a lead sees exactly the people under him, from MyAFAQY's employees list or the team file | The real October pull (`OCT_PULL`) |
+| `pager.py` | A window with a long scroll turns into pages (ADR-0119): built windows measured page by page, then the portal’s real windows | The real October pull (`OCT_PULL`) for the last part |
 | `smoke.py` | Every page opens in three languages with no page error, no failed request and no raw text key; the WCAG 2.1 A and AA scan passes on every page; the phone has no sideways scroll | `AXE_JS=/path/to/axe.min.js` for the scan (skipped with a note when absent) |
 
 Run: `python3 tests/browser/readings.py` and `python3 tests/browser/smoke.py` from the repository root. No real pull, name or

@@ -2447,3 +2447,33 @@ export function projectReport(rows,work,filters={},today=saudiDay(new Date().toI
   const sum=fn=>selected.reduce((n,r)=>n+(Number(fn(r))||0),0);
   return {rows:selected,events,actions,filters:{...filters},today,totals:{count:selected.length,offer:sum(r=>r.value),award:sum(r=>r.followup.award),collected:sum(r=>r.followup.collected),awardMissing:selected.filter(r=>['won','ongoing','delivered'].includes(r.status)&&r.followup.award==null).length,overdue:actions.filter(a=>a.overdue).length}};
 }
+
+/**
+ * ADR-0119 — where each page of a long window begins. `boxes` are the things that must not be cut (rows, cards, paragraphs,
+ * fields), in the window's own coordinates: { top, bottom, lead, head } — `lead` is the room a pinned table heading takes above a
+ * row, `head` marks a heading. `view` is the window's height, `barH` the pager's, `inset` what is pinned at the top (the ✕ bar).
+ * A page starts only where nothing is cut; a heading is never left alone at a page's foot; a thing taller than a page is shown in
+ * screens, and a mostly empty page does not stop before it. Returns { starts: [{ y, top }], end }: `y` is where the page's first
+ * thing begins, `top` the scroll position that shows it under what is pinned.
+ */
+export function pageStarts(boxes, { view, barH, inset = 0 }) {
+  const list = (boxes || []).filter((b) => b && Number.isFinite(b.top) && Number.isFinite(b.bottom) && b.bottom > b.top).map((b) => ({ top: b.top, bottom: b.bottom, lead: b.lead || 0, head: !!b.head }));
+  list.sort((x, y) => x.top - y.top || y.bottom - x.bottom);
+  const end = list.reduce((m, b) => Math.max(m, b.bottom), 0), room = view - barH - inset;
+  const cuts = []; let reach = 0;
+  for (const b of list) {
+    if (reach <= b.top + 1 && b.top > 1 && (!cuts.length || b.top - cuts[cuts.length - 1].y > 1)) cuts.push({ y: b.top, lead: b.lead, head: b.head });
+    else if (cuts.length && Math.abs(cuts[cuts.length - 1].y - b.top) <= 1) cuts[cuts.length - 1].lead = Math.max(cuts[cuts.length - 1].lead, b.lead);
+    reach = Math.max(reach, b.bottom);
+  }
+  const starts = [{ y: 0, top: 0 }];
+  if (!(room > 0)) return { starts, end };
+  for (let guard = 0; guard < 2000; guard += 1) {
+    const cur = starts[starts.length - 1], limit = cur.top + view - barH; if (limit >= end - 1) break;
+    let pick = null; for (const k of cuts) { if (k.y > limit + 0.5) break; if (k.y - inset - k.lead > cur.top + 1) pick = k; }
+    if (pick) { const tallest = list.reduce((m, b) => (Math.abs(b.top - pick.y) <= 1 ? Math.max(m, b.bottom - b.top) : m), 0); if (tallest > room && pick.y - (cur.top + inset) < room * 0.5) pick = null; }
+    if (pick) { const j = cuts.indexOf(pick); if (j > 0 && cuts[j - 1].head && cuts[j - 1].y - inset - cuts[j - 1].lead > cur.top + 1 && !list.some((b) => b.top > cuts[j - 1].y + 1 && b.top < pick.y - 1)) pick = cuts[j - 1]; }
+    starts.push(pick ? { y: pick.y, top: Math.max(0, pick.y - inset - pick.lead) } : { y: cur.top + inset + room, top: cur.top + room });
+  }
+  return { starts, end };
+}

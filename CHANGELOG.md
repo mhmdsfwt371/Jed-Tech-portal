@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.41 — 2026-11-14
+
+- أي نافذة محتواها طويل بقت صفحات بدل الإسكرول: تحتها «السابق» و«التالي» وأرقام الصفحات، وعجلة الماوس أو السحب على الموبايل يقلب صفحة كاملة. مفيش صف ولا كارت بيتقطع بين صفحتين، وعنوان أعمدة الجدول بيفضل ظاهر فوق.
+- النافذة القصيرة بتفضل زي ما هي. والصفحات بتتظبط لوحدها لو المحتوى زاد أو الفلتر اتغيّر، والجدول اللي كان له إسكرول لوحده جوه النافذة بقى جزء من نفس الصفحات.
+
+<details><summary>English</summary>
+
+- Any window with long content now opens in pages instead of a long scroll: «Previous», «Next» and page numbers sit at its foot, and the mouse wheel or a swipe on a phone turns a whole page. No row or card is cut between two pages, and a table’s column headings stay in view at the top.
+- A short window stays exactly as it was. Pages are recounted by themselves when the content grows or a filter changes, and a table that used to scroll inside the window now flows into the same pages.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- لمبے مواد والی ہر ونڈو اب لمبے اسکرول کے بجائے صفحات میں کھلتی ہے: نیچے «پچھلا»، «اگلا» اور صفحات کے نمبر ہیں، اور ماؤس کا پہیہ یا موبائل پر انگلی سے کھینچنا پورا صفحہ پلٹتا ہے۔ کوئی قطار یا کارڈ دو صفحات کے درمیان نہیں کٹتا، اور جدول کے کالموں کے عنوان اوپر نظر آتے رہتے ہیں۔
+- چھوٹی ونڈو بالکل پہلے جیسی رہتی ہے۔ مواد بڑھے یا فلٹر بدلے تو صفحات خود دوبارہ گنے جاتے ہیں، اور جو جدول ونڈو کے اندر الگ سے اسکرول ہوتا تھا وہ اب انہی صفحات میں شامل ہو جاتا ہے۔
+
+</div>
+</details>
+
+
 ## v9.40 — 2026-11-14
 
 - متابعة المشاريع: المسؤول والخطوة القادمة والموعد والعوائق ومراحل تنفيذ موزونة مع سجل تغييرات وبدء التنفيذ بعد الفوز.

@@ -15,7 +15,7 @@ import {
   maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply,
   tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
-  tenderCanAdvance, cleanTenderDetails, mergeTenderDetails } from './core.js';
+  tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts } from './core.js';
 
 import { validateSystems } from './systems-core.js';
 
@@ -2379,8 +2379,147 @@ function projectsCard() {
     }
     // the ✕ is made once; its words follow the language each time the window opens (it kept the first language before)
     const x = this.querySelector(':scope > .dlg-bar .dlg-x'); if (x) { x.textContent = `✕ ${t('close')}`; x.setAttribute('aria-label', t('close')); }
-    return open.call(this);
+    const shown = open.call(this); pagerAttach(this); return shown;
   }; }
+
+// ADR-0119: a window with a long scroll turns into pages. One rule for every window, in every page: when what is inside is more
+// than one and a half screens of the window, the scroll is replaced by pages — «Previous · 2 of 7 · Next» pinned at the bottom.
+// Nothing inside is moved or copied: the same content is shown one screen at a time, cut only between rows, cards and paragraphs,
+// never through one. A window with a short scroll is left exactly as it was. The pages follow the content: «show more», a filter,
+// a different view or a resized browser are counted again by themselves.
+const PAGERS = new WeakMap();
+const PG_LONG = 1.5;                                             // more than this many screens of the window = «a long scroll»
+const pgNatural = (st) => { const sc = st.sc; if (!sc) return;   // back to the window's own scroll, as if the pager was never there
+  if (st.bar) st.bar.remove(); if (st.pad) st.pad.remove(); st.bar = st.pad = null;
+  for (const tb of sc.querySelectorAll('table.dp-sticky')) tb.classList.remove('dp-sticky');
+  for (const [c, v] of st.lifted || []) c.style.top = v; st.lifted = [];
+  for (const [n, mh, hh, oy] of st.freed || []) { n.style.maxHeight = mh; n.style.height = hh; n.style.overflowY = oy; } st.freed = []; sc.style.removeProperty('--dp-pad');
+  sc.style.overflowY = st.was || ''; sc.style.maxHeight = st.wasMax || ''; sc.removeAttribute('data-paged'); sc.style.removeProperty('--dp-top'); sc.style.removeProperty('--dp-bg'); st.paged = false; };
+const pgScroller = (dlg) => { let best = null;                   // the part of the window that scrolls: the window itself or its body — the one that runs over most, and never a small frame inside
+  const can = (n) => /auto|scroll/.test(getComputedStyle(n).overflowY);
+  const walk = (node, depth) => { if (/^(TABLE|TEXTAREA|PRE|SELECT|UL|OL|SVG)$/i.test(node.tagName)) return;
+    if (node.scrollHeight - node.clientHeight > 8 && can(node) && (!best || node.scrollHeight - node.clientHeight > best.scrollHeight - best.clientHeight)) best = node;
+    if (depth < 4) for (const c of node.children) walk(c, depth + 1); };
+  walk(dlg, 0);
+  // only a small frame runs over: its pages belong to the window around it, which takes the frame's rows once the frame is opened
+  if (best && best.clientHeight < dlg.clientHeight * 0.5) for (let n = best.parentElement; n; n = n.parentElement) { if (can(n) && n.clientHeight >= dlg.clientHeight * 0.5) { best = n; break; } if (n === dlg) break; }
+  return best; };
+const pgBack = (node) => { for (let n = node; n && n.nodeType === 1; n = n.parentElement) { const c = getComputedStyle(n).backgroundColor; if (c && !/rgba\(.*,\s*0\)|transparent/.test(c)) return c; } return ''; };
+function pagerRefresh(dlg) {
+  const st = PAGERS.get(dlg); if (!st || !dlg.open) return;
+  const keepTop = st.paged && st.starts[st.page] ? st.starts[st.page].y : null, hadFirst = st.first;
+  const a = document.activeElement, keepFocus = st.bar && a && st.bar.contains(a) ? (a.classList.contains('dp-prev') ? '.dp-prev' : a.classList.contains('dp-next') ? '.dp-next' : '.dp-next') : null;
+  pgNatural(st);
+  const sc = pgScroller(dlg); st.sc = sc; st.starts = [{ y: 0, top: 0 }]; st.paged = false; st.freed = [];
+  if (sc) for (const n of sc.querySelectorAll('*')) { if (/^(TEXTAREA|PRE|SELECT)$/.test(n.tagName) || n.closest('[role=listbox]') || n.scrollHeight - n.clientHeight <= 8) continue;
+    const k = getComputedStyle(n); if (!/auto|scroll/.test(k.overflowY)) continue; st.freed.push([n, n.style.maxHeight, n.style.height, n.style.overflowY]); n.style.maxHeight = 'none'; n.style.height = 'auto'; n.style.overflowY = 'visible'; n.scrollTop = 0; }
+  const done = () => { st.sig = pgSig(st); st.mo.takeRecords(); st.ro.disconnect(); if (st.sc) { st.ro.observe(st.sc); for (const c of st.sc.children) if (c !== st.bar && c !== st.pad) st.ro.observe(c); } };
+  if (!sc || sc.scrollHeight <= sc.clientHeight * PG_LONG) { st.page = 0; st.first = null; done(); return; }
+  // what stays pinned at the top of the window (its ✕ bar): pages start under it
+  st.was = sc.style.overflowY; st.wasMax = sc.style.maxHeight; const bg = pgBack(sc);
+  sc.style.overflowY = 'hidden'; sc.setAttribute('data-paged', '');          // first: with the scrollbar gone the content is wider and its lines wrap differently
+  // a body that scrolls inside a window that itself runs a little over: the body gives up that much, so the pager is never below the fold
+  if (sc !== dlg) { const over = dlg.scrollHeight - dlg.clientHeight; if (over > 0 && sc.clientHeight - over > 240) sc.style.maxHeight = `${sc.clientHeight - over}px`; }
+  const view = sc.clientHeight, cs = getComputedStyle(sc);
+  let scTop = 0; const at = (r) => r - scTop - sc.clientTop + sc.scrollTop;   // measured against where the window is now: adding the pager can move a centred window
+  const padTop = parseFloat(cs.paddingTop) || 0; st.lifted = [];
+  let inset = 0; for (const c of sc.children) { const k = getComputedStyle(c); if (k.position === 'sticky' && parseFloat(k.top) === 0) { inset += c.offsetHeight; if (padTop) { st.lifted.push([c, c.style.top]); c.style.top = `-${padTop}px`; } } }
+  sc.style.setProperty('--dp-pad', `${padTop}px`);
+  const prev = el('button', { type: 'button', class: 'btn tiny dp-prev', text: t('dlgp_prev'), onclick: () => pagerGo(dlg, st.page - 1) });
+  const next = el('button', { type: 'button', class: 'btn tiny dp-next', text: t('dlgp_next'), onclick: () => pagerGo(dlg, st.page + 1) });
+  const status = el('span', { class: 'dp-status', role: 'status', 'aria-live': 'polite' }), nums = el('span', { class: 'dp-nums' });
+  st.bar = el('nav', { class: 'dlg-pager no-print', 'aria-label': t('dlgp_nav') }, el('div', { class: 'dp-row' }, prev, nums, status, next));
+  st.pad = el('div', { class: 'dlg-pad', 'aria-hidden': 'true' });
+  st.bar.style.marginInline = `-${parseFloat(cs.paddingInlineStart) || 0}px -${parseFloat(cs.paddingInlineEnd) || 0}px`; if (bg) st.bar.style.backgroundColor = bg;
+  st.bar.style.bottom = `-${parseFloat(cs.paddingBottom) || 0}px`;      // «bottom: 0» stops above the window's own padding; the pager sits on the very edge so nothing shows under it
+  sc.append(st.pad, st.bar);
+  const fill = (n) => { const [, nums, status] = st.bar.firstChild.children; status.textContent = t('dlgp_status', { n, m: n });
+    set(nums, n <= 9 ? Array.from({ length: n }, (_, i) => el('button', { type: 'button', class: 'pill-btn dp-n', text: String(i + 1) })) : []); return st.bar.offsetHeight; };
+  let barH = fill(2), room = view - barH - inset;
+  if (room < 120) { pgNatural(st); st.page = 0; done(); return; }       // a window too small to hold a page keeps its scroll
+  // everything that must not be cut: rows, cards, paragraphs, fields. Large containers are opened up and their parts taken instead.
+  const boxes = [], whole = /^(P|H[1-6]|LI|TR|BUTTON|INPUT|SELECT|TEXTAREA|SVG|CANVAS|IMG|LABEL|SUMMARY|FIGURE|PRE|THEAD|DT|DD)$/i;
+  const take = (node, depth, lead) => { for (const c of node.children) {
+    if (c === st.bar || c === st.pad || c.offsetParent === null && c.tagName !== 'TR' && c.tagName !== 'THEAD') continue;
+    const r = c.getBoundingClientRect(); if (r.height < 1) continue;
+    const top = at(r.top), bottom = at(r.bottom), big = r.height > room * 0.5 && c.children.length && depth < 9 && !whole.test(c.tagName);
+    if (c.tagName === 'TABLE' && big) {                             // a long table: its rows are the units, and its heading row stays in view
+      let pinned = true; for (let n = c.parentElement; n && n !== sc; n = n.parentElement) if (getComputedStyle(n).overflowY !== 'visible' || getComputedStyle(n).overflowX !== 'visible') { pinned = false; break; }
+      const head = c.tHead, headH = head && pinned ? Math.ceil(Math.max(head.getBoundingClientRect().height, ...[...head.querySelectorAll('th, td')].map((x) => x.getBoundingClientRect().height))) : 0; if (headH) c.classList.add('dp-sticky');
+      for (const row of c.rows) { const rr = row.getBoundingClientRect(); if (rr.height >= 1) boxes.push({ top: at(rr.top), bottom: at(rr.bottom), lead: row.parentElement === head ? 0 : headH, head: false }); }
+      continue; }
+    if (big) { take(c, depth + 1, lead); continue; }
+    boxes.push({ top, bottom, lead, head: /^H[1-6]$/.test(c.tagName) }); } };
+  scTop = sc.getBoundingClientRect().top; take(sc, 0, 0);
+  if (!boxes.length) { pgNatural(st); st.page = 0; done(); return; }
+  const layout = () => pageStarts(boxes, { view, barH, inset });            // where each page begins: core.js, tested on its own
+  let { starts, end } = layout();
+  for (let k = 0; k < 3; k += 1) { const h2 = fill(starts.length); if (h2 === barH) break; barH = h2; room = view - barH - inset; if (room < 120) break; ({ starts, end } = layout()); }
+  if (room < 120) { pgNatural(st); st.page = 0; done(); return; }
+  if (starts.length < 2) { pgNatural(st); st.page = 0; done(); return; }
+  st.starts = starts; st.view = view; st.barH = barH; st.end = end; st.paged = true;
+  st.pad.style.height = `${Math.max(0, starts[starts.length - 1].top + view - barH - end)}px`;
+  sc.style.setProperty('--dp-top', `${inset}px`); if (bg) sc.style.setProperty('--dp-bg', bg);
+  const first = [...sc.children].find((c) => c !== st.bar && c !== st.pad) || null; st.first = first;
+  let page = 0; if (keepTop != null && first === hadFirst) for (let i = 0; i < starts.length; i += 1) if (starts[i].y <= keepTop + 2) page = i;
+  st.page = -1; pagerGo(dlg, page, true);
+  // something inside is still moving into place (a list sliding in as the window opens): count the pages again once it has settled
+  if (!st.waiting) { const moving = (sc.getAnimations ? sc.getAnimations({ subtree: true }) : []).filter((x) => x.playState === 'running' && Number.isFinite(x.effect && x.effect.getComputedTiming().endTime));
+    if (moving.length) { st.waiting = true; Promise.race([Promise.all(moving.map((x) => x.finished.catch(() => null))), new Promise((r) => setTimeout(r, 2500))]).then(() => { st.waiting = false; if (dlg.open) pagerRefresh(dlg); }); } }
+  if (keepFocus) { const f = st.bar.querySelector(keepFocus); if (f && !f.disabled) f.focus({ preventScroll: true }); else st.bar.querySelector('.dp-prev:not(:disabled), .dp-next:not(:disabled)')?.focus({ preventScroll: true }); }
+  done();
+}
+const pgSig = (st) => (st.sc ? `${st.sc.clientWidth}x${st.sc.clientHeight}:${st.paged && st.pad ? Math.round(st.pad.offsetTop) : st.sc.scrollHeight}` : '');
+function pagerGo(dlg, page, quiet) {
+  const st = PAGERS.get(dlg); if (!st || !st.paged) return;
+  const n = st.starts.length, p = Math.max(0, Math.min(n - 1, page)), s = st.starts[p], nextY = p + 1 < n ? st.starts[p + 1].y : null;
+  st.page = p;
+  // whatever is left under the last whole row of this page is covered, so no half row shows above the pager
+  st.bar.style.paddingTop = `${nextY == null ? 0 : Math.max(0, s.top + st.view - st.barH - nextY)}px`;
+  st.sc.scrollTop = s.top; st.expect = s.top;
+  const row = st.bar.firstChild, [prev, nums, status, next] = row.children;
+  prev.disabled = p === 0; next.disabled = p === n - 1; status.textContent = t('dlgp_status', { n: p + 1, m: n });
+  set(nums, n <= 9 ? st.starts.map((x, i) => el('button', { type: 'button', class: `pill-btn dp-n${i === p ? ' on' : ''}`, 'aria-label': t('dlgp_go', { n: i + 1 }), 'aria-current': i === p ? 'page' : null, text: String(i + 1), onclick: () => { pagerGo(dlg, i); st.bar.querySelector(`.dp-n:nth-child(${i + 1})`)?.focus({ preventScroll: true }); } })) : []);
+  st.mo.takeRecords();
+  if (!quiet && st.sc.contains(document.activeElement) && document.activeElement !== prev && document.activeElement !== next && !st.bar.contains(document.activeElement)) { /* focus stays where the person put it */ }
+}
+function pagerAttach(dlg) {
+  if (typeof ResizeObserver !== 'function' || typeof MutationObserver !== 'function' || typeof requestAnimationFrame !== 'function') return;   // an old browser keeps the plain scroll
+  let st = PAGERS.get(dlg);
+  if (!st) {
+    st = { sc: null, bar: null, pad: null, page: 0, starts: [{ y: 0, top: 0 }], paged: false, timer: 0, lock: 0, sig: '', first: null };
+    PAGERS.set(dlg, st);
+    const later = () => { clearTimeout(st.timer); st.timer = setTimeout(() => pagerRefresh(dlg), 80); };
+    st.mo = new MutationObserver(later);
+    st.ro = new ResizeObserver(() => { if (pgSig(st) !== st.sig) later(); });
+    const inside = (e) => st.paged && st.sc && (e.target === st.sc || st.sc.contains(e.target));
+    // the mouse wheel, a swipe and Page Up / Page Down turn the page; one page for one gesture
+    dlg.addEventListener('wheel', (e) => { if (!inside(e) || Math.abs(e.deltaY) < 8 || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+      const own = e.target.closest && e.target.closest('textarea, select, pre'); if (own && own.scrollHeight > own.clientHeight + 2) return;
+      e.preventDefault(); const now = Date.now(); if (now < st.lock) { st.lock = Math.max(st.lock, now + 180); return; } st.lock = now + 320; pagerGo(dlg, st.page + (e.deltaY > 0 ? 1 : -1)); }, { passive: false });
+    let touch = null;
+    dlg.addEventListener('touchstart', (e) => { touch = inside(e) && e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null; }, { passive: true });
+    dlg.addEventListener('touchend', (e) => { if (!touch || !st.paged) return; const c = e.changedTouches[0], dy = touch.y - c.clientY, dx = touch.x - c.clientX; touch = null;
+      if (Math.abs(dy) > 60 && Math.abs(dy) > Math.abs(dx) * 1.5) pagerGo(dlg, st.page + (dy > 0 ? 1 : -1)); }, { passive: true });
+    if (!PAGERS.keys) { PAGERS.keys = true; document.addEventListener('keydown', (e) => { if (e.target !== document.body) return; const top = [...document.querySelectorAll('dialog[open]')].pop(); if (top && PAGERS.get(top) && PAGERS.get(top).paged) PAGERS.get(top).key(e); }); }
+    st.key = (e) => { if (!st.paged || e.altKey || e.ctrlKey || e.metaKey) return;
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable;
+      const to = e.key === 'PageDown' ? st.page + 1 : e.key === 'PageUp' ? st.page - 1 : typing ? null : e.key === 'Home' ? 0 : e.key === 'End' ? st.starts.length - 1 : null;
+      if (to == null) return; e.preventDefault(); pagerGo(dlg, to); };
+    dlg.addEventListener('keydown', st.key);
+    // the browser moved the content by itself (Tab into a field on another page, a search in the page): go to the page that holds it
+    dlg.addEventListener('scroll', (e) => { if (!st.paged || e.target !== st.sc || Math.abs(st.sc.scrollTop - st.expect) < 2) return;
+      const f = document.activeElement, r = st.sc.getBoundingClientRect();
+      const y = f && f !== st.sc && st.sc.contains(f) && !st.bar.contains(f) ? f.getBoundingClientRect().top - r.top - st.sc.clientTop + st.sc.scrollTop : st.sc.scrollTop + (st.starts[1] ? st.starts[1].y - st.starts[1].top : 0);
+      let p = 0; for (let i = 0; i < st.starts.length; i += 1) if (st.starts[i].y <= y + 2) p = i; pagerGo(dlg, p, true); }, true);
+    dlg.addEventListener('close', () => { clearTimeout(st.timer); st.mo.disconnect(); st.ro.disconnect(); pgNatural(st); st.page = 0; st.first = null; st.on = false; });
+  }
+  if (!st.on) { st.on = true; st.mo.observe(dlg, { childList: true, subtree: true, attributes: true, attributeFilter: ['open', 'hidden', 'class'] }); }
+  pagerRefresh(dlg);
+  // a window settles in its first frames (its fonts, its opening): count once more when it has, keeping the page the person is on
+  requestAnimationFrame(() => requestAnimationFrame(() => pagerRefresh(dlg))); setTimeout(() => pagerRefresh(dlg), 450);
+}
+
 function projOpen() {
   let dlg = $('proj-dlg'); if (!dlg) { dlg = el('dialog', { id: 'proj-dlg', class: 'proj-layer' }); document.body.append(dlg); dlg.addEventListener('close', () => renderMe()); }
   set(dlg, el('div', { class: 'pl-top' }, el('button', { type: 'button', class: 'btn quiet', text: `✕ ${t('close')}`, onclick: () => dlg.close() })), el('div', { class: 'pl-body' }, projWorkspaceBody()));

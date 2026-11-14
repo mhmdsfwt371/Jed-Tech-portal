@@ -1171,6 +1171,32 @@ test('project follow-up keeps execution separate and reports nullable cash amoun
   assert.equal(report.events.length,1);
 });
 
+// ADR-0119 — a long window turns into pages: where each page begins
+test('pages of a long window start only between rows, keep every row whole once, and keep the heading row in view', () => {
+  const rows = Array.from({ length: 60 }, (_, i) => ({ top: 100 + i * 42, bottom: 142 + i * 42, lead: 38 }));
+  const { starts, end } = core.pageStarts(rows, { view: 800, barH: 60, inset: 54 });
+  assert.equal(end, 100 + 60 * 42);
+  assert.ok(starts.length > 3);
+  const room = 800 - 60;
+  for (let p = 0; p < starts.length; p += 1) {
+    const s = starts[p], next = starts[p + 1];
+    if (p) assert.ok(rows.some((r) => r.top === s.y), `page ${p + 1} starts at a row`);
+    // everything that starts on this page and before the next page ends inside the visible part, under the bar and the heading row
+    for (const r of rows) if (r.top >= s.y && (!next || r.top < next.y)) { assert.ok(r.bottom <= s.top + room + 0.5, `row at ${r.top} is cut at the foot of page ${p + 1}`); if (p) assert.ok(r.top >= s.top + 54 + 38 - 0.5, `row at ${r.top} hides under the heading on page ${p + 1}`); }
+  }
+  const seen = rows.map((r) => starts.filter((s, p) => r.top >= s.y && (!starts[p + 1] || r.top < starts[p + 1].y)).length);
+  assert.deepEqual([...new Set(seen)], [1], 'every row belongs to exactly one page');
+});
+test('a heading is not left alone at the foot of a page, and something taller than a page is shown in screens', () => {
+  const boxes = [{ top: 10, bottom: 600 }, { top: 610, bottom: 640, head: true }, { top: 650, bottom: 690 }, { top: 700, bottom: 1400 }];
+  const a = core.pageStarts(boxes, { view: 700, barH: 40, inset: 0 });
+  assert.equal(a.starts[1].y, 610, 'the page ends before the heading, so the heading opens the next page with what follows it');
+  const tall = core.pageStarts([{ top: 10, bottom: 60, head: true }, { top: 70, bottom: 3000 }], { view: 700, barH: 40, inset: 0 });
+  assert.ok(tall.starts.length >= 5 && tall.starts.every((s, i) => !i || s.top > tall.starts[i - 1].top), 'the tall block is walked in screens, always forward');
+  assert.equal(tall.starts[1].top, 660, 'the first page is not left empty before the tall block');
+  assert.deepEqual(core.pageStarts([], { view: 700, barH: 40 }).starts, [{ y: 0, top: 0 }]);
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

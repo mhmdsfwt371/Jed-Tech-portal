@@ -1,25 +1,22 @@
 {
-  "version": "9.40",
+  "version": "9.41",
   "date": "2026-11-14",
   "notes": {
     "ar": [
-      "متابعة المشاريع: المسؤول والخطوة القادمة والموعد والعوائق ومراحل تنفيذ موزونة مع سجل تغييرات وبدء التنفيذ بعد الفوز.",
-      "تقارير المشاريع تتبع الفلاتر والمشاريع المختارة: Excel من ٦ صفحات وPDF وDashboard تفاعلية تعمل بلا اتصال. الترسية والتحصيل قيمتان منفصلتان.",
-      "المتابعة محفوظة على الجهاز وتدخل في النسخة الاحتياطية. يمنع الحفظ من تبويب قديم الكتابة فوق تعديل أحدث."
+      "أي نافذة محتواها طويل بقت صفحات بدل الإسكرول: تحتها «السابق» و«التالي» وأرقام الصفحات، وعجلة الماوس أو السحب على الموبايل يقلب صفحة كاملة. مفيش صف ولا كارت بيتقطع بين صفحتين، وعنوان أعمدة الجدول بيفضل ظاهر فوق.",
+      "النافذة القصيرة بتفضل زي ما هي. والصفحات بتتظبط لوحدها لو المحتوى زاد أو الفلتر اتغيّر، والجدول اللي كان له إسكرول لوحده جوه النافذة بقى جزء من نفس الصفحات."
     ],
     "en": [
-      "Project follow-up adds owners, next actions, deadlines, blockers and weighted milestones, with change history and execution after winning.",
-      "Reports follow selected projects and filters: six-sheet Excel, PDF and an offline interactive dashboard. Award and collection amounts remain separate.",
-      "Follow-up stays on the device and is included in backups. Saving from a stale tab cannot overwrite newer changes."
+      "Any window with long content now opens in pages instead of a long scroll: «Previous», «Next» and page numbers sit at its foot, and the mouse wheel or a swipe on a phone turns a whole page. No row or card is cut between two pages, and a table’s column headings stay in view at the top.",
+      "A short window stays exactly as it was. Pages are recounted by themselves when the content grows or a filter changes, and a table that used to scroll inside the window now flows into the same pages."
     ],
     "ur": [
-      "منصوبوں کی پیروی میں ذمہ دار، اگلے کام، آخری تاریخ، رکاوٹیں اور وزنی مراحل شامل ہیں، ساتھ تبدیلیوں کا تاریخچہ اور جیتنے کے بعد عمل درآمد۔",
-      "رپورٹیں منتخب منصوبوں اور فلٹر کے مطابق ہیں: چھ صفحات کا Excel، PDF اور آف لائن انٹرایکٹو ڈیش بورڈ۔ معاہدے اور وصولی کی رقوم الگ رہتی ہیں۔",
-      "پیروی آلے پر محفوظ ہے اور بیک اپ میں شامل ہے۔ پرانے ٹیب سے محفوظ کرنے پر نئی تبدیلی مٹ نہیں سکتی۔"
+      "لمبے مواد والی ہر ونڈو اب لمبے اسکرول کے بجائے صفحات میں کھلتی ہے: نیچے «پچھلا»، «اگلا» اور صفحات کے نمبر ہیں، اور ماؤس کا پہیہ یا موبائل پر انگلی سے کھینچنا پورا صفحہ پلٹتا ہے۔ کوئی قطار یا کارڈ دو صفحات کے درمیان نہیں کٹتا، اور جدول کے کالموں کے عنوان اوپر نظر آتے رہتے ہیں۔",
+      "چھوٹی ونڈو بالکل پہلے جیسی رہتی ہے۔ مواد بڑھے یا فلٹر بدلے تو صفحات خود دوبارہ گنے جاتے ہیں، اور جو جدول ونڈو کے اندر الگ سے اسکرول ہوتا تھا وہ اب انہی صفحات میں شامل ہو جاتا ہے۔"
     ]
   },
   "counts": {
-    "versions": 165,
-    "decisions": 118
+    "versions": 166,
+    "decisions": 119
   }
 }

@@ -1300,6 +1300,20 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   @keyframes pm-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } } @keyframes pm-pop { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
   @media (prefers-reduced-motion: reduce) { .pm-bar i, .pm-cal-day { animation: none; transition: none; } }
   /* ADR-0115 */ .ds-by { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  /* ADR-0119: a window with a long scroll turns into pages */
+  .dlg-pager { position: sticky; bottom: 0; z-index: 19; display: flex; flex-direction: column; justify-content: flex-end; grid-column: 1 / -1; flex: none; background-color: var(--bg); box-sizing: content-box; }
+  .dlg-pager .dp-row { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; min-height: 52px; padding: 8px 12px; box-sizing: border-box; border-top: 1px solid var(--line); }
+  .dlg-pager .btn.tiny { margin: 0; min-height: 36px; padding: 0 14px; font-size: 13px; }
+  .dlg-pager .btn.tiny:disabled { opacity: .4; cursor: default; }
+  .dlg-pager .dp-nums { display: inline-flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+  .dlg-pager .dp-n { min-width: 36px; min-height: 36px; padding: 0 8px; font-variant-numeric: tabular-nums; }
+  .dlg-pager .dp-status { font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .dlg-pad { grid-column: 1 / -1; flex: none; }
+  [data-paged] { overscroll-behavior: contain; overflow-anchor: none; } [data-paged] * { overflow-anchor: none; }
+  [data-paged] .bt-rv { opacity: 1; transform: none; transition: none; }   /* a reveal-on-scroll has no scroll left to wait for: on its page it is simply there */
+  [data-paged] table.dp-sticky > thead th { position: sticky; top: calc(var(--dp-top, 0px) - var(--dp-pad, 0px)); z-index: 3; background-color: var(--dp-bg, var(--bg)); }
+  @media (max-width: 640px) { .dlg-pager .dp-status { order: 5; flex-basis: 100%; text-align: center; } .dlg-pager .dp-row { gap: 6px; padding: 6px 8px; } }
+  @media print { .dlg-pager, .dlg-pad { display: none !important; } [data-paged] { overflow: visible !important; } }
 </style>
 </head>
 <body>
