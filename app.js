@@ -7,7 +7,7 @@ import {
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
   monthReadings, READINGS_TEAM,
-  parseWeights, mergeWeights, weightedPoints, typeKey, typeNameOf, accountsBoard, dailyIntake, startDue, coveredFrom, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, overtimeOf, SOURCES, taskSource, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, typeNameOf, accountsBoard, projectLine, projectDeletePlan, dailyIntake, startDue, coveredFrom, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, overtimeOf, SOURCES, taskSource, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
@@ -490,6 +490,7 @@ function renderSignatures() {
 let privLinks = [];
 let myProjects = null;   // the projects-from-mail file, on this device only (ADR-0039)
 let projAll = false, projOnlyMine = false, projQuery = '', projView = 'summary', projStatus = '';
+let projLineF = '';   // ADR-0125: '' all, 'tender', 'upsell', 'none' (not sorted)
 let devPlans = {};   // quarter development plans (ADR-0040) — { 'YYYY-Qn': { personId: plan } }, device only
 let devQ = pref('devq') === 'cur' ? 'cur' : 'next', devSel = pref('devsel') || null;
 let myRegister = null;   // the projects register (won / submitted from the management deck, presales board) — device only
@@ -1988,7 +1989,7 @@ function cleanRegister(raw) {
   const mail = raw.mail && typeof raw.mail === 'object' ? Object.fromEntries(Object.entries(raw.mail).slice(0, 3000).map(([k, v]) => [s(k, 200), { hide: !!(v && v.hide), item: s(v && v.item, 20), name: s(v && v.name, 160), status: ['worked', 'studied', 'seen'].includes(v && v.status) ? v.status : '', ok: !!(v && v.ok) }])) : {};
   return { schema: raw.schema, asOf: s(raw.asOf, 10), mail, sources: arr(raw.sources).map((x) => x), h1: raw.h1 && typeof raw.h1 === 'object' ? Object.fromEntries(Object.entries(raw.h1).map(([k, v]) => [s(k, 30), num(v)])) : {},
     items: raw.items.map((x) => ({ id: s(x.id, 12), name: s(x.name), client: s(x.client, 120), line: s(x.line, 60), value: num(x.value), status: ST.includes(x.status) ? x.status : 'submitted',
-      period: s(x.period, 20), kind: KD.includes(x.kind) ? x.kind : 'commercial', match: arr(x.match).map((m) => m.toLowerCase()), not: arr(x.not), note: s(x.note, 300), source: s(x.source, 120), manual: !!x.manual, ok: !!x.ok, files: Math.max(0, Math.round(Number(x.files) || 0)), date: /^\d{4}-\d{2}-\d{2}$/.test(String(x.date || '')) ? x.date : '' })).filter((x) => x.name),
+      period: s(x.period, 20), kind: KD.includes(x.kind) ? x.kind : 'commercial', cat: ['tender', 'upsell'].includes(x.cat) ? x.cat : '', match: arr(x.match).map((m) => m.toLowerCase()), not: arr(x.not), note: s(x.note, 300), source: s(x.source, 120), manual: !!x.manual, ok: !!x.ok, files: Math.max(0, Math.round(Number(x.files) || 0)), date: /^\d{4}-\d{2}-\d{2}$/.test(String(x.date || '')) ? x.date : '' })).filter((x) => x.name),
     board: (Array.isArray(raw.board) ? raw.board : []).slice(0, 2000).map((b) => ({ date: /^\d{4}-\d{2}-\d{2}$/.test(String(b.date || '')) ? b.date : '', who: s(b.who, 60), task: s(b.task, 120), client: s(b.client, 80), type: s(b.type, 40), via: s(b.via, 30), done: !!b.done, mine: !!b.mine })) };
 }
 // one model from both files: register items carry the mail threads that match them; the other threads stand alone
@@ -2000,7 +2001,7 @@ function projectsModel() {
   for (const it of (myRegister ? myRegister.items : [])) {
     const th = live.filter((x) => !taken.has(x.k) && ((ed[x.k] && ed[x.k].item === it.id) || (!(ed[x.k] && ed[x.k].item) && it.match.some((w) => lc(x.p.project).includes(w)) && !it.not.some((w) => lc(x.p.project).includes(w.toLowerCase())))));
     th.forEach((x) => taken.add(x.k));
-    rows.push({ id: `i:${it.id}`, item: it, ok: it.ok, files: it.files || 0, name: it.name, client: it.client, line: it.line, status: it.status, kind: it.kind, value: it.value, period: it.period || (it.date || '').slice(0, 4), date: it.date, note: it.note, source: it.source, manual: it.manual, threads: th.map((x) => x.p), deck: true });
+    rows.push({ id: `i:${it.id}`, item: it, cat: it.cat || '', ok: it.ok, files: it.files || 0, name: it.name, client: it.client, line: it.line, status: it.status, kind: it.kind, value: it.value, period: it.period || (it.date || '').slice(0, 4), date: it.date, note: it.note, source: it.source, manual: it.manual, threads: th.map((x) => x.p), deck: true });
   }
   for (const x of live) if (!taken.has(x.k)) { const p = x.p, e2 = ed[x.k] || {}; rows.push({ id: `m:${x.k}`, key: x.k, ok: !!e2.ok, files: 0, name: e2.name || p.project, client: '', status: e2.status || (p.kraasa ? 'studied' : p.worked ? 'worked' : 'seen'), kind: p.kraasa ? 'tender' : '', value: 0, period: '', threads: [p], deck: false, tender: p.tender }); }
   for (const r of rows) { const t2 = r.threads; r.first = t2.map((p) => p.first).filter(Boolean).sort()[0] || r.date || ''; r.last = t2.map((p) => p.last).filter(Boolean).sort().pop() || r.date || '';
@@ -2038,7 +2039,8 @@ function pwModel(rows) {
 }
 function pwYearRows() {
   const year=((myProjects?.to)||(myRegister?.asOf)||saudiDay(new Date().toISOString())).slice(0,4);
-  return projectsModel().filter(r=>projAll || (r.deck ? String(r.period||'').includes(year) || String(r.date||'').slice(0,4)===year : String(r.last||r.date||'').slice(0,4)===year));
+  const lineOk=r=>{if(!projLineF)return true;const l=projectLine(r).line;return projLineF==='none'?!l:l===projLineF;};
+  return projectsModel().filter(r=>(projAll || (r.deck ? String(r.period||'').includes(year) || String(r.date||'').slice(0,4)===year : String(r.last||r.date||'').slice(0,4)===year)) && lineOk(r));
 }
 function pwScreenRows() {
   let rows=pwYearRows();
@@ -2192,11 +2194,17 @@ function projWorkspaceBody() {
   const sar = (v) => `${Math.round(v).toLocaleString('en-US')} ${t('sar')}`, sumV = (l) => l.reduce((x, r) => x + r.value, 0);
   const tabs = el('div', { class: 'pills proj-pages' }, [['followup', 'pw_followup'], ['mail', 'proj_p_mail'], ['bids', 'proj_p_bids'], ['summary', 'proj_p_summary'], ['clients', 'proj_v_clients']].map(([k, l]) =>
     el('button', { type: 'button', class: `pill-btn${projView === k ? ' on' : ''}`, text: t(l), onclick: () => { projView = k; projRefresh(); } })));
+  const lineAll = (() => { const keep = projLineF; projLineF = ''; const l = pwYearRows(); projLineF = keep; return l; })();
+  const lineN = (k) => lineAll.filter((r) => { const l = projectLine(r).line; return k === '' ? true : k === 'none' ? !l : l === k; }).length;
+  const lines = el('div', { class: 'pills proj-lines', role: 'group', 'aria-label': t('proj_c_line2') }, [['', 'proj_line_all'], ['tender', 'proj_line_tender'], ['upsell', 'proj_line_upsell'], ['none', 'proj_line_none']].map(([k, l]) =>
+    el('button', { type: 'button', class: `pill-btn${projLineF === k ? ' on' : ''}`, 'data-line': k || 'all', 'aria-pressed': String(projLineF === k), text: `${t(l)} (${lineN(k)})`, onclick: () => { projLineF = k; projRefresh(); } })));
+  const delAll = ['mail', 'bids', 'followup'].includes(projView) ? el('button', { type: 'button', class: 'btn tiny quiet proj-del-all', text: `🗑 ${t('proj_del_all')}`, onclick: () => projDeleteAll(pwScreenRows()) }) : null;
   const period = el('div', { class: 'pills' }, el('button', { type: 'button', class: `pill-btn${projAll ? '' : ' on'}`, text: t('proj_year', { y: year }), onclick: () => { projAll = false; projRefresh(); } }),
     el('button', { type: 'button', class: `pill-btn${projAll ? ' on' : ''}`, text: t('proj_all'), onclick: () => { projAll = true; projRefresh(); } }));
   const search = (ph) => el('input', { type: 'search', class: 'proj-q', placeholder: ph, value: projQuery, oninput: (e) => { projQuery = e.target.value; clearTimeout(projWorkspaceBody.t); projWorkspaceBody.t = setTimeout(projRefresh, 300); } });
   const q = (r) => !projQuery || `${r.name} ${r.client} ${r.tender || ''} ${r.threads.map((p) => p.project).join(' ')}`.toLowerCase().includes(projQuery.toLowerCase());
   const pill = (st) => el('span', { class: `st-pill st-${st}`, text: t(`proj_f_${st}`) });
+  const lineChip = (r) => { const { line, auto } = projectLine(r); return el('span', { class: `chip proj-line proj-line-${line || 'none'}`, title: auto ? t('proj_line_auto_t') : '', text: `${line ? t(`proj_line_${line}`) : t('proj_line_none')}${auto && line ? ' ·' : ''}` }); };
   const acts = (r, { attach = false } = {}) => el('td', { class: 'row-acts' },
     el('button',{type:'button',class:'icon-btn',title:t('pw_followup'),text:'↗',onclick:()=>pwEdit(r)}),
     el('button', { type: 'button', class: `icon-btn${r.ok ? ' on' : ''}`, title: t('proj_ok'), text: '✓', onclick: () => projToggleOk(r) }),
@@ -2219,7 +2227,7 @@ function projWorkspaceBody() {
       el('div', { class: 'table-wrap fit' }, el('table', { class: 'proj-tbl' }, el('colgroup', {}, ['28%', '13%', '10%', '9%', '7%', '10%', '13%', '10%'].map((w) => el('col', { style: `width:${w}` }))), el('thead', {}, el('tr', {}, ['proj_c_subject', 'proj_c_belongs', 'proj_c_status', 'proj_c_last', 'proj_c_msgs', 'proj_c_who', 'proj_c_why', ''].map((k, n) => el('th', { class: n === 4 ? 'num' : null, text: k ? t(k) : '' })))),
         el('tbody', {}, shown.map(({ r, p }) => el('tr', { class: `${p.worked ? 'worked' : ''}${r.ok ? ' ok' : ''}` },
           el('td', {}, el('div', { text: r.deck ? p.project : r.name }), r.deck || r.name === p.project ? null : el('div', { class: 'hint', text: p.project })),
-          el('td', { text: r.deck ? r.name : '—' }), el('td', {}, pill(r.status)), el('td', { class: 'ltr', text: p.last || '—' }), el('td', { class: 'num', text: String(p.messages) }),
+          el('td', { text: r.deck ? r.name : '—' }), el('td', {}, pill(r.status), lineChip(r)), el('td', { class: 'ltr', text: p.last || '—' }), el('td', { class: 'num', text: String(p.messages) }),
           el('td', { text: [p.me && t('proj_who_me', { n: p.me }), p.akram && t('proj_who_akram', { n: p.akram }), p.shaarawi && t('proj_who_shaarawi', { n: p.shaarawi })].filter(Boolean).join(' · ') || '—' }),
           el('td', { text: projWhy({ ...r, deck: false, manual: false, aibrahim: p.aibrahim, kraasa: p.kraasa, rules: p.rules }) }), acts(r, { attach: !r.deck })))))),
       myProjects && myProjects.skipped.length ? el('details', { class: 'tucked' }, el('summary', { text: t('proj_skipped', { n: myProjects.skipped.length }) }),
@@ -2232,7 +2240,7 @@ function projWorkspaceBody() {
       list.length ? el('div', { class: 'table-wrap fit' }, el('table', { class: 'proj-tbl' }, el('colgroup', {}, ['28%', '15%', '11%', '10%', '9%', '17%', '10%'].map((w) => el('col', { style: `width:${w}` }))), el('thead', {}, el('tr', {}, ['proj_c_name', 'proj_c_client', 'proj_c_status', 'proj_c_value', 'proj_c_date', 'proj_c_note', ''].map((k, n) => el('th', { class: n === 3 ? 'num' : null, text: k ? t(k) : '' })))),
         makeSortable(el('tbody', {}, ordered(list, key).map((r) => el('tr', { 'data-id': r.id, class: r.ok ? 'ok' : null },
           el('td', {}, el('div', { text: r.name }), el('div', { class: 'hint', text: [r.line, r.threads.length ? t('proj_threads', { n: r.threads.length }) : '', r.source && !r.manual ? r.source.replace(/^.*— /, '') : ''].filter(Boolean).join(' · ') })),
-          el('td', { text: r.client && r.client !== r.name ? r.client : '—' }), el('td', {}, pill(r.status)), el('td', { class: 'num', text: r.value ? r.value.toLocaleString('en-US') : '—' }),
+          el('td', { text: r.client && r.client !== r.name ? r.client : '—' }), el('td', {}, pill(r.status), lineChip(r)), el('td', { class: 'num', text: r.value ? r.value.toLocaleString('en-US') : '—' }),
           el('td', { class: 'ltr', text: r.date || r.period || r.last || '—' }), el('td', { class: 'note-c', text: r.note || '' }), acts(r)))), key))) : el('div', { class: 'empty', text: t('proj_bg_none') }));
     page = el('div', {}, el('div', { class: 'row proj-tools' }, el('div', { class: 'pills' }, [['', 'proj_st_all'], ['submitted', 'proj_f_submitted'], ['won', 'proj_f_won'], ['ongoing', 'proj_f_ongoing'], ['delivered', 'proj_f_delivered'], ['lost', 'proj_f_lost']].map(([k, l]) =>
         el('button', { type: 'button', class: `pill-btn${projStatus === k ? ' on' : ''}`, text: t(l), onclick: () => { projStatus = k; projRefresh(); } }))), search(t('proj_find'))),
@@ -2268,7 +2276,7 @@ function projWorkspaceBody() {
       el('p', { class: 'hint', text: t('proj_s_note') }));
   }
   const src = el('p', { class: 'hint' }, [myRegister ? t('proj_src_reg', { d: myRegister.asOf, n: myRegister.items.length, b: myRegister.board.length }) : t('proj_src_noreg'), myProjects ? ` · ${t('proj_src', { from: myProjects.from, to: myProjects.to, d: myProjects.importedAt })}` : ` · ${t('proj_src_nomail')}`].join(''));
-  return el('section', { class: 'proj' }, head, projView === 'mail' ? mailSrc('projects') : null, src, el('div', { class: 'row proj-tools' }, tabs, period), page);
+  return el('section', { class: 'proj' }, head, projView === 'mail' ? mailSrc('projects') : null, src, el('div', { class: 'row proj-tools' }, tabs, period), el('div', { class: 'row proj-tools' }, lines, delAll), page);
 }
 async function projFilesExport() {
   const out = {}; for (const it of (myRegister ? myRegister.items : [])) { if (!it.files) continue; const files = (await store.kvGet(`pf:${it.id}`)) || [];
@@ -2325,6 +2333,12 @@ async function projTakeFile(f, kind) {
   await projTakeJson(j, kind);
 }
 async function projTakeJson(j, kind) {
+  if (j && j.backup === 'afaqy-projects-backup/v1') {   // ADR-0125: a backup saved before «delete all» puts the projects back as they were
+    const reg = j.register ? cleanRegister(j.register) : null, pr = j.projects ? cleanProjects(j.projects) : null;
+    if (!reg && !pr) { toast(t('proj_bad')); return false; }
+    if (!confirm(t('proj_restore_q', { d: String(j.exportedAt || '').slice(0, 10) }))) return false;
+    if (reg) { myRegister = reg; await store.putRegister(myRegister); } if (pr) { myProjects = pr; await store.putProjects(myProjects); }
+    toast(t('proj_restored')); projRefresh(); return true; }
   if (j && j.schema === 'afaqy-tenders-from-mail/v1') { projWrongPlace('proj_wrong_td'); return false; }
   if (j && j.schema === 'afaqy-projects-register/v1') { const r = cleanRegister(j); if (!r) { toast(t('proj_bad')); return false; }
     if (myRegister) { const have = new Set(myRegister.items.map((x) => x.id)); for (const x of r.items) if (!have.has(x.id)) myRegister.items.push(x); myRegister.board = r.board; myRegister.h1 = r.h1; myRegister.sources = r.sources; myRegister.asOf = r.asOf; }
@@ -2566,16 +2580,16 @@ function projEdit(r) {
   if(r?.fromTender) { pwEdit(r); return; }
   const it = r && r.item ? r.item : null;
   const f = { name: r ? r.name : '', client: r ? r.client || '' : '', line: it ? it.line : '', kind: r ? r.kind || 'commercial' : 'commercial', status: r ? (r.status === 'seen' ? 'worked' : r.status) : 'worked',
-    value: r ? r.value || '' : '', date: it ? it.date || r.last || '' : r ? r.last || '' : new Date().toISOString().slice(0, 10), period: it ? it.period : '', note: it ? it.note : '', match: it ? it.match.join(', ') : '' };
+    cat: it && it.cat ? it.cat : '', value: r ? r.value || '' : '', date: it ? it.date || r.last || '' : r ? r.last || '' : new Date().toISOString().slice(0, 10), period: it ? it.period : '', note: it ? it.note : '', match: it ? it.match.join(', ') : '' };
   const inp = (k, type = 'text', extra = {}) => el('input', { type, value: f[k], ...extra, oninput: (e) => { f[k] = e.target.value; } });
   const sel = (k, opts) => el('select', { onchange: (e) => { f[k] = e.target.value; } }, opts.map(([v, l]) => el('option', { value: v, selected: f[k] === v ? '' : null, text: l })));
   const dlg = el('dialog', { class: 'proj-edit' });
   const save = async () => {
     if (!f.name.trim()) { toast(t('proj_need_name')); return; }
     const R = regEnsure(); const rec = { name: f.name.trim().slice(0, 160), client: f.client.trim().slice(0, 120), line: f.line.trim().slice(0, 60), kind: f.kind, status: f.status, value: Math.max(0, Math.round(Number(f.value) || 0)),
-      date: /^\d{4}-\d{2}-\d{2}$/.test(f.date) ? f.date : '', period: f.period.trim().slice(0, 20) || (f.date || '').slice(0, 4), note: f.note.trim().slice(0, 300), match: f.match.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean).slice(0, 12) };
+      date: /^\d{4}-\d{2}-\d{2}$/.test(f.date) ? f.date : '', period: f.period.trim().slice(0, 20) || (f.date || '').slice(0, 4), note: f.note.trim().slice(0, 300), cat: ['tender', 'upsell'].includes(f.cat) ? f.cat : '', match: f.match.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean).slice(0, 12) };
     if (it) Object.assign(it, rec);
-    else if (r && r.key && ['worked', 'studied'].includes(rec.status) && !rec.value && !rec.client) { R.mail[r.key] = { ...(R.mail[r.key] || {}), name: rec.name, status: rec.status }; }
+    else if (r && r.key && ['worked', 'studied'].includes(rec.status) && !rec.value && !rec.client && !rec.cat) { R.mail[r.key] = { ...(R.mail[r.key] || {}), name: rec.name, status: rec.status }; }
     else { const id = `U${Date.now().toString(36)}`; R.items.push({ id, ...rec, not: [], source: t('proj_why_manual'), manual: true }); if (r && r.key) R.mail[r.key] = { item: id }; }
     dlg.close(); toast(t('proj_saved')); await projSave(); };
   set(dlg,el('h2', { text: r ? t('proj_edit_h') : t('proj_add_h') }),
@@ -2584,12 +2598,26 @@ function projEdit(r) {
       el('label', {}, el('span', { text: t('proj_c_name') }), inp('name')), el('label', {}, el('span', { text: t('proj_c_client') }), inp('client')),
       el('label', {}, el('span', { text: t('proj_c_status') }), sel('status', ['worked', 'studied', 'submitted', 'won', 'ongoing', 'delivered', 'lost'].map((s) => [s, t(`proj_f_${s}`)]))),
       el('label', {}, el('span', { text: t('proj_c_kind') }), sel('kind', ['project', 'commercial', 'tender'].map((s) => [s, t(`proj_k_${s}`)]))),
+      el('label', {}, el('span', { text: t('proj_c_line2') }), sel('cat', [['', t('proj_line_auto', { l: (() => { const l = projectLine({ ...(r || {}), cat: '' }).line; return l ? t(`proj_line_${l}`) : t('proj_line_none'); })() })], ['tender', t('proj_line_tender')], ['upsell', t('proj_line_upsell')]])),
       el('label', {}, el('span', { text: t('proj_c_value') }), inp('value', 'number', { min: '0', step: '1' })), el('label', {}, el('span', { text: t('proj_c_date') }), inp('date', 'date')),
       el('label', {}, el('span', { text: t('proj_c_line') }), inp('line')), el('label', {}, el('span', { text: t('proj_c_period') }), inp('period', 'text', { placeholder: 'H2 2026' })),
       el('label', { class: 'wide' }, el('span', { text: t('proj_c_note') }), el('textarea', { rows: '2', oninput: (e) => { f.note = e.target.value; } }, f.note)),
       el('label', { class: 'wide' }, el('span', { text: t('proj_c_match') }), inp('match', 'text', { placeholder: t('proj_match_ph') }))),
     el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary', text: t('save'), onclick: save }), el('button', { type: 'button', class: 'btn quiet', text: t('cancel'), onclick: () => dlg.close() })));
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
+}
+// ADR-0125: delete everything the page shows, after a backup file of the projects is saved on the device
+const projBackupFile = () => ({ backup: 'afaqy-projects-backup/v1', exportedAt: new Date().toISOString(), register: myRegister || null, projects: myProjects || null });
+async function projDeleteAll(rows) {
+  const plan = projectDeletePlan(rows), n = plan.items.length + plan.keys.length;
+  if (!n) { toast(plan.kept.length ? t('proj_del_all_only_td', { k: plan.kept.length }) : t('proj_del_all_none')); return; }
+  if (!confirm(t('proj_del_all_q', { n, k: plan.kept.length }))) return;
+  download(`afaqy-projects-backup-${ymd(new Date())}.json`, JSON.stringify(projBackupFile(), null, 1));
+  const R = regEnsure(), gone = new Set(plan.items);
+  R.items = R.items.filter((x) => !gone.has(x.id));
+  for (const [k, v] of Object.entries(R.mail)) if (v.item && gone.has(v.item)) delete R.mail[k];
+  for (const k of plan.keys) R.mail[k] = { hide: true };
+  toast(t('proj_del_all_done', { n, k: plan.kept.length })); await projSave();
 }
 async function projDelete(r) {
   if (!confirm(t('proj_delete_q', { n: r.name }))) return;

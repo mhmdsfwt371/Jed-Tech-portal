@@ -2459,6 +2459,24 @@ export function tenderNeeds(item) {
     ...(['submitted', 'won', 'lost'].includes(st) ? ['submittedOn', 'submitNo'] : [])];
   return want.filter(empty);
 }
+/** ADR-0125: which line a project belongs to — a tender (a public bid) or upselling (more work for a customer we already serve).
+ *  The manager's own choice wins. Otherwise only clear signals decide: a tender-register row, a terms booklet, the tenders
+ *  sender or the «tender» kind make it a tender; the «commercial offer» kind (an offer to a client) makes it upselling.
+ *  Anything else stays «not sorted» rather than guessed. `auto` says the line was derived, not chosen. */
+export function projectLine(r) {
+  if (!r) return { line: '', auto: false };
+  if (r.cat === 'tender' || r.cat === 'upsell') return { line: r.cat, auto: false };
+  if (r.fromTender || r.tender || r.kind === 'tender' || r.kraasa || r.aibrahim) return { line: 'tender', auto: true };
+  if (r.kind === 'commercial') return { line: 'upsell', auto: true };
+  return { line: '', auto: true };
+}
+/** ADR-0125: what «delete all shown» removes, and what it cannot: a register item is removed, a mail thread is hidden (it does not
+ *  come back with the next pull); a row that comes from the tender register is left — it is deleted in the tender register. */
+export function projectDeletePlan(rows) {
+  const items = [], keys = [], kept = [];
+  for (const r of rows || []) { if (r.fromTender) kept.push(r.id); else if (r.item) items.push(r.item.id); else if (r.key) keys.push(r.key); else kept.push(r.id); }
+  return { items: [...new Set(items)], keys: [...new Set(keys)], kept };
+}
 export function tenderCanAdvance(item, nextStage) {
   return !['ready', 'submitted', 'won', 'lost'].includes(nextStage) ||
     ['technical', 'financial'].every((kind) => item.files?.some((file) => file.kind === kind && file.blob.size > 0));

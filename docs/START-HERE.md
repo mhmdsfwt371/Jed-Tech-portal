@@ -163,6 +163,7 @@
 | `docs/decisions/0122-tender-details-in-a-window.md` | Tender details open in a window; fields the stage needs are marked «to fill»; site visit and bid opening read like the other two dates |
 | `docs/decisions/0123-sections-as-cards.md` | A long page’s secondary sections become cards that open in one window; started on Team KPIs |
 | `docs/decisions/0124-first-start-times.md` | The manager pull reads each recent task’s activity log for its first start; the daily table shows «started after the limit» where known |
+| `docs/decisions/0125-projects-lines-and-delete-all.md` | My projects split into tenders / upselling / not sorted; «Delete all shown» with a backup first and a restore |
 
 ## في عشر دقائق: ابنِ وافحص
 ```bash

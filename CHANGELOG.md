@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.51 — 2026-11-14
+
+- مشاريعي: تقسيم جديد أعلى كل صفحة: مناقصات وأبسيلنج (لعملاء حاليين) وغير مصنّف. التقسيم من إشارات واضحة فقط، وتختار مسار أي مشروع بنفسك من ✎ تعديل.
+- زر «احذف كل المعروض» في صفحات الإيميل والعروض والمتابعة: يحذف ما تعرضه الصفحة فقط بعد التأكيد، ويحفظ قبلها ملف نسخة احتياطية ترفعه لإرجاع كل شيء. صفوف سجل المناقصات تُحذف من سجل المناقصات نفسه.
+
+<details><summary>English</summary>
+
+- My projects: a new split at the top of every page: tenders, upselling (existing customers) and not sorted. The split comes from clear signals only, and you choose any project’s line yourself in ✎ Edit.
+- A «Delete all shown» button on the mail, bids and follow-up pages: it deletes only what the page shows, after you confirm, and first saves a backup file you can upload to put everything back. Rows from the tender register are deleted in the tender register itself.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- میرے پروجیکٹس: ہر صفحے کے اوپر نئی تقسیم: ٹینڈرز، اپ سیلنگ (موجودہ کسٹمرز) اور غیر درجہ بند۔ تقسیم صرف واضح علامات سے ہوتی ہے، اور کسی بھی پروجیکٹ کی لائن آپ خود ✎ ترمیم سے چنتے ہیں۔
+- ای میل، بولیوں اور فالو اپ کے صفحات پر بٹن «دکھائے گئے سب حذف کریں»: یہ تصدیق کے بعد صرف وہی حذف کرتا ہے جو صفحہ دکھا رہا ہو، اور پہلے ایک بیک اپ فائل محفوظ کرتا ہے جسے اپ لوڈ کر کے سب واپس لایا جا سکتا ہے۔ ٹینڈر رجسٹر کی قطاریں ٹینڈر رجسٹر ہی میں حذف ہوتی ہیں۔
+
+</div>
+</details>
+
+
 ## v9.50 — 2026-11-14
 
 - المهام يومًا بيوم: لآخر ٧ أيام صار يظهر عمود «بدأت بعد الحد»: كم مهمة بدأها أحد بعد الحد المسموح، من كل المهام التي عُرف وقت بدئها، ونافذة اليوم تعرض وقت البدء لكل مهمة.

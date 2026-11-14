@@ -1338,6 +1338,16 @@ test('firstStart and dailyIntake: the first Start (or Complete) from the activit
   assert.ok(one && one[0] && one[0].startedAt === '2026-11-15T07:40:00.000Z', JSON.stringify(ds).slice(0, 200));
 });
 
+test('projectLine and projectDeletePlan: tenders vs upselling from clear signals only; delete-all removes items, hides threads, leaves tender rows', () => {
+  assert.deepEqual(core.projectLine({ kind: 'commercial', cat: 'tender' }), { line: 'tender', auto: false }, 'the manager’s choice wins');
+  assert.deepEqual(core.projectLine({ fromTender: true }), { line: 'tender', auto: true });
+  assert.deepEqual(core.projectLine({ kind: '', kraasa: true }), { line: 'tender', auto: true }, 'a terms booklet means a tender');
+  assert.deepEqual(core.projectLine({ kind: 'commercial' }), { line: 'upsell', auto: true });
+  assert.deepEqual(core.projectLine({ kind: 'project' }), { line: '', auto: true }, 'no clear signal: not sorted, not guessed');
+  const p = core.projectDeletePlan([{ id: 'i:1', item: { id: '1' } }, { id: 'm:a', key: 'a' }, { id: 'm:a', key: 'a' }, { id: 't:9', fromTender: true, tender: '9' }]);
+  assert.deepEqual(p, { items: ['1'], keys: ['a'], kept: ['t:9'] });
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }
