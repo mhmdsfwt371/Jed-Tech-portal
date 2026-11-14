@@ -1,22 +1,25 @@
 {
-  "version": "9.41",
+  "version": "9.42",
   "date": "2026-11-14",
   "notes": {
     "ar": [
-      "أي نافذة محتواها طويل بقت صفحات بدل الإسكرول: تحتها «السابق» و«التالي» وأرقام الصفحات، وعجلة الماوس أو السحب على الموبايل يقلب صفحة كاملة. مفيش صف ولا كارت بيتقطع بين صفحتين، وعنوان أعمدة الجدول بيفضل ظاهر فوق.",
-      "النافذة القصيرة بتفضل زي ما هي. والصفحات بتتظبط لوحدها لو المحتوى زاد أو الفلتر اتغيّر، والجدول اللي كان له إسكرول لوحده جوه النافذة بقى جزء من نفس الصفحات."
+      "لوحة التعيين في ماي أفاقي كانت بتعدّ نفس الحساب كذا مرة (١٠٠٠٥ حساب بدل ٢٢٠١). دلوقتي كل حساب بيتعدّ مرة واحدة، وأرقام كل مهندس بقت صحيحة.",
+      "بعد التجربة اللوحة بتكتب رد ماي أفاقي على كل حساب ومين اتضاف ومين اتشال بالاسم. لو حد اتشال من غير ما تعلّم عليه، «تطبيق على الباقي» بيتقفل. ولو ماي أفاقي رفض خمس حسابات ورا بعض بتوقف بدل ما تبعت الكل.",
+      "لو الرد «not found»: علّم على اللي مشيوا (زي محمد إسماعيل) في قسم الإزالة وجرّب تاني. اسحب زرار اللوحة لشريط الإشارات من جديد علشان تاخد النسخة دي."
     ],
     "en": [
-      "Any window with long content now opens in pages instead of a long scroll: «Previous», «Next» and page numbers sit at its foot, and the mouse wheel or a swipe on a phone turns a whole page. No row or card is cut between two pages, and a table’s column headings stay in view at the top.",
-      "A short window stays exactly as it was. Pages are recounted by themselves when the content grows or a filter changes, and a table that used to scroll inside the window now flows into the same pages."
+      "The assignment panel in MyAFAQY was counting the same account several times (10,005 accounts instead of 2,201). Every account is now counted once, and each engineer’s number is right.",
+      "After a pilot the panel writes MyAFAQY’s own reply for each account and names who was added and who was removed. If someone you did not tick was removed, «Apply to the rest» locks. If MyAFAQY refuses five accounts in a row, the panel stops instead of sending them all.",
+      "If the reply is «not found», tick whoever left (such as an engineer who resigned) in the removal section and try again. Drag the panel button to the bookmarks bar again to get this version."
     ],
     "ur": [
-      "لمبے مواد والی ہر ونڈو اب لمبے اسکرول کے بجائے صفحات میں کھلتی ہے: نیچے «پچھلا»، «اگلا» اور صفحات کے نمبر ہیں، اور ماؤس کا پہیہ یا موبائل پر انگلی سے کھینچنا پورا صفحہ پلٹتا ہے۔ کوئی قطار یا کارڈ دو صفحات کے درمیان نہیں کٹتا، اور جدول کے کالموں کے عنوان اوپر نظر آتے رہتے ہیں۔",
-      "چھوٹی ونڈو بالکل پہلے جیسی رہتی ہے۔ مواد بڑھے یا فلٹر بدلے تو صفحات خود دوبارہ گنے جاتے ہیں، اور جو جدول ونڈو کے اندر الگ سے اسکرول ہوتا تھا وہ اب انہی صفحات میں شامل ہو جاتا ہے۔"
+      "مائی آفاقی میں تفویض کا پینل ایک ہی اکاؤنٹ کئی بار گن رہا تھا (2,201 کے بجائے 10,005 اکاؤنٹ)۔ اب ہر اکاؤنٹ ایک بار گنا جاتا ہے اور ہر انجینئر کی تعداد درست ہے۔",
+      "آزمائش کے بعد پینل ہر اکاؤنٹ پر مائی آفاقی کا اپنا جواب لکھتا ہے اور نام سے بتاتا ہے کہ کون شامل ہوا اور کون ہٹا۔ اگر کوئی ایسا شخص ہٹ گیا جسے آپ نے نشان نہیں لگایا تو «باقی پر لاگو کریں» بند ہو جاتا ہے۔ مائی آفاقی لگاتار پانچ اکاؤنٹ رد کرے تو پینل سب بھیجنے کے بجائے رک جاتا ہے۔",
+      "اگر جواب «not found» ہو تو جانے والوں (جیسے استعفیٰ دینے والا انجینئر) کو ہٹانے والے حصے میں نشان لگا کر دوبارہ آزمائیں۔ یہ ورژن لینے کے لیے پینل کا بٹن دوبارہ بُک مارکس بار پر گھسیٹیں۔"
     ]
   },
   "counts": {
-    "versions": 166,
+    "versions": 167,
     "decisions": 119
   }
 }

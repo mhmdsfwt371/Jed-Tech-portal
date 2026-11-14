@@ -1197,6 +1197,21 @@ test('a heading is not left alone at the foot of a page, and something taller th
   assert.deepEqual(core.pageStarts([], { view: 700, barH: 40 }).starts, [{ y: 0, top: 0 }]);
 });
 
+// v9.42 — the assignment panel read the same accounts several times (10,005 «Jeddah accounts» for 2,201 real ones)
+test('the assignment panel counts each account once, keeps only Jeddah, and notices a page that brings nothing new', () => {
+  const seen = new Set();
+  const a = core.assignPage(seen, [{ id: 1, customerId: 31405, branchCode: '2', afterSalesManIds: [7610, 4121, 4121], connectedDevices: '3' }, { id: 2, customerId: 900, branchCode: '1', afterSalesManIds: [5] }]);
+  assert.deepEqual(a.rows, [{ id: '31405', have: ['7610', '4121'], devices: 3 }]);
+  assert.equal(a.fresh, 2, 'a Riyadh account is still counted as read, so the reading knows when it has seen them all');
+  const again = core.assignPage(seen, [{ customerId: 31405, branchCode: '2', afterSalesManIds: [1] }, { customerId: 900, branchCode: '1' }]);
+  assert.deepEqual([again.rows.length, again.fresh], [0, 0], 'the same accounts on a later page are not counted again');
+  const code = decodeURIComponent(core.buildAssignBookmarklet('ar').slice(11));
+  assert.doesNotThrow(() => new Function(code));
+  assert.ok(code.includes('assignPage(seen,arr)'), 'the panel reads its pages through the same function');
+  assert.ok(/M\.unexpected/.test(code) && /blocked=true/.test(code), 'a pilot that removed someone nobody ticked stops «apply to the rest»');
+  assert.ok(decodeURIComponent(core.buildAssignBookmarklet('ur').slice(11)).includes('"title":"'), 'an Urdu manager gets a panel with words, not an empty one');
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

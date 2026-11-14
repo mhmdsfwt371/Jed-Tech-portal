@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.42 — 2026-11-14
+
+- لوحة التعيين في ماي أفاقي كانت بتعدّ نفس الحساب كذا مرة (١٠٠٠٥ حساب بدل ٢٢٠١). دلوقتي كل حساب بيتعدّ مرة واحدة، وأرقام كل مهندس بقت صحيحة.
+- بعد التجربة اللوحة بتكتب رد ماي أفاقي على كل حساب ومين اتضاف ومين اتشال بالاسم. لو حد اتشال من غير ما تعلّم عليه، «تطبيق على الباقي» بيتقفل. ولو ماي أفاقي رفض خمس حسابات ورا بعض بتوقف بدل ما تبعت الكل.
+- لو الرد «not found»: علّم على اللي مشيوا (زي محمد إسماعيل) في قسم الإزالة وجرّب تاني. اسحب زرار اللوحة لشريط الإشارات من جديد علشان تاخد النسخة دي.
+
+<details><summary>English</summary>
+
+- The assignment panel in MyAFAQY was counting the same account several times (10,005 accounts instead of 2,201). Every account is now counted once, and each engineer’s number is right.
+- After a pilot the panel writes MyAFAQY’s own reply for each account and names who was added and who was removed. If someone you did not tick was removed, «Apply to the rest» locks. If MyAFAQY refuses five accounts in a row, the panel stops instead of sending them all.
+- If the reply is «not found», tick whoever left (such as an engineer who resigned) in the removal section and try again. Drag the panel button to the bookmarks bar again to get this version.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- مائی آفاقی میں تفویض کا پینل ایک ہی اکاؤنٹ کئی بار گن رہا تھا (2,201 کے بجائے 10,005 اکاؤنٹ)۔ اب ہر اکاؤنٹ ایک بار گنا جاتا ہے اور ہر انجینئر کی تعداد درست ہے۔
+- آزمائش کے بعد پینل ہر اکاؤنٹ پر مائی آفاقی کا اپنا جواب لکھتا ہے اور نام سے بتاتا ہے کہ کون شامل ہوا اور کون ہٹا۔ اگر کوئی ایسا شخص ہٹ گیا جسے آپ نے نشان نہیں لگایا تو «باقی پر لاگو کریں» بند ہو جاتا ہے۔ مائی آفاقی لگاتار پانچ اکاؤنٹ رد کرے تو پینل سب بھیجنے کے بجائے رک جاتا ہے۔
+- اگر جواب «not found» ہو تو جانے والوں (جیسے استعفیٰ دینے والا انجینئر) کو ہٹانے والے حصے میں نشان لگا کر دوبارہ آزمائیں۔ یہ ورژن لینے کے لیے پینل کا بٹن دوبارہ بُک مارکس بار پر گھسیٹیں۔
+
+</div>
+</details>
+
+
 ## v9.41 — 2026-11-14
 
 - أي نافذة محتواها طويل بقت صفحات بدل الإسكرول: تحتها «السابق» و«التالي» وأرقام الصفحات، وعجلة الماوس أو السحب على الموبايل يقلب صفحة كاملة. مفيش صف ولا كارت بيتقطع بين صفحتين، وعنوان أعمدة الجدول بيفضل ظاهر فوق.
