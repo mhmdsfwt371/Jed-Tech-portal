@@ -12,6 +12,7 @@ is served.
 | `ownerteam.py` | «Team KPIs» follows the device's owner (ADR-0116): a lead sees exactly the people under him, from MyAFAQY's employees list or the team file | The real October pull (`OCT_PULL`) |
 | `assign.py` | The assignment panel inside a stand-in for MyAFAQY: each account once, MyAFAQY’s reply per account, a lock after an unasked removal, a stop after five refusals | Nothing — the stand-in answers like the 14 Nov 2026 log |
 | `pager.py` | A window with a long scroll turns into pages (ADR-0119): built windows measured page by page, then the portal’s real windows | The real October pull (`OCT_PULL`) for the last part |
+| `weights.py` | The Weights page names each type once, in the reader’s language, and no table scrolls sideways on a laptop or a phone, advanced settings included | The real October pull (`OCT_PULL`), with type names added the way MyAFAQY sends them |
 | `smoke.py` | Every page opens in three languages with no page error, no failed request and no raw text key; the WCAG 2.1 A and AA scan passes on every page; the phone has no sideways scroll | `AXE_JS=/path/to/axe.min.js` for the scan (skipped with a note when absent) |
 
 Run: `python3 tests/browser/readings.py` and `python3 tests/browser/smoke.py` from the repository root. No real pull, name or

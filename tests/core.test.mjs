@@ -1212,6 +1212,28 @@ test('the assignment panel counts each account once, keeps only Jeddah, and noti
   assert.ok(decodeURIComponent(core.buildAssignBookmarklet('ur').slice(11)).includes('"title":"'), 'an Urdu manager gets a panel with words, not an empty one');
 });
 
+test('typeNameOf: a type whose two name fields both carry «English | Arabic» is named once, not twice', () => {
+  const both = 'Training Request | طلب تدريب';
+  assert.equal(core.typeNameOf(both, both), both);
+  assert.equal(core.typeLabel(core.typeNameOf(both, both), 'en'), '\u2068Training Request\u2069');
+  assert.equal(core.typeLabel(core.typeNameOf(both, both), 'ar'), '\u2068طلب تدريب\u2069');
+  assert.equal(core.typeNameOf('Visit', 'زيارة'), 'Visit | زيارة');
+  assert.equal(core.typeNameOf('Visit', ''), 'Visit');
+  assert.equal(core.typeNameOf('', ''), '');
+});
+
+test('buildOrg: a person «On Leave» in MyAFAQY stays on his manager\'s team and is never called inactive', () => {
+  const emps = [{ id: 1, nameEn: 'Boss One', status: 'Active' }, { id: 2, nameEn: 'Away Eng', manager: 'Boss One', status: 'On Leave' },
+    { id: 3, nameEn: 'Here Eng', manager: 'Boss One', status: 'Active' }, { id: 4, nameEn: 'Gone Eng', manager: 'Boss One', status: 'Resigned' }];
+  const people = [{ id: '10', nameEn: 'Boss One' }, { id: '20', nameEn: 'Away Eng' }, { id: '30', nameEn: 'Here Eng' }, { id: '40', nameEn: 'Gone Eng' }];
+  const org = core.buildOrg(emps, people);
+  assert.deepEqual(org.engineersOf('10').sort(), ['20', '30'], 'on leave is still on the team; the one who left is not');
+  assert.equal(org.isActive('20'), true); assert.equal(org.isOnLeave('20'), true); assert.equal(org.statusOf('40'), 'Resigned');
+  const file = { people: { 20: { leaderId: '10' }, 30: { leaderId: '10', onLeave: true }, 40: { leaderId: '10' } } };
+  const cmp = core.compareOrg(org, file, '10');
+  assert.deepEqual(cmp.inactive, ['40']); assert.deepEqual(cmp.onLeave, ['20'], 'only the leave the team file does not already mark');
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

@@ -44,3 +44,17 @@ in the tasks file, no personal number anywhere; a refused request still complete
 differences (a different manager, a person missing from the file, an inactive person, a person matching nobody) finds exactly those
 four against an independent count, stores no personal number, previews 8 instead of 10, switches, survives a reload and switches
 back; a Riyadh-style manager with no team file gets his four engineers and no false alert.
+
+## v9.43 — «On Leave» is not «gone»
+
+The first reading treated any status other than `Active` as inactive: the person dropped out of his manager's team in the
+hierarchy path, and the Team page listed him as «inactive but still in the team file». MyAFAQY's Employees page shows a second
+status, `On Leave`, for someone who is still employed. Reading it as inactive invites the wrong action — taking a man off his
+accounts because he is on holiday.
+
+- `On Leave` (and an empty status, and `Active`) keeps the person in the tree and on the team.
+- Any other status takes him out and is flagged; the line quotes the status exactly as MyAFAQY writes it, so the portal never
+  puts its own word on a status it has not seen before.
+- A person on leave in MyAFAQY whom the team file does not mark `onLeave` gets his own line, so the manager can mark it.
+
+Only `Active` and `On Leave` have been seen on the Employees page (14 November 2026). No other status value is assumed.

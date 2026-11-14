@@ -7,7 +7,7 @@ import {
   buildBookmarklet, parseMe, parseMePayload, myProfile, openTasks, profileMonths, upgradeMe,
   parseRoster, mergeRoster, positionOf, leaderOf, donutParts, ROSTER_SCHEMA, saudiDay, teamAlerts, buildAssignBookmarklet,
   monthReadings, READINGS_TEAM,
-  parseWeights, mergeWeights, weightedPoints, typeKey, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, overtimeOf, SOURCES, taskSource, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
+  parseWeights, mergeWeights, weightedPoints, typeKey, typeNameOf, taskWeight, taskPoints, activityWeight, baseFromFactors, tierFromBase, rulesOf, parseRules, rulesAreDefault, factorScore, DEFAULT_RULES, afterHours, pointsDetail, EXTRA_CONDS, businessHours, isCustomMode, TEAMTYPES_AUTO_SCHEMA, buildTypesBookmarklet, parseTeamTypesTransfer, buildOrg, compareOrg, JEDDAH_BRANCH, managerPullRecipe, overtimeOf, SOURCES, taskSource, POINT_MODES, FACTORS, typeLabel, loadStrings, weightPublishDiff, publishableWeights, portalWeights, WEIGHT_STEPS, TIERS, scopeIds, inScope, scopeApplies, canEditWeight, isWeightsAdmin,
   monthCard, teamMonth, closableMonths, monthRange, prevMonth, ARCHETYPES, ymd,
   weeklyDigest, goalProgress, patternPath, coverageTotals, CARD_DEFAULTS, shareWindow, workloadShare, repairCheck, parseRepairLines, lastQuarters, supersede, engineerLevels, developmentPlan, LEVELS, loadSustainability,
   safePortalUrl, buildReportsPrompt, parseReports, techTotals, afterSalesTotals, activityTotals, REPORTS_SCHEMA, buildManagerBookmarklet, parseManagerTransfer, MANAGER_AUTO_SCHEMA, portalRoute,
@@ -3997,7 +3997,7 @@ function renderWeights() {
   const findTeam = (re) => Object.entries(tt).find(([n]) => re.test(n));
   const asTeam = findTeam(/jeddah.*after\s*-?\s*sales/i), rdTeam = findTeam(/jeddah.*r\s*&\s*d/i);
   const fromFile = (team) => Object.entries(wt.tasks).filter(([, x]) => x.team === team || (team === 'aftersales' && x.team === 'both') || (team === 'rd' && x.team === 'both')).map(([k]) => k);
-  const linked = (teamEntry, team) => (teamEntry ? teamEntry[1].map((x) => ({ key: typeKey(x.nameEn || x.nameAr), name: x.nameEn && x.nameAr ? `${x.nameEn} | ${x.nameAr}` : (x.nameEn || x.nameAr) })) : fromFile(team).map((k) => ({ key: k, name: (seen.get(k) || {}).name || k })));
+  const linked = (teamEntry, team) => (teamEntry ? teamEntry[1].map((x) => ({ key: typeKey(x.nameEn || x.nameAr), name: typeNameOf(x.nameEn, x.nameAr) })) : fromFile(team).map((k) => ({ key: k, name: (seen.get(k) || {}).name || k })));
   const groups = [
     { id: 'aftersales', title: t('wteam_aftersales'), live: !!asTeam, rows: linked(asTeam, 'aftersales') },
     { id: 'rd', title: t('wteam_rd'), live: !!rdTeam, rows: linked(rdTeam, 'rd') },
@@ -4057,7 +4057,7 @@ function renderWeights() {
       el('div', { class: 'table-wrap' }, el('table', {},
         el('thead', {}, el('tr', {}, ['w_col_type', 'w_col_factors', 'w_col_weight', 'w_col_mode', 'w_col_std', 'w_col_n', 'w_col_points', 'w_col_editors'].map((k, i) => el('th', { class: [2, 4, 5, 6].includes(i) ? 'num' : null, text: t(k) })))),
         el('tbody', {}, rows.map((r) => el('tr', { class: r.x ? null : 'unweighted' },
-          el('td', {}, el('div', { text: r.name || pretty(r.key) }), r.x ? null : el('div', { class: 'hint warn-text', text: t('w_new_type') })),
+          el('td', {}, el('div', { text: r.name ? typeLabel(r.name, lang) : pretty(r.key) }), r.x ? null : el('div', { class: 'hint warn-text', text: t('w_new_type') })),
           ...basisCells(r, g), el('td', { class: 'num', text: String(r.n) }),
           el('td', { class: 'num', text: String(Math.round(pointsOfType(r.key) * 10) / 10) }), editorsCell(r.key))))))];
   };
@@ -4094,7 +4094,7 @@ function renderWeights() {
             onchange: (e) => { const v = Number(e.target.value); if (!(v >= 0.5 && v <= 10)) { e.target.value = String(r.w); toast(t('w_pts_bad')); return; }
               const x = r.x || {}; save({ tasks: { [r.key]: { w: v, tier: tierFromBase(Math.round(v)), team: x.team || g.id, mode: x.mode || 'done', ...(x.std ? { std: x.std, stdSrc: x.stdSrc || 'set' } : {}) } } }); } });   // typed directly: no factors behind it
           return el('tr', { class: r.x ? null : 'unweighted' },
-            el('td', {}, el('div', { text: r.name || pretty(r.key) }), r.x ? null : el('div', { class: 'hint warn-text', text: t('w_new_type') })),
+            el('td', {}, el('div', { text: r.name ? typeLabel(r.name, lang) : pretty(r.key) }), r.x ? null : el('div', { class: 'hint warn-text', text: t('w_new_type') })),
             el('td', { class: 'num', 'data-label': t('w_col_pts') }, inp), el('td', { class: 'num', 'data-label': t('w_col_n') }, String(r.n)),
             el('td', { 'data-label': t('w_col_method') }, el('select', { class: 'w-sel w-mode', 'aria-label': t('w_col_method'), ...(can ? {} : { disabled: '' }), onchange: (e) => putSimple(r, g, { mode: e.target.value }) },
               [...POINT_MODES.map((m) => [m, t(`mode_${m}`)]), ...(RRs.methods || []).map((m) => [m.id, m.name])].map(([m, label]) => el('option', { value: m, selected: m === ((r.x && r.x.mode) || 'done') ? '' : null, text: label }))),
@@ -4179,9 +4179,9 @@ function orgCheckBox() {
   const tasks = allTasks(), sc = scoped(ppl), cur = currentTeam(sc, tasks), wouldBe = currentTeam(sc, tasks, 'org'), reps = od.org.engineersOf(root);
   const add = wouldBe.filter((id) => !cur.includes(id)), rm = cur.filter((id) => !wouldBe.includes(id)), names = (ids) => (ids.length ? ids.map(nm).join(lang === 'en' ? ', ' : '، ') : t('org_chg_none'));
   const fileApplies = Object.keys(roster().people || {}).some((id) => od.org.hasRow(id));   // no team file for this team → nothing to compare against
-  const cmp = fileApplies ? compareOrg(od.org, roster(), root) : { leader: [], missingInFile: [], notInOrg: [], inactive: [], unmatched: od.org.unmatchedUnder(root) };
+  const cmp = fileApplies ? compareOrg(od.org, roster(), root) : { leader: [], missingInFile: [], notInOrg: [], inactive: [], onLeave: [], unmatched: od.org.unmatchedUnder(root) };
   const lines = [...cmp.leader.map((x) => t('org_diff_leader', { name: nm(x.id), org: x.orgPid ? nm(x.orgPid) : (x.orgName || t('org_no_mgr')), file: nm(x.file) })),
-    ...cmp.missingInFile.map((id) => t('org_diff_missing', { name: nm(id), root: nm(root) })), ...cmp.inactive.map((id) => t('org_diff_inactive', { name: nm(id) })), ...cmp.notInOrg.map((id) => t('org_diff_notin', { name: nm(id) })),
+    ...cmp.missingInFile.map((id) => t('org_diff_missing', { name: nm(id), root: nm(root) })), ...cmp.inactive.map((id) => t('org_diff_inactive', { name: nm(id), status: od.org.statusOf(id) })), ...(cmp.onLeave || []).map((id) => t('org_diff_leave', { name: nm(id) })), ...cmp.notInOrg.map((id) => t('org_diff_notin', { name: nm(id) })),
     ...cmp.unmatched.map((n) => t('org_diff_unmatched', { name: n }))];
   const redraw = () => { renderTeam(); renderKpi(); renderHome(); };
   const pick = el('select', { 'aria-label': t('org_root'), onchange: (e) => { pref('orgRoot', e.target.value); redraw(); } },

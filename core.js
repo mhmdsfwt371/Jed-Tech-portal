@@ -1137,6 +1137,14 @@ export function typeLabel(name, lang = 'ar') {
   const pick = (lang === 'en' ? (la || ar) : (ar || la)) || parts[0] || '';
   return `\u2068${pick}\u2069`;
 }
+// One name for a type from the two name fields of a team's linked types. MyAFAQY fills BOTH fields with the same
+// «English | Arabic» text for many types, so gluing the two fields printed every type twice and pushed the Weights
+// table off the screen sideways. Each distinct part is kept once, in the order it first appears.
+export function typeNameOf(nameEn, nameAr) {
+  const out = [];
+  for (const part of `${nameEn || ''}|${nameAr || ''}`.split('|').map((x) => x.trim()).filter(Boolean)) if (!out.some((o) => o.toLowerCase() === part.toLowerCase())) out.push(part);
+  return out.join(' | ');
+}
 // ===================== the basis of a type's points (ADR-0031) =====================
 // Base 1–5 from four stated factors (technical depth, outside party, field work, business impact — each 0, 1 or 2; sum of 8),
 // times the method: "done" (the base on closing, time ignored), "speed" (×1.5 when closed within the type's standard time)
@@ -1902,10 +1910,13 @@ export function buildOrg(employees, people) {
   const pidByEn = new Map(), pidByAr = new Map(), keyOfPid = new Map();
   for (const p of people || []) { const id = String(p.id), en = orgNorm(p.nameEn), ar = orgNorm(p.nameAr);
     if (en && !pidByEn.has(en)) pidByEn.set(en, id); if (ar && !pidByAr.has(ar)) pidByAr.set(ar, id); keyOfPid.set(id, en || ar); }
-  const isActive = (s) => !String(s || '').trim() || /^active$/i.test(String(s).trim());
+  // «On Leave» is someone still on the team: he keeps his place under his manager. Only a status that is neither empty,
+  // «Active» nor «On Leave» takes a person out — calling a man on leave «inactive» invited removing him from accounts.
+  const isLeave = (s) => /^on[\s-]*leave$/i.test(String(s || '').trim());
+  const isActive = (s) => !String(s || '').trim() || /^active$/i.test(String(s).trim()) || isLeave(s);
   const nodes = new Map();
   for (const e of emps) { const key = orgNorm(e.nameEn) || orgNorm(e.nameAr); if (!key || nodes.has(key)) continue;
-    nodes.set(key, { key, pid: pidByEn.get(orgNorm(e.nameEn)) ?? pidByAr.get(orgNorm(e.nameAr)) ?? null, e, mgrKey: orgNorm(e.manager) || null, active: isActive(e.status) }); }
+    nodes.set(key, { key, pid: pidByEn.get(orgNorm(e.nameEn)) ?? pidByAr.get(orgNorm(e.nameAr)) ?? null, e, mgrKey: orgNorm(e.manager) || null, active: isActive(e.status), leave: isLeave(e.status) }); }
   const kids = new Map();
   for (const n of nodes.values()) if (n.mgrKey && n.mgrKey !== n.key) { if (!kids.has(n.mgrKey)) kids.set(n.mgrKey, []); kids.get(n.mgrKey).push(n); }
   const activeKids = (key) => (kids.get(key) || []).filter((n) => n.active);
@@ -1914,7 +1925,7 @@ export function buildOrg(employees, people) {
   const rowOf = (pid) => nodes.get(keyOfPid.get(String(pid)) || none);
   const nameOfNode = (n) => n.e.nameEn || n.e.nameAr;
   return {
-    size: nodes.size, under, hasRow: (pid) => !!rowOf(pid), branchOf: (pid) => { const n = rowOf(pid); return n && n.e.branchCode ? { code: String(n.e.branchCode), name: n.e.branch || '' } : null; }, isActive: (pid) => { const n = rowOf(pid); return n ? n.active : null; }, isManager: (pid) => activeKids(keyOfPid.get(String(pid)) || none).length > 0,
+    size: nodes.size, under, hasRow: (pid) => !!rowOf(pid), branchOf: (pid) => { const n = rowOf(pid); return n && n.e.branchCode ? { code: String(n.e.branchCode), name: n.e.branch || '' } : null; }, isActive: (pid) => { const n = rowOf(pid); return n ? n.active : null; }, isOnLeave: (pid) => { const n = rowOf(pid); return !!(n && n.leave); }, statusOf: (pid) => { const n = rowOf(pid); return n ? String(n.e.status || '').trim() : ''; }, isManager: (pid) => activeKids(keyOfPid.get(String(pid)) || none).length > 0,
     managerOf: (pid) => { const n = rowOf(pid); if (!n || !n.mgrKey) return null; const m = nodes.get(n.mgrKey); return { pid: pidByEn.get(n.mgrKey) ?? (m ? m.pid : null), name: m ? nameOfNode(m) : String(n.e.manager || '') }; },
     engineersOf: (pid) => under(pid).filter((n) => n.pid != null && !activeKids(n.key).length).map((n) => n.pid),
     managers: () => (people || []).map((p) => String(p.id)).filter((id) => activeKids(keyOfPid.get(id) || none).length > 0).map((pid) => ({ pid, n: under(pid).length })).sort((a, b) => b.n - a.n),
@@ -1924,11 +1935,12 @@ export function buildOrg(employees, people) {
 }
 /** What differs between MyAFAQY's hierarchy and the team file, for the team under `rootPid`. Nothing changes by itself. */
 export function compareOrg(org, roster, rootPid) {
-  const ro = (roster && roster.people) || {}, out = { leader: [], missingInFile: [], notInOrg: [], inactive: [], unmatched: org.unmatchedUnder(rootPid) };
+  const ro = (roster && roster.people) || {}, out = { leader: [], missingInFile: [], notInOrg: [], inactive: [], onLeave: [], unmatched: org.unmatchedUnder(rootPid) };
   for (const [id, r] of Object.entries(ro)) {
     if (!r || !(r.leaderId || r.position)) continue;
     if (!org.hasRow(id)) { out.notInOrg.push(id); continue; }
     if (org.isActive(id) === false) out.inactive.push(id);
+    if (org.isOnLeave(id) && !r.onLeave) out.onLeave.push(id);
     if (!r.leaderId) continue;
     const m = org.managerOf(id); if (!m || String(m.pid) !== String(r.leaderId)) out.leader.push({ id, file: String(r.leaderId), orgPid: m ? m.pid : null, orgName: m ? m.name : '' });
   }

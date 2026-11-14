@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.43 — 2026-11-14
+
+- صفحة الأوزان: اسم نوع المهمة كان يتكرر مرتين في كل صف ويجبرك على التمرير يمينًا ويسارًا. الآن يظهر مرة واحدة بلغتك، والجداول كلها — البسيطة والمتقدمة — تبقى داخل الشاشة على الكمبيوتر والجوال.
+- صفحة الفريق: من حالته في ماي أفاقي «On Leave» كان يُكتب عنه «غير نشط» كأنه ترك العمل. الآن يبقى من الفريق ويُذكر أنه في إجازة، ولا يُنبَّه إلا على من حالته تقول إنه لم يعد على رأس العمل، مع ذكر الحالة كما هي في ماي أفاقي.
+
+<details><summary>English</summary>
+
+- Weights page: each task type’s name was printed twice in every row and forced you to scroll sideways. It now appears once, in your language, and every table — the simple ones and the advanced ones — stays inside the screen on a computer and on a phone.
+- Team page: a person whose status in MyAFAQY is «On Leave» was described as «inactive», as if he had left. He now stays on the team and is shown as on leave; only a status that says someone is no longer at work is flagged, quoting the status exactly as MyAFAQY writes it.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اوزان کا صفحہ: ہر قطار میں ٹاسک کی قسم کا نام دو بار لکھا آتا تھا اور آپ کو دائیں بائیں اسکرول کرنا پڑتا تھا۔ اب نام ایک بار، آپ کی زبان میں آتا ہے، اور تمام جدول — سادہ بھی اور تفصیلی بھی — کمپیوٹر اور موبائل دونوں پر اسکرین کے اندر رہتے ہیں۔
+- ٹیم کا صفحہ: جس شخص کی حالت مائی آفاقی میں «On Leave» تھی اسے «غیر فعال» لکھا جاتا تھا، گویا وہ کام چھوڑ گیا ہو۔ اب وہ ٹیم میں رہتا ہے اور چھٹی پر دکھایا جاتا ہے؛ صرف وہ حالت نمایاں ہوتی ہے جو بتائے کہ کوئی اب کام پر نہیں، اور حالت ویسے ہی لکھی جاتی ہے جیسے مائی آفاقی میں ہے۔
+
+</div>
+</details>
+
+
 ## v9.42 — 2026-11-14
 
 - لوحة التعيين في ماي أفاقي كانت بتعدّ نفس الحساب كذا مرة (١٠٠٠٥ حساب بدل ٢٢٠١). دلوقتي كل حساب بيتعدّ مرة واحدة، وأرقام كل مهندس بقت صحيحة.
