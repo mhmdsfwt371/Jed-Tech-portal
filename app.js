@@ -2568,6 +2568,7 @@ const pgScroller = (dlg) => { let best = null;                   // the part of 
 const pgBack = (node) => { for (let n = node; n && n.nodeType === 1; n = n.parentElement) { const c = getComputedStyle(n).backgroundColor; if (c && !/rgba\(.*,\s*0\)|transparent/.test(c)) return c; } return ''; };
 function pagerRefresh(dlg) {
   const st = PAGERS.get(dlg); if (!st || !dlg.open) return;
+  if (st.press) { st.pending = true; return; }   // v9.56: never rebuild the buttons under a press — every path that recounts comes through here
   const keepTop = st.paged && st.starts[st.page] ? st.starts[st.page].y : null, hadFirst = st.first;
   const a = document.activeElement, keepFocus = st.bar && a && st.bar.contains(a) ? (a.classList.contains('dp-prev') ? '.dp-prev' : a.classList.contains('dp-next') ? '.dp-next' : '.dp-next') : null;
   pgNatural(st);
@@ -2650,8 +2651,29 @@ function pagerAttach(dlg) {
   if (!st) {
     st = { sc: null, bar: null, pad: null, page: 0, starts: [{ y: 0, top: 0 }], paged: false, timer: 0, lock: 0, sig: '', first: null };
     PAGERS.set(dlg, st);
-    const later = () => { clearTimeout(st.timer); st.timer = setTimeout(() => pagerRefresh(dlg), 80); };
-    st.mo = new MutationObserver(later);
+    // and whatever else changes in the window (an extension in a text box, a file being read) waits while a pager button is held
+    // down: the recount rebuilds the buttons, and a press must end on the button it began on
+    const later = () => { clearTimeout(st.timer); if (st.press) { st.pending = true; return; } st.timer = setTimeout(() => { if (st.press) st.pending = true; else pagerRefresh(dlg); }, 80); };
+    dlg.addEventListener('pointerdown', (e) => { if (st.bar && st.bar.contains(e.target)) st.press = true; }, true);
+    const release = () => { if (!st.press) return; st.press = false; if (st.pending) { st.pending = false; setTimeout(later, 0); } };
+    document.addEventListener('pointerup', release, true); document.addEventListener('pointercancel', release, true);
+    // v9.56: a change that cannot move a page break is not a reason to count the pages again. Counting again rebuilds the
+    // pager's own buttons, and the press effect (`bt-tap`, added on pointer-down) is a class change: so pressing «Next» rebuilt
+    // «Next» under the finger, the release landed on a button that was no longer there, and the click never happened. A person
+    // holds a click for about a tenth of a second; the tests clicked in an instant, which is why they passed.
+    const EFFECT = /^bt-/;
+    const layoutChange = (r) => {
+      if (st.bar && (r.target === st.bar || st.bar.contains(r.target))) return false;
+      if (st.pad && (r.target === st.pad || st.pad.contains(r.target))) return false;
+      if (r.type === 'childList' && [...r.addedNodes, ...r.removedNodes].every((n) => n === st.bar || n === st.pad)) return false;
+      if (r.type === 'attributes' && r.attributeName === 'class') {
+        const was = new Set(String(r.oldValue || '').split(/\s+/).filter((c) => c && !EFFECT.test(c)));
+        const now = new Set([...r.target.classList].filter((c) => !EFFECT.test(c)));
+        if (was.size === now.size && [...now].every((c) => was.has(c))) return false;
+      }
+      return true;
+    };
+    st.mo = new MutationObserver((records) => { if (records.some(layoutChange)) later(); });
     st.ro = new ResizeObserver(() => { if (pgSig(st) !== st.sig) later(); });
     const inside = (e) => st.paged && st.sc && (e.target === st.sc || st.sc.contains(e.target));
     // the mouse wheel, a swipe and Page Up / Page Down turn the page; one page for one gesture
@@ -2675,7 +2697,7 @@ function pagerAttach(dlg) {
       let p = 0; for (let i = 0; i < st.starts.length; i += 1) if (st.starts[i].y <= y + 2) p = i; pagerGo(dlg, p, true); }, true);
     dlg.addEventListener('close', () => { clearTimeout(st.timer); st.mo.disconnect(); st.ro.disconnect(); pgNatural(st); st.page = 0; st.first = null; st.on = false; });
   }
-  if (!st.on) { st.on = true; st.mo.observe(dlg, { childList: true, subtree: true, attributes: true, attributeFilter: ['open', 'hidden', 'class'] }); }
+  if (!st.on) { st.on = true; st.mo.observe(dlg, { childList: true, subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['open', 'hidden', 'class'] }); }
   pagerRefresh(dlg);
   // a window settles in its first frames (its fonts, its opening): count once more when it has, keeping the page the person is on
   requestAnimationFrame(() => requestAnimationFrame(() => pagerRefresh(dlg))); setTimeout(() => pagerRefresh(dlg), 450);

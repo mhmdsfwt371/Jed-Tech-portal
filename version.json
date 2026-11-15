@@ -1,49 +1,19 @@
 {
-  "version": "9.55",
+  "version": "9.56",
   "date": "2026-11-15",
   "notes": {
     "ar": [
-      "سجل المناقصات صار يبدأ بما تفعله كل يوم: اسحب الإيميل أو الدراسة أو العرض النهائي، أو اضغط «أو اختر الملفات» (يعمل على الجوال). باقي طرق التسجيل ومسؤول الملف الافتراضي مطوية تحت سطر واحد، وشرح الصفحة صار سطرًا يُفتح عند الحاجة.",
-      "إصلاح: موعد زيارة الموقع وفتح المظاريف المقروءان من كراسة مرفقة كانا يُقرآن ثم يضيعان — الآن يُحفظان في المناقصة.",
-      "إصلاح: القيمة التقديرية وقيمة الكراسة إذا تُركتا فارغتين كانتا تتحولان إلى صفر بعد إعادة فتح الصفحة، فيختفي تنبيه «فارغ» وترفض الدراسة ملأهما — الآن الفارغ يبقى فارغًا.",
-      "الملف له المعنى نفسه أينما أضفته: ملف الدراسة من نافذة المناقصة يملؤها، والملف المضاف أو المصنَّف «العرض النهائي» من النافذة يجعلها جاهزة (كان ذلك بالسحب فقط).",
-      "الدراسة تُقرأ بتسامح أكثر وبلا تخمين: التاريخ والمبلغ المكتوبان نصًّا يُقبلان، وما لا يُقرأ يُترك فارغًا وتُسمّيه الصفحة لك. واستيراد الدراسة نفسها مرتين لا يكرر السطر في السجل الزمني.",
-      "تنبيه النسخة الاحتياطية: السجل محفوظ على جهازك وحده، فإذا لم تُحفظ منه نسخة قط أو مضى أسبوع على آخر نسخة تقول الصفحة ذلك وتحفظ نسخة بضغطة. وصفحة البيانات تعرض تاريخ آخر نسخة.",
-      "الوضع الداكن: نصوص كانت تكاد لا تُرى داخل النوافذ صارت واضحة (رقم الصفحة أسفل النافذة، الروابط بين صفحات البريد، الصفوف المتأخرة بالأحمر، أرقام خط سير المناقصات).",
-      "الطباعة: الأقسام التي لم تصل إليها بالتمرير كانت تُطبع فارغة — الآن تُطبع كاملة.",
-      "لمن يستخدم لوحة المفاتيح أو قارئ الشاشة: كل خانة صار لها اسم، والجداول العريضة على الجوال يمكن الوصول إليها وتمريرها من لوحة المفاتيح.",
-      "جملة فيها اسم مناقصة عربي داخل نص إنجليزي كانت تظهر مقلوبة الترتيب — صارت تُقرأ صحيحة.",
-      "مراجعة جودة شاملة: فحص جديد يفتح كل نوافذ البوابة بالوضعين الفاتح والداكن وباللغات الثلاث وعلى الجوال، ويعمل تلقائيًّا مع كل تعديل."
+      "إصلاح: في النوافذ الطويلة (مثل نافذة المناقصة) كان زر «التالي» و«السابق» وأرقام الصفحات لا تستجيب للضغط بالماوس، وكانت عجلة الماوس وحدها تقلّب الصفحات. الآن الأزرار تعمل، حتى لو كان في النافذة شيء يتغير باستمرار مثل إضافة تدقيق الكتابة."
     ],
     "en": [
-      "The tender register now opens on what you do every day: drop the email, the study or the final offer, or press «Or choose the files» (this works on a phone). The other ways to register and the default file owner are folded under one line, and the page’s explanation is now a line that opens when you need it.",
-      "Fixed: the site-visit deadline and the bid opening read from an attached booklet were worked out and then lost — they are now saved on the tender.",
-      "Fixed: an estimated value or a booklet fee left empty turned into zero after the page was reopened, which hid the «empty» reminder and stopped the study from filling them — an empty amount now stays empty.",
-      "A file means the same thing wherever you add it: a study workbook added from a tender’s own window fills it, and a file added or marked «final offer» in the window makes the tender ready (only a drop did that before).",
-      "The study is read more tolerantly and still without guessing: a date and an amount written as text are accepted, and what cannot be read is left empty and named on the page. Importing the same study twice no longer repeats the line in the tender’s history.",
-      "Backup reminder: the register lives on your device only, so when it has never been backed up, or a week has passed since the last backup, the page says so and saves one with a click. The Data page shows the date of the last backup.",
-      "Dark mode: text that was barely visible inside windows is now clear (the page number at the foot of a window, the links between the mail pages, late rows in red, the numbers on the tender pipeline).",
-      "Printing: sections you had not scrolled to yet were printed blank — they are now printed in full.",
-      "For keyboard and screen-reader users: every field now has a name, and wide tables on a phone can be reached and scrolled from the keyboard.",
-      "A sentence holding an Arabic tender name inside English text was shown back to front — it now reads correctly.",
-      "A full quality review: a new check opens every window of the portal in light and dark mode, in the three languages and on a phone, and runs by itself with every change."
+      "Fixed: in long windows (such as a tender’s window) «Next», «Previous» and the page numbers did not respond to a mouse click — only the mouse wheel turned the pages. The buttons now work, even when something in the window keeps changing, such as a writing-help browser extension."
     ],
     "ur": [
-      "ٹینڈر رجسٹر اب اسی کام سے کھلتا ہے جو آپ روز کرتے ہیں: ای میل، مطالعہ یا حتمی پیشکش یہاں ڈالیں، یا «یا فائلیں منتخب کریں» دبائیں (یہ فون پر بھی کام کرتا ہے)۔ اندراج کے باقی طریقے اور فائل کا طے شدہ ذمہ دار ایک سطر کے نیچے تہہ کر دیے گئے ہیں، اور صفحے کی وضاحت اب ایک سطر ہے جو ضرورت پڑنے پر کھلتی ہے۔",
-      "درستی: منسلک دستاویز سے پڑھی گئی سائٹ وزٹ کی آخری تاریخ اور بولی کھلنے کی تاریخ نکالی جاتی تھیں مگر محفوظ نہیں ہوتی تھیں — اب وہ ٹینڈر میں محفوظ ہوتی ہیں۔",
-      "درستی: خالی چھوڑی گئی تخمینی مالیت یا دستاویز کی فیس صفحہ دوبارہ کھلنے پر صفر بن جاتی تھی، جس سے «خالی» کی یاد دہانی چھپ جاتی اور مطالعہ انہیں بھر نہیں پاتا تھا — اب خالی رقم خالی ہی رہتی ہے۔",
-      "فائل کا مطلب ہر جگہ ایک ہی ہے: ٹینڈر کی اپنی کھڑکی سے شامل کی گئی مطالعے کی ورک بک اسے بھرتی ہے، اور کھڑکی میں «حتمی پیشکش» کے طور پر شامل یا نشان زد کی گئی فائل ٹینڈر کو تیار کر دیتی ہے (پہلے یہ صرف فائل ڈالنے سے ہوتا تھا)۔",
-      "مطالعہ اب زیادہ نرمی سے مگر بغیر اندازے کے پڑھا جاتا ہے: متن میں لکھی تاریخ اور رقم قبول ہوتی ہیں، اور جو پڑھا نہ جا سکے اسے خالی چھوڑ کر صفحے پر اس کا نام بتایا جاتا ہے۔ ایک ہی مطالعہ دو بار درآمد کرنے سے ٹینڈر کے تاریخچے میں سطر دہرائی نہیں جاتی۔",
-      "بیک اپ کی یاد دہانی: رجسٹر صرف آپ کی ڈیوائس پر محفوظ ہے، اس لیے اگر کبھی بیک اپ نہیں لیا گیا یا آخری بیک اپ کو ایک ہفتہ گزر چکا ہے تو صفحہ یہ بتاتا ہے اور ایک کلک سے بیک اپ محفوظ کرتا ہے۔ ڈیٹا کا صفحہ آخری بیک اپ کی تاریخ دکھاتا ہے۔",
-      "ڈارک موڈ: کھڑکیوں کے اندر جو متن مشکل سے نظر آتا تھا اب صاف ہے (کھڑکی کے نیچے صفحہ نمبر، میل کے صفحات کے درمیان لنک، تاخیر والی سرخ سطریں، اور ٹینڈر کے مراحل کی گنتی)۔",
-      "پرنٹ: جن حصوں تک آپ نے ابھی سکرول نہیں کیا تھا وہ خالی چھپتے تھے — اب وہ مکمل چھپتے ہیں۔",
-      "کی بورڈ اور اسکرین ریڈر استعمال کرنے والوں کے لیے: اب ہر خانے کا نام ہے، اور فون پر چوڑی جدولوں تک کی بورڈ سے پہنچ کر انہیں سکرول کیا جا سکتا ہے۔",
-      "انگریزی متن کے اندر عربی نام والے ٹینڈر کا جملہ الٹی ترتیب میں دکھائی دیتا تھا — اب وہ درست پڑھا جاتا ہے۔",
-      "معیار کا مکمل جائزہ: ایک نئی جانچ پورٹل کی ہر کھڑکی کو روشن اور ڈارک موڈ میں، تینوں زبانوں میں اور فون پر کھولتی ہے، اور ہر تبدیلی کے ساتھ خود چلتی ہے۔"
+      "درستی: لمبی کھڑکیوں میں (جیسے ٹینڈر کی کھڑکی) «اگلا»، «پچھلا» اور صفحہ نمبر ماؤس کے کلک پر کام نہیں کرتے تھے — صرف ماؤس کا پہیہ صفحے پلٹتا تھا۔ اب یہ بٹن کام کرتے ہیں، چاہے کھڑکی میں کوئی چیز مسلسل بدل رہی ہو، جیسے لکھائی میں مدد دینے والی براؤزر ایکسٹینشن۔"
     ]
   },
   "counts": {
-    "versions": 180,
+    "versions": 181,
     "decisions": 129
   }
 }

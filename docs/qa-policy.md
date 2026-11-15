@@ -76,3 +76,11 @@ Before a release that touches many pages, and at least once a month, the wide cr
 can be clicked, every window that opens, in the theme × language × screen matrix, with the accessibility scan inside each
 window. Its findings are sorted into *fixed with a test*, *not a defect — why*, and *left — why*. The record of the first run
 is `docs/qa/audit-v9.55.md`.
+
+## 8. Lessons recorded
+
+- **v9.56 — a test clicks in an instant; a person does not.** The window pager rebuilt its own buttons whenever anything in
+  the window changed class — including the press effect added on pointer-down — so a real click (about a tenth of a second
+  from press to release) ended on a button that no longer existed. Every suite passed. A control that redraws itself must be
+  tested with a held click (`mouse.down` → wait → `mouse.up`), and with something else in the window changing while it is
+  pressed. The pager suite does both (W21, W22).

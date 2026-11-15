@@ -71,6 +71,33 @@ with sync_playwright() as p:
     # ---------- a short scroll is left alone
     pg.evaluate("__mk('<h2>Short</h2><table><tbody>'+__rows(22)+'</tbody></table>')"); pg.wait_for_timeout(250); s=pg.locator('#t-dlg').evaluate("d=>__state(d)")
     check(f'W8 a window a little longer than the screen ({s.get("ratio")} screens) keeps its own scroll: no pager', not s['paged'] and 1.0 < s['ratio'] <= 1.5, s); shut(pg)
+    # ---------- v9.56: a click held as long as a person holds it. The tests clicked in an instant and passed; on the manager's
+    # screen «Next» and the page numbers did nothing, because pressing a button adds the press effect, the pager counted that as
+    # a change, rebuilt its buttons under the finger, and the release fell on a button that was gone.
+    def held(sel, ms=140):
+        bb=None
+        for _ in range(20):
+            bb=pg.locator(sel).bounding_box()
+            if bb: break
+            pg.wait_for_timeout(100)
+        if not bb: print('NOTE  '+sel+' was not on screen'); return
+        pg.mouse.move(bb['x']+bb['width']/2, bb['y']+bb['height']/2); pg.wait_for_timeout(250)
+        pg.mouse.down(); pg.wait_for_timeout(ms); pg.mouse.up(); pg.wait_for_timeout(350)
+    pg.evaluate("__mk('<h2>Held</h2><table><tbody>'+__rows(70)+'</tbody></table>')"); pg.wait_for_timeout(400); d=pg.locator('#t-dlg')
+    check('W20b the held-click window is paged into a few numbered pages', 3<=d.evaluate("d=>__state(d)")['pages']<=9 and pg.locator('#t-dlg .dlg-pager .dp-n').count()>=3, d.evaluate("d=>__state(d)"))
+    h0=d.evaluate("d=>__state(d)")['page']; held('#t-dlg .dlg-pager .dp-next'); h1=d.evaluate("d=>__state(d)")['page']
+    held('#t-dlg .dlg-pager .dp-n:nth-child(3)'); h2=d.evaluate("d=>__state(d)")['page']; held('#t-dlg .dlg-pager .dp-prev'); h3=d.evaluate("d=>__state(d)")['page']
+    check(f'W21 «Next», a page number and «Previous» work when the click is held like a person holds it ({h0}→{h1}→{h2}→{h3})', (h1,h2,h3)==(h0+1,3,2), (h0,h1,h2,h3))
+    # something in the window that never stops changing (a writing-help extension in a text box, a file still being read)
+    d.evaluate("d=>{ const g=document.createElement('span'); g.id='busy-ext'; __sc(d).prepend(g); let k=0; window.__busy=setInterval(()=>{ g.className='x'+(k++%2) }, 50) }")
+    pg.wait_for_timeout(300); pg.keyboard.press('Home'); pg.wait_for_timeout(200)
+    tries=[]
+    for _ in range(4):
+        pg.keyboard.press('Home'); pg.wait_for_timeout(200)
+        b0=d.evaluate("d=>__state(d)")['page']; held('#t-dlg .dlg-pager .dp-next'); b1=d.evaluate("d=>__state(d)")['page']; held('#t-dlg .dlg-pager .dp-n:nth-child(3)'); b2=d.evaluate("d=>__state(d)")['page']; tries.append((b0,b1,b2))
+    pg.evaluate("clearInterval(window.__busy); document.getElementById('busy-ext').remove()"); pg.wait_for_timeout(300)
+    check(f'W22 and while something else in the window keeps changing — four times over ({tries})', all((x[1],x[2])==(x[0]+1,3) for x in tries), tries)
+    shut(pg)
     # ---------- mixed content: headings, text, a grid of cards, a form, and one block taller than a page
     cards=''.join(f'<div class="card" style="padding:14px;min-height:{90+(i%3)*40}px"><b>Card {i+1}</b><p>text</p></div>' for i in range(24))
     form=''.join(f'<label style="display:block;margin:10px 0">Field {i+1} <input id="f{i+1}" style="display:block;min-height:40px;width:100%"></label>' for i in range(30))
