@@ -1,28 +1,34 @@
 {
-  "version": "9.60",
+  "version": "9.61",
   "date": "2026-11-17",
   "notes": {
     "ar": [
-      "رادار اعتماد في سجل المناقصات: ارفع ملف أداة سحب اعتماد (الإكسل أو ملف الرادار) فتظهر المنافسات المفتوحة في نطاق آفاقي بأقرب موعد، مع تصفية للمنطقة الغربية. «تابِعها» تضيفها إلى السجل بمواعيد المنصة، و«ليست لنا» تُخفيها.",
-      "مواعيد المنصة وسعر الكراسة صارت تؤخذ من اعتماد: إذا عرف الرادار مناقصة في السجل ضبط موعد التقديم وساعته وآخر موعد للاستفسارات وسعر الكراسة كما على المنصة، وكتبت البطاقة ما صحّحه ومن أين جاء القديم. ما تكتبه بيدك لا يتغير.",
-      "تحت موعد التقديم في بطاقة المناقصة يظهر مصدره: منصة اعتماد، أو دراسة المحلل من الكراسة، أو الإيميل، أو إدخال يدوي.",
-      "تاريخ الكراسة المكتوب بالهجري يراجعه السجل بنفسه بتقويم أم القرى قبل أن يأخذه من دراسة المحلل؛ هذا ما جعل مناقصة الداش كام تظهر بموعد 19 نوفمبر بدل موعدها على المنصة."
+      "في بطاقة المناقصة المربوطة باعتماد طيّة جديدة «السوق والنتيجة»: العروض المنشورة لها بأسعارها وفحصها الفني وترتيب عرضنا، ومنافسات مشابهة أُعلنت ترسيتها بفائزها وقيمتها وعدد عروضها، ووسيط قيمة الترسية والأكثر فوزًا.",
+      "إذا أعلنت اعتماد الفائز، تقول البطاقة النتيجة وتعرض تسجيلها بزر واحد مع السبب من بيانات اعتماد نفسها؛ لا يُسجَّل شيء دون ضغطتك.",
+      "في رادار اعتماد: قسم «عروض آفاقي على اعتماد» بأسعارنا وفحصها الفني وترتيبنا والفائز، وزر «انسخ أرقام ما أتابعه» لتحديث هذه المناقصات وحدها من أداة السحب.",
+      "المناقصة التي فزنا بها تقول في بطاقتها موعد بدء الأعمال كما تنشره اعتماد، وفيها زر «تابع التنفيذ في مشاريعي» حيث تُتابع القيمة والتحصيل والمراحل.",
+      "زر «الأرشيف» في سجل المناقصات يجمع كل مناقصة أُغلقت بنتيجتها وسببها وقيمتها وملفاتها ورقمها على اعتماد، مع تصفية بالنتيجة والسنة وتنزيل إكسل. و«تقرير السنة» صار يبدأ بقمع: ما نُشر في نطاقنا بالمنطقة الغربية على اعتماد، وما وصل إلينا، وما قررنا فيه، وما قدّمناه، وما فزنا به.",
+      "رادار اعتماد لا يعرض بين «المفتوحة» منافسة فات موعد تقديمها بعد السحب؛ تبقى ظاهرة تحت «الكل»."
     ],
     "en": [
-      "The Etimad radar in the tender register: upload the Etimad pull tool’s file (the Excel workbook or the radar file) to see the open tenders within AFAQY’s scope, nearest deadline first, with a Western Region filter. «Follow it» adds a tender to the register with the platform’s dates; «Not ours» hides it.",
-      "The platform’s dates and the booklet fee now come from Etimad: when the radar knows a register tender, it sets the submission deadline and its hour, the inquiries deadline and the booklet fee as they are on the platform, and the card says what it corrected and where the old value came from. What you type yourself is never changed.",
-      "Under the submission deadline on a tender’s card, its source is shown: the Etimad platform, the analyzer’s study of the booklet, the email, or typed by hand.",
-      "A booklet date written in Hijri is now checked by the register itself, in the Umm al-Qura calendar, before it is taken from the analyzer’s study — this is what showed the dash-cam tender with a 19 November deadline instead of its date on the platform."
+      "A tender linked to Etimad has a new «Market and result» fold on its card: its published offers with their prices, technical result and our offer’s rank, and similar tenders with an announced award — winner, value, number of offers — with the median award value and who wins most.",
+      "Once Etimad announces the winner, the card says so and offers to record it with one press, with the reason taken from Etimad’s own facts; nothing is recorded without your press.",
+      "In the Etimad radar: a section «AFAQY’s offers on Etimad» with our prices, their technical result, our rank and the winner, and a «Copy the numbers I follow» button to refresh only those tenders from the pull tool.",
+      "A tender we won shows on its card the work start date as Etimad publishes it, with a «Follow the execution in My projects» button, where the value, the collection and the milestones are followed.",
+      "The «Archive» button in the tender register gathers every closed tender with its outcome, reason, value, files and Etimad number, filtered by outcome and year, with an Excel download. The «Year report» now opens with a funnel: what Etimad published within our scope in the Western Region, what reached us, what we decided on, what we submitted, and what we won.",
+      "The Etimad radar no longer lists as «open» a tender whose submission deadline passed after the pull; it stays visible under «All of them»."
     ],
     "ur": [
-      "ٹینڈر رجسٹر میں اعتماد ریڈار: اعتماد ٹول کی فائل (ایکسل یا ریڈار فائل) اپ لوڈ کریں تو آفاقی کے دائرۂ کار کے کھلے ٹینڈر قریب ترین آخری تاریخ کے ساتھ پہلے نظر آتے ہیں، مغربی علاقے کے فلٹر کے ساتھ۔ «اس کی پیروی کریں» ٹینڈر کو پلیٹ فارم کی تاریخوں کے ساتھ رجسٹر میں شامل کرتا ہے؛ «ہمارا نہیں» اسے چھپا دیتا ہے۔",
-      "پلیٹ فارم کی تاریخیں اور کتابچے کی قیمت اب اعتماد سے لی جاتی ہیں: جب ریڈار رجسٹر کے کسی ٹینڈر کو پہچان لے تو جمع کرانے کی آخری تاریخ اور وقت، سوالات کی آخری تاریخ اور کتابچے کی قیمت پلیٹ فارم کے مطابق کر دیتا ہے، اور کارڈ بتاتا ہے کہ کیا درست ہوا اور پرانی قدر کہاں سے آئی تھی۔ جو آپ خود لکھیں وہ کبھی نہیں بدلتا۔",
-      "ٹینڈر کارڈ میں جمع کرانے کی آخری تاریخ کے نیچے اس کا ماخذ دکھایا جاتا ہے: اعتماد پلیٹ فارم، کتابچے پر تجزیہ کار کا مطالعہ، ای میل، یا ہاتھ سے لکھا ہوا۔",
-      "کتابچے میں ہجری میں لکھی تاریخ کو رجسٹر اب تجزیہ کار کے مطالعے سے لینے سے پہلے خود ام القریٰ کیلنڈر سے جانچتا ہے — اسی وجہ سے ڈیش کیم ٹینڈر پلیٹ فارم کی تاریخ کے بجائے 19 نومبر کی آخری تاریخ کے ساتھ نظر آ رہا تھا۔"
+      "اعتماد سے منسلک ٹینڈر کے کارڈ میں نیا حصہ «مارکیٹ اور نتیجہ»: اس کی شائع شدہ پیشکشیں ان کی قیمتوں، تکنیکی جانچ اور ہماری پیشکش کے درجے کے ساتھ، اور ملتے جلتے ٹینڈر جن کے ایوارڈ کا اعلان ہو چکا — جیتنے والا، قیمت، پیشکشوں کی تعداد — ایوارڈ کی درمیانی قیمت اور سب سے زیادہ جیتنے والوں کے ساتھ۔",
+      "جب اعتماد جیتنے والے کا اعلان کرے تو کارڈ نتیجہ بتاتا ہے اور ایک بٹن سے اسے درج کرنے کی پیشکش کرتا ہے، وجہ اعتماد کی اپنی معلومات سے لی جاتی ہے؛ آپ کے دبائے بغیر کچھ درج نہیں ہوتا۔",
+      "اعتماد ریڈار میں: «اعتماد پر آفاقی کی پیشکشیں» کا حصہ ہماری قیمتوں، تکنیکی جانچ، ہمارے درجے اور جیتنے والے کے ساتھ، اور «جن کی پیروی کرتا ہوں ان کے نمبر کاپی کریں» کا بٹن تاکہ ٹول صرف انہی ٹینڈروں کو تازہ کرے۔",
+      "جو ٹینڈر ہم جیتے، اس کے کارڈ پر کام کے آغاز کی تاریخ ویسی ہی دکھائی جاتی ہے جیسی اعتماد شائع کرے، اور «میرے منصوبوں میں عمل درآمد کی پیروی کریں» کا بٹن ہے جہاں قیمت، وصولی اور مراحل کی پیروی ہوتی ہے۔",
+      "ٹینڈر رجسٹر میں «آرکائیو» کا بٹن ہر بند ٹینڈر کو اس کے نتیجے، وجہ، قیمت، فائلوں اور اعتماد نمبر کے ساتھ جمع کرتا ہے، نتیجے اور سال کے فلٹر اور ایکسل ڈاؤن لوڈ کے ساتھ۔ اور «سال کی رپورٹ» اب ایک قیف سے شروع ہوتی ہے: مغربی علاقے میں ہمارے دائرۂ کار میں اعتماد پر کیا شائع ہوا، ہم تک کیا پہنچا، ہم نے کس پر فیصلہ کیا، کیا جمع کرایا، اور کیا جیتا۔",
+      "اعتماد ریڈار اب ایسا ٹینڈر «کھلے» میں نہیں دکھاتا جس کی جمع کرانے کی آخری تاریخ ڈیٹا نکالنے کے بعد گزر چکی ہو؛ وہ «سب ٹینڈر» میں نظر آتا رہتا ہے۔"
     ]
   },
   "counts": {
-    "versions": 185,
-    "decisions": 132
+    "versions": 186,
+    "decisions": 133
   }
 }

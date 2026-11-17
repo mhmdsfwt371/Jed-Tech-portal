@@ -14,7 +14,7 @@ import {
   quarterRange, quarterOf, quarterBaseline, quarterGoalProgress, planProgress, suggestQuarterGoals,
   maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply,
   tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds, tenderAmount, tenderDatePatch, backupDue, parseTenderStudy, matchTenderStudy, applyTenderStudy, tenderAutoStage, tenderStudyFromSheet,
-  RADAR_SCHEMA, parseRadar, radarFromSheets, radarMerge, radarFind, radarSuggest, applyEtimad, radarToItem,
+  RADAR_SCHEMA, parseRadar, radarFromSheets, radarMerge, radarFind, radarSuggest, applyEtimad, radarToItem, radarResult, tenderOutcome, radarSimilar, radarOurBids, tenderFunnel, tenderArchive,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
   mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts,
@@ -911,7 +911,7 @@ function cleanTenders(x) {
     stage: TD_STAGES.includes(i.stage) ? i.stage : (i.status === 'ready' ? 'ready' : 'received'), stageAt: d(i.stageAt) || d(i.readyOn) || i.date,
     reason: String(i.reason || '').slice(0, 300), owner: String(i.owner || '').slice(0, 80), etimadNo: String(i.etimadNo || '').slice(0, 40),
     value: tenderAmount(i.value), fees: tenderAmount(i.fees), bond: String(i.bond || '').slice(0, 120),
-    askDue: d(i.askDue), openAt: d(i.openAt), submittedOn: d(i.submittedOn), submitNo: String(i.submitNo || '').slice(0, 60), decidedOn: d(i.decidedOn), study: String(i.study || '').slice(0, 300),
+    askDue: d(i.askDue), openAt: d(i.openAt), submittedOn: d(i.submittedOn), submitNo: String(i.submitNo || '').slice(0, 60), workStart: d(i.workStart), decidedOn: d(i.decidedOn), study: String(i.study || '').slice(0, 300),
     entity: String(i.entity || '').slice(0, 200), site: String(i.site || '').slice(0, 300), ...cleanTenderDetails(i) }));   // entity, site: v9.58
   return { items, to: d(x.to) || null, pulledAt: String(x.pulledAt || ''), revision: String(x.revision || ''),
     radarIgnore: (Array.isArray(x.radarIgnore) ? x.radarIgnore : []).map((r) => String(r).replace(/[^\d]/g, '')).filter(Boolean).slice(-3000) };   // v9.60: Etimad tenders the manager put aside
@@ -1071,6 +1071,7 @@ async function tdImportStudies(files, onlyId = null) {
       if (study.decision) await tdAutoMove(row.id, { type: 'study', decision: study.decision, why: study.why }, res);
     }
   }
+  if (etRadar) { try { await etApply({ changed: [], differs: [] }); } catch { /* applied on the next pull */ } }   // v9.60: the platform's dates stay the platform's after a study is read
   tdStudyResult = res; renderTenders();
   toast(t('td_study_done', { n: res.fields, m: res.tenders, d: res.differs.length, u: res.unmatched.length }));
 }
@@ -1082,6 +1083,8 @@ let etRadar = null, etResult = null, etTm = 0;
 const etF = { scope: true, west: false, status: 'active', q: '', hidden: false };
 const etRefs = () => (tenders ? tenders.items : []).map((i) => String(i.etimadNo || '').replace(/[^\d]/g, '')).filter(Boolean);
 const etIgnored = () => new Set((tenders && tenders.radarIgnore) || []);
+// a tender the pull saw open is open only until its deadline: the real pull listed tenders whose submission had closed hours earlier
+const etOpenNow = (x, now = tdNowWall()) => x.status === 'active' && (!x.due || tdAt(x.due, x.dueTime || '23:59') >= now.slice(0, 16));
 async function etIsFile(f) {
   if (/\.json$/i.test(f.name)) { try { return (await f.slice(0, 4000).text()).includes(RADAR_SCHEMA); } catch { return false; } }
   if (!/\.(xlsx|xlsm)$/i.test(f.name)) return false;
@@ -1140,6 +1143,39 @@ async function etIgnore(ref, on) {
   if (await etSave({ ...cur, radarIgnore: [...s].slice(-3000) })) etDraw();
 }
 const etWhen = (d, tm) => (d ? tdWhen(tdAt(d, tm)) : '—');
+// v9.62 (ADR-0134): a won tender opens in «My projects», where its execution is followed; the archive lists every closed tender
+function tdToProjects(i) {
+  pwFilters.q = projQuery = tdTitle(i.subject).slice(0, 80); dlgCloseAll();   // the follow-up view is where execution, the award and the milestones are kept
+  location.hash = '#me'; setTimeout(() => { projView = 'followup'; projOpen(); }, 300);
+}
+function dlgCloseAll() { for (const d of [...document.querySelectorAll('dialog[open]')]) d.close(); }
+function tdArchiveOpen() {
+  const A = tenderArchive(tenders ? tenders.items : []);
+  if (!A.length) { toast(t('td_arch_none')); return; }
+  const is = (s) => (k) => A[k].stage === s, money = (v) => (v != null ? tdMoney(v) : '—');
+  crModal({ title: t('td_arch_h', { n: A.length }), lead: t('td_arch_lead'), file: 'AFAQY-tenders-archive', wrap: true,
+    tiles: ['won', 'lost', 'missed', 'declined', 'cancelled'].map((s) => [t(`td_st_${s}`), A.filter((x) => x.stage === s).length, null, is(s)]),
+    bar: (k) => [A[k].year, 1],
+    head: [t('td_col_subject'), t('td_col_entity'), t('td_col_date'), t('td_arch_closed'), t('td_col_stage'), t('td_col_reason'), t('td_col_value'), t('td_col_etimadNo'), t('td_arch_files')],
+    rows: A.map((x) => [x.subject, x.entity || '—', x.date, x.closedOn, t(`td_st_${x.stage}`), x.reason || '—', money(x.value), x.etimadNo || '—', x.files]) });
+}
+// v9.61 (ADR-0133): the market around a tender — its own bids once published, and awarded tenders that look like it
+function tdMarketFold(i, x, res) {
+  const M = radarSimilar(x ? x.title : i.subject, etRadar, { ref: x ? x.ref : '' }), money = (v) => (v != null ? tdMoney(v) : '—');
+  const bids = res && res.offers.length ? el('div', { class: 'table-wrap crm-list crm-wrap', tabindex: '0', role: 'group', 'aria-label': t('et_bids_h') }, el('table', { class: 'et-bids' },
+    el('thead', {}, el('tr', {}, [t('et_c_rank'), t('et_c_bidder'), t('et_c_price'), t('et_c_tech')].map((h) => el('th', { text: h })))),
+    el('tbody', {}, res.offers.map((o, k) => el('tr', { class: o.us ? 'et-us' : '' }, el('td', { class: 'num', text: o.price != null && k < res.usOf ? String(k + 1) : '—' }), el('td', { dir: 'auto', text: o.bidder }),
+      el('td', { class: 'num', text: money(o.price) }), el('td', { text: o.tech ? t(`et_tech_${o.tech}`) : '—' })))))) : null;
+  const sim = M.n ? el('div', { class: 'table-wrap crm-list crm-wrap', tabindex: '0', role: 'group', 'aria-label': t('et_sim_h', { n: M.n }) }, el('table', { class: 'et-sim' },
+    el('thead', {}, el('tr', {}, [t('td_col_subject'), t('et_c_winner'), t('et_c_value'), t('et_c_bidders'), t('et_c_range')].map((h) => el('th', { text: h })))),
+    el('tbody', {}, M.rows.map((r) => el('tr', { class: r.us ? 'et-us' : '' }, el('td', {}, el('div', { dir: 'auto', text: r.title }), el('small', { class: 'hint', dir: 'auto', text: `${r.entity} · ${r.published || ''}` })),
+      el('td', { dir: 'auto', text: r.winner }), el('td', { class: 'num', text: money(r.value) }), el('td', { class: 'num', text: String(r.bidders || '—') }),
+      el('td', { class: 'num', text: r.low != null ? `${money(r.low)} – ${money(r.high)}` : '—' })))))) : null;
+  return tdFold('market', t('et_fold_market', { n: M.n + (res ? res.n : 0) }),
+    res && res.n ? el('h4', { text: t('et_bids_h') }) : null, bids || (x ? el('p', { class: 'hint', text: t('et_bids_none') }) : el('p', { class: 'hint', text: t('et_market_unlinked') })),
+    el('h4', { text: t('et_sim_h', { n: M.n }) }),
+    M.n ? el('p', { class: 'et-sim-sum', text: t('et_sim_sum', { v: money(M.medianValue), b: M.medianBidders != null ? M.medianBidders : '—', w: M.wins.map((w) => `${bidi(w.name)} (${w.n})`).join(lang === 'en' ? ', ' : '، ') || '—' }) }) : el('p', { class: 'hint', text: t('et_sim_none') }), sim);
+}
 let etDraw = () => {};
 function etOpen() {
   const body = el('div', { class: 'et-body' }), up = el('input', { type: 'file', accept: '.json,.xlsx,.xlsm', multiple: '', hidden: '', onchange: async (e) => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) { await etImport(fs); etDraw(); } } });
@@ -1153,17 +1189,18 @@ function etOpen() {
     const upBtn = el('button', { type: 'button', class: 'btn primary et-up', disabled: !!tdBusy, text: `⤒ ${t(R ? 'et_up_more' : 'et_up')}`, onclick: () => up.click() });
     if (!R) { set(body, el('p', { class: 'note', text: t('et_empty') }), upBtn); return; }
     const pill = (on, text, f) => el('button', { type: 'button', class: `pill-btn${on ? ' on' : ''}`, 'aria-pressed': String(on), text, onclick: () => { f(); etDraw(); } });
-    const base = R.tenders.filter((x) => (!etF.scope || x.scope || linked.has(x.ref)) && (!etF.west || x.west) && (etF.status === 'all' || x.status === etF.status));
+    const base = R.tenders.filter((x) => (!etF.scope || x.scope || linked.has(x.ref)) && (!etF.west || x.west) && (etF.status === 'all' || (etF.status === 'active' ? etOpenNow(x, now) : x.status === etF.status)));
     const q = tdNorm(tenderDigits(etF.q)), list = base.filter((x) => (etF.hidden ? hid.has(x.ref) : !hid.has(x.ref)) && (!q || tdNorm(tenderDigits(`${x.title} ${x.entity} ${x.ref} ${x.no}`)).includes(q)))
       .sort((a, b) => (etF.status === 'active' ? `${a.due || '9'}${a.dueTime}`.localeCompare(`${b.due || '9'}${b.dueTime}`) : (b.published || '').localeCompare(a.published || '')));
-    const act = R.tenders.filter((x) => x.status === 'active' && (x.scope || linked.has(x.ref)) && !hid.has(x.ref)), soon = act.filter((x) => x.due && x.due >= today && tdDaysBetween(today, x.due) <= 7);
+    const act = R.tenders.filter((x) => etOpenNow(x, now) && (x.scope || linked.has(x.ref)) && !hid.has(x.ref)), soon = act.filter((x) => x.due && x.due >= today && tdDaysBetween(today, x.due) <= 7);
     const sugg = (tenders ? tenders.items : []).filter((i) => !TENDER_CLOSED.includes(i.stage) && !String(i.etimadNo || '').trim() && !radarFind(i, R.tenders, tdKey))
       .map((i) => [i, radarSuggest(i, R.tenders.filter((x) => x.status === 'active' && !linked.has(x.ref)), 1)[0]]).filter(([, x]) => x);
     const row = (x) => { const id = linked.get(x.ref), off = hid.has(x.ref);
       return el('tr', { class: `et-row${id ? ' et-in' : ''}`, 'data-ref': x.ref },
         el('td', {}, el('b', { dir: 'auto', text: x.title }), el('div', { class: 'hint', dir: 'auto', text: x.entity }),
           el('div', { class: 'td-chips' }, [x.type, x.west ? t('et_west') : '', id ? t('et_in_reg') : '', `${t('td_card_etimad')} ${x.ref}`].filter(Boolean).map((c) => el('span', { class: 'chip', dir: 'auto', text: c })))),
-        el('td', { class: 'num' }, el('div', { text: etWhen(x.due, x.dueTime) }), x.status === 'active' && x.due ? tdBadge(tdCountdown(tdAt(x.due, x.dueTime), now)) : el('span', { class: 'hint', text: t(`et_st_${x.status}`) })),
+        el('td', { class: 'num' }, el('div', { text: etWhen(x.due, x.dueTime) }), x.status === 'active' && x.due ? tdBadge(tdCountdown(tdAt(x.due, x.dueTime), now)) : el('span', { class: 'hint', text: t(`et_st_${x.status}`) }),
+          (() => { const a = x.status === 'awarded' && (R.awards || []).find((w) => w.ref === x.ref); return a ? el('div', { class: 'hint et-won-by', dir: 'auto', text: t('et_won_by', { w: a.winner, v: a.value != null ? tdMoney(a.value) : t('et_novalue') }) }) : null; })()),
         el('td', { class: 'num', text: x.fees != null ? tdMoney(x.fees) : '—' }),
         el('td', { class: 'et-acts' },
           id ? el('button', { type: 'button', class: 'btn tiny et-open', text: t('et_open'), onclick: () => { tdOpenId = id; dlg.close(); renderTenders(); } })
@@ -1172,7 +1209,9 @@ function etOpen() {
           x.link ? el('a', { class: 'btn tiny quiet', href: x.link, target: '_blank', rel: 'noopener noreferrer', text: `${t('et_page')} ↗` }) : null)); };
     const shown = list.slice(0, 200);
     set(body,
-      el('div', { class: 'row et-pull' }, el('span', { class: 'hint', text: t('et_pulled', { at: R.pulledAt ? tdWhen(R.pulledAt) : '—', k: R.tenders.length, n: (R.pulls || []).length }) }), upBtn),
+      el('div', { class: 'row et-pull' }, el('span', { class: 'hint', text: t('et_pulled', { at: R.pulledAt ? tdWhen(R.pulledAt) : '—', k: R.tenders.length, n: (R.pulls || []).length }) }), upBtn,
+        el('button', { type: 'button', class: 'btn et-refs', text: `📋 ${t('et_copy_refs')}`, title: t('et_copy_refs_hint'), onclick: () => { const refs = [...new Set((tenders ? tenders.items : []).filter((i) => !['declined', 'cancelled'].includes(i.stage)).map((i) => { const y = radarFind(i, R.tenders, tdKey); return y ? y.ref : String(i.etimadNo || '').replace(/[^\d]/g, ''); }).filter((r) => r.length >= 10))];
+          if (!refs.length) { toast(t('et_copy_refs_none')); return; } copyText(refs.join('\n'), t('et_copy_refs_done', { n: refs.length })); } })),
       R.partial ? el('p', { class: 'note et-partial', text: t('et_partial') }) : null,
       el('div', { class: 'crm-tiles et-tiles' },
         el('div', { class: 'km-tile' }, el('b', { text: String(act.length) }), el('span', { text: t('et_k_open') })),
@@ -1188,6 +1227,12 @@ function etOpen() {
         el('div', { class: 'pills' }, ['active', 'awarded', 'all'].map((s) => pill(etF.status === s, t(`et_f_${s}`), () => { etF.status = s; }))),
         el('input', { type: 'search', class: 'et-q', value: etF.q, placeholder: t('et_q'), 'aria-label': t('et_q'), oninput: (e) => { etF.q = e.target.value; clearTimeout(etTm); etTm = setTimeout(() => { etDraw(); const n = dlg.querySelector('.et-q'); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 250); } }),
         pill(etF.hidden, t('et_f_hidden', { n: hid.size }), () => { etF.hidden = !etF.hidden; })),
+      (() => { const ours = radarOurBids(R); if (!ours.length) return null;   // v9.61: AFAQY's own bids on Etimad, whatever branch made them
+        return el('details', { class: 'et-ours' }, el('summary', { text: t('et_ours_h', { n: ours.length, w: ours.filter((o) => o.winner && o.winner.us).length, f: ours.filter((o) => o.us && o.us.tech === 'fail').length }) }),
+          el('div', { class: 'table-wrap crm-list crm-wrap', tabindex: '0', role: 'group', 'aria-label': t('et_ours_aria') }, el('table', {}, el('thead', {}, el('tr', {}, [t('td_col_subject'), t('et_c_price'), t('et_c_tech'), t('et_c_rank'), t('et_c_winner')].map((h) => el('th', { text: h })))),
+            el('tbody', {}, ours.map((o) => el('tr', {}, el('td', {}, el('div', { dir: 'auto', text: o.title }), el('small', { class: 'hint', dir: 'auto', text: `${o.entity} · ${o.published || ''}` })),
+              el('td', { class: 'num', text: o.us && o.us.price != null ? tdMoney(o.us.price) : '—' }), el('td', { text: o.us && o.us.tech ? t(`et_tech_${o.us.tech}`) : '—' }),
+              el('td', { class: 'num', text: o.usRank ? `${o.usRank} / ${o.usOf}` : '—' }), el('td', { dir: 'auto', text: o.winner ? (o.winner.us ? t('et_us_won') : o.winner.name) : t('et_no_winner') }))))))); })(),
       list.length ? el('div', { class: 'table-wrap crm-list crm-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('td_col_subject'), t('td_tile_due'), t('td_col_fees'), ''].map((h) => el('th', { text: h })))), el('tbody', {}, shown.map(row))))
         : el('p', { class: 'empty', text: t('et_none') }),
       list.length > shown.length ? el('p', { class: 'hint', text: t('crm_more', { n: list.length - shown.length }) }) : null);
@@ -1338,6 +1383,7 @@ async function tdImportEmails(files, id = '') {
     tdQuery = '';
   }
   tdMailResult = { a: added, l: linked, s: skipped, f: failed, w: warnings, failures };
+  if (etRadar) { try { await etApply({ changed: [], differs: [] }); } catch { /* the mail is in; Etimad applies on the next pull */ } }   // v9.60: a tender a mail added may be one Etimad already knows
   renderTenders();
   for (const tenderId of new Set(imported)) {
     const item = tenders.items.find(row => row.id === tenderId);
@@ -1482,7 +1528,19 @@ function tdCard(i, { field, needsFields, today }) {
   const srcName = (x) => (x ? t(`et_src_${x}`) : t('et_src_none'));
   const etWas = (i.etimadWas || []).filter((w) => w.field === 'fees' ? i.fieldSources?.fees === 'etimad' : i.dateSources?.[w.field] === 'etimad');
   const etSug = !String(i.etimadNo || '').trim() && etRadar && !closed ? radarSuggest(i, etRadar.tenders.filter((x) => x.status === 'active'), 2) : [];
-  const etBox = etWas.length || etSug.length ? el('section', { class: 'td-box et-card' },
+  // v9.61 (ADR-0133): Etimad's result for this tender, and the outcome it points to — confirmed by the manager, never set by itself
+  const etX = etRadar && String(i.etimadNo || '').trim() ? radarFind(i, etRadar.tenders, tdKey) : null, etRes = etX ? radarResult(etX.ref, etRadar) : null, etOut = tenderOutcome(i, etRes);
+  const etResLine = etRes && etRes.winner ? el('p', { class: 'et-res-line' }, el('span', { text: t('et_res_winner', { w: bidi(etRes.winner.name), v: etRes.winner.value != null ? tdMoney(etRes.winner.value) : t('et_novalue'), n: etRes.n }) }),
+    etRes.us ? el('span', { text: ' ' + (etRes.us.tech === 'fail' ? t('et_res_us_fail', { p: etRes.us.price != null ? tdMoney(etRes.us.price) : '—' }) : t('et_res_us', { p: etRes.us.price != null ? tdMoney(etRes.us.price) : '—', r: etRes.usRank || '—', n: etRes.usOf })) }) : null) : null;
+  const etOutBtn = etOut ? el('p', { class: 'et-out' }, el('b', { text: t(etOut.stage === 'won' ? 'et_out_won' : 'et_out_lost') }), ' ',
+    el('button', { type: 'button', class: 'btn tiny primary et-out-btn', disabled: !!tdBusy, text: t(etOut.stage === 'won' ? 'et_out_won_btn' : 'et_out_lost_btn'), onclick: async () => {
+      const reason = etOut.stage === 'lost' ? (etOut.usTech === 'fail' ? t('et_lost_tech', { w: etOut.winner, v: etOut.value != null ? tdMoney(etOut.value) : t('et_novalue') }) : t('et_lost_reason', { w: etOut.winner, v: etOut.value != null ? tdMoney(etOut.value) : t('et_novalue'), p: etOut.usPrice != null ? tdMoney(etOut.usPrice) : '—', r: etOut.rank || '—', n: etOut.of })) : '';
+      const patch = { stage: etOut.stage, stageAt: tdToday(), ...(reason ? { reason: reason.slice(0, 300) } : {}), ...(etOut.stage === 'won' && (i.value == null || i.value === '') && etOut.value != null ? { value: etOut.value } : {}) };
+      if (await tdUpdate(i.id, patch, tdActivity('stage', t('et_out_act', { s: t(`td_st_${etOut.stage}`) })))) { toast(t('et_out_done')); renderTenders(); } } })) : null;
+  // v9.62 (ADR-0134): a won tender is executed in «My projects»; the work start comes from Etimad when it publishes one
+  const etExec = st === 'won' ? el('p', { class: 'et-exec' }, el('span', { text: i.workStart ? t('et_exec', { d: tdWhen(i.workStart) }) : t('et_exec_nodate') }), ' ',
+    el('button', { type: 'button', class: 'btn tiny et-exec-open', text: `🗂 ${t('et_exec_open')}`, onclick: () => tdToProjects(i) })) : null;
+  const etBox = etWas.length || etSug.length || etResLine || etExec ? el('section', { class: 'td-box et-card' }, etExec, etResLine, etOutBtn,
     etWas.map((w) => el('p', { class: 'et-was', text: t('et_was', { f: t(`td_col_${w.field}`), w: bidi(w.was), src: srcName(w.src), v: bidi(w.field === 'fees' ? money(i.fees) : tdDateText(i[w.field], w.field === 'due' || w.field === 'askDue' ? i[`${w.field}Time`] : '')) }) })),
     etSug.map((x) => el('p', { class: 'et-sug' }, el('span', { text: t('et_card_sug', { e: bidi(x.title.slice(0, 100)), r: x.ref, d: x.due ? tdDateText(x.due, x.dueTime) : '—' }) }), ' ',
       el('button', { type: 'button', class: 'btn tiny et-link', disabled: !!tdBusy, text: t('et_link'), onclick: () => etLink(i.id, x.ref) })))) : null;
@@ -1521,7 +1579,7 @@ function tdCard(i, { field, needsFields, today }) {
         tdDateReview(i, TENDER_DATE_FIELDS.filter((k) => i[k])),
         el('label', { class: 'td-lab td-study-lab' }, el('span', { text: t('td_study_summary') }), el('textarea', { class: 'td-study-text', rows: 4, maxlength: 4000, dir: 'auto', disabled: !!tdBusy,
           placeholder: t('td_study_placeholder'), onchange: async (event) => { if (await tdUpdate(i.id, { studySummary: event.target.value.trim() }, tdActivity('study', ''))) renderTenders(); } }, i.studySummary || ''))),
-      tdThreadPanel(i), tdFold('files', t('td_fold_files', { n: (i.files || []).length }), tdInsightsPanel(i), ...tdFilesList(i)), tdInquiries(i), tdHistory(i)),
+      etRadar ? tdMarketFold(i, etX, etRes) : null, tdThreadPanel(i), tdFold('files', t('td_fold_files', { n: (i.files || []).length }), tdInsightsPanel(i), ...tdFilesList(i)), tdInquiries(i), tdHistory(i)),
     el('div', { class: 'row td-card-acts' },
       el('button', { type: 'button', class: 'btn tiny primary td-copy-sum', text: `📋 ${t('td_copy_sum')}`, onclick: () => copyText(tdTenderText(i), t('td_copied_sum')) }),
       el('button', { type: 'button', class: 'btn tiny td-team-msg', text: `📋 ${t('td_team_copy')}`, onclick: () => copyText(tdTeamText(i), t('td_team_copied')) }),
@@ -1601,6 +1659,9 @@ function tdYearSections(R) {
     reasons: ['missed', 'lost', 'declined', 'cancelled'].filter((k) => R.reasons[k].length).map((k) => [t(`td_st_${k}`), R.reasons[k].map((x) => [tdTitle(x.subject), x.reason || t('td_yr_noreason')])]),
     months: [[t('td_col_month'), t('td_yr_in'), t('td_yr_joined'), t('td_yr_sub'), t('td_st_won'), t('td_st_missed')], ...R.months.map((m) => [periodLabel(m.month), m.n, m.joined, m.submitted, m.won, m.missed])],
     entities: [[t('td_col_entity'), t('td_yr_in'), t('td_yr_sub'), t('td_st_won')], ...R.entities.map((e) => [e.entity || t('td_none_rec'), e.n, e.submitted, e.won])],
+    funnel: R.funnel ? [[t('et_fun_pub'), R.funnel.publishedWest, t('et_fun_pub_sub', { k: R.funnel.published })], [t('et_fun_reached'), R.funnel.reached, pct(R.funnel.reached, R.funnel.publishedWest)],
+      [t('et_fun_decided'), R.funnel.decided, pct(R.funnel.decided, R.funnel.reached)], [t('et_fun_sub'), R.funnel.submitted, pct(R.funnel.submitted, R.funnel.decided)], [t('et_fun_won'), R.funnel.won, pct(R.funnel.won, R.funnel.submitted)]] : null,
+    funnelNote: R.funnel ? t('et_fun_note', { n: R.funnel.covered.length, l: R.funnel.linked }) + (R.funnel.partial ? ` ${t('et_partial')}` : '') : '',
   };
 }
 function tdYearHtml(R) {
@@ -1613,6 +1674,7 @@ ul{margin:4px 0;padding-inline-start:20px}table{border-collapse:collapse;width:1
 @media print{body{margin:12mm}h2{break-after:avoid}tr{break-inside:avoid}}</style></head><body>
 <h1>${tdEsc(t('td_yr_h', { y: R.year }))}</h1><p class="sub">${tdEsc(t('td_yr_made', { d: tdWhen(tdNowWall()) }))}</p>
 <div class="tiles">${S.tiles.map(([l, v, x]) => `<div class="tile"><b>${tdEsc(v)}</b><span>${tdEsc(l)}${x ? ` · ${tdEsc(x)}` : ''}</span></div>`).join('')}</div>
+${S.funnel ? `<h2>${tdEsc(t('et_fun_h'))}</h2><div class="tiles">${S.funnel.map(([l, v, x]) => `<div class="tile"><b>${tdEsc(v)}</b><span>${tdEsc(l)}${x ? ` · ${tdEsc(x)}` : ''}</span></div>`).join('')}</div><p class="sub">${tdEsc(S.funnelNote)}</p>` : ''}
 <h2>${tdEsc(t('td_yr_glance'))}</h2><ul>${S.lines.map((l) => `<li>${tdEsc(l)}</li>`).join('')}</ul>
 ${S.reasons.length ? `<h2>${tdEsc(t('td_yr_why'))}</h2>${S.reasons.map(([h, L]) => `<p><b>${tdEsc(h)} (${L.length})</b></p><ul>${L.map(([s, r]) => `<li dir="auto">${tdEsc(s)} — ${tdEsc(r)}</li>`).join('')}</ul>`).join('')}` : ''}
 <h2>${tdEsc(t('td_yr_months'))}</h2>${table(S.months)}<h2>${tdEsc(t('td_yr_entities'))}</h2>${table(S.entities)}
@@ -1620,7 +1682,7 @@ ${S.reasons.length ? `<h2>${tdEsc(t('td_yr_why'))}</h2>${S.reasons.map(([h, L]) 
 }
 async function tdYearExcel(R) {
   const X = await loadXlsx(), S = tdYearSections(R), wb = X.utils.book_new(), add = (rows, name, cols) => { const ws = X.utils.aoa_to_sheet(rows); ws['!views'] = [{ RTL: lang !== 'en' }]; if (cols) ws['!cols'] = cols.map((w) => ({ wch: w })); X.utils.book_append_sheet(wb, ws, name.slice(0, 30)); };
-  add([[t('td_yr_h', { y: R.year })], [], ...S.tiles.map(([l, v, x]) => [l, v, x || '']), [], ...S.lines.map((l) => [l])], t('td_yr_sheet_sum'), [40, 12, 24]);
+  add([[t('td_yr_h', { y: R.year })], [], ...(S.funnel ? [[t('et_fun_h')], ...S.funnel.map(([l, v, x]) => [l, v, x || '']), [S.funnelNote], []] : []), ...S.tiles.map(([l, v, x]) => [l, v, x || '']), [], ...S.lines.map((l) => [l])], t('td_yr_sheet_sum'), [40, 12, 24]);
   add([tdYearHead(), ...tdYearRows(R)], t('td_sheet'), [60, 26, 12, 16, 10, 16, 16, 14, 40]);
   add(S.months, t('td_yr_months'), [18, 10, 10, 10, 10, 10]); add(S.entities, t('td_yr_entities'), [40, 10, 10, 10]);
   add([[t('td_col_stage'), t('td_col_subject'), t('td_col_reason')], ...S.reasons.flatMap(([h, L]) => L.map(([sub, r]) => [h, sub, r]))], t('td_yr_why'), [18, 60, 50]);
@@ -1629,7 +1691,8 @@ async function tdYearExcel(R) {
 function tdYearReport(year = null) {
   const items = tenders ? tenders.items : [], years = [...new Set(items.map((i) => i.date.slice(0, 4)))].sort().reverse();
   if (!years.length) { toast(t('td_empty')); return; }
-  const y = years.includes(year) ? year : years.includes(tdToday().slice(0, 4)) ? tdToday().slice(0, 4) : years[0], R = tenderYearReport(items, y), S = tdYearSections(R);
+  const y = years.includes(year) ? year : years.includes(tdToday().slice(0, 4)) ? tdToday().slice(0, 4) : years[0], R = tenderYearReport(items, y);
+  R.funnel = etRadar ? tenderFunnel(items, etRadar, y, tdKey) : null; const S = tdYearSections(R);   // v9.62: the year from what Etimad published
   const tableEl = (rows, cls) => el('div', { class: `table-wrap td-yr-table ${cls}`, tabindex: '0', role: 'group', 'aria-label': rows[0][0] }, el('table', {}, el('thead', {}, el('tr', {}, rows[0].map((h) => el('th', { text: h })))),
     el('tbody', {}, rows.slice(1).map((r) => el('tr', {}, r.map((c, k) => el('td', { class: k && typeof c === 'number' ? 'num' : '', dir: 'auto', text: String(c) })))))));
   const dl = () => { const u = URL.createObjectURL(new Blob([tdYearHtml(R)], { type: 'text/html' })); const a = el('a', { href: u, download: `AFAQY-tenders-${R.year}-report.html` }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 5000); };
@@ -1638,6 +1701,9 @@ function tdYearReport(year = null) {
       el('div', { class: 'row td-yr-tools' }, el('select', { class: 'td-yr-pick', 'aria-label': t('td_year'), onchange: (e) => { dlg.close(); tdYearReport(e.target.value); } }, years.map((v) => el('option', { value: v, text: v, ...(v === y ? { selected: '' } : {}) }))),
         el('button', { type: 'button', class: 'btn tiny td-yr-html', text: `⬇ ${t('td_yr_dl')}`, onclick: dl }), el('button', { type: 'button', class: 'btn tiny td-yr-xl', text: `⬇ ${t('td_excel')}`, onclick: () => tdYearExcel(R) }))),
     el('p', { class: 'hint', text: t('td_yr_lead_text') }),
+    S.funnel ? el('section', { class: 'td-yr-funnel' }, el('h3', { class: 'td-yr-h3', text: t('et_fun_h') }),
+      el('ol', { class: 'et-funnel' }, S.funnel.map(([l, v, x]) => el('li', {}, el('b', { text: String(v) }), el('span', { text: l }), x ? el('small', { class: 'hint', text: x }) : null))),
+      el('p', { class: 'hint', text: S.funnelNote })) : null,
     el('div', { class: 'crm-tiles td-yr-tiles' }, S.tiles.map(([l, v, x]) => el('div', { class: 'km-tile' }, el('b', { text: String(v) }), el('span', { text: l }), x ? el('small', { class: 'hint', text: x }) : null))),
     el('h3', { class: 'td-yr-h3', text: t('td_yr_glance') }), el('ul', { class: 'td-yr-lines' }, S.lines.map((l) => el('li', { text: l }))),
     S.reasons.length ? [el('h3', { class: 'td-yr-h3', text: t('td_yr_why') }), ...S.reasons.map(([h, L]) => el('details', { class: 'td-subpanel td-yr-why' }, el('summary', { text: `${h} (${L.length})` }),
@@ -1794,7 +1860,7 @@ function renderTenders() {
   const pull = el('section', { class: 'dt-quick td-pull' },
     el('div', { class: 'td-pull-head' }, el('h2', { text: t('td_pull_h') }), tenders && tenders.pulledAt ? el('span', { class: 'hint', text: t('td_last', { to: tenders.to || '—', n: tenders.items.length }) }) : null),
     tdEmailPicker(),
-    (() => { const R = etRadar, act = R ? R.tenders.filter((x) => x.status === 'active' && x.scope && !etIgnored().has(x.ref)).length : 0;   // v9.60 (ADR-0132)
+    (() => { const R = etRadar, act = R ? R.tenders.filter((x) => etOpenNow(x) && x.scope && !etIgnored().has(x.ref)).length : 0;   // v9.60 (ADR-0132)
       return el('p', { class: 'td-radar-line' }, el('button', { type: 'button', class: 'btn td-radar-btn', disabled: !!tdBusy, text: `📡 ${t('et_title')}${R ? ` · ${t('et_btn_n', { n: act })}` : ''}`, onclick: etOpen }), ' ',
         el('span', { class: 'hint', text: R ? t('et_btn_at', { at: R.pulledAt ? tdWhen(R.pulledAt) : '—' }) : t('et_btn_none') })); })(),
     etResult ? el('div', { role: 'status', class: 'td-study-res et-res' },
@@ -1900,7 +1966,7 @@ function renderTenders() {
       patch.status = st === 'ready' ? 'ready' : i.status; await tdUpdate(i.id, patch, tdActivity('stage', st)); renderTenders(); } },
     TD_STAGES.map((s) => el('option', { value: s, text: t(`td_st_${s}`), ...(i.stage === s ? { selected: '' } : {}) })));
   // v9.58 (ADR-0131): a tender's window is one card — where it stands and what it needs on one screen; the rest folds below it.
-  const FT = { date: 'date', askDue: 'date', visit: 'date', due: 'date', openAt: 'date', submittedOn: 'date', decidedOn: 'date', readyOn: 'date', askDueTime: 'time', dueTime: 'time', value: 'number', fees: 'number' };
+  const FT = { date: 'date', askDue: 'date', visit: 'date', due: 'date', openAt: 'date', submittedOn: 'date', decidedOn: 'date', readyOn: 'date', workStart: 'date', askDueTime: 'time', dueTime: 'time', value: 'number', fees: 'number' };
   const field = (i, k) => lab(k, fld(i, k, FT[k] || 'text', k === 'date' ? { required: '' } : FT[k] === 'time' ? { disabled: !!tdBusy || !i[k.replace('Time', '')] } : FT[k] === 'number' ? { min: 0, step: 1 } : {}), i);
   // the deadline's hour stays on the card until it is typed: the hand-over date and every margin to the deadline need it
   const detail = (i) => tdCard(i, { field, needsFields: (() => { const n = tenderNeeds(i); return [...n, ...(n.includes('due') || (i.due && !i.dueTime && !TENDER_CLOSED.includes(i.stage)) ? ['dueTime'] : [])]; })(), today });
@@ -1928,6 +1994,7 @@ function renderTenders() {
       el('button', { type: 'button', class: 'btn tiny td-wm', text: `🗓 ${t('td_wm')}`, onclick: () => copyText(tdWeekMessage(), t('td_wm_copied')) }),
       el('a', { class: 'btn tiny td-wm-mail', href: '#', text: `✉ ${t('fl_mail')}`, onclick: (e) => { e.preventDefault(); location.href = `mailto:?subject=${encodeURIComponent(t('td_wm_subject', { a: saudiDay(new Date(Date.now() - 6 * 864e5).toISOString()), b: saudiDay(new Date().toISOString()) }))}&body=${encodeURIComponent(tdWeekMessage())}`; } }),
       el('button', { type: 'button', class: 'btn tiny td-year-btn', text: `📈 ${t('td_yr_btn')}`, onclick: () => tdYearReport() }),
+      el('button', { type: 'button', class: 'btn tiny td-arch-btn', text: `🗄 ${t('td_arch_btn')}`, onclick: () => tdArchiveOpen() }),
       el('button', { type: 'button', class: 'btn tiny td-sum-btn', text: `✉ ${t('td_sum_btn')}`, onclick: () => tdThreadSummary(rows) }),
       el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('td_excel')}`, onclick: () => tdExcel(rows) })),
     tdStageF ? el('div', { class: 'row td-filtered' }, el('span', { class: 'chip', text: t('td_pipe_on', { s: t(`td_st_${tdStageF}`), n: rows.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: `✕ ${t('td_pipe_clear')}`, onclick: () => { tdStageF = null; renderTenders(); } })) : null,

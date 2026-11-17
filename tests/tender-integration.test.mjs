@@ -242,7 +242,8 @@ try {
       {ref:'261139000777',title:'sample: Exact tender',entity:'Sample entity',status:'active',due:`${ahead(20)} 10:00`,fees:500},
       {ref:'261139000888',title:'توريد كاميرات مراقبة للمستودع',entity:'أمانة محافظة جدة',status:'active',due:`${ahead(5)} 09:59`,fees:300},
       {ref:'261139000999',title:'توريد وتركيب شبكة لاسلكية للمبنى',entity:'جهة تجريبية',status:'active',due:`${ahead(25)} 09:59`,fees:100},
-      {ref:'261139000555',title:'توريد أدوية',entity:'جهة تجريبية',status:'active',due:`${ahead(4)} 09:59`}]};
+      {ref:'261139000555',title:'توريد أدوية',entity:'جهة تجريبية',status:'active',due:`${ahead(4)} 09:59`},
+      {ref:'261139000444',title:'توريد كاميرات مراقبة للبوابات',entity:'جهة تجريبية',status:'active',due:`${ahead(-1)} 09:59`}]};   // seen open by the pull, closed since
     // (1) the pull file dropped anywhere on the register is told apart from a study, and Etimad sets the dates of the tender it knows by number
     const file=new w.File([JSON.stringify(pull)],'etimad-radar.json',{type:'application/json'}),any=select('.td-drop-any input');Object.defineProperty(any,'files',{value:[file],configurable:true});any.dispatchEvent(new w.Event('change',{bubbles:true}));
     await wait(()=>it('sample:exact').due===ahead(20)&&!qa.busy(),'Etimad applied');
@@ -253,7 +254,8 @@ try {
     // (2) the radar window: only our scope, the West filter, a link suggested for the dash-cam tender
     select('.td-radar-btn').click();const rad=()=>select('dialog.et-modal');assert(rad(),'the radar opened');
     const refs=()=>[...rad().querySelectorAll('tr.et-row')].map(r=>r.dataset.ref);
-    assert.deepEqual(refs().sort(),['261139000777','261139000888','261139000999','261139004629'],'the medicines tender is not ours');
+    assert.deepEqual(refs().sort(),['261139000777','261139000888','261139000999','261139004629'],'the medicines tender is not ours; the one whose deadline passed is not open');
+    [...rad().querySelectorAll('.pill-btn')].find(b=>b.textContent==='All of them').click();assert(refs().includes('261139000444'),'it is still listed under «All of them»');[...rad().querySelectorAll('.pill-btn')].find(b=>b.textContent==='Open ones').click();
     [...rad().querySelectorAll('.pill-btn')].find(b=>b.textContent==='Western Region').click();assert.deepEqual(refs().sort(),['261139000888','261139004629']);
     [...rad().querySelectorAll('.pill-btn')].find(b=>b.textContent==='Whole Kingdom').click();
     assert(rad().querySelector('.et-sugg').textContent.includes('WM - توريد وتركيب داش كام'));rad().querySelector('.et-sugg .et-link').click();
@@ -274,11 +276,68 @@ try {
     const hij={id:'sample:hijri',subject:'sample: Hijri tender',date:arrived,stage:'received',stageAt:arrived,status:'open',att:[],due:''};await qa.tdCommit({...qa.get(),items:[hij,...qa.get().items]});
     const study=new w.File([JSON.stringify({schema:'afaqy-tender-study/v1',tenders:[{subject:'sample: Hijri tender',dates:{due:{date:'2026-11-19',time:''}},evidence:{due:{file:'booklet.pdf',page:4,quote:'وقت التسليم 16ص 09:30 1448/06/'}}}]})],'study.json',{type:'application/json'});
     await qa.tdImportStudies([study]);assert.equal(it('sample:hijri').due,'2026-11-26');assert(select('.td-study-fix').textContent.includes('Umm al-Qura'));
+    // (5b) a tender a mail adds later, under Etimad's own title, takes the platform's dates at once
+    const m2=await email('sample-etimad-mail',{subject:'توريد وتركيب شبكة لاسلكية للمبنى',attachments:[new File(['%PDF-1.4'],'كراسة الشروط.pdf')]});await qa.tdImportEmails([m2]);
+    await wait(()=>!qa.busy(),'mail read');const net=qa.get().items.find(x=>x.subject==='توريد وتركيب شبكة لاسلكية للمبنى');
+    assert(net,'the mail added the tender');assert.deepEqual([net.etimadNo,net.due,net.dateSources.due],['261139000999',ahead(25),'etimad']);
     // (6) a backup and a reload keep the Etimad facts, what was hidden, and the radar itself (kept on the device)
     const bk=JSON.parse(JSON.stringify(await qa.buildBackup()));await qa.tdCommit({...qa.get(),radarIgnore:[],items:qa.get().items.map(x=>x.id==='sample:dash'?{...x,etimadWas:[],link:''}:x)});await qa.applyBackup(bk);
     assert.deepEqual([...qa.get().radarIgnore],['261139000999']);assert.equal(it('sample:dash').etimadWas.length,2);assert.equal(it('sample:dash').link,'https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=qa1');
     w.close();const again=await setup(),d2=again.window.document;assert(d2.querySelector('.td-radar-btn').textContent.includes('2 open tenders'),d2.querySelector('.td-radar-btn').textContent);
     assert.equal(again.window.qa.get().items.find(x=>x.id==='sample:dash').dateSources.due,'etimad');again.window.close();
+  }
+  // ---- v9.61 (ADR-0133): the market and the result on the card, our bids in the radar. Each failed on v9.60. ----
+  { const dom8=await setup(), w=dom8.window, d=w.document, qa=w.qa, select=s=>d.querySelector(s);
+    const arrived=new Date(Date.now()+3*36e5-2*864e5).toISOString().slice(0,10);
+    const mk={id:'sample:market',subject:'sample: Market tender',date:arrived,stage:'submitted',stageAt:arrived,submittedOn:arrived,status:'ready',att:[],due:arrived,etimadNo:'261139000100',value:null};
+    const was=qa.get()||{items:[],to:null,pulledAt:''};await qa.tdCommit({...was,items:[mk,...was.items.filter(x=>x.id!=='sample:market')]});qa.renderTenders();
+    const it=()=>qa.get().items.find(x=>x.id==='sample:market');
+    const pull={schema:'afaqy-etimad-radar/v1',pulledAt:`${arrived}T10:00`,tenders:[
+      {ref:'261139000100',title:'توريد وتركيب كاميرات مراقبة أمنية للمستودعات',entity:'جهة أ',status:'awarded',published:'2026-09-01'},
+      {ref:'261139000101',title:'توريد وتركيب كاميرات مراقبة أمنية للمباني',entity:'جهة ب',status:'awarded',published:'2026-10-01'},
+      {ref:'261139000102',title:'صيانة كاميرات مراقبة أمنية بالبلدية',entity:'جهة ج',status:'awarded',published:'2026-08-01'}],
+      awards:[{ref:'261139000100',winner:'شركة رامي قاسم',value:300000},{ref:'261139000101',winner:'شركة أفاقي لتقنية المعلومات',value:500000},{ref:'261139000102',winner:'شركة رامي قاسم',value:100000}],
+      offers:[{ref:'261139000100',bidder:'شركة رامي قاسم',price:300000,tech:'pass'},{ref:'261139000100',bidder:'شركة أفاقي لتقنية المعلومات',price:340000,tech:'pass'},
+        {ref:'261139000101',bidder:'شركة أفاقي لتقنية المعلومات',price:500000,tech:'pass'},{ref:'261139000102',bidder:'شركة أفاقي لتقنية المعلومات',price:90000,tech:'fail'}]};
+    const any=select('.td-drop-any input');Object.defineProperty(any,'files',{value:[new w.File([JSON.stringify(pull)],'radar.json',{type:'application/json'})],configurable:true});any.dispatchEvent(new w.Event('change',{bubbles:true}));
+    await wait(()=>select('.et-res')&&!qa.busy(),'pull read');
+    // (1) the card says the result, where we stood, and offers to record it — nothing is recorded by itself
+    [...d.querySelectorAll('.td-row')].find(r=>r.dataset.id==='sample:market').querySelector('.td-subj').click();await wait(()=>select('dialog.td-dlg[open] .td-card'),'card open');
+    assert.equal(it().stage,'submitted','not moved by itself');
+    const line=select('dialog.td-dlg .et-res-line').textContent;assert(line.includes('شركة رامي قاسم')&&line.includes('ranked 2 of 2'),line);
+    assert(select('dialog.td-dlg .et-out').textContent.includes('awarded to someone else'));
+    // (2) the market fold: our offer highlighted among the bids, two similar awarded tenders, the summary
+    const mf=select('dialog.td-dlg .td-fold-market');assert(mf,'the market fold');assert(mf.querySelector('summary').textContent.includes('Market and result'));
+    assert.equal(mf.querySelectorAll('table.et-bids tbody tr').length,2);assert(mf.querySelector('table.et-bids tr.et-us').textContent.includes('340,000'));
+    assert.equal(mf.querySelectorAll('table.et-sim tbody tr').length,2);assert(mf.querySelector('.et-sim-sum').textContent.includes('winning most often'));
+    // (3) recording the result writes the stage and its reason from Etimad's own facts
+    select('dialog.td-dlg .et-out-btn').click();await wait(()=>it().stage==='lost','recorded');
+    assert(it().reason.includes('شركة رامي قاسم')&&it().reason.includes('ranked 2 of 2'),it().reason);assert(it().activity.some(a=>a.action==='stage'&&a.label.includes('Etimad')));
+    select('dialog.td-dlg').close();
+    // (4) the radar: who won an awarded tender, AFAQY's own bids, and the numbers to paste into the pull tool
+    select('.td-radar-btn').click();const rad=select('dialog.et-modal');[...rad.querySelectorAll('.pill-btn')].find(b=>b.textContent==='Awarded ones').click();
+    assert(select('dialog.et-modal tr[data-ref="261139000100"] .et-won-by').textContent.includes('شركة رامي قاسم'));
+    const ours=select('dialog.et-modal .et-ours');assert(ours.querySelector('summary').textContent.includes('(3) · won 1 · not technically compliant 1'),ours.querySelector('summary').textContent);
+    let copied='';Object.defineProperty(w.navigator,'clipboard',{value:{writeText:async text=>{copied=text;}},configurable:true});
+    select('dialog.et-modal .et-refs').click();await wait(()=>copied,'refs copied');assert(copied.split('\n').includes('261139000100'));rad.close();
+    // (5) a won tender: the outcome records the award value; the card leads to the execution in My projects
+    const won={id:'sample:won',subject:'sample: Won tender',date:arrived,stage:'submitted',stageAt:arrived,submittedOn:arrived,status:'ready',att:[],due:arrived,etimadNo:'261139000101',value:null};
+    await qa.tdCommit({...qa.get(),items:[won,...qa.get().items]});qa.renderTenders();const wt=()=>qa.get().items.find(x=>x.id==='sample:won');
+    [...d.querySelectorAll('.td-row')].find(r=>r.dataset.id==='sample:won').querySelector('.td-subj').click();await wait(()=>select('dialog.td-dlg[open] .et-out-btn'),'won card');
+    assert(select('dialog.td-dlg .et-out').textContent.includes('we are the winners'));select('dialog.td-dlg .et-out-btn').click();await wait(()=>wt().stage==='won','won recorded');
+    assert.equal(wt().value,500000,'the award value fills an empty value');
+    await wait(()=>select('dialog.td-dlg .et-exec'),'execution line');assert(select('dialog.td-dlg .et-exec').textContent.includes('not published the work start'));
+    assert(select('dialog.td-dlg .td-fold-data input.td-workStart'),'the work start is a field of a won tender');
+    select('dialog.td-dlg .et-exec-open').click();assert.equal(w.location.hash,'#me');assert(!select('dialog.td-dlg[open]'),'the card closed on the way');
+    w.location.hash='#tenders';await new Promise(r=>setTimeout(r,400));qa.renderTenders();
+    // (6) the archive: every closed tender, filtered by outcome, with its reason
+    select('.td-arch-btn').click();const ar=select('dialog.cr-modal');assert(ar.textContent.includes('Tender archive'));
+    const arRows=()=>[...ar.querySelectorAll('tbody tr')].map(tr=>tr.textContent);assert(arRows().some(x=>x.includes('Market tender')&&x.includes('Lost')));assert(arRows().some(x=>x.includes('Won tender')&&x.includes('500,000')));
+    [...ar.querySelectorAll('button.km-tile')].find(b=>b.textContent.includes('Won')).click();assert(arRows().every(x=>x.includes('Won')),arRows());ar.close();
+    // (7) the year report opens with the funnel from what Etimad published to what we won
+    select('.td-year-btn').click();const yr=select('dialog.td-yr-dlg');assert(yr.querySelector('.td-yr-funnel'),'the funnel');
+    const steps=[...yr.querySelectorAll('.et-funnel li')].map(li=>li.querySelector('b').textContent);assert.equal(steps.length,5);assert.equal(steps[4],'1','one won');
+    assert(qa.tdYearHtml(qa.tenderYearReport(qa.get().items,arrived.slice(0,4))).includes('<h2>')); yr.close();w.close();
   }
   assert.deepEqual(errors,[],'uncaught UI errors');
   console.log('tender-integration: passed Outlook import, source dates, conflict review, categories, table preview, filtering, deletion, deduplication, offer gates, stage transitions, My Projects, alerts, backup/restore, reload, stale tabs, 120-file reading/pagination/search, storage-failure reporting, missing-date rejection, literal HTML display, all management routes, languages, theme, team separation, the tender card, «missed», inquiries, the team message, the year report and the correspondence timeline (thread reading, de-duplication, hand-over mark, re-read, copy, summary window, backup and reload)');

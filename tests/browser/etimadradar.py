@@ -20,7 +20,8 @@ PULL={'schema':'afaqy-etimad-radar/v1','pulledAt':day(0)+'T08:00','partial':Fals
   {'ref':'261139004629','title':'WM - توريد وتركيب داش كام','entity':'جهة تجريبية بالمدينة المنورة','status':'active','type':'شراء مباشر','due':day(13)+' 09:59','askDue':day(8),'fees':200,'link':'https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=qa1'},
   {'ref':'261139000888','title':'توريد كاميرات مراقبة للمستودع','entity':'أمانة محافظة جدة','status':'active','type':'منافسة عامة','due':day(5)+' 09:59','fees':300},
   {'ref':'261139000999','title':'توريد وتركيب شبكة لاسلكية للمبنى','entity':'جهة تجريبية','status':'active','due':day(25)+' 09:59','fees':100},
-  {'ref':'261139000555','title':'توريد أدوية','entity':'جهة تجريبية','status':'active','due':day(4)+' 09:59'}]}
+  {'ref':'261139000555','title':'توريد أدوية','entity':'جهة تجريبية','status':'active','due':day(4)+' 09:59'},
+  {'ref':'261139000444','title':'توريد كاميرات مراقبة للبوابات','entity':'جهة تجريبية','status':'active','due':day(-1)+' 09:59'}]}   # open when pulled, closed since
 def drop(pg, sel, name, obj):
     pg.evaluate("""([s,n,j])=>{const f=new File([JSON.stringify(j)],n,{type:'application/json'});const i=document.querySelector(s);const dt=new DataTransfer();dt.items.add(f);i.files=dt.files;i.dispatchEvent(new Event('change',{bubbles:true}));}""",[sel,name,obj]); pg.wait_for_timeout(1200)
 def press(pg, loc, hold=150):
@@ -48,7 +49,7 @@ with sync_playwright() as p:
     ok=press(pg, pg.locator('.td-radar-btn')); rad=pg.locator('dialog.et-modal')
     check('R3 the radar opens with a held click', ok and rad.count()==1)
     refs=lambda: sorted(rad.locator('tr.et-row').evaluate_all("rs=>rs.map(r=>r.dataset.ref)"))
-    check('R4 only our scope: the medicines tender is not listed', refs()==['261139000888','261139000999','261139004629'], refs())
+    check('R4 only our scope and still open: no medicines tender, no tender whose deadline passed', refs()==['261139000888','261139000999','261139004629'], refs())
     first=rad.locator('tr.et-row').first.get_attribute('data-ref')
     check('R5 the closest deadline comes first', first=='261139000888', first)
     press(pg, rad.locator('.pill-btn', has_text='Western Region'))
@@ -70,6 +71,26 @@ with sync_playwright() as p:
     card=pg.locator('dialog.td-dlg .td-card').inner_text()
     check('R11 the card names the deadline’s source and links to the Etimad page', 'Source: the Etimad platform' in card and pg.locator('dialog.td-dlg .et-chip-link').get_attribute('href').startswith('https://tenders.etimad.sa/'), card[:300])
     pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
+    # v9.61 (ADR-0133): a later pull publishes the dash-cam tender's offers and award; similar awarded tenders give the market
+    RES={'schema':'afaqy-etimad-radar/v1','pulledAt':day(0)+'T12:00','tenders':[dict(PULL['tenders'][0],status='awarded'),
+      {'ref':'261139000301','title':'توريد وتركيب داش كام للمركبات','entity':'جهة تجريبية','status':'awarded','published':day(-60)},
+      {'ref':'261139000302','title':'توريد داش كام وكاميرات خلفية للمركبات','entity':'جهة تجريبية','status':'awarded','published':day(-90)}],
+      'awards':[{'ref':'261139004629','winner':'شركة رامي قاسم','value':41000},{'ref':'261139000301','winner':'شركة رامي قاسم','value':38000},{'ref':'261139000302','winner':'مؤسسة لينا حرب','value':52000}],
+      'offers':[{'ref':'261139004629','bidder':'شركة رامي قاسم','price':41000,'tech':'pass'},{'ref':'261139004629','bidder':'شركة أفاقي لتقنية المعلومات','price':45500,'tech':'pass'},
+        {'ref':'261139000301','bidder':'شركة رامي قاسم','price':38000,'tech':'pass'},{'ref':'261139000301','bidder':'مؤسسة زيد فارس','price':40000,'tech':'pass'}]}
+    drop(pg,'.td-drop-any input','etimad-radar-2.json',RES)
+    pg.locator('#tenders-body .pills button').last.click(); pg.wait_for_timeout(300)
+    pg.locator('.td-table tr.td-row', has_text='داش كام').locator('.td-subj').click(); pg.wait_for_timeout(900)
+    rl=pg.locator('dialog.td-dlg .et-res-line'); check('R19 the card shows who won, at what value, and where our offer stood', rl.count()==1 and 'ranked 2 of 2' in rl.inner_text(), rl.inner_text() if rl.count() else '')
+    ok=press(pg, pg.locator('dialog.td-dlg .td-fold-market > summary')); n=pg.locator('dialog.td-dlg .td-fold-market table.et-sim tbody tr').count()
+    check('R20 the market fold opens with a held click: our bid among the offers, two similar awarded tenders', ok and pg.locator('dialog.td-dlg .td-fold-market tr.et-us').count()==1 and n==2, n)
+    check('R21 the outcome is offered, not recorded by itself', pg.locator('dialog.td-dlg .et-out-btn').count()==1 and [x for x in items(pg)['items'] if 'داش' in x['subject']][0]['stage']!='lost')
+    pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
+    # v9.61 (ADR-0134): the archive and the year funnel
+    press(pg, pg.locator('.td-year-btn')); yr=pg.locator('dialog.td-yr-dlg')
+    steps=yr.locator('.et-funnel li b').all_inner_texts() if yr.count() else []
+    check('R24 the year report opens with the funnel from Etimad to what we won', len(steps)==5, steps)
+    pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
     check('R12 no page error on the laptop', not errs, errs[:2])
     state=c.storage_state(indexed_db=True); c.close()
     for theme,lang in [('dark','ar'),('light','ur'),('dark','en'),('light','ar')]:
@@ -80,6 +101,16 @@ with sync_playwright() as p:
         if os.path.exists(AXE): q.add_script_tag(path=AXE); v=q.evaluate(SCAN); check(f'R14[{theme}/{lang}] the accessibility scan passes in the radar', not v, v[:3])
         q.keyboard.press('Escape'); q.wait_for_timeout(300)
         check(f'R15[{theme}/{lang}] Escape closes the radar', q.locator('dialog.et-modal').count()==0)
+        press(q, q.locator('.td-year-btn')); cr=q.evaluate(LUM,'dialog.td-yr-dlg .et-funnel li b, dialog.td-yr-dlg .et-funnel li span, dialog.td-yr-dlg .et-funnel small, dialog.td-yr-dlg .td-yr-funnel .hint')
+        check(f'R25[{theme}/{lang}] the funnel is readable', cr['worst']>=4.5, cr)
+        if os.path.exists(AXE): v=q.evaluate(SCAN); check(f'R26[{theme}/{lang}] the accessibility scan passes in the year report with the funnel', not v, v[:3])
+        q.keyboard.press('Escape'); q.wait_for_timeout(300)
+        q.locator('#tenders-body .pills button').last.click(); q.wait_for_timeout(300)
+        q.locator('.td-table tr.td-row', has_text='داش كام').locator('.td-subj').click(); q.wait_for_timeout(900); press(q, q.locator('dialog.td-dlg .td-fold-market > summary'))
+        cr=q.evaluate(LUM,'dialog.td-dlg .et-card p, dialog.td-dlg .td-fold-market th, dialog.td-dlg .td-fold-market td, dialog.td-dlg .td-fold-market h4, dialog.td-dlg .et-sim-sum, dialog.td-dlg .td-fold-market small')
+        raw=q.evaluate("()=>/\\b(et|td)_[a-z_]+\\b/.test(document.querySelector('dialog.td-dlg').innerText)")
+        check(f'R22[{theme}/{lang}] the result and the market are readable, with no raw key', not raw and cr['worst']>=4.5, (raw,cr))
+        if os.path.exists(AXE): v=q.evaluate(SCAN); check(f'R23[{theme}/{lang}] the accessibility scan passes in the card with the market open', not v, v[:3])
         check(f'R16[{theme}/{lang}] no page error', not e2, e2[:2]); c2.close()
     c3,ph,e3=boot(b,'light',(390,844),'ar',state); ok=press(ph, ph.locator('.td-radar-btn'))
     fit=ph.evaluate("()=>{const d=document.querySelector('dialog.et-modal');if(!d)return null;const r=(n)=>n.getBoundingClientRect();return {page:document.documentElement.scrollWidth>innerWidth+1,over:[...d.querySelectorAll('.km-tile, .et-filters, .et-q, .et-pull .btn, .et-sugg')].filter(n=>r(n).width&&(r(n).right>innerWidth+1||r(n).left<-1)).length}}")

@@ -1390,6 +1390,15 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   .et-card { border-inline-start: 4px solid var(--note); } .et-card p { margin: 4px 0; } .et-was::before { content: 'ⓘ '; color: var(--note); }
   .et-chip-link { text-decoration: none; border-color: var(--note); color: var(--note); }
   @media (max-width: 640px) { .et-acts { white-space: normal; } .et-q { min-width: 0; width: 100%; } }
+  /* v9.61 (ADR-0133): market and result */
+  .et-res-line { margin: 4px 0; font-weight: 600; } .et-out { margin: 6px 0; } .et-us td { background: var(--accent-wash); font-weight: 600; }
+  .td-fold-market h4 { margin: 10px 0 4px; } .et-sim-sum { margin: 4px 0 8px; } .et-won-by { margin-top: 4px; } .et-ours { margin: 8px 0; } .et-ours > summary { cursor: pointer; font-weight: 600; }
+  /* v9.62 (ADR-0134): execution, archive, the year funnel */
+  .et-exec { margin: 4px 0; font-weight: 600; } .td-yr-funnel { margin: 8px 0; }
+  .et-funnel { list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; padding: 0; margin: 6px 0; }
+  .et-funnel li { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 10px; background: var(--surface); display: flex; flex-direction: column; gap: 2px; }
+  .et-funnel li b { font-size: 22px; } .et-funnel li + li { border-inline-start: 4px solid var(--accent); }
+  @media (max-width: 640px) { .et-funnel { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 </head>
 <body>

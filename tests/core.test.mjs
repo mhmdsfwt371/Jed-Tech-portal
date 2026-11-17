@@ -1833,6 +1833,74 @@ test('v9.60: Etimad sets the platform’s deadline and fee over the study’s; a
   assert.equal(clean.link, ''); assert.equal(clean.dateSources.due, 'etimad'); assert.equal(clean.fieldSources.fees, 'etimad'); assert.equal(clean.etimadWas.length, 2);
 });
 
+// ---------- v9.61 (ADR-0133): the market and the result ----------
+const marketRadar = () => core.parseRadar({ schema: core.RADAR_SCHEMA, pulledAt: '2026-11-17 08:00', tenders: [
+  { ref: '261139000100', title: 'توريد وتركيب كاميرات مراقبة أمنية للمستودعات', entity: 'جهة أ', status: 'awarded', published: '2026-09-01' },
+  { ref: '261139000101', title: 'توريد وتركيب كاميرات مراقبة أمنية للمباني', entity: 'جهة ب', status: 'awarded', published: '2026-10-01' },
+  { ref: '261139000102', title: 'صيانة كاميرات مراقبة أمنية بالبلدية', entity: 'جهة ج', status: 'awarded', published: '2026-08-01' },
+  { ref: '261139000103', title: 'تجديد رخص نظام الموارد', activity: 'تقنية المعلومات', entity: 'جهة د', status: 'awarded', published: '2026-08-01' },
+  { ref: '261139000104', title: 'توريد كاميرات مراقبة أمنية', entity: 'جهة هـ', status: 'active', due: '2026-12-10 09:59' }],
+  awards: [{ ref: '261139000100', winner: 'شركة رامي قاسم', value: 300000 }, { ref: '261139000101', winner: 'شركة أفاقي لتقنية المعلومات', value: 500000 },
+    { ref: '261139000102', winner: 'شركة رامي قاسم', value: 100000 }, { ref: '261139000103', winner: 'مؤسسة لينا حرب', value: 90000 }],
+  offers: [{ ref: '261139000100', bidder: 'مؤسسة زيد فارس', price: 250000, tech: 'fail' }, { ref: '261139000100', bidder: 'شركة رامي قاسم', price: 300000, tech: 'pass' },
+    { ref: '261139000100', bidder: 'شركة أفاقي لتقنية المعلومات', price: 340000, tech: 'pass' }, { ref: '261139000100', bidder: 'مؤسسة لينا حرب', price: null, tech: 'pass' },
+    { ref: '261139000101', bidder: 'شركة أفاقي لتقنية المعلومات', price: 500000, tech: 'pass' }, { ref: '261139000101', bidder: 'شركة رامي قاسم', price: 520000, tech: 'pass' },
+    { ref: '261139000102', bidder: 'شركة أفاقي لتقنية المعلومات', price: 90000, tech: 'fail' }, { ref: '261139000102', bidder: 'شركة رامي قاسم', price: 100000, tech: 'pass' }] });
+test('v9.61: a tender’s own result — prices ranked among the technically compliant, where AFAQY stood, and who won', () => {
+  const R = marketRadar(), r = core.radarResult('261139000100', R);
+  assert.equal(r.n, 4); assert.equal(r.winner.name, 'شركة رامي قاسم'); assert.equal(r.winner.us, false);
+  assert.deepEqual(r.offers.map((o) => o.bidder), ['شركة رامي قاسم', 'شركة أفاقي لتقنية المعلومات', 'مؤسسة زيد فارس', 'مؤسسة لينا حرب'], 'ranked first; the cheaper non-compliant offer and the one without a price are listed after, unranked');
+  assert.equal(r.lowest.price, 300000); assert.equal(r.usRank, 2); assert.equal(r.usOf, 2); assert.equal(r.us.price, 340000);
+  const f = core.radarResult('261139000102', R); assert.equal(f.us.tech, 'fail'); assert.equal(f.usRank, null, 'a non-compliant offer has no rank');
+  assert.equal(core.radarResult('261139000999', R), null); assert.equal(core.radarResult('', R), null);
+});
+test('v9.61: the outcome Etimad points to is offered for a tender still open, never for a closed one, and only with a winner', () => {
+  const R = marketRadar(), open = { stage: 'submitted' };
+  assert.deepEqual(core.tenderOutcome(open, core.radarResult('261139000101', R)), { stage: 'won', value: 500000 });
+  assert.deepEqual(core.tenderOutcome(open, core.radarResult('261139000100', R)), { stage: 'lost', winner: 'شركة رامي قاسم', value: 300000, usPrice: 340000, usTech: 'pass', rank: 2, of: 2 });
+  assert.equal(core.tenderOutcome({ stage: 'lost' }, core.radarResult('261139000100', R)), null, 'already closed');
+  assert.equal(core.tenderOutcome(open, core.radarResult('261139000103', R)), null, 'our offer is not on the list');
+  assert.equal(core.tenderOutcome(open, core.radarResult('261139000104', R)), null, 'no winner yet');
+});
+test('v9.61: similar awarded tenders, with the median award, the usual number of offers and who wins most', () => {
+  const R = marketRadar(), m = core.radarSimilar('توريد كاميرات مراقبة أمنية', R, { ref: '261139000104' });
+  assert.deepEqual(m.rows.map((r) => r.ref).sort(), ['261139000100', '261139000101', '261139000102'], 'the licence renewal is not similar; the tender itself is not listed');
+  assert.equal(m.medianValue, 300000); assert.equal(m.medianBidders, 2); assert.deepEqual(m.wins[0], { name: 'شركة رامي قاسم', n: 2 });
+  const r100 = m.rows.find((r) => r.ref === '261139000100'); assert.deepEqual([r100.bidders, r100.low, r100.high, r100.us], [4, 250000, 340000, true]);
+  assert.equal(core.radarSimilar('توريد أدوية', R).n, 0);
+  const ours = core.radarOurBids(R);
+  assert.deepEqual(ours.map((o) => o.ref), ['261139000101', '261139000100', '261139000102'], 'newest first');
+  assert.equal(ours[0].winner.us, true); assert.equal(ours[2].us.tech, 'fail');
+});
+
+// ---------- v9.61 (ADR-0134): execution, the archive and the year funnel ----------
+test('v9.61: Etimad’s work start is kept on the tender, and a won tender shows it among its fields', () => {
+  const x = core.parseRadar({ schema: core.RADAR_SCHEMA, pulledAt: '2026-11-17 08:00', tenders: [{ ref: '261139000100', title: 't', status: 'awarded', workStart: '2026-12-01' }] }, ['261139000100']).tenders[0];   // kept because the register follows it
+  const r = core.applyEtimad({ etimadNo: '261139000100', workStart: '' }, x, '2026-11-17T08:00');
+  assert.equal(r.patch.workStart, '2026-12-01'); assert.deepEqual(r.changed.find((c) => c.field === 'workStart'), { field: 'workStart', was: '', now: '2026-12-01' });
+  assert(core.tenderShownFields({ stage: 'won' }).includes('workStart')); assert(!core.tenderShownFields({ stage: 'prep' }).includes('workStart'));
+});
+test('v9.61: the year as a funnel — published within scope (West and Kingdom), reached, decided, submitted, won', () => {
+  const key = (s) => String(s || '').trim().toLowerCase();
+  const R = core.parseRadar({ schema: core.RADAR_SCHEMA, pulledAt: '2026-11-17 08:00', partial: true, tenders: [
+    { ref: '261139000001', title: 'توريد كاميرات مراقبة', entity: 'أمانة محافظة جدة', status: 'active', published: '2026-03-01' },
+    { ref: '261139000002', title: 'توريد كاميرات مراقبة للمباني', entity: 'أمانة منطقة الرياض', status: 'active', published: '2026-04-01' },
+    { ref: '261139000003', title: 'توريد كاميرات حرارية', entity: 'جهة بالمدينة المنورة', status: 'awarded', published: '2026-05-01' },
+    { ref: '251139000004', title: 'توريد كاميرات', entity: 'أمانة محافظة جدة', status: 'awarded', published: '2025-05-01' },
+    { ref: '261139000005', title: 'توريد أدوية', entity: 'أمانة محافظة جدة', status: 'active', published: '2026-05-01' }] });
+  const items = [{ subject: 'a', date: '2026-03-05', stage: 'won', etimadNo: '261139000001' }, { subject: 'b', date: '2026-05-04', stage: 'lost' },
+    { subject: 'c', date: '2026-06-01', stage: 'received', studyDecision: 'no-go' }, { subject: 'd', date: '2026-07-01', stage: 'screen' }, { subject: 'e', date: '2025-07-01', stage: 'won' }];
+  const f = core.tenderFunnel(items, core.radarMerge(null, R), '2026', key);
+  assert.deepEqual([f.published, f.publishedWest, f.reached, f.linked, f.decided, f.submitted, f.won], [3, 2, 4, 1, 3, 2, 1]);
+  assert.deepEqual(f.rates, { reached: 200, decided: 75, submitted: 67, won: 50 }); assert.equal(f.partial, true); assert.equal(f.covered.length, 1);
+  assert.equal(core.tenderFunnel(items, null, '2026', key).published, 0, 'no radar: nothing published is claimed');
+});
+test('v9.61: the archive lists every closed tender, newest closure first, and nothing still open', () => {
+  const A = core.tenderArchive([{ id: '1', subject: 'a', date: '2026-01-01', stage: 'won', stageAt: '2026-03-01', value: 100, files: [1, 2] }, { id: '2', subject: 'b', date: '2026-02-01', stage: 'prep' },
+    { id: '3', subject: 'c', date: '2025-05-01', stage: 'lost', stageAt: '2025-08-01', reason: 'price' }, { id: '4', subject: 'd', date: '2026-04-01', stage: 'missed', stageAt: '2026-04-20' }]);
+  assert.deepEqual(A.map((x) => [x.id, x.year, x.files]), [['4', '2026', 0], ['1', '2026', 2], ['3', '2025', 0]]); assert.equal(A[2].reason, 'price'); assert.equal(A[1].value, 100);
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

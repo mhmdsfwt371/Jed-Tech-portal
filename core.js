@@ -2786,6 +2786,7 @@ export function applyEtimad(item, x, pulledAt = '') {
   if (empty(item.etimadNo)) { patch.etimadNo = x.ref; changed.push({ field: 'etimadNo', was: '', now: x.ref }); }
   if (empty(item.entity) && x.entity) { patch.entity = x.entity; changed.push({ field: 'entity', was: '', now: x.entity }); }
   if (x.link && item.link !== x.link) patch.link = x.link;
+  if (x.workStart && item.workStart !== x.workStart) { patch.workStart = x.workStart; changed.push({ field: 'workStart', was: item.workStart || '', now: x.workStart }); }   // v9.62: when the work starts, as Etimad publishes it
   if (was.length !== (item.etimadWas || []).length) patch.etimadWas = was.slice(-10);
   if (Object.keys(patch).length && pulledAt) patch.etimadAt = pulledAt;
   return { patch, changed, differs };
@@ -2795,6 +2796,76 @@ export function radarToItem(x, today, keyOf) {
   const it = { id: keyOf(x.title), subject: x.title, date: today, from: '', byFrom: false, byKr: false, manual: true, att: [], status: 'open', stage: 'received', stageAt: today,
     readyOn: '', due: '', visit: '', note: '', etimadNo: '', entity: '', dateSource: 'manual', dateSources: {}, fieldSources: {} };
   return { ...it, ...applyEtimad(it, x).patch };
+}
+// ---------- v9.61 (ADR-0133): the market and the result, from the same Etimad pulls ----------
+/** A tender's own result on Etimad: who bid and at what price, their technical result, where AFAQY stood, and who won. Prices
+ *  are compared only among offers that passed the technical check when any did; an offer without a price is listed, not ranked. */
+export function radarResult(ref, radar) {
+  if (!ref || !radar) return null;
+  const x = (radar.tenders || []).find((t) => t.ref === ref); if (!x) return null;
+  const offers = (radar.offers || []).filter((o) => o.ref === ref).map((o) => ({ ...o, us: etimadIsUs(o.bidder) }));
+  const award = (radar.awards || []).filter((a) => a.ref === ref);
+  const pool = offers.some((o) => o.tech === 'pass') ? offers.filter((o) => o.tech === 'pass') : offers;
+  const ranked = pool.filter((o) => o.price != null).sort((a, b) => a.price - b.price);
+  const us = offers.find((o) => o.us) || null, rank = us ? ranked.indexOf(us) + 1 : 0;
+  const winner = award[0] ? { name: award[0].winner, value: award[0].value, us: award.some((a) => etimadIsUs(a.winner)), more: award.length - 1 } : null;
+  return { status: x.status, n: offers.length, offers: [...ranked, ...offers.filter((o) => !ranked.includes(o))], lowest: ranked[0] || null, us,
+    usRank: rank || null, usOf: ranked.length, winner, workStart: x.workStart || '' };
+}
+/** The outcome a result points to, for the manager to confirm — never applied by itself. Only for a tender we joined and that is
+ *  not closed yet: our name among the winners → won; a winner published and our offer among the bidders → lost, with the reason
+ *  in Etimad's own facts. Nothing when the result does not name a winner, or when our offer is not on the list. */
+export function tenderOutcome(item, res) {
+  if (!item || !res || !res.winner || TENDER_CLOSED.includes(item.stage)) return null;
+  if (res.winner.us) return { stage: 'won', value: res.winner.value };
+  if (!res.us) return null;
+  return { stage: 'lost', winner: res.winner.name, value: res.winner.value, usPrice: res.us.price, usTech: res.us.tech, rank: res.usRank, of: res.usOf };
+}
+const rMedian = (L) => { const s = [...L].sort((a, b) => a - b), m = s.length >> 1; return s.length ? (s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2) : null; };
+/** Awarded tenders that look like this one (two shared title words and half the shorter title), with what each was awarded for,
+ *  to whom, and how many bid; and across them the median award, the usual number of bidders and who wins most. */
+export function radarSimilar(title, radar, { ref = '', max = 8 } = {}) {
+  if (!radar || !title) return { rows: [], n: 0 };
+  const a = rWords(title), byRef = (L) => L.reduce((m, o) => m.set(o.ref, [...(m.get(o.ref) || []), o]), new Map());
+  const offers = byRef(radar.offers || []), awards = byRef(radar.awards || []);
+  const rows = (radar.tenders || []).filter((x) => x.status === 'awarded' && x.ref !== ref && awards.has(x.ref)).map((x) => {
+    const b = rWords(x.title), shared = [...b].filter((w) => a.has(w)).length, small = Math.min(a.size, b.size) || 1;
+    return { x, shared, score: shared / small };
+  }).filter((s) => s.shared >= 2 && s.score >= 0.5).sort((p, q) => q.score - p.score || (q.x.published || '').localeCompare(p.x.published || '')).slice(0, max).map(({ x }) => {
+    const of = offers.get(x.ref) || [], aw = awards.get(x.ref) || [], prices = of.map((o) => o.price).filter((p) => p != null);
+    return { ref: x.ref, title: x.title, entity: x.entity, published: x.published, winner: aw[0].winner, value: aw[0].value, bidders: of.length,
+      low: prices.length ? Math.min(...prices) : null, high: prices.length ? Math.max(...prices) : null, us: of.some((o) => etimadIsUs(o.bidder)) || aw.some((w) => etimadIsUs(w.winner)) };
+  });
+  const values = rows.map((r) => r.value).filter((v) => v != null), bids = rows.map((r) => r.bidders).filter((n) => n > 0);
+  const wins = [...rows.reduce((m, r) => m.set(r.winner, (m.get(r.winner) || 0) + 1), new Map())].sort((p, q) => q[1] - p[1]).slice(0, 3).map(([name, n]) => ({ name, n }));
+  return { rows, n: rows.length, medianValue: rMedian(values), medianBidders: rMedian(bids), wins };
+}
+/** AFAQY's own bids found on Etimad, newest first: the tender, our price, the technical result, our rank and the winner. */
+export function radarOurBids(radar) {
+  if (!radar) return [];
+  const refs = new Set([...(radar.offers || []).filter((o) => etimadIsUs(o.bidder)).map((o) => o.ref), ...(radar.awards || []).filter((a) => etimadIsUs(a.winner)).map((a) => a.ref)]);
+  return (radar.tenders || []).filter((x) => refs.has(x.ref)).map((x) => ({ ...radarResult(x.ref, radar), ref: x.ref, title: x.title, entity: x.entity, published: x.published }))
+    .sort((p, q) => (q.published || '').localeCompare(p.published || ''));
+}
+// ---------- v9.62 (ADR-0134): execution and the archive — the year from what Etimad published to what we won ----------
+/** The year as a funnel: tenders Etimad published within AFAQY's scope (and in the West), the tenders that reached the register,
+ *  those we decided on (a study's decision or a stage past «decide»), submitted and won. The published counts come from the radar
+ *  and say nothing about a period the pulls did not cover — `covered` lists the pulls behind them. */
+export function tenderFunnel(items, radar, year, keyOf) {
+  const y = String(year), rows = (items || []).filter((i) => String(i.date || '').startsWith(y)), pub = ((radar && radar.tenders) || []).filter((x) => x.scope && String(x.published || '').startsWith(y));
+  const decided = rows.filter((i) => !['received', 'screen', 'decide'].includes(i.stage || 'received') || !!i.studyDecision);
+  const sub = rows.filter((i) => ['submitted', 'won', 'lost'].includes(i.stage)), won = rows.filter((i) => i.stage === 'won');
+  const linked = radar ? rows.filter((i) => radarFind(i, radar.tenders || [], keyOf)) : [];
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) : null);
+  return { year: y, published: pub.length, publishedWest: pub.filter((x) => x.west).length, reached: rows.length, linked: linked.length, decided: decided.length,
+    submitted: sub.length, won: won.length, rates: { reached: pct(rows.length, pub.filter((x) => x.west).length), decided: pct(decided.length, rows.length), submitted: pct(sub.length, decided.length), won: pct(won.length, sub.length) },
+    covered: ((radar && radar.pulls) || []).map((p) => ({ at: p.at, n: p.n, partial: !!p.partial, filter: p.filter || null })), partial: !!(radar && radar.partial) };
+}
+/** The archive: every closed tender, newest decision first, with what it ended as, why, its value, files and Etimad number. */
+export function tenderArchive(items) {
+  return (items || []).filter((i) => TENDER_CLOSED.includes(i.stage)).map((i) => ({ id: i.id, subject: i.subject, entity: i.entity || '', date: i.date, closedOn: i.stageAt || i.date, year: String(i.stageAt || i.date).slice(0, 4),
+    stage: i.stage, reason: i.reason || '', value: typeof i.value === 'number' ? i.value : null, files: (i.files || []).length, etimadNo: i.etimadNo || '', link: i.link || '', workStart: i.workStart || '' }))
+    .sort((a, b) => (b.closedOn || '').localeCompare(a.closedOn || '') || a.subject.localeCompare(b.subject));
 }
 // ---------- v9.57 (ADR-0130): a tender's correspondence, read from the mail thread itself ----------
 // A reply carries the whole conversation beneath it. The register reads that conversation into entries — who wrote, when, and
@@ -2977,7 +3048,7 @@ export function minutesUntil(at, now) {
 }
 // the fields each stage needs, in the order the window lists them; a field that already holds a value is always shown
 const TENDER_FIELDS_ARRIVED = ['date', 'owner', 'etimadNo', 'entity', 'site', 'askDue', 'askDueTime', 'visit', 'due', 'dueTime', 'fees', 'bond', 'note'];   // the booklet's own facts
-const TENDER_FIELD_ORDER = ['date', 'owner', 'etimadNo', 'entity', 'site', 'value', 'fees', 'bond', 'askDue', 'askDueTime', 'visit', 'due', 'dueTime', 'openAt', 'decidedOn', 'readyOn', 'submittedOn', 'submitNo', 'study', 'reason', 'note'];
+const TENDER_FIELD_ORDER = ['date', 'owner', 'etimadNo', 'entity', 'site', 'value', 'fees', 'bond', 'askDue', 'askDueTime', 'visit', 'due', 'dueTime', 'openAt', 'decidedOn', 'readyOn', 'submittedOn', 'submitNo', 'workStart', 'study', 'reason', 'note'];
 export const TENDER_CLOSED = ['won', 'lost', 'missed', 'cancelled', 'declined'];
 export function tenderShownFields(item) {
   const st = item.stage || 'received', want = new Set(TENDER_FIELDS_ARRIVED);
@@ -2985,6 +3056,7 @@ export function tenderShownFields(item) {
   if (['prep', 'ready', 'submitted', 'won', 'lost', 'missed', 'declined'].includes(st)) want.add('decidedOn');
   if (['ready', 'submitted', 'won', 'lost', 'missed'].includes(st)) want.add('readyOn');
   if (['submitted', 'won', 'lost'].includes(st)) { want.add('submittedOn'); want.add('submitNo'); }
+  if (st === 'won') want.add('workStart');   // v9.62: execution starts here
   if (['declined', 'lost', 'missed', 'cancelled'].includes(st)) want.add('reason');
   for (const k of TENDER_FIELD_ORDER) if (item[k] !== '' && item[k] != null) want.add(k);
   return TENDER_FIELD_ORDER.filter((k) => want.has(k));

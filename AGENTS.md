@@ -97,6 +97,8 @@
 | جودة الإصلاح (القرار 0022) | `repairCheck()`، `parseRepairLines()` |
 | لوحة حسابات ما بعد البيع والأنظمة (القرار 0120) | `accountsBoard()`، `serverIpMap()`، `attachSystems()` |
 | تدقيق 9.55 (القرار 0129) | `tenderAmount()`، `tenderDatePatch()`، `backupDue()` — و`docs/qa-policy.md`، و`tests/browser/audit.py`، و`scripts/browser-suites.mjs` |
+| التنفيذ والأرشيف وقمع السنة (القرار 0134) | `tenderFunnel()`، `tenderArchive()` — وفي الصفحة `tdArchiveOpen()`، `tdToProjects()` |
+| السوق والنتيجة من اعتماد (القرار 0133) | `radarResult()`، `tenderOutcome()`، `radarSimilar()`، `radarOurBids()` — وفي الصفحة `tdMarketFold()` |
 | رادار اعتماد ومواعيد المنصة والتحقق من الهجري (القرار 0132) | `parseRadar()`، `radarFromSheets()`، `radarMerge()`، `radarFind()`، `radarSuggest()`، `applyEtimad()`، `radarToItem()`، `etimadInScope()`، `etimadWest()`، `hijriCheck()` — وفي الصفحة `etOpen()`، `etImport()` — والصيغة `docs/etimad-radar-format.md` — والاختبار `tests/browser/etimadradar.py` |
 | بطاقة المناقصة والمتابعة وتقرير السنة (القرار 0131) | `tenderHandoverDue()`، `tenderHandedAt()`، `tenderHandoverOnTime()`، `tenderLead()`، `minutesUntil()`، `tenderShownFields()`، `tenderYearReport()` — وفي الصفحة `tdCard()`، `tdInquiries()`، `tdTeamText()`، `tdYearReport()` — والاختبار `tests/browser/tendercard.py` |
 | تسلسل مراسلات المناقصة (القرار 0130) | `mailThread()`، `mailWhen()`، `mailWall()`، `mailGist()`، `tenderThreadMerge()`، `tenderThreadFacts()`، `workDaysBetween()` — والاختبار `tests/browser/tenderthread.py` |
