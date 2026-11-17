@@ -2500,15 +2500,20 @@ export function parseTenderStudy(raw) {
   };
   const tenders = j.tenders.slice(0, 200).map((x) => {
     if (!x || typeof x !== 'object') return null;
-    const dates = {}, skipped = [];
-    for (const k of TENDER_DATE_FIELDS) { const d = x.dates && x.dates[k]; if (!given(d) || (typeof d === 'object' && !given(d.date))) continue; const w = when(d); if (w) dates[k] = w; else skipped.push(k); }
-    const money = (k) => { if (!given(x[k])) return null; const n = tenderAmount(x[k]); if (n == null) skipped.push(k); return n; };
     const evidence = {}; for (const [k, v] of Object.entries(x.evidence && typeof x.evidence === 'object' ? x.evidence : {})) if ([...TENDER_STUDY_FIELDS, ...TENDER_DATE_FIELDS].includes(k) && v && typeof v === 'object')
       evidence[k] = { file: str(v.file, 160), page: Number.isSafeInteger(v.page) && v.page > 0 ? v.page : null, quote: str(v.quote, 240) };
+    const dates = {}, skipped = [], fixed = [];
+    for (const k of TENDER_DATE_FIELDS) { const d = x.dates && x.dates[k]; if (!given(d) || (typeof d === 'object' && !given(d.date))) continue; const w = when(d); if (!w) { skipped.push(k); continue; }
+      // v9.60 (ADR-0132): a date whose own quote is a Hijri date is converted here and compared; a wrong conversion is corrected
+      // when the quote allows one reading, and left out when it allows several
+      const hc = evidence[k] && evidence[k].quote ? hijriCheck(w.date, evidence[k].quote) : { ok: true };
+      if (!hc.ok) { if (!hc.date) { skipped.push(k); continue; } fixed.push({ field: k, was: w.date, hijri: hc.hijri, now: hc.date }); w.date = hc.date; }
+      dates[k] = w; }
+    const money = (k) => { if (!given(x[k])) return null; const n = tenderAmount(x[k]); if (n == null) skipped.push(k); return n; };
     const no = String(x.etimadNo ?? '').replace(/[^\d]/g, '').slice(0, 40), fees = money('fees'), value = money('value');
     return { subject: str(x.subject, 300), etimadNo: no,
       entity: str(x.entity, 160), dates, fees, bond: str(typeof x.bond === 'number' ? String(x.bond) : x.bond, 120), value,
-      decision: ['go', 'no-go', 'review'].includes(x.decision) ? x.decision : '', why: str(x.decisionWhy, 400), summary: str(x.summary, 4000), studyFile: str(x.studyFile, 300), evidence, skipped };
+      decision: ['go', 'no-go', 'review'].includes(x.decision) ? x.decision : '', why: str(x.decisionWhy, 400), summary: str(x.summary, 4000), studyFile: str(x.studyFile, 300), evidence, skipped, fixed };
   }).filter((x) => x && (x.subject || x.etimadNo));
   return tenders.length ? { tenders, generatedAt: str(j.generatedAt, 35), tool: str(j.tool, 80) } : { error: 'empty' };
 }
@@ -2607,6 +2612,189 @@ export function tenderStudyFromSheet(rows, fileName = '') {
   const dates = {}; for (const k of TENDER_DATE_FIELDS) { const w = when(k); if (w) dates[k] = w; }
   return { schema: 'afaqy-tender-study/v1', generatedAt: txt('generatedAt'), tool: txt('tool'), tenders: [{ subject: txt('subject'), etimadNo: txt('etimadNo'), entity: txt('entity'), dates,
     fees: amt('fees'), bond: txt('bond'), value: amt('value'), decision: txt('decision'), decisionWhy: txt('decisionWhy'), summary: txt('summary'), studyFile: txt('studyFile') || fileName, evidence: ev }] };
+}
+// ---------- v9.60 (ADR-0132): Etimad — the platform's own facts, and a Hijri date checked before it is taken ----------
+// The Tender Analyzer reads dates from the booklet. A booklet often writes them in Hijri, and a wrong conversion became a wrong
+// deadline on the card (WM dash-cam tender: the booklet's 16/06/1448 was written as 19 Nov; Umm al-Qura gives 26 Nov). The
+// register now converts the booklet's own words itself and compares. And the platform is the authority for its own dates and
+// fee: a file from the Etimad pull tool sets them, whatever the booklet, the mail or the study said, unless the manager typed one.
+const HIJRI_FMT = (() => { try { return new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'numeric', year: 'numeric', timeZone: 'UTC' }); } catch { return null; } })();
+const hijriParts = (ms) => { const p = HIJRI_FMT.formatToParts(new Date(ms)), g = (k) => Number((p.find((x) => x.type === k) || {}).value); return [g('year'), g('month'), g('day')]; };
+/** A Hijri day (Umm al-Qura, the calendar Etimad and the booklets use) as a Gregorian `YYYY-MM-DD`; '' when the day does not exist. */
+export function hijriToGregorian(y, m, d) {
+  if (!HIJRI_FMT || !(y >= 1400 && y <= 1500 && m >= 1 && m <= 12 && d >= 1 && d <= 30)) return '';
+  const guess = Date.UTC(2024, 6, 7) + ((y - 1446) * 354.36707 + (m - 1) * 29.530589 + (d - 1)) * 864e5;   // 1 Muharram 1446 = 7 July 2024
+  for (let k = 0; k <= 5; k++) for (const s of k ? [k, -k] : [0]) { const ms = guess + s * 864e5, [yy, mm, dd] = hijriParts(ms); if (yy === y && mm === m && dd === d) return new Date(ms).toISOString().slice(0, 10); }
+  return '';
+}
+/** The Hijri days a quote can mean. Text pulled out of a right-to-left PDF often comes out of order («16ص 09:30 1448/06/»), so the
+ *  year is found first, clock times and Gregorian dates are set aside, and the day and month are read from the numbers left —
+ *  every order that makes a real day is kept. More than three numbers left is too loose to read: nothing is returned. */
+export function hijriInQuote(quote) {
+  let s = tenderDigits(quote).replace(/\b20\d{2}\s*[-/.]\s*\d{1,2}\s*[-/.]\s*\d{1,2}\b|\b\d{1,2}\s*[-/.]\s*\d{1,2}\s*[-/.]\s*20\d{2}\b/g, ' ').replace(/\b\d{1,2}\s*:\s*\d{2}\b/g, ' ');
+  const yr = s.match(/\b14\d{2}\b/); if (!yr) return [];
+  s = s.replace(yr[0], ' '); const nums = (s.match(/\b\d{1,2}\b/g) || []).map(Number);
+  if (!nums.length || nums.length > 3) return [];
+  const y = Number(yr[0]), out = new Map();
+  for (const d of nums) for (const m of nums) { if (d === m && nums.filter((n) => n === d).length < 2) continue; const g = hijriToGregorian(y, m, d); if (g) out.set(g, { hijri: `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`, date: g }); }
+  return [...out.values()];
+}
+/** Does a date match the Hijri date in its own quote? ok:true when the quote holds no Hijri date or one reading matches. Otherwise
+ *  `date` is the one reading the quote allows ('' when it allows several), so the caller can take it or leave the field empty. */
+export function hijriCheck(date, quote) {
+  const c = hijriInQuote(quote);
+  if (!c.length || c.some((x) => x.date === date)) return { ok: true };
+  return { ok: false, hijri: c.length === 1 ? c[0].hijri : '', date: c.length === 1 ? c[0].date : '' };
+}
+
+export const RADAR_SCHEMA = 'afaqy-etimad-radar/v1';
+const rNorm = (s) => tenderDigits(s).normalize('NFKC').replace(/[إأآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/[ـً-ْ]/g, '').toLowerCase();
+// AFAQY's scope, the Tender Analyzer's rule the manager approved (Nov 2026): IT, IoT, building systems, cameras, networks and software
+// are in — with the civil and fibre works a technical project carries; general contracting, finishing and supplies are out.
+const SCOPE_IN = /كامير|cctv|داش ?كام|مراقبه (امني|تلفزيون|بالكامير)|تتبع (ال)?(مركب|اسطول|سيار|اليات|الاليات|معدات|المعدات|اجهز|الاجهز)|اجهز(ه)? تتبع|\bavl\b|\bgps\b|حساس|انترنت الاشياء|\biot\b|rfid|بوابات (ذكي|الكترون|دخول)|تحكم (في|ب) ?(ال)?دخول|(ب|في )?(ال)?ابواب (ذكي|الكترون)|انظمه الدخول|الدخول الذكي|شبك(ه|ات) (ال)?(حاسب|بيانات|معلومات|اتصالات|محلي|لاسلكي|الياف|داخلي)|الشبكه المحليه|سويتش|\bswitch(es)?\b|راوتر|\brouters?\b|الياف ضوئي|فايبر|fib(er|re) optic|مركز (ال)?بيانات|خوادم|سيرفر|\bservers?\b|انظمه المباني|المباني الذكي|\bbms\b|ادار(ه)? (ال)?مباني|ادار(ه)? (ال)?اسطول|ادار(ه)? (ال)?مركبات|الذكاء الاصطناعي|منص(ه|ات) (ذكي|رقمي|الكترون)|نظام (ذكي|الكتروني|رقمي)|تطبيق|برمج|بنيه تحتيه تقنيه|البنيه التحتيه (التقنيه|للشبكات|الرقميه)|تقنيه المعلومات|لاسلكي|wi-?fi|انذار (ضد )?(السرق|التسلل|امني)|ذكي/;
+const SCOPE_OUT = /قطع غيار|محرك|زورق|زوارق|نظافه|تشطيب|ترميم|ادويه|(^|\s)(ال)?طبي(ه)?(\s|$)|مستلزمات|تغذيه|اعاشه|اثاث|تصريف|سفلت|رصف|زراع|تشجير|ملابس|اغذيه|كساوي|اسمنت|مكيفات|تكييف|مولد|ديزل|اطارات|زيوت|بطاريات|توريد مركبات|توريد سيارات|قرطاسي|حبر/;
+const SCOPE_ACT = /تقنيه المعلومات|الاتصالات/;
+/** Is an Etimad tender inside AFAQY's scope? By its title first (a clear «out» word wins), then by Etimad's main activity. */
+export function etimadInScope(title, activity = '') { const t = rNorm(title); if (SCOPE_OUT.test(t)) return false; return SCOPE_IN.test(t) || SCOPE_ACT.test(rNorm(activity)); }
+// Etimad's own «region» column came empty for all 30,396 tenders of the first pull, so the West is read from the entity and the place
+const WEST = /جده|مكه|المدينه المنوره|منطقه المدينه|ينبع|الطائف|رابغ|الليث|القنفذه|العلا|الغربيه|خليص|الجموم|بحره/;
+export const etimadWest = (...s) => WEST.test(rNorm(s.join(' ')));
+const AFAQY_NAME = /افاقي لتقنيه المعلومات|\bafaqy\b/;
+export const etimadIsUs = (name) => AFAQY_NAME.test(rNorm(name));
+/** An Etimad time as the Saudi wall clock. The pull tool writes Excel dates (serial days) or text; a serial is read without any time
+ *  zone, so the browser's own zone cannot shift it. A time of 00:00 means «no time» on Etimad. */
+export function etimadWhen(v) {
+  let iso = '';
+  if (typeof v === 'number' && Number.isFinite(v) && v > 20000 && v < 80000) iso = new Date(Math.round((v * 864e5 + Date.UTC(1899, 11, 30)) / 6e4) * 6e4).toISOString().slice(0, 16);
+  else if (typeof v === 'string') { const m = tenderDigits(v).trim().match(/^(\d{4}-\d{2}-\d{2})(?:[T\s]+(\d{2}:\d{2}))?/); if (m && !Number.isNaN(Date.parse(`${m[1]}T00:00:00Z`))) iso = `${m[1]}T${m[2] || '00:00'}`; }
+  if (!iso) return { date: '', time: '' };
+  return { date: iso.slice(0, 10), time: iso.slice(11, 16) === '00:00' ? '' : iso.slice(11, 16) };
+}
+const rStr = (v, n) => (v == null ? '' : String(v).trim().slice(0, n));
+const rRef = (v) => tenderDigits(rStr(v, 60)).replace(/^REF:/i, '').replace(/[^\d]/g, '').slice(0, 20);
+const rLink = (v) => { const s = rStr(v, 400); return /^https:\/\/tenders\.etimad\.sa\//i.test(s) ? s.replace(/\s/g, '%20') : ''; };
+const rMoney = (v) => (v === '' || v == null ? null : tenderAmount(typeof v === 'number' ? v : String(v)));
+const rStatus = (v) => { const s = rNorm(v); return s === 'active' || s.includes('نشطه') ? 'active' : s === 'awarded' || s.includes('ترسيه') ? 'awarded' : 'other'; };
+/** One tender, cleaned — from the pull tool's JSON (English keys) or from a sheet row already mapped to the same keys. */
+function radarTender(x) {
+  const ref = rRef(x.ref); if (!ref) return null;
+  const w = (k) => etimadWhen(x[k]), pub = w('published'), ask = w('askDue'), due = w('due'), open = w('openAt'), ws = w('workStart'), seen = w('firstSeen');
+  const title = rStr(x.title, 300), entity = rStr(x.entity, 200), activity = rStr(x.activity, 160), place = rStr(x.place, 300);
+  return { ref, no: rStr(x.no, 60), title, entity, status: rStatus(x.status), type: rStr(x.type, 80), activity, published: pub.date,
+    askDue: ask.date, askDueTime: ask.time, due: due.date, dueTime: due.time, openAt: open.date, openAtTime: open.time,
+    fees: rMoney(x.fees), place, duration: rStr(x.duration, 80), link: rLink(x.link), workStart: ws.date, firstSeen: seen.date,
+    scope: etimadInScope(title, activity), west: etimadWest(entity, place) };
+}
+const rOffer = (x) => { const ref = rRef(x.ref), bidder = rStr(x.bidder, 200); if (!ref || !bidder) return null; const tech = rNorm(x.tech);
+  return { ref, bidder, price: rMoney(x.price), tech: tech === 'pass' || tech === 'مطابق' ? 'pass' : tech === 'fail' || tech.includes('غير مطابق') ? 'fail' : '' }; };
+const rAward = (x) => { const ref = rRef(x.ref), winner = rStr(x.winner, 200); return ref && winner ? { ref, winner, value: rMoney(x.value) } : null; };
+/** What a pull keeps: AFAQY's scope, the tenders the register already follows (`keepRefs`) and any tender AFAQY itself bid on — never
+ *  the whole platform (the first pull held 30,396 tenders, of which a few hundred concern us). */
+function radarKeep(r, keepRefs) {
+  const keep = new Set(keepRefs.map(rRef).filter(Boolean));
+  for (const o of r.offers) if (etimadIsUs(o.bidder)) keep.add(o.ref);
+  for (const a of r.awards) if (etimadIsUs(a.winner)) keep.add(a.ref);
+  const tenders = r.tenders.filter((x) => x.scope || keep.has(x.ref)).slice(0, 20000), refs = new Set(tenders.map((x) => x.ref));
+  return { ...r, total: r.tenders.length, tenders, awards: r.awards.filter((x) => refs.has(x.ref)), offers: r.offers.filter((x) => refs.has(x.ref)) };
+}
+/** The pull tool's own file (`afaqy-etimad-radar/v1`), cleaned. */
+export function parseRadar(raw, keepRefs = []) {
+  let j = raw; if (typeof raw === 'string') { try { j = JSON.parse(raw); } catch { return { error: 'json' }; } }
+  if (!j || j.schema !== RADAR_SCHEMA || !Array.isArray(j.tenders)) return { error: 'schema' };
+  const list = (v, f) => (Array.isArray(v) ? v : []).map((x) => (x && typeof x === 'object' ? f(x) : null)).filter(Boolean);
+  const pulled = etimadWhen(j.pulledAt);
+  const r = { schema: RADAR_SCHEMA, pulledAt: pulled.date ? `${pulled.date}T${pulled.time || '00:00'}` : '', partial: !!j.partial, tool: rStr(j.tool, 80),
+    filter: j.filter && typeof j.filter === 'object' ? { from: etimadWhen(j.filter.from).date, to: etimadWhen(j.filter.to).date, category: rStr(j.filter.category, 200) } : null,
+    tenders: list(j.tenders, radarTender), awards: list(j.awards, rAward), offers: list(j.offers, rOffer) };
+  return r.tenders.length ? radarKeep(r, keepRefs) : { error: 'empty' };
+}
+// the pull tool's Excel names its columns in Arabic; they are found by name, so a column added or moved does not shift the others
+const RADAR_COLS = { ref: ['الرقم المرجعي'], title: ['اسم المنافسة', 'المنافسة'], entity: ['الجهة الحكومية'], status: ['حالة المنافسة'], type: ['نوع المنافسة'],
+  activity: ['النشاط الرئيسي', 'النشاط'], published: ['تاريخ النشر'], askDue: ['آخر موعد استفسارات'], due: ['آخر موعد تقديم'], openAt: ['موعد فتح العروض'],
+  fees: ['سعر الكراسة ر.س'], no: ['رقم المنافسة'], duration: ['مدة التنفيذ'], place: ['مكان التنفيذ'], link: ['رابط اعتماد', 'رابط المصدر'], firstSeen: ['أول رصد'],
+  workStart: ['تاريخ بدء الأعمال'], winner: ['اسم الفائز'], value: ['قيمة الترسية ر.س'], bidder: ['مقدم العرض'], price: ['سعر العرض المالي ر.س'], tech: ['نتيجة الفحص الفني'],
+  started: ['بدأ'], ended: ['انتهى'], runStatus: ['الحالة'] };
+function rRows(rows, keys) {
+  if (!Array.isArray(rows) || rows.length < 2) return [];
+  const head = rows[0].map((h) => String(h ?? '').trim()), at = Object.fromEntries(keys.map((k) => [k, head.findIndex((h) => RADAR_COLS[k].includes(h))]));
+  return rows.slice(1).map((r) => Object.fromEntries(keys.map((k) => [k, at[k] >= 0 ? r[at[k]] : '']))); }
+/** The pull tool's Excel workbook, as `get(sheetName)` → rows (header first), read into the same shape as parseRadar(). */
+export function radarFromSheets(get, keepRefs = []) {
+  const T = ['ref', 'title', 'entity', 'status', 'type', 'activity', 'published', 'askDue', 'due', 'openAt', 'fees', 'no', 'duration', 'place', 'link', 'firstSeen', 'workStart'];
+  const all = get('جميع المنافسات') || get('المنافسات النشطة'); if (!all) return { error: 'nosheet' };
+  const runs = rRows(get('سجل السحب'), ['started', 'ended', 'runStatus']).filter((x) => x.ended !== '' && x.ended != null);
+  const last = runs.map((x) => etimadWhen(x.ended)).filter((x) => x.date).map((x) => `${x.date}T${x.time || '00:00'}`).sort().pop() || '';
+  const r = { schema: RADAR_SCHEMA, pulledAt: last, partial: runs.some((x) => /partial|جزئي/i.test(String(x.runStatus))), tool: '', filter: null,
+    tenders: rRows(all, T).map(radarTender).filter(Boolean),
+    awards: rRows(get('تفاصيل الترسيات'), ['ref', 'winner', 'value']).map(rAward).filter(Boolean),
+    offers: rRows(get('العروض المنشورة'), ['ref', 'bidder', 'price', 'tech']).map(rOffer).filter(Boolean) };
+  if (!r.pulledAt) r.pulledAt = r.tenders.map((x) => x.firstSeen).filter(Boolean).sort().pop() || '';
+  return r.tenders.length ? radarKeep(r, keepRefs) : { error: 'empty' };
+}
+/** A new pull added to what the radar holds. A pull covers a period or a category, not the whole platform, so nothing is dropped:
+ *  a tender in the new pull replaces its older copy, and its awards and offers replace the older ones. */
+export function radarMerge(have, add) {
+  if (!have || !Array.isArray(have.tenders)) return { ...add, pulls: [{ at: add.pulledAt, n: add.tenders.length, partial: add.partial, filter: add.filter }] };
+  const newer = (add.pulledAt || '') >= (have.pulledAt || ''), by = new Map(have.tenders.map((x) => [x.ref, x]));
+  for (const x of add.tenders) by.set(x.ref, x);
+  const got = (L) => new Set(L.map((x) => x.ref)), aRefs = got(add.awards), oRefs = got(add.offers);
+  return { schema: RADAR_SCHEMA, pulledAt: newer ? add.pulledAt : have.pulledAt, partial: newer ? add.partial : have.partial, tool: add.tool || have.tool, filter: add.filter,
+    total: add.total, tenders: [...by.values()], awards: [...have.awards.filter((x) => !aRefs.has(x.ref)), ...add.awards], offers: [...have.offers.filter((x) => !oRefs.has(x.ref)), ...add.offers],
+    pulls: [...(have.pulls || []), { at: add.pulledAt, n: add.tenders.length, partial: add.partial, filter: add.filter }].slice(-30) };
+}
+/** The Etimad tender a register row is: the same number (Etimad's reference number, or the entity's own tender number), then the same
+ *  title key. Anything looser is only suggested (radarSuggest), never linked by itself. */
+export function radarFind(item, list, keyOf) {
+  const no = String(item.etimadNo || '').replace(/[^\d]/g, '');
+  if (no) { const L = list.filter((x) => x.ref === no || (x.no && x.no.replace(/[^\d]/g, '') === no)); if (L.length === 1) return L[0]; if (L.length > 1) return null; }
+  const k = keyOf(item.subject); if (!k) return null;
+  const L = list.filter((x) => keyOf(x.title) === k); return L.length === 1 ? L[0] : null;
+}
+const R_STOP = new Set(['توريد', 'وتركيب', 'تركيب', 'وتشغيل', 'تشغيل', 'وصيانه', 'صيانه', 'مشروع', 'منافسه', 'عمليه', 'لزوم', 'بشان', 'خاص', 'الخاص', 'الخاصه', 'عدد', 'تامين', 'تقديم', 'خدمات', 'اعمال', 'supply', 'and', 'the', 'for', 'of', 'installation']);
+const rWords = (s) => new Set(rNorm(s).split(/[^\p{L}\p{N}]+/u).map((w) => w.replace(/^(و|ب|ل)(?=ال)/, '').replace(/^ال(?=..)/, '')).filter((w) => w.length > 1 && !R_STOP.has(w) && !R_STOP.has(`ال${w}`)));
+/** Etimad tenders that look like a register row: at least two words of the title shared, and most of the shorter title. Best first. */
+export function radarSuggest(item, list, max = 3) {
+  const a = rWords(`${item.subject} ${item.entity || ''}`);
+  return list.map((x) => { const b = rWords(`${x.title} ${x.entity}`), shared = [...rWords(x.title)].filter((w) => a.has(w)).length, both = [...b].filter((w) => a.has(w)).length, small = Math.min(rWords(x.title).size, rWords(item.subject).size) || 1;
+    return { x, score: shared / small, shared, both }; })
+    .filter((s) => s.shared >= 2 && s.score >= 0.6).sort((p, q) => q.score - p.score || q.both - p.both).slice(0, max).map((s) => s.x);
+}
+const ETIMAD_DATES = ['due', 'askDue', 'openAt'];
+/** What Etimad changes on a register row. Etimad is the platform: its deadlines and booklet fee replace what the booklet, the mail or
+ *  the study said — the replaced value is kept in `etimadWas` so the card can say what changed. A value the manager typed is never
+ *  replaced (listed in `differs`). A pull older than the one already applied changes nothing. The same pull again writes nothing. */
+export function applyEtimad(item, x, pulledAt = '') {
+  const patch = {}, changed = [], differs = [], empty = (v) => v === '' || v == null;
+  if (pulledAt && item.etimadAt && pulledAt < item.etimadAt) return { patch, changed, differs };
+  const dateSources = { ...(item.dateSources || {}) }, fieldSources = { ...(item.fieldSources || {}) }, was = [...(item.etimadWas || [])];
+  for (const k of ETIMAD_DATES) {
+    const v = x[k]; if (!v) continue;
+    const tm = TENDER_TIMED.includes(k) ? x[`${k}Time`] || '' : '', haveTm = TENDER_TIMED.includes(k) ? item[`${k}Time`] || '' : '';
+    if (item[k] === v && (!tm || haveTm === tm)) { if (dateSources[k] !== 'manual' && dateSources[k] !== 'etimad') { dateSources[k] = 'etimad'; patch.dateSources = dateSources; } continue; }
+    if (dateSources[k] === 'manual' && !empty(item[k])) { differs.push({ field: k, have: item[k] + (haveTm ? ` ${haveTm}` : ''), etimad: v + (tm ? ` ${tm}` : '') }); continue; }
+    if (!empty(item[k])) was.push({ field: k, was: item[k] + (haveTm ? ` ${haveTm}` : ''), src: dateSources[k] || '' });
+    patch[k] = v; if (TENDER_TIMED.includes(k)) patch[`${k}Time`] = tm; dateSources[k] = 'etimad'; patch.dateSources = dateSources;
+    changed.push({ field: k, was: empty(item[k]) ? '' : item[k] + (haveTm ? ` ${haveTm}` : ''), now: v + (tm ? ` ${tm}` : '') });
+  }
+  if (x.fees != null) {
+    if (empty(item.fees)) { patch.fees = x.fees; fieldSources.fees = 'etimad'; patch.fieldSources = fieldSources; changed.push({ field: 'fees', was: '', now: String(x.fees) }); }
+    else if (Number(item.fees) !== x.fees) {
+      if (fieldSources.fees === 'analyzer' || fieldSources.fees === 'etimad') { was.push({ field: 'fees', was: String(item.fees), src: fieldSources.fees }); patch.fees = x.fees; fieldSources.fees = 'etimad'; patch.fieldSources = fieldSources; changed.push({ field: 'fees', was: String(item.fees), now: String(x.fees) }); }
+      else differs.push({ field: 'fees', have: String(item.fees), etimad: String(x.fees) });
+    } else if (fieldSources.fees !== 'etimad' && fieldSources.fees !== 'analyzer') { /* typed by hand and equal: nothing to say */ }
+  }
+  if (empty(item.etimadNo)) { patch.etimadNo = x.ref; changed.push({ field: 'etimadNo', was: '', now: x.ref }); }
+  if (empty(item.entity) && x.entity) { patch.entity = x.entity; changed.push({ field: 'entity', was: '', now: x.entity }); }
+  if (x.link && item.link !== x.link) patch.link = x.link;
+  if (was.length !== (item.etimadWas || []).length) patch.etimadWas = was.slice(-10);
+  if (Object.keys(patch).length && pulledAt) patch.etimadAt = pulledAt;
+  return { patch, changed, differs };
+}
+/** A register row made from an Etimad tender the manager chose to follow: the branch received it today; everything else is Etimad's. */
+export function radarToItem(x, today, keyOf) {
+  const it = { id: keyOf(x.title), subject: x.title, date: today, from: '', byFrom: false, byKr: false, manual: true, att: [], status: 'open', stage: 'received', stageAt: today,
+    readyOn: '', due: '', visit: '', note: '', etimadNo: '', entity: '', dateSource: 'manual', dateSources: {}, fieldSources: {} };
+  return { ...it, ...applyEtimad(it, x).patch };
 }
 // ---------- v9.57 (ADR-0130): a tender's correspondence, read from the mail thread itself ----------
 // A reply carries the whole conversation beneath it. The register reads that conversation into entries — who wrote, when, and
@@ -2835,9 +3023,12 @@ export function cleanTenderDetails(item) {
     dateSource: ['received','sent','manual','thread'].includes(item.dateSource) ? item.dateSource : '',   // 'thread' (v9.57): the day of the oldest message quoted in a reply
     studySummary: string(item.studySummary, 4000),
     dueTime: item.due ? time(item.dueTime) : '', askDueTime: item.askDue ? time(item.askDueTime) : '',
-    dateSources: Object.fromEntries(fields.filter((key) => ['mail','document','manual','analyzer'].includes(item.dateSources?.[key])).map((key) => [key,item.dateSources[key]])),
+    dateSources: Object.fromEntries(fields.filter((key) => ['mail','document','manual','analyzer','etimad'].includes(item.dateSources?.[key])).map((key) => [key,item.dateSources[key]])),
     // ADR-0126: what the Tender Analyzer filled, its evidence, and its bid decision
-    fieldSources: Object.fromEntries(TENDER_STUDY_FIELDS.filter((key) => item.fieldSources?.[key] === 'analyzer').map((key) => [key,'analyzer'])),
+    fieldSources: Object.fromEntries(TENDER_STUDY_FIELDS.filter((key) => ['analyzer','etimad'].includes(item.fieldSources?.[key])).map((key) => [key,item.fieldSources[key]])),
+    // v9.60 (ADR-0132): the tender on Etimad — its page, when it was last read from a pull, and what Etimad replaced
+    link: /^https:\/\/tenders\.etimad\.sa\//i.test(item.link || '') ? string(item.link, 400) : '', etimadAt: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(item.etimadAt || '') ? item.etimadAt : '',
+    etimadWas: list(item.etimadWas).filter((w) => w && [...fields, 'fees'].includes(w.field)).slice(-10).map((w) => ({ field: w.field, was: string(w.was, 40), src: ['mail','document','manual','analyzer','etimad',''].includes(w.src) ? w.src : '' })),
     evidence: Object.fromEntries(Object.entries(item.evidence && typeof item.evidence === 'object' ? item.evidence : {}).filter(([key]) => [...TENDER_STUDY_FIELDS, ...fields].includes(key)).map(([key, v]) => [key, { file: string(v?.file, 160), page: Number.isSafeInteger(v?.page) && v.page > 0 ? v.page : null, quote: string(v?.quote, 240) }])),
     studyDecision: ['go','no-go','review'].includes(item.studyDecision) ? item.studyDecision : '', studyWhy: string(item.studyWhy, 400), studyAt: string(item.studyAt, 35),
     messages: list(item.messages).filter((m) => m && string(m.key, 400)).map((m) => ({
@@ -2857,7 +3048,7 @@ export function cleanTenderDetails(item) {
     thread: list(item.thread).filter((e) => e && (string(e.name, 80) || string(e.addr, 120) || string(e.text, 1500))).slice(0, 300).map((e) => ({
       at: /^\d{4}-\d{2}-\d{2}(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/.test(e.at) ? e.at : '', name: string(e.name, 80), addr: string(e.addr, 120), text: string(e.text, 1500), ...(e.mark === 'handover' ? { mark: 'handover' } : {})
     })),
-    activity: list(item.activity).filter((entry) => entry && string(entry.id, 150) && ['email','add','remove','stage','date','study','read','category','thread','inq'].includes(entry.action)).map((entry) => ({
+    activity: list(item.activity).filter((entry) => entry && string(entry.id, 150) && ['email','add','remove','stage','date','study','read','category','thread','inq','etimad'].includes(entry.action)).map((entry) => ({
       id: string(entry.id, 150), action: entry.action, at: string(entry.at, 35), label: string(entry.label, 300)
     })),
   };

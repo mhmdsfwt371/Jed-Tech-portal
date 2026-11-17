@@ -142,6 +142,8 @@ From v9.38 a file may also include `kindManual`, `kindAt` and optional `analysis
 
 From v9.57 (ADR-0130) a tender may carry `thread`: the conversation read from its mails, oldest first — entries of `{ at, name, addr, text }` and, on at most one of them, `mark: "handover"` (set by the manager). `at` is the Saudi wall clock as the mail program wrote it, `YYYY-MM-DDTHH:MM`, the day alone, or empty when it could not be read without guessing. `text` is the message's own words without links, phone numbers or the signature, at most 1,500 characters; at most 300 entries. `dateSource` also accepts `thread` (the tender's date is the day of the oldest quoted message), and the activity log accepts the action `thread`. Earlier backups, which have none of these, are read as before.
 
+From v9.60 (ADR-0132) a tender may also carry `link` (its Etimad page, `https://tenders.etimad.sa/` only), `etimadAt` (the pull last applied, `YYYY-MM-DDTHH:MM`) and `etimadWas` (up to 10 `{ field, was, src }`: what Etimad replaced and where it had come from). `dateSources` and `fieldSources.fees` accept `etimad`; the activity log accepts the action `etimad`. The register itself carries `radarIgnore` (Etimad reference numbers the manager put aside). The radar (`afaqy-etimad-radar/v1`, `docs/etimad-radar-format.md`) is kept in the device store under `radar` and is not in the backup.
+
 
 ## Project follow-up (v9.40)
 

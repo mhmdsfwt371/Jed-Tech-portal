@@ -1,19 +1,28 @@
 {
-  "version": "9.59",
+  "version": "9.60",
   "date": "2026-11-17",
   "notes": {
     "ar": [
-      "إصلاح: الاستفسار الذي تكتبه في «الاستفسارات» كان يضيع إذا أعادت النافذة رسم نفسها قبل أن تضغط «أضف الاستفسار» (مثل انتهاء قراءة ملف في الخلفية) — الآن يبقى ما كتبته حتى تضيفه."
+      "رادار اعتماد في سجل المناقصات: ارفع ملف أداة سحب اعتماد (الإكسل أو ملف الرادار) فتظهر المنافسات المفتوحة في نطاق آفاقي بأقرب موعد، مع تصفية للمنطقة الغربية. «تابِعها» تضيفها إلى السجل بمواعيد المنصة، و«ليست لنا» تُخفيها.",
+      "مواعيد المنصة وسعر الكراسة صارت تؤخذ من اعتماد: إذا عرف الرادار مناقصة في السجل ضبط موعد التقديم وساعته وآخر موعد للاستفسارات وسعر الكراسة كما على المنصة، وكتبت البطاقة ما صحّحه ومن أين جاء القديم. ما تكتبه بيدك لا يتغير.",
+      "تحت موعد التقديم في بطاقة المناقصة يظهر مصدره: منصة اعتماد، أو دراسة المحلل من الكراسة، أو الإيميل، أو إدخال يدوي.",
+      "تاريخ الكراسة المكتوب بالهجري يراجعه السجل بنفسه بتقويم أم القرى قبل أن يأخذه من دراسة المحلل؛ هذا ما جعل مناقصة الداش كام تظهر بموعد 19 نوفمبر بدل موعدها على المنصة."
     ],
     "en": [
-      "Fixed: an inquiry being typed under «Inquiries» was lost if the window redrew itself before «Add the inquiry» was pressed (for example when a file finished reading in the background) — what you typed now stays until you add it."
+      "The Etimad radar in the tender register: upload the Etimad pull tool’s file (the Excel workbook or the radar file) to see the open tenders within AFAQY’s scope, nearest deadline first, with a Western Region filter. «Follow it» adds a tender to the register with the platform’s dates; «Not ours» hides it.",
+      "The platform’s dates and the booklet fee now come from Etimad: when the radar knows a register tender, it sets the submission deadline and its hour, the inquiries deadline and the booklet fee as they are on the platform, and the card says what it corrected and where the old value came from. What you type yourself is never changed.",
+      "Under the submission deadline on a tender’s card, its source is shown: the Etimad platform, the analyzer’s study of the booklet, the email, or typed by hand.",
+      "A booklet date written in Hijri is now checked by the register itself, in the Umm al-Qura calendar, before it is taken from the analyzer’s study — this is what showed the dash-cam tender with a 19 November deadline instead of its date on the platform."
     ],
     "ur": [
-      "درستی: «سوالات» میں لکھا جا رہا سوال ضائع ہو جاتا تھا اگر «سوال شامل کریں» دبانے سے پہلے کھڑکی خود کو دوبارہ بناتی (مثلاً جب پس منظر میں کسی فائل کا پڑھنا مکمل ہوتا) — اب آپ کا لکھا ہوا شامل کرنے تک باقی رہتا ہے۔"
+      "ٹینڈر رجسٹر میں اعتماد ریڈار: اعتماد ٹول کی فائل (ایکسل یا ریڈار فائل) اپ لوڈ کریں تو آفاقی کے دائرۂ کار کے کھلے ٹینڈر قریب ترین آخری تاریخ کے ساتھ پہلے نظر آتے ہیں، مغربی علاقے کے فلٹر کے ساتھ۔ «اس کی پیروی کریں» ٹینڈر کو پلیٹ فارم کی تاریخوں کے ساتھ رجسٹر میں شامل کرتا ہے؛ «ہمارا نہیں» اسے چھپا دیتا ہے۔",
+      "پلیٹ فارم کی تاریخیں اور کتابچے کی قیمت اب اعتماد سے لی جاتی ہیں: جب ریڈار رجسٹر کے کسی ٹینڈر کو پہچان لے تو جمع کرانے کی آخری تاریخ اور وقت، سوالات کی آخری تاریخ اور کتابچے کی قیمت پلیٹ فارم کے مطابق کر دیتا ہے، اور کارڈ بتاتا ہے کہ کیا درست ہوا اور پرانی قدر کہاں سے آئی تھی۔ جو آپ خود لکھیں وہ کبھی نہیں بدلتا۔",
+      "ٹینڈر کارڈ میں جمع کرانے کی آخری تاریخ کے نیچے اس کا ماخذ دکھایا جاتا ہے: اعتماد پلیٹ فارم، کتابچے پر تجزیہ کار کا مطالعہ، ای میل، یا ہاتھ سے لکھا ہوا۔",
+      "کتابچے میں ہجری میں لکھی تاریخ کو رجسٹر اب تجزیہ کار کے مطالعے سے لینے سے پہلے خود ام القریٰ کیلنڈر سے جانچتا ہے — اسی وجہ سے ڈیش کیم ٹینڈر پلیٹ فارم کی تاریخ کے بجائے 19 نومبر کی آخری تاریخ کے ساتھ نظر آ رہا تھا۔"
     ]
   },
   "counts": {
-    "versions": 184,
-    "decisions": 131
+    "versions": 185,
+    "decisions": 132
   }
 }

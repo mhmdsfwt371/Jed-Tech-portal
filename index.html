@@ -1378,6 +1378,18 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   @media (max-width: 640px) { .dlg-pager .dp-status { order: 5; flex-basis: 100%; text-align: center; } .dlg-pager .dp-row { gap: 6px; padding: 6px 8px; } }
   @media print { .dlg-pager, .dlg-pad { display: none !important; } [data-paged] { overflow: visible !important; } }
   @media print { .bt-rv { opacity: 1 !important; transform: none !important; transition: none !important; } }   /* v9.55: a section waiting to be scrolled to was printed blank */
+
+  /* v9.60 (ADR-0132): the Etimad radar */
+  .td-radar-line { margin: 6px 0; } .td-radar-btn { font-weight: 600; }
+  .et-modal { max-width: 1040px; } .et-head { margin: 4px 0; }
+  .et-pull { justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0; }
+  .et-tiles { margin: 8px 0; } .et-filters { flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; } .et-q { min-width: 220px; flex: 1; }
+  .et-row td { vertical-align: top; } .et-row.et-in { background: var(--accent-wash); } .et-row .td-chips { margin-top: 4px; gap: 4px; } .et-row .chip { font-size: 12px; padding: 1px 8px; font-weight: 500; } .et-acts { white-space: nowrap; } .et-acts .btn { margin: 2px; }
+  .et-sugg { margin: 8px 0; border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 12px; } .et-sugg-row { margin: 4px 0; }
+  .td-auto-et { background: var(--note-wash); color: var(--note); }
+  .et-card { border-inline-start: 4px solid var(--note); } .et-card p { margin: 4px 0; } .et-was::before { content: 'ⓘ '; color: var(--note); }
+  .et-chip-link { text-decoration: none; border-color: var(--note); color: var(--note); }
+  @media (max-width: 640px) { .et-acts { white-space: normal; } .et-q { min-width: 0; width: 100%; } }
 </style>
 </head>
 <body>

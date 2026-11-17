@@ -52,6 +52,9 @@ What the reader tolerates, and what it will not guess (v9.55, ADR-0129)
   not read»), so the manager knows it was there and was not taken.
 - The register keeps an hour for `due` and `askDue` only; an hour written for `visit` or `openAt` is read and not stored.
 - Importing the same file again changes nothing and writes nothing in the tender's history.
+- v9.60 (ADR-0132): a date whose `evidence` quote holds a Hijri date is converted by the register itself (Umm al-Qura) and
+  compared. A wrong conversion is corrected when the quote allows one reading and reported; with several readings and no match
+  the date is left out. Once Etimad knows the tender, Etimad's platform dates and booklet fee replace the study's.
 
 How the register uses it
 - Matches a tender by `etimadNo`, then by `subject` (RE:/FW: and spacing ignored). From a tender's own window the study goes into

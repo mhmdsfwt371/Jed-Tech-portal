@@ -1717,6 +1717,122 @@ test('tender follow-up: the analyzer’s study fills the entity when it is empty
   assert.equal(core.applyTenderStudy({ entity: 'Typed' }, st).patch.entity, undefined);
 });
 
+// ---------- v9.60 (ADR-0132): Etimad radar and the Hijri check ----------
+test('v9.60: a booklet date written in Hijri is converted by the register itself — Umm al-Qura, the calendar Etimad uses', () => {
+  assert.equal(core.hijriToGregorian(1448, 6, 5), '2026-11-15');
+  assert.equal(core.hijriToGregorian(1448, 6, 16), '2026-11-26');
+  assert.equal(core.hijriToGregorian(1448, 6, 20), '2026-11-30');
+  assert.equal(core.hijriToGregorian(1448, 13, 1), '', 'no thirteenth month');
+  assert.deepEqual(core.hijriInQuote('وقت التسليم 16ص 09:30 1448/06/'), [{ hijri: '1448-06-16', date: '2026-11-26' }], 'text pulled out of a right-to-left PDF, out of order, clock time set aside');
+  assert.deepEqual(core.hijriInQuote('١٤٤٨/٠٦/١٦'), [{ hijri: '1448-06-16', date: '2026-11-26' }], 'Arabic-Indic digits');
+  assert.deepEqual(core.hijriInQuote('آخر موعد 2026-11-30'), [], 'no Hijri year: nothing to check');
+  assert.equal(core.hijriInQuote('1448/05/06').length, 2, 'day and month both under 13: two readings');
+  assert.deepEqual(core.hijriCheck('2026-11-26', '16/06/1448'), { ok: true });
+  assert.deepEqual(core.hijriCheck('2026-11-19', 'وقت التسليم 16ص 09:30 1448/06/'), { ok: false, hijri: '1448-06-16', date: '2026-11-26' });
+});
+
+test('v9.60: a study whose Hijri date was converted wrongly is corrected from its own quote; two readings and neither matches — the date is left out', () => {
+  const st = (due, quote) => core.parseTenderStudy({ schema: 'afaqy-tender-study/v1', tenders: [{ subject: 'WM - dash cam', dates: { due: { date: due, time: '' } }, evidence: { due: { file: 'booklet.pdf', page: 4, quote } } }] }).tenders[0];
+  const a = st('2026-11-19', 'وقت التسليم 16ص 09:30 1448/06/');
+  assert.equal(a.dates.due.date, '2026-11-26', 'the study wrote 19 Nov for 16/06/1448; it is 26 Nov');
+  assert.deepEqual(a.fixed, [{ field: 'due', was: '2026-11-19', hijri: '1448-06-16', now: '2026-11-26' }]);
+  const b = st('2026-11-26', '16/06/1448'); assert.equal(b.dates.due.date, '2026-11-26'); assert.deepEqual(b.fixed, []);
+  const c = st('2026-12-01', '1448/05/06'); assert.equal(c.dates.due, undefined); assert.deepEqual(c.skipped, ['due']);
+  const d = st('2026-12-01', 'آخر موعد لتقديم العروض'); assert.equal(d.dates.due.date, '2026-12-01', 'no Hijri date in the quote: taken as written');
+});
+
+test('v9.60: Etimad times are read as the Saudi wall clock, whatever the browser’s time zone', () => {
+  const serial = (y, mo, d, h, mi) => (Date.UTC(y, mo - 1, d, h, mi) - Date.UTC(1899, 11, 30)) / 864e5;
+  assert.deepEqual(core.etimadWhen(serial(2026, 11, 30, 9, 59) - 1e-9), { date: '2026-11-30', time: '09:59' }, 'Excel keeps 09:58:59.999 — read as 09:59');
+  assert.deepEqual(core.etimadWhen(serial(2026, 11, 15, 0, 0)), { date: '2026-11-15', time: '' }, 'midnight on Etimad means no hour');
+  assert.deepEqual(core.etimadWhen('2026-12-15 09:59:00'), { date: '2026-12-15', time: '09:59' });
+  assert.deepEqual(core.etimadWhen('٢٠٢٦-١٢-١٥'), { date: '2026-12-15', time: '' });
+  assert.deepEqual(core.etimadWhen('05/12/2026'), { date: '', time: '' }, 'a day-first date is not guessed');
+  assert.deepEqual(core.etimadWhen(null), { date: '', time: '' });
+});
+
+test('v9.60: AFAQY’s scope and the Western Region are read from the title, the activity, the entity and the place', () => {
+  assert.equal(core.etimadInScope('توريد وتركيب كاميرات مراقبة أمنية'), true);
+  assert.equal(core.etimadInScope('WM - توريد وتركيب داش كام', 'تجارة الكماليات'), true);
+  assert.equal(core.etimadInScope('مشروع توريد تركيب حساسات لقياس مستوى الوقود'), true);
+  assert.equal(core.etimadInScope('تجديد رخص نظام الموارد المؤسسية', 'تقنية المعلومات'), true, 'Etimad’s IT activity');
+  assert.equal(core.etimadInScope('تجديد اشتراك نظام إدارة أداء التطبيقات'), true, '«التطبيقات» holds the letters of «طبي» and is not a medical tender');
+  assert.equal(core.etimadInScope('قطع غيار لنظام كاميرات'), false, 'a clear «out» word wins');
+  assert.equal(core.etimadInScope('توريد أدوية', 'الأنشطة الطبية'), false);
+  assert.equal(core.etimadInScope('أعمال نظافة المباني'), false);
+  assert.equal(core.etimadWest('مستشفى الامير محمد بن عبدالعزيز بالمدينة المنورة'), true);
+  assert.equal(core.etimadWest('أمانة محافظة جدة'), true);
+  assert.equal(core.etimadWest('أمانة منطقة الرياض', ''), false);
+  assert.equal(core.etimadIsUs('شركة أفاقي لتقنية المعلومات'), true); assert.equal(core.etimadIsUs('مؤسسة آفاق ساهر للمقاولات'), false, 'another company with a similar word');
+});
+
+const radarSheets = () => {
+  const H = ['الرقم المرجعي', 'اسم المنافسة', 'الجهة الحكومية', 'حالة المنافسة', 'نوع المنافسة', 'النشاط الرئيسي', 'تاريخ النشر', 'آخر موعد استفسارات', 'آخر موعد تقديم', 'موعد فتح العروض', 'سعر الكراسة ر.س', 'رقم المنافسة', 'مكان التنفيذ', 'رابط اعتماد', 'أول رصد', 'تاريخ بدء الأعمال'];
+  const s = { 'جميع المنافسات': [H,
+    ['261139004629', 'WM - توريد وتركيب داش كام', 'مستشفى تجريبي بالمدينة المنورة', 'نشطة', 'شراء مباشر', 'تجارة الكماليات', '2026-11-15 00:00:00', '2026-11-25 00:00:00', '2026-11-30 09:59:00', '', 200, '126526 / 130720', '', 'https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=abc', '2026-11-15 12:00:00', ''],
+    ['261139000001', 'توريد أدوية', 'تجمع صحي تجريبي', 'نشطة', 'شراء مباشر', 'الأنشطة الطبية', '2026-11-15', '2026-11-20', '2026-11-25 09:59', '', 100, '', '', 'javascript:alert(1)', '2026-11-15', ''],
+    ['REF:250739013184', 'أعمال نظافة', 'جهة تجريبية', 'تم إعلان الترسية', 'منافسة عامة', 'التشغيل والصيانة والنظافة', '2025-07-01', '2025-07-05', '2025-07-10', '', 500, '', '', '', '2026-11-15', '2025-09-01'],
+    ['261139000002', 'توريد ملابس', 'جهة تجريبية', 'نشطة', 'شراء مباشر', 'تجارة', '2026-11-15', '2026-11-20', '2026-11-25', '', 100, '', '', '', '2026-11-15', '']],
+    'تفاصيل الترسيات': [['الرقم المرجعي', 'اسم الفائز', 'قيمة الترسية ر.س'], ['250739013184', 'شركة رامي قاسم', 44620], ['261139000001', 'مؤسسة لينا حرب', 900]],
+    'العروض المنشورة': [['الرقم المرجعي', 'مقدم العرض', 'سعر العرض المالي ر.س', 'نتيجة الفحص الفني'], ['250739013184', 'شركة أفاقي لتقنية المعلومات', 58650, 'غير مطابق'], ['250739013184', 'شركة رامي قاسم', 44620, 'مطابق']],
+    'سجل السحب': [['رقم التشغيل', 'بدأ', 'انتهى', 'الحالة'], ['1', '2026-11-15 12:48:14', '2026-11-15 13:15:55', 'partial'], ['2', '2026-11-15 20:48:14', '2026-11-16 15:38:00', 'complete']] };
+  return (n) => s[n] || null;
+};
+test('v9.60: the pull tool’s Excel is read by column name and only what concerns AFAQY is kept', () => {
+  const r = core.radarFromSheets(radarSheets(), ['261139000002']);
+  assert.equal(r.total, 4);
+  assert.deepEqual(r.tenders.map((x) => x.ref), ['261139004629', '250739013184', '261139000002'], 'in scope · AFAQY bid on it · the register follows it; the medicines tender is dropped');
+  const dc = r.tenders[0];
+  assert.deepEqual([dc.status, dc.due, dc.dueTime, dc.askDue, dc.askDueTime, dc.fees, dc.no, dc.scope, dc.west], ['active', '2026-11-30', '09:59', '2026-11-25', '', 200, '126526 / 130720', true, true]);
+  assert.equal(r.tenders[1].status, 'awarded'); assert.equal(r.tenders[1].ref, '250739013184', 'the «REF:» prefix is dropped');
+  assert.deepEqual(r.awards, [{ ref: '250739013184', winner: 'شركة رامي قاسم', value: 44620 }], 'awards of dropped tenders are dropped with them');
+  assert.deepEqual(r.offers.map((o) => [o.bidder, o.tech]), [['شركة أفاقي لتقنية المعلومات', 'fail'], ['شركة رامي قاسم', 'pass']]);
+  assert.equal(r.pulledAt, '2026-11-16T15:38'); assert.equal(r.partial, true, 'one run says partial');
+  assert.deepEqual(core.radarFromSheets(() => null), { error: 'nosheet' });
+});
+test('v9.60: the pull tool’s own file is checked; a link that is not an Etimad page is dropped', () => {
+  assert.deepEqual(core.parseRadar('{'), { error: 'json' }); assert.deepEqual(core.parseRadar({ schema: 'x', tenders: [] }), { error: 'schema' });
+  const r = core.parseRadar({ schema: core.RADAR_SCHEMA, pulledAt: '2026-11-17T08:00', filter: { from: '2026-11-01', to: '2026-11-17', category: 'تقنية المعلومات' },
+    tenders: [{ ref: '261139000009', title: 'توريد كاميرات مراقبة', entity: 'أمانة محافظة جدة', status: 'active', due: '2026-12-01 10:00', link: 'javascript:alert(1)' }, { ref: '', title: 'no ref' }] });
+  assert.equal(r.tenders.length, 1); assert.equal(r.tenders[0].link, ''); assert.equal(r.tenders[0].dueTime, '10:00'); assert.equal(r.tenders[0].west, true);
+  assert.deepEqual(r.filter, { from: '2026-11-01', to: '2026-11-17', category: 'تقنية المعلومات' });
+});
+test('v9.60: pulls add up — a newer copy of a tender replaces the older one, nothing else is dropped', () => {
+  const a = core.radarFromSheets(radarSheets(), []), b = core.parseRadar({ schema: core.RADAR_SCHEMA, pulledAt: '2026-11-18T08:00', tenders: [{ ref: '261139004629', title: 'WM - توريد وتركيب داش كام', status: 'active', due: '2026-12-03 09:59' }] });
+  const m = core.radarMerge(core.radarMerge(null, a), b);
+  assert.equal(m.tenders.length, 2); assert.equal(m.tenders.find((x) => x.ref === '261139004629').due, '2026-12-03', 'Etimad extended the deadline');
+  assert.equal(m.awards.length, 1, 'the older pull’s awards stay'); assert.equal(m.pulls.length, 2); assert.equal(m.pulledAt, '2026-11-18T08:00');
+});
+const key = (s) => String(s || '').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, '').replace(/\s+/g, ' ').trim().toLowerCase();
+test('v9.60: a register row finds its Etimad tender by number or exact title; a looser match is only suggested', () => {
+  const L = core.radarFromSheets(radarSheets(), ['261139000002']).tenders;
+  assert.equal(core.radarFind({ etimadNo: '261139004629', subject: 'x' }, L, key).ref, '261139004629', 'Etimad’s reference number');
+  assert.equal(core.radarFind({ etimadNo: '126526/130720', subject: 'x' }, L, key).ref, '261139004629', 'the entity’s own tender number');
+  assert.equal(core.radarFind({ etimadNo: '', subject: 'RE: WM - توريد وتركيب داش كام' }, L, key).ref, '261139004629', 'same title');
+  assert.equal(core.radarFind({ etimadNo: '', subject: 'توريد وتركيب داش كام - الشؤون الصحية' }, L, key), null, 'a different title is not linked by itself');
+  assert.deepEqual(core.radarSuggest({ subject: 'توريد وتركيب داش كام - الشؤون الصحية بوزارة الحرس الوطني', entity: '' }, L).map((x) => x.ref), ['261139004629']);
+  assert.deepEqual(core.radarSuggest({ subject: 'توريد كاميرات للمستودع' }, L), [], 'one shared word is not enough');
+});
+test('v9.60: Etimad sets the platform’s deadline and fee over the study’s; a value typed by hand stays; the same pull twice writes nothing', () => {
+  const x = core.radarFromSheets(radarSheets(), []).tenders[0];
+  const item = { id: 'a', subject: 's', due: '2026-11-19', dueTime: '', askDue: '', fees: 0, etimadNo: '', entity: 'Entity typed', dateSources: { due: 'analyzer' }, fieldSources: { fees: 'analyzer' } };
+  const r = core.applyEtimad(item, x, '2026-11-16T15:38');
+  assert.deepEqual([r.patch.due, r.patch.dueTime, r.patch.askDue, r.patch.fees, r.patch.etimadNo, r.patch.entity], ['2026-11-30', '09:59', '2026-11-25', 200, '261139004629', undefined]);
+  assert.deepEqual(r.patch.dateSources, { due: 'etimad', askDue: 'etimad' }); assert.deepEqual(r.patch.fieldSources, { fees: 'etimad' });
+  assert.deepEqual(r.patch.etimadWas, [{ field: 'due', was: '2026-11-19', src: 'analyzer' }, { field: 'fees', was: '0', src: 'analyzer' }], 'what was replaced, and where it came from');
+  assert.equal(r.patch.link, 'https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=abc'); assert.equal(r.patch.etimadAt, '2026-11-16T15:38');
+  const after = { ...item, ...r.patch };
+  assert.deepEqual(core.applyEtimad(after, x, '2026-11-16T15:38').patch, {}, 'the same pull again: nothing');
+  assert.deepEqual(core.applyEtimad(after, { ...x, due: '2026-12-31' }, '2026-11-10T00:00').patch, {}, 'an older pull changes nothing');
+  const typed = core.applyEtimad({ ...item, dateSources: { due: 'manual' }, fieldSources: {}, fees: 150 }, x, '2026-11-16T15:38');
+  assert.equal(typed.patch.due, undefined); assert.equal(typed.patch.fees, undefined);
+  assert.deepEqual(typed.differs, [{ field: 'due', have: '2026-11-19', etimad: '2026-11-30 09:59' }, { field: 'fees', have: '150', etimad: '200' }]);
+  const it = core.radarToItem(x, '2026-11-17', key);
+  assert.deepEqual([it.id, it.subject, it.date, it.stage, it.etimadNo, it.due, it.dueTime, it.fees, it.dateSources.due], ['wm - توريد وتركيب داش كام', 'WM - توريد وتركيب داش كام', '2026-11-17', 'received', '261139004629', '2026-11-30', '09:59', 200, 'etimad']);
+  const clean = core.cleanTenderDetails({ ...after, link: 'https://evil.example/x', dateSources: { due: 'etimad' }, fieldSources: { fees: 'etimad' } });
+  assert.equal(clean.link, ''); assert.equal(clean.dateSources.due, 'etimad'); assert.equal(clean.fieldSources.fees, 'etimad'); assert.equal(clean.etimadWas.length, 2);
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

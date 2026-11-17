@@ -171,6 +171,7 @@
 | `docs/decisions/0128-manual-tender-fields-optional.md` | Nothing the manager fills by hand blocks a tender’s stage; closed tenders ask for nothing |
 | `docs/decisions/0129-audit-and-qa-policy.md` | The audit of 9.55: defects found in windows, dark mode, reloads and repeats; the tender page rebuilt around drop-or-choose; the backup reminder; the QA policy |
 | `docs/decisions/0131-tender-card-and-follow-up.md` | A tender’s window as one card (tiles, dates line, missing, folds); the hand-over date to the tenders team; «missed the deadline»; inquiries; the team message; the year report |
+| `docs/decisions/0132-etimad-radar.md` | The Etimad radar: the pull tool’s file read on the device; Etimad sets the platform’s dates and fee; exact linking or a suggestion; a Hijri date in a study checked before it is taken (format: `docs/etimad-radar-format.md`) |
 | `docs/decisions/0130-tender-correspondence-timeline.md` | A tender’s mail thread read into its messages (writer, time, own words), the summary with full working days, the manager’s hand-over mark, copy as text, and the summary window |
 
 ## في عشر دقائق: ابنِ وافحص
