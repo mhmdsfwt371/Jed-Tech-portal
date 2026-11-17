@@ -1,34 +1,28 @@
 {
-  "version": "9.61",
+  "version": "9.62",
   "date": "2026-11-17",
   "notes": {
     "ar": [
-      "في بطاقة المناقصة المربوطة باعتماد طيّة جديدة «السوق والنتيجة»: العروض المنشورة لها بأسعارها وفحصها الفني وترتيب عرضنا، ومنافسات مشابهة أُعلنت ترسيتها بفائزها وقيمتها وعدد عروضها، ووسيط قيمة الترسية والأكثر فوزًا.",
-      "إذا أعلنت اعتماد الفائز، تقول البطاقة النتيجة وتعرض تسجيلها بزر واحد مع السبب من بيانات اعتماد نفسها؛ لا يُسجَّل شيء دون ضغطتك.",
-      "في رادار اعتماد: قسم «عروض آفاقي على اعتماد» بأسعارنا وفحصها الفني وترتيبنا والفائز، وزر «انسخ أرقام ما أتابعه» لتحديث هذه المناقصات وحدها من أداة السحب.",
-      "المناقصة التي فزنا بها تقول في بطاقتها موعد بدء الأعمال كما تنشره اعتماد، وفيها زر «تابع التنفيذ في مشاريعي» حيث تُتابع القيمة والتحصيل والمراحل.",
-      "زر «الأرشيف» في سجل المناقصات يجمع كل مناقصة أُغلقت بنتيجتها وسببها وقيمتها وملفاتها ورقمها على اعتماد، مع تصفية بالنتيجة والسنة وتنزيل إكسل. و«تقرير السنة» صار يبدأ بقمع: ما نُشر في نطاقنا بالمنطقة الغربية على اعتماد، وما وصل إلينا، وما قررنا فيه، وما قدّمناه، وما فزنا به.",
-      "رادار اعتماد لا يعرض بين «المفتوحة» منافسة فات موعد تقديمها بعد السحب؛ تبقى ظاهرة تحت «الكل»."
+      "سحب اعتماد صار دراسة للسوق فقط، تُحدَّث كل ثلاثة أو ستة أشهر: لا يغيّر موعدًا ولا سعر كراسة في أي مناقصة. مرجع كل مناقصة ملفات الإيميل ودراسة المحلل وما تكتبه بيدك.",
+      "إذا كان في السحب موعد أو سعر مختلف عن السجل، أو موجود والسجل فاضي، تذكره بطاقة المناقصة ملاحظةً بتاريخ السحب ولا تغيّر شيئًا.",
+      "ما كان سحب اعتماد قد غيّره في النسختين السابقتين يرجع وحده إلى قيمة الإيميل أو الدراسة عند فتح البوابة، ويُكتب ذلك في سجل المناقصة.",
+      "المنافسة التي تتابعها من الرادار تبدأ بما في السحب، ثم تحل محله مواعيد الإيميل والدراسة حين تصل."
     ],
     "en": [
-      "A tender linked to Etimad has a new «Market and result» fold on its card: its published offers with their prices, technical result and our offer’s rank, and similar tenders with an announced award — winner, value, number of offers — with the median award value and who wins most.",
-      "Once Etimad announces the winner, the card says so and offers to record it with one press, with the reason taken from Etimad’s own facts; nothing is recorded without your press.",
-      "In the Etimad radar: a section «AFAQY’s offers on Etimad» with our prices, their technical result, our rank and the winner, and a «Copy the numbers I follow» button to refresh only those tenders from the pull tool.",
-      "A tender we won shows on its card the work start date as Etimad publishes it, with a «Follow the execution in My projects» button, where the value, the collection and the milestones are followed.",
-      "The «Archive» button in the tender register gathers every closed tender with its outcome, reason, value, files and Etimad number, filtered by outcome and year, with an Excel download. The «Year report» now opens with a funnel: what Etimad published within our scope in the Western Region, what reached us, what we decided on, what we submitted, and what we won.",
-      "The Etimad radar no longer lists as «open» a tender whose submission deadline passed after the pull; it stays visible under «All of them»."
+      "The Etimad pull is now a market study only, refreshed every three or six months: it changes no deadline and no booklet fee in any tender. Each tender’s reference is its mail files, the analyzer’s study and what you type.",
+      "When the pull holds a deadline or a fee that differs from the register, or one the register lacks, the tender’s card mentions it as a note with the pull’s date and changes nothing.",
+      "Whatever an Etimad pull changed in the two previous versions goes back by itself to the mail’s or the study’s value when the portal opens, and this is written in the tender’s history.",
+      "A tender you follow from the radar starts with what the pull holds, and the mail’s and the study’s dates take its place when they arrive."
     ],
     "ur": [
-      "اعتماد سے منسلک ٹینڈر کے کارڈ میں نیا حصہ «مارکیٹ اور نتیجہ»: اس کی شائع شدہ پیشکشیں ان کی قیمتوں، تکنیکی جانچ اور ہماری پیشکش کے درجے کے ساتھ، اور ملتے جلتے ٹینڈر جن کے ایوارڈ کا اعلان ہو چکا — جیتنے والا، قیمت، پیشکشوں کی تعداد — ایوارڈ کی درمیانی قیمت اور سب سے زیادہ جیتنے والوں کے ساتھ۔",
-      "جب اعتماد جیتنے والے کا اعلان کرے تو کارڈ نتیجہ بتاتا ہے اور ایک بٹن سے اسے درج کرنے کی پیشکش کرتا ہے، وجہ اعتماد کی اپنی معلومات سے لی جاتی ہے؛ آپ کے دبائے بغیر کچھ درج نہیں ہوتا۔",
-      "اعتماد ریڈار میں: «اعتماد پر آفاقی کی پیشکشیں» کا حصہ ہماری قیمتوں، تکنیکی جانچ، ہمارے درجے اور جیتنے والے کے ساتھ، اور «جن کی پیروی کرتا ہوں ان کے نمبر کاپی کریں» کا بٹن تاکہ ٹول صرف انہی ٹینڈروں کو تازہ کرے۔",
-      "جو ٹینڈر ہم جیتے، اس کے کارڈ پر کام کے آغاز کی تاریخ ویسی ہی دکھائی جاتی ہے جیسی اعتماد شائع کرے، اور «میرے منصوبوں میں عمل درآمد کی پیروی کریں» کا بٹن ہے جہاں قیمت، وصولی اور مراحل کی پیروی ہوتی ہے۔",
-      "ٹینڈر رجسٹر میں «آرکائیو» کا بٹن ہر بند ٹینڈر کو اس کے نتیجے، وجہ، قیمت، فائلوں اور اعتماد نمبر کے ساتھ جمع کرتا ہے، نتیجے اور سال کے فلٹر اور ایکسل ڈاؤن لوڈ کے ساتھ۔ اور «سال کی رپورٹ» اب ایک قیف سے شروع ہوتی ہے: مغربی علاقے میں ہمارے دائرۂ کار میں اعتماد پر کیا شائع ہوا، ہم تک کیا پہنچا، ہم نے کس پر فیصلہ کیا، کیا جمع کرایا، اور کیا جیتا۔",
-      "اعتماد ریڈار اب ایسا ٹینڈر «کھلے» میں نہیں دکھاتا جس کی جمع کرانے کی آخری تاریخ ڈیٹا نکالنے کے بعد گزر چکی ہو؛ وہ «سب ٹینڈر» میں نظر آتا رہتا ہے۔"
+      "اعتماد ڈیٹا اب صرف مارکیٹ کا مطالعہ ہے جو ہر تین یا چھ ماہ میں تازہ ہوتا ہے: یہ کسی ٹینڈر کی آخری تاریخ یا کتابچے کی قیمت نہیں بدلتا۔ ہر ٹینڈر کا معیار اس کی ای میل فائلیں، تجزیہ کار کا مطالعہ اور آپ کا لکھا ہوا ہے۔",
+      "جب ڈیٹا میں رجسٹر سے مختلف آخری تاریخ یا قیمت ہو، یا ایسی ہو جو رجسٹر میں نہیں، تو ٹینڈر کا کارڈ اسے ڈیٹا کی تاریخ کے ساتھ ایک نوٹ کے طور پر ذکر کرتا ہے اور کچھ نہیں بدلتا۔",
+      "پچھلے دو ورژنز میں اعتماد ڈیٹا نے جو کچھ بدلا تھا وہ پورٹل کھلنے پر خود بخود ای میل یا مطالعے کی قدر پر واپس آ جاتا ہے، اور یہ ٹینڈر کی تاریخ میں لکھا جاتا ہے۔",
+      "جس ٹینڈر کی آپ ریڈار سے پیروی کریں وہ ڈیٹا کی معلومات سے شروع ہوتا ہے، اور ای میل اور مطالعے کی تاریخیں آنے پر ان کی جگہ لے لیتی ہیں۔"
     ]
   },
   "counts": {
-    "versions": 186,
-    "decisions": 133
+    "versions": 187,
+    "decisions": 135
   }
 }

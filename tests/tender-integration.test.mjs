@@ -230,7 +230,7 @@ try {
     assert.equal(card().inquiries[0].answer,'Gate 3, north side');assert.equal(card().entity,'Sample entity');assert.equal(card().site,'Sample site, gate 3');
     w.close();const again=await setup(),k2=again.window.qa.get().items.find(x=>x.id==='sample:card');assert.equal(k2.stage,'missed');assert.equal(k2.inquiries.length,1);assert.equal(k2.site,'Sample site, gate 3');again.window.close();
   }
-  // ---- v9.60 (ADR-0132): the Etimad radar and the platform's dates. Each failed on v9.59. ----
+  // ---- v9.60 (ADR-0132), v9.62 (ADR-0135): the Etimad radar — a market study that never changes a tender's data. ----
   { const dom7=await setup(), w=dom7.window, d=w.document, qa=w.qa, select=s=>d.querySelector(s);
     const arrived=new Date(Date.now()+3*36e5-2*864e5).toISOString().slice(0,10), ahead=(n)=>new Date(Date.now()+3*36e5+n*864e5).toISOString().slice(0,10);
     const dash={id:'sample:dash',subject:'توريد وتركيب داش كام - جهة تجريبية',date:arrived,stage:'prep',stageAt:arrived,status:'open',att:[],due:'2026-11-19',dueTime:'',fees:0,etimadNo:'',dateSources:{due:'analyzer'},fieldSources:{fees:'analyzer'}};
@@ -244,13 +244,13 @@ try {
       {ref:'261139000999',title:'توريد وتركيب شبكة لاسلكية للمبنى',entity:'جهة تجريبية',status:'active',due:`${ahead(25)} 09:59`,fees:100},
       {ref:'261139000555',title:'توريد أدوية',entity:'جهة تجريبية',status:'active',due:`${ahead(4)} 09:59`},
       {ref:'261139000444',title:'توريد كاميرات مراقبة للبوابات',entity:'جهة تجريبية',status:'active',due:`${ahead(-1)} 09:59`}]};   // seen open by the pull, closed since
-    // (1) the pull file dropped anywhere on the register is told apart from a study, and Etimad sets the dates of the tender it knows by number
+    // (1) the pull file dropped anywhere on the register is told apart from a study, and changes nothing in the register (v9.62)
+    const before=JSON.stringify(qa.get().items.map(x=>[x.id,x.due,x.dueTime,x.fees,x.etimadNo,x.dateSources]));
     const file=new w.File([JSON.stringify(pull)],'etimad-radar.json',{type:'application/json'}),any=select('.td-drop-any input');Object.defineProperty(any,'files',{value:[file],configurable:true});any.dispatchEvent(new w.Event('change',{bubbles:true}));
-    await wait(()=>it('sample:exact').due===ahead(20)&&!qa.busy(),'Etimad applied');
-    assert.equal(it('sample:exact').dueTime,'10:00');assert.equal(it('sample:exact').dateSources.due,'etimad');assert.equal(it('sample:exact').fees,500);assert.equal(it('sample:exact').fieldSources.fees,'etimad');
-    assert.equal(it('sample:dash').due,'2026-11-19','a looser title is not linked by itself');assert(select('.et-res'),'the import says what it did');
+    await wait(()=>select('.et-res')&&!qa.busy(),'pull read');
+    assert.equal(JSON.stringify(qa.get().items.map(x=>[x.id,x.due,x.dueTime,x.fees,x.etimadNo,x.dateSources])),before,'not one tender changed');
+    assert(select('.et-res').textContent.includes('1 register tenders were found'),select('.et-res').textContent);
     assert(select('.et-res').textContent.includes('incomplete'),'a partial pull is declared');
-    assert(it('sample:exact').activity.some(a=>a.action==='etimad'),'written in the history');
     // (2) the radar window: only our scope, the West filter, a link suggested for the dash-cam tender
     select('.td-radar-btn').click();const rad=()=>select('dialog.et-modal');assert(rad(),'the radar opened');
     const refs=()=>[...rad().querySelectorAll('tr.et-row')].map(r=>r.dataset.ref);
@@ -260,8 +260,8 @@ try {
     [...rad().querySelectorAll('.pill-btn')].find(b=>b.textContent==='Whole Kingdom').click();
     assert(rad().querySelector('.et-sugg').textContent.includes('WM - توريد وتركيب داش كام'));rad().querySelector('.et-sugg .et-link').click();
     await wait(()=>it('sample:dash').etimadNo==='261139004629','linked');
-    assert.deepEqual([it('sample:dash').due,it('sample:dash').dueTime,it('sample:dash').fees,it('sample:dash').dateSources.due],[ahead(13),'09:59',200,'etimad']);
-    assert.deepEqual(it('sample:dash').etimadWas,[{field:'due',was:'2026-11-19',src:'analyzer'},{field:'fees',was:'0',src:'analyzer'}]);
+    assert.deepEqual([it('sample:dash').due,it('sample:dash').dueTime,it('sample:dash').fees,it('sample:dash').dateSources.due],['2026-11-19','',0,'analyzer'],'linking gives the number and the page only');
+    assert.equal(it('sample:dash').link,'https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=qa1');
     // (3) follow one, hide another
     rad().querySelector('tr[data-ref="261139000888"] .et-follow').click();await wait(()=>qa.get().items.some(x=>x.etimadNo==='261139000888'),'followed');
     const fol=qa.get().items.find(x=>x.etimadNo==='261139000888');assert.deepEqual([fol.stage,fol.due,fol.dueTime,fol.fees,fol.entity],['received',ahead(5),'09:59',300,'أمانة محافظة جدة']);assert(!rad(),'the window closed onto the new tender');
@@ -269,8 +269,8 @@ try {
     assert(!refs().includes('261139000999'));rad().close();
     // (4) the card says what Etimad corrected and where the deadline came from
     [...d.querySelectorAll('.td-row')].find(r=>r.dataset.id==='sample:dash').querySelector('.td-subj').click();await wait(()=>select('dialog.td-dlg[open] .td-card'),'card open');
-    const etc=select('dialog.td-dlg .et-card');assert(etc&&etc.textContent.includes('Corrected by Etimad')&&etc.textContent.includes('2026-11-19')&&etc.textContent.includes('the analyzer’s study of the booklet'),etc&&etc.textContent);
-    assert(select('dialog.td-dlg .td-tile-due').textContent.includes('Source: the Etimad platform'));assert.equal(select('dialog.td-dlg .et-chip-link').getAttribute('href'),'https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=qa1');
+    const etc=select('dialog.td-dlg .et-card'),etT=etc?etc.textContent.replace(/[\u2066-\u2069]/g,''):'';assert(etT.includes('In the Etimad pull of')&&etT.includes(`${ahead(13)} 09:59`)&&etT.includes('the register has 2026-11-19, from the analyzer’s study of the booklet')&&etT.includes('Nothing was changed'),etT);
+    assert(select('dialog.td-dlg .td-tile-due').textContent.includes('Source: the analyzer’s study of the booklet'));assert.equal(select('dialog.td-dlg .et-chip-link').getAttribute('href'),'https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=qa1');
     select('dialog.td-dlg').close();
     // (5) a study whose Hijri date was converted wrongly is corrected from the booklet's own words, and says so
     const hij={id:'sample:hijri',subject:'sample: Hijri tender',date:arrived,stage:'received',stageAt:arrived,status:'open',att:[],due:''};await qa.tdCommit({...qa.get(),items:[hij,...qa.get().items]});
@@ -279,12 +279,15 @@ try {
     // (5b) a tender a mail adds later, under Etimad's own title, takes the platform's dates at once
     const m2=await email('sample-etimad-mail',{subject:'توريد وتركيب شبكة لاسلكية للمبنى',attachments:[new File(['%PDF-1.4'],'كراسة الشروط.pdf')]});await qa.tdImportEmails([m2]);
     await wait(()=>!qa.busy(),'mail read');const net=qa.get().items.find(x=>x.subject==='توريد وتركيب شبكة لاسلكية للمبنى');
-    assert(net,'the mail added the tender');assert.deepEqual([net.etimadNo,net.due,net.dateSources.due],['261139000999',ahead(25),'etimad']);
+    assert(net,'the mail added the tender');assert.deepEqual([net.etimadNo,net.due],['',''],'v9.62: the pull does not fill a tender the mail brought');
     // (6) a backup and a reload keep the Etimad facts, what was hidden, and the radar itself (kept on the device)
-    const bk=JSON.parse(JSON.stringify(await qa.buildBackup()));await qa.tdCommit({...qa.get(),radarIgnore:[],items:qa.get().items.map(x=>x.id==='sample:dash'?{...x,etimadWas:[],link:''}:x)});await qa.applyBackup(bk);
-    assert.deepEqual([...qa.get().radarIgnore],['261139000999']);assert.equal(it('sample:dash').etimadWas.length,2);assert.equal(it('sample:dash').link,'https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=qa1');
+    const bk=JSON.parse(JSON.stringify(await qa.buildBackup()));await qa.tdCommit({...qa.get(),radarIgnore:[],items:qa.get().items.map(x=>x.id==='sample:dash'?{...x,link:''}:x)});await qa.applyBackup(bk);
+    assert.deepEqual([...qa.get().radarIgnore],['261139000999']);assert.equal(it('sample:dash').link,'https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=qa1');
+    // (7) v9.62: a tender 9.60–9.61 had changed from Etimad gets its mail's or study's value back on the next load, with a history line
+    await qa.tdCommit({...qa.get(),items:qa.get().items.map(x=>x.id==='sample:dash'?{...x,due:'2026-11-30',dueTime:'09:59',dateSources:{due:'etimad'},etimadWas:[{field:'due',was:'2026-11-19',src:'analyzer'}]}:x)});
     w.close();const again=await setup(),d2=again.window.document;assert(d2.querySelector('.td-radar-btn').textContent.includes('2 open tenders'),d2.querySelector('.td-radar-btn').textContent);
-    assert.equal(again.window.qa.get().items.find(x=>x.id==='sample:dash').dateSources.due,'etimad');again.window.close();
+    await wait(()=>again.window.qa.get().items.find(x=>x.id==='sample:dash').due==='2026-11-19','undone');const back=again.window.qa.get().items.find(x=>x.id==='sample:dash');
+    assert.deepEqual([back.dueTime,back.dateSources.due,back.etimadWas.length],['','analyzer',0]);assert(back.activity.some(a=>a.action==='etimad'&&a.label.includes('value is back')));again.window.close();
   }
   // ---- v9.61 (ADR-0133): the market and the result on the card, our bids in the radar. Each failed on v9.60. ----
   { const dom8=await setup(), w=dom8.window, d=w.document, qa=w.qa, select=s=>d.querySelector(s);

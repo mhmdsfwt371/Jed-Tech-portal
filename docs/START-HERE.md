@@ -174,6 +174,7 @@
 | `docs/decisions/0132-etimad-radar.md` | The Etimad radar: the pull tool’s file read on the device; Etimad sets the platform’s dates and fee; exact linking or a suggestion; a Hijri date in a study checked before it is taken (format: `docs/etimad-radar-format.md`) |
 | `docs/decisions/0133-etimad-market-and-result.md` | A tender’s own result from Etimad (offers ranked, our rank, the winner), the outcome offered for the manager to record, similar awarded tenders, AFAQY’s own bids, and the followed numbers copied back to the pull tool |
 | `docs/decisions/0134-execution-archive-funnel.md` | Etimad’s work start on a won tender and the way to its execution in My projects; the archive of closed tenders; the year report’s funnel from publication to winning |
+| `docs/decisions/0135-etimad-is-a-market-study.md` | The Etimad pull is a market study every three or six months: it never changes a tender’s data (the mail files and the study are the reference); the card mentions the differences; what 9.60–9.61 replaced is put back |
 | `docs/decisions/0130-tender-correspondence-timeline.md` | A tender’s mail thread read into its messages (writer, time, own words), the summary with full working days, the manager’s hand-over mark, copy as text, and the summary window |
 
 ## في عشر دقائق: ابنِ وافحص

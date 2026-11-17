@@ -17,6 +17,35 @@
 
 <!-- releases -->
 
+## v9.62 — 2026-11-17
+
+- سحب اعتماد صار دراسة للسوق فقط، تُحدَّث كل ثلاثة أو ستة أشهر: لا يغيّر موعدًا ولا سعر كراسة في أي مناقصة. مرجع كل مناقصة ملفات الإيميل ودراسة المحلل وما تكتبه بيدك.
+- إذا كان في السحب موعد أو سعر مختلف عن السجل، أو موجود والسجل فاضي، تذكره بطاقة المناقصة ملاحظةً بتاريخ السحب ولا تغيّر شيئًا.
+- ما كان سحب اعتماد قد غيّره في النسختين السابقتين يرجع وحده إلى قيمة الإيميل أو الدراسة عند فتح البوابة، ويُكتب ذلك في سجل المناقصة.
+- المنافسة التي تتابعها من الرادار تبدأ بما في السحب، ثم تحل محله مواعيد الإيميل والدراسة حين تصل.
+
+<details><summary>English</summary>
+
+- The Etimad pull is now a market study only, refreshed every three or six months: it changes no deadline and no booklet fee in any tender. Each tender’s reference is its mail files, the analyzer’s study and what you type.
+- When the pull holds a deadline or a fee that differs from the register, or one the register lacks, the tender’s card mentions it as a note with the pull’s date and changes nothing.
+- Whatever an Etimad pull changed in the two previous versions goes back by itself to the mail’s or the study’s value when the portal opens, and this is written in the tender’s history.
+- A tender you follow from the radar starts with what the pull holds, and the mail’s and the study’s dates take its place when they arrive.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اعتماد ڈیٹا اب صرف مارکیٹ کا مطالعہ ہے جو ہر تین یا چھ ماہ میں تازہ ہوتا ہے: یہ کسی ٹینڈر کی آخری تاریخ یا کتابچے کی قیمت نہیں بدلتا۔ ہر ٹینڈر کا معیار اس کی ای میل فائلیں، تجزیہ کار کا مطالعہ اور آپ کا لکھا ہوا ہے۔
+- جب ڈیٹا میں رجسٹر سے مختلف آخری تاریخ یا قیمت ہو، یا ایسی ہو جو رجسٹر میں نہیں، تو ٹینڈر کا کارڈ اسے ڈیٹا کی تاریخ کے ساتھ ایک نوٹ کے طور پر ذکر کرتا ہے اور کچھ نہیں بدلتا۔
+- پچھلے دو ورژنز میں اعتماد ڈیٹا نے جو کچھ بدلا تھا وہ پورٹل کھلنے پر خود بخود ای میل یا مطالعے کی قدر پر واپس آ جاتا ہے، اور یہ ٹینڈر کی تاریخ میں لکھا جاتا ہے۔
+- جس ٹینڈر کی آپ ریڈار سے پیروی کریں وہ ڈیٹا کی معلومات سے شروع ہوتا ہے، اور ای میل اور مطالعے کی تاریخیں آنے پر ان کی جگہ لے لیتی ہیں۔
+
+</div>
+</details>
+
+
 ## v9.61 — 2026-11-17
 
 - في بطاقة المناقصة المربوطة باعتماد طيّة جديدة «السوق والنتيجة»: العروض المنشورة لها بأسعارها وفحصها الفني وترتيب عرضنا، ومنافسات مشابهة أُعلنت ترسيتها بفائزها وقيمتها وعدد عروضها، ووسيط قيمة الترسية والأكثر فوزًا.

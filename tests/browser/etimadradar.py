@@ -45,7 +45,7 @@ with sync_playwright() as p:
     check('R1 before any pull the register says what the radar is for', 'Upload the Etimad pull tool' in pg.locator('.td-radar-line').inner_text())
     drop(pg,'.td-drop-any input','etimad-radar.json',PULL)
     line=pg.locator('.td-radar-line').inner_text()
-    check('R2 the pull file dropped on the register is read as a pull, not a study', '3 open tenders within our scope' in line and pg.locator('.et-res').count()==1, line)
+    check('R2 the pull file dropped on the register is read as a pull, not a study, and says it changes nothing', '3 open tenders within our scope' in line and pg.locator('.et-res').count()==1 and 'does not change their data' in pg.locator('.et-res').inner_text(), line)
     ok=press(pg, pg.locator('.td-radar-btn')); rad=pg.locator('dialog.et-modal')
     check('R3 the radar opens with a held click', ok and rad.count()==1)
     refs=lambda: sorted(rad.locator('tr.et-row').evaluate_all("rs=>rs.map(r=>r.dataset.ref)"))
@@ -59,7 +59,7 @@ with sync_playwright() as p:
     check('R7 the register tender with another title is suggested, not linked by itself', 'WM - توريد وتركيب داش كام' in sug, sug)
     press(pg, rad.locator('.et-sugg .et-link')); pg.wait_for_timeout(600)
     dash=[x for x in items(pg)['items'] if 'داش' in x['subject']][0]
-    check('R8 linking sets the platform deadline, its hour and the booklet fee from Etimad', dash['etimadNo']=='261139004629' and dash['due']==day(13) and dash['dueTime']=='09:59' and dash['fees']==200, {k:dash.get(k) for k in ['etimadNo','due','dueTime','fees']})
+    check('R8 linking gives the Etimad number and page only — the pull never fills the tender (v9.62)', dash['etimadNo']=='261139004629' and not dash.get('due') and dash.get('fees') is None and dash.get('link','').startswith('https://tenders.etimad.sa/'), {k:dash.get(k) for k in ['etimadNo','due','dueTime','fees','link']})
     press(pg, rad.locator('tr[data-ref="261139000999"] .et-hide'))
     check('R9 «Not ours» hides a tender and counts it', '261139000999' not in refs() and 'What you hid (1)' in rad.locator('.et-filters').inner_text())
     press(pg, rad.locator('tr[data-ref="261139000888"] .et-follow')); pg.wait_for_timeout(800)
@@ -68,8 +68,8 @@ with sync_playwright() as p:
     if pg.locator('dialog.td-dlg[open]').count(): pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
     pg.locator('#tenders-body .pills button').last.click(); pg.wait_for_timeout(300)
     pg.locator('.td-table tr.td-row', has_text='داش كام').locator('.td-subj').click(); pg.wait_for_timeout(900)
-    card=pg.locator('dialog.td-dlg .td-card').inner_text()
-    check('R11 the card names the deadline’s source and links to the Etimad page', 'Source: the Etimad platform' in card and pg.locator('dialog.td-dlg .et-chip-link').get_attribute('href').startswith('https://tenders.etimad.sa/'), card[:300])
+    card=pg.locator('dialog.td-dlg .td-card').inner_text().replace('\u2068','').replace('\u2069','')
+    check('R11 the card says what the pull holds as a note, changes nothing, and links to the Etimad page', 'In the Etimad pull of' in card and day(13)+' 09:59 (empty in the register)' in card and 'Nothing was changed' in card and pg.locator('dialog.td-dlg .et-chip-link').get_attribute('href').startswith('https://tenders.etimad.sa/'), card[:400])
     pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
     # v9.61 (ADR-0133): a later pull publishes the dash-cam tender's offers and award; similar awarded tenders give the market
     RES={'schema':'afaqy-etimad-radar/v1','pulledAt':day(0)+'T12:00','tenders':[dict(PULL['tenders'][0],status='awarded'),

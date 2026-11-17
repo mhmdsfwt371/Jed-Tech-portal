@@ -1,6 +1,7 @@
 # `afaqy-etimad-radar/v1` — the Etimad pull tool's file for the tender register
 
-The pull tool writes this file beside its Excel workbook. The register's «Etimad radar» reads it (ADR-0132). It is small because
+The pull tool writes this file beside its Excel workbook. The register's «Etimad radar» reads it (ADR-0132) as a market study,
+made every three or six months; it never changes a tender's data, whose reference is its mail files and the study (ADR-0135). It is small because
 the tool writes only what was asked for (a period, a category) — the register keeps from it what concerns AFAQY.
 
 ```json

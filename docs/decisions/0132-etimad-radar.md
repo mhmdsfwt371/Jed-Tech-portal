@@ -2,6 +2,9 @@
 
 Date: 17 November 2026 · Version 9.60 · Adds to ADR-0126 (the analyzer's study), ADR-0131 (the card)
 
+> **9.62:** the part «Etimad sets the platform's facts» is replaced by ADR-0135 — the pull is a market study and never changes a
+> tender's data; the rest of this record stands.
+
 ## Context
 The manager runs his own Etimad pull tool (Python, public data only, no sign-in). Its first full pull — 30,396 tenders of 2025
 and 2026 in a 16-sheet Excel workbook (24 MB): the tenders, the awards with the winners and values, the published offers with

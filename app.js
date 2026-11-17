@@ -14,7 +14,7 @@ import {
   quarterRange, quarterOf, quarterBaseline, quarterGoalProgress, planProgress, suggestQuarterGoals,
   maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply,
   tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds, tenderAmount, tenderDatePatch, backupDue, parseTenderStudy, matchTenderStudy, applyTenderStudy, tenderAutoStage, tenderStudyFromSheet,
-  RADAR_SCHEMA, parseRadar, radarFromSheets, radarMerge, radarFind, radarSuggest, applyEtimad, radarToItem, radarResult, tenderOutcome, radarSimilar, radarOurBids, tenderFunnel, tenderArchive,
+  RADAR_SCHEMA, parseRadar, radarFromSheets, radarMerge, radarFind, radarSuggest, applyEtimad, radarToItem, etimadLinkPatch, tenderUndoEtimad, radarResult, tenderOutcome, radarSimilar, radarOurBids, tenderFunnel, tenderArchive,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
   mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts,
@@ -1071,7 +1071,6 @@ async function tdImportStudies(files, onlyId = null) {
       if (study.decision) await tdAutoMove(row.id, { type: 'study', decision: study.decision, why: study.why }, res);
     }
   }
-  if (etRadar) { try { await etApply({ changed: [], differs: [] }); } catch { /* applied on the next pull */ } }   // v9.60: the platform's dates stay the platform's after a study is read
   tdStudyResult = res; renderTenders();
   toast(t('td_study_done', { n: res.fields, m: res.tenders, d: res.differs.length, u: res.unmatched.length }));
 }
@@ -1095,22 +1094,10 @@ async function etReadFile(f) {
   const X = await loadXlsx(), wb = X.read(await f.arrayBuffer(), { type: 'array', dense: true, sheets: ['جميع المنافسات', 'المنافسات النشطة', 'تفاصيل الترسيات', 'العروض المنشورة', 'سجل السحب'] });
   return radarFromSheets((n) => (wb.Sheets[n] ? X.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: '' }) : null), etRefs());
 }
-/** Etimad's facts onto every register row it knows — one write for all. */
-async function etApply(res) {
-  if (!etRadar || !tenders) return;
-  const items = tenders.items.map((i) => {
-    const x = radarFind(i, etRadar.tenders, tdKey); if (!x) return i;
-    const { patch, changed, differs } = applyEtimad(i, x, etRadar.pulledAt);
-    for (const d of differs) res.differs.push({ subject: i.subject, ...d });
-    if (!Object.keys(patch).length) return i;
-    if (changed.length) res.changed.push({ id: i.id, subject: i.subject, changes: changed });
-    const line = changed.map((c) => `${t(`td_col_${c.field}`)}: ${c.was ? `${c.was} → ` : ''}${c.now}`).join(' · ');
-    return { ...i, ...patch, activity: changed.length ? [tdActivity('etimad', line), ...(i.activity || [])] : i.activity };
-  });
-  if (items.some((x, k) => x !== tenders.items[k])) await tdCommit({ ...tenders, items });
-}
+// v9.62 (ADR-0135): a pull writes nothing into the register. It is a market study made every three or six months; a tender's
+// reference is its mail files and the analyzer's study. The import only says how many register tenders the pull knows.
 async function etImport(files) {
-  const res = { read: 0, kept: 0, total: 0, changed: [], differs: [], bad: [], partial: false, pulledAt: '' };
+  const res = { read: 0, kept: 0, total: 0, found: 0, bad: [], partial: false, pulledAt: '' };
   tdBusy = t('et_reading'); renderTenders();
   try {
     for (const f of files) {
@@ -1118,10 +1105,10 @@ async function etImport(files) {
       if (r.error) { res.bad.push(f.name); continue; }
       etRadar = radarMerge(etRadar, r); res.read++; res.total += r.total; res.kept += r.tenders.length; res.partial = res.partial || r.partial; res.pulledAt = r.pulledAt;
     }
-    if (res.read) { await store.kvPut('radar', etRadar); await etApply(res); }
+    if (res.read) { await store.kvPut('radar', etRadar); res.found = (tenders ? tenders.items : []).filter((i) => radarFind(i, etRadar.tenders, tdKey)).length; }
   } finally { tdBusy = ''; }
   etResult = res; renderTenders();
-  toast(res.read ? t('et_done', { k: res.kept, n: res.total, c: res.changed.length }) : t('et_bad', { list: res.bad.join(' · ') }));
+  toast(res.read ? t('et_done', { k: res.kept, n: res.total, c: res.found }) : t('et_bad', { list: res.bad.join(' · ') }));
 }
 async function etSave(next) { try { await tdCommit(next); return true; } catch { toast(t('td_store_failed')); return false; } }
 async function etFollow(ref) {
@@ -1135,8 +1122,8 @@ async function etFollow(ref) {
 }
 async function etLink(id, ref) {
   const i = tenders && tenders.items.find((y) => y.id === id), x = etRadar && etRadar.tenders.find((y) => y.ref === ref); if (!i || !x) return;
-  const { patch, changed } = applyEtimad({ ...i, etimadNo: '' }, x, etRadar.pulledAt); patch.etimadNo = x.ref;
-  if (await tdUpdate(id, patch, tdActivity('etimad', t('et_linked', { r: x.ref }) + (changed.length ? ` · ${changed.filter((c) => c.field !== 'etimadNo').map((c) => `${t(`td_col_${c.field}`)}: ${c.now}`).join(' · ')}` : '')))) { renderTenders(); toast(t('et_linked', { r: x.ref })); }
+  const patch = etimadLinkPatch(i, x); if (!Object.keys(patch).length) return;   // v9.62: linking gives the number and the page, nothing else
+  if (await tdUpdate(id, patch, tdActivity('etimad', t('et_linked', { r: x.ref })))) { renderTenders(); toast(t('et_linked', { r: x.ref })); }
 }
 async function etIgnore(ref, on) {
   const cur = tenders || { items: [], to: null, pulledAt: '' }, s = new Set(cur.radarIgnore || []); on ? s.add(ref) : s.delete(ref);
@@ -1383,7 +1370,6 @@ async function tdImportEmails(files, id = '') {
     tdQuery = '';
   }
   tdMailResult = { a: added, l: linked, s: skipped, f: failed, w: warnings, failures };
-  if (etRadar) { try { await etApply({ changed: [], differs: [] }); } catch { /* the mail is in; Etimad applies on the next pull */ } }   // v9.60: a tender a mail added may be one Etimad already knows
   renderTenders();
   for (const tenderId of new Set(imported)) {
     const item = tenders.items.find(row => row.id === tenderId);
@@ -1526,7 +1512,10 @@ function tdCard(i, { field, needsFields, today }) {
   const chips = [i.entity, i.etimadNo ? `${t('td_card_etimad')} ${i.etimadNo}` : '', i.owner ? `${t('td_col_owner')}: ${i.owner}` : '', i.site].filter(Boolean);
   // v9.60 (ADR-0132): what Etimad changed on this tender, and — before it is linked — the Etimad tender it may be
   const srcName = (x) => (x ? t(`et_src_${x}`) : t('et_src_none'));
-  const etWas = (i.etimadWas || []).filter((w) => w.field === 'fees' ? i.fieldSources?.fees === 'etimad' : i.dateSources?.[w.field] === 'etimad');
+  // v9.62 (ADR-0135): what the latest pull says about this tender — a note, never applied: where it differs, and what the register lacks
+  const etX0 = etRadar ? radarFind(i, etRadar.tenders, tdKey) : null, etA = etX0 ? applyEtimad(i, etX0) : null;
+  const etDiff = etA ? [...etA.differs, ...etA.filled.filter((f) => ['due', 'askDue', 'openAt', 'fees'].includes(f)).map((f) => ({ field: f, have: '', src: '',
+    etimad: f === 'fees' ? String(etX0.fees) : etX0[f] + ((f === 'due' || f === 'askDue') && etX0[`${f}Time`] ? ` ${etX0[`${f}Time`]}` : '') }))] : [];
   const etSug = !String(i.etimadNo || '').trim() && etRadar && !closed ? radarSuggest(i, etRadar.tenders.filter((x) => x.status === 'active'), 2) : [];
   // v9.61 (ADR-0133): Etimad's result for this tender, and the outcome it points to — confirmed by the manager, never set by itself
   const etX = etRadar && String(i.etimadNo || '').trim() ? radarFind(i, etRadar.tenders, tdKey) : null, etRes = etX ? radarResult(etX.ref, etRadar) : null, etOut = tenderOutcome(i, etRes);
@@ -1538,10 +1527,10 @@ function tdCard(i, { field, needsFields, today }) {
       const patch = { stage: etOut.stage, stageAt: tdToday(), ...(reason ? { reason: reason.slice(0, 300) } : {}), ...(etOut.stage === 'won' && (i.value == null || i.value === '') && etOut.value != null ? { value: etOut.value } : {}) };
       if (await tdUpdate(i.id, patch, tdActivity('stage', t('et_out_act', { s: t(`td_st_${etOut.stage}`) })))) { toast(t('et_out_done')); renderTenders(); } } })) : null;
   // v9.62 (ADR-0134): a won tender is executed in «My projects»; the work start comes from Etimad when it publishes one
-  const etExec = st === 'won' ? el('p', { class: 'et-exec' }, el('span', { text: i.workStart ? t('et_exec', { d: tdWhen(i.workStart) }) : t('et_exec_nodate') }), ' ',
+  const etExec = st === 'won' ? el('p', { class: 'et-exec' }, el('span', { text: i.workStart ? t('et_exec_set', { d: tdWhen(i.workStart) }) : etX0 && etX0.workStart ? t('et_exec', { d: tdWhen(etX0.workStart) }) : t('et_exec_nodate') }), ' ',
     el('button', { type: 'button', class: 'btn tiny et-exec-open', text: `🗂 ${t('et_exec_open')}`, onclick: () => tdToProjects(i) })) : null;
-  const etBox = etWas.length || etSug.length || etResLine || etExec ? el('section', { class: 'td-box et-card' }, etExec, etResLine, etOutBtn,
-    etWas.map((w) => el('p', { class: 'et-was', text: t('et_was', { f: t(`td_col_${w.field}`), w: bidi(w.was), src: srcName(w.src), v: bidi(w.field === 'fees' ? money(i.fees) : tdDateText(i[w.field], w.field === 'due' || w.field === 'askDue' ? i[`${w.field}Time`] : '')) }) })),
+  const etBox = etDiff.length || etSug.length || etResLine || etExec ? el('section', { class: 'td-box et-card' }, etExec, etResLine, etOutBtn,
+    etDiff.length ? el('p', { class: 'et-was', text: t('et_note', { at: etRadar.pulledAt ? tdWhen(etRadar.pulledAt) : '—', list: etDiff.map((d) => (d.have ? t('et_note_item', { f: t(`td_col_${d.field}`), v: bidi(d.etimad), h: bidi(d.have), src: srcName(d.src) }) : t('et_note_empty', { f: t(`td_col_${d.field}`), v: bidi(d.etimad) }))).join(lang === 'en' ? '; ' : '؛ ') }) }) : null,
     etSug.map((x) => el('p', { class: 'et-sug' }, el('span', { text: t('et_card_sug', { e: bidi(x.title.slice(0, 100)), r: x.ref, d: x.due ? tdDateText(x.due, x.dueTime) : '—' }) }), ' ',
       el('button', { type: 'button', class: 'btn tiny et-link', disabled: !!tdBusy, text: t('et_link'), onclick: () => etLink(i.id, x.ref) })))) : null;
   const lines = tdSummaryLines(i.studySummary), thread = i.thread || [];
@@ -1865,10 +1854,8 @@ function renderTenders() {
         el('span', { class: 'hint', text: R ? t('et_btn_at', { at: R.pulledAt ? tdWhen(R.pulledAt) : '—' }) : t('et_btn_none') })); })(),
     etResult ? el('div', { role: 'status', class: 'td-study-res et-res' },
       el('button', { type: 'button', class: 'icon-btn td-study-close', text: '✕', title: t('td_res_close'), 'aria-label': t('td_res_close'), onclick: () => { etResult = null; renderTenders(); } }),
-      el('p', { class: 'hint', text: etResult.read ? t('et_done', { k: etResult.kept, n: etResult.total, c: etResult.changed.length }) : t('et_bad', { list: etResult.bad.join(' · ') }) }),
+      el('p', { class: 'hint', text: etResult.read ? t('et_done', { k: etResult.kept, n: etResult.total, c: etResult.found }) : t('et_bad', { list: etResult.bad.join(' · ') }) }),
       etResult.partial ? el('p', { class: 'note', text: t('et_partial') }) : null,
-      etResult.changed.length ? el('ul', { class: 'td-study-diff et-changed' }, etResult.changed.slice(0, 30).map((c) => el('li', { text: t('et_changed', { s: bidi(c.subject.slice(0, 80)), list: c.changes.map((x) => `${t(`td_col_${x.field}`)}: ${x.was ? `${bidi(x.was)} → ` : ''}${bidi(x.now)}`).join(' · ') }) }))) : null,
-      etResult.differs.map((d) => el('p', { class: 'note', text: t('et_differs', { s: bidi(d.subject.slice(0, 80)), f: t(`td_col_${d.field}`), h: bidi(d.have), v: bidi(d.etimad) }) })),
       etResult.bad.length && etResult.read ? el('p', { class: 'note', text: t('et_bad', { list: etResult.bad.join(' · ') }) }) : null,
       el('button', { type: 'button', class: 'btn tiny', text: t('et_open_radar'), onclick: etOpen })) : null,
     (() => { const any = el('input', { type: 'file', multiple: '', hidden: true, onchange: (e) => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) void tdRouteDrop(fs, null); } });
@@ -5744,6 +5731,9 @@ $('update-btn').addEventListener('click', () => location.reload());
   privLinks = (await store.getPriv()) || [];
   mailRows = (await store.getMail()) || [];
   myProjects = await store.getProjects(); tenders = isTeamPortal ? null : cleanTenders(await store.kvGet('tenders')); etRadar = isTeamPortal ? null : await store.kvGet('radar');
+  if (tenders && tenders.items.some((x) => (x.etimadWas || []).length)) {   // v9.62 (ADR-0135): what 9.60–9.61 replaced with Etimad's value goes back to the mail's or the study's
+    const items = tenders.items.map((x) => { const u = tenderUndoEtimad(x); return u ? { ...x, ...u.patch, activity: u.fields.length ? [tdActivity('etimad', t('et_undo_act', { list: u.fields.map((f) => t(`td_col_${f}`)).join(' · ') })), ...(x.activity || [])] : x.activity } : x; });
+    try { await tdCommit({ ...tenders, items }); } catch { /* tried again on the next load */ } }
   mailAct = (await store.kvGet('mailact')) || { imports: [], recs: [] }; mailIds = (await store.kvGet('mailids')) || { map: {}, ignored: [] };   // ADR-0095
   myRegister = await store.getRegister();
   projectWork=isTeamPortal?cleanProjectWork(null):cleanProjectWork(await store.kvGet('projectwork'));

@@ -2386,7 +2386,7 @@ export function tenderDeadlineCandidates(item, field) {
 export function applyTenderEmailDates(item) {
   item = {...item,dateSources:{...item.dateSources}};
   for (const field of Object.keys(tenderDeadlineFields)) {
-    if (item.dateSources[field] === 'manual' || (item[field] && !['mail','document'].includes(item.dateSources[field]))) continue;
+    if (item.dateSources[field] === 'manual' || (item[field] && !['mail','document','etimad'].includes(item.dateSources[field]))) continue;   // v9.62: the mail replaces a date only Etimad gave
     const candidates = tenderDeadlineCandidates(item,field);
     if (!candidates.length) {
       if (['mail','document'].includes(item.dateSources[field])) { item[field] = ''; item[field+'Time'] = ''; delete item.dateSources[field]; }
@@ -2531,12 +2531,12 @@ export function applyTenderStudy(item, study, at = new Date().toISOString()) {
   const fieldSources = { ...(item.fieldSources || {}) }, dateSources = { ...(item.dateSources || {}) }, evidence = { ...(item.evidence || {}) };
   for (const k of TENDER_STUDY_FIELDS) {
     const v = study[k]; if (empty(v)) continue;
-    if (empty(item[k])) { patch[k] = v; fieldSources[k] = 'analyzer'; if (study.evidence[k]) evidence[k] = study.evidence[k]; filled.push(k); }
+    if (empty(item[k]) || fieldSources[k] === 'etimad') { patch[k] = v; fieldSources[k] = 'analyzer'; if (study.evidence[k]) evidence[k] = study.evidence[k]; filled.push(k); }
     else if (String(item[k]).replace(/[^\d.]/g, '') !== String(v).replace(/[^\d.]/g, '') || (k === 'bond' && String(item[k]).trim() !== String(v).trim())) differs.push({ field: k, have: String(item[k]), study: String(v) });
   }
   for (const k of TENDER_DATE_FIELDS) {
     const d = study.dates[k]; if (!d) continue;
-    if (empty(item[k])) { patch[k] = d.date; if (d.time && TENDER_TIMED.includes(k)) patch[`${k}Time`] = d.time; dateSources[k] = 'analyzer'; if (study.evidence[k]) evidence[k] = study.evidence[k]; filled.push(k); }
+    if (empty(item[k]) || dateSources[k] === 'etimad') { patch[k] = d.date; if (TENDER_TIMED.includes(k)) patch[`${k}Time`] = d.time || ''; dateSources[k] = 'analyzer'; if (study.evidence[k]) evidence[k] = study.evidence[k]; filled.push(k); }   // v9.62: what only Etimad gave yields to the study
     else if (item[k] !== d.date) differs.push({ field: k, have: item[k], study: d.date });
     else if (d.time && empty(item[`${k}Time`]) && `${k}Time` in item) { patch[`${k}Time`] = d.time; filled.push(`${k}Time`); }   // same day, the study adds the hour
   }
@@ -2760,36 +2760,52 @@ export function radarSuggest(item, list, max = 3) {
     .filter((s) => s.shared >= 2 && s.score >= 0.6).sort((p, q) => q.score - p.score || q.both - p.both).slice(0, max).map((s) => s.x);
 }
 const ETIMAD_DATES = ['due', 'askDue', 'openAt'];
-/** What Etimad changes on a register row. Etimad is the platform: its deadlines and booklet fee replace what the booklet, the mail or
- *  the study said — the replaced value is kept in `etimadWas` so the card can say what changed. A value the manager typed is never
- *  replaced (listed in `differs`). A pull older than the one already applied changes nothing. The same pull again writes nothing. */
-export function applyEtimad(item, x, pulledAt = '') {
-  const patch = {}, changed = [], differs = [], empty = (v) => v === '' || v == null;
-  if (pulledAt && item.etimadAt && pulledAt < item.etimadAt) return { patch, changed, differs };
-  const dateSources = { ...(item.dateSources || {}) }, fieldSources = { ...(item.fieldSources || {}) }, was = [...(item.etimadWas || [])];
+/** v9.62 (ADR-0135): what an Etimad pull may do to a register row. The pull is a periodic market study (every three or six
+ *  months); a tender's reference is its mail files, the analyzer's study and what the manager types. So the pull fills only
+ *  what is still empty — and the page uses even that only for a tender the manager chose to follow from the radar. Every value
+ *  the register already holds that Etimad states otherwise is returned in `differs`, for the card to mention, never to apply. */
+export function applyEtimad(item, x) {
+  const patch = {}, filled = [], differs = [], empty = (v) => v === '' || v == null;
+  const dateSources = { ...(item.dateSources || {}) }, fieldSources = { ...(item.fieldSources || {}) };
   for (const k of ETIMAD_DATES) {
     const v = x[k]; if (!v) continue;
     const tm = TENDER_TIMED.includes(k) ? x[`${k}Time`] || '' : '', haveTm = TENDER_TIMED.includes(k) ? item[`${k}Time`] || '' : '';
-    if (item[k] === v && (!tm || haveTm === tm)) { if (dateSources[k] !== 'manual' && dateSources[k] !== 'etimad') { dateSources[k] = 'etimad'; patch.dateSources = dateSources; } continue; }
-    if (dateSources[k] === 'manual' && !empty(item[k])) { differs.push({ field: k, have: item[k] + (haveTm ? ` ${haveTm}` : ''), etimad: v + (tm ? ` ${tm}` : '') }); continue; }
-    if (!empty(item[k])) was.push({ field: k, was: item[k] + (haveTm ? ` ${haveTm}` : ''), src: dateSources[k] || '' });
-    patch[k] = v; if (TENDER_TIMED.includes(k)) patch[`${k}Time`] = tm; dateSources[k] = 'etimad'; patch.dateSources = dateSources;
-    changed.push({ field: k, was: empty(item[k]) ? '' : item[k] + (haveTm ? ` ${haveTm}` : ''), now: v + (tm ? ` ${tm}` : '') });
+    if (empty(item[k])) { patch[k] = v; if (TENDER_TIMED.includes(k)) patch[`${k}Time`] = tm; dateSources[k] = 'etimad'; patch.dateSources = dateSources; filled.push(k); continue; }
+    if (item[k] !== v || (tm && haveTm && haveTm !== tm)) differs.push({ field: k, have: item[k] + (haveTm ? ` ${haveTm}` : ''), etimad: v + (tm ? ` ${tm}` : ''), src: dateSources[k] || '' });
   }
   if (x.fees != null) {
-    if (empty(item.fees)) { patch.fees = x.fees; fieldSources.fees = 'etimad'; patch.fieldSources = fieldSources; changed.push({ field: 'fees', was: '', now: String(x.fees) }); }
-    else if (Number(item.fees) !== x.fees) {
-      if (fieldSources.fees === 'analyzer' || fieldSources.fees === 'etimad') { was.push({ field: 'fees', was: String(item.fees), src: fieldSources.fees }); patch.fees = x.fees; fieldSources.fees = 'etimad'; patch.fieldSources = fieldSources; changed.push({ field: 'fees', was: String(item.fees), now: String(x.fees) }); }
-      else differs.push({ field: 'fees', have: String(item.fees), etimad: String(x.fees) });
-    } else if (fieldSources.fees !== 'etimad' && fieldSources.fees !== 'analyzer') { /* typed by hand and equal: nothing to say */ }
+    if (empty(item.fees)) { patch.fees = x.fees; fieldSources.fees = 'etimad'; patch.fieldSources = fieldSources; filled.push('fees'); }
+    else if (Number(item.fees) !== x.fees) differs.push({ field: 'fees', have: String(item.fees), etimad: String(x.fees), src: fieldSources.fees || '' });
   }
-  if (empty(item.etimadNo)) { patch.etimadNo = x.ref; changed.push({ field: 'etimadNo', was: '', now: x.ref }); }
-  if (empty(item.entity) && x.entity) { patch.entity = x.entity; changed.push({ field: 'entity', was: '', now: x.entity }); }
-  if (x.link && item.link !== x.link) patch.link = x.link;
-  if (x.workStart && item.workStart !== x.workStart) { patch.workStart = x.workStart; changed.push({ field: 'workStart', was: item.workStart || '', now: x.workStart }); }   // v9.62: when the work starts, as Etimad publishes it
-  if (was.length !== (item.etimadWas || []).length) patch.etimadWas = was.slice(-10);
-  if (Object.keys(patch).length && pulledAt) patch.etimadAt = pulledAt;
-  return { patch, changed, differs };
+  if (empty(item.etimadNo)) { patch.etimadNo = x.ref; filled.push('etimadNo'); }
+  if (empty(item.entity) && x.entity) { patch.entity = x.entity; filled.push('entity'); }
+  if (x.link && empty(item.link)) patch.link = x.link;
+  return { patch, filled, differs };
+}
+/** Linking a register row to its Etimad tender (the manager pressed «Link»): its number and its page, nothing else. */
+export function etimadLinkPatch(item, x) {
+  const patch = { etimadNo: x.ref };
+  if (x.link) patch.link = x.link;
+  return String(item.etimadNo || '').replace(/[^\d]/g, '') === x.ref && (!x.link || item.link === x.link) ? {} : patch;
+}
+/** v9.62: what 9.60 and 9.61 replaced with Etimad's value is put back — the mail's or the study's date or fee — with its source.
+ *  A value typed since then (source no longer «etimad») is left alone. Returns the patch, or null when there is nothing to undo. */
+export function tenderUndoEtimad(item) {
+  const was = Array.isArray(item && item.etimadWas) ? item.etimadWas : [];
+  if (!was.length) return null;
+  const patch = { etimadWas: [] }, dateSources = { ...(item.dateSources || {}) }, fieldSources = { ...(item.fieldSources || {}) }, back = [];
+  for (const w of [...was].reverse()) {   // the oldest replaced value is the original one
+    if (back.includes(w.field)) continue;
+    if (w.field === 'fees') {
+      if (fieldSources.fees !== 'etimad') continue;
+      const n = tenderAmount(w.was); patch.fees = n; if (w.src) fieldSources.fees = w.src; else delete fieldSources.fees; patch.fieldSources = fieldSources; back.push('fees'); continue;
+    }
+    if (!ETIMAD_DATES.includes(w.field) || dateSources[w.field] !== 'etimad') continue;
+    const [d, tm = ''] = String(w.was || '').split(' ');
+    patch[w.field] = /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : ''; if (TENDER_TIMED.includes(w.field)) patch[`${w.field}Time`] = /^\d{2}:\d{2}$/.test(tm) ? tm : '';
+    if (w.src) dateSources[w.field] = w.src; else delete dateSources[w.field]; patch.dateSources = dateSources; back.push(w.field);
+  }
+  return { patch, fields: back };
 }
 /** A register row made from an Etimad tender the manager chose to follow: the branch received it today; everything else is Etimad's. */
 export function radarToItem(x, today, keyOf) {

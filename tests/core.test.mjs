@@ -1813,26 +1813,33 @@ test('v9.60: a register row finds its Etimad tender by number or exact title; a 
   assert.deepEqual(core.radarSuggest({ subject: 'توريد وتركيب داش كام - الشؤون الصحية بوزارة الحرس الوطني', entity: '' }, L).map((x) => x.ref), ['261139004629']);
   assert.deepEqual(core.radarSuggest({ subject: 'توريد كاميرات للمستودع' }, L), [], 'one shared word is not enough');
 });
-test('v9.60: Etimad sets the platform’s deadline and fee over the study’s; a value typed by hand stays; the same pull twice writes nothing', () => {
+test('v9.62: an Etimad pull never changes what the mail or the study gave — it fills only what is empty, and says where it differs', () => {
   const x = core.radarFromSheets(radarSheets(), []).tenders[0];
   const item = { id: 'a', subject: 's', due: '2026-11-19', dueTime: '', askDue: '', fees: 0, etimadNo: '', entity: 'Entity typed', dateSources: { due: 'analyzer' }, fieldSources: { fees: 'analyzer' } };
-  const r = core.applyEtimad(item, x, '2026-11-16T15:38');
-  assert.deepEqual([r.patch.due, r.patch.dueTime, r.patch.askDue, r.patch.fees, r.patch.etimadNo, r.patch.entity], ['2026-11-30', '09:59', '2026-11-25', 200, '261139004629', undefined]);
-  assert.deepEqual(r.patch.dateSources, { due: 'etimad', askDue: 'etimad' }); assert.deepEqual(r.patch.fieldSources, { fees: 'etimad' });
-  assert.deepEqual(r.patch.etimadWas, [{ field: 'due', was: '2026-11-19', src: 'analyzer' }, { field: 'fees', was: '0', src: 'analyzer' }], 'what was replaced, and where it came from');
-  assert.equal(r.patch.link, 'https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=abc'); assert.equal(r.patch.etimadAt, '2026-11-16T15:38');
-  const after = { ...item, ...r.patch };
-  assert.deepEqual(core.applyEtimad(after, x, '2026-11-16T15:38').patch, {}, 'the same pull again: nothing');
-  assert.deepEqual(core.applyEtimad(after, { ...x, due: '2026-12-31' }, '2026-11-10T00:00').patch, {}, 'an older pull changes nothing');
-  const typed = core.applyEtimad({ ...item, dateSources: { due: 'manual' }, fieldSources: {}, fees: 150 }, x, '2026-11-16T15:38');
-  assert.equal(typed.patch.due, undefined); assert.equal(typed.patch.fees, undefined);
-  assert.deepEqual(typed.differs, [{ field: 'due', have: '2026-11-19', etimad: '2026-11-30 09:59' }, { field: 'fees', have: '150', etimad: '200' }]);
+  const r = core.applyEtimad(item, x);
+  assert.equal(r.patch.due, undefined, 'the study’s date stays'); assert.equal(r.patch.fees, undefined, 'the study’s fee stays');
+  assert.deepEqual(r.differs, [{ field: 'due', have: '2026-11-19', etimad: '2026-11-30 09:59', src: 'analyzer' }, { field: 'fees', have: '0', etimad: '200', src: 'analyzer' }]);
+  assert.deepEqual([r.patch.askDue, r.patch.etimadNo, r.patch.entity], ['2026-11-25', '261139004629', undefined], 'only empty fields are filled; a typed entity stays');
+  assert.deepEqual(core.etimadLinkPatch(item, x), { etimadNo: '261139004629', link: 'https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=abc' }, 'linking gives the number and the page, nothing else');
+  assert.deepEqual(core.etimadLinkPatch({ etimadNo: '261139004629', link: x.link }, x), {}, 'linked already: nothing');
   const it = core.radarToItem(x, '2026-11-17', key);
   assert.deepEqual([it.id, it.subject, it.date, it.stage, it.etimadNo, it.due, it.dueTime, it.fees, it.dateSources.due], ['wm - توريد وتركيب داش كام', 'WM - توريد وتركيب داش كام', '2026-11-17', 'received', '261139004629', '2026-11-30', '09:59', 200, 'etimad']);
-  const clean = core.cleanTenderDetails({ ...after, link: 'https://evil.example/x', dateSources: { due: 'etimad' }, fieldSources: { fees: 'etimad' } });
-  assert.equal(clean.link, ''); assert.equal(clean.dateSources.due, 'etimad'); assert.equal(clean.fieldSources.fees, 'etimad'); assert.equal(clean.etimadWas.length, 2);
+  // a followed tender starts with the pull's dates; the study and the mail take their place when they arrive
+  const st = core.parseTenderStudy({ schema: 'afaqy-tender-study/v1', tenders: [{ subject: 'x', fees: 150, dates: { due: { date: '2026-11-26', time: '09:30' } } }] }).tenders[0];
+  const a = core.applyTenderStudy(it, st);
+  assert.deepEqual([a.patch.due, a.patch.dueTime, a.patch.fees, a.patch.dateSources.due, a.patch.fieldSources.fees], ['2026-11-26', '09:30', 150, 'analyzer', 'analyzer']); assert.deepEqual(a.differs, []);
+  const mailed = core.applyTenderEmailDates({ ...it, messages: [{ key: 'm', date: '2026-11-17', schedule: { due: [{ date: '2026-11-27', time: '10:00' }], askDue: [], visit: [], openAt: [] } }] });
+  assert.deepEqual([mailed.due, mailed.dueTime, mailed.dateSources.due], ['2026-11-27', '10:00', 'mail']);
+  const clean = core.cleanTenderDetails({ ...it, link: 'https://evil.example/x', dateSources: { due: 'etimad' }, fieldSources: { fees: 'etimad' } });
+  assert.equal(clean.link, ''); assert.equal(clean.dateSources.due, 'etimad'); assert.equal(clean.fieldSources.fees, 'etimad');
 });
-
+test('v9.62: what 9.60–9.61 replaced with Etimad’s value goes back to the mail’s or the study’s; a value typed since stays', () => {
+  const was = [{ field: 'due', was: '2026-11-19', src: 'analyzer' }, { field: 'fees', was: '0', src: 'analyzer' }, { field: 'askDue', was: '2026-11-20 10:00', src: 'mail' }];
+  const u = core.tenderUndoEtimad({ due: '2026-11-30', dueTime: '09:59', fees: 200, askDue: '2026-11-25', askDueTime: '', dateSources: { due: 'etimad', askDue: 'manual' }, fieldSources: { fees: 'etimad' }, etimadWas: was });
+  assert.deepEqual([u.patch.due, u.patch.dueTime, u.patch.dateSources.due, u.patch.fees, u.patch.fieldSources.fees], ['2026-11-19', '', 'analyzer', 0, 'analyzer']);
+  assert.equal(u.patch.askDue, undefined, 'typed by hand since: stays'); assert.deepEqual(u.patch.etimadWas, []); assert.deepEqual(u.fields.sort(), ['due', 'fees']);
+  assert.equal(core.tenderUndoEtimad({ etimadWas: [] }), null);
+});
 // ---------- v9.61 (ADR-0133): the market and the result ----------
 const marketRadar = () => core.parseRadar({ schema: core.RADAR_SCHEMA, pulledAt: '2026-11-17 08:00', tenders: [
   { ref: '261139000100', title: 'توريد وتركيب كاميرات مراقبة أمنية للمستودعات', entity: 'جهة أ', status: 'awarded', published: '2026-09-01' },
@@ -1874,10 +1881,10 @@ test('v9.61: similar awarded tenders, with the median award, the usual number of
 });
 
 // ---------- v9.61 (ADR-0134): execution, the archive and the year funnel ----------
-test('v9.61: Etimad’s work start is kept on the tender, and a won tender shows it among its fields', () => {
+test('v9.61: Etimad’s work start is read from the pull, and a won tender has a work-start field of its own', () => {
   const x = core.parseRadar({ schema: core.RADAR_SCHEMA, pulledAt: '2026-11-17 08:00', tenders: [{ ref: '261139000100', title: 't', status: 'awarded', workStart: '2026-12-01' }] }, ['261139000100']).tenders[0];   // kept because the register follows it
-  const r = core.applyEtimad({ etimadNo: '261139000100', workStart: '' }, x, '2026-11-17T08:00');
-  assert.equal(r.patch.workStart, '2026-12-01'); assert.deepEqual(r.changed.find((c) => c.field === 'workStart'), { field: 'workStart', was: '', now: '2026-12-01' });
+  assert.equal(x.workStart, '2026-12-01', 'read from the pull');
+  assert.equal(core.applyEtimad({ etimadNo: '261139000100', workStart: '' }, x).patch.workStart, undefined, 'v9.62: shown on the card from the pull, never written into the tender');
   assert(core.tenderShownFields({ stage: 'won' }).includes('workStart')); assert(!core.tenderShownFields({ stage: 'prep' }).includes('workStart'));
 });
 test('v9.61: the year as a funnel — published within scope (West and Kingdom), reached, decided, submitted, won', () => {
