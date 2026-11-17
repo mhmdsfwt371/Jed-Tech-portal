@@ -22,6 +22,10 @@ study=lambda subj,no='',dec='go': {'subject':subj,'etimadNo':no,'entity':'جهة
 f1=J('s1.json',{'schema':'afaqy-tender-study/v1','generatedAt':'2026-11-14T18:00:00Z','tool':'Tender Analyzer','tenders':[study('منافسة توريد وتركيب كاميرات مراقبة','123456'),study('منافسة لا وجود لها')]})
 f2=J('s2.json',{'schema':'afaqy-tender-study/v1','generatedAt':'2026-11-14T18:00:00Z','tool':'Tender Analyzer','tenders':[study('عنوان مختلف تمامًا في الكراسة','999','no-go')]})
 bad=J('bad.json',{'schema':'something-else'})
+# v9.58 (ADR-0131): the tender's card keeps everything but its summary in folds; a test opens a fold the way a person does
+def open_fold(pg, name):
+    if not pg.evaluate(f"!!document.querySelector('dialog.td-dlg .td-fold-{name}[open]')"):
+        pg.locator(f'dialog.td-dlg .td-fold-{name} > summary').click(); pg.wait_for_timeout(300)
 with sync_playwright() as p:
     b=p.chromium.launch(); c=b.new_context(viewport={'width':1366,'height':900}, service_workers='block'); pg=c.new_page(); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)[:200]))
     pg.goto(f'http://127.0.0.1:{PORT}/'); pg.wait_for_timeout(1500); pg.select_option('#lang-select','en'); pg.wait_for_timeout(300)
@@ -30,7 +34,7 @@ with sync_playwright() as p:
     # the deadline typed by hand before the study arrives must stay
     pg.locator('.td-table tr.td-row', has_text='كاميرات').locator('.td-subj').click(); pg.wait_for_timeout(800)
     pg.locator('dialog.td-dlg input.td-due').fill('2026-11-30'); pg.locator('dialog.td-dlg input.td-due').dispatch_event('change'); pg.wait_for_timeout(600)
-    pg.locator('dialog.td-dlg input.td-bond').fill('5%'); pg.locator('dialog.td-dlg input.td-bond').dispatch_event('change'); pg.wait_for_timeout(600)
+    open_fold(pg,'data'); pg.locator('dialog.td-dlg input.td-bond').fill('5%'); pg.locator('dialog.td-dlg input.td-bond').dispatch_event('change'); pg.wait_for_timeout(600)
     pg.keyboard.press('Escape'); pg.wait_for_timeout(500)
     pg.locator('#tenders-body .td-study-btn + input[type=file]').set_input_files([f1,bad]); pg.wait_for_timeout(1500)
     res=pg.locator('#tenders-body .td-study-res').inner_text()
@@ -41,7 +45,7 @@ with sync_playwright() as p:
     check('S2 empty fields filled from the study (fee, Etimad no., inquiries, visit, opening); the hand-typed deadline and guarantee stay', r['fees']=='1500' and r['etimad']=='123456' and r['askDue']=='2026-11-20' and r['visit']=='2026-11-22' and r['openAt']=='2026-12-02' and r['due']=='2026-11-30' and r['bond']=='5%', r)
     check('S3 filled fields say «from the analyzer» with the evidence; the hand-typed one does not', 'page 4' in r['feesTag'] and 'قيمة وثائق' in r['feesTag'] and r['visitTag'] and not r['dueTag'], r)
     check('S4 the study decision shows in the window', r['dec'].startswith('Study decision: Bid'), r['dec'])
-    pg.locator('dialog.td-dlg input.td-fees').fill('2000'); pg.locator('dialog.td-dlg input.td-fees').dispatch_event('change'); pg.wait_for_timeout(700)
+    open_fold(pg,'data'); pg.locator('dialog.td-dlg input.td-fees').fill('2000'); pg.locator('dialog.td-dlg input.td-fees').dispatch_event('change'); pg.wait_for_timeout(700)
     t2=pg.evaluate("()=>{const l=document.querySelector('dialog.td-dlg input.td-fees').closest('label');return !!l.querySelector('.td-auto-an')}")
     check('S5 typing over a filled field makes it the manager’s: the analyzer tag goes', not t2)
     pg.keyboard.press('Escape'); pg.wait_for_timeout(400)

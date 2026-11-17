@@ -1366,7 +1366,7 @@ test('tender study file: read strictly, matched by Etimad number then subject, f
   assert.equal(core.matchTenderStudy([items[0], { ...items[0], id: 'x' }], { ...s0, etimadNo: '' }, key), null, 'two rows with that subject: none is chosen');
   const row = { id: 'r', etimadNo: '', fees: null, bond: '5%', value: null, askDue: '', askDueTime: '', visit: '', due: '2026-12-01', dueTime: '', openAt: '', study: '', studySummary: '', dateSources: { due: 'manual' } };
   const { patch, filled, differs } = core.applyTenderStudy(row, s0, '2026-11-14T18:01:00Z');
-  assert.deepEqual(filled.sort(), ['askDue', 'dueTime', 'etimadNo', 'fees', 'study', 'studySummary', 'visit'].sort());
+  assert.deepEqual(filled.sort(), ['askDue', 'dueTime', 'entity', 'etimadNo', 'fees', 'study', 'studySummary', 'visit'].sort(), 'v9.58: the study’s entity fills the empty entity too');
   assert.equal(patch.fees, 1500); assert.ok(!('visitTime' in patch), 'v9.55: the register keeps no hour for the visit, so none is written'); assert.equal(patch.due, undefined, 'a deadline typed by hand stays');
   assert.equal(patch.fieldSources.fees, 'analyzer'); assert.equal(patch.dateSources.askDue, 'analyzer'); assert.equal(patch.dateSources.due, 'manual');
   assert.equal(patch.evidence.fees.page, 4); assert.equal(patch.studyDecision, 'go');
@@ -1614,6 +1614,107 @@ test('mail thread: what is saved on the tender is cleaned, survives a merge betw
   const a = { thread: thread.slice(0, 3).map((e, k) => (k === 1 ? { ...e, mark: 'handover' } : e)) }, b = { thread: thread.slice(2) };
   const both = core.mergeTenderDetails(a, b).thread;
   assert.equal(both.length, 5); assert.equal(both[1].mark, 'handover');
+});
+
+// ---------- v9.58 (ADR-0131): following a tender from arrival to result ----------
+test('tender follow-up: the hand-over to the tenders team is two working days before the deadline, at the same hour', () => {
+  assert.equal(core.TENDER_HANDOVER_DAYS, 2);
+  assert.equal(core.tenderHandoverDue({ due: '2026-11-17', dueTime: '10:00' }), '2026-11-15T10:00', 'Tuesday: Monday and Sunday are the two days');
+  assert.equal(core.tenderHandoverDue({ due: '2026-11-22', dueTime: '' }), '2026-11-18', 'Sunday: Thursday and Wednesday — the weekend is skipped; no hour, the day alone');
+  assert.equal(core.tenderHandoverDue({ due: '2026-11-19', dueTime: '13:30' }), '2026-11-17T13:30');
+  assert.equal(core.tenderHandoverDue({ due: '' }), '', 'no deadline, no hand-over date');
+  assert.equal(core.tenderHandoverDue({}), '');
+});
+
+test('tender follow-up: when the offer was handed over — the message the manager marked, else the day it was ready; never guessed', () => {
+  assert.equal(core.tenderHandedAt({ thread: [{ at: '2026-11-17T09:43', mark: 'handover' }], readyOn: '2026-11-16' }), '2026-11-17T09:43', 'the marked message wins');
+  assert.equal(core.tenderHandedAt({ readyOn: '2026-11-16' }), '2026-11-16');
+  assert.equal(core.tenderHandedAt({ thread: [{ at: '2026-11-17T09:43' }] }), '', 'an unmarked message is not a hand-over');
+  // on time: by the hour when both carry one, by the day otherwise
+  assert.equal(core.tenderHandoverOnTime({ due: '2026-11-17', dueTime: '10:00', thread: [{ at: '2026-11-17T09:43', mark: 'handover' }] }), false);
+  assert.equal(core.tenderHandoverOnTime({ due: '2026-11-17', dueTime: '10:00', thread: [{ at: '2026-11-15T09:59', mark: 'handover' }] }), true);
+  assert.equal(core.tenderHandoverOnTime({ due: '2026-11-17', dueTime: '10:00', readyOn: '2026-11-15' }), true, 'a day against an hour compares the days');
+  assert.equal(core.tenderHandoverOnTime({ due: '2026-11-17', readyOn: '2026-11-16' }), false);
+  assert.equal(core.tenderHandoverOnTime({ due: '2026-11-17' }), null, 'nothing handed over yet: unknown, not late');
+  assert.equal(core.tenderHandoverOnTime({ readyOn: '2026-11-16' }), null, 'no deadline: unknown');
+});
+
+test('tender follow-up: the time a tender had — full working days from arrival to the deadline, and whether that is short', () => {
+  assert.deepEqual(core.tenderLead({ date: '2026-11-12', due: '2026-11-17' }), { workDays: 2, short: true, handoverBeforeArrival: false });
+  assert.deepEqual(core.tenderLead({ date: '2026-11-01', due: '2026-11-19' }), { workDays: 13, short: false, handoverBeforeArrival: false });
+  assert.deepEqual(core.tenderLead({ date: '2026-11-16', due: '2026-11-17' }), { workDays: 0, short: true, handoverBeforeArrival: true }, 'the hand-over day was before the tender arrived');
+  assert.deepEqual(core.tenderLead({ date: '2026-11-12' }), { workDays: null, short: false, handoverBeforeArrival: false }, 'no deadline: nothing is claimed');
+});
+
+test('tender follow-up: minutes left to a moment on the Saudi wall clock; a day alone ends at its last minute', () => {
+  assert.equal(core.minutesUntil('2026-11-17T10:00', '2026-11-16T15:00'), 1140);
+  assert.equal(core.minutesUntil('2026-11-15T10:00', '2026-11-16T15:10'), -1750);
+  assert.equal(core.minutesUntil('2026-11-17', '2026-11-17T23:00'), 59);
+  assert.equal(core.minutesUntil('', '2026-11-17T23:00'), null);
+});
+
+test('tender follow-up: the fields a stage shows — few at arrival, more as it moves, and never one that holds a value', () => {
+  const arrived = core.tenderShownFields({ stage: 'received' });
+  assert.deepEqual(arrived, ['date', 'owner', 'etimadNo', 'entity', 'site', 'fees', 'bond', 'askDue', 'askDueTime', 'visit', 'due', 'dueTime', 'note'], 'the booklet’s own facts, in the window’s order');
+  const prep = core.tenderShownFields({ stage: 'prep' });
+  for (const k of ['value', 'bond', 'decidedOn', 'openAt', 'study']) assert(prep.includes(k), k);
+  assert(!prep.includes('submittedOn') && !prep.includes('reason'));
+  const sub = core.tenderShownFields({ stage: 'submitted' }); for (const k of ['readyOn', 'submittedOn', 'submitNo']) assert(sub.includes(k), k);
+  for (const st of ['declined', 'lost', 'missed', 'cancelled']) assert(core.tenderShownFields({ stage: st }).includes('reason'), st);
+  const kept = core.tenderShownFields({ stage: 'received', submitNo: 'X-1', reason: '', value: 0 });
+  assert(kept.includes('submitNo'), 'a value typed earlier is never hidden'); assert(kept.includes('value'), 'zero is a value'); assert(!kept.includes('reason'), 'empty is not');
+});
+
+test('tender follow-up: «missed the deadline» is a closed outcome that asks for nothing more', () => {
+  assert.deepEqual(core.tenderNeeds({ stage: 'missed' }), []);
+  assert.deepEqual(core.tenderNeeds({ stage: 'prep' }), ['owner', 'etimadNo', 'due', 'value', 'bond']);
+});
+
+test('tender follow-up: the inquiries log is cleaned, kept between devices, and an answered copy wins', () => {
+  const raw = [{ id: 'q1', text: '  Where is the station?  ', askedOn: '2026-11-15', answeredOn: '', answer: '' }, { id: 'q2', text: '', askedOn: '2026-11-15' }, null,
+    { id: 'q3', text: 'x'.repeat(900), askedOn: 'soon', answeredOn: '2026-11-16', answer: 'y'.repeat(2000) }];
+  const c = core.cleanTenderDetails({ inquiries: raw }).inquiries;
+  assert.deepEqual(c.map((q) => q.id), ['q1', 'q3'], 'an inquiry without words is dropped');
+  assert.deepEqual(c[0], { id: 'q1', text: 'Where is the station?', askedOn: '2026-11-15', answeredOn: '', answer: '' });
+  assert.equal(c[1].text.length, 600); assert.equal(c[1].askedOn, ''); assert.equal(c[1].answer.length, 1500);
+  const mine = { inquiries: [{ id: 'q1', text: 'Where?', askedOn: '2026-11-15', answeredOn: '', answer: '' }] };
+  const theirs = { inquiries: [{ id: 'q1', text: 'Where?', askedOn: '2026-11-15', answeredOn: '2026-11-16', answer: 'Gate 3' }, { id: 'q9', text: 'Hours?', askedOn: '', answeredOn: '', answer: '' }] };
+  const m = core.mergeTenderDetails(mine, theirs).inquiries;
+  assert.equal(m.length, 2); assert.equal(m.find((q) => q.id === 'q1').answer, 'Gate 3', 'the answered copy is kept whichever side it came from');
+  assert.equal(core.mergeTenderDetails(theirs, mine).inquiries.find((q) => q.id === 'q1').answer, 'Gate 3');
+});
+
+test('tender follow-up: the year report — counts, values, time given, hand-overs, reasons, months and entities, from that year only', () => {
+  const T = (o) => ({ subject: o.id, stage: 'received', ...o });
+  const items = [
+    T({ id: 'a', date: '2026-01-10', stage: 'won', value: 100000, due: '2026-01-25', readyOn: '2026-01-20', entity: 'Entity A' }),
+    T({ id: 'b', date: '2026-01-20', stage: 'lost', value: 50000, reason: 'price', due: '2026-02-05', readyOn: '2026-02-04', entity: 'Entity A' }),
+    T({ id: 'c', date: '2026-02-03', stage: 'declined', reason: 'out of scope', due: '2026-02-20', entity: 'Entity B' }),
+    T({ id: 'd', date: '2026-11-12', stage: 'missed', reason: 'three working days', due: '2026-11-17', dueTime: '10:00', value: 276000, thread: [{ at: '2026-11-17T09:43', mark: 'handover' }] }),
+    T({ id: 'e', date: '2026-11-14', stage: 'prep', due: '2026-12-01', value: null }),
+    T({ id: 'f', date: '2026-11-15', stage: 'submitted', due: '2026-11-30', value: 20000, readyOn: '2026-11-25', entity: 'Entity B' }),
+    T({ id: 'old', date: '2025-12-30', stage: 'won', value: 999999 }),
+  ];
+  const r = core.tenderYearReport(items, '2026');
+  assert.equal(r.n, 6, 'only the tenders that arrived in 2026');
+  assert.deepEqual([r.joined, r.submitted, r.won, r.lost, r.missed, r.declined, r.cancelled, r.open], [5, 3, 1, 1, 1, 1, 0, 2]);
+  assert.equal(r.winRate, 50);
+  assert.deepEqual(r.value, { all: 446000, submitted: 170000, won: 100000, known: 4 });
+  assert.equal(r.lead.known, 6); assert.equal(r.lead.short, 1, 'one tender had fewer than five full working days');
+  assert.equal(r.lead.avgWorkDays, 9.5, '(10 + 11 + 12 + 2 + 12 + 10) / 6');
+  assert.deepEqual(r.handover, { known: 4, onTime: 2 }, 'a and f on time; b a day late; d 17 minutes before the deadline, not two working days');
+  assert.deepEqual(r.reasons.missed, [{ subject: 'd', reason: 'three working days' }]); assert.deepEqual(r.reasons.lost, [{ subject: 'b', reason: 'price' }]); assert.deepEqual(r.reasons.declined, [{ subject: 'c', reason: 'out of scope' }]);
+  assert.deepEqual(r.months, [{ month: '2026-01', n: 2, joined: 2, submitted: 2, won: 1, missed: 0 }, { month: '2026-02', n: 1, joined: 0, submitted: 0, won: 0, missed: 0 }, { month: '2026-11', n: 3, joined: 3, submitted: 1, won: 0, missed: 1 }]);
+  assert.deepEqual(r.entities, [{ entity: 'Entity A', n: 2, submitted: 2, won: 1 }, { entity: 'Entity B', n: 2, submitted: 1, won: 0 }, { entity: '', n: 2, submitted: 0, won: 0 }], 'most first; «not recorded» last');
+  assert.deepEqual(r.rows.map((x) => x.id), ['a', 'b', 'c', 'd', 'e', 'f']);
+  const none = core.tenderYearReport(items, '2024');
+  assert.equal(none.n, 0); assert.equal(none.winRate, null); assert.equal(none.lead.avgWorkDays, null); assert.deepEqual(none.months, []);
+});
+
+test('tender follow-up: the analyzer’s study fills the entity when it is empty, and never writes over one typed by hand', () => {
+  const st = core.parseTenderStudy({ schema: 'afaqy-tender-study/v1', tenders: [{ subject: 'x', entity: '  Entity A ', dates: {} }] }).tenders[0];
+  assert.equal(core.applyTenderStudy({ entity: '' }, st).patch.entity, 'Entity A');
+  assert.equal(core.applyTenderStudy({ entity: 'Typed' }, st).patch.entity, undefined);
 });
 
 for (const [name, fn] of tests) {

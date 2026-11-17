@@ -1,40 +1,43 @@
 {
-  "version": "9.57",
+  "version": "9.58",
   "date": "2026-11-17",
   "notes": {
     "ar": [
-      "سجل المناقصات صار يقرأ سلسلة الإيميل نفسها: اسحب إيميل المناقصة (والأفضل آخر رد، لأنه يحمل كل ما قبله) فتظهر في نافذة المناقصة «تسلسل المراسلات» — كل رسالة بوقتها وكاتبها وخلاصة من كلامه هو، من الأقدم إلى الأحدث.",
-      "تحت التسلسل خلاصته: عدد الرسائل والمرسلين، أول رسالة وآخر رسالة، موعد التقديم المسجل، وأيام العمل الكاملة بين أول رسالة والموعد (من الأحد إلى الخميس، دون يوم الوصول ويوم الإغلاق).",
-      "علّم الرسالة التي سلّمت فيها العرض، فتحسب الصفحة كم سبقت الموعد أو تأخرت عنه. هذه العلامة منك أنت، والصفحة لا تخمّنها.",
-      "«انسخ التسلسل» ينسخ التسلسل وخلاصته نصًّا جاهزًا للّصق في إيميل.",
-      "زر «ملخص المراسلات» في الصفحة: جدول للمناقصات المعروضة التي قُرئت رسائلها — أول رسالة، الموعد وأيام العمل، عدد الرسائل وآخرها، وتسليم العرض — مع تصفية للمناقصات التي مدتها أقل من أسبوع عمل، وتنزيل إكسل.",
-      "المناقصة التي تدخل السجل لأول مرة من رد تأخذ تاريخ أقدم رسالة في السلسلة لا تاريخ الرد، ويُكتب تحته مصدره. والمناقصة الموجودة من قبل يبقى تاريخها كما هو.",
-      "لا شيء يُخمَّن ولا يُحفظ ما لا يلزم: الروابط وأرقام الهواتف والتواقيع لا تُحفظ، والرسالة المكررة في رد لاحق لا تتكرر، والوقت المكتوب بصيغة تحتمل قراءتين يُترك «غير مقروء». والإيميلات المحفوظة من قبل تُقرأ بزر «اقرأ التسلسل من الإيميلات المحفوظة».",
-      "إصلاح داخلي: أحد الفحوص الآلية كان مربوطًا بتاريخ 15 نوفمبر 2026 فصار يفشل من اليوم التالي بلا أي تغيير في البوابة — صار لا يعتمد على تاريخ اليوم."
+      "نافذة المناقصة صارت «بطاقة» في صفحة واحدة: الجهة ورقم اعتماد والمسؤول، شريط المراحل، أربعة مربعات (موعد التقديم وما بقي عليه، موعد التسليم لفريق المنافسات، أيام العمل الكاملة المتاحة، القيمة)، كل المواعيد على خط واحد وعليه «الآن»، الخلاصة وآخر ثلاث رسائل، «الناقص» بخاناته تكتب فيها مباشرة، والملفات في سطر. وكل ما عدا ذلك في طيّات تُفتح عند الحاجة.",
+      "موعد التسليم لفريق المنافسات صار موعدًا أساسيًّا: قبل الإغلاق بيومي عمل، بعدّ تنازلي، وتنبيه في غرفة التحكم إذا بقي عليه يوم أو فات.",
+      "المناقصة التي تصل بمدة أقل من أسبوع عمل تُعلَّم في القائمة، وتنبّه غرفة التحكم إلى أنها تحتاج قرارًا اليوم.",
+      "الخانات تظهر حسب المرحلة: عند الوصول بيانات الكراسة فقط، وخانات التقديم بعد التجهيز، والسبب عند الإغلاق. وأي خانة فيها قيمة تظهر دائمًا. وصور التواقيع من الإيميل مطوية معًا.",
+      "نتيجة جديدة للمراحل: «فات موعد التقديم» بسببها.",
+      "«الاستفسارات»: سجل لما رُفع للجهة ومتى ونص الرد، لأن الفرع لا يرى الاستفسارات على المنصة.",
+      "«انسخ رسالة فريق المنافسات» أو «افتحها في البريد»: المواعيد، والمدة، والاستفسارات المطلوب رفعها، وما ينقصنا، ومعها اقتراح الاتفاق على جدول مختصر أو تمديد أو اعتذار إذا كانت المدة قصيرة. و«انسخ ملخص المناقصة» للصق في أي مكان.",
+      "«تقرير السنة»: ما وصل، وما شاركنا فيه، وما قُدّم وفاز وخسر وفات، وأسباب كل ذلك، والقيمة، ومتوسط المدة، وهل وصلت العروض لفريق المنافسات في موعدها، حسب الشهر والجهة — في نافذة، وصفحة للطباعة، وإكسل.",
+      "خانتان جديدتان: الجهة (تُملأ من دراسة المحلل إن كانت فارغة) وموقع التنفيذ، وتصدير الإكسل صار فيه الجهة وموعد التسليم وأيام العمل."
     ],
     "en": [
-      "The tender register now reads the email thread itself: drop the tender’s email (best of all the latest reply, because it carries everything before it) and the tender’s window shows «Correspondence timeline» — every message with its time, its writer and a summary in the writer’s own words, oldest first.",
-      "Under the timeline is its summary: how many messages and writers, the first and the last message, the submission deadline on record, and the full working days between the first message and the deadline (Sunday to Thursday, without the day it arrived and the closing day).",
-      "Mark the message in which you handed the offer over, and the page works out how long before the deadline it was sent, or how long after. That mark is yours alone; the page never guesses it.",
-      "«Copy the timeline» copies the timeline and its summary as text ready to paste into an email.",
-      "A «Correspondence summary» button on the page: a table of the tenders shown whose messages were read — first message, the deadline and working days, how many messages and the last, and the offer hand-over — with a filter for tenders that had less than a working week, and an Excel download.",
-      "A tender that first enters the register through a reply takes the date of the oldest message in the thread, not the date of the reply, and its source is written under it. A tender already in the register keeps the date it has.",
-      "Nothing is guessed and nothing unneeded is kept: links, phone numbers and signatures are not saved, a message repeated inside a later reply is not repeated, and a time written in a form with two readings is left «not readable». Emails saved earlier are read with «Read the timeline from the saved emails».",
-      "Internal fix: one of the automatic checks was tied to the date 15 November 2026, so it began to fail the next day with no change to the portal — it no longer depends on today’s date."
+      "A tender’s window is now a «card» on one page: the entity, the Etimad number and the owner; the stage strip; four tiles (the submission deadline and the time left, the hand-over date to the tenders team, the full working days available, the value); every date on one line with «Now» on it; the summary and the latest three messages; «Missing» with its fields to type into directly; and the files on one line. Everything else sits in folds that open when needed.",
+      "The hand-over to the tenders team is now a deadline of its own: two working days before closing, with a countdown, and a control-room alert when it is a day away or already past.",
+      "A tender that arrives with less than a working week is marked in the list, and the control room says it needs a decision today.",
+      "Fields appear by stage: at arrival only the booklet’s facts, the submission fields once the offer is being prepared, and the reason when the tender closes. Any field that holds a value always shows. The signature pictures from the email are folded together.",
+      "A new outcome among the stages: «Missed the deadline», with its reason.",
+      "«Inquiries»: a record of what was raised to the entity, when, and the answer, because the branch cannot see the inquiries on the platform.",
+      "«Copy the message to the tenders team» or «Open it in your mail»: the dates, the time given, the inquiries to raise and what we are missing, with a suggestion to agree on a short schedule, an extension or a withdrawal when the time is short. And «Copy the tender summary» to paste anywhere.",
+      "«Year report»: what arrived, what we bid on, what was submitted, won, lost and missed, the reasons for each, the value, the average time given, and whether the offers reached the tenders team on time, by month and by entity — in a window, as a printable page, and in Excel.",
+      "Two new fields: the entity (filled from the analyzer’s study when empty) and the site; the Excel export now carries the entity, the hand-over date and the working days."
     ],
     "ur": [
-      "ٹینڈر رجسٹر اب ای میل کے سلسلے کو خود پڑھتا ہے: ٹینڈر کی ای میل ڈالیں (بہتر ہے کہ تازہ ترین جواب ہو، کیونکہ اس میں پہلے کے سب پیغام شامل ہوتے ہیں) تو ٹینڈر کی کھڑکی میں «خط و کتابت کی ترتیب» نظر آتی ہے — ہر پیغام اپنے وقت، لکھنے والے اور اسی کے الفاظ میں خلاصے کے ساتھ، پرانے سے نئے کی ترتیب میں۔",
-      "ترتیب کے نیچے اس کا خلاصہ ہے: پیغامات اور لکھنے والوں کی تعداد، پہلا اور آخری پیغام، درج شدہ جمع کرانے کی آخری تاریخ، اور پہلے پیغام اور آخری تاریخ کے درمیان پورے کاری دن (اتوار سے جمعرات، آنے کے دن اور بند ہونے کے دن کے بغیر)۔",
-      "جس پیغام میں آپ نے پیشکش حوالے کی اس پر نشان لگائیں، تو صفحہ بتاتا ہے کہ وہ آخری تاریخ سے کتنا پہلے یا کتنا بعد بھیجا گیا۔ یہ نشان صرف آپ لگاتے ہیں؛ صفحہ اس کا اندازہ نہیں لگاتا۔",
-      "«ترتیب نقل کریں» ترتیب اور اس کا خلاصہ ایسے متن کی صورت میں نقل کرتا ہے جو ای میل میں چسپاں کیا جا سکے۔",
-      "صفحے پر «خط و کتابت کا خلاصہ» کا بٹن: ان دکھائے گئے ٹینڈرز کی جدول جن کے پیغام پڑھے گئے — پہلا پیغام، آخری تاریخ اور کاری دن، پیغامات کی تعداد اور آخری پیغام، اور پیشکش حوالگی — ان ٹینڈرز کے فلٹر کے ساتھ جن کی مدت ایک کاری ہفتے سے کم تھی، اور ایکسل ڈاؤن لوڈ کے ساتھ۔",
-      "جو ٹینڈر پہلی بار کسی جواب کے ذریعے رجسٹر میں آئے وہ جواب کی تاریخ کے بجائے سلسلے کے سب سے پرانے پیغام کی تاریخ لیتا ہے، اور اس کے نیچے اس کا ماخذ لکھا جاتا ہے۔ جو ٹینڈر پہلے سے رجسٹر میں ہے اس کی تاریخ وہی رہتی ہے۔",
-      "کوئی اندازہ نہیں لگایا جاتا اور غیر ضروری چیز محفوظ نہیں کی جاتی: لنک، فون نمبر اور دستخط محفوظ نہیں ہوتے، کسی بعد کے جواب میں دہرایا گیا پیغام دوبارہ نہیں آتا، اور دو مطلب والی شکل میں لکھا وقت «پڑھا نہیں جا سکا» چھوڑ دیا جاتا ہے۔ پہلے سے محفوظ ای میلز «محفوظ ای میلز سے ترتیب پڑھیں» کے بٹن سے پڑھی جاتی ہیں۔",
-      "اندرونی درستی: خودکار جانچوں میں سے ایک 15 نومبر 2026 کی تاریخ سے بندھی تھی، اس لیے اگلے ہی دن پورٹل میں کسی تبدیلی کے بغیر ناکام ہونے لگی — اب وہ آج کی تاریخ پر منحصر نہیں۔"
+      "ٹینڈر کی کھڑکی اب ایک صفحے کا «کارڈ» ہے: ادارہ، اعتماد نمبر اور ذمہ دار؛ مراحل کی پٹی؛ چار خانے (جمع کرانے کی آخری تاریخ اور باقی وقت، ٹینڈر ٹیم کو حوالگی کی تاریخ، دستیاب پورے کاری دن، مالیت)؛ تمام تاریخیں ایک لکیر پر جس پر «ابھی» کا نشان ہے؛ خلاصہ اور تازہ ترین تین پیغام؛ «کمی» اپنے خانوں کے ساتھ جن میں سیدھا لکھا جا سکتا ہے؛ اور فائلیں ایک سطر میں۔ باقی سب کچھ تہوں میں ہے جو ضرورت پر کھلتی ہیں۔",
+      "ٹینڈر ٹیم کو حوالگی اب اپنی الگ آخری تاریخ ہے: بند ہونے سے دو کاری دن پہلے، الٹی گنتی کے ساتھ، اور جب ایک دن رہ جائے یا گزر جائے تو کنٹرول روم میں انتباہ۔",
+      "جو ٹینڈر ایک کاری ہفتے سے کم مدت کے ساتھ آئے وہ فہرست میں نشان زد ہوتا ہے، اور کنٹرول روم بتاتا ہے کہ اس پر آج فیصلہ درکار ہے۔",
+      "خانے مرحلے کے مطابق دکھتے ہیں: آنے پر صرف دستاویز کی معلومات، پیشکش کی تیاری کے بعد جمع کرانے کے خانے، اور بند ہونے پر وجہ۔ جس خانے میں کوئی قیمت ہو وہ ہمیشہ دکھتا ہے۔ ای میل کی دستخطی تصاویر ایک ساتھ تہہ کی گئی ہیں۔",
+      "مراحل میں ایک نیا نتیجہ: «آخری تاریخ گزر گئی»، اپنی وجہ کے ساتھ۔",
+      "«سوالات»: اس کا ریکارڈ کہ ادارے کو کیا بھیجا گیا، کب، اور جواب کیا آیا، کیونکہ برانچ پلیٹ فارم پر سوالات نہیں دیکھ سکتی۔",
+      "«ٹینڈر ٹیم کے لیے پیغام نقل کریں» یا «اسے میل میں کھولیں»: تاریخیں، دی گئی مدت، بھیجنے والے سوالات اور جو کمی ہے، اور اگر مدت کم ہو تو مختصر شیڈول، توسیع یا معذرت پر اتفاق کی تجویز۔ اور «ٹینڈر کا خلاصہ نقل کریں» کہیں بھی چسپاں کرنے کے لیے۔",
+      "«سال کی رپورٹ»: کیا آیا، کس پر بولی دی، کیا جمع ہوا، جیتا، ہارا اور کیا رہ گیا، ہر ایک کی وجوہات، مالیت، اوسط دی گئی مدت، اور کیا پیشکشیں وقت پر ٹینڈر ٹیم تک پہنچیں، مہینے اور ادارے کے لحاظ سے — ایک کھڑکی میں، پرنٹ کے صفحے کے طور پر، اور ایکسل میں۔",
+      "دو نئے خانے: ادارہ (اگر خالی ہو تو اینالائزر کے مطالعے سے بھرتا ہے) اور کام کی جگہ؛ ایکسل میں اب ادارہ، حوالگی کی تاریخ اور کاری دن بھی شامل ہیں۔"
     ]
   },
   "counts": {
-    "versions": 182,
-    "decisions": 130
+    "versions": 183,
+    "decisions": 131
   }
 }

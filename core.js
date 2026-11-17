@@ -2537,6 +2537,7 @@ export function applyTenderStudy(item, study, at = new Date().toISOString()) {
   }
   if (study.summary && empty(item.studySummary)) { patch.studySummary = study.summary; filled.push('studySummary'); }
   if (study.studyFile && empty(item.study)) { patch.study = study.studyFile; filled.push('study'); }
+  if (study.entity && empty(item.entity)) { patch.entity = study.entity; filled.push('entity'); }   // v9.58: the card names the entity
   // v9.55: the same study read again is not news — no new stamp, no history line. Only a decision or a reason that changed is written.
   const decided = !!study.decision && (item.studyDecision !== study.decision || (item.studyWhy || '') !== (study.why || ''));
   if (decided) { patch.studyDecision = study.decision; patch.studyWhy = study.why; patch.studyAt = at; }
@@ -2550,7 +2551,7 @@ export function applyTenderStudy(item, study, at = new Date().toISOString()) {
 export function tenderNeeds(item) {
   const st = item.stage || 'received', empty = (k) => item[k] === '' || item[k] == null;
   // ADR-0128: a closed tender (won, lost, declined, cancelled) asks for nothing; the rest is a reminder, never a condition
-  const want = ['declined', 'cancelled', 'won', 'lost'].includes(st) ? [] : ['owner', 'etimadNo', 'due',
+  const want = ['declined', 'cancelled', 'won', 'lost', 'missed'].includes(st) ? [] : ['owner', 'etimadNo', 'due',
     ...(['prep', 'ready', 'submitted'].includes(st) ? ['value', 'bond'] : []),
     ...(st === 'submitted' ? ['submittedOn', 'submitNo'] : [])];
   return want.filter(empty);
@@ -2750,6 +2751,80 @@ export function tenderThreadFacts(item, thread = item && item.thread) {
   return { n: list.length, people: writers.length, first, last, dueAt, workDays: first && item && item.due ? workDaysBetween(first.at.slice(0, 10), item.due) : null,
     handover, leadMin: handover && dueAt ? mailMinutes(handover.at, dueAt) : null };
 }
+// ---------- v9.58 (ADR-0131): following a tender from arrival to result ----------
+/** The tenders team in Riyadh asks for the offer at least this many working days before the platform closes (their mail of 17 Nov 2026). */
+export const TENDER_HANDOVER_DAYS = 2;
+const tdDayShift = (day, n) => new Date(Date.parse(`${day}T00:00:00Z`) + n * 864e5).toISOString().slice(0, 10);
+const tdWorkDay = (day) => ![5, 6].includes(new Date(`${day}T00:00:00Z`).getUTCDay());
+/** When the offer must reach the tenders team: TENDER_HANDOVER_DAYS working days (Sunday to Thursday) before the deadline, at the
+ *  deadline's own hour when it has one. Empty without a deadline. */
+export function tenderHandoverDue(item) {
+  if (!item || !/^\d{4}-\d{2}-\d{2}$/.test(item.due || '')) return '';
+  let day = item.due, left = TENDER_HANDOVER_DAYS;
+  while (left > 0) { day = tdDayShift(day, -1); if (tdWorkDay(day)) left--; }
+  return day + (item.dueTime ? `T${item.dueTime}` : '');
+}
+/** When the offer was handed over: the message the manager marked as the hand-over, else the day it was marked ready. Never guessed. */
+export function tenderHandedAt(item) {
+  const marked = (Array.isArray(item && item.thread) ? item.thread : []).filter((e) => e && e.mark === 'handover' && e.at).at(-1);
+  return marked ? marked.at : (item && item.readyOn) || '';
+}
+/** Was the offer handed over by the hand-over date? null when either side is unknown. By the hour when both carry one, by the day otherwise. */
+export function tenderHandoverOnTime(item) {
+  const due = tenderHandoverDue(item), at = tenderHandedAt(item);
+  if (!due || !at) return null;
+  return due.length > 10 && at.length > 10 ? at <= due : at.slice(0, 10) <= due.slice(0, 10);
+}
+/** The time a tender had: full working days between its arrival and the deadline; «short» under a working week; and whether
+ *  the hand-over date fell before the tender even arrived. Nothing is claimed without a deadline. */
+export function tenderLead(item) {
+  const workDays = workDaysBetween(item.date, item.due), hand = tenderHandoverDue(item);
+  return { workDays, short: workDays != null && workDays < 5, handoverBeforeArrival: !!hand && !!item.date && hand.slice(0, 10) < item.date };
+}
+/** Minutes from `now` to `at`, both on the Saudi wall clock (`YYYY-MM-DDTHH:MM`); a day alone ends at 23:59. null without a target. */
+export function minutesUntil(at, now) {
+  if (!at || !now) return null;
+  const target = Date.parse(`${at.length > 10 ? at : `${at}T23:59`}:00Z`), from = Date.parse(`${now.slice(0, 16)}:00Z`);
+  return Number.isNaN(target) || Number.isNaN(from) ? null : Math.round((target - from) / 6e4);
+}
+// the fields each stage needs, in the order the window lists them; a field that already holds a value is always shown
+const TENDER_FIELDS_ARRIVED = ['date', 'owner', 'etimadNo', 'entity', 'site', 'askDue', 'askDueTime', 'visit', 'due', 'dueTime', 'fees', 'bond', 'note'];   // the booklet's own facts
+const TENDER_FIELD_ORDER = ['date', 'owner', 'etimadNo', 'entity', 'site', 'value', 'fees', 'bond', 'askDue', 'askDueTime', 'visit', 'due', 'dueTime', 'openAt', 'decidedOn', 'readyOn', 'submittedOn', 'submitNo', 'study', 'reason', 'note'];
+export const TENDER_CLOSED = ['won', 'lost', 'missed', 'cancelled', 'declined'];
+export function tenderShownFields(item) {
+  const st = item.stage || 'received', want = new Set(TENDER_FIELDS_ARRIVED);
+  if (!['received', 'screen'].includes(st)) for (const k of ['value', 'openAt', 'study']) want.add(k);
+  if (['prep', 'ready', 'submitted', 'won', 'lost', 'missed', 'declined'].includes(st)) want.add('decidedOn');
+  if (['ready', 'submitted', 'won', 'lost', 'missed'].includes(st)) want.add('readyOn');
+  if (['submitted', 'won', 'lost'].includes(st)) { want.add('submittedOn'); want.add('submitNo'); }
+  if (['declined', 'lost', 'missed', 'cancelled'].includes(st)) want.add('reason');
+  for (const k of TENDER_FIELD_ORDER) if (item[k] !== '' && item[k] != null) want.add(k);
+  return TENDER_FIELD_ORDER.filter((k) => want.has(k));
+}
+/** A year of tenders in one place: what arrived, what we joined, submitted, won, lost or missed, and why; the money; how much time
+ *  the tenders gave; whether the offers reached the tenders team on time; by month and by entity. Only tenders that arrived that year. */
+export function tenderYearReport(items, year) {
+  const rows = (items || []).filter((i) => String(i.date || '').startsWith(String(year))).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  const is = (i, ...s) => s.includes(i.stage), early = ['received', 'screen', 'decide'];
+  const joinedOf = (L) => L.filter((i) => !is(i, 'declined', 'cancelled', ...early)), subOf = (L) => L.filter((i) => is(i, 'submitted', 'won', 'lost'));
+  const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null), sum = (L) => L.reduce((n, i) => n + (num(i.value) || 0), 0);
+  const won = rows.filter((i) => is(i, 'won')), lost = rows.filter((i) => is(i, 'lost'));
+  const leads = rows.map((i) => tenderLead(i).workDays).filter((n) => n != null);
+  const hand = rows.map(tenderHandoverOnTime).filter((x) => x != null);
+  const reasons = Object.fromEntries(['declined', 'lost', 'missed', 'cancelled'].map((s) => [s, rows.filter((i) => is(i, s)).map((i) => ({ subject: i.subject, reason: i.reason || '' }))]));
+  const months = [...new Set(rows.map((i) => i.date.slice(0, 7)))].map((month) => { const L = rows.filter((i) => i.date.startsWith(month));
+    return { month, n: L.length, joined: joinedOf(L).length, submitted: subOf(L).length, won: L.filter((i) => is(i, 'won')).length, missed: L.filter((i) => is(i, 'missed')).length }; });
+  const entities = [...new Set(rows.map((i) => String(i.entity || '').trim()))].map((entity) => { const L = rows.filter((i) => String(i.entity || '').trim() === entity);
+    return { entity, n: L.length, submitted: subOf(L).length, won: L.filter((i) => is(i, 'won')).length }; })
+    .sort((a, b) => b.n - a.n || (!a.entity) - (!b.entity) || a.entity.localeCompare(b.entity));
+  return { year: String(year), n: rows.length, joined: joinedOf(rows).length, submitted: subOf(rows).length, won: won.length, lost: lost.length,
+    missed: rows.filter((i) => is(i, 'missed')).length, declined: rows.filter((i) => is(i, 'declined')).length, cancelled: rows.filter((i) => is(i, 'cancelled')).length,
+    open: rows.filter((i) => is(i, ...early, 'prep', 'ready', 'submitted')).length,
+    winRate: won.length + lost.length ? Math.round((won.length / (won.length + lost.length)) * 100) : null,
+    value: { all: sum(rows), submitted: sum(subOf(rows)), won: sum(won), known: rows.filter((i) => num(i.value) != null).length },
+    lead: { known: leads.length, avgWorkDays: leads.length ? Math.round((leads.reduce((a, b) => a + b, 0) / leads.length) * 10) / 10 : null, short: rows.filter((i) => tenderLead(i).short).length },
+    handover: { known: hand.length, onTime: hand.filter(Boolean).length }, reasons, months, entities, rows };
+}
 export function cleanTenderDetails(item) {
   const string = (value, max) => typeof value === 'string' ? value.slice(0, max) : '';
   const list = (value) => Array.isArray(value) ? value : [];
@@ -2775,11 +2850,14 @@ export function cleanTenderDetails(item) {
       ...(cleanTenderAnalysis(file.analysis) ? {analysis:cleanTenderAnalysis(file.analysis)} : {})
     })),
     removedFiles: [...new Set(list(item.removedFiles).filter((id) => typeof id === 'string' && id.length && id.length <= 150))],
+    // v9.58 (ADR-0131): the questions raised to the entity on the platform — the branch cannot see them there, so they are kept here
+    inquiries: list(item.inquiries).filter((q) => q && string(q.id, 80) && String(q.text || '').trim()).slice(0, 60).map((q) => ({
+      id: string(q.id, 80), text: String(q.text).trim().slice(0, 600), askedOn: day(q.askedOn), answeredOn: day(q.answeredOn), answer: string(q.answer, 1500) })),
     // v9.57 (ADR-0130): the conversation read from the mails — a time, a writer and the words; a mark only where the manager set one
     thread: list(item.thread).filter((e) => e && (string(e.name, 80) || string(e.addr, 120) || string(e.text, 1500))).slice(0, 300).map((e) => ({
       at: /^\d{4}-\d{2}-\d{2}(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/.test(e.at) ? e.at : '', name: string(e.name, 80), addr: string(e.addr, 120), text: string(e.text, 1500), ...(e.mark === 'handover' ? { mark: 'handover' } : {})
     })),
-    activity: list(item.activity).filter((entry) => entry && string(entry.id, 150) && ['email','add','remove','stage','date','study','read','category','thread'].includes(entry.action)).map((entry) => ({
+    activity: list(item.activity).filter((entry) => entry && string(entry.id, 150) && ['email','add','remove','stage','date','study','read','category','thread','inq'].includes(entry.action)).map((entry) => ({
       id: string(entry.id, 150), action: entry.action, at: string(entry.at, 35), label: string(entry.label, 300)
     })),
   };
@@ -2801,6 +2879,8 @@ export function mergeTenderDetails(base, other) {
     files: [...byFile.values()].filter((file) => !removed.has(file.id)),
     removedFiles,
     thread: tenderThreadMerge(base.thread,other.thread),
+    // an inquiry answered on one device stays answered, whichever side the merge starts from
+    inquiries: [...new Map([...(other.inquiries || []), ...(base.inquiries || [])].map((q) => [q.id, q])).values()].map((q) => { const twin = [...(base.inquiries || []), ...(other.inquiries || [])].find((x) => x.id === q.id && (x.answer || x.answeredOn)); return twin || q; }),
     activity: union(base.activity,other.activity,'id').sort((a,b) => b.at.localeCompare(a.at)),
   };
 }

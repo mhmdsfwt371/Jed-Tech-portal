@@ -16,7 +16,8 @@ import {
   tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds, tenderAmount, tenderDatePatch, backupDue, parseTenderStudy, matchTenderStudy, applyTenderStudy, tenderAutoStage, tenderStudyFromSheet,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
-  mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts } from './core.js';
+  mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts,
+  TENDER_HANDOVER_DAYS, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
 
 import { validateSystems } from './systems-core.js';
 
@@ -814,11 +815,11 @@ let tdKind = pref('tdkind') || 'month', tdPick = '', tdFrom = '', tdTo = '', tdB
 let tdQuery = '', tdMailResult = null, tdStudyResult = null, tdMoreOpen = pref('tdmore') === '1';   // tdStudyResult: the last analyzer import (ADR-0126)
 const TD_FROM = 'a.ibrahim@afaqy.com';
 // ADR-0083: the lifecycle. Open stages in order, then the closed ones. declined/lost need a reason.
-const TD_STAGES = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted', 'won', 'lost', 'cancelled', 'declined'];
-const TD_OPEN = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted'], TD_NEED_REASON = ['declined', 'lost'];
+const TD_STAGES = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted', 'won', 'lost', 'missed', 'cancelled', 'declined'];   // missed (v9.58): we meant to bid and the platform closed first
+const TD_OPEN = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted'], TD_NEED_REASON = ['declined', 'lost', 'missed'];
 const tdDaysBetween = (a, b) => Math.round((new Date(`${b}T00:00:00Z`) - new Date(`${a}T00:00:00Z`)) / 864e5);
 /** The nearest coming date of a tender and what it is, for the countdown. */
-function tdNextDate(i, today) { return [['askDue', i.askDue], ['visit', i.visit], ['due', i.due], ['openAt', i.openAt]].filter(([, v]) => v && v >= today).sort((x, y) => (x[1] < y[1] ? -1 : 1))[0] || null; }
+function tdNextDate(i, today) { return [['askDue', i.askDue], ['visit', i.visit], ['handover', ['received', 'screen', 'decide', 'prep'].includes(i.stage) && !tenderHandedAt(i) ? tenderHandoverDue(i).slice(0, 10) : ''], ['due', i.due], ['openAt', i.openAt]].filter(([, v]) => v && v >= today).sort((x, y) => (x[1] < y[1] ? -1 : 1))[0] || null; }
 /** The period's own numbers: how many we joined, won, how long a decision took, how many were in on time. */
 function tdKpis(rows, today) {
   const decided = rows.filter((i) => i.decidedOn), joined = rows.filter((i) => !['declined', 'cancelled'].includes(i.stage) && i.stage !== 'received' && i.stage !== 'screen' && i.stage !== 'decide');
@@ -909,7 +910,8 @@ function cleanTenders(x) {
     stage: TD_STAGES.includes(i.stage) ? i.stage : (i.status === 'ready' ? 'ready' : 'received'), stageAt: d(i.stageAt) || d(i.readyOn) || i.date,
     reason: String(i.reason || '').slice(0, 300), owner: String(i.owner || '').slice(0, 80), etimadNo: String(i.etimadNo || '').slice(0, 40),
     value: tenderAmount(i.value), fees: tenderAmount(i.fees), bond: String(i.bond || '').slice(0, 120),
-    askDue: d(i.askDue), openAt: d(i.openAt), submittedOn: d(i.submittedOn), submitNo: String(i.submitNo || '').slice(0, 60), decidedOn: d(i.decidedOn), study: String(i.study || '').slice(0, 300), ...cleanTenderDetails(i) }));
+    askDue: d(i.askDue), openAt: d(i.openAt), submittedOn: d(i.submittedOn), submitNo: String(i.submitNo || '').slice(0, 60), decidedOn: d(i.decidedOn), study: String(i.study || '').slice(0, 300),
+    entity: String(i.entity || '').slice(0, 160), site: String(i.site || '').slice(0, 300), ...cleanTenderDetails(i) }));   // entity, site: v9.58
   return { items, to: d(x.to) || null, pulledAt: String(x.pulledAt || ''), revision: String(x.revision || '') };
 }
 const tdPeriodOf = (date, kind) => (kind === 'year' ? date.slice(0, 4) : kind === 'quarter' ? `${date.slice(0, 4)}-Q${Math.floor((Number(date.slice(5, 7)) - 1) / 3) + 1}` : kind === 'month' ? date.slice(0, 7) : 'all');
@@ -995,10 +997,10 @@ function tdAddManual() {
 }
 async function tdExcel(rows) {
   const X = await loadXlsx(), today = saudiDay(new Date().toISOString());
-  const H = ['td_col_subject', 'td_col_date', 'td_col_from', 'td_col_why', 'td_col_stage', 'td_col_stageAt', 'td_col_days', 'td_col_reason', 'td_col_owner', 'td_col_etimadNo', 'td_col_value', 'td_col_fees', 'td_col_bond', 'td_col_askDue', 'td_col_visit', 'td_col_due', 'td_col_openAt', 'td_col_submittedOn', 'td_col_submitNo', 'td_col_decidedOn', 'td_col_study', 'td_col_studyDecision', 'td_col_note'].map((k) => t(k));
+  const H = ['td_col_subject', 'td_col_entity', 'td_col_handover', 'td_tile_lead', 'td_col_date', 'td_col_from', 'td_col_why', 'td_col_stage', 'td_col_stageAt', 'td_col_days', 'td_col_reason', 'td_col_owner', 'td_col_etimadNo', 'td_col_value', 'td_col_fees', 'td_col_bond', 'td_col_askDue', 'td_col_visit', 'td_col_due', 'td_col_openAt', 'td_col_submittedOn', 'td_col_submitNo', 'td_col_decidedOn', 'td_col_study', 'td_col_studyDecision', 'td_col_note'].map((k) => t(k));
   const why = (i) => [i.messages?.length ? t('td_why_email') : '', i.byFrom ? t('td_why_from') : '', i.byKr ? t('td_why_kr') : '', i.manual ? t('td_why_manual') : ''].filter(Boolean).join(' + ');
-  const ws = X.utils.aoa_to_sheet([H, ...rows.map((i) => [i.subject, i.date, i.from, why(i), t(`td_st_${i.stage}`), i.stageAt, tdDaysBetween(i.stageAt, today), i.reason, i.owner, i.etimadNo, i.value, i.fees, i.bond, i.askDue, i.visit, i.due, i.openAt, i.submittedOn, i.submitNo, i.decidedOn, i.study, i.studyDecision ? t(`td_dec_${i.studyDecision.replace("-", "")}`) : '', i.note])]);
-  ws['!cols'] = [60, 12, 26, 24, 18, 12, 8, 30, 16, 16, 14, 12, 18, 14, 14, 14, 14, 14, 16, 14, 30, 14, 40].map((w) => ({ wch: w })); ws['!views'] = [{ RTL: lang !== 'en' }];
+  const ws = X.utils.aoa_to_sheet([H, ...rows.map((i) => [i.subject, i.entity || '', tenderHandoverDue(i).replace('T', ' '), tenderLead(i).workDays ?? '', i.date, i.from, why(i), t(`td_st_${i.stage}`), i.stageAt, tdDaysBetween(i.stageAt, today), i.reason, i.owner, i.etimadNo, i.value, i.fees, i.bond, i.askDue, i.visit, i.due, i.openAt, i.submittedOn, i.submitNo, i.decidedOn, i.study, i.studyDecision ? t(`td_dec_${i.studyDecision.replace("-", "")}`) : '', i.note])]);
+  ws['!cols'] = [60, 26, 16, 10, 12, 26, 24, 18, 12, 8, 30, 16, 16, 14, 12, 18, 14, 14, 14, 14, 14, 16, 14, 30, 14, 40].map((w) => ({ wch: w })); ws['!views'] = [{ RTL: lang !== 'en' }];
   const months = [...new Set(tenders.items.map((i) => i.date.slice(0, 7)))].sort();
   const sum = X.utils.aoa_to_sheet([[t('td_col_month'), t('td_k_in'), t('td_k_joined'), t('td_st_declined'), t('td_k_submitted'), t('td_st_won'), t('td_st_lost'), t('td_k_winrate'), t('td_k_decision'), t('td_k_ontime')],
     ...months.map((m) => { const k = tdKpis(tenders.items.filter((i) => i.date.startsWith(m)), today); return [m, k.n, k.joined, k.declined, k.submitted, k.won, k.closed - k.won, k.winRate == null ? '' : `${k.winRate}%`, k.avgDecision == null ? '' : k.avgDecision, k.onTime == null ? '' : `${k.onTime}%`]; })]);
@@ -1018,7 +1020,7 @@ function tdDateText(day, time) { return day + (time ? ' · ' + time : ''); }
 async function tdCommit(next) {
   // ADR-0127: the manager's name goes on every open tender that has no owner, so «file owner» is never a field to fill
   const own = (pref('tdowner') || '').trim();
-  if (own) next = { ...next, items: next.items.map((i) => (!i.owner && !['won', 'lost', 'cancelled', 'declined'].includes(i.stage) ? { ...i, owner: own.slice(0, 80) } : i)) };
+  if (own) next = { ...next, items: next.items.map((i) => (!i.owner && !TENDER_CLOSED.includes(i.stage) ? { ...i, owner: own.slice(0, 80) } : i)) };
   const saved = { ...next, revision: crypto.randomUUID() };
   await store.putTenders(saved, next.revision || '');
   tenders = saved;
@@ -1092,7 +1094,7 @@ async function tdRouteDrop(files, hintId = null) {
   if (other.length) tdDropAsk(other, hintId);
 }
 function tdDropAsk(files, hintId) {
-  const open = (tenders ? tenders.items : []).filter((i) => !['won', 'lost', 'cancelled', 'declined'].includes(i.stage));
+  const open = (tenders ? tenders.items : []).filter((i) => !TENDER_CLOSED.includes(i.stage));
   if (!open.length) { toast(t('td_drop_no_tender')); return; }
   const prep = open.filter((i) => i.stage === 'prep'), guess = hintId || (prep.length === 1 ? prep[0].id : (open.find((i) => i.etimadNo && files.some((f) => f.name.includes(i.etimadNo))) || {}).id) || '';
   const sel = el('select', { class: 'td-drop-tender', 'aria-label': t('td_drop_which') }, guess ? null : el('option', { value: '', text: t('td_drop_pick') }), open.map((i) => el('option', { value: i.id, selected: i.id === guess ? '' : null, text: `${i.subject.slice(0, 90)} — ${t(`td_st_${i.stage}`)}` })));
@@ -1272,7 +1274,7 @@ async function tdRebuildThread(id) {
 function tdThreadPanel(item) {
   const thread = item.thread || [], mails = (item.files || []).some((file) => file.kind === 'original' && /\.(?:msg|eml)$/i.test(file.name));
   const mark = async (k) => { const next = thread.map((e, j) => { const { mark: was, ...rest } = e; return j === k && !was ? { ...rest, mark: 'handover' } : rest; }); if (await tdUpdate(item.id, { thread: next })) renderTenders(); };
-  return el('details', { class: 'td-subpanel td-thread', ...(thread.length ? { open: '' } : {}) },
+  return el('details', { class: 'td-subpanel td-thread td-fold td-fold-thread', ...(tdFoldSet.has('thread') ? { open: '' } : {}), ontoggle: (e) => { if (e.target.open) tdFoldSet.add('thread'); else tdFoldSet.delete('thread'); } },
     el('summary', { text: t('td_thr_h', { n: thread.length }) }),
     el('p', { class: 'hint', text: t(thread.length ? 'td_thr_lead' : 'td_thr_none') }),
     thread.length ? el('div', { class: 'td-thr-list' }, thread.map((e, k) => { const gist = mailGist(e.text);
@@ -1285,7 +1287,8 @@ function tdThreadPanel(item) {
     thread.length ? el('div', { class: 'td-thr-sum' }, tdThreadLines(item).map((line) => el('p', { text: line })), el('p', { class: 'hint', text: t('td_thr_wd_hint') })) : null,
     el('div', { class: 'row td-thr-actions' },
       thread.length ? el('button', { type: 'button', class: 'btn tiny td-thr-copy', text: `📋 ${t('td_thr_copy')}`, onclick: () => copyText(tdThreadText(item), t('td_thr_copied')) }) : null,
-      mails ? el('button', { type: 'button', class: 'btn tiny quiet td-thr-rebuild', disabled: !!tdBusy, text: `↻ ${t('td_thr_rebuild')}`, onclick: () => tdRebuildThread(item.id) }) : null));
+      mails ? el('button', { type: 'button', class: 'btn tiny quiet td-thr-rebuild', disabled: !!tdBusy, text: `↻ ${t('td_thr_rebuild')}`, onclick: () => tdRebuildThread(item.id) }) : null),
+    tdEmailPicker(item.id));
 }
 // the summary of every tender shown on the page whose mails were read — one row each, the same facts as its own window
 function tdThreadSummary(rows) {
@@ -1299,6 +1302,214 @@ function tdThreadSummary(rows) {
       F.dueAt ? `${tdWhenShort(F.dueAt)}${F.workDays == null ? '' : ` · ${t('td_sum_wd', { w: F.workDays })}`}` : null,
       `${F.n}${F.last ? ` · ${tdWhenShort(F.last.at)}` : ''}`,
       F.handover ? `${tdWhenShort(F.handover.at)}${F.leadMin == null ? '' : ` · ${t(F.leadMin < 0 ? 'td_sum_after' : 'td_sum_before', { s: tdSpan(F.leadMin) })}`}` : null]) });
+}
+// ---------- v9.58 (ADR-0131): the tender's card — where it stands and what it needs, on one screen ----------
+const tdTitle = (s) => String(s || '').replace(/^\s*(((re|fw|fwd|aw|wg)\s*:|رد\s*:|إعادة توجيه\s*:|اعادة توجيه\s*:|تحويل\s*:)\s*)+/i, '').trim() || String(s || '');
+const tdNowWall = () => mailWall(new Date().toISOString());
+const tdAt = (day, time) => (day ? day + (time ? `T${time}` : '') : '');
+// a deadline as a badge: what is left (red under two days, amber under a week) or how long ago it passed
+function tdCountdown(at, now) {
+  const min = minutesUntil(at, now); if (min == null) return null;
+  return min < 0 ? ['red', t('td_b_past', { s: tdSpan(-min) })] : [min <= 2880 ? 'red' : min <= 10080 ? 'amber' : 'ok', t('td_b_left', { s: tdSpan(min) })];
+}
+const tdBadge = (b) => (b ? el('i', { class: `td-badge td-b-${b[0]}`, text: b[1] }) : null);
+const tdDayShort = (at) => (at ? new Date(`${at.slice(0, 10)}T12:00:00Z`).toLocaleDateString(lang === 'ur' ? 'ur-PK' : lang === 'ar' ? 'ar-SA' : 'en-GB', { timeZone: 'UTC', calendar: 'gregory', numberingSystem: 'latn', weekday: 'short', day: 'numeric', month: 'short' }) : '');
+const tdSummaryLines = (text) => String(text || '').split(/\r?\n/).map((l) => l.replace(/^\s*(?:[-•*·▪◦]|\d+[.)-])\s*/, '').trim()).filter(Boolean);
+function tdStepper(i) {
+  const FLOW = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted'], st = i.stage || 'received', closed = TENDER_CLOSED.includes(st);
+  // how far a closed tender got before it closed: lost and won went all the way; a missed one as far as its offer got
+  const reach = ['won', 'lost'].includes(st) ? 6 : st === 'missed' ? (i.readyOn ? 5 : 4) : st === 'declined' ? 3 : st === 'cancelled' ? 0 : FLOW.indexOf(st);
+  return el('ol', { class: 'td-steps', 'aria-label': t('td_col_stage') }, FLOW.flatMap((f, k) => [k ? el('li', { class: `td-step-ln${k <= reach ? ' on' : ''}`, 'aria-hidden': 'true' }) : null,
+    el('li', { class: `td-step${k < reach || (closed && k < reach) ? ' done' : ''}${!closed && k === reach ? ' now' : ''}`, ...(!closed && k === reach ? { 'aria-current': 'step' } : {}) },
+      el('span', { class: 'td-step-dot', text: k < reach ? '✓' : String(k + 1), 'aria-hidden': 'true' }), el('span', { text: t(`td_st_${f}`) }))]),
+    closed ? el('li', { class: `td-step-end td-end-${st}` }, t(`td_st_${st}`)) : null);
+}
+function tdTimeline(i, now) {
+  const hand = tenderHandoverDue(i), handed = tenderHandedAt(i), closed = TENDER_CLOSED.includes(i.stage), dueAt = tdAt(i.due, i.dueTime);
+  const key = (at) => (at.length > 10 ? at : `${at}T23:59`);
+  const pts = [['date', i.date], ['handover', hand], ['askDue', tdAt(i.askDue, i.askDueTime)], ['visit', i.visit], ['due', dueAt], ['openAt', i.openAt], ['readyOn', i.readyOn], ['submittedOn', i.submittedOn]]
+    .filter(([, at]) => at).sort((a, b) => (key(a[1]) < key(b[1]) ? -1 : key(a[1]) > key(b[1]) ? 1 : 0));
+  if (pts.length < 2) return null;
+  const late = (k, at) => !closed && key(at) < now && ((k === 'handover' && !handed) || (k === 'due' && !i.submittedOn));
+  const nextAt = pts.findIndex(([, at]) => key(at) >= now);
+  const items = pts.map(([k, at], n) => el('li', { class: `td-tl-pt ${late(k, at) ? 'late' : ['readyOn', 'submittedOn'].includes(k) ? 'done' : key(at) < now ? 'past' : n === nextAt ? 'next' : ''}` },
+    el('b', { text: tdDayShort(at) }), el('span', { text: t(`td_col_${k}`) }), at.length > 10 ? el('small', { text: at.slice(11) }) : null));
+  items.splice(nextAt < 0 ? items.length : nextAt, 0, el('li', { class: 'td-tl-now', 'aria-label': t('td_tl_now') }, el('span', { text: t('td_tl_now') })));
+  return el('section', { class: 'td-box td-tl-box' }, el('h3', { text: t('td_card_dates') }), el('ol', { class: 'td-tl' }, items));
+}
+function tdCard(i, { field, needsFields, today }) {
+  const now = tdNowWall(), st = i.stage || 'received', closed = TENDER_CLOSED.includes(st), dueAt = tdAt(i.due, i.dueTime);
+  const hand = tenderHandoverDue(i), handed = tenderHandedAt(i), onTime = tenderHandoverOnTime(i), lead = tenderLead(i), needs = tenderNeeds(i);
+  const grey = (text) => ['grey', text], stageNow = grey(t(`td_st_${st}`));
+  const tile = (cls, label, big, badge, sub = null) => el('div', { class: `td-tile td-tile-${cls}${badge ? ` td-t-${badge[0]}` : ''}` }, el('small', { text: label }), el('b', { dir: 'auto', text: big }), tdBadge(badge), sub ? el('span', { class: 'hint', text: sub }) : null);
+  const money = (v) => `${Number(v).toLocaleString('en')} ${t('td_sar')}`;
+  const tiles = el('div', { class: 'td-tiles4' },
+    tile('due', t('td_tile_due'), dueAt ? tdWhen(dueAt) : t('td_none_rec'),
+      i.submittedOn ? ['ok', t('td_b_submitted', { d: tdWhen(i.submittedOn) })] : closed ? stageNow : dueAt ? tdCountdown(dueAt, now) : grey(t('td_b_fill'))),
+    tile('hand', t('td_tile_hand', { n: TENDER_HANDOVER_DAYS }), hand ? tdWhen(hand) : t('td_none_rec'),
+      handed ? [onTime === false ? 'red' : 'ok', t(onTime === false ? 'td_b_handed_late' : 'td_b_handed', { d: tdWhen(handed) })] : closed ? stageNow : hand ? tdCountdown(hand, now) : grey(t('td_b_needs_due'))),
+    tile('lead', t('td_tile_lead'), lead.workDays == null ? '—' : t('td_wd_n', { n: lead.workDays }),
+      lead.workDays == null ? grey(t('td_b_needs_due')) : lead.handoverBeforeArrival ? ['red', t('td_b_before_arrival')] : lead.short ? ['amber', t('td_b_short')] : ['ok', t('td_b_enough')]),
+    tile('value', t('td_col_value'), i.value != null && i.value !== '' ? money(i.value) : t('td_none_rec'), null,
+      [i.fees != null && i.fees !== '' ? `${t('td_col_fees')}: ${money(i.fees)}` : '', i.bond ? `${t('td_col_bond')}: ${i.bond}` : ''].filter(Boolean).join(' · ') || null));
+  const chips = [i.entity, i.etimadNo ? `${t('td_card_etimad')} ${i.etimadNo}` : '', i.owner ? `${t('td_col_owner')}: ${i.owner}` : '', i.site].filter(Boolean);
+  const lines = tdSummaryLines(i.studySummary), thread = i.thread || [];
+  const last = [...thread.filter((e) => e.at), ...thread.filter((e) => !e.at)].slice(-3).reverse();
+  const sumBox = el('section', { class: 'td-box td-sum-box' }, el('h3', { text: t('td_card_sum') }),
+    i.studyDecision ? el('p', { class: `td-study-dec td-dec-${i.studyDecision}`, text: t('td_study_dec', { d: t(`td_dec_${i.studyDecision.replace('-', '')}`), why: bidi(i.studyWhy || '—'), at: String(i.studyAt || '').slice(0, 10) }) }) : null,
+    closed && i.reason ? el('p', { class: 'td-card-reason', text: t('td_card_reason', { r: bidi(i.reason) }) }) : null,
+    lines.length ? el('ul', { class: 'td-sum-list' }, lines.slice(0, 6).map((l) => el('li', { dir: 'auto', text: l }))) : el('p', { class: 'hint', text: t('td_card_nosum') }),
+    lines.length > 6 ? el('button', { type: 'button', class: 'btn tiny quiet', text: t('td_card_more_sum', { n: lines.length - 6 }), onclick: () => tdOpenFold('data') }) : null);
+  const msgBox = el('section', { class: 'td-box td-msg-box' }, el('h3', { text: t('td_card_msgs') }),
+    last.length ? last.map((e) => el('div', { class: 'td-card-msg' }, el('div', {}, el('b', { text: tdWhen(e.at) }), ' ', el('span', { class: 'td-thr-who', dir: 'auto', text: e.name || e.addr || '—' })),
+      el('p', { dir: 'auto', title: mailGist(e.text, 400), text: mailGist(e.text, 140) || t('td_thr_notext') }))) : el('p', { class: 'hint', text: t('td_thr_none') }),
+    thread.length ? el('button', { type: 'button', class: 'btn tiny quiet td-card-all', text: t('td_card_all_msgs', { n: thread.length }), onclick: () => tdOpenFold('thread') }) : null);   // a mail is linked by dropping it anywhere on the window, or from the correspondence fold
+  const reviews = TENDER_DATE_FIELDS.filter((k) => !i[k]);
+  const needBox = el('section', { class: 'td-box td-need-box' }, el('h3', { text: t('td_card_needs_h') }),
+    el('p', { class: `td-needs ${needs.length ? 'some' : 'none'}`, text: needs.length ? t('td_needs_line', { n: needs.length, list: needs.map((k) => t(`td_col_${k}`)).join(lang === 'en' ? ', ' : '، ') }) : t('td_needs_none') }),
+    needsFields.length ? el('div', { class: 'td-grid td-need-grid' }, needsFields.map((k) => field(i, k))) : null, tdDateReview(i, reviews));
+  const files = (i.files || []).filter((f) => f.kind !== 'original'), label = (k) => t(tdFileKind[k] || `td_file_${k}`);
+  const fileChips = [...['booklet', 'boq', 'study', 'offer', 'technical', 'financial', 'sheet', 'proof', 'other'].map((k) => { const n = files.filter((f) => f.kind === k && !tdIsMailPicture(f)).length; return n ? el('span', { class: 'chip td-fchip', text: n > 1 ? `${label(k)} (${n})` : label(k) }) : null; }),
+    files.some(tdIsMailPicture) ? el('span', { class: 'chip td-fchip quiet', text: t('td_card_imgs', { n: files.filter(tdIsMailPicture).length }) }) : null,
+    ['prep', 'ready', 'missed'].includes(st) && !tenderCanAdvance(i, 'ready') ? el('span', { class: 'chip td-fchip td-fmiss', text: t('td_card_no_offer') }) : null].filter(Boolean);
+  const fileBox = el('section', { class: 'td-box td-file-box' }, el('h3', { text: t('td_file_title', { n: (i.files || []).length }) }),
+    fileChips.length ? el('div', { class: 'td-chips' }, fileChips) : el('p', { class: 'hint', text: t('proj_f_none') }), tdFileAdd(i),
+    (i.files || []).length ? el('button', { type: 'button', class: 'btn tiny quiet td-card-files', text: t('td_card_all_files'), onclick: () => tdOpenFold('files') }) : null);
+  const dataFields = tenderShownFields(i).filter((k) => !needsFields.includes(k));
+  const study = tdStudyInput(i.id);
+  return el('div', { class: 'td-detail td-card' },
+    chips.length ? el('div', { class: 'td-chips td-card-chips' }, chips.map((c) => el('span', { class: 'chip', dir: 'auto', text: c }))) : null,
+    tdStepper(i), tiles, tdTimeline(i, now),
+    el('div', { class: 'td-cols' }, sumBox, msgBox),
+    el('div', { class: 'td-cols' }, needBox, fileBox),
+    el('div', { class: 'td-folds' },
+      tdFold('data', t('td_fold_data', { n: dataFields.length }), el('div', { class: 'td-grid' }, dataFields.map((k) => field(i, k))),
+        tdDateReview(i, TENDER_DATE_FIELDS.filter((k) => i[k])),
+        el('label', { class: 'td-lab td-study-lab' }, el('span', { text: t('td_study_summary') }), el('textarea', { class: 'td-study-text', rows: 4, maxlength: 4000, dir: 'auto', disabled: !!tdBusy,
+          placeholder: t('td_study_placeholder'), onchange: async (event) => { if (await tdUpdate(i.id, { studySummary: event.target.value.trim() }, tdActivity('study', ''))) renderTenders(); } }, i.studySummary || ''))),
+      tdThreadPanel(i), tdFold('files', t('td_fold_files', { n: (i.files || []).length }), tdInsightsPanel(i), ...tdFilesList(i)), tdInquiries(i), tdHistory(i)),
+    el('div', { class: 'row td-card-acts' },
+      el('button', { type: 'button', class: 'btn tiny primary td-copy-sum', text: `📋 ${t('td_copy_sum')}`, onclick: () => copyText(tdTenderText(i), t('td_copied_sum')) }),
+      el('button', { type: 'button', class: 'btn tiny td-team-msg', text: `📋 ${t('td_team_copy')}`, onclick: () => copyText(tdTeamText(i), t('td_team_copied')) }),
+      el('a', { class: 'btn tiny td-team-mail', href: `mailto:${TD_FROM}?subject=${encodeURIComponent(t('td_fd_subject', { s: tdTitle(i.subject) }))}&body=${encodeURIComponent(tdTeamText(i))}`, text: `✉ ${t('td_team_mail')}` }),
+      el('button', { type: 'button', class: 'btn tiny td-ics', disabled: !(i.askDue || i.visit || i.due || i.openAt), text: `📅 ${t('td_ics')}`, onclick: () => { const b = new Blob([tdIcs(i)], { type: 'text/calendar' }), u = URL.createObjectURL(b); const x = el('a', { href: u, download: `tender-${(i.etimadNo || i.date).replace(/[^\w-]/g, '')}.ics` }); document.body.append(x); x.click(); x.remove(); setTimeout(() => URL.revokeObjectURL(u), 5000); } }),
+      el('button', { type: 'button', class: 'btn tiny quiet', text: `📊 ${t('td_study_import_one')}`, onclick: () => study.click() }), study,
+      el('span', { class: 'hint td-card-from', dir: 'auto', text: i.from }),
+      el('button', { type: 'button', class: 'btn tiny quiet', disabled: !!tdBusy, text: `✕ ${t('td_del')}`, onclick: async () => { if (!confirm(t('td_del_confirm', { s: i.subject }))) return; try { await tdCommit({ ...tenders, items: tenders.items.filter((x) => x.id !== i.id) }); renderTenders(); } catch { toast(t('td_store_failed')); } } })));
+}
+// the questions raised to the entity: the branch cannot see them on the platform, so they are written down here with their answers
+function tdInquiries(item) {
+  const list = item.inquiries || [], waiting = list.filter((q) => !q.answer && !q.answeredOn).length;
+  const save = async (next, act = null) => { const cur = tenders.items.find((r) => r.id === item.id); if (!cur || tdBusy) return; if (await tdUpdate(item.id, { inquiries: next }, act)) renderTenders(); };
+  const edit = (q, patch) => save((tenders.items.find((r) => r.id === item.id).inquiries || []).map((x) => (x.id === q.id ? { ...x, ...patch } : x)));
+  const box = el('textarea', { class: 'td-inq-new', rows: 2, maxlength: 600, dir: 'auto', 'aria-label': t('td_inq_new'), placeholder: t('td_inq_ph') });
+  return tdFold('inq', t('td_inq_h', { n: list.length, o: waiting }), el('p', { class: 'hint', text: t('td_inq_lead') }),
+    list.map((q, k) => el('div', { class: `td-inq${q.answer || q.answeredOn ? ' td-inq-done' : ''}` },
+      el('p', { class: 'td-inq-q', dir: 'auto' }, el('b', { text: `${k + 1}. ` }), q.text),
+      el('div', { class: 'row td-inq-row' },
+        el('label', { class: 'td-lab' }, el('span', { text: t('td_inq_asked') }), el('input', { type: 'date', class: 'td-inq-asked', value: q.askedOn, disabled: !!tdBusy, onchange: (e) => edit(q, { askedOn: e.target.value }) })),
+        el('label', { class: 'td-lab' }, el('span', { text: t('td_inq_answered') }), el('input', { type: 'date', class: 'td-inq-answered', value: q.answeredOn, disabled: !!tdBusy, onchange: (e) => edit(q, { answeredOn: e.target.value }) })),
+        el('button', { type: 'button', class: 'icon-btn td-inq-del', text: '✕', title: t('proj_delete'), 'aria-label': `${t('proj_delete')} ${k + 1}`, disabled: !!tdBusy, onclick: () => { if (confirm(t('td_inq_del_q'))) save(list.filter((x) => x.id !== q.id)); } })),
+      el('label', { class: 'td-lab' }, el('span', { text: t('td_inq_answer') }), el('textarea', { class: 'td-inq-ans', rows: 2, maxlength: 1500, dir: 'auto', disabled: !!tdBusy,
+        onchange: (e) => { const v = e.target.value.trim(); edit(q, { answer: v, answeredOn: q.answeredOn || (v ? tdToday() : '') }); } }, q.answer || '')))),
+    el('div', { class: 'td-inq-add' }, box, el('button', { type: 'button', class: 'btn tiny td-inq-add-btn', disabled: !!tdBusy, text: `＋ ${t('td_inq_add')}`,
+      onclick: () => { const v = box.value.trim(); if (!v) { box.focus(); return; } save([...list, { id: crypto.randomUUID(), text: v.slice(0, 600), askedOn: '', answeredOn: '', answer: '' }], tdActivity('inq', v.slice(0, 120))); } })));
+}
+// the tender in a few lines, to paste anywhere — the same facts the card shows
+function tdTenderText(i) {
+  const hand = tenderHandoverDue(i), handed = tenderHandedAt(i), lead = tenderLead(i), dueAt = tdAt(i.due, i.dueTime), th = i.thread || [];
+  const lines = [tdTitle(i.subject), [i.entity, i.etimadNo ? `${t('td_card_etimad')} ${i.etimadNo}` : '', `${t('td_col_stage')}: ${t(`td_st_${i.stage}`)}`, i.owner ? `${t('td_col_owner')}: ${i.owner}` : ''].filter(Boolean).join(' · '), '',
+    `${t('td_col_date')}: ${tdWhen(i.date)}`, `${t('td_tile_due')}: ${dueAt ? tdWhen(dueAt) : t('td_none_rec')}`,
+    `${t('td_tile_hand', { n: TENDER_HANDOVER_DAYS })}: ${hand ? tdWhen(hand) : t('td_none_rec')}${handed ? ` — ${t(tenderHandoverOnTime(i) === false ? 'td_b_handed_late' : 'td_b_handed', { d: tdWhen(handed) })}` : ''}`,
+    `${t('td_tile_lead')}: ${lead.workDays == null ? '—' : lead.workDays}${lead.short ? ` (${t('td_b_short')})` : ''}`];
+  if (i.value != null && i.value !== '') lines.push(`${t('td_col_value')}: ${Number(i.value).toLocaleString('en')} ${t('td_sar')}`);
+  if (i.reason) lines.push(`${t('td_col_reason')}: ${i.reason}`);
+  const sum = tdSummaryLines(i.studySummary); if (i.studyDecision || sum.length) lines.push('', t('td_card_sum'), ...(i.studyDecision ? [`${t('td_col_studyDecision')}: ${t(`td_dec_${i.studyDecision.replace('-', '')}`)}${i.studyWhy ? ` — ${i.studyWhy}` : ''}`] : []), ...sum.map((l) => `- ${l}`));
+  const last = th.filter((e) => e.at).slice(-3); if (last.length) lines.push('', t('td_card_msgs'), ...last.map((e) => `- ${tdWhen(e.at)} — ${e.name || e.addr || '—'}: ${mailGist(e.text, 200) || t('td_thr_notext')}`));
+  const needs = tenderNeeds(i); if (needs.length) lines.push('', `${t('td_card_needs_h')}: ${needs.map((k) => t(`td_col_${k}`)).join(lang === 'en' ? ', ' : '، ')}`);
+  return lines.join('\n');
+}
+// the message to the tenders team: the dates, the time the tender gives, what to raise to the entity and what we are missing
+function tdTeamText(i) {
+  const hand = tenderHandoverDue(i), lead = tenderLead(i), dueAt = tdAt(i.due, i.dueTime), q = i.inquiries || [], needs = tenderNeeds(i);
+  const toAsk = q.filter((x) => !x.askedOn && !x.answer), waiting = q.filter((x) => x.askedOn && !x.answer && !x.answeredOn);
+  const out = [t('td_fd_hello'), '', t('td_fd_arrived', { s: tdTitle(i.subject), no: i.etimadNo ? t('td_fd_no', { n: i.etimadNo }) : '', d: tdWhen(i.date) })];
+  if (dueAt) out.push(`- ${t('td_fd_due', { d: tdWhen(dueAt) })}`);
+  if (hand) out.push(`- ${t('td_fd_hand', { d: tdWhen(hand), n: TENDER_HANDOVER_DAYS })}`);
+  if (lead.workDays != null) out.push(`- ${t('td_fd_days', { n: lead.workDays })}`);
+  if (i.visit) out.push(`- ${t('td_fd_visit', { d: tdWhen(i.visit) })}`);
+  if (lead.short) out.push('', t('td_fd_short'));
+  if (toAsk.length) out.push('', t('td_fd_ask_h'), ...toAsk.map((x, k) => `${k + 1}. ${x.text}`));
+  if (waiting.length) out.push('', t('td_fd_wait_h'), ...waiting.map((x, k) => `${k + 1}. ${x.text} (${t('td_inq_asked')}: ${tdWhen(x.askedOn)})`));
+  if (needs.length) out.push('', `${t('td_fd_need_h')} ${needs.map((k) => t(`td_col_${k}`)).join(lang === 'en' ? ', ' : '، ')}`);
+  out.push('', t('td_fd_end'));
+  return out.join('\n');
+}
+// ---------- v9.58 (ADR-0131): the year's report — what arrived, what we did with it and why, on one page to print or send ----------
+const tdEsc = (x) => String(x == null ? '' : x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const tdMoney = (v) => `${Math.round(Number(v) || 0).toLocaleString('en')} ${t('td_sar')}`;
+function tdYearRows(R) {
+  return R.rows.map((i) => { const lead = tenderLead(i), on = tenderHandoverOnTime(i);
+    return [tdTitle(i.subject), i.entity || '—', i.date, i.due ? tdAt(i.due, i.dueTime).replace('T', ' ') : '—', lead.workDays == null ? '—' : String(lead.workDays),
+      on == null ? '—' : t(on ? 'td_yr_ontime' : 'td_yr_late'), t(`td_st_${i.stage}`), i.value != null && i.value !== '' ? Number(i.value).toLocaleString('en') : '—', i.reason || '']; });
+}
+const tdYearHead = () => [t('td_col_subject'), t('td_col_entity'), t('td_col_date'), t('td_tile_due'), t('td_tile_lead'), t('td_yr_hand_col'), t('td_col_stage'), t('td_col_value'), t('td_col_reason')];
+function tdYearSections(R) {
+  const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : '—');
+  return {
+    tiles: [[t('td_yr_in'), R.n], [t('td_yr_joined'), R.joined, pct(R.joined, R.n)], [t('td_yr_sub'), R.submitted], [t('td_st_won'), R.won, R.winRate == null ? t('td_k_norate') : t('td_yr_rate', { r: R.winRate })], [t('td_st_missed'), R.missed], [t('td_st_declined'), R.declined]],
+    lines: [t('td_yr_value', { a: tdMoney(R.value.all), s: tdMoney(R.value.submitted), w: tdMoney(R.value.won), k: R.value.known, n: R.n }),
+      R.lead.known ? t('td_yr_lead', { d: R.lead.avgWorkDays, s: R.lead.short, n: R.lead.known }) : t('td_yr_lead_none'),
+      R.handover.known ? t('td_yr_hand', { o: R.handover.onTime, k: R.handover.known, n: TENDER_HANDOVER_DAYS }) : t('td_yr_hand_none', { n: TENDER_HANDOVER_DAYS }),
+      t('td_yr_open', { n: R.open, l: R.lost, c: R.cancelled })],
+    reasons: ['missed', 'lost', 'declined', 'cancelled'].filter((k) => R.reasons[k].length).map((k) => [t(`td_st_${k}`), R.reasons[k].map((x) => [tdTitle(x.subject), x.reason || t('td_yr_noreason')])]),
+    months: [[t('td_col_month'), t('td_yr_in'), t('td_yr_joined'), t('td_yr_sub'), t('td_st_won'), t('td_st_missed')], ...R.months.map((m) => [periodLabel(m.month), m.n, m.joined, m.submitted, m.won, m.missed])],
+    entities: [[t('td_col_entity'), t('td_yr_in'), t('td_yr_sub'), t('td_st_won')], ...R.entities.map((e) => [e.entity || t('td_none_rec'), e.n, e.submitted, e.won])],
+  };
+}
+function tdYearHtml(R) {
+  const S = tdYearSections(R), dir = lang === 'en' ? 'ltr' : 'rtl';
+  const table = (rows) => `<table><thead><tr>${rows[0].map((h) => `<th>${tdEsc(h)}</th>`).join('')}</tr></thead><tbody>${rows.slice(1).map((r) => `<tr>${r.map((c) => `<td dir="auto">${tdEsc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  return `<!doctype html><html lang="${lang}" dir="${dir}"><head><meta charset="utf-8"><title>${tdEsc(t('td_yr_h', { y: R.year }))}</title><style>
+body{font-family:-apple-system,"Segoe UI",Tahoma,"Noto Sans Arabic",Arial,sans-serif;color:#0F2231;margin:28px;line-height:1.6}h1{font-size:22px;margin:0}h2{font-size:15px;color:#0E7C86;margin:22px 0 8px;border-bottom:1px solid #DBE2E8;padding-bottom:4px}
+.sub{color:#5A6B78;font-size:13px;margin:2px 0 16px}.tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.tile{border:1px solid #DBE2E8;border-radius:8px;padding:8px 10px}.tile b{display:block;font-size:22px}.tile span{font-size:12px;color:#5A6B78}
+ul{margin:4px 0;padding-inline-start:20px}table{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:6px}th,td{border:1px solid #DBE2E8;padding:5px 7px;text-align:start;vertical-align:top}th{background:#EEF1F4}
+@media print{body{margin:12mm}h2{break-after:avoid}tr{break-inside:avoid}}</style></head><body>
+<h1>${tdEsc(t('td_yr_h', { y: R.year }))}</h1><p class="sub">${tdEsc(t('td_yr_made', { d: tdWhen(tdNowWall()) }))}</p>
+<div class="tiles">${S.tiles.map(([l, v, x]) => `<div class="tile"><b>${tdEsc(v)}</b><span>${tdEsc(l)}${x ? ` · ${tdEsc(x)}` : ''}</span></div>`).join('')}</div>
+<h2>${tdEsc(t('td_yr_glance'))}</h2><ul>${S.lines.map((l) => `<li>${tdEsc(l)}</li>`).join('')}</ul>
+${S.reasons.length ? `<h2>${tdEsc(t('td_yr_why'))}</h2>${S.reasons.map(([h, L]) => `<p><b>${tdEsc(h)} (${L.length})</b></p><ul>${L.map(([s, r]) => `<li dir="auto">${tdEsc(s)} — ${tdEsc(r)}</li>`).join('')}</ul>`).join('')}` : ''}
+<h2>${tdEsc(t('td_yr_months'))}</h2>${table(S.months)}<h2>${tdEsc(t('td_yr_entities'))}</h2>${table(S.entities)}
+<h2>${tdEsc(t('td_yr_all', { n: R.n }))}</h2>${table([tdYearHead(), ...tdYearRows(R)])}</body></html>`;
+}
+async function tdYearExcel(R) {
+  const X = await loadXlsx(), S = tdYearSections(R), wb = X.utils.book_new(), add = (rows, name, cols) => { const ws = X.utils.aoa_to_sheet(rows); ws['!views'] = [{ RTL: lang !== 'en' }]; if (cols) ws['!cols'] = cols.map((w) => ({ wch: w })); X.utils.book_append_sheet(wb, ws, name.slice(0, 30)); };
+  add([[t('td_yr_h', { y: R.year })], [], ...S.tiles.map(([l, v, x]) => [l, v, x || '']), [], ...S.lines.map((l) => [l])], t('td_yr_sheet_sum'), [40, 12, 24]);
+  add([tdYearHead(), ...tdYearRows(R)], t('td_sheet'), [60, 26, 12, 16, 10, 16, 16, 14, 40]);
+  add(S.months, t('td_yr_months'), [18, 10, 10, 10, 10, 10]); add(S.entities, t('td_yr_entities'), [40, 10, 10, 10]);
+  add([[t('td_col_stage'), t('td_col_subject'), t('td_col_reason')], ...S.reasons.flatMap(([h, L]) => L.map(([sub, r]) => [h, sub, r]))], t('td_yr_why'), [18, 60, 50]);
+  X.writeFile(wb, `AFAQY-tenders-${R.year}-report.xlsx`);
+}
+function tdYearReport(year = null) {
+  const items = tenders ? tenders.items : [], years = [...new Set(items.map((i) => i.date.slice(0, 4)))].sort().reverse();
+  if (!years.length) { toast(t('td_empty')); return; }
+  const y = years.includes(year) ? year : years.includes(tdToday().slice(0, 4)) ? tdToday().slice(0, 4) : years[0], R = tenderYearReport(items, y), S = tdYearSections(R);
+  const tableEl = (rows, cls) => el('div', { class: `table-wrap td-yr-table ${cls}`, tabindex: '0', role: 'group', 'aria-label': rows[0][0] }, el('table', {}, el('thead', {}, el('tr', {}, rows[0].map((h) => el('th', { text: h })))),
+    el('tbody', {}, rows.slice(1).map((r) => el('tr', {}, r.map((c, k) => el('td', { class: k && typeof c === 'number' ? 'num' : '', dir: 'auto', text: String(c) })))))));
+  const dl = () => { const u = URL.createObjectURL(new Blob([tdYearHtml(R)], { type: 'text/html' })); const a = el('a', { href: u, download: `AFAQY-tenders-${R.year}-report.html` }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 5000); };
+  const dlg = el('dialog', { class: 'cr-modal td-yr-dlg', 'aria-labelledby': 'td-yr-h' },
+    el('div', { class: 'crm-head' }, el('h2', { id: 'td-yr-h', text: t('td_yr_h', { y }) }),
+      el('div', { class: 'row td-yr-tools' }, el('select', { class: 'td-yr-pick', 'aria-label': t('td_year'), onchange: (e) => { dlg.close(); tdYearReport(e.target.value); } }, years.map((v) => el('option', { value: v, text: v, ...(v === y ? { selected: '' } : {}) }))),
+        el('button', { type: 'button', class: 'btn tiny td-yr-html', text: `⬇ ${t('td_yr_dl')}`, onclick: dl }), el('button', { type: 'button', class: 'btn tiny td-yr-xl', text: `⬇ ${t('td_excel')}`, onclick: () => tdYearExcel(R) }))),
+    el('p', { class: 'hint', text: t('td_yr_lead_text') }),
+    el('div', { class: 'crm-tiles td-yr-tiles' }, S.tiles.map(([l, v, x]) => el('div', { class: 'km-tile' }, el('b', { text: String(v) }), el('span', { text: l }), x ? el('small', { class: 'hint', text: x }) : null))),
+    el('h3', { class: 'td-yr-h3', text: t('td_yr_glance') }), el('ul', { class: 'td-yr-lines' }, S.lines.map((l) => el('li', { text: l }))),
+    S.reasons.length ? [el('h3', { class: 'td-yr-h3', text: t('td_yr_why') }), ...S.reasons.map(([h, L]) => el('details', { class: 'td-subpanel td-yr-why' }, el('summary', { text: `${h} (${L.length})` }),
+      el('ul', {}, L.map(([sub, r]) => el('li', { dir: 'auto', text: `${sub} — ${r}` })))))] : null,
+    el('h3', { class: 'td-yr-h3', text: t('td_yr_months') }), tableEl(S.months, 'td-yr-months'),
+    el('h3', { class: 'td-yr-h3', text: t('td_yr_entities') }), tableEl(S.entities, 'td-yr-entities'),
+    el('h3', { class: 'td-yr-h3', text: t('td_yr_all', { n: R.n }) }), tableEl([tdYearHead(), ...tdYearRows(R)], 'td-yr-all'));
+  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
 }
 function tdDownload(file) {
   const url = URL.createObjectURL(file.blob);
@@ -1332,7 +1543,8 @@ function tdInsightsPanel(item) {
       el('b',{text:t(`td_fact_${fact.topic}`)}),el('p',{class:'td-fact-text',text:fact.text,dir:'auto'}),
       el('button',{type:'button',class:'btn tiny quiet',text:fact.locator ? file.name+' · '+tdLocator(file,fact.locator) : file.name,onclick:()=>tdDocumentView(file)})))));
 }
-function tdFilesPanel(item) {
+// v9.58: the files of a tender in two places with two jobs — adding one sits on the card, the full list in its fold
+function tdFileAdd(item) {
   const kinds = TENDER_FILE_KINDS.filter((kind) => kind !== 'original');
   const label = (kind) => t(tdFileKind[kind] || ('td_file_' + kind));
   const pick = el('input', { type: 'file', multiple: '', hidden: true, onchange: async (e) => {
@@ -1355,6 +1567,14 @@ function tdFilesPanel(item) {
   } });
   const kind = el('select', { class: 'td-pick', 'aria-label': t('td_file_type'),disabled:!!tdBusy },
     el('option',{value:'auto',text:t('td_file_auto')}), kinds.map((k) => el('option', { value: k, text: label(k) })));
+  return el('div', { class: 'row td-file-controls' }, kind, el('button', { type: 'button', class: 'btn tiny', disabled: !!tdBusy, text: t('td_file_add'), onclick: () => pick.click() }), pick,
+    ['technical', 'financial'].map((key) => el('button', { type: 'button', class: 'btn tiny quiet', disabled: !!tdBusy,
+      text: '＋ ' + label(key), onclick: () => { kind.value = key; pick.click(); } })));
+}
+const tdIsMailPicture = (file) => !!file.mailKey && file.kind === 'other' && /\.(?:png|jpe?g|gif|bmp|webp)$/i.test(file.name);   // signatures and logos the mail carried
+function tdFilesList(item) {
+  const kinds = TENDER_FILE_KINDS.filter((kind) => kind !== 'original');
+  const label = (kind) => t(tdFileKind[kind] || ('td_file_' + kind));
   const showFile = (file) => {
     const original = file.kind === 'original';
     return el('div', { class: 'pf-item td-file' },
@@ -1381,26 +1601,23 @@ function tdFilesPanel(item) {
   };
   const files = item.files || [];
   const filter = tdFileFilters.get(item.id) || {kind:'all',query:'',limit:40};
-  const ordered = TENDER_FILE_KINDS.flatMap((kind) => files.filter((file) => file.kind === kind))
+  // the pictures a mail carried (signatures, logos) come last, folded together: they are kept, not read
+  const ordered = [...TENDER_FILE_KINDS.flatMap((kind) => files.filter((file) => file.kind === kind && !tdIsMailPicture(file))), ...files.filter(tdIsMailPicture)]
     .filter(file=>(filter.kind==='all'||file.kind===filter.kind)&&tdNorm(file.name).includes(tdNorm(filter.query)));
   const search = el('input',{type:'search',value:filter.query,placeholder:t('td_file_search'),'aria-label':t('td_file_search')});
   const fileFilters = el('form',{class:'row td-file-controls',onsubmit:event=>{event.preventDefault();tdFileFilters.set(item.id,{...filter,query:search.value,limit:40});renderTenders();}},
     el('select',{'aria-label':t('td_file_filter'),onchange:event=>{tdFileFilters.set(item.id,{...filter,kind:event.target.value,limit:40});renderTenders();}},
       ['all',...TENDER_FILE_KINDS].map(k=>el('option',{value:k,text:k==='all'?t('td_file_all'):label(k),selected:k===filter.kind}))),search,
     el('button',{type:'submit',class:'btn tiny',text:t('td_file_search')}),el('span',{class:'hint',text:t('td_file_count',{n:ordered.length,all:files.length})}));
-  return el('details', { class: 'td-subpanel', open: '' },
-    el('summary', { text: t('td_file_title', { n: files.length }) }),
-    el('div', { class: 'row td-file-controls' }, kind, el('button', { type: 'button', class: 'btn tiny', disabled: !!tdBusy, text: t('td_file_add'), onclick: () => pick.click() }), pick,
-      ['technical', 'financial'].map((key) => el('button', { type: 'button', class: 'btn tiny quiet', disabled: !!tdBusy,
-        text: '＋ ' + label(key), onclick: () => { kind.value = key; pick.click(); } }))),
-    tdEmailPicker(item.id),
-    fileFilters,
-    ordered.length ? el('div', { class: 'pf-list' }, ordered.slice(0,filter.limit).map(showFile)) : el('p', { class: 'hint', text: t('proj_f_none') }),
+  const shown = ordered.slice(0, filter.limit), pics = shown.filter(tdIsMailPicture);
+  return [fileFilters,
+    shown.length ? el('div', { class: 'pf-list' }, shown.filter((f) => !tdIsMailPicture(f)).map(showFile),
+      pics.length ? el('details', { class: 'td-pics' }, el('summary', { text: t('td_card_imgs', { n: pics.length }) }), pics.map(showFile)) : null) : el('p', { class: 'hint', text: t('proj_f_none') }),
     ordered.length > filter.limit ? el('button',{type:'button',class:'btn tiny',text:t('td_file_more'),onclick:()=>{tdFileFilters.set(item.id,{...filter,limit:filter.limit+40});renderTenders();}}) : null,
-    (item.messages || []).map((mail) => el('div', {}, el('p', { class: 'hint', dir: 'auto', text: [mail.subject, mail.sender, mail.date].filter(Boolean).join(' · ') }), mail.warnings ? el('p', { class: 'hint', text: t('td_mail_warnings') }) : null)));
+    (item.messages || []).map((mail) => el('div', {}, el('p', { class: 'hint', dir: 'auto', text: [mail.subject, mail.sender, mail.date].filter(Boolean).join(' · ') }), mail.warnings ? el('p', { class: 'hint', text: t('td_mail_warnings') }) : null))];
 }
-function tdDateReview(item) {
-  return TENDER_DATE_FIELDS.map((field) => {
+function tdDateReview(item, which = TENDER_DATE_FIELDS) {   // v9.58: the card asks only about empty dates; a date already chosen can be changed in «All data»
+  return TENDER_DATE_FIELDS.filter((field) => which.includes(field)).map((field) => {
     const dates = tenderDeadlineCandidates(item, field);
     if (!dates.length) return null;
     return el('div', { class: 'td-subpanel' }, el('strong', { text: t('td_date_review', { date: t(`td_col_${field}`) }) }),
@@ -1414,12 +1631,21 @@ function tdDateReview(item) {
   });
 }
 function tdHistory(item) {
-  return el('details', { class: 'td-subpanel' },
-    el('summary', { text: t('td_history') }),
+  return tdFold('history', t('td_history'),
     el('p', { class: 'hint', text: t('td_history_first', { date: item.date }) }),
     (item.activity || []).map((entry) => el('div', { class: 'td-history-entry' },
       el('span', { text: t(`td_history_${entry.action}`, { value: entry.action === 'stage' ? t(`td_st_${entry.label}`) : entry.label }) }),
       el('small', { class: 'hint', text: new Date(entry.at).toLocaleString(lang === 'ur' ? 'ur-PK' : lang === 'ar' ? 'ar-SA' : 'en-GB', { timeZone: 'Asia/Riyadh', calendar: 'gregory' }) }))));
+}
+// v9.58: the folds under a tender's card stay as the manager left them while he works on it; a new window starts with them closed
+const tdFoldSet = new Set(); let tdFoldsFor = null;
+function tdFold(id, title, ...content) {
+  return el('details', { class: `td-subpanel td-fold td-fold-${id}`, ...(tdFoldSet.has(id) ? { open: '' } : {}), ontoggle: (e) => { if (e.target.open) tdFoldSet.add(id); else tdFoldSet.delete(id); } },
+    el('summary', { text: title }), ...content);
+}
+function tdOpenFold(id) {
+  tdFoldSet.add(id); renderTenders();
+  const f = tdDlg && tdDlg.querySelector(`.td-fold-${id}`); if (f) { f.open = true; f.scrollIntoView?.({ block: 'start' }); f.querySelector('summary')?.focus(); }   // an old browser without scrollIntoView still opens the fold
 }
 
 function renderTenders() {
@@ -1487,7 +1713,7 @@ function renderTenders() {
     title: t('td_pipe_hint'), onclick: () => { tdStageF = tdStageF === s ? null : s; tdCardF = null; renderTenders(); } }, el('b', { text: String(cnt(s)) }), el('span', { text: t(`td_st_${s}`) }));
   const pipe = el('div', { class: 'td-pipe', role: 'group', 'aria-label': t('td_pipe') },
     flow.flatMap((s, k) => [k ? el('span', { class: `td-pipe-line${flow.slice(k).some((x) => cnt(x)) && flow.slice(0, k).some((x) => cnt(x)) ? ' on' : ''}`, 'aria-hidden': 'true' }) : null, node(s)]),
-    el('span', { class: 'td-pipe-sep', 'aria-hidden': 'true' }), ['won', 'lost', 'declined', 'cancelled'].map((s) => node(s, ` td-pipe-end td-end-${s}`)));
+    el('span', { class: 'td-pipe-sep', 'aria-hidden': 'true' }), ['won', 'lost', 'missed', 'declined', 'cancelled'].map((s) => node(s, ` td-pipe-end td-end-${s}`)));
   const kinds = el('div', { class: 'pills' }, [['month', 'td_month'], ['quarter', 'td_quarter'], ['year', 'td_year'], ['all', 'td_all']].map(([k, l]) =>
     el('button', { type: 'button', class: `pill-btn${tdKind === k ? ' on' : ''}`, text: t(l), onclick: () => { tdKind = k; pref('tdkind', k); tdPick = ''; renderTenders(); } })));
   const pick = tdKind === 'all' ? null : el('select', { class: 'td-pick', 'aria-label': t('td_period'), onchange: (e) => { tdPick = e.target.value; renderTenders(); } }, periods.map((k) => el('option', { value: k, text: tdLabel(k), ...(k === tdPick ? { selected: '' } : {}) })));
@@ -1519,33 +1745,21 @@ function renderTenders() {
       i && i[k] != null && i[k] !== '' && (src === 'analyzer' || (i.fieldSources && i.fieldSources[k] === 'analyzer')) ? el('i', { class: 'td-auto-tag td-auto-an', title: (() => { const e = i.evidence && i.evidence[k]; return e ? `${e.file}${e.page ? ` · ${t('td_page', { p: e.page })}` : ''}${e.quote ? ` — «${e.quote}»` : ''}` : ''; })(), text: t('td_auto_an') }) : null), node); };
   const stageSel = (i) => el('select', { class: 'td-stage', disabled: !!tdBusy, 'aria-label': t('td_col_stage'), onchange: async (e) => { const st = e.target.value, patch = { stage: st, stageAt: today };
       // ADR-0128: nothing the manager fills by hand blocks a stage — offer files and the reason are optional
-      if (TD_NEED_REASON.includes(st)) { const r = window.prompt(t(st === 'lost' ? 'td_why_lost' : 'td_why_declined'), i.reason || ''); if (r == null) { e.target.value = i.stage; return; } if (r.trim()) patch.reason = r.trim().slice(0, 300); }
-      if (['prep', 'ready', 'submitted', 'declined'].includes(st) && !i.decidedOn) patch.decidedOn = today;
+      if (TD_NEED_REASON.includes(st)) { const r = window.prompt(t(st === 'lost' ? 'td_why_lost' : st === 'missed' ? 'td_why_missed' : 'td_why_declined'), i.reason || ''); if (r == null) { e.target.value = i.stage; return; } if (r.trim()) patch.reason = r.trim().slice(0, 300); }
+      if (['prep', 'ready', 'submitted', 'declined', 'missed'].includes(st) && !i.decidedOn) patch.decidedOn = today;
       if (st === 'ready' && !i.readyOn) patch.readyOn = today; if (st === 'submitted' && !i.submittedOn) patch.submittedOn = today;
       patch.status = st === 'ready' ? 'ready' : i.status; await tdUpdate(i.id, patch, tdActivity('stage', st)); renderTenders(); } },
     TD_STAGES.map((s) => el('option', { value: s, text: t(`td_st_${s}`), ...(i.stage === s ? { selected: '' } : {}) })));
-  const detail = (i) => el('div', { class: 'td-detail' },
-    el('div', { class: 'td-grid' },
-      lab('date', fld(i, 'date', 'date', { required: '' }), i), lab('reason', fld(i, 'reason'), i), lab('owner', fld(i, 'owner'), i), lab('etimadNo', fld(i, 'etimadNo'), i), lab('value', fld(i, 'value', 'number', { min: 0, step: 1 }), i), lab('fees', fld(i, 'fees', 'number', { min: 0, step: 1 }), i), lab('bond', fld(i, 'bond'), i),
-      lab('askDue', fld(i, 'askDue', 'date'), i), lab('askDueTime', fld(i, 'askDueTime', 'time', { disabled: !!tdBusy || !i.askDue }), i), lab('visit', fld(i, 'visit', 'date'), i), lab('due', fld(i, 'due', 'date'), i), lab('dueTime', fld(i, 'dueTime', 'time', { disabled: !!tdBusy || !i.due }), i), lab('openAt', fld(i, 'openAt', 'date'), i), lab('submittedOn', fld(i, 'submittedOn', 'date'), i), lab('submitNo', fld(i, 'submitNo'), i),
-      lab('decidedOn', fld(i, 'decidedOn', 'date'), i), lab('readyOn', fld(i, 'readyOn', 'date'), i), lab('study', fld(i, 'study'), i), lab('note', fld(i, 'note'), i)),
-    tdDateReview(i), tdThreadPanel(i), tdInsightsPanel(i), tdFilesPanel(i),
-    el('details', { class: 'td-subpanel', ...(i.studySummary ? { open: '' } : {}) },
-      el('summary', { text: t('td_study_summary') }),
-      el('textarea', { class: 'td-study-text', rows: 3, maxlength: 4000, dir: 'auto', disabled: !!tdBusy,
-        'aria-label': t('td_study_summary'), placeholder: t('td_study_placeholder'), onchange: async (event) => {
-          if (await tdUpdate(i.id, { studySummary: event.target.value.trim() }, tdActivity('study', ''))) renderTenders();
-        } }, i.studySummary || '')),
-    tdHistory(i),
-    el('div', { class: 'row' },
-      el('button', { type: 'button', class: 'btn tiny td-ics', disabled: !(i.askDue || i.visit || i.due || i.openAt), text: `📅 ${t('td_ics')}`, onclick: () => { const b = new Blob([tdIcs(i)], { type: 'text/calendar' }), u = URL.createObjectURL(b); const x = el('a', { href: u, download: `tender-${(i.etimadNo || i.date).replace(/[^\w-]/g, '')}.ics` }); document.body.append(x); x.click(); x.remove(); setTimeout(() => URL.revokeObjectURL(u), 5000); } }),
-      el('span', { class: 'hint', text: i.from }),
-      el('button', { type: 'button', class: 'btn tiny quiet', disabled: !!tdBusy, text: `✕ ${t('td_del')}`, onclick: async () => { if (!confirm(t('td_del_confirm', { s: i.subject }))) return; try { await tdCommit({ ...tenders, items: tenders.items.filter((x) => x.id !== i.id) }); renderTenders(); } catch { toast(t('td_store_failed')); } } })));
+  // v9.58 (ADR-0131): a tender's window is one card — where it stands and what it needs on one screen; the rest folds below it.
+  const FT = { date: 'date', askDue: 'date', visit: 'date', due: 'date', openAt: 'date', submittedOn: 'date', decidedOn: 'date', readyOn: 'date', askDueTime: 'time', dueTime: 'time', value: 'number', fees: 'number' };
+  const field = (i, k) => lab(k, fld(i, k, FT[k] || 'text', k === 'date' ? { required: '' } : FT[k] === 'time' ? { disabled: !!tdBusy || !i[k.replace('Time', '')] } : FT[k] === 'number' ? { min: 0, step: 1 } : {}), i);
+  // the deadline's hour stays on the card until it is typed: the hand-over date and every margin to the deadline need it
+  const detail = (i) => tdCard(i, { field, needsFields: (() => { const n = tenderNeeds(i); return [...n, ...(n.includes('due') || (i.due && !i.dueTime && !TENDER_CLOSED.includes(i.stage)) ? ['dueTime'] : [])]; })(), today });
   const table = el('div', { class: 'table-wrap' }, el('table', { class: 'td-table' },
     el('thead', {}, el('tr', {}, ['td_col_subject', 'td_col_date', 'td_col_stage', 'td_col_days', 'td_col_next', ''].map((k) => el('th', { text: k ? t(k) : '' })))),
     el('tbody', {}, rows.flatMap((i) => { const open = tdOpenId === i.id, days = tdDaysBetween(i.stageAt, today);
       return [el('tr', { 'data-id': i.id, class: `td-row${open ? ' on' : ''}${TD_OPEN.includes(i.stage) ? '' : ' td-closed'}`, tabindex: '0', onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) { tdOpenId = i.id; renderTenders(); } }, onclick: (e) => { if (e.target.closest('select, input, button, a')) return; tdOpenId = i.id; renderTenders(); } },
-        el('td', {}, el('div', { class: 'td-subj', text: i.subject, dir: 'auto' }), el('div', {}, i.messages?.length ? el('span', { class: 'chip', text: t('td_why_email') }) : null, i.byFrom ? el('span', { class: 'chip', text: t('td_why_from') }) : null, i.byKr ? el('span', { class: 'chip', text: t('td_why_kr') }) : null, i.manual ? el('span', { class: 'chip td-manual', text: t('td_why_manual') }) : null, i.etimadNo ? el('span', { class: 'chip', text: i.etimadNo }) : null, tenderNeeds(i).length ? el('span', { class: 'chip td-need-chip', text: t('td_need_n', { n: tenderNeeds(i).length }) }) : null)),
+        el('td', {}, el('div', { class: 'td-subj', text: i.subject, dir: 'auto' }), el('div', {}, i.messages?.length ? el('span', { class: 'chip', text: t('td_why_email') }) : null, i.byFrom ? el('span', { class: 'chip', text: t('td_why_from') }) : null, i.byKr ? el('span', { class: 'chip', text: t('td_why_kr') }) : null, i.manual ? el('span', { class: 'chip td-manual', text: t('td_why_manual') }) : null, TD_OPEN.includes(i.stage) && tenderLead(i).short ? el('span', { class: 'chip td-short-chip', text: t('td_short_chip', { n: tenderLead(i).workDays }) }) : null, i.etimadNo ? el('span', { class: 'chip', text: i.etimadNo }) : null, tenderNeeds(i).length ? el('span', { class: 'chip td-need-chip', text: t('td_need_n', { n: tenderNeeds(i).length }) }) : null)),
         el('td', { class: 'num' }, i.date, i.dateSource === 'sent' ? el('div', { class: 'hint', text: t('td_sent_date') }) : i.dateSource === 'thread' ? el('div', { class: 'hint', text: t('td_thread_date') }) : null), el('td', {}, stageSel(i)),
         el('td', { class: `num${TD_OPEN.includes(i.stage) && ['received', 'screen', 'decide'].includes(i.stage) && days > 3 ? ' td-wait' : ''}`, text: TD_OPEN.includes(i.stage) ? String(days) : '—', title: t('td_col_days') }),
         el('td', {}, cd(i)), el('td', { class: 'num td-tog', text: '↗', title: t('td_open_win') }))]; }))));
@@ -1564,6 +1778,7 @@ function renderTenders() {
     el('div', { class: 'row', style: 'justify-content:flex-end;gap:8px' },
       el('button', { type: 'button', class: 'btn tiny td-wm', text: `🗓 ${t('td_wm')}`, onclick: () => copyText(tdWeekMessage(), t('td_wm_copied')) }),
       el('a', { class: 'btn tiny td-wm-mail', href: '#', text: `✉ ${t('fl_mail')}`, onclick: (e) => { e.preventDefault(); location.href = `mailto:?subject=${encodeURIComponent(t('td_wm_subject', { a: saudiDay(new Date(Date.now() - 6 * 864e5).toISOString()), b: saudiDay(new Date().toISOString()) }))}&body=${encodeURIComponent(tdWeekMessage())}`; } }),
+      el('button', { type: 'button', class: 'btn tiny td-year-btn', text: `📈 ${t('td_yr_btn')}`, onclick: () => tdYearReport() }),
       el('button', { type: 'button', class: 'btn tiny td-sum-btn', text: `✉ ${t('td_sum_btn')}`, onclick: () => tdThreadSummary(rows) }),
       el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('td_excel')}`, onclick: () => tdExcel(rows) })),
     tdStageF ? el('div', { class: 'row td-filtered' }, el('span', { class: 'chip', text: t('td_pipe_on', { s: t(`td_st_${tdStageF}`), n: rows.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: `✕ ${t('td_pipe_clear')}`, onclick: () => { tdStageF = null; renderTenders(); } })) : null,
@@ -1578,12 +1793,9 @@ function renderTenders() {
     tdDropBind(tdDlg, () => tdOpenId);
     tdDlg.addEventListener('close', () => { if (tdOpenId) { tdOpenId = null; renderTenders(); } }); document.body.append(tdDlg); }
   const box = tdDlg.querySelector('.td-dlg-body'), act = document.activeElement, was = act && box.contains(act) ? [...act.classList].find((c) => /^td-(?!f$|need$)/.test(c)) : '';
-  const needs = tenderNeeds(cur);
-  set(box, el('h2', { id: 'td-dlg-h', class: 'td-dlg-h', dir: 'auto', text: cur.subject }),
-    el('div', { class: 'row td-dlg-top' }, el('span', { class: 'hint', text: t('td_col_stage') }), stageSel(cur), el('span', { class: 'hint', text: `${t('td_col_date')}: ${cur.date}` })),
-    cur.studyDecision ? el('p', { class: `td-study-dec td-dec-${cur.studyDecision}`, text: t('td_study_dec', { d: t(`td_dec_${cur.studyDecision.replace("-", "")}`), why: bidi(cur.studyWhy || '—'), at: String(cur.studyAt || '').slice(0, 10) }) }) : null,
-    (() => { const inp = tdStudyInput(cur.id); return el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn tiny quiet', text: `📊 ${t('td_study_import_one')}`, onclick: () => inp.click() }), inp); })(),
-    el('p', { class: `td-needs ${needs.length ? 'some' : 'none'}`, text: needs.length ? t('td_needs_line', { n: needs.length, list: needs.map((k) => t(`td_col_${k}`)).join(lang === 'en' ? ', ' : '، ') }) : t('td_needs_none') }),
+  if (tdFoldsFor !== cur.id || !tdDlg.open) { tdFoldSet.clear(); tdFoldsFor = cur.id; }   // another tender, or the window reopened: its folds start closed
+  set(box, el('h2', { id: 'td-dlg-h', class: 'td-dlg-h', dir: 'auto', title: cur.subject, text: tdTitle(cur.subject) }),
+    el('div', { class: 'row td-dlg-top' }, el('span', { class: 'hint', text: t('td_col_stage') }), stageSel(cur), el('span', { class: 'hint', text: `${t('td_col_date')}: ${tdWhen(cur.date)}` })),
     detail(cur));
   if (!tdDlg.open) tdDlg.showModal();
   else if (was) { const again = box.querySelector(`.${was}`); if (again && !again.disabled) again.focus(); }
@@ -3788,7 +4000,10 @@ function addTips() {
 /** ADR-0084: the tenders that need him, shown on the control room even before any task pull. */
 function tdStartAlerts() {
   if (!tenders || !tenders.items.length) return null; const today = saudiDay(new Date().toISOString()), K = tdKpis(tenders.items, today), go = (prep) => () => { tdKind = 'all'; location.hash = '#tenders'; };
-  const items = [K.late && { k: 'red', title: t('cr_att_td_late', { n: K.late }) }, K.waiting && { k: K.waitMax > 3 ? 'red' : 'pending', title: t('cr_att_td_wait', { n: K.waiting }), detail: t('td_k_waitmax', { d: K.waitMax }) }, K.soon && { k: 'old', title: t('cr_att_td_soon', { n: K.soon }) }].filter(Boolean);
+  // v9.58: the hand-over to the tenders team is a deadline of its own, and a tender with less than a working week needs a decision today
+  const nowW = tdNowWall(), handNow = tenders.items.filter((i) => ['received', 'screen', 'decide', 'prep'].includes(i.stage) && !tenderHandedAt(i) && tenderHandoverDue(i) && minutesUntil(tenderHandoverDue(i), nowW) <= 1440).length;
+  const shortNow = tenders.items.filter((i) => ['received', 'screen', 'decide'].includes(i.stage) && tenderLead(i).short).length;
+  const items = [handNow && { k: 'red', title: t('cr_att_td_hand', { n: handNow }), detail: t('td_tile_hand', { n: TENDER_HANDOVER_DAYS }) }, shortNow && { k: 'pending', title: t('cr_att_td_short', { n: shortNow }) }, K.late && { k: 'red', title: t('cr_att_td_late', { n: K.late }) }, K.waiting && { k: K.waitMax > 3 ? 'red' : 'pending', title: t('cr_att_td_wait', { n: K.waiting }), detail: t('td_k_waitmax', { d: K.waitMax }) }, K.soon && { k: 'old', title: t('cr_att_td_soon', { n: K.soon }) }].filter(Boolean);
   if (!items.length) return null;
   return el('div', {}, el('h2', { class: 'cr-h', text: t('cr_att_h') }), el('div', { class: 'cr-att' }, items.map((x) => el('button', { type: 'button', class: `cr-item k-${x.k}`, onclick: go() }, el('div', {}, el('b', { text: x.title }), x.detail ? el('span', { text: x.detail }) : null), el('span', { class: 'cr-go', text: `${t('cr_go')} ↗` })))));
 }

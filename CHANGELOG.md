@@ -17,6 +17,50 @@
 
 <!-- releases -->
 
+## v9.58 — 2026-11-17
+
+- نافذة المناقصة صارت «بطاقة» في صفحة واحدة: الجهة ورقم اعتماد والمسؤول، شريط المراحل، أربعة مربعات (موعد التقديم وما بقي عليه، موعد التسليم لفريق المنافسات، أيام العمل الكاملة المتاحة، القيمة)، كل المواعيد على خط واحد وعليه «الآن»، الخلاصة وآخر ثلاث رسائل، «الناقص» بخاناته تكتب فيها مباشرة، والملفات في سطر. وكل ما عدا ذلك في طيّات تُفتح عند الحاجة.
+- موعد التسليم لفريق المنافسات صار موعدًا أساسيًّا: قبل الإغلاق بيومي عمل، بعدّ تنازلي، وتنبيه في غرفة التحكم إذا بقي عليه يوم أو فات.
+- المناقصة التي تصل بمدة أقل من أسبوع عمل تُعلَّم في القائمة، وتنبّه غرفة التحكم إلى أنها تحتاج قرارًا اليوم.
+- الخانات تظهر حسب المرحلة: عند الوصول بيانات الكراسة فقط، وخانات التقديم بعد التجهيز، والسبب عند الإغلاق. وأي خانة فيها قيمة تظهر دائمًا. وصور التواقيع من الإيميل مطوية معًا.
+- نتيجة جديدة للمراحل: «فات موعد التقديم» بسببها.
+- «الاستفسارات»: سجل لما رُفع للجهة ومتى ونص الرد، لأن الفرع لا يرى الاستفسارات على المنصة.
+- «انسخ رسالة فريق المنافسات» أو «افتحها في البريد»: المواعيد، والمدة، والاستفسارات المطلوب رفعها، وما ينقصنا، ومعها اقتراح الاتفاق على جدول مختصر أو تمديد أو اعتذار إذا كانت المدة قصيرة. و«انسخ ملخص المناقصة» للصق في أي مكان.
+- «تقرير السنة»: ما وصل، وما شاركنا فيه، وما قُدّم وفاز وخسر وفات، وأسباب كل ذلك، والقيمة، ومتوسط المدة، وهل وصلت العروض لفريق المنافسات في موعدها، حسب الشهر والجهة — في نافذة، وصفحة للطباعة، وإكسل.
+- خانتان جديدتان: الجهة (تُملأ من دراسة المحلل إن كانت فارغة) وموقع التنفيذ، وتصدير الإكسل صار فيه الجهة وموعد التسليم وأيام العمل.
+
+<details><summary>English</summary>
+
+- A tender’s window is now a «card» on one page: the entity, the Etimad number and the owner; the stage strip; four tiles (the submission deadline and the time left, the hand-over date to the tenders team, the full working days available, the value); every date on one line with «Now» on it; the summary and the latest three messages; «Missing» with its fields to type into directly; and the files on one line. Everything else sits in folds that open when needed.
+- The hand-over to the tenders team is now a deadline of its own: two working days before closing, with a countdown, and a control-room alert when it is a day away or already past.
+- A tender that arrives with less than a working week is marked in the list, and the control room says it needs a decision today.
+- Fields appear by stage: at arrival only the booklet’s facts, the submission fields once the offer is being prepared, and the reason when the tender closes. Any field that holds a value always shows. The signature pictures from the email are folded together.
+- A new outcome among the stages: «Missed the deadline», with its reason.
+- «Inquiries»: a record of what was raised to the entity, when, and the answer, because the branch cannot see the inquiries on the platform.
+- «Copy the message to the tenders team» or «Open it in your mail»: the dates, the time given, the inquiries to raise and what we are missing, with a suggestion to agree on a short schedule, an extension or a withdrawal when the time is short. And «Copy the tender summary» to paste anywhere.
+- «Year report»: what arrived, what we bid on, what was submitted, won, lost and missed, the reasons for each, the value, the average time given, and whether the offers reached the tenders team on time, by month and by entity — in a window, as a printable page, and in Excel.
+- Two new fields: the entity (filled from the analyzer’s study when empty) and the site; the Excel export now carries the entity, the hand-over date and the working days.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹینڈر کی کھڑکی اب ایک صفحے کا «کارڈ» ہے: ادارہ، اعتماد نمبر اور ذمہ دار؛ مراحل کی پٹی؛ چار خانے (جمع کرانے کی آخری تاریخ اور باقی وقت، ٹینڈر ٹیم کو حوالگی کی تاریخ، دستیاب پورے کاری دن، مالیت)؛ تمام تاریخیں ایک لکیر پر جس پر «ابھی» کا نشان ہے؛ خلاصہ اور تازہ ترین تین پیغام؛ «کمی» اپنے خانوں کے ساتھ جن میں سیدھا لکھا جا سکتا ہے؛ اور فائلیں ایک سطر میں۔ باقی سب کچھ تہوں میں ہے جو ضرورت پر کھلتی ہیں۔
+- ٹینڈر ٹیم کو حوالگی اب اپنی الگ آخری تاریخ ہے: بند ہونے سے دو کاری دن پہلے، الٹی گنتی کے ساتھ، اور جب ایک دن رہ جائے یا گزر جائے تو کنٹرول روم میں انتباہ۔
+- جو ٹینڈر ایک کاری ہفتے سے کم مدت کے ساتھ آئے وہ فہرست میں نشان زد ہوتا ہے، اور کنٹرول روم بتاتا ہے کہ اس پر آج فیصلہ درکار ہے۔
+- خانے مرحلے کے مطابق دکھتے ہیں: آنے پر صرف دستاویز کی معلومات، پیشکش کی تیاری کے بعد جمع کرانے کے خانے، اور بند ہونے پر وجہ۔ جس خانے میں کوئی قیمت ہو وہ ہمیشہ دکھتا ہے۔ ای میل کی دستخطی تصاویر ایک ساتھ تہہ کی گئی ہیں۔
+- مراحل میں ایک نیا نتیجہ: «آخری تاریخ گزر گئی»، اپنی وجہ کے ساتھ۔
+- «سوالات»: اس کا ریکارڈ کہ ادارے کو کیا بھیجا گیا، کب، اور جواب کیا آیا، کیونکہ برانچ پلیٹ فارم پر سوالات نہیں دیکھ سکتی۔
+- «ٹینڈر ٹیم کے لیے پیغام نقل کریں» یا «اسے میل میں کھولیں»: تاریخیں، دی گئی مدت، بھیجنے والے سوالات اور جو کمی ہے، اور اگر مدت کم ہو تو مختصر شیڈول، توسیع یا معذرت پر اتفاق کی تجویز۔ اور «ٹینڈر کا خلاصہ نقل کریں» کہیں بھی چسپاں کرنے کے لیے۔
+- «سال کی رپورٹ»: کیا آیا، کس پر بولی دی، کیا جمع ہوا، جیتا، ہارا اور کیا رہ گیا، ہر ایک کی وجوہات، مالیت، اوسط دی گئی مدت، اور کیا پیشکشیں وقت پر ٹینڈر ٹیم تک پہنچیں، مہینے اور ادارے کے لحاظ سے — ایک کھڑکی میں، پرنٹ کے صفحے کے طور پر، اور ایکسل میں۔
+- دو نئے خانے: ادارہ (اگر خالی ہو تو اینالائزر کے مطالعے سے بھرتا ہے) اور کام کی جگہ؛ ایکسل میں اب ادارہ، حوالگی کی تاریخ اور کاری دن بھی شامل ہیں۔
+
+</div>
+</details>
+
+
 ## v9.57 — 2026-11-17
 
 - سجل المناقصات صار يقرأ سلسلة الإيميل نفسها: اسحب إيميل المناقصة (والأفضل آخر رد، لأنه يحمل كل ما قبله) فتظهر في نافذة المناقصة «تسلسل المراسلات» — كل رسالة بوقتها وكاتبها وخلاصة من كلامه هو، من الأقدم إلى الأحدث.

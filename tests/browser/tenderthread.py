@@ -53,13 +53,19 @@ def press(pg, loc, hold=150):
     pg.mouse.move(bx['x']+bx['width']/2,bx['y']+bx['height']/2); pg.mouse.down(); pg.wait_for_timeout(hold); pg.mouse.up(); return True
 def open_tender(pg):
     pg.locator('.td-table tr.td-row', has_text='Level sensors').locator('.td-subj').click(); pg.wait_for_timeout(900)
+    all_msgs(pg)
+# v9.58: the card shows the latest messages; «The whole timeline» opens the conversation's fold
+def all_msgs(pg):
+    if not pg.evaluate("!!document.querySelector('dialog.td-dlg .td-thread[open]')"): pg.locator('dialog.td-dlg .td-card-all').click(); pg.wait_for_timeout(600)
 with sync_playwright() as p:
     b=p.chromium.launch(); c=b.new_context(viewport={'width':1366,'height':900}, service_workers='block'); c.grant_permissions(['clipboard-read','clipboard-write'])
     pg=c.new_page(); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)[:200]))
     pg.goto(f'http://127.0.0.1:{PORT}/'); pg.wait_for_timeout(1500); pg.select_option('#lang-select','en'); pg.wait_for_timeout(300)
     pg.evaluate("location.hash='#tenders'"); pg.wait_for_timeout(800)
     pg.locator('#tenders-body .td-pull .td-mail-drop input[type=file]').set_input_files(P('reply.eml')); pg.wait_for_timeout(2500)
-    t=pg.evaluate(THREAD)
+    card=pg.evaluate("()=>[...document.querySelectorAll('dialog.td-dlg .td-card-msg')].map(x=>x.textContent)")
+    check('C0 the card shows the latest messages, newest first, with the conversation folded below', len(card)==3 and 'Zaid Fares' in card[0] and 'Rami Qasim' in card[2] and not pg.evaluate("!!document.querySelector('dialog.td-dlg .td-thread[open]')"), card)
+    all_msgs(pg); t=pg.evaluate(THREAD)
     check('C1 the reply opens its tender with the conversation read: three messages, oldest first', t and t['open'] and len(t['entries'])==3 and [e['who'] for e in t['entries']]==['Rami Qasim','Lina Harb','Zaid Fares'], t)
     check('C2 each message carries the time the mail program wrote', t and '10 Nov 2026' in t['entries'][0]['when'] and '09:15' in t['entries'][0]['when'] and '14:26' in t['entries'][1]['when'] and '18:30' in t['entries'][2]['when'], t and [e['when'] for e in t['entries']])
     check('C3 the line under each is the writer’s own words: the greeting is skipped, the signature is cut', t and t['entries'][0]['gist']=='The booklet is attached. Submission deadline: 2026-11-19 at 10:00 AM' and t['entries'][1]['gist']=='يرجى العمل على الملفات مع الأخذ في الاعتبار الإطار الزمني.' and t['entries'][2]['gist']=='The offer is attached for review. · Offer deck.pptx', t and [e['gist'] for e in t['entries']])
@@ -83,6 +89,7 @@ with sync_playwright() as p:
     check('C11 «Copy the timeline» puts the same lines and the same summary on the clipboard', clip.startswith('Correspondence timeline — RE: sample: Level sensors supply') and len([l for l in clip.split('\n') if l.startswith('- ')])==3 and '[Offer hand-over]' in clip and '2 d 15 h before the deadline' in clip, clip[:400])
     pg.keyboard.press('Escape'); pg.wait_for_timeout(400)
     # twice: the same mail again leaves no mark
+    pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
     pg.locator('#tenders-body .td-pull .td-mail-drop input[type=file]').set_input_files(P('reply.eml')); pg.wait_for_timeout(2000)
     res=pg.locator('#tenders-body .td-pull [role=status]').last.inner_text(); rows=pg.locator('.td-table tr.td-row').count()
     open_tender(pg); t=pg.evaluate(THREAD)
@@ -135,6 +142,8 @@ with sync_playwright() as p:
         q.locator('#tenders-body .td-pull .td-mail-drop input[type=file]').set_input_files(P('reply.eml')); q.wait_for_timeout(2500)
     else:
         q.locator('.td-table tr.td-row', has_text='Level sensors').locator('.td-subj').click(); q.wait_for_timeout(900)
+    if q.locator('dialog.td-dlg').count():
+        b=q.locator('dialog.td-dlg .td-card-all'); press(q, b); q.wait_for_timeout(600)
     m=q.evaluate("()=>{const d=document.querySelector('dialog.td-dlg'),p=d&&d.querySelector('.td-thread');if(!p)return null;const r=(n)=>n.getBoundingClientRect();return {n:p.querySelectorAll('.td-thr-entry').length,over:[...p.querySelectorAll('.td-thr-entry, .td-thr-sum, .td-thr-mark, .td-thr-gist')].filter(n=>r(n).right>innerWidth+1||r(n).left<-1).length,page:document.documentElement.scrollWidth>innerWidth+1,btn:r(p.querySelector('.td-thr-mark')).height}}")
     check('C22 on a phone the conversation fits the screen: nothing runs off the side', m and m['n']==3 and m['over']==0 and not m['page'], m)
     q.locator('dialog.td-dlg .td-thr-entry').nth(1).locator('.td-thr-mark').click(); q.wait_for_timeout(900)

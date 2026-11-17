@@ -31,7 +31,7 @@ async function setup(team=false) {
   const source=readFileSync(new URL('app.js',root),'utf8').replace(/^import[\s\S]*?from\s+'[^']+';\s*$/gm,match=>{
     const names=match.slice(match.indexOf('{')+1,match.lastIndexOf('}')).split(',').map(x=>x.trim().replace(/\s+as\s+/,': '));return 'const {'+names.join(',')+'}=injected;';
   }).replaceAll("import('./assets/vendor/tender-mail.min.js')","imp('./assets/vendor/tender-mail.min.js')").replaceAll("import('./assets/tender-documents.js')","imp('./assets/tender-documents.js')");
-  w.eval(source+'\nwindow.qa={store,tdCommit,tdUpdate,tdImportEmails,tdImportStudies,tdAnalyzeFiles,tdDocumentView,buildBackup,applyBackup,projectsModel,renderTenders,tdStartAlerts,route,busy:()=>tdBusy,get:()=>tenders};');
+  w.eval(source+'\nwindow.qa={store,tdCommit,tdUpdate,tdImportEmails,tdImportStudies,tdAnalyzeFiles,tdDocumentView,buildBackup,applyBackup,projectsModel,renderTenders,tdStartAlerts,route,busy:()=>tdBusy,get:()=>tenders,tdTeamText:typeof tdTeamText==="function"?tdTeamText:null,tdTenderText:typeof tdTenderText==="function"?tdTenderText:null,tdYearHtml:typeof tdYearHtml==="function"?tdYearHtml:null,tenderYearReport:injected.tenderYearReport};');
   await wait(()=>w.document.querySelector('#tenders-body')?.childElementCount || team&&w.document.querySelector('#version').textContent==='v'+config.PORTAL_VERSION,'boot');
   return dom;
 }
@@ -142,7 +142,9 @@ try {
   assert.equal(th().date,'2026-11-10','first seen through a reply: the oldest message dates it');assert.equal(th().dateSource,'thread');assert.equal(th().stageAt,'2026-11-10');
   assert.equal(th().due,'2026-11-19');assert.equal(th().dueTime,'10:00');
   const panel=()=>select('dialog.td-dlg .td-thread'), entries=()=>[...d.querySelectorAll('dialog.td-dlg .td-thr-entry')];
-  assert(panel().open,'the panel is open when there is something to read');assert.equal(entries().length,2);
+  // v9.58: the card shows the latest messages; the whole conversation is a fold that «The whole timeline» opens
+  assert(!panel().open,'the conversation is folded under the card');assert.equal(d.querySelectorAll('dialog.td-dlg .td-card-msg').length,2,'the latest messages are on the card');assert.equal(entries().length,2);
+  select('dialog.td-dlg .td-card-all').click();assert(panel().open,'«The whole timeline» opens the fold');
   assert(entries()[0].textContent.includes('Rami Qasim')&&entries()[0].textContent.includes('The booklet is attached'));assert(!panel().textContent.includes('+966'),'no phone number on the page');
   assert(select('dialog.td-dlg .td-thr-sum').textContent.includes('Messages: 2 · writers: 2'));assert(select('dialog.td-dlg .td-thr-sum').textContent.includes('the deadline: 6'),'Tuesday 10 to Thursday 19 November: six full working days between');
   assert(select('.td-row.on').textContent.includes('From the oldest message in the thread'),'the list says where the date came from');
@@ -164,7 +166,7 @@ try {
   // (4) Mails kept before this version are read from their saved files; reading them again writes nothing.
   const reread=async()=>{select('dialog.td-dlg .td-thr-rebuild').click();await wait(()=>!qa.busy()&&!select('dialog.td-dlg .td-thr-rebuild').disabled,'re-read');await new Promise(r=>setTimeout(r,50));};
   await reread();assert.equal(th().activity.filter(a=>a.action==='thread').length,0,'nothing new: no history line');assert.equal(th().thread[2].mark,'handover');
-  await qa.tdUpdate(th().id,{thread:[]});qa.renderTenders();assert.equal(entries().length,0);assert(!panel().open);
+  await qa.tdUpdate(th().id,{thread:[]});qa.renderTenders();assert.equal(entries().length,0);assert.equal(select('dialog.td-dlg .td-card-all'),null,'no messages, no link to them');
   await reread();await wait(()=>th().thread.length===3,'the saved mails were read');assert.equal(th().activity.filter(a=>a.action==='thread').length,1);
   await reread();assert.equal(th().activity.filter(a=>a.action==='thread').length,1,'a second reading leaves no mark');
   entries()[2].querySelector('.td-thr-mark').click();await wait(()=>th().thread[2].mark==='handover','hand-over marked after the re-read');
@@ -187,6 +189,45 @@ try {
   w.close();const fourth=await setup(), keptThread=fourth.window.qa.get().items.find(x=>x.id==='sample: thread tender');
   assert.deepEqual(keptThread.thread.map(e=>[e.at,e.mark||'']),[['2026-11-10T09:15',''],['2026-11-12T09:00',''],['2026-11-16T18:30','handover']]);fourth.window.close();
   }
+  // ---- v9.58 (ADR-0131): following a tender — the card, «missed», inquiries, the team message, the year report. Each failed on v9.57. ----
+  { const dom6=await setup(), w=dom6.window, d=w.document, qa=w.qa, select=s=>d.querySelector(s), ev=()=>new w.Event('change',{bubbles:true});
+    const soon=new Date(Date.now()+3*36e5+9*864e5).toISOString().slice(0,10), arrived=new Date(Date.now()+3*36e5-2*864e5).toISOString().slice(0,10);
+    const base={subject:'sample: Card tender',date:arrived,stage:'received',stageAt:arrived,status:'open',att:[],due:soon,dueTime:'10:00',entity:'Sample entity',site:'Sample site, gate 3'};
+    const was=qa.get()||{items:[],to:null,pulledAt:''};await qa.tdCommit({...was,items:[{...base,id:'sample:card'},...was.items.filter(x=>x.id!=='sample:card')]});qa.renderTenders();
+    const card=()=>qa.get().items.find(x=>x.id==='sample:card');
+    [...d.querySelectorAll('.td-row')].find(r=>r.textContent.includes('Card tender')).querySelector('.td-subj').click();await wait(()=>select('dialog.td-dlg[open] .td-card'),'card open');
+    // (1) one card: four tiles, the stage strip, the dates line, the entity and site on top
+    assert.equal(d.querySelectorAll('dialog.td-dlg .td-tile').length,4);assert(select('dialog.td-dlg .td-steps .td-step.now').textContent.includes('Arrived'));
+    assert(select('dialog.td-dlg .td-tile-hand').textContent.includes('working days before closing'),'the hand-over tile');assert(select('dialog.td-dlg .td-tl'),'the dates line');
+    assert(select('dialog.td-dlg .td-card-chips').textContent.includes('Sample entity'));
+    // (2) what is missing is typed on the card itself; the rest is folded, by stage: no value field at arrival
+    assert.deepEqual([...d.querySelectorAll('dialog.td-dlg .td-need-box input.td-need')].map(x=>[...x.classList].find(c=>/^td-(owner|etimadNo|due)$/.test(c))).sort(),['td-etimadNo','td-owner']);
+    assert(!select('dialog.td-dlg .td-fold-data[open]'),'all data is folded');assert.equal(select('dialog.td-dlg input.td-value'),null,'no estimated value asked at arrival');
+    assert(select('dialog.td-dlg .td-fold-data input.td-site'),'a field with a value is shown in its fold');
+    // (3) inquiries: added, raised, answered — the answer dates itself
+    select('dialog.td-dlg .td-inq-new').value='Where is the station?';select('dialog.td-dlg .td-inq-add-btn').click();await wait(()=>(card().inquiries||[]).length===1,'inquiry added');
+    assert(card().activity.some(a=>a.action==='inq'),'written in the history');
+    const q=()=>card().inquiries[0];const asked=select('dialog.td-dlg .td-inq-asked');asked.value=arrived;asked.dispatchEvent(ev());await wait(()=>q().askedOn===arrived,'raised');
+    assert(qa.tdTeamText(card()).includes('Inquiries raised and still unanswered'),'a raised question waits for its answer in the team message');
+    const ans=select('dialog.td-dlg .td-inq-ans');ans.value='Gate 3, north side';ans.dispatchEvent(ev());await wait(()=>q().answer==='Gate 3, north side'&&q().answeredOn,'answered');
+    assert(select('dialog.td-dlg .td-fold-inq > summary').textContent.includes('unanswered 0'));
+    // (4) the team message and the summary say the same dates the card shows
+    const team=qa.tdTeamText(card());assert(team.startsWith('Dear colleagues in the tenders team,'));assert(team.includes('working days before closing'));assert(team.includes('Card tender'));assert(!team.includes('Inquiries raised and still unanswered'),'an answered question is not chased');
+    assert(qa.tdTenderText(card()).includes('Sample entity'));
+    // (5) «missed the deadline» is an outcome with its reason, and it asks for nothing more
+    const stSel=select('dialog.td-dlg .td-dlg-top select.td-stage');stSel.value='missed';stSel.dispatchEvent(ev());await wait(()=>card().stage==='missed','missed');
+    assert.equal(card().reason,'QA reason');assert(card().decidedOn,'deciding to bid is dated');assert.deepEqual(core.tenderNeeds(card()),[]);
+    assert(select('dialog.td-dlg .td-step-end.td-end-missed'),'the strip ends on the outcome');assert(select('dialog.td-dlg .td-fold-data input.td-reason'),'its reason field shows');
+    assert(select('.td-pipe-node[data-stage=missed]'),'the pipeline counts it');
+    // (6) the year report counts it, with its reason, and the printable page escapes what it prints
+    select('dialog.td-dlg').close();select('.td-year-btn').click();const yr=select('dialog.td-yr-dlg');assert(yr,'the year report opened');
+    assert([...yr.querySelectorAll('.km-tile')].some(x=>x.textContent.includes('Missed the deadline')&&x.querySelector('b').textContent==='1'));
+    const R=qa.tenderYearReport(qa.get().items,arrived.slice(0,4)),html=qa.tdYearHtml(R);assert(html.includes('QA reason'));assert(!html.includes('<img src=x'),'a subject is printed as text');yr.close();
+    // (7) the card's new data survives a backup and a reload
+    const bk=JSON.parse(JSON.stringify(await qa.buildBackup()));await qa.tdUpdate('sample:card',{inquiries:[],entity:'',site:''});await qa.applyBackup(bk);
+    assert.equal(card().inquiries[0].answer,'Gate 3, north side');assert.equal(card().entity,'Sample entity');assert.equal(card().site,'Sample site, gate 3');
+    w.close();const again=await setup(),k2=again.window.qa.get().items.find(x=>x.id==='sample:card');assert.equal(k2.stage,'missed');assert.equal(k2.inquiries.length,1);assert.equal(k2.site,'Sample site, gate 3');again.window.close();
+  }
   assert.deepEqual(errors,[],'uncaught UI errors');
-  console.log('tender-integration: passed Outlook import, source dates, conflict review, categories, table preview, filtering, deletion, deduplication, offer gates, stage transitions, My Projects, alerts, backup/restore, reload, stale tabs, 120-file reading/pagination/search, storage-failure reporting, missing-date rejection, literal HTML display, all management routes, languages, theme, team separation and the correspondence timeline (thread reading, de-duplication, hand-over mark, re-read, copy, summary window, backup and reload)');
+  console.log('tender-integration: passed Outlook import, source dates, conflict review, categories, table preview, filtering, deletion, deduplication, offer gates, stage transitions, My Projects, alerts, backup/restore, reload, stale tabs, 120-file reading/pagination/search, storage-failure reporting, missing-date rejection, literal HTML display, all management routes, languages, theme, team separation, the tender card, «missed», inquiries, the team message, the year report and the correspondence timeline (thread reading, de-duplication, hand-over mark, re-read, copy, summary window, backup and reload)');
 } finally { for(const dom of instances) dom.window.close(); }

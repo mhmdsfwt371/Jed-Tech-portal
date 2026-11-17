@@ -27,6 +27,10 @@ DROP="""async ([sel, files]) => { const dt = new DataTransfer(); for (const [nam
   const n = document.querySelector(sel); n.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt })); n.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt })); }"""
 def drop(pg, sel, names): pg.evaluate(DROP, [sel, [[n, base64.b64encode(open(P(n),'rb').read()).decode()] for n in names]])
 ROW="""(needle)=>{const tr=[...document.querySelectorAll('.td-table tr.td-row')].find(r=>r.textContent.includes(needle));return tr?{stage:tr.querySelector('select.td-stage').selectedOptions[0].textContent,need:(tr.querySelector('.td-need-chip')||{}).textContent||''}:null}"""
+# v9.58 (ADR-0131): the tender's card keeps everything but its summary in folds; a test opens a fold the way a person does
+def open_fold(pg, name):
+    if not pg.evaluate(f"!!document.querySelector('dialog.td-dlg .td-fold-{name}[open]')"):
+        pg.locator(f'dialog.td-dlg .td-fold-{name} > summary').click(); pg.wait_for_timeout(300)
 with sync_playwright() as p:
     b=p.chromium.launch(); c=b.new_context(viewport={'width':1366,'height':900}, service_workers='block'); pg=c.new_page(); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)[:200]))
     pg.goto(f'http://127.0.0.1:{PORT}/'); pg.wait_for_timeout(1500); pg.select_option('#lang-select','en'); pg.wait_for_timeout(300)
@@ -78,7 +82,7 @@ with sync_playwright() as p:
     wb3.save(P('دراسة التتبع.xlsx'))
     pg.locator('.td-table tr.td-row', has_text='أنظمة تتبع').locator('.td-subj').click(); pg.wait_for_timeout(900)
     pg.locator('dialog.td-dlg .td-file-controls input[type=file]').first.set_input_files(P('دراسة التتبع.xlsx')); pg.wait_for_timeout(2500)
-    w=pg.evaluate("()=>{const d=document.querySelector('dialog.td-dlg');return d?{no:d.querySelector('input.td-etimadNo').value,fees:d.querySelector('input.td-fees').value,value:d.querySelector('input.td-value').value,due:d.querySelector('input.td-due').value,dueTime:d.querySelector('input.td-dueTime').value,visit:d.querySelector('input.td-visit').value,files:[...d.querySelectorAll('.td-file b')].map(x=>x.textContent)}:null}")
+    w=pg.evaluate("()=>{const d=document.querySelector('dialog.td-dlg');return d?{no:d.querySelector('input.td-etimadNo').value,fees:d.querySelector('input.td-fees').value,value:(d.querySelector('input.td-value')||{value:''}).value,due:d.querySelector('input.td-due').value,dueTime:d.querySelector('input.td-dueTime').value,visit:d.querySelector('input.td-visit').value,files:[...d.querySelectorAll('.td-file b')].map(x=>x.textContent)}:null}")
     check('F14 a study workbook added from the tender’s own «add files» fills that tender (its subject need not match) and stays attached; an amount and a date written as text are read',
           w and w['no']=='556677' and w['fees']=='1200' and w['due']=='2026-12-20' and w['dueTime']=='13:00' and 'دراسة التتبع.xlsx' in w['files'], w)
     check('F15 what the study held but could not be read is left empty, never guessed', w and w['value']=='' and w['visit']=='', w)
@@ -97,7 +101,7 @@ with sync_playwright() as p:
     pg.locator('dialog.td-dlg .td-file-controls select.td-pick').select_option('other')
     pg.locator('dialog.td-dlg .td-file-controls input[type=file]').first.set_input_files(P('العرض الفني والمالي.pptx')); pg.wait_for_timeout(1800)
     st0=pg.evaluate("()=>document.querySelector('dialog.td-dlg select.td-stage').selectedOptions[0].textContent")
-    pg.locator('dialog.td-dlg select.td-file-kind').first.select_option('offer'); pg.wait_for_timeout(1500)
+    open_fold(pg,'files'); pg.locator('dialog.td-dlg select.td-file-kind').first.select_option('offer'); pg.wait_for_timeout(1500)
     st1=pg.evaluate("()=>document.querySelector('dialog.td-dlg select.td-stage').selectedOptions[0].textContent")
     check('F19 naming a file already on the tender «final offer» does the same', st0=='Arrived' and st1.startswith('Ready'), (st0,st1))
     pg.keyboard.press('Escape'); pg.wait_for_timeout(400)
