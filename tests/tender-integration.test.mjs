@@ -205,8 +205,10 @@ try {
     assert(!select('dialog.td-dlg .td-fold-data[open]'),'all data is folded');assert.equal(select('dialog.td-dlg input.td-value'),null,'no estimated value asked at arrival');
     assert(select('dialog.td-dlg .td-fold-data input.td-site'),'a field with a value is shown in its fold');
     // (3) inquiries: added, raised, answered — the answer dates itself
-    select('dialog.td-dlg .td-inq-new').value='Where is the station?';select('dialog.td-dlg .td-inq-add-btn').click();await wait(()=>(card().inquiries||[]).length===1,'inquiry added');
-    assert(card().activity.some(a=>a.action==='inq'),'written in the history');
+    // what is typed survives a redraw of the window before «Add» is pressed (on a slow machine the window redrew in between)
+    const nq=select('dialog.td-dlg .td-inq-new');nq.value='Where is the station?';nq.dispatchEvent(new w.Event('input',{bubbles:true}));qa.renderTenders();
+    assert.equal(select('dialog.td-dlg .td-inq-new').value,'Where is the station?','the draft is kept');select('dialog.td-dlg .td-inq-add-btn').click();await wait(()=>(card().inquiries||[]).length===1,'inquiry added');
+    assert(card().activity.some(a=>a.action==='inq'),'written in the history');assert.equal(select('dialog.td-dlg .td-inq-new').value,'','the draft is cleared once added');
     const q=()=>card().inquiries[0];const asked=select('dialog.td-dlg .td-inq-asked');asked.value=arrived;asked.dispatchEvent(ev());await wait(()=>q().askedOn===arrived,'raised');
     assert(qa.tdTeamText(card()).includes('Inquiries raised and still unanswered'),'a raised question waits for its answer in the team message');
     const ans=select('dialog.td-dlg .td-inq-ans');ans.value='Gate 3, north side';ans.dispatchEvent(ev());await wait(()=>q().answer==='Gate 3, north side'&&q().answeredOn,'answered');

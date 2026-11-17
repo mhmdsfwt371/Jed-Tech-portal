@@ -69,8 +69,11 @@ with sync_playwright() as p:
     check('K6 the entity typed in the fold appears at the top of the card', 'Sample entity' in chips, chips)
     # inquiries
     press(pg, pg.locator('dialog.td-dlg .td-fold-inq > summary')); pg.wait_for_timeout(400)
-    pg.locator('dialog.td-dlg .td-inq-new').fill('Where is the station, and who opens the gate?'); press(pg, pg.locator('dialog.td-dlg .td-inq-add-btn')); pg.wait_for_timeout(800)
-    inq=pg.evaluate("()=>({n:document.querySelectorAll('dialog.td-dlg .td-inq').length,h:document.querySelector('dialog.td-dlg .td-fold-inq > summary').textContent})")
+    pg.locator('dialog.td-dlg .td-inq-new').fill('Where is the station, and who opens the gate?'); pg.wait_for_timeout(300); got=press(pg, pg.locator('dialog.td-dlg .td-inq-add-btn'))
+    for _ in range(20):
+        if pg.evaluate("document.querySelectorAll('dialog.td-dlg .td-inq').length"): break
+        pg.wait_for_timeout(150)
+    inq=pg.evaluate("()=>({n:document.querySelectorAll('dialog.td-dlg .td-inq').length,h:document.querySelector('dialog.td-dlg .td-fold-inq > summary').textContent,draft:(document.querySelector('dialog.td-dlg .td-inq-new')||{}).value,paged:!!document.querySelector('dialog.td-dlg .dlg-pager:not([hidden]) .dp-next')})"); inq['pressed']=got
     check('K7 an inquiry is added with a held click and counted as unanswered', inq['n']==1 and 'unanswered 1' in inq['h'], inq)
     press(pg, pg.locator('dialog.td-dlg .td-team-msg')); pg.wait_for_timeout(500); clip=pg.evaluate("navigator.clipboard.readText()")
     check('K8 the message to the tenders team carries the deadline, the hand-over date, the time given and the inquiry to raise', clip.startswith('Dear colleagues in the tenders team,') and 'Submission deadline on the platform' in clip and 'working days before closing' in clip and 'Please raise these inquiries' in clip and 'who opens the gate' in clip, clip[:500])

@@ -1398,11 +1398,13 @@ function tdCard(i, { field, needsFields, today }) {
       el('button', { type: 'button', class: 'btn tiny quiet', disabled: !!tdBusy, text: `✕ ${t('td_del')}`, onclick: async () => { if (!confirm(t('td_del_confirm', { s: i.subject }))) return; try { await tdCommit({ ...tenders, items: tenders.items.filter((x) => x.id !== i.id) }); renderTenders(); } catch { toast(t('td_store_failed')); } } })));
 }
 // the questions raised to the entity: the branch cannot see them on the platform, so they are written down here with their answers
+const tdInqDrafts = new Map();
 function tdInquiries(item) {
   const list = item.inquiries || [], waiting = list.filter((q) => !q.answer && !q.answeredOn).length;
   const save = async (next, act = null) => { const cur = tenders.items.find((r) => r.id === item.id); if (!cur || tdBusy) return; if (await tdUpdate(item.id, { inquiries: next }, act)) renderTenders(); };
   const edit = (q, patch) => save((tenders.items.find((r) => r.id === item.id).inquiries || []).map((x) => (x.id === q.id ? { ...x, ...patch } : x)));
-  const box = el('textarea', { class: 'td-inq-new', rows: 2, maxlength: 600, dir: 'auto', 'aria-label': t('td_inq_new'), placeholder: t('td_inq_ph') });
+  // what is being typed survives the window redrawing itself (a file finishing its reading, a field saved elsewhere)
+  const box = el('textarea', { class: 'td-inq-new', rows: 2, maxlength: 600, dir: 'auto', 'aria-label': t('td_inq_new'), placeholder: t('td_inq_ph'), oninput: (e) => tdInqDrafts.set(item.id, e.target.value) }, tdInqDrafts.get(item.id) || '');
   return tdFold('inq', t('td_inq_h', { n: list.length, o: waiting }), el('p', { class: 'hint', text: t('td_inq_lead') }),
     list.map((q, k) => el('div', { class: `td-inq${q.answer || q.answeredOn ? ' td-inq-done' : ''}` },
       el('p', { class: 'td-inq-q', dir: 'auto' }, el('b', { text: `${k + 1}. ` }), q.text),
@@ -1413,7 +1415,7 @@ function tdInquiries(item) {
       el('label', { class: 'td-lab' }, el('span', { text: t('td_inq_answer') }), el('textarea', { class: 'td-inq-ans', rows: 2, maxlength: 1500, dir: 'auto', disabled: !!tdBusy,
         onchange: (e) => { const v = e.target.value.trim(); edit(q, { answer: v, answeredOn: q.answeredOn || (v ? tdToday() : '') }); } }, q.answer || '')))),
     el('div', { class: 'td-inq-add' }, box, el('button', { type: 'button', class: 'btn tiny td-inq-add-btn', disabled: !!tdBusy, text: `＋ ${t('td_inq_add')}`,
-      onclick: () => { const v = box.value.trim(); if (!v) { box.focus(); return; } save([...list, { id: crypto.randomUUID(), text: v.slice(0, 600), askedOn: '', answeredOn: '', answer: '' }], tdActivity('inq', v.slice(0, 120))); } })));
+      onclick: () => { const v = box.value.trim(); if (!v) { box.focus(); return; } tdInqDrafts.delete(item.id); save([...list, { id: crypto.randomUUID(), text: v.slice(0, 600), askedOn: '', answeredOn: '', answer: '' }], tdActivity('inq', v.slice(0, 120))); } })));
 }
 // the tender in a few lines, to paste anywhere — the same facts the card shows
 function tdTenderText(i) {
