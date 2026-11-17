@@ -35,6 +35,15 @@ def boot(b, theme='light', vp=(1366,800), lang='en', state=None):
     c=b.new_context(**kw); pg=c.new_page(); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)[:200])); pg.on('dialog', lambda d: d.accept())
     pg.goto(f'http://127.0.0.1:{PORT}/'); pg.wait_for_timeout(1400); pg.select_option('#lang-select',lang); pg.wait_for_timeout(300); pg.evaluate("location.hash='#tenders'"); pg.wait_for_timeout(700)
     return c,pg,errs
+def press_in(pg, loc, dlg='dialog.mk-modal'):   # a long window is paged (v9.47): turn its pages until the control is on screen, then hold the click
+    for _ in range(20):
+        bx=loc.bounding_box(); vh=pg.viewport_size['height']
+        if bx and bx['height']>0 and bx['y']>=0 and bx['y']+bx['height']<=vh and loc.evaluate("(n,[x,y])=>{const h=document.elementFromPoint(x,y);return !!h&&(h===n||n.contains(h))}",[bx['x']+bx['width']/2,bx['y']+bx['height']/2]):
+            pg.mouse.move(bx['x']+bx['width']/2,bx['y']+bx['height']/2); pg.mouse.down(); pg.wait_for_timeout(150); pg.mouse.up(); pg.wait_for_timeout(500); return True
+        nx=pg.locator(f'{dlg} .dlg-pager .dp-next')
+        if not nx.count() or nx.is_disabled() or not nx.is_visible(): return press(pg, loc)
+        nx.click(); pg.wait_for_timeout(350)
+    return False
 def items(pg): return pg.evaluate("async()=>{const r=indexedDB.open('afaqy-portal',1);const db=await new Promise(o=>{r.onsuccess=()=>o(r.result)});return await new Promise(o=>{const q=db.transaction('kv').objectStore('kv').get('tenders');q.onsuccess=()=>o(q.result)})}")
 LUM="""(sel)=>{const lum=(c)=>{const v=c.map(x=>x/255).map(x=>x<=0.03928?x/12.92:((x+0.055)/1.055)**2.4);return 0.2126*v[0]+0.7152*v[1]+0.0722*v[2]};const rgb=(s)=>{const m=s.match(/[\\d.]+/g).map(Number);return {c:m.slice(0,3),a:m.length>3?m[3]:1}};
   const bg=(n)=>{for(;n;n=n.parentElement){const b=rgb(getComputedStyle(n).backgroundColor);if(b.a>0.99)return b.c}return [255,255,255]};let worst=99,which='';
@@ -91,6 +100,23 @@ with sync_playwright() as p:
     steps=yr.locator('.et-funnel li b').all_inner_texts() if yr.count() else []
     check('R24 the year report opens with the funnel from Etimad to what we won', len(steps)==5, steps)
     pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
+    # v9.63 (ADR-0136): «Market analysis» — the whole pull in one window, every list complete, Excel by the choice made
+    nR=pg.evaluate("async()=>{const r=indexedDB.open('afaqy-portal',1);const db=await new Promise(o=>{r.onsuccess=()=>o(r.result)});return await new Promise(o=>{const q=db.transaction('kv').objectStore('kv').get('radar');q.onsuccess=()=>o(q.result.tenders.length)})}")
+    ok=press(pg, pg.locator('.td-market-btn')); mk=pg.locator('dialog.mk-modal')
+    TILE="(l)=>{const t=[...document.querySelectorAll('dialog.mk-modal .km-tile')].find(x=>x.querySelector('span').textContent===l);return t?t.querySelector('b').textContent:null}"
+    rows=lambda: mk.locator('table.mk-t tbody tr').count()
+    check('R27 the market window opens with a held click and counts every tender in the pull, ours or not', ok and mk.count()==1 and pg.evaluate(TILE,'tenders published')==str(nR) and rows()==nR, (nR, pg.evaluate(TILE,'tenders published'), rows()))
+    press_in(pg, mk.locator('.mk-sc-afaqy')); inScope=pg.evaluate(TILE,'tenders published'); press_in(pg, mk.locator('.mk-sc-all'))
+    check('R28 «AFAQY\'s field of work only» narrows the numbers, «Every field» brings them back', inScope is not None and int(inScope)<nR and pg.evaluate(TILE,'tenders published')==str(nR), (inScope,nR))
+    press_in(pg, mk.locator('.mk-tab-winners'))
+    if not mk.locator('table.mk-t-winners').count(): press_in(pg, mk.locator('.mk-tab-winners'))   # a press that landed while the pager was settling
+    wn=mk.locator('table.mk-t-winners tbody tr').count(); top=mk.locator('table.mk-t-winners tbody tr').first.inner_text()
+    press_in(pg, mk.locator('table.mk-t-winners tbody tr').first.locator('.mk-who'))
+    check('R29 the winners list is complete, and a winner pressed shows his tenders only', wn==2 and 'شركة رامي قاسم' in top and mk.locator('.mk-who-on').count()==1 and rows()==2, (wn,top,rows()))
+    with pg.expect_download() as dl: press_in(pg, mk.locator('.mk-xl-all'))
+    import openpyxl, tempfile; xf=os.path.join(tempfile.mkdtemp(),dl.value.suggested_filename); dl.value.save_as(xf); wb=openpyxl.load_workbook(xf); names=wb.sheetnames; tl=list(wb['Tenders'].values)
+    check('R30 «Excel of every list» downloads one sheet per list with the choice applied', names[:2]==['Summary','Tenders'] and len(names)==8 and len(tl)==3 and 'شركة رامي قاسم' in str(list(wb['Summary'].values)[0][1]), (names,len(tl)))
+    pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
     check('R12 no page error on the laptop', not errs, errs[:2])
     state=c.storage_state(indexed_db=True); c.close()
     for theme,lang in [('dark','ar'),('light','ur'),('dark','en'),('light','ar')]:
@@ -111,9 +137,17 @@ with sync_playwright() as p:
         raw=q.evaluate("()=>/\\b(et|td)_[a-z_]+\\b/.test(document.querySelector('dialog.td-dlg').innerText)")
         check(f'R22[{theme}/{lang}] the result and the market are readable, with no raw key', not raw and cr['worst']>=4.5, (raw,cr))
         if os.path.exists(AXE): v=q.evaluate(SCAN); check(f'R23[{theme}/{lang}] the accessibility scan passes in the card with the market open', not v, v[:3])
+        q.keyboard.press('Escape'); q.wait_for_timeout(300); press(q, q.locator('.td-market-btn'))
+        raw=q.evaluate("()=>/\\bmk_[a-z_]+\\b/.test(document.querySelector('dialog.mk-modal').innerText)")
+        cr=q.evaluate(LUM,'dialog.mk-modal h2, dialog.mk-modal .hint, dialog.mk-modal .note, dialog.mk-modal .km-tile b, dialog.mk-modal .km-tile span, dialog.mk-modal .km-tile small, dialog.mk-modal .pill-btn, dialog.mk-modal th, dialog.mk-modal td b, dialog.mk-modal .chip, dialog.mk-modal .crm-n, dialog.mk-modal label span')
+        check(f'R31[{theme}/{lang}] the market window has no raw key and every text is readable (at least 4.5 to 1)', not raw and cr['worst']>=4.5, (raw,cr))
+        if os.path.exists(AXE): v=q.evaluate(SCAN); check(f'R32[{theme}/{lang}] the accessibility scan passes in the market window', not v, v[:3])
         check(f'R16[{theme}/{lang}] no page error', not e2, e2[:2]); c2.close()
     c3,ph,e3=boot(b,'light',(390,844),'ar',state); ok=press(ph, ph.locator('.td-radar-btn'))
     fit=ph.evaluate("()=>{const d=document.querySelector('dialog.et-modal');if(!d)return null;const r=(n)=>n.getBoundingClientRect();return {page:document.documentElement.scrollWidth>innerWidth+1,over:[...d.querySelectorAll('.km-tile, .et-filters, .et-q, .et-pull .btn, .et-sugg')].filter(n=>r(n).width&&(r(n).right>innerWidth+1||r(n).left<-1)).length}}")
     check('R17 on a phone the radar opens with a tap and nothing runs off the side', ok and fit and not fit['page'] and fit['over']==0, fit)
+    ph.keyboard.press('Escape'); ph.wait_for_timeout(300); ok=press(ph, ph.locator('.td-market-btn'))
+    fit=ph.evaluate("()=>{const d=document.querySelector('dialog.mk-modal');if(!d)return null;return {page:document.documentElement.scrollWidth>innerWidth+1,over:[...d.querySelectorAll('.km-tile, .mk-filters, .mk-tabs, .mk-xl, .crm-head')].filter(n=>{const r=n.getBoundingClientRect(),D=d.getBoundingClientRect();return r.right>D.right+1||r.left<D.left-1}).length}}")
+    check('R33 on a phone the market window opens with a tap and nothing runs off the side', ok and fit and not fit['page'] and fit['over']==0, fit)
     check('R18 no page error on the phone', not e3, e3[:2]); c3.close()
 print(f'\n{len(fails)} failed' if fails else '\nall passed'); sys.exit(1 if fails else 0)

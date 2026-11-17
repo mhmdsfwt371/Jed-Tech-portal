@@ -34,7 +34,7 @@ RAW=re.compile(r'(?<![\w./@-])[a-z]{1,10}_[a-z0-9]+(?:_[a-z0-9]+)*(?![\w.@-])')
 OPENERS=[('home','#view-home tr.di-row',False),('home','#view-home .di-now',False),('home','#view-home .cr-num',False),('home','#view-home .help-q',False),
          ('me','#view-me .sec-card',True),('me','#view-me .km-flag',False),('me','#view-me .me-tour-open',False),
          ('kpi','#view-kpi .sec-card',True),('team','#view-team .sec-card',True),('weights','#view-weights .sec-card',True),
-         ('tenders','#view-tenders .td-table tr.td-row .td-subj',False),('tenders','#view-tenders .td-paste-btn',False),('tenders','#view-tenders .td-add-btn',False),('tenders','#view-tenders .td-radar-btn',False),('tenders','#view-tenders .td-arch-btn',False),
+         ('tenders','#view-tenders .td-table tr.td-row .td-subj',False),('tenders','#view-tenders .td-paste-btn',False),('tenders','#view-tenders .td-add-btn',False),('tenders','#view-tenders .td-radar-btn',False),('tenders','#view-tenders .td-arch-btn',False),('tenders','#view-tenders .td-market-btn',False),
          ('tenders','#view-tenders .mail-src button.linkish',True),('home','#by-line',False),('home','#version',False)]
 # The state of the top window: text, focus, controls without a name, and text nobody could read (contrast under 3:1 against what
 # is really painted behind it — the bar for large text; ordinary text is held to 4.5 by the scanner when AXE_JS is set).

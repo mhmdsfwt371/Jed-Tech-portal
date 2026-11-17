@@ -2688,14 +2688,12 @@ function radarTender(x) {
 const rOffer = (x) => { const ref = rRef(x.ref), bidder = rStr(x.bidder, 200); if (!ref || !bidder) return null; const tech = rNorm(x.tech);
   return { ref, bidder, price: rMoney(x.price), tech: tech === 'pass' || tech === 'مطابق' ? 'pass' : tech === 'fail' || tech.includes('غير مطابق') ? 'fail' : '' }; };
 const rAward = (x) => { const ref = rRef(x.ref), winner = rStr(x.winner, 200); return ref && winner ? { ref, winner, value: rMoney(x.value) } : null; };
-/** What a pull keeps: AFAQY's scope, the tenders the register already follows (`keepRefs`) and any tender AFAQY itself bid on — never
- *  the whole platform (the first pull held 30,396 tenders, of which a few hundred concern us). */
-function radarKeep(r, keepRefs) {
-  const keep = new Set(keepRefs.map(rRef).filter(Boolean));
-  for (const o of r.offers) if (etimadIsUs(o.bidder)) keep.add(o.ref);
-  for (const a of r.awards) if (etimadIsUs(a.winner)) keep.add(a.ref);
-  const tenders = r.tenders.filter((x) => x.scope || keep.has(x.ref)).slice(0, 20000), refs = new Set(tenders.map((x) => x.ref));
-  return { ...r, total: r.tenders.length, tenders, awards: r.awards.filter((x) => refs.has(x.ref)), offers: r.offers.filter((x) => refs.has(x.ref)) };
+/** What a pull keeps. v9.63 (ADR-0136): everything it holds — the market study looks at every field of work, not only ours; each
+ *  tender carries `scope` and `west` so the radar and the study can narrow it. (9.60–9.62 kept only our scope.) A tender seen twice
+ *  in one file is kept once. `keepRefs` is still accepted and changes nothing now. */
+function radarKeep(r, keepRefs = []) {
+  const seen = new Set(), tenders = r.tenders.filter((x) => !seen.has(x.ref) && seen.add(x.ref)).slice(0, 200000);
+  return { ...r, total: r.tenders.length, tenders, awards: r.awards, offers: r.offers };
 }
 /** The pull tool's own file (`afaqy-etimad-radar/v1`), cleaned. */
 export function parseRadar(raw, keepRefs = []) {
@@ -2744,14 +2742,25 @@ export function radarMerge(have, add) {
 }
 /** The Etimad tender a register row is: the same number (Etimad's reference number, or the entity's own tender number), then the same
  *  title key. Anything looser is only suggested (radarSuggest), never linked by itself. */
+// v9.63: the whole pull (tens of thousands of tenders) is searched through an index built once per list, not scanned per tender
+const radarIdx = new WeakMap();
+function radarIndex(list, keyOf) {
+  let ix = radarIdx.get(list); if (ix && ix.keyOf === keyOf) return ix;
+  const add = (m, k, x) => { if (!k) return; const L = m.get(k); if (L) L.push(x); else m.set(k, [x]); };
+  ix = { keyOf, byNo: new Map(), byKey: new Map() };
+  for (const x of list) { add(ix.byNo, x.ref, x); const n = x.no ? x.no.replace(/[^\d]/g, '') : ''; if (n && n !== x.ref) add(ix.byNo, n, x); add(ix.byKey, keyOf(x.title), x); }
+  radarIdx.set(list, ix); return ix;
+}
 export function radarFind(item, list, keyOf) {
-  const no = String(item.etimadNo || '').replace(/[^\d]/g, '');
-  if (no) { const L = list.filter((x) => x.ref === no || (x.no && x.no.replace(/[^\d]/g, '') === no)); if (L.length === 1) return L[0]; if (L.length > 1) return null; }
+  const ix = radarIndex(list, keyOf), no = String(item.etimadNo || '').replace(/[^\d]/g, '');
+  if (no) { const L = [...new Set(ix.byNo.get(no) || [])]; if (L.length === 1) return L[0]; if (L.length > 1) return null; }
   const k = keyOf(item.subject); if (!k) return null;
-  const L = list.filter((x) => keyOf(x.title) === k); return L.length === 1 ? L[0] : null;
+  const L = ix.byKey.get(k) || []; return L.length === 1 ? L[0] : null;
 }
 const R_STOP = new Set(['توريد', 'وتركيب', 'تركيب', 'وتشغيل', 'تشغيل', 'وصيانه', 'صيانه', 'مشروع', 'منافسه', 'عمليه', 'لزوم', 'بشان', 'خاص', 'الخاص', 'الخاصه', 'عدد', 'تامين', 'تقديم', 'خدمات', 'اعمال', 'supply', 'and', 'the', 'for', 'of', 'installation']);
-const rWords = (s) => new Set(rNorm(s).split(/[^\p{L}\p{N}]+/u).map((w) => w.replace(/^(و|ب|ل)(?=ال)/, '').replace(/^ال(?=..)/, '')).filter((w) => w.length > 1 && !R_STOP.has(w) && !R_STOP.has(`ال${w}`)));
+const rWordsMemo = new Map();
+const rWords = (s) => { const k = String(s || ''); let w = rWordsMemo.get(k); if (!w) { if (rWordsMemo.size > 120000) rWordsMemo.clear(); w = rWordsRaw(k); rWordsMemo.set(k, w); } return w; };
+const rWordsRaw = (s) => new Set(rNorm(s).split(/[^\p{L}\p{N}]+/u).map((w) => w.replace(/^(و|ب|ل)(?=ال)/, '').replace(/^ال(?=..)/, '')).filter((w) => w.length > 1 && !R_STOP.has(w) && !R_STOP.has(`ال${w}`)));
 /** Etimad tenders that look like a register row: at least two words of the title shared, and most of the shorter title. Best first. */
 export function radarSuggest(item, list, max = 3) {
   const a = rWords(`${item.subject} ${item.entity || ''}`);
@@ -2862,6 +2871,73 @@ export function radarOurBids(radar) {
   const refs = new Set([...(radar.offers || []).filter((o) => etimadIsUs(o.bidder)).map((o) => o.ref), ...(radar.awards || []).filter((a) => etimadIsUs(a.winner)).map((a) => a.ref)]);
   return (radar.tenders || []).filter((x) => refs.has(x.ref)).map((x) => ({ ...radarResult(x.ref, radar), ref: x.ref, title: x.title, entity: x.entity, published: x.published }))
     .sort((p, q) => (q.published || '').localeCompare(p.published || ''));
+}
+// ---------- v9.63 (ADR-0136): the market study — the pull read for a period, a field of work and a status ----------
+const mGroup = (L) => { const m = new Map(); for (const x of L || []) { const a = m.get(x.ref); if (a) a.push(x); else m.set(x.ref, [x]); } return m; };
+const mMedian = (L) => { const s = L.filter((v) => v != null).sort((a, b) => a - b), k = s.length >> 1; return s.length ? (s.length % 2 ? s[k] : (s[k - 1] + s[k]) / 2) : null; };
+const mAdd = (m, k, init) => { let v = m.get(k); if (!v) { v = init(); m.set(k, v); } return v; };
+/** Everything the market study shows for one filter: `from`/`to` (publication day), `scope` ('afaqy' or 'all'), `west`, `status`
+ *  ('all', 'active', 'awarded'), `q` (words in the title, entity or number) and `who` (one winner, entity, activity or bidder,
+ *  pressed in a list). Every list is complete — nothing is cut to a «top ten». A value is the award as Etimad published it; where it
+ *  was not published it is not guessed, and `valueKnown` says how many tenders the sums rest on. */
+export function marketStats(radar, f = {}) {
+  const T = (radar && radar.tenders) || [], aw = mGroup(radar && radar.awards), of = mGroup(radar && radar.offers), q = f.q ? rNorm(f.q).trim() : '';
+  let rows = T.filter((x) => (!f.from || (x.published && x.published >= f.from)) && (!f.to || (x.published && x.published <= f.to))
+    && (f.scope !== 'afaqy' || x.scope) && (!f.west || x.west) && (!f.status || f.status === 'all' || x.status === f.status)
+    && (!q || rNorm(`${x.title} ${x.entity} ${x.ref} ${x.no || ''}`).includes(q))).map((x) => {
+    const A = aw.get(x.ref) || [], O = of.get(x.ref) || [], prices = O.map((o) => o.price).filter((p) => p != null), vals = A.map((a) => a.value).filter((v) => v != null);
+    return { ...x, winners: [...new Set(A.map((a) => a.winner))], value: vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) * 100) / 100 : null,
+      bidders: O.length, low: prices.length ? Math.min(...prices) : null, high: prices.length ? Math.max(...prices) : null,
+      us: O.some((o) => etimadIsUs(o.bidder)) || A.some((a) => etimadIsUs(a.winner)), usWon: A.some((a) => etimadIsUs(a.winner)) };
+  });
+  const w = f.who;
+  if (w && w.name) rows = rows.filter((r) => w.kind === 'winner' ? r.winners.includes(w.name) : w.kind === 'entity' ? r.entity === w.name : w.kind === 'activity' ? r.activity === w.name
+    : w.kind === 'bidder' ? (of.get(r.ref) || []).some((o) => o.bidder === w.name) : true);
+  const months = new Map(), entities = new Map(), winners = new Map(), activities = new Map(), bidders = new Map();
+  for (const r of rows) {
+    const mo = mAdd(months, (r.published || '').slice(0, 7) || '—', () => ({ month: (r.published || '').slice(0, 7) || '—', n: 0, awarded: 0, value: 0, valued: 0 }));
+    const en = mAdd(entities, r.entity || '—', () => ({ name: r.entity || '—', n: 0, active: 0, awarded: 0, value: 0, valued: 0 }));
+    const ac = mAdd(activities, r.activity || '—', () => ({ name: r.activity || '—', n: 0, awarded: 0, value: 0, valued: 0 }));
+    for (const g of [mo, en, ac]) { g.n++; if (r.status === 'awarded') g.awarded++; if (r.value != null) { g.value += r.value; g.valued++; } }
+    if (r.status === 'active') en.active++;
+    for (const a of aw.get(r.ref) || []) {
+      const wi = mAdd(winners, a.winner, () => ({ name: a.winner, wins: 0, value: 0, valued: 0, tenders: new Set(), us: etimadIsUs(a.winner) }));
+      if (!wi.tenders.has(r.ref)) { wi.tenders.add(r.ref); wi.wins++; }
+      if (a.value != null) { wi.value += a.value; wi.valued++; }
+    }
+    const won = new Set(r.winners);
+    for (const o of of.get(r.ref) || []) {
+      const b = mAdd(bidders, o.bidder, () => ({ name: o.bidder, bids: 0, wins: 0, pass: 0, fail: 0, us: etimadIsUs(o.bidder) }));
+      b.bids++; if (won.has(o.bidder)) b.wins++; if (o.tech === 'pass') b.pass++; if (o.tech === 'fail') b.fail++;
+    }
+  }
+  const round = (L) => L.map((x) => ({ ...x, value: Math.round(x.value * 100) / 100 }));
+  const vals = rows.map((r) => r.value).filter((v) => v != null), awarded = rows.filter((r) => r.status === 'awarded');
+  return {
+    total: rows.length, active: rows.filter((r) => r.status === 'active').length, awarded: awarded.length, other: rows.filter((r) => r.status === 'other').length,
+    winnerKnown: awarded.filter((r) => r.winners.length).length, valueKnown: vals.length, value: Math.round(vals.reduce((s, v) => s + v, 0) * 100) / 100,
+    medianValue: mMedian(vals), medianBidders: mMedian(rows.map((r) => r.bidders).filter((n) => n > 0)), us: rows.filter((r) => r.us).length, usWon: rows.filter((r) => r.usWon).length,
+    first: rows.map((r) => r.published).filter(Boolean).sort()[0] || '', last: rows.map((r) => r.published).filter(Boolean).sort().pop() || '',
+    tenders: rows.sort((a, b) => (b.published || '').localeCompare(a.published || '') || (b.value || 0) - (a.value || 0)),
+    months: round([...months.values()]).sort((a, b) => a.month.localeCompare(b.month)),
+    entities: round([...entities.values()]).sort((a, b) => b.n - a.n || b.value - a.value || a.name.localeCompare(b.name)),
+    winners: round([...winners.values()].map(({ tenders, ...x }) => x)).sort((a, b) => b.wins - a.wins || b.value - a.value || a.name.localeCompare(b.name)),
+    activities: round([...activities.values()]).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)),
+    bidders: [...bidders.values()].map((b) => ({ ...b, winRate: b.bids ? Math.round((b.wins / b.bids) * 100) : null })).sort((a, b) => b.bids - a.bids || b.wins - a.wins || a.name.localeCompare(b.name)),
+  };
+}
+/** The period a choice means, as publication days: 'all', 'q' (the last 3 months), 'h' (the last 6 months), 'ytd' (this year so far),
+ *  a year ('2025'), a quarter ('2025-Q3'), or 'custom' with the two days given. `today` is the Saudi day. */
+export function marketPeriod(kind, today, from = '', to = '') {
+  const back = (m) => { const d = new Date(`${today}T00:00:00Z`); d.setUTCMonth(d.getUTCMonth() - m); return d.toISOString().slice(0, 10); };
+  if (kind === 'q') return { from: back(3), to: today };
+  if (kind === 'h') return { from: back(6), to: today };
+  if (kind === 'ytd') return { from: `${today.slice(0, 4)}-01-01`, to: today };
+  let m = /^(\d{4})$/.exec(kind || ''); if (m) return { from: `${m[1]}-01-01`, to: `${m[1]}-12-31` };
+  m = /^(\d{4})-Q([1-4])$/.exec(kind || ''); if (m) { const s = (Number(m[2]) - 1) * 3 + 1, e = s + 2, last = new Date(Date.UTC(Number(m[1]), e, 0)).getUTCDate();
+    return { from: `${m[1]}-${String(s).padStart(2, '0')}-01`, to: `${m[1]}-${String(e).padStart(2, '0')}-${last}` }; }
+  if (kind === 'custom') return { from: /^\d{4}-\d{2}-\d{2}$/.test(from) ? from : '', to: /^\d{4}-\d{2}-\d{2}$/.test(to) ? to : '' };
+  return { from: '', to: '' };
 }
 // ---------- v9.62 (ADR-0134): execution and the archive — the year from what Etimad published to what we won ----------
 /** The year as a funnel: tenders Etimad published within AFAQY's scope (and in the West), the tenders that reached the register,

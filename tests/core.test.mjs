@@ -1778,14 +1778,15 @@ const radarSheets = () => {
     'سجل السحب': [['رقم التشغيل', 'بدأ', 'انتهى', 'الحالة'], ['1', '2026-11-15 12:48:14', '2026-11-15 13:15:55', 'partial'], ['2', '2026-11-15 20:48:14', '2026-11-16 15:38:00', 'complete']] };
   return (n) => s[n] || null;
 };
-test('v9.60: the pull tool’s Excel is read by column name and only what concerns AFAQY is kept', () => {
+test('v9.63: the pull tool’s Excel is read by column name and all of it is kept — the market study reads every field of work', () => {
   const r = core.radarFromSheets(radarSheets(), ['261139000002']);
   assert.equal(r.total, 4);
-  assert.deepEqual(r.tenders.map((x) => x.ref), ['261139004629', '250739013184', '261139000002'], 'in scope · AFAQY bid on it · the register follows it; the medicines tender is dropped');
+  assert.deepEqual(r.tenders.map((x) => x.ref), ['261139004629', '261139000001', '250739013184', '261139000002'], 'the medicines tender is kept too (9.60–9.62 dropped it)');
+  assert.deepEqual(r.tenders.map((x) => x.scope), [true, false, false, false], 'each tender still says whether it is ours');
   const dc = r.tenders[0];
   assert.deepEqual([dc.status, dc.due, dc.dueTime, dc.askDue, dc.askDueTime, dc.fees, dc.no, dc.scope, dc.west], ['active', '2026-11-30', '09:59', '2026-11-25', '', 200, '126526 / 130720', true, true]);
-  assert.equal(r.tenders[1].status, 'awarded'); assert.equal(r.tenders[1].ref, '250739013184', 'the «REF:» prefix is dropped');
-  assert.deepEqual(r.awards, [{ ref: '250739013184', winner: 'شركة رامي قاسم', value: 44620 }], 'awards of dropped tenders are dropped with them');
+  assert.equal(r.tenders[2].status, 'awarded'); assert.equal(r.tenders[2].ref, '250739013184', 'the «REF:» prefix is dropped');
+  assert.deepEqual(r.awards, [{ ref: '250739013184', winner: 'شركة رامي قاسم', value: 44620 }, { ref: '261139000001', winner: 'مؤسسة لينا حرب', value: 900 }], 'every award is kept');
   assert.deepEqual(r.offers.map((o) => [o.bidder, o.tech]), [['شركة أفاقي لتقنية المعلومات', 'fail'], ['شركة رامي قاسم', 'pass']]);
   assert.equal(r.pulledAt, '2026-11-16T15:38'); assert.equal(r.partial, true, 'one run says partial');
   assert.deepEqual(core.radarFromSheets(() => null), { error: 'nosheet' });
@@ -1800,8 +1801,66 @@ test('v9.60: the pull tool’s own file is checked; a link that is not an Etimad
 test('v9.60: pulls add up — a newer copy of a tender replaces the older one, nothing else is dropped', () => {
   const a = core.radarFromSheets(radarSheets(), []), b = core.parseRadar({ schema: core.RADAR_SCHEMA, pulledAt: '2026-11-18T08:00', tenders: [{ ref: '261139004629', title: 'WM - توريد وتركيب داش كام', status: 'active', due: '2026-12-03 09:59' }] });
   const m = core.radarMerge(core.radarMerge(null, a), b);
-  assert.equal(m.tenders.length, 2); assert.equal(m.tenders.find((x) => x.ref === '261139004629').due, '2026-12-03', 'Etimad extended the deadline');
-  assert.equal(m.awards.length, 1, 'the older pull’s awards stay'); assert.equal(m.pulls.length, 2); assert.equal(m.pulledAt, '2026-11-18T08:00');
+  assert.equal(m.tenders.length, 4); assert.equal(m.tenders.find((x) => x.ref === '261139004629').due, '2026-12-03', 'Etimad extended the deadline');
+  assert.equal(m.awards.length, 2, 'the older pull’s awards stay'); assert.equal(m.pulls.length, 2); assert.equal(m.pulledAt, '2026-11-18T08:00');
+});
+
+// v9.63 (ADR-0136): the market study
+const studyRadar = () => core.parseRadar({ schema: core.RADAR_SCHEMA, pulledAt: '2026-11-17T08:00', tenders: [
+  { ref: '1', title: 'توريد كاميرات مراقبة', entity: 'أمانة جدة', status: 'awarded', activity: 'تقنية المعلومات', published: '2025-02-10', due: '2025-03-01' },
+  { ref: '2', title: 'تتبع المركبات', entity: 'أمانة جدة', status: 'awarded', activity: 'تقنية المعلومات', published: '2025-05-20', due: '2025-06-01' },
+  { ref: '3', title: 'أعمال نظافة', entity: 'بلدية الرياض', status: 'awarded', activity: 'النظافة', published: '2025-08-01', due: '2025-08-20' },
+  { ref: '4', title: 'شبكات اتصالات', entity: 'تجمع جدة الصحي', status: 'active', activity: 'الاتصالات', published: '2026-10-01', due: '2026-12-01' },
+  { ref: '5', title: 'توريد أدوية', entity: 'بلدية الرياض', status: 'other', activity: 'الأنشطة الطبية', published: '2026-11-10', due: '2026-11-30' },
+  { ref: '6', title: 'كاميرات مراقبة المدارس', entity: 'أمانة جدة', status: 'awarded', activity: 'تقنية المعلومات', published: '2025-11-02', due: '2025-11-20' }],
+  awards: [{ ref: '1', winner: 'شركة ألف', value: 100000 }, { ref: '2', winner: 'شركة أفاقي لتقنية المعلومات', value: 50000 }, { ref: '3', winner: 'شركة ألف', value: 30000 },
+    { ref: '6', winner: 'شركة باء', value: null }],
+  offers: [{ ref: '1', bidder: 'شركة ألف', price: 100000, tech: 'pass' }, { ref: '1', bidder: 'شركة أفاقي لتقنية المعلومات', price: 120000, tech: 'pass' },
+    { ref: '2', bidder: 'شركة أفاقي لتقنية المعلومات', price: 50000, tech: 'pass' }, { ref: '2', bidder: 'شركة ألف', price: 70000, tech: 'fail' }, { ref: '3', bidder: 'شركة ألف', price: 30000, tech: 'pass' }] });
+test('v9.63: the market study counts, sums and lists everything for a filter — no list is cut to ten', () => {
+  const R = studyRadar(), all = core.marketStats(R, {});
+  assert.deepEqual([all.total, all.active, all.awarded, all.other, all.winnerKnown, all.valueKnown, all.value], [6, 1, 4, 1, 4, 3, 180000]);
+  assert.equal(all.medianValue, 50000); assert.equal(all.medianBidders, 2); assert.deepEqual([all.us, all.usWon], [2, 1]);
+  assert.deepEqual(all.winners.map((w) => [w.name, w.wins, w.value, w.valued, w.us]), [['شركة ألف', 2, 130000, 2, false], ['شركة أفاقي لتقنية المعلومات', 1, 50000, 1, true], ['شركة باء', 1, 0, 0, false]], 'a win without a published value counts as a win, not as money');
+  assert.deepEqual(all.entities.map((e) => [e.name, e.n, e.awarded, e.value]), [['أمانة جدة', 3, 3, 150000], ['بلدية الرياض', 2, 1, 30000], ['تجمع جدة الصحي', 1, 0, 0]]);
+  assert.deepEqual(all.bidders.map((b) => [b.name, b.bids, b.wins, b.winRate, b.fail]), [['شركة ألف', 3, 2, 67, 1], ['شركة أفاقي لتقنية المعلومات', 2, 1, 50, 0]]);
+  assert.deepEqual(all.months.map((m) => [m.month, m.n]), [['2025-02', 1], ['2025-05', 1], ['2025-08', 1], ['2025-11', 1], ['2026-10', 1], ['2026-11', 1]]);
+  const t1 = all.tenders.find((x) => x.ref === '1');
+  assert.deepEqual([t1.winners, t1.value, t1.bidders, t1.low, t1.high, t1.us, t1.usWon], [['شركة ألف'], 100000, 2, 100000, 120000, true, false]);
+  assert.deepEqual(all.tenders.map((x) => x.ref), ['5', '4', '6', '3', '2', '1'], 'newest first');
+  const many = core.parseRadar({ schema: core.RADAR_SCHEMA, tenders: Array.from({ length: 40 }, (_, i) => ({ ref: String(100 + i), title: `t${i}`, entity: `e${i}`, status: 'active', published: '2026-01-01' })) });
+  const M = core.marketStats(many, {}); assert.equal(M.tenders.length, 40); assert.equal(M.entities.length, 40, 'all forty, not a top ten');
+});
+test('v9.63: the market filter — period, our scope, status, words, and one name pressed in a list', () => {
+  const R = studyRadar();
+  const y25 = core.marketStats(R, core.marketPeriod('2025', '2026-11-17'));
+  assert.deepEqual([y25.total, y25.value, y25.first, y25.last], [4, 180000, '2025-02-10', '2025-11-02']);
+  assert.equal(core.marketStats(R, { ...core.marketPeriod('2025-Q2', '2026-11-17') }).total, 1);
+  assert.equal(core.marketStats(R, { status: 'active' }).total, 1);
+  assert.equal(core.marketStats(R, { q: 'كاميرات' }).total, 2, 'a word in the title');
+  assert.equal(core.marketStats(R, { q: 'بلديه الرياض' }).total, 2, 'the entity, spelt with ه for ة');
+  const w = core.marketStats(R, { who: { kind: 'winner', name: 'شركة ألف' } });
+  assert.deepEqual(w.tenders.map((x) => x.ref).sort(), ['1', '3']);
+  assert.deepEqual(core.marketStats(R, { who: { kind: 'entity', name: 'أمانة جدة' } }).tenders.map((x) => x.ref).sort(), ['1', '2', '6']);
+  assert.deepEqual(core.marketStats(R, { who: { kind: 'bidder', name: 'شركة أفاقي لتقنية المعلومات' } }).tenders.map((x) => x.ref).sort(), ['1', '2']);
+  assert.deepEqual(core.marketStats(R, { who: { kind: 'activity', name: 'النظافة' } }).tenders.map((x) => x.ref), ['3']);
+  const empty = core.marketStats(null, {}); assert.deepEqual([empty.total, empty.value, empty.medianValue, empty.tenders.length], [0, 0, null, 0]);
+});
+test('v9.63: the market periods — last quarter, half year, this year, a year, a quarter, and two days of his own', () => {
+  assert.deepEqual(core.marketPeriod('q', '2026-11-17'), { from: '2026-08-17', to: '2026-11-17' });
+  assert.deepEqual(core.marketPeriod('h', '2026-11-17'), { from: '2026-05-17', to: '2026-11-17' });
+  assert.deepEqual(core.marketPeriod('ytd', '2026-11-17'), { from: '2026-01-01', to: '2026-11-17' });
+  assert.deepEqual(core.marketPeriod('2024', '2026-11-17'), { from: '2024-01-01', to: '2024-12-31' });
+  assert.deepEqual(core.marketPeriod('2024-Q1', '2026-11-17'), { from: '2024-01-01', to: '2024-03-31' }, 'a leap year');
+  assert.deepEqual(core.marketPeriod('2025-Q4', '2026-11-17'), { from: '2025-10-01', to: '2025-12-31' });
+  assert.deepEqual(core.marketPeriod('custom', '2026-11-17', '2025-01-05', 'x'), { from: '2025-01-05', to: '' });
+  assert.deepEqual(core.marketPeriod('all', '2026-11-17'), { from: '', to: '' });
+});
+test('v9.63: finding a register row in a whole pull of 30,000 tenders stays quick', () => {
+  const L = Array.from({ length: 30000 }, (_, i) => ({ ref: String(261100000000 + i), no: '', title: `منافسة رقم ${i}` }));
+  const t0 = Date.now(); let n = 0;
+  for (let i = 0; i < 300; i++) if (core.radarFind({ etimadNo: '', subject: `منافسة رقم ${i * 7}` }, L, key)) n++;
+  assert.equal(n, 300); assert.ok(Date.now() - t0 < 1500, `took ${Date.now() - t0} ms`);
 });
 const key = (s) => String(s || '').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, '').replace(/\s+/g, ' ').trim().toLowerCase();
 test('v9.60: a register row finds its Etimad tender by number or exact title; a looser match is only suggested', () => {

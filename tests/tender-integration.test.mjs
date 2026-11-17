@@ -31,7 +31,7 @@ async function setup(team=false) {
   const source=readFileSync(new URL('app.js',root),'utf8').replace(/^import[\s\S]*?from\s+'[^']+';\s*$/gm,match=>{
     const names=match.slice(match.indexOf('{')+1,match.lastIndexOf('}')).split(',').map(x=>x.trim().replace(/\s+as\s+/,': '));return 'const {'+names.join(',')+'}=injected;';
   }).replaceAll("import('./assets/vendor/tender-mail.min.js')","imp('./assets/vendor/tender-mail.min.js')").replaceAll("import('./assets/tender-documents.js')","imp('./assets/tender-documents.js')");
-  w.eval(source+'\nwindow.qa={store,tdCommit,tdUpdate,tdImportEmails,tdImportStudies,tdAnalyzeFiles,tdDocumentView,buildBackup,applyBackup,projectsModel,renderTenders,tdStartAlerts,route,busy:()=>tdBusy,get:()=>tenders,tdTeamText:typeof tdTeamText==="function"?tdTeamText:null,tdTenderText:typeof tdTenderText==="function"?tdTenderText:null,tdYearHtml:typeof tdYearHtml==="function"?tdYearHtml:null,tenderYearReport:injected.tenderYearReport};');
+  w.eval(source+'\nwindow.qa={store,tdCommit,tdUpdate,tdImportEmails,tdImportStudies,tdAnalyzeFiles,tdDocumentView,buildBackup,applyBackup,projectsModel,renderTenders,tdStartAlerts,route,busy:()=>tdBusy,get:()=>tenders,etRadarNow:()=>etRadar,tdTeamText:typeof tdTeamText==="function"?tdTeamText:null,tdTenderText:typeof tdTenderText==="function"?tdTenderText:null,tdYearHtml:typeof tdYearHtml==="function"?tdYearHtml:null,tenderYearReport:injected.tenderYearReport};');
   await wait(()=>w.document.querySelector('#tenders-body')?.childElementCount || team&&w.document.querySelector('#version').textContent==='v'+config.PORTAL_VERSION,'boot');
   return dom;
 }
@@ -341,6 +341,49 @@ try {
     select('.td-year-btn').click();const yr=select('dialog.td-yr-dlg');assert(yr.querySelector('.td-yr-funnel'),'the funnel');
     const steps=[...yr.querySelectorAll('.et-funnel li')].map(li=>li.querySelector('b').textContent);assert.equal(steps.length,5);assert.equal(steps[4],'1','one won');
     assert(qa.tdYearHtml(qa.tenderYearReport(qa.get().items,arrived.slice(0,4))).includes('<h2>')); yr.close();w.close();
+  }
+  // ---- v9.63 (ADR-0136): «Market analysis» — the whole pull, read for a period, a field of work and a status, every list complete ----
+  { const pre=await setup();await pre.window.qa.store.kvPut('radar',null);pre.window.close();   // the earlier sections' pulls add up; this one starts from none
+    const dom9=await setup(), w=dom9.window, d=w.document, qa=w.qa, select=s=>d.querySelector(s), all=s=>[...d.querySelectorAll(s)];
+    const T=[];for(let i=0;i<260;i++)T.push({ref:String(261100000000+i),title:`منافسة عامة رقم ${i}`,entity:`جهة ${i%7}`,status:i%2?'awarded':'active',activity:'الأنشطة الطبية',published:`2025-${String(1+i%12).padStart(2,'0')}-10`});
+    T.push({ref:'261139000201',title:'توريد وتركيب كاميرات مراقبة',entity:'أمانة جدة',status:'awarded',activity:'تقنية المعلومات',published:'2026-03-01'},
+      {ref:'261139000202',title:'نظام تتبع المركبات',entity:'أمانة جدة',status:'awarded',activity:'تقنية المعلومات',published:'2026-04-01'});
+    const pull={schema:'afaqy-etimad-radar/v1',pulledAt:'2026-11-16T10:00',tenders:T,
+      awards:[{ref:'261139000201',winner:'شركة ألف',value:400000},{ref:'261139000202',winner:'شركة أفاقي لتقنية المعلومات',value:250000},{ref:'261100000001',winner:'شركة ألف',value:1000}],
+      offers:[{ref:'261139000201',bidder:'شركة أفاقي لتقنية المعلومات',price:420000,tech:'pass'},{ref:'261139000201',bidder:'شركة ألف',price:400000,tech:'pass'},{ref:'261139000202',bidder:'شركة أفاقي لتقنية المعلومات',price:250000,tech:'pass'}]};
+    const any=select('.td-drop-any input');Object.defineProperty(any,'files',{value:[new w.File([JSON.stringify(pull)],'radar.json',{type:'application/json'})],configurable:true});any.dispatchEvent(new w.Event('change',{bubbles:true}));
+    await wait(()=>select('.et-res')&&!qa.busy(),'pull read');
+    assert.equal(qa.etRadarNow().tenders.length,262,'the whole pull is kept, not only our scope');
+    select('.td-market-btn').click();const mk=select('dialog.mk-modal');assert(mk,'the market window opened');
+    const tile=(l)=>[...mk.querySelectorAll('.km-tile')].find(x=>x.querySelector('span').textContent===l).querySelector('b').textContent;
+    assert.equal(tile('tenders published'),'262');assert.equal(tile('companies that won tenders'),'2');assert.equal(tile('tenders AFAQY bid on'),'2');
+    assert(mk.querySelector('.mk-cover').textContent.includes('published for 3 of 132'),mk.querySelector('.mk-cover').textContent);
+    // (1) every tender is listed, 200 at a time, and «show more» adds the rest — nothing is cut to a top ten
+    assert.equal(mk.querySelectorAll('table.mk-t tbody tr').length,200);select('dialog.mk-modal .mk-more').click();assert.equal(select('dialog.mk-modal').querySelectorAll('table.mk-t tbody tr').length,262);
+    // (2) the period and the field of work narrow every number
+    const P=select('dialog.mk-modal .mk-p');assert([...P.options].some(o=>o.value==='2025-Q3'),'a quarter of a year in the pull');P.value='2026';P.dispatchEvent(new w.Event('change',{bubbles:true}));
+    assert.equal(tile('tenders published'),'2');select('dialog.mk-modal .mk-sc-afaqy').click();assert.equal(tile('tenders published'),'2');
+    P.value='all';select('dialog.mk-modal .mk-p').value='all';select('dialog.mk-modal .mk-p').dispatchEvent(new w.Event('change',{bubbles:true}));assert.equal(tile('tenders published'),'2','our field only, over the whole pull');
+    select('dialog.mk-modal .mk-sc-all').click();assert.equal(tile('tenders published'),'262');
+    // (3) a winner pressed in his list shows his tenders only; the narrowing says so and can be removed
+    select('dialog.mk-modal .mk-tab-winners').click();const top=select('dialog.mk-modal table.mk-t-winners tbody tr');assert(top.textContent.includes('شركة ألف')&&top.textContent.includes('401,000'),top.textContent);
+    top.querySelector('.mk-who').click();assert(select('dialog.mk-modal .mk-tab-tenders').classList.contains('on'));assert.equal(select('dialog.mk-modal').querySelectorAll('table.mk-t tbody tr').length,2);
+    assert(select('dialog.mk-modal .mk-who-on').textContent.includes('شركة ألف'));select('dialog.mk-modal .mk-who-off').click();assert(!select('dialog.mk-modal .mk-who-on'));
+    // (4) sorting by value puts the biggest award first; the entities list is complete
+    select('dialog.mk-modal .mk-sort').value='value';select('dialog.mk-modal .mk-sort').dispatchEvent(new w.Event('change',{bubbles:true}));
+    assert(select('dialog.mk-modal table.mk-t tbody tr').textContent.includes('كاميرات مراقبة'));
+    select('dialog.mk-modal .mk-tab-entities').click();assert.equal(select('dialog.mk-modal').querySelectorAll('table.mk-t-entities tbody tr').length,8);
+    // (5) Excel: the list shown, or every list, with the choice applied — numbers stay numbers
+    let wb=null;w.XLSX.writeFile=(book)=>{wb=book;};w.XLSX.__byAuthor=true;
+    select('dialog.mk-modal .mk-q').value='كاميرات';select('dialog.mk-modal .mk-q').dispatchEvent(new w.Event('input',{bubbles:true}));await wait(()=>select('dialog.mk-modal .mk-span')&&select('dialog.mk-modal .mk-span').textContent.includes('1 tenders'),'search applied');
+    select('dialog.mk-modal .mk-xl-all').click();await wait(()=>wb,'all lists written');
+    assert.deepEqual([...wb.SheetNames],['Summary','Tenders','Winning companies','Entities','Activities','Bidders',"AFAQY's bids",'Month by month']);
+    const sum=w.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1});assert(sum[0][1].includes('«كاميرات»'),sum[0][1]);assert.deepEqual([...sum.find(r=>r[0]==='tenders published')],['tenders published',1]);
+    const tl=w.XLSX.utils.sheet_to_json(wb.Sheets['Tenders'],{header:1});assert.equal(tl.length,2,'the header and the one tender searched');assert.equal(tl[1][8],400000,'the value is a number');
+    wb=null;select('dialog.mk-modal .mk-tab-winners').click();select('dialog.mk-modal .mk-xl-one').click();await wait(()=>wb,'one list written');assert.deepEqual([...wb.SheetNames],['Winning companies']);
+    mk.close();assert(!select('dialog.mk-modal'));
+    // (6) the radar opens the same window
+    select('.td-radar-btn').click();select('dialog.et-modal .et-market').click();assert(select('dialog.mk-modal'),'from the radar');select('dialog.mk-modal').close();w.close();
   }
   assert.deepEqual(errors,[],'uncaught UI errors');
   console.log('tender-integration: passed Outlook import, source dates, conflict review, categories, table preview, filtering, deletion, deduplication, offer gates, stage transitions, My Projects, alerts, backup/restore, reload, stale tabs, 120-file reading/pagination/search, storage-failure reporting, missing-date rejection, literal HTML display, all management routes, languages, theme, team separation, the tender card, «missed», inquiries, the team message, the year report and the correspondence timeline (thread reading, de-duplication, hand-over mark, re-read, copy, summary window, backup and reload)');

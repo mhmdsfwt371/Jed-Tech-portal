@@ -98,6 +98,7 @@
 | لوحة حسابات ما بعد البيع والأنظمة (القرار 0120) | `accountsBoard()`، `serverIpMap()`، `attachSystems()` |
 | تدقيق 9.55 (القرار 0129) | `tenderAmount()`، `tenderDatePatch()`، `backupDue()` — و`docs/qa-policy.md`، و`tests/browser/audit.py`، و`scripts/browser-suites.mjs` |
 | التنفيذ والأرشيف وقمع السنة (القرار 0134) | `tenderFunnel()`، `tenderArchive()` — وفي الصفحة `tdArchiveOpen()`، `tdToProjects()` |
+| تحليل السوق: السحب كله بالفترة والمجال والحالة، والقوائم كاملة والإكسل (القرار 0136) | `marketStats()`، `marketPeriod()`، `radarKeep()` — وفي الصفحة `mkOpen()`، `mkExcel()` — والاختبار `tests/browser/etimadradar.py` (R27–R33) |
 | السوق والنتيجة من اعتماد (القرار 0133) | `radarResult()`، `tenderOutcome()`، `radarSimilar()`، `radarOurBids()` — وفي الصفحة `tdMarketFold()` |
 | سحب اعتماد دراسة سوق لا تغيّر بيانات المناقصة (القرار 0135) | `applyEtimad()` (يملأ الفارغ ويعيد الفروق فقط)، `etimadLinkPatch()`، `tenderUndoEtimad()` — المرجع ملفات الإيميل ودراسة المحلل |
 | رادار اعتماد ومواعيد المنصة والتحقق من الهجري (القرار 0132) | `parseRadar()`، `radarFromSheets()`، `radarMerge()`، `radarFind()`، `radarSuggest()`، `applyEtimad()`، `radarToItem()`، `etimadInScope()`، `etimadWest()`، `hijriCheck()` — وفي الصفحة `etOpen()`، `etImport()` — والصيغة `docs/etimad-radar-format.md` — والاختبار `tests/browser/etimadradar.py` |

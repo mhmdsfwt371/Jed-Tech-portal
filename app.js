@@ -14,7 +14,7 @@ import {
   quarterRange, quarterOf, quarterBaseline, quarterGoalProgress, planProgress, suggestQuarterGoals,
   maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply,
   tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds, tenderAmount, tenderDatePatch, backupDue, parseTenderStudy, matchTenderStudy, applyTenderStudy, tenderAutoStage, tenderStudyFromSheet,
-  RADAR_SCHEMA, parseRadar, radarFromSheets, radarMerge, radarFind, radarSuggest, applyEtimad, radarToItem, etimadLinkPatch, tenderUndoEtimad, radarResult, tenderOutcome, radarSimilar, radarOurBids, tenderFunnel, tenderArchive,
+  RADAR_SCHEMA, parseRadar, radarFromSheets, radarMerge, radarFind, radarSuggest, applyEtimad, radarToItem, etimadLinkPatch, tenderUndoEtimad, radarResult, tenderOutcome, radarSimilar, radarOurBids, tenderFunnel, tenderArchive, marketStats, marketPeriod,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
   mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts,
@@ -1197,6 +1197,7 @@ function etOpen() {
     const shown = list.slice(0, 200);
     set(body,
       el('div', { class: 'row et-pull' }, el('span', { class: 'hint', text: t('et_pulled', { at: R.pulledAt ? tdWhen(R.pulledAt) : '—', k: R.tenders.length, n: (R.pulls || []).length }) }), upBtn,
+        el('button', { type: 'button', class: 'btn et-market', text: `📊 ${t('mk_btn')}`, onclick: () => { dlg.close(); mkOpen(); } }),
         el('button', { type: 'button', class: 'btn et-refs', text: `📋 ${t('et_copy_refs')}`, title: t('et_copy_refs_hint'), onclick: () => { const refs = [...new Set((tenders ? tenders.items : []).filter((i) => !['declined', 'cancelled'].includes(i.stage)).map((i) => { const y = radarFind(i, R.tenders, tdKey); return y ? y.ref : String(i.etimadNo || '').replace(/[^\d]/g, ''); }).filter((r) => r.length >= 10))];
           if (!refs.length) { toast(t('et_copy_refs_none')); return; } copyText(refs.join('\n'), t('et_copy_refs_done', { n: refs.length })); } })),
       R.partial ? el('p', { class: 'note et-partial', text: t('et_partial') }) : null,
@@ -1225,6 +1226,127 @@ function etOpen() {
       list.length > shown.length ? el('p', { class: 'hint', text: t('crm_more', { n: list.length - shown.length }) }) : null);
   };
   dlg.addEventListener('close', () => { dlg.remove(); etDraw = () => {}; }); document.body.append(dlg); etDraw(); dlg.showModal();
+}
+// ---------- v9.63 (ADR-0136): «تحليل السوق» — the whole Etimad pull read for a period, a field of work and a status ----------
+const mkF = { period: 'all', from: '', to: '', scope: 'all', west: false, status: 'all', q: '', who: null, tab: 'tenders', sort: {}, limit: 200 };
+let mkMemo = { key: '', radar: null, S: null }, mkTm = 0;
+const MK_TABS = ['tenders', 'winners', 'entities', 'activities', 'bidders', 'ours'];
+const MK_SORTS = { tenders: ['new', 'value', 'bidders', 'due'], ours: ['new', 'value', 'bidders'], winners: ['wins', 'value'], entities: ['count', 'value', 'awarded'], activities: ['count', 'value'], bidders: ['bids', 'wins', 'rate'] };
+function mkPeriods(R) {   // the choices the pull can answer: the fixed spans, each year it holds and each quarter of those years
+  const years = [...new Set(R.tenders.map((x) => (x.published || '').slice(0, 4)).filter((y) => /^\d{4}$/.test(y)))].sort().reverse();
+  return [['all', t('mk_p_all')], ['q', t('mk_p_q')], ['h', t('mk_p_h')], ['ytd', t('mk_p_ytd')], ...years.map((y) => [y, t('mk_p_year', { y })]),
+    ...years.flatMap((y) => [4, 3, 2, 1].map((q) => [`${y}-Q${q}`, t('mk_p_quarter', { q, y })])), ['custom', t('mk_p_custom')]];
+}
+function mkFilter() { const p = marketPeriod(mkF.period, tdToday(), mkF.from, mkF.to); return { ...p, scope: mkF.scope, west: mkF.west, status: mkF.status, q: mkF.q, who: mkF.who }; }
+function mkStats() {
+  const f = mkFilter(), key = JSON.stringify(f);
+  if (mkMemo.radar !== etRadar || mkMemo.key !== key) mkMemo = { key, radar: etRadar, S: marketStats(etRadar, f) };
+  return mkMemo.S;
+}
+const mkNum = (v) => (v == null ? '—' : tdMoney(v));
+const mkStatus = (x) => t(`et_st_${x.status || 'other'}`);
+function mkSorted(S, tab) {
+  const by = mkF.sort[tab] || MK_SORTS[tab][0], v = (n) => (n == null ? -1 : n);
+  const L = tab === 'ours' ? S.tenders.filter((x) => x.us) : [...S[tab]];
+  const cmp = { new: (a, b) => (b.published || '').localeCompare(a.published || ''), value: (a, b) => v(b.value) - v(a.value), bidders: (a, b) => b.bidders - a.bidders,
+    due: (a, b) => `${a.due || '9'}${a.dueTime || ''}`.localeCompare(`${b.due || '9'}${b.dueTime || ''}`), wins: (a, b) => b.wins - a.wins || b.value - a.value,
+    count: (a, b) => b.n - a.n || b.value - a.value, awarded: (a, b) => b.awarded - a.awarded || b.n - a.n, bids: (a, b) => b.bids - a.bids || b.wins - a.wins,
+    rate: (a, b) => v(b.winRate) - v(a.winRate) || b.bids - a.bids }[by];
+  return cmp ? L.sort(cmp) : L;
+}
+// one list's columns, the same for the page and the Excel: [header, value on the page, value in the file]
+function mkCols(tab, inReg) {
+  const who = (kind) => (x) => el('button', { type: 'button', class: 'linkish mk-who', dir: 'auto', text: x.name, title: t('mk_press'), onclick: () => { mkF.who = { kind, name: x.name }; mkF.tab = 'tenders'; mkF.limit = 200; mkDraw(); } });
+  const T = [[t('mk_c_title'), (x) => [el('b', { dir: 'auto', text: x.title }), el('div', { class: 'hint', dir: 'auto', text: [x.entity, x.activity].filter(Boolean).join(' · ') }),
+      el('div', { class: 'td-chips' }, [x.type, x.west ? t('et_west') : '', inReg.has(x.ref) ? t('et_in_reg') : '', x.us ? t('mk_us') : '', `${t('td_card_etimad')} ${x.ref}`].filter(Boolean).map((c) => el('span', { class: 'chip', dir: 'auto', text: c })))], (x) => x.title],
+    [t('mk_c_entity'), null, (x) => x.entity], [t('mk_c_activity'), null, (x) => x.activity], [t('mk_c_type'), null, (x) => x.type],
+    [t('mk_c_published'), (x) => x.published || '—', (x) => x.published], [t('mk_c_due'), (x) => (x.due ? etWhen(x.due, x.dueTime) : '—'), (x) => [x.due, x.dueTime].filter(Boolean).join(' ')],
+    [t('mk_c_status'), mkStatus, mkStatus], [t('mk_c_winner'), (x) => x.winners.join(' · ') || '—', (x) => x.winners.join(' · ')],
+    [t('mk_c_value'), (x) => mkNum(x.value), (x) => x.value], [t('mk_c_bidders'), (x) => String(x.bidders || '—'), (x) => x.bidders || null],
+    [t('mk_c_low'), (x) => mkNum(x.low), (x) => x.low], [t('mk_c_high'), (x) => mkNum(x.high), (x) => x.high],
+    [t('mk_c_ref'), null, (x) => x.ref], [t('mk_c_link'), (x) => (x.link ? el('a', { class: 'btn tiny quiet', href: x.link, target: '_blank', rel: 'noopener noreferrer', text: `${t('et_page')} ↗` }) : '—'), (x) => x.link]];
+  return {
+    tenders: T, ours: T,
+    winners: [[t('mk_c_name'), who('winner'), (x) => x.name], [t('mk_c_wins'), (x) => String(x.wins), (x) => x.wins], [t('mk_c_value'), (x) => mkNum(x.value), (x) => x.value],
+      [t('mk_c_valued'), (x) => String(x.valued), (x) => x.valued], [t('mk_c_us'), (x) => (x.us ? '✓' : ''), (x) => (x.us ? t('mk_yes') : '')]],
+    entities: [[t('mk_c_name'), who('entity'), (x) => x.name], [t('mk_c_n'), (x) => String(x.n), (x) => x.n], [t('mk_c_active'), (x) => String(x.active), (x) => x.active],
+      [t('mk_c_awarded'), (x) => String(x.awarded), (x) => x.awarded], [t('mk_c_value'), (x) => mkNum(x.value), (x) => x.value], [t('mk_c_valued'), (x) => String(x.valued), (x) => x.valued]],
+    activities: [[t('mk_c_name'), who('activity'), (x) => x.name], [t('mk_c_n'), (x) => String(x.n), (x) => x.n], [t('mk_c_awarded'), (x) => String(x.awarded), (x) => x.awarded],
+      [t('mk_c_value'), (x) => mkNum(x.value), (x) => x.value], [t('mk_c_valued'), (x) => String(x.valued), (x) => x.valued]],
+    bidders: [[t('mk_c_name'), who('bidder'), (x) => x.name], [t('mk_c_bids'), (x) => String(x.bids), (x) => x.bids], [t('mk_c_wins'), (x) => String(x.wins), (x) => x.wins],
+      [t('mk_c_rate'), (x) => (x.winRate == null ? '—' : `${x.winRate}%`), (x) => x.winRate], [t('mk_c_pass'), (x) => String(x.pass), (x) => x.pass], [t('mk_c_fail'), (x) => String(x.fail), (x) => x.fail],
+      [t('mk_c_us'), (x) => (x.us ? '✓' : ''), (x) => (x.us ? t('mk_yes') : '')]],
+  }[tab];
+}
+function mkFilterText(S) {
+  const pick = mkPeriods(etRadar).find(([k]) => k === mkF.period), f = mkFilter();
+  return [pick ? pick[1] : '', f.from || f.to ? `${f.from || '…'} → ${f.to || '…'}` : '', t(mkF.scope === 'afaqy' ? 'mk_f_afaqy' : 'mk_f_all'), t(mkF.west ? 'mk_f_west' : 'mk_f_ksa'),
+    t(`mk_f_st_${mkF.status}`), mkF.q ? `«${mkF.q}»` : '', mkF.who ? t('mk_who', { k: t(`mk_who_k_${mkF.who.kind}`), n: mkF.who.name }) : '', t('mk_x_n', { n: S.total })].filter(Boolean).join(' · ');
+}
+async function mkExcel(all) {
+  const S = mkStats(), X = await loadXlsx(), wb = X.utils.book_new(), rtl = lang !== 'en', inReg = new Set();
+  const sheet = (name, aoa, widths) => { const ws = X.utils.aoa_to_sheet(aoa); ws['!views'] = [{ RTL: rtl }]; ws['!cols'] = widths.map((w) => ({ wch: w })); X.utils.book_append_sheet(wb, ws, name.slice(0, 30)); };
+  const list = (tab) => { const C = mkCols(tab, inReg); sheet(t(`mk_tab_${tab}`, { n: '' }).replace(/[()\s]+$/, ''), [C.map((c) => c[0]), ...mkSorted(S, tab).map((x) => C.map((c) => { const v = c[2](x); return v == null || v === '' ? null : v; }))], C.map((c, k) => (k ? 16 : 54))); };
+  if (all) {
+    sheet(t('mk_x_sum'), [[t('mk_x_filter'), mkFilterText(S)], [t('mk_k_total'), S.total], [t('mk_k_active'), S.active], [t('mk_k_awarded'), S.awarded], [t('mk_x_wknown'), S.winnerKnown],
+      [t('mk_k_value'), S.value], [t('mk_x_vknown'), S.valueKnown], [t('mk_k_median'), S.medianValue], [t('mk_k_bidders'), S.medianBidders], [t('mk_k_entities'), S.entities.length],
+      [t('mk_k_winners'), S.winners.length], [t('mk_k_us'), S.us], [t('mk_x_uswon'), S.usWon], [t('mk_x_pulled'), etRadar.pulledAt || '']], [34, 60]);
+    for (const tab of MK_TABS) list(tab);
+    sheet(t('mk_x_months'), [[t('mk_c_month'), t('mk_c_n'), t('mk_c_awarded'), t('mk_c_value'), t('mk_c_valued')], ...S.months.map((m) => [m.month, m.n, m.awarded, m.value, m.valued])], [12, 12, 12, 18, 14]);
+  } else list(mkF.tab);
+  X.writeFile(wb, `AFAQY-market-${all ? 'all' : mkF.tab}-${mkF.period}${mkF.who || mkF.q ? '-filtered' : ''}-${tdToday()}.xlsx`);
+}
+let mkDraw = () => {};
+function mkOpen() {
+  if (!etRadar || !etRadar.tenders.length) { toast(t('mk_empty')); return; }
+  const body = el('div', { class: 'mk-body' });
+  const dlg = el('dialog', { class: 'cr-modal et-modal mk-modal', 'aria-labelledby': 'mk-h' },
+    el('div', { class: 'crm-head' }, el('h2', { id: 'mk-h', text: `📊 ${t('mk_title')}` }),
+      el('span', { class: 'row mk-xl' }, el('button', { type: 'button', class: 'btn tiny mk-xl-one', text: `⬇ ${t('mk_xl_list')}`, onclick: () => mkExcel(false) }),
+        el('button', { type: 'button', class: 'btn tiny primary mk-xl-all', text: `⬇ ${t('mk_xl_all')}`, onclick: () => mkExcel(true) }))),
+    el('p', { class: 'hint', text: t('mk_lead') }), body);
+  mkDraw = () => {
+    if (!dlg.isConnected) return;
+    const S = mkStats(), inReg = new Set();
+    for (const i of tenders ? tenders.items : []) { const x = radarFind(i, etRadar.tenders, tdKey); if (x) inReg.add(x.ref); }
+    const pill = (on, text, f, cls = '') => el('button', { type: 'button', class: `pill-btn${on ? ' on' : ''}${cls ? ` ${cls}` : ''}`, 'aria-pressed': String(on), text, onclick: () => { f(); mkF.limit = 200; mkDraw(); } });
+    const tile = (v, l, s) => el('div', { class: 'km-tile' }, el('b', { text: String(v) }), el('span', { text: l }), s ? el('small', { class: 'hint', text: s }) : null);
+    const dateIn = (k) => el('label', { class: 'mk-date' }, el('span', { text: t(`mk_${k}`) }), el('input', { type: 'date', value: mkF[k], class: `mk-${k}`, onchange: (e) => { mkF[k] = e.target.value; mkF.limit = 200; mkDraw(); } }));
+    const maxM = Math.max(1, ...S.months.map((m) => m.n));
+    const tab = mkF.tab, C = mkCols(tab, inReg), L = mkSorted(S, tab), shown = L.slice(0, mkF.limit), count = (k) => (k === 'ours' ? S.us : k === 'tenders' ? S.total : S[k].length);
+    set(body,
+      el('div', { class: 'row mk-filters' },
+        el('label', { class: 'mk-period' }, el('span', { text: t('mk_p_label') }), el('select', { class: 'mk-p', 'aria-label': t('mk_p_label'), onchange: (e) => { mkF.period = e.target.value; mkF.limit = 200; mkDraw(); } },
+          mkPeriods(etRadar).map(([k, l]) => el('option', { value: k, text: l, ...(k === mkF.period ? { selected: '' } : {}) })))),
+        mkF.period === 'custom' ? [dateIn('from'), dateIn('to')] : null,
+        el('div', { class: 'pills' }, pill(mkF.scope === 'all', t('mk_f_all'), () => { mkF.scope = 'all'; }, 'mk-sc-all'), pill(mkF.scope === 'afaqy', t('mk_f_afaqy'), () => { mkF.scope = 'afaqy'; }, 'mk-sc-afaqy')),
+        el('div', { class: 'pills' }, pill(!mkF.west, t('mk_f_ksa'), () => { mkF.west = false; }), pill(mkF.west, t('mk_f_west'), () => { mkF.west = true; }, 'mk-west')),
+        el('div', { class: 'pills' }, ['all', 'active', 'awarded'].map((st) => pill(mkF.status === st, t(`mk_f_st_${st}`), () => { mkF.status = st; }, `mk-st-${st}`))),
+        el('input', { type: 'search', class: 'mk-q', value: mkF.q, placeholder: t('mk_q'), 'aria-label': t('mk_q'), oninput: (e) => { mkF.q = e.target.value; clearTimeout(mkTm); mkTm = setTimeout(() => { mkF.limit = 200; mkDraw(); const n = dlg.querySelector('.mk-q'); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 300); } })),
+      mkF.who ? el('p', { class: 'crm-filter mk-who-on' }, el('span', { text: t('mk_who', { k: t(`mk_who_k_${mkF.who.kind}`), n: mkF.who.name }) }), ' ',
+        el('button', { type: 'button', class: 'btn tiny quiet mk-who-off', text: `✕ ${t('mk_who_off')}`, onclick: () => { mkF.who = null; mkF.limit = 200; mkDraw(); } })) : null,
+      el('p', { class: 'hint mk-span', text: S.total ? t('mk_span', { a: S.first || '—', b: S.last || '—', n: S.total }) : t('mk_none') }),
+      S.awarded ? el('p', { class: 'note mk-cover', text: t('mk_cover', { v: S.valueKnown, a: S.awarded, w: S.winnerKnown }) }) : null,
+      el('div', { class: 'crm-tiles mk-tiles' },
+        tile(S.total, t('mk_k_total')), tile(S.active, t('mk_k_active')), tile(S.awarded, t('mk_k_awarded')),
+        tile(tdMoney(S.value), t('mk_k_value'), t('mk_k_value_s', { n: S.valueKnown })), tile(mkNum(S.medianValue), t('mk_k_median')),
+        tile(S.medianBidders == null ? '—' : S.medianBidders, t('mk_k_bidders')), tile(S.entities.length, t('mk_k_entities')), tile(S.winners.length, t('mk_k_winners')),
+        tile(S.us, t('mk_k_us'), t('mk_k_us_s', { w: S.usWon }))),
+      S.months.length > 1 ? el('details', { class: 'mk-months', open: '' }, el('summary', { text: t('mk_months_h') }),
+        el('div', { class: 'crm-bars', role: 'group', tabindex: '0', 'aria-label': t('mk_months_h') }, S.months.map((m, k) => el('div', { class: 'crm-bar', title: t('mk_month_tip', { n: m.n, a: m.awarded, v: tdMoney(m.value) }) },
+          el('span', { class: 'crm-n', text: m.month }), el('span', { class: 'crm-track' }, el('i', { style: `--w:${(m.n / maxM) * 100}%;animation-delay:${Math.min(k, 20) * 30}ms` })), el('b', { text: String(m.n) }))))) : null,
+      el('div', { class: 'pills mk-tabs', role: 'group', 'aria-label': t('mk_tabs') }, MK_TABS.map((k) => pill(tab === k, t(`mk_tab_${k}`, { n: count(k) }), () => { mkF.tab = k; }, `mk-tab mk-tab-${k}`))),
+      el('div', { class: 'row mk-sortrow' }, el('label', {}, el('span', { text: `${t('mk_sort')} ` }), el('select', { class: 'mk-sort', 'aria-label': t('mk_sort'), onchange: (e) => { mkF.sort[tab] = e.target.value; mkDraw(); } },
+        MK_SORTS[tab].map((k) => el('option', { value: k, text: t(`mk_s_${k}`), ...((mkF.sort[tab] || MK_SORTS[tab][0]) === k ? { selected: '' } : {}) })))),
+        ['winners', 'entities', 'activities', 'bidders'].includes(tab) ? el('span', { class: 'hint', text: t('mk_press') }) : null),
+      L.length ? el('div', { class: 'table-wrap crm-list crm-wrap mk-list', tabindex: '0', role: 'group', 'aria-label': t(`mk_tab_${tab}`, { n: L.length }) },
+        el('table', { class: `mk-t mk-t-${tab}` }, el('thead', {}, el('tr', {}, C.filter((c) => c[1]).map((c) => el('th', { text: c[0] })))),
+          el('tbody', {}, shown.map((x) => el('tr', { class: x.us || x.usWon ? 'et-us' : '' }, C.filter((c) => c[1]).map((c, ci) => { const v = c[1](x); return el('td', { class: ci ? 'num' : '', dir: 'auto' }, v); }))))))
+        : el('p', { class: 'empty', text: t('mk_none') }),
+      L.length > shown.length ? el('p', { class: 'row mk-more-row' }, el('span', { class: 'hint', text: t('mk_shown', { a: shown.length, n: L.length }) }),
+        el('button', { type: 'button', class: 'btn tiny mk-more', text: t('mk_more', { n: Math.min(300, L.length - shown.length) }), onclick: () => { mkF.limit += 300; mkDraw(); } })) : null);
+  };
+  dlg.addEventListener('close', () => { dlg.remove(); mkDraw = () => {}; }); document.body.append(dlg); mkDraw(); dlg.showModal();
 }
 // ADR-0127: the final offer (one file, or several) goes onto its tender and makes it ready
 async function tdAddFilesAs(id, files, kind) {
@@ -1851,6 +1973,7 @@ function renderTenders() {
     tdEmailPicker(),
     (() => { const R = etRadar, act = R ? R.tenders.filter((x) => etOpenNow(x) && x.scope && !etIgnored().has(x.ref)).length : 0;   // v9.60 (ADR-0132)
       return el('p', { class: 'td-radar-line' }, el('button', { type: 'button', class: 'btn td-radar-btn', disabled: !!tdBusy, text: `📡 ${t('et_title')}${R ? ` · ${t('et_btn_n', { n: act })}` : ''}`, onclick: etOpen }), ' ',
+        R ? el('button', { type: 'button', class: 'btn td-market-btn', disabled: !!tdBusy, text: `📊 ${t('mk_btn')}`, onclick: mkOpen }) : null, ' ',
         el('span', { class: 'hint', text: R ? t('et_btn_at', { at: R.pulledAt ? tdWhen(R.pulledAt) : '—' }) : t('et_btn_none') })); })(),
     etResult ? el('div', { role: 'status', class: 'td-study-res et-res' },
       el('button', { type: 'button', class: 'icon-btn td-study-close', text: '✕', title: t('td_res_close'), 'aria-label': t('td_res_close'), onclick: () => { etResult = null; renderTenders(); } }),

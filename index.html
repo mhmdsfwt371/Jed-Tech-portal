@@ -1382,6 +1382,15 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   /* v9.60 (ADR-0132): the Etimad radar */
   .td-radar-line { margin: 6px 0; } .td-radar-btn { font-weight: 600; }
   .et-modal { max-width: 1040px; } .et-head { margin: 4px 0; }
+  /* v9.63 (ADR-0136): the market study */
+  .mk-modal { max-width: 1180px; } .mk-xl { gap: 8px; flex-wrap: wrap; } .mk-filters { gap: 10px; align-items: flex-end; flex-wrap: wrap; margin: 8px 0; }
+  .mk-period, .mk-date { display: flex; flex-direction: column; gap: 2px; font-size: 13px; } .mk-q { min-width: 220px; flex: 1 1 220px; }
+  .mk-tiles { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); } .mk-tiles .km-tile b { font-size: 1.25rem; overflow-wrap: anywhere; }
+  .mk-months summary { cursor: pointer; font-weight: 700; margin: 4px 0; } .mk-months .crm-bars { max-height: 260px; overflow: auto; padding-inline-end: 4px; }
+  .mk-tabs { margin: 12px 0 6px; flex-wrap: wrap; } .mk-sortrow { gap: 12px; align-items: center; flex-wrap: wrap; margin: 4px 0 8px; }
+  .mk-who { font-weight: 700; text-align: start; } .mk-who-on { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; } .mk-more-row { gap: 10px; align-items: center; }
+  .mk-list { max-height: 60vh; } .mk-t td .td-chips { margin-top: 4px; } .mk-cover { margin: 4px 0 8px; }
+  @media (max-width: 640px) { .mk-q { min-width: 0; flex-basis: 100%; } .mk-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .et-pull { justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0; }
   .et-tiles { margin: 8px 0; } .et-filters { flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; } .et-q { min-width: 220px; flex: 1; }
   .et-row td { vertical-align: top; } .et-row.et-in { background: var(--accent-wash); } .et-row .td-chips { margin-top: 4px; gap: 4px; } .et-row .chip { font-size: 12px; padding: 1px 8px; font-weight: 500; } .et-acts { white-space: nowrap; } .et-acts .btn { margin: 2px; }

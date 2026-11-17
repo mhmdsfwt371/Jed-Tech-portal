@@ -1,28 +1,25 @@
 {
-  "version": "9.62",
+  "version": "9.63",
   "date": "2026-11-17",
   "notes": {
     "ar": [
-      "سحب اعتماد صار دراسة للسوق فقط، تُحدَّث كل ثلاثة أو ستة أشهر: لا يغيّر موعدًا ولا سعر كراسة في أي مناقصة. مرجع كل مناقصة ملفات الإيميل ودراسة المحلل وما تكتبه بيدك.",
-      "إذا كان في السحب موعد أو سعر مختلف عن السجل، أو موجود والسجل فاضي، تذكره بطاقة المناقصة ملاحظةً بتاريخ السحب ولا تغيّر شيئًا.",
-      "ما كان سحب اعتماد قد غيّره في النسختين السابقتين يرجع وحده إلى قيمة الإيميل أو الدراسة عند فتح البوابة، ويُكتب ذلك في سجل المناقصة.",
-      "المنافسة التي تتابعها من الرادار تبدأ بما في السحب، ثم تحل محله مواعيد الإيميل والدراسة حين تصل."
+      "جديد في سجل المناقصات: زر «📊 تحليل السوق» بجانب رادار اعتماد. يفتح نافذة تقرأ سحب اعتماد كله لكل المجالات، وتختار فيها الفترة (آخر ثلاثة أو ستة أشهر، السنة الحالية، سنة كاملة، ربع سنة، أو فترة تحددها) والمجال والمنطقة والحالة، فتظهر لوحة بعدد المنافسات المنشورة والمرسّاة ومجموع قيم الترسية والشركات الفائزة والجهات، ومعها القوائم كاملة: المنافسات، والشركات الفائزة، والجهات، والأنشطة، والمتقدمون، وعروض أفاقي.",
+      "اضغط اسم أي شركة أو جهة في القوائم لتعرض منافساتها وحدها، وزر الإكسل ينزّل القائمة المعروضة أو كل القوائم بنفس الاختيار الذي عملته. المبالغ هي ما نشرته اعتماد فقط، والنافذة تقول على كم منافسة بُنيت.",
+      "الرادار يحتفظ الآن بكل ما في ملف السحب وليس بمجال أفاقي وحده، حتى تكون دراسة السوق كاملة. وما زال السحب لا يغيّر بيانات أي مناقصة في السجل."
     ],
     "en": [
-      "The Etimad pull is now a market study only, refreshed every three or six months: it changes no deadline and no booklet fee in any tender. Each tender’s reference is its mail files, the analyzer’s study and what you type.",
-      "When the pull holds a deadline or a fee that differs from the register, or one the register lacks, the tender’s card mentions it as a note with the pull’s date and changes nothing.",
-      "Whatever an Etimad pull changed in the two previous versions goes back by itself to the mail’s or the study’s value when the portal opens, and this is written in the tender’s history.",
-      "A tender you follow from the radar starts with what the pull holds, and the mail’s and the study’s dates take its place when they arrive."
+      "New in the tender register: a «📊 Market analysis» button beside the Etimad radar. It opens a window that reads the whole Etimad pull, across every field of work. Choose the period (the last three or six months, this year, a whole year, a quarter, or a period you set), the field of work, the region and the status, and a dashboard shows how many tenders were published and awarded, the total award value, the winning companies and the entities, together with the complete lists: tenders, winning companies, entities, activities, bidders and AFAQY's bids.",
+      "Press the name of any company or entity in the lists to show its tenders on their own. The Excel button downloads the list shown, or every list, with the same choice you made. The amounts are only what Etimad published, and the window says how many tenders they rest on.",
+      "The radar now keeps everything in the pull file, not only AFAQY's field of work, so the market study is complete. The pull still changes no tender in the register."
     ],
     "ur": [
-      "اعتماد ڈیٹا اب صرف مارکیٹ کا مطالعہ ہے جو ہر تین یا چھ ماہ میں تازہ ہوتا ہے: یہ کسی ٹینڈر کی آخری تاریخ یا کتابچے کی قیمت نہیں بدلتا۔ ہر ٹینڈر کا معیار اس کی ای میل فائلیں، تجزیہ کار کا مطالعہ اور آپ کا لکھا ہوا ہے۔",
-      "جب ڈیٹا میں رجسٹر سے مختلف آخری تاریخ یا قیمت ہو، یا ایسی ہو جو رجسٹر میں نہیں، تو ٹینڈر کا کارڈ اسے ڈیٹا کی تاریخ کے ساتھ ایک نوٹ کے طور پر ذکر کرتا ہے اور کچھ نہیں بدلتا۔",
-      "پچھلے دو ورژنز میں اعتماد ڈیٹا نے جو کچھ بدلا تھا وہ پورٹل کھلنے پر خود بخود ای میل یا مطالعے کی قدر پر واپس آ جاتا ہے، اور یہ ٹینڈر کی تاریخ میں لکھا جاتا ہے۔",
-      "جس ٹینڈر کی آپ ریڈار سے پیروی کریں وہ ڈیٹا کی معلومات سے شروع ہوتا ہے، اور ای میل اور مطالعے کی تاریخیں آنے پر ان کی جگہ لے لیتی ہیں۔"
+      "ٹینڈر رجسٹر میں نیا: اعتماد ریڈار کے ساتھ «📊 مارکیٹ کا تجزیہ» کا بٹن۔ یہ ایک ونڈو کھولتا ہے جو اعتماد کا پورا ڈیٹا، کام کے ہر شعبے کے لیے، پڑھتی ہے۔ مدت (پچھلے تین یا چھ مہینے، یہ سال، پورا ایک سال، ایک سہ ماہی، یا اپنی مقرر کردہ مدت)، کام کا شعبہ، علاقہ اور حالت منتخب کریں، تو ایک ڈیش بورڈ دکھاتا ہے کہ کتنے ٹینڈر شائع ہوئے اور کتنوں کا ایوارڈ ہوا، ایوارڈ کی کل مالیت، جیتنے والی کمپنیاں اور ادارے، اور ساتھ مکمل فہرستیں: ٹینڈر، جیتنے والی کمپنیاں، ادارے، سرگرمیاں، بولی دہندگان اور آفاقی کی بولیاں۔",
+      "فہرستوں میں کسی بھی کمپنی یا ادارے کے نام کو دبائیں تاکہ صرف اسی کے ٹینڈر دکھائی دیں۔ ایکسل کا بٹن دکھائی گئی فہرست، یا تمام فہرستیں، اسی انتخاب کے ساتھ ڈاؤن لوڈ کرتا ہے جو آپ نے کیا۔ رقوم صرف وہی ہیں جو اعتماد نے شائع کیں، اور ونڈو بتاتی ہے کہ وہ کتنے ٹینڈروں پر مبنی ہیں۔",
+      "ریڈار اب ڈیٹا فائل میں موجود سب کچھ رکھتا ہے، صرف آفاقی کا شعبہ نہیں، تاکہ مارکیٹ کا مطالعہ مکمل ہو۔ ڈیٹا اب بھی رجسٹر کے کسی ٹینڈر کو نہیں بدلتا۔"
     ]
   },
   "counts": {
-    "versions": 187,
-    "decisions": 135
+    "versions": 188,
+    "decisions": 136
   }
 }
