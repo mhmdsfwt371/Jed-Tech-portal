@@ -1,25 +1,25 @@
 {
-  "version": "9.63",
+  "version": "9.64",
   "date": "2026-11-17",
   "notes": {
     "ar": [
-      "جديد في سجل المناقصات: زر «📊 تحليل السوق» بجانب رادار اعتماد. يفتح نافذة تقرأ سحب اعتماد كله لكل المجالات، وتختار فيها الفترة (آخر ثلاثة أو ستة أشهر، السنة الحالية، سنة كاملة، ربع سنة، أو فترة تحددها) والمجال والمنطقة والحالة، فتظهر لوحة بعدد المنافسات المنشورة والمرسّاة ومجموع قيم الترسية والشركات الفائزة والجهات، ومعها القوائم كاملة: المنافسات، والشركات الفائزة، والجهات، والأنشطة، والمتقدمون، وعروض أفاقي.",
-      "اضغط اسم أي شركة أو جهة في القوائم لتعرض منافساتها وحدها، وزر الإكسل ينزّل القائمة المعروضة أو كل القوائم بنفس الاختيار الذي عملته. المبالغ هي ما نشرته اعتماد فقط، والنافذة تقول على كم منافسة بُنيت.",
-      "الرادار يحتفظ الآن بكل ما في ملف السحب وليس بمجال أفاقي وحده، حتى تكون دراسة السوق كاملة. وما زال السحب لا يغيّر بيانات أي مناقصة في السجل."
+      "جديد في بطاقة كل مناقصة: زر «🧠 ادرسها بالمحلل». يرسل ملفات المناقصة إلى برنامج محلل المناقصات على جهازك، فيدرسها النموذج المجاني بلا مفتاح خدمة ولا اشتراك، ثم ترجع ملفات الدراسة إلى البطاقة وحدها وتُملأ خاناتها.",
+      "لا يخرج أي ملف من جهازك. إن كان البرنامج مغلقًا يفتحه الزر، وإن لم يكن مثبّتًا تدلّك البطاقة على تنزيله وتثبيته مرة واحدة. ويمكنك إغلاق الصفحة أثناء الدراسة ثم العودة لاستلام الملفات.",
+      "صفحة «محلل المناقصات — تحميل ودليل» حُدّثت للإصدار ٣ من البرنامج: بلا مفتاح خدمة، وبنموذج مجاني يُنزَّل ويُثبَّت وحده، وبخطوات الربط مع البوابة."
     ],
     "en": [
-      "New in the tender register: a «📊 Market analysis» button beside the Etimad radar. It opens a window that reads the whole Etimad pull, across every field of work. Choose the period (the last three or six months, this year, a whole year, a quarter, or a period you set), the field of work, the region and the status, and a dashboard shows how many tenders were published and awarded, the total award value, the winning companies and the entities, together with the complete lists: tenders, winning companies, entities, activities, bidders and AFAQY's bids.",
-      "Press the name of any company or entity in the lists to show its tenders on their own. The Excel button downloads the list shown, or every list, with the same choice you made. The amounts are only what Etimad published, and the window says how many tenders they rest on.",
-      "The radar now keeps everything in the pull file, not only AFAQY's field of work, so the market study is complete. The pull still changes no tender in the register."
+      "New on every tender's card: a «🧠 Study it with the Analyzer» button. It sends the tender's files to the Tender Analyzer program on your computer, the free model studies them with no service key and no subscription, then the study's files come back to the card by themselves and fill its fields.",
+      "No file leaves your computer. If the program is closed the button opens it, and if it is not installed the card points you to downloading and installing it once. You may close the page while the study runs, then come back to collect the files.",
+      "The page «Tender Analyzer — download and manual» was updated for version 3 of the program: no service key, a free model that downloads and installs by itself, and the steps of the link with the portal."
     ],
     "ur": [
-      "ٹینڈر رجسٹر میں نیا: اعتماد ریڈار کے ساتھ «📊 مارکیٹ کا تجزیہ» کا بٹن۔ یہ ایک ونڈو کھولتا ہے جو اعتماد کا پورا ڈیٹا، کام کے ہر شعبے کے لیے، پڑھتی ہے۔ مدت (پچھلے تین یا چھ مہینے، یہ سال، پورا ایک سال، ایک سہ ماہی، یا اپنی مقرر کردہ مدت)، کام کا شعبہ، علاقہ اور حالت منتخب کریں، تو ایک ڈیش بورڈ دکھاتا ہے کہ کتنے ٹینڈر شائع ہوئے اور کتنوں کا ایوارڈ ہوا، ایوارڈ کی کل مالیت، جیتنے والی کمپنیاں اور ادارے، اور ساتھ مکمل فہرستیں: ٹینڈر، جیتنے والی کمپنیاں، ادارے، سرگرمیاں، بولی دہندگان اور آفاقی کی بولیاں۔",
-      "فہرستوں میں کسی بھی کمپنی یا ادارے کے نام کو دبائیں تاکہ صرف اسی کے ٹینڈر دکھائی دیں۔ ایکسل کا بٹن دکھائی گئی فہرست، یا تمام فہرستیں، اسی انتخاب کے ساتھ ڈاؤن لوڈ کرتا ہے جو آپ نے کیا۔ رقوم صرف وہی ہیں جو اعتماد نے شائع کیں، اور ونڈو بتاتی ہے کہ وہ کتنے ٹینڈروں پر مبنی ہیں۔",
-      "ریڈار اب ڈیٹا فائل میں موجود سب کچھ رکھتا ہے، صرف آفاقی کا شعبہ نہیں، تاکہ مارکیٹ کا مطالعہ مکمل ہو۔ ڈیٹا اب بھی رجسٹر کے کسی ٹینڈر کو نہیں بدلتا۔"
+      "ہر ٹینڈر کے کارڈ پر نیا: «🧠 تجزیہ کار سے مطالعہ کریں» کا بٹن۔ یہ ٹینڈر کی فائلیں آپ کے کمپیوٹر پر موجود ٹینڈر تجزیہ کار پروگرام کو بھیجتا ہے، مفت ماڈل کسی سروس کلید یا سبسکرپشن کے بغیر ان کا مطالعہ کرتا ہے، پھر مطالعے کی فائلیں خود بخود کارڈ پر واپس آتی ہیں اور اس کے خانے بھر دیتی ہیں۔",
+      "کوئی فائل آپ کے کمپیوٹر سے باہر نہیں جاتی۔ اگر پروگرام بند ہو تو بٹن اسے کھول دیتا ہے، اور اگر انسٹال نہ ہو تو کارڈ اسے ایک بار ڈاؤن لوڈ اور انسٹال کرنے کی رہنمائی کرتا ہے۔ مطالعے کے دوران آپ صفحہ بند کر سکتے ہیں، پھر واپس آ کر فائلیں وصول کر سکتے ہیں۔",
+      "صفحہ «ٹینڈر تجزیہ کار — ڈاؤن لوڈ اور گائیڈ» پروگرام کے ورژن 3 کے مطابق تازہ کیا گیا: سروس کلید کے بغیر، ایک مفت ماڈل جو خود ڈاؤن لوڈ اور انسٹال ہوتا ہے، اور پورٹل کے ساتھ ربط کے مراحل۔"
     ]
   },
   "counts": {
-    "versions": 188,
-    "decisions": 136
+    "versions": 189,
+    "decisions": 137
   }
 }

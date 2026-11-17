@@ -61,7 +61,17 @@ for (const [name, src] of [['index.html', html], ['app.js', appWithoutPro], ['co
   if (/afaqy\.sa|afaqy\.pro\/|crmbackend/.test((name === 'config.js' ? src.replace(/https:\/\/[^\s"']+/g, '') : src.replace(/https:\/\/afaqy\.pro\/'/g, '')))) note(`${name}: an Afaqy API address appeared — the portal never calls an Afaqy API`);
   const calls = [...src.matchAll(/fetch\(\s*([^,)]+)/g)].map((m) => m[1].trim());
   // ADR-0107: the changelog and the decisions are no longer read by the portal, so they are no longer allowed
-  for (const c of calls) if (!["'./version.json'", "'./team.json'", "'./weights.json'", "'./systems.json'"].includes(c)) note(`${name}: network call to ${c} — the only allowed reads are the site's own version.json, team.json and weights.json`);
+  // ADR-0137: one more door, and only one — the Tender Analyzer on this very computer (rule 30 below holds it to that)
+  for (const c of calls) if (!["'./version.json'", "'./team.json'", "'./weights.json'", "'./systems.json'"].includes(c) && !(name === 'app.js' && c === 'ANALYZER.base + path')) note(`${name}: network call to ${c} — the only allowed reads are the site's own version.json, team.json and weights.json`);
+}
+
+// 30. ADR-0137: the Tender Analyzer link. The page reaches one address, on this computer only, through one function; the
+// address that opens the program is our own protocol; and nothing but a tender's own documents is sent.
+{
+  if (!/export const ANALYZER = \{ schema: 'afaqy-analyzer-link\/v1', base: 'http:\/\/127\.0\.0\.1:47615', open: 'afaqy-tender:\/\/open' \};/.test(core)) note('core.js: ANALYZER must be the program on this computer only — http://127.0.0.1:47615 and afaqy-tender://open (ADR-0137)');
+  if ((app.match(/ANALYZER\.base/g) || []).length !== 1 || !/async function anCall\(path, init = \{\}\) \{[^\n]*\n  const res = await fetch\(ANALYZER\.base \+ path,/.test(app)) note('app.js: the Analyzer is reached through anCall() alone (ADR-0137)');
+  if (/127\.0\.0\.1|localhost/.test(app)) note('app.js: no address of this computer is written in the page; it comes from ANALYZER in core.js (ADR-0137)');
+  if (!/const AN_SEND_KINDS = \['booklet', 'boq', 'sheet', 'other', 'proof'\];/.test(core)) note('core.js: the Analyzer receives a tender\'s own documents only — not the mail, not a study or an offer (ADR-0137)');
 }
 
 // 5. The service worker stays inside this folder, so the other tools on the same domain are never taken over.

@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.64 — 2026-11-17
+
+- جديد في بطاقة كل مناقصة: زر «🧠 ادرسها بالمحلل». يرسل ملفات المناقصة إلى برنامج محلل المناقصات على جهازك، فيدرسها النموذج المجاني بلا مفتاح خدمة ولا اشتراك، ثم ترجع ملفات الدراسة إلى البطاقة وحدها وتُملأ خاناتها.
+- لا يخرج أي ملف من جهازك. إن كان البرنامج مغلقًا يفتحه الزر، وإن لم يكن مثبّتًا تدلّك البطاقة على تنزيله وتثبيته مرة واحدة. ويمكنك إغلاق الصفحة أثناء الدراسة ثم العودة لاستلام الملفات.
+- صفحة «محلل المناقصات — تحميل ودليل» حُدّثت للإصدار ٣ من البرنامج: بلا مفتاح خدمة، وبنموذج مجاني يُنزَّل ويُثبَّت وحده، وبخطوات الربط مع البوابة.
+
+<details><summary>English</summary>
+
+- New on every tender's card: a «🧠 Study it with the Analyzer» button. It sends the tender's files to the Tender Analyzer program on your computer, the free model studies them with no service key and no subscription, then the study's files come back to the card by themselves and fill its fields.
+- No file leaves your computer. If the program is closed the button opens it, and if it is not installed the card points you to downloading and installing it once. You may close the page while the study runs, then come back to collect the files.
+- The page «Tender Analyzer — download and manual» was updated for version 3 of the program: no service key, a free model that downloads and installs by itself, and the steps of the link with the portal.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ہر ٹینڈر کے کارڈ پر نیا: «🧠 تجزیہ کار سے مطالعہ کریں» کا بٹن۔ یہ ٹینڈر کی فائلیں آپ کے کمپیوٹر پر موجود ٹینڈر تجزیہ کار پروگرام کو بھیجتا ہے، مفت ماڈل کسی سروس کلید یا سبسکرپشن کے بغیر ان کا مطالعہ کرتا ہے، پھر مطالعے کی فائلیں خود بخود کارڈ پر واپس آتی ہیں اور اس کے خانے بھر دیتی ہیں۔
+- کوئی فائل آپ کے کمپیوٹر سے باہر نہیں جاتی۔ اگر پروگرام بند ہو تو بٹن اسے کھول دیتا ہے، اور اگر انسٹال نہ ہو تو کارڈ اسے ایک بار ڈاؤن لوڈ اور انسٹال کرنے کی رہنمائی کرتا ہے۔ مطالعے کے دوران آپ صفحہ بند کر سکتے ہیں، پھر واپس آ کر فائلیں وصول کر سکتے ہیں۔
+- صفحہ «ٹینڈر تجزیہ کار — ڈاؤن لوڈ اور گائیڈ» پروگرام کے ورژن 3 کے مطابق تازہ کیا گیا: سروس کلید کے بغیر، ایک مفت ماڈل جو خود ڈاؤن لوڈ اور انسٹال ہوتا ہے، اور پورٹل کے ساتھ ربط کے مراحل۔
+
+</div>
+</details>
+
+
 ## v9.63 — 2026-11-17
 
 - جديد في سجل المناقصات: زر «📊 تحليل السوق» بجانب رادار اعتماد. يفتح نافذة تقرأ سحب اعتماد كله لكل المجالات، وتختار فيها الفترة (آخر ثلاثة أو ستة أشهر، السنة الحالية، سنة كاملة، ربع سنة، أو فترة تحددها) والمجال والمنطقة والحالة، فتظهر لوحة بعدد المنافسات المنشورة والمرسّاة ومجموع قيم الترسية والشركات الفائزة والجهات، ومعها القوائم كاملة: المنافسات، والشركات الفائزة، والجهات، والأنشطة، والمتقدمون، وعروض أفاقي.

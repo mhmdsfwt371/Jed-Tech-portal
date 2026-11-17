@@ -1856,6 +1856,43 @@ test('v9.63: the market periods — last quarter, half year, this year, a year, 
   assert.deepEqual(core.marketPeriod('custom', '2026-11-17', '2025-01-05', 'x'), { from: '2025-01-05', to: '' });
   assert.deepEqual(core.marketPeriod('all', '2026-11-17'), { from: '', to: '' });
 });
+// v9.64 (ADR-0137): the Tender Analyzer inside the card
+test('v9.64: the page talks to the program on this computer only, and only in our protocol', () => {
+  assert.equal(core.ANALYZER.base, 'http://127.0.0.1:47615', 'this computer, never the network');
+  assert.deepEqual(core.parseAnalyzerHello({ schema: 'afaqy-analyzer-link/v1', app: 'TenderAnalyzer', version: '3.1.0', engine: 'local', busy: false, job: null }), { version: '3.1.0', engine: 'local', busy: false, job: '' });
+  assert.deepEqual(core.parseAnalyzerHello({ schema: 'x', app: 'TenderAnalyzer' }), { error: 'schema' }, 'another program on the same port is not ours');
+  assert.deepEqual(core.parseAnalyzerHello('<html>'), { error: 'schema' });
+  const j = core.parseAnalyzerJob({ schema: 'afaqy-analyzer-link/v1', job: 't-1', state: 'running', stage: 2, progress: 7, message: 'قراءة', error: '',
+    outputs: [{ name: 'a.xlsx', size: 10 }, { name: '../b.xlsx', size: 10 }, { name: 'a.xlsx', size: 10 }, { name: 'c.pptx', size: 0 }, { name: '.hidden', size: 3 }, null] });
+  assert.deepEqual([j.state, j.stage, j.progress, j.message], ['running', 2, 1, 'قراءة']);
+  assert.deepEqual(j.outputs, [{ name: 'a.xlsx', size: 10 }], 'a path, a repeat, an empty file and a hidden file are dropped');
+  assert.equal(core.parseAnalyzerJob({ schema: 'afaqy-analyzer-link/v1', job: 't-1', state: 'dancing' }).state, 'failed', 'a state we do not know is not success');
+  assert.deepEqual(core.parseAnalyzerJob({ schema: 'afaqy-analyzer-link/v1' }), { error: 'schema' });
+});
+test('v9.64: a tender has one job name, and the card sends its own documents only', () => {
+  const a = core.analyzerJobId('توريد وتركيب داش كام'), b = core.analyzerJobId('توريد وتركيب داش كام 2');
+  assert.match(a, /^t-[0-9a-f]{16}$/); assert.equal(a, core.analyzerJobId('توريد وتركيب داش كام')); assert.notEqual(a, b);
+  const f = (id, name, kind, mailKey = '') => ({ id, name, kind, mailKey });
+  const s = core.analyzerSend({ files: [f('1', 'mail.msg', 'original'), f('2', 'كراسة الشروط.pdf', 'booklet'), f('3', 'BOQ.xlsx', 'boq'), f('4', 'BOQ.xlsx', 'boq'), f('5', 'our offer.pptx', 'offer'),
+    f('6', 'T_Study_AR.pptx', 'study', 'analyzer:t-1'), f('7', 'run.exe', 'other'), f('8', 'a/b:c.pdf', 'other')] });
+  assert.deepEqual(s.files, [{ id: '2', name: 'كراسة الشروط.pdf' }, { id: '3', name: 'BOQ.xlsx' }, { id: '4', name: 'BOQ (2).xlsx' }, { id: '8', name: 'a b c.pdf' }]);
+  assert.equal(s.skipped, 3, 'our own offer, the program\'s earlier study and a file it cannot read are counted; the mail itself is not');
+  assert.deepEqual(core.analyzerSend({ files: [] }), { files: [], skipped: 0 });
+});
+test('v9.64: what the program wrote takes its place on the card, and one file fills the fields', () => {
+  const k = core.analyzerOutputKind;
+  assert.deepEqual([k('AFAQY_Tender_T_Study_AR.pptx'), k('AFAQY_Tender_T_Workbook_AR.xlsx'), k('AFAQY_Tender_T_Inquiries_AR.docx'), k('T.tender-study.json'), k('AFAQY_Tender_T_Offer_AR.pptx'),
+    k('AFAQY_Tender_T_Offer_AR.pdf'), k('AFAQY_Tender_T_BOQ_Priced_AR.xlsx'), k('AFAQY_Tender_T_Offer_AR.xlsx'), k('AFAQY_Tender_T_Datasheets_AR.pdf')],
+  ['study', 'study', 'study', 'study', 'offer', 'offer', 'financial', 'financial', 'technical']);
+  assert.equal(core.analyzerStudyFile([{ name: 'AFAQY_Tender_T_Workbook_AR.xlsx' }, { name: 'T.tender-study.json' }]), 'T.tender-study.json');
+  assert.equal(core.analyzerStudyFile([{ name: 'AFAQY_Tender_T_Workbook_AR.xlsx' }, { name: 'x.pptx' }]), 'AFAQY_Tender_T_Workbook_AR.xlsx');
+  assert.equal(core.analyzerStudyFile([{ name: 'x.pptx' }]), '');
+  const job = core.analyzerJobId('x');
+  assert.deepEqual(core.cleanAnalyzer({ job, state: 'done', at: '2026-11-17T21:30:55', files: 6, extra: 1 }), { job, state: 'done', at: '2026-11-17T21:30', error: '', files: 6 });
+  assert.equal(core.cleanAnalyzer({ job: '../x', state: 'done' }), null);
+  assert.deepEqual(core.cleanTenderDetails({ analyzer: { job, state: 'running', at: '2026-11-17T21:30' } }).analyzer, { job, state: 'running', at: '2026-11-17T21:30', error: '', files: 0 }, 'kept with the tender, so a reload finds the study again');
+  assert.equal('analyzer' in core.cleanTenderDetails({}), false);
+});
 test('v9.63: finding a register row in a whole pull of 30,000 tenders stays quick', () => {
   const L = Array.from({ length: 30000 }, (_, i) => ({ ref: String(261100000000 + i), no: '', title: `منافسة رقم ${i}` }));
   const t0 = Date.now(); let n = 0;

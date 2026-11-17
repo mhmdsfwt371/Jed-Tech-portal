@@ -2872,6 +2872,66 @@ export function radarOurBids(radar) {
   return (radar.tenders || []).filter((x) => refs.has(x.ref)).map((x) => ({ ...radarResult(x.ref, radar), ref: x.ref, title: x.title, entity: x.entity, published: x.published }))
     .sort((p, q) => (q.published || '').localeCompare(p.published || ''));
 }
+// ---------- v9.64 (ADR-0137): the Tender Analyzer inside the card — a program on this computer, reached from the page ----------
+/** The program's own address on this computer (never the network), the name of the protocol it speaks, and the address
+ *  that opens it when it is closed. The page talks to nothing else here. */
+export const ANALYZER = { schema: 'afaqy-analyzer-link/v1', base: 'http://127.0.0.1:47615', open: 'afaqy-tender://open' };
+const AN_STATES = ['waiting', 'running', 'done', 'failed'];
+const AN_SEND_KINDS = ['booklet', 'boq', 'sheet', 'other', 'proof'];
+const AN_EXT = /\.(pdf|xlsx|xlsm|xls|docx|doc|csv|txt|png|jpe?g|zip|pptx)$/i;
+const anStr = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
+/** The program's greeting, checked: only a reply in our protocol counts as the program. */
+export function parseAnalyzerHello(raw) {
+  if (!raw || typeof raw !== 'object' || raw.schema !== ANALYZER.schema || raw.app !== 'TenderAnalyzer') return { error: 'schema' };
+  return { version: anStr(raw.version, 20), engine: raw.engine === 'bridge' ? 'bridge' : 'local', busy: raw.busy === true, job: anStr(raw.job, 48) };
+}
+/** Where a study stands, checked. A file name is a name, never a path; a state we do not know is «failed». */
+export function parseAnalyzerJob(raw) {
+  if (!raw || typeof raw !== 'object' || raw.schema !== ANALYZER.schema || !anStr(raw.job, 48)) return { error: 'schema' };
+  const p = Number(raw.progress), seen = new Set();
+  const outputs = (Array.isArray(raw.outputs) ? raw.outputs : []).filter((o) => o && typeof o.name === 'string' && o.name.length && o.name.length <= 200 && !/[\\/\u0000-\u001f]/.test(o.name) && !o.name.startsWith('.')
+    && Number.isSafeInteger(o.size) && o.size > 0 && !seen.has(o.name) && seen.add(o.name)).slice(0, 60).map((o) => ({ name: o.name, size: o.size }));
+  return { job: anStr(raw.job, 48), state: AN_STATES.includes(raw.state) ? raw.state : 'failed', stage: Number.isSafeInteger(raw.stage) ? raw.stage : -1,
+    progress: Number.isFinite(p) ? Math.min(1, Math.max(0, p)) : 0, message: anStr(raw.message, 300), error: anStr(raw.error, 500), outputs };
+}
+/** A job's name for a tender: the same every time for the same tender, in letters the program's address accepts. */
+export function analyzerJobId(id) {
+  let h = 0x811c9dc5, g = 0x01000193;
+  for (const ch of String(id || '')) { const c = ch.codePointAt(0); h = Math.imul(h ^ (c & 0xff), 0x01000193) >>> 0; h = Math.imul(h ^ (c >>> 8), 0x01000193) >>> 0; g = (Math.imul(g, 31) + c) >>> 0; }
+  return `t-${h.toString(16).padStart(8, '0')}${g.toString(16).padStart(8, '0')}`;
+}
+/** What the card hands to the program: the tender's own documents — the booklet, the bill of quantities, annexes. Not the
+ *  mail itself, and not a study or an offer the program (or we) wrote. Two files with one name get different names. */
+export function analyzerSend(item) {
+  const used = new Set(), files = [];
+  let skipped = 0;
+  for (const f of (item && item.files) || []) {
+    if (!f || !AN_SEND_KINDS.includes(f.kind) || !AN_EXT.test(f.name || '') || String(f.mailKey || '').startsWith('analyzer:')) { if (f && f.kind !== 'original') skipped++; continue; }
+    let name = String(f.name).replace(/[\\/:*?"<>|\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+    for (let k = 2; used.has(name.toLowerCase()); k++) name = name.replace(/( \(\d+\))?(\.[^.]+)$/, ` (${k})$2`);
+    used.add(name.toLowerCase()); files.push({ id: f.id, name });
+  }
+  return { files: files.slice(0, 60), skipped: skipped + Math.max(0, files.length - 60) };
+}
+/** The kind a file the program wrote takes on the card. */
+export function analyzerOutputKind(name) {
+  const n = String(name || '');
+  if (/_Offer_(Technical_)?AR\.(pptx|pdf)$/i.test(n)) return 'offer';
+  if (/_BOQ_Priced_|_Offer_(AR|EN)\.xlsx$/i.test(n)) return 'financial';
+  if (/_Datasheets_/i.test(n)) return 'technical';
+  return 'study';
+}
+/** The one file whose fields fill the card: the register file the program writes for the portal, else its study workbook. */
+export function analyzerStudyFile(outputs) {
+  const names = (outputs || []).map((o) => o.name);
+  return names.find((n) => /\.tender-study\.json$/i.test(n)) || names.find((n) => /_Workbook_AR\.xlsx$/i.test(n)) || '';
+}
+/** What a tender remembers of its study by the program: the job, how it ended and when. */
+export function cleanAnalyzer(a) {
+  if (!a || typeof a !== 'object' || !/^t-[0-9a-f]{16}$/.test(a.job || '')) return null;
+  return { job: a.job, state: ['running', 'done', 'failed'].includes(a.state) ? a.state : 'failed', at: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(a.at || '') ? a.at.slice(0, 16) : '',
+    error: anStr(a.error, 300), files: Number.isSafeInteger(a.files) && a.files >= 0 ? a.files : 0 };
+}
 // ---------- v9.63 (ADR-0136): the market study — the pull read for a period, a field of work and a status ----------
 const mGroup = (L) => { const m = new Map(); for (const x of L || []) { const a = m.get(x.ref); if (a) a.push(x); else m.set(x.ref, [x]); } return m; };
 const mMedian = (L) => { const s = L.filter((v) => v != null).sort((a, b) => a - b), k = s.length >> 1; return s.length ? (s.length % 2 ? s[k] : (s[k - 1] + s[k]) / 2) : null; };
@@ -3195,6 +3255,7 @@ export function cleanTenderDetails(item) {
     etimadWas: list(item.etimadWas).filter((w) => w && [...fields, 'fees'].includes(w.field)).slice(-10).map((w) => ({ field: w.field, was: string(w.was, 40), src: ['mail','document','manual','analyzer','etimad',''].includes(w.src) ? w.src : '' })),
     evidence: Object.fromEntries(Object.entries(item.evidence && typeof item.evidence === 'object' ? item.evidence : {}).filter(([key]) => [...TENDER_STUDY_FIELDS, ...fields].includes(key)).map(([key, v]) => [key, { file: string(v?.file, 160), page: Number.isSafeInteger(v?.page) && v.page > 0 ? v.page : null, quote: string(v?.quote, 240) }])),
     studyDecision: ['go','no-go','review'].includes(item.studyDecision) ? item.studyDecision : '', studyWhy: string(item.studyWhy, 400), studyAt: string(item.studyAt, 35),
+    ...(cleanAnalyzer(item.analyzer) ? { analyzer: cleanAnalyzer(item.analyzer) } : {}),   // v9.64 (ADR-0137): the study by the program on this computer
     messages: list(item.messages).filter((m) => m && string(m.key, 400)).map((m) => ({
       key: string(m.key, 400), messageId: string(m.messageId, 320), hash: string(m.hash, 64),
       subject: string(m.subject, 300), sender: string(m.sender, 120), date: day(m.date), warnings: Number.isSafeInteger(m.warnings) && m.warnings > 0 ? m.warnings : 0,

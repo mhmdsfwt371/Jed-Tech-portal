@@ -15,6 +15,7 @@ import {
   maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply,
   tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds, tenderAmount, tenderDatePatch, backupDue, parseTenderStudy, matchTenderStudy, applyTenderStudy, tenderAutoStage, tenderStudyFromSheet,
   RADAR_SCHEMA, parseRadar, radarFromSheets, radarMerge, radarFind, radarSuggest, applyEtimad, radarToItem, etimadLinkPatch, tenderUndoEtimad, radarResult, tenderOutcome, radarSimilar, radarOurBids, tenderFunnel, tenderArchive, marketStats, marketPeriod,
+  ANALYZER, parseAnalyzerHello, parseAnalyzerJob, analyzerJobId, analyzerSend, analyzerOutputKind, analyzerStudyFile,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
   mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts,
@@ -1348,6 +1349,139 @@ function mkOpen() {
   };
   dlg.addEventListener('close', () => { dlg.remove(); mkDraw = () => {}; }); document.body.append(dlg); mkDraw(); dlg.showModal();
 }
+// ---------- v9.64 (ADR-0137): the Tender Analyzer inside the card ----------
+// The card hands the tender's documents to the program on this computer (its own address only — nothing goes to the network), the
+// free local model studies them there, and the study's files come back to the card by themselves. The page speaks our own
+// protocol (`afaqy-analyzer-link/v1`); a reply that is not in it is not the program.
+const anRun = new Map();          // tender id -> { phase, pct, msg, error, timer } while this page is following a study
+const AN_T = { poll: 3000, wake: 2000, tries: 15 };   // how often the program is asked, and how long a closed program is given to open
+async function anCall(path, init = {}) {   // the one door to the program: every request of the link goes through here
+  const res = await fetch(ANALYZER.base + path, { cache: 'no-store', targetAddressSpace: 'loopback', ...init });   // Chrome asks the user once before a page reaches this computer
+  return res;
+}
+async function anHello() { try { const r = await anCall('/v1/hello'); if (!r.ok) return null; const h = parseAnalyzerHello(await r.json()); return h.error ? null : h; } catch { return null; } }
+async function anJob(job) { try { const r = await anCall(`/v1/jobs/${job}`); if (r.status === 404) return { missing: true }; if (!r.ok) return null; const j = parseAnalyzerJob(await r.json()); return j.job ? j : null; } catch { return null; } }   // a job's own «error» is its reason for failing, not a bad reply
+const anSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function anSet(id, patch) { const st = { ...(anRun.get(id) || {}), ...patch }; anRun.set(id, st); anDraw(id); return st; }
+function anStop(id) { const st = anRun.get(id); if (st && st.timer) clearTimeout(st.timer); }
+// the program is closed: the address Windows learned opens it, then it is asked again until it answers
+async function anWake(id) {
+  anSet(id, { phase: 'opening' });
+  try { const a = el('a', { href: ANALYZER.open, hidden: '' }); document.body.append(a); a.click(); a.remove(); } catch { /* no handler: the wait below ends in «not found» */ }
+  for (let k = 0; k < AN_T.tries; k++) { await anSleep(AN_T.wake); const h = await anHello(); if (h) return h; if (!anRun.has(id)) return null; }
+  return null;
+}
+async function tdAnalyze(id) {
+  const item = tenders?.items.find((r) => r.id === id); if (!item) return;
+  const now = anRun.get(id); if (now && AN_BUSY.includes(now.phase)) return;
+  const send = analyzerSend(item);
+  if (!send.files.length) { anSet(id, { phase: 'nofiles', error: '' }); return; }
+  anSet(id, { phase: 'connect', pct: 0, msg: '', error: '' });
+  const hello = (await anHello()) || (await anWake(id));
+  if (!hello) { anSet(id, { phase: 'missing' }); return; }
+  const job = analyzerJobId(id);
+  if (hello.busy && hello.job !== job) { anSet(id, { phase: 'busy' }); return; }
+  try {
+    if (hello.job !== job) {
+      anSet(id, { phase: 'sending', pct: 0 });
+      let r = await anCall('/v1/jobs', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: job, subject: tdTitle(item.subject).slice(0, 200) }) });
+      if (!r.ok) throw new Error('job');
+      for (const [k, f] of send.files.entries()) {
+        const file = item.files.find((x) => x.id === f.id);
+        r = await anCall(`/v1/jobs/${job}/files/${encodeURIComponent(f.name)}`, { method: 'PUT', body: file.blob });
+        if (!r.ok) throw new Error('file');
+        anSet(id, { pct: (k + 1) / send.files.length, msg: f.name });
+      }
+      r = await anCall(`/v1/jobs/${job}/start`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+      if (r.status === 409) { anSet(id, { phase: 'busy' }); return; }
+      if (!r.ok) throw new Error('start');
+    }
+    await tdUpdate(id, { analyzer: { job, state: 'running', at: tdNowWall().slice(0, 16), error: '', files: send.files.length } }, tdActivity('study', t('an_act_sent', { n: send.files.length })));
+    anSet(id, { phase: 'running', pct: 0, msg: '' });
+    anFollow(id);
+  } catch { anSet(id, { phase: 'error' }); }
+}
+// follow a study the program is running: where it stands, every few seconds, until it ends
+function anFollow(id) {
+  anStop(id);
+  const tick = async () => {
+    const item = tenders?.items.find((r) => r.id === id), a = item && item.analyzer; if (!a || !anRun.has(id)) return;
+    const j = await anJob(a.job);
+    if (!j) { anSet(id, { phase: 'lost', timer: setTimeout(tick, AN_T.poll * 2) }); return; }   // the program was closed: keep asking, quietly
+    if (j.missing) { await tdUpdate(id, { analyzer: { ...a, state: 'failed', error: 'gone' } }); anSet(id, { phase: 'failed', error: t('an_err_gone') }); return; }
+    if (j.state === 'running' || j.state === 'waiting') { anSet(id, { phase: 'running', pct: j.progress, msg: j.message, timer: setTimeout(tick, AN_T.poll) }); return; }
+    if (j.state === 'failed') { await tdUpdate(id, { analyzer: { ...a, state: 'failed', error: j.error === 'closed' ? 'closed' : j.error.slice(0, 300) } }); anSet(id, { phase: 'failed', error: j.error === 'closed' ? t('an_err_closed') : j.error }); renderTenders(); return; }
+    await anTake(id, j);
+  };
+  anSet(id, { timer: setTimeout(tick, 400) });
+}
+// the study is done: its files come onto the card, and the register file fills the card's fields
+async function anTake(id, j = null) {
+  const item = tenders?.items.find((r) => r.id === id), a = item && item.analyzer; if (!a) return;
+  j = j || await anJob(a.job);
+  if (!j || j.missing || !j.outputs.length) { anSet(id, { phase: j && !j.missing ? 'failed' : 'lost', error: j && !j.missing ? t('an_err_nofiles') : '' }); return; }
+  anSet(id, { phase: 'taking', pct: 0, msg: '' });
+  try {
+    const got = [];
+    for (const [k, o] of j.outputs.entries()) {
+      const r = await anCall(`/v1/jobs/${a.job}/outputs/${encodeURIComponent(o.name)}`);
+      if (!r.ok) throw new Error('output');
+      got.push(new File([await r.blob()], o.name));
+      anSet(id, { pct: (k + 1) / j.outputs.length, msg: o.name });
+    }
+    const mark = `analyzer:${a.job}`, names = new Set(got.map((f) => f.name)), cur = tenders.items.find((r) => r.id === id);
+    const files = [...(cur.files || []).filter((f) => !(f.mailKey === mark && names.has(f.name))),   // a study done again replaces its own earlier files, nothing else
+      ...got.map((f) => ({ ...tdNewFile(f, analyzerOutputKind(f.name), mark), kindManual: true }))];
+    if (!await tdUpdate(id, { files, analyzer: { ...a, state: 'done', at: tdNowWall().slice(0, 16), error: '', files: got.length } }, tdActivity('study', t('an_act_done', { n: got.length })))) throw new Error('store');
+    const study = got.find((f) => f.name === analyzerStudyFile(j.outputs));
+    anSet(id, { phase: 'done', pct: 1, msg: '' });
+    if (study) await tdImportStudies([study], id); else renderTenders();
+  } catch { anSet(id, { phase: 'error' }); }
+}
+function anText(i, st) {
+  const a = i.analyzer, ph = st ? st.phase : a ? a.state : '';
+  if (ph === 'running') return t('an_s_running', { p: Math.round(((st && st.pct) || 0) * 100), m: bidi((st && st.msg) || '…') });
+  if (ph === 'sending' || ph === 'taking') return t(`an_s_${ph}`, { p: Math.round(((st && st.pct) || 0) * 100), m: bidi((st && st.msg) || '…') });
+  if (ph === 'done') return t('an_s_done', { n: a ? a.files : 0, at: a && a.at ? tdWhen(a.at) : '—' });
+  if (ph === 'failed') return t('an_s_failed', { e: bidi((st && st.error) || (a && a.error === 'closed' ? t('an_err_closed') : a && a.error === 'gone' ? t('an_err_gone') : (a && a.error) || '—')) });
+  return ph ? t(`an_s_${ph}`) : t('an_s_idle');
+}
+// the box on the card: one button, what is happening in plain words, and what to do when the program is not there
+function anBody(i) {
+  const st = anRun.get(i.id), a = i.analyzer, ph = st ? st.phase : a ? a.state : '', busy = AN_BUSY.includes(ph);
+  const send = analyzerSend(i);
+  return [el('p', { class: `an-line an-${ph || 'idle'}`, role: 'status', text: anText(i, st) }),
+    busy ? el('progress', { class: 'an-bar', max: '100', value: String(Math.round(((st && st.pct) || 0) * 100)), 'aria-label': t('an_h') }) : null,
+    el('div', { class: 'row an-acts' },
+      el('button', { type: 'button', class: 'btn tiny primary an-go', disabled: busy || !!tdBusy, text: t(a && a.state === 'done' ? 'an_again' : 'an_go', { n: send.files.length }), onclick: () => tdAnalyze(i.id) }),
+      a && ['lost', 'error'].includes(ph) ? el('button', { type: 'button', class: 'btn tiny an-take', text: t('an_take'), onclick: () => { anSet(i.id, { phase: 'running' }); anFollow(i.id); } }) : null,
+      ['missing', 'lost'].includes(ph) ? el('a', { class: 'btn tiny an-open', href: ANALYZER.open, text: t('an_open') }) : null,
+      ph === 'missing' ? el('a', { class: 'btn tiny an-get', href: './tender-analyzer.html#install', target: '_blank', rel: 'noopener', text: `⬇ ${t('an_get')}` }) : null),
+    ph === 'missing' ? el('p', { class: 'hint an-help', text: t('an_help') }) : el('p', { class: 'hint', text: t('an_note', { n: send.files.length }) })];
+}
+const AN_BUSY = ['connect', 'opening', 'sending', 'running', 'taking'];
+// the fold's own line says where the study stands in two words, so a closed fold still tells
+function anShort(i) {
+  const st = anRun.get(i.id), a = i.analyzer, ph = st ? st.phase : a ? a.state : '';
+  if (AN_BUSY.includes(ph)) return t('an_f_work', { p: Math.round(((st && st.pct) || 0) * 100) });
+  return t(ph === 'done' ? 'an_f_done' : ph === 'failed' ? 'an_f_failed' : ph ? 'an_f_wait' : 'an_f_idle');
+}
+// The card stays one window on a laptop (ADR-0131): the study lives in a fold, and one button in the card's row starts it.
+function anBox(i) {
+  if (i.analyzer && i.analyzer.state === 'running' && !anRun.has(i.id)) { anRun.set(i.id, { phase: 'running', pct: 0, msg: '' }); tdFoldSet.add('analyzer'); anFollow(i.id); }   // the page was reopened while the program works
+  return tdFold('analyzer', t('an_fold', { s: anShort(i) }), el('div', { class: 'an-box', 'data-an': i.id }, anBody(i)));
+}
+function anStartBtn(i) {
+  return el('button', { type: 'button', class: 'btn tiny primary an-start', disabled: !!tdBusy || AN_BUSY.includes((anRun.get(i.id) || {}).phase), title: t('an_h'), text: `🧠 ${t('an_start')}`,
+    onclick: () => { tdOpenFold('analyzer'); tdAnalyze(i.id); } });
+}
+function anDraw(id) {
+  const item = tenders?.items.find((r) => r.id === id); if (!item) return;
+  for (const box of document.querySelectorAll('.an-box')) if (box.dataset.an === id) {
+    set(box, anBody(item));
+    const sum = box.parentElement && box.parentElement.querySelector(':scope > summary'); if (sum) sum.textContent = t('an_fold', { s: anShort(item) });
+  }
+}
 // ADR-0127: the final offer (one file, or several) goes onto its tender and makes it ready
 async function tdAddFilesAs(id, files, kind) {
   const cur = tenders?.items.find((i) => i.id === id); if (!cur || !files.length) return;
@@ -1690,12 +1824,13 @@ function tdCard(i, { field, needsFields, today }) {
         tdDateReview(i, TENDER_DATE_FIELDS.filter((k) => i[k])),
         el('label', { class: 'td-lab td-study-lab' }, el('span', { text: t('td_study_summary') }), el('textarea', { class: 'td-study-text', rows: 4, maxlength: 4000, dir: 'auto', disabled: !!tdBusy,
           placeholder: t('td_study_placeholder'), onchange: async (event) => { if (await tdUpdate(i.id, { studySummary: event.target.value.trim() }, tdActivity('study', ''))) renderTenders(); } }, i.studySummary || ''))),
-      etRadar ? tdMarketFold(i, etX, etRes) : null, tdThreadPanel(i), tdFold('files', t('td_fold_files', { n: (i.files || []).length }), tdInsightsPanel(i), ...tdFilesList(i)), tdInquiries(i), tdHistory(i)),
+      etRadar ? tdMarketFold(i, etX, etRes) : null, tdThreadPanel(i), tdFold('files', t('td_fold_files', { n: (i.files || []).length }), tdInsightsPanel(i), ...tdFilesList(i)), anBox(i), tdInquiries(i), tdHistory(i)),
     el('div', { class: 'row td-card-acts' },
       el('button', { type: 'button', class: 'btn tiny primary td-copy-sum', text: `📋 ${t('td_copy_sum')}`, onclick: () => copyText(tdTenderText(i), t('td_copied_sum')) }),
       el('button', { type: 'button', class: 'btn tiny td-team-msg', text: `📋 ${t('td_team_copy')}`, onclick: () => copyText(tdTeamText(i), t('td_team_copied')) }),
       el('a', { class: 'btn tiny td-team-mail', href: `mailto:${TD_FROM}?subject=${encodeURIComponent(t('td_fd_subject', { s: tdTitle(i.subject) }))}&body=${encodeURIComponent(tdTeamText(i))}`, text: `✉ ${t('td_team_mail')}` }),
       el('button', { type: 'button', class: 'btn tiny td-ics', disabled: !(i.askDue || i.visit || i.due || i.openAt), text: `📅 ${t('td_ics')}`, onclick: () => { const b = new Blob([tdIcs(i)], { type: 'text/calendar' }), u = URL.createObjectURL(b); const x = el('a', { href: u, download: `tender-${(i.etimadNo || i.date).replace(/[^\w-]/g, '')}.ics` }); document.body.append(x); x.click(); x.remove(); setTimeout(() => URL.revokeObjectURL(u), 5000); } }),
+      anStartBtn(i),
       el('button', { type: 'button', class: 'btn tiny quiet', text: `📊 ${t('td_study_import_one')}`, onclick: () => study.click() }), study,
       el('span', { class: 'hint td-card-from', dir: 'auto', text: i.from }),
       el('button', { type: 'button', class: 'btn tiny quiet', disabled: !!tdBusy, text: `✕ ${t('td_del')}`, onclick: async () => { if (!confirm(t('td_del_confirm', { s: i.subject }))) return; try { await tdCommit({ ...tenders, items: tenders.items.filter((x) => x.id !== i.id) }); renderTenders(); } catch { toast(t('td_store_failed')); } } })));

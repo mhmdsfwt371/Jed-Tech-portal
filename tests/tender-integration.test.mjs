@@ -18,7 +18,8 @@ async function setup(team=false) {
   instances.push(dom); const w=dom.window;
   const globals = {indexedDB:idb,XLSX:spreadsheetLibrary(),TextEncoder,TextDecoder,Blob,File,Response,Headers,CompressionStream,DecompressionStream,ReadableStream,
     matchMedia:()=>({matches:false,addEventListener(){}}),confirm:()=>true,prompt:()=> 'QA reason',
-    fetch:async target=>{try{return new Response(readFileSync(new URL(new URL(target,w.location.href).pathname.slice(1),root),'utf8'));}catch{return new Response(null,{status:404});}},
+    fetch:async (target,init)=>{if(String(target).startsWith('http://127.0.0.1:')){if(!w.analyzerProgram)throw new TypeError('Failed to fetch');return w.analyzerProgram(String(target),init||{});}   // v9.64: the program on this computer, when a test stands one up
+      try{return new Response(readFileSync(new URL(new URL(target,w.location.href).pathname.slice(1),root),'utf8'));}catch{return new Response(null,{status:404});}},
     FileReader:class {readAsDataURL(blob){blob.arrayBuffer().then(bytes=>{this.result='data:'+(blob.type||'application/octet-stream')+';base64,'+Buffer.from(bytes).toString('base64');this.onload();},error=>{this.error=error;this.onerror();});}},
     imp:specifier=>import(new URL(specifier,root).href),
     injected:{...core,...config,...systems,...tour,tr:core.t,DEFAULT_SYSTEMS:config.SYSTEMS,DEFAULT_SYSTEM_CATEGORIES:config.SYSTEM_CATEGORIES}};
@@ -31,7 +32,7 @@ async function setup(team=false) {
   const source=readFileSync(new URL('app.js',root),'utf8').replace(/^import[\s\S]*?from\s+'[^']+';\s*$/gm,match=>{
     const names=match.slice(match.indexOf('{')+1,match.lastIndexOf('}')).split(',').map(x=>x.trim().replace(/\s+as\s+/,': '));return 'const {'+names.join(',')+'}=injected;';
   }).replaceAll("import('./assets/vendor/tender-mail.min.js')","imp('./assets/vendor/tender-mail.min.js')").replaceAll("import('./assets/tender-documents.js')","imp('./assets/tender-documents.js')");
-  w.eval(source+'\nwindow.qa={store,tdCommit,tdUpdate,tdImportEmails,tdImportStudies,tdAnalyzeFiles,tdDocumentView,buildBackup,applyBackup,projectsModel,renderTenders,tdStartAlerts,route,busy:()=>tdBusy,get:()=>tenders,etRadarNow:()=>etRadar,tdTeamText:typeof tdTeamText==="function"?tdTeamText:null,tdTenderText:typeof tdTenderText==="function"?tdTenderText:null,tdYearHtml:typeof tdYearHtml==="function"?tdYearHtml:null,tenderYearReport:injected.tenderYearReport};');
+  w.eval(source+'\nwindow.qa={store,tdCommit,tdUpdate,tdImportEmails,tdImportStudies,tdAnalyzeFiles,tdDocumentView,buildBackup,applyBackup,projectsModel,renderTenders,tdStartAlerts,route,busy:()=>tdBusy,get:()=>tenders,etRadarNow:()=>etRadar,anT:typeof AN_T==="object"?AN_T:null,anRun:typeof anRun==="object"?anRun:null,tdTeamText:typeof tdTeamText==="function"?tdTeamText:null,tdTenderText:typeof tdTenderText==="function"?tdTenderText:null,tdYearHtml:typeof tdYearHtml==="function"?tdYearHtml:null,tenderYearReport:injected.tenderYearReport};');
   await wait(()=>w.document.querySelector('#tenders-body')?.childElementCount || team&&w.document.querySelector('#version').textContent==='v'+config.PORTAL_VERSION,'boot');
   return dom;
 }
@@ -384,6 +385,75 @@ try {
     mk.close();assert(!select('dialog.mk-modal'));
     // (6) the radar opens the same window
     select('.td-radar-btn').click();select('dialog.et-modal .et-market').click();assert(select('dialog.mk-modal'),'from the radar');select('dialog.mk-modal').close();w.close();
+  }
+  // ---- v9.64 (ADR-0137): the Tender Analyzer inside the card — the card hands the tender's documents to the program on this computer and takes the study back ----
+  { const dom10=await setup(), w=dom10.window, d=w.document, qa=w.qa, select=s=>d.querySelector(s);
+    qa.anT.poll=40;qa.anT.wake=20;qa.anT.tries=3;
+    const arrived=new Date(Date.now()+3*36e5-2*864e5).toISOString().slice(0,10);
+    const blob=(text,name)=>new w.File([text],name);
+    const an={id:'sample:analyze',subject:'sample: Analyzer tender',date:arrived,stage:'received',stageAt:arrived,status:'open',att:[],due:'',etimadNo:'',
+      files:[{id:'f1',name:'mail.msg',kind:'original',mailKey:'',blob:blob('mail','mail.msg')},{id:'f2',name:'booklet.pdf',kind:'booklet',mailKey:'',blob:blob('%PDF booklet','booklet.pdf')},
+        {id:'f3',name:'BOQ.xlsx',kind:'boq',mailKey:'',blob:blob('PK boq','BOQ.xlsx')}]};
+    const bare={id:'sample:bare',subject:'sample: No files tender',date:arrived,stage:'received',stageAt:arrived,status:'open',att:[],due:'',etimadNo:''};
+    const was=qa.get()||{items:[],to:null,pulledAt:''};await qa.tdCommit({...was,items:[an,bare,...was.items.filter(x=>!['sample:analyze','sample:bare'].includes(x.id))]});qa.renderTenders();
+    const it=()=>qa.get().items.find(x=>x.id==='sample:analyze');
+    // the program, as the page sees it: closed at first; then open, studying in two looks, then done with its files
+    const P={up:false,calls:[],files:{},job:null,looks:0,busy:false,fail:false};
+    const study=JSON.stringify({schema:'afaqy-tender-study/v1',tool:'Tender Analyzer 3',tenders:[{subject:'sample: Analyzer tender',etimadNo:'261139009999',fees:'500',decision:'go',decisionWhy:'within scope'}]});
+    const outs={'T.tender-study.json':study,'AFAQY_Tender_T_Study_AR.pptx':'PK deck','AFAQY_Tender_T_Inquiries_AR.docx':'PK letter'};
+    const reply=(code,body)=>new w.Response(typeof body==='string'?body:JSON.stringify(body),{status:code});
+    w.analyzerProgram=async(url,init={})=>{ assert(url.startsWith('http://127.0.0.1:47615/'),url);
+      const path=url.slice('http://127.0.0.1:47615'.length), m=(init.method||'GET'); P.calls.push(`${m} ${path}`);
+      assert.equal(init.targetAddressSpace,'loopback','every request says it goes to this computer');
+      if(!P.up)throw new TypeError('Failed to fetch');
+      const head={schema:'afaqy-analyzer-link/v1'};
+      if(path==='/v1/hello')return reply(200,{...head,app:'TenderAnalyzer',version:'3.1.0',engine:'local',busy:P.busy,job:P.busy?'t-other':null});
+      if(path==='/v1/jobs'&&m==='POST'){P.job=JSON.parse(init.body).id;return reply(200,{...head,job:P.job,state:'waiting',outputs:[]});}
+      let mm=path.match(/^\/v1\/jobs\/([^/]+)\/files\/(.+)$/);if(mm&&m==='PUT'){P.files[decodeURIComponent(mm[2])]=await init.body.text();return reply(200,{...head,name:mm[2],size:1});}
+      if(path===`/v1/jobs/${P.job}/start`){P.looks=0;return reply(200,{...head,job:P.job,state:'running',outputs:[]});}
+      if(path===`/v1/jobs/${P.job}`){P.looks++;
+        if(P.fail)return reply(200,{...head,job:P.job,state:'failed',stage:1,progress:0.2,message:'',error:'النموذج المحلي لم يعطِ ردًا صالحًا',outputs:[]});
+        return reply(200,P.looks<3?{...head,job:P.job,state:'running',stage:1,progress:0.4,message:'قراءة الكراسة',outputs:[]}
+          :{...head,job:P.job,state:'done',stage:5,progress:1,message:'',error:'',outputs:Object.keys(outs).map(n=>({name:n,size:outs[n].length}))});}
+      mm=path.match(/^\/v1\/jobs\/([^/]+)\/outputs\/(.+)$/);if(mm)return reply(200,outs[decodeURIComponent(mm[2])]);
+      return reply(404,{...head,error:'path'}); };
+    const open=async(id)=>{[...d.querySelectorAll('.td-row')].find(r=>r.dataset.id===id).querySelector('.td-subj').click();await wait(()=>select('dialog.td-dlg[open] .an-box'),'card open');};
+    const line=()=>select('dialog.td-dlg .an-line').textContent.replace(/[⁦-⁩]/g,'');
+    // (1) a tender with no documents: nothing is sent, and the card says what to add
+    await open('sample:bare');assert(line().includes('not been studied'));select('dialog.td-dlg .an-go').click();await wait(()=>line().includes('no tender files'),'no files said');assert.deepEqual(P.calls,[]);select('dialog.td-dlg').close();
+    // (2) the program is not on this computer: the card tries to open it, then says how to get it — and nothing was sent
+    await open('sample:analyze');assert(select('dialog.td-dlg .an-go').textContent.includes('(2 files)'),'the booklet and the BOQ; not the mail');
+    select('dialog.td-dlg .an-go').click();await wait(()=>line().includes('not found on this computer'),'missing said');
+    assert(select('dialog.td-dlg .an-get').getAttribute('href').endsWith('tender-analyzer.html#install'));assert.equal(select('dialog.td-dlg .an-open').getAttribute('href'),'afaqy-tender://open');
+    assert(P.calls.every(c=>c==='GET /v1/hello'),P.calls);assert.equal(it().analyzer,undefined,'nothing is recorded for a study that never started');
+    { const nav=errors.filter(e=>String(e&&e.message||e).includes('navigation'));assert.equal(nav.length,1,'the page asked the system to open the program (a test page cannot follow that address)');
+      errors.splice(0,errors.length,...errors.filter(e=>!nav.includes(e))); }
+    // (3) the program is busy with another tender: said, and nothing sent
+    P.up=true;P.busy=true;P.calls.length=0;select('dialog.td-dlg .an-go').click();await wait(()=>line().includes('studying another tender'),'busy said');assert.deepEqual(P.calls,['GET /v1/hello']);
+    // (4) the program is there: the two documents go, the study is followed, its files come back and fill the card
+    P.busy=false;P.calls.length=0;assert(select('dialog.td-dlg .td-card-acts .an-start'),'the card\'s own row has the button');assert(!select('dialog.td-dlg .td-fold-analyzer').open||true);
+    select('dialog.td-dlg .td-card-acts .an-start').click();await wait(()=>select('dialog.td-dlg .td-fold-analyzer')&&select('dialog.td-dlg .td-fold-analyzer').open,'the fold opened by the button');
+    await wait(()=>it().analyzer&&it().analyzer.state==='done'&&!qa.busy(),'study came back');
+    assert.deepEqual(Object.keys(P.files).sort(),['BOQ.xlsx','booklet.pdf']);assert.equal(P.files['booklet.pdf'],'%PDF booklet','the file itself, not a copy of its name');
+    assert.match(P.job,/^t-[0-9a-f]{16}$/);assert.equal(it().analyzer.files,3);
+    const mine=it().files.filter(f=>f.mailKey===`analyzer:${P.job}`);assert.equal(mine.map(f=>`${f.name}=${f.kind}`).sort().join(' | '),'AFAQY_Tender_T_Inquiries_AR.docx=study | AFAQY_Tender_T_Study_AR.pptx=study | T.tender-study.json=study');
+    assert.equal(it().etimadNo,'261139009999','the register file filled the card');assert.equal(it().studyDecision,'go');assert.equal(it().fieldSources.fees,'analyzer');
+    assert(it().activity.some(a=>a.label.includes('Sent to the Analyzer'))&&it().activity.some(a=>a.label.includes('came back')));
+    await wait(()=>select('dialog.td-dlg .an-line')&&line().includes('3 files came back'),'done said on the card');
+    assert(select('dialog.td-dlg .td-fold-analyzer > summary').textContent.includes('completed'),'a closed fold still says where the study stands');
+    assert(select('dialog.td-dlg .an-go').textContent.includes('Study it again'));
+    // (5) a second study replaces the program's own earlier files and nothing else; the tender's documents are sent again, the study's are not
+    P.calls.length=0;P.files={};select('dialog.td-dlg .an-go').click();await wait(()=>P.calls.some(c=>c.includes('/outputs/'))&&it().analyzer.state==='done'&&!qa.busy()&&qa.anRun.get('sample:analyze').phase==='done','second study');
+    assert.deepEqual(Object.keys(P.files).sort(),['BOQ.xlsx','booklet.pdf']);assert.equal(it().files.filter(f=>f.mailKey===`analyzer:${P.job}`).length,3);assert.equal(it().files.length,6);
+    // (6) the study fails in the program: the card says the program's own reason
+    P.fail=true;P.calls.length=0;select('dialog.td-dlg .an-go').click();await wait(()=>it().analyzer.state==='failed','failure kept');await wait(()=>select('dialog.td-dlg .an-line')&&line().includes('النموذج المحلي'),'reason said');
+    // (7) the page is closed while the program works: the tender remembers, and the reopened card follows the study to its end
+    P.fail=false;await qa.tdUpdate('sample:analyze',{analyzer:{...it().analyzer,state:'running',error:''}});P.looks=0;qa.anRun.clear();select('dialog.td-dlg').close();
+    w.close();const again=await setup(),w2=again.window,q2=w2.qa;q2.anT.poll=40;w2.analyzerProgram=w.analyzerProgram;
+    assert.equal(q2.get().items.find(x=>x.id==='sample:analyze').analyzer.state,'running','kept across a reload');
+    [...w2.document.querySelectorAll('.td-row')].find(r=>r.dataset.id==='sample:analyze').querySelector('.td-subj').click();
+    await wait(()=>q2.get().items.find(x=>x.id==='sample:analyze').analyzer.state==='done'&&!q2.busy(),'followed after reopening');
+    const bk=await q2.buildBackup();assert(JSON.stringify(bk).includes('"analyzer"'),'the backup carries it');w2.close();
   }
   assert.deepEqual(errors,[],'uncaught UI errors');
   console.log('tender-integration: passed Outlook import, source dates, conflict review, categories, table preview, filtering, deletion, deduplication, offer gates, stage transitions, My Projects, alerts, backup/restore, reload, stale tabs, 120-file reading/pagination/search, storage-failure reporting, missing-date rejection, literal HTML display, all management routes, languages, theme, team separation, the tender card, «missed», inquiries, the team message, the year report and the correspondence timeline (thread reading, de-duplication, hand-over mark, re-read, copy, summary window, backup and reload)');
