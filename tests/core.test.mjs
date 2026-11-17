@@ -1899,6 +1899,60 @@ test('v9.63: finding a register row in a whole pull of 30,000 tenders stays quic
   for (let i = 0; i < 300; i++) if (core.radarFind({ etimadNo: '', subject: `منافسة رقم ${i * 7}` }, L, key)) n++;
   assert.equal(n, 300); assert.ok(Date.now() - t0 < 1500, `took ${Date.now() - t0} ms`);
 });
+// v9.65 (ADR-0138): a new pull is written onto what is kept, never in its place
+test('v9.65: a later pull adds the winners and the new tenders, and never erases what an earlier pull knew', () => {
+  const P = (at, tenders, awards = [], offers = []) => core.parseRadar({ schema: core.RADAR_SCHEMA, pulledAt: at, tenders, awards, offers });
+  const first = P('2026-11-16T15:38', [
+    { ref: '261100000001', title: 'توريد كاميرات مراقبة', entity: 'أمانة جدة', status: 'awarded', activity: 'تقنية المعلومات', published: '2026-03-01', due: '2026-03-20 10:00', fees: 500, firstSeen: '2026-11-15' },
+    { ref: '261100000002', title: 'تتبع مركبات', entity: 'بلدية ينبع', status: 'active', published: '2026-11-10', due: '2026-12-01 09:59', firstSeen: '2026-11-15' },
+    { ref: '251100000003', title: 'أعمال نظافة', entity: 'جهة أخرى', status: 'awarded', published: '2025-06-01' }],
+  [{ ref: '251100000003', winner: 'شركة قديمة', value: 9000 }]);
+  // the second pull: 2026 in our scope only, made for the winners — thinner rows (no fee, no entity on one), one new tender
+  const second = P('2026-11-20T09:00', [
+    { ref: '261100000001', title: 'توريد كاميرات مراقبة', entity: '', status: 'awarded', published: '2026-03-01', due: '', firstSeen: '2026-11-20' },
+    { ref: '261100000002', title: 'تتبع مركبات', entity: 'بلدية ينبع', status: 'awarded', published: '2026-11-10', due: '2026-12-05 09:59' },
+    { ref: '261100000009', title: 'شبكات جديدة', entity: 'أمانة جدة', status: 'active', published: '2026-11-18', due: '2026-12-10 10:00' }],
+  [{ ref: '261100000001', winner: 'شركة ألف', value: 120000 }], [{ ref: '261100000001', bidder: 'شركة ألف', price: 120000, tech: 'pass' }]);
+  const m = core.radarMerge(core.radarMerge(null, first), second), t = (r) => m.tenders.find((x) => x.ref === r);
+  assert.equal(m.tenders.length, 4, 'three kept and one new: nothing the first pull held is gone');
+  assert.deepEqual(m.merged, { added: 1, updated: 2 });
+  assert.deepEqual([t('261100000001').entity, t('261100000001').due, t('261100000001').dueTime, t('261100000001').fees, t('261100000001').activity], ['أمانة جدة', '2026-03-20', '10:00', 500, 'تقنية المعلومات'], 'an empty value in the new pull erases nothing');
+  assert.equal(t('261100000001').firstSeen, '2026-11-15', 'first seen stays the earliest');
+  assert.deepEqual([t('261100000002').status, t('261100000002').due], ['awarded', '2026-12-05'], 'what the later reading knows wins');
+  assert.equal(t('251100000003').title, 'أعمال نظافة', 'a tender the new pull does not hold stays as it was');
+  assert.deepEqual(m.awards.map((a) => [a.ref, a.winner]).sort(), [['251100000003', 'شركة قديمة'], ['261100000001', 'شركة ألف']], 'the winners are added to the ones already known');
+  assert.equal(m.offers.length, 1); assert.equal(m.pulls.length, 2); assert.equal(m.pulledAt, '2026-11-20T09:00');
+  assert.equal(core.marketStats(m, core.marketPeriod('2026', '2026-11-20')).winnerKnown, 1, 'and the market study sees them');
+});
+test('v9.65: an old file uploaded after a newer one cannot take the register back in time', () => {
+  const P = (at, tenders, awards = []) => core.parseRadar({ schema: core.RADAR_SCHEMA, pulledAt: at, tenders, awards });
+  const newer = P('2026-11-20T09:00', [{ ref: '261100000001', title: 'توريد كاميرات مراقبة', entity: '', status: 'awarded', due: '2026-12-05 09:59' }], [{ ref: '261100000001', winner: 'شركة ألف', value: 120000 }]);
+  const older = P('2026-11-16T15:38', [{ ref: '261100000001', title: 'توريد كاميرات مراقبة', entity: 'أمانة جدة', status: 'active', due: '2026-11-30 09:59', fees: 500 }, { ref: '261100000007', title: 'قديم آخر', status: 'active' }],
+    [{ ref: '261100000001', winner: 'اسم قديم خطأ', value: 1 }, { ref: '261100000007', winner: 'شركة باء', value: 7 }]);
+  const m = core.radarMerge(core.radarMerge(null, newer), older), x = m.tenders.find((y) => y.ref === '261100000001');
+  assert.deepEqual([x.status, x.due], ['awarded', '2026-12-05'], 'the later reading stays');
+  assert.deepEqual([x.entity, x.fees], ['أمانة جدة', 500], 'and the old file still fills what the later one lacked');
+  assert.deepEqual(m.awards.map((a) => a.winner).sort(), ['شركة ألف', 'شركة باء'], 'the newer winner is not replaced by the old file; a winner only the old file knows is taken');
+  assert.equal(m.pulledAt, '2026-11-20T09:00'); assert.equal(m.tenders.length, 2);
+  const same = core.radarMerge(m, older); assert.deepEqual(same.merged, { added: 0, updated: 0 }, 'the same file again changes nothing');
+});
+test('v9.65: a thinner later reading cannot take a tender out of our scope or out of the Western Region', () => {
+  const P = (at, tenders, awards = []) => core.parseRadar({ schema: core.RADAR_SCHEMA, pulledAt: at, tenders, awards });
+  // in scope by its activity alone, and in the west by its entity alone — exactly what a details-only second pull does not carry
+  const full = P('2026-11-16T15:38', [{ ref: '261100000021', title: 'تطوير منصة الخدمات', entity: 'أمانة جدة', activity: 'تقنية المعلومات', status: 'awarded', published: '2026-03-02' }]);
+  const thin = P('2026-11-20T09:00', [{ ref: '261100000021', title: 'تطوير منصة الخدمات', entity: '', status: 'awarded', published: '2026-03-02' }], [{ ref: '261100000021', winner: 'شركة ألف', value: 90000 }]);
+  assert.deepEqual([full.tenders[0].scope, full.tenders[0].west, thin.tenders[0].scope, thin.tenders[0].west], [true, true, false, false], 'the thin row alone reads out of scope');
+  for (const m of [core.radarMerge(core.radarMerge(null, full), thin), core.radarMerge(core.radarMerge(null, thin), full)]) {
+    const x = m.tenders[0];
+    assert.deepEqual([x.scope, x.west, x.activity, x.entity], [true, true, 'تقنية المعلومات', 'أمانة جدة'], 'scope and region follow what is known of the tender after the merge');
+    const st = core.marketStats(m, { ...core.marketPeriod('2026', '2026-11-20'), scope: 'afaqy', west: true });
+    assert.deepEqual([st.total, st.winnerKnown, st.value], [1, 1, 90000], 'so the study of our scope keeps it, now with its winner');
+  }
+  // and a later reading that knows more can still bring a tender into scope
+  const late = P('2026-11-21T09:00', [{ ref: '261100000022', title: 'عقد خدمات', activity: 'الاتصالات', status: 'active' }]);
+  const early = P('2026-11-01T09:00', [{ ref: '261100000022', title: 'عقد خدمات', status: 'active' }]);
+  assert.equal(core.radarMerge(core.radarMerge(null, early), late).tenders[0].scope, true);
+});
 const key = (s) => String(s || '').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, '').replace(/\s+/g, ' ').trim().toLowerCase();
 test('v9.60: a register row finds its Etimad tender by number or exact title; a looser match is only suggested', () => {
   const L = core.radarFromSheets(radarSheets(), ['261139000002']).tenders;

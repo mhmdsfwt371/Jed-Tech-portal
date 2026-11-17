@@ -2732,13 +2732,33 @@ export function radarFromSheets(get, keepRefs = []) {
 /** A new pull added to what the radar holds. A pull covers a period or a category, not the whole platform, so nothing is dropped:
  *  a tender in the new pull replaces its older copy, and its awards and offers replace the older ones. */
 export function radarMerge(have, add) {
-  if (!have || !Array.isArray(have.tenders)) return { ...add, pulls: [{ at: add.pulledAt, n: add.tenders.length, partial: add.partial, filter: add.filter }] };
-  const newer = (add.pulledAt || '') >= (have.pulledAt || ''), by = new Map(have.tenders.map((x) => [x.ref, x]));
-  for (const x of add.tenders) by.set(x.ref, x);
-  const got = (L) => new Set(L.map((x) => x.ref)), aRefs = got(add.awards), oRefs = got(add.offers);
+  // v9.65 (ADR-0138): a new pull is written onto what is kept, never in its place. Every tender carries the time it was read
+  // (`at`); for a tender both hold, the later reading's values win and an empty value never erases a known one — so a pull
+  // made for the winners adds them without losing a date an earlier, fuller pull had, and an old file uploaded after a newer
+  // one cannot take the register back in time. A tender the new pull does not hold stays exactly as it was.
+  const stamp = (r) => r.tenders.map((x) => (x.at ? x : { ...x, at: r.pulledAt || '' }));
+  const pull = { at: add.pulledAt, n: add.tenders.length, partial: add.partial, filter: add.filter };
+  if (!have || !Array.isArray(have.tenders)) return { ...add, tenders: stamp(add), merged: { added: add.tenders.length, updated: 0 }, pulls: [pull] };
+  const newer = (add.pulledAt || '') >= (have.pulledAt || ''), by = new Map(stamp(have).map((x) => [x.ref, x])), olderCopy = new Set();
+  let added = 0, updated = 0;
+  for (const x of stamp(add)) {
+    const old = by.get(x.ref);
+    if (!old) { by.set(x.ref, x); added++; continue; }
+    const late = x.at >= old.at ? x : old, early = late === x ? old : x, m = { ...early };
+    if (late === old) olderCopy.add(x.ref);
+    for (const [k, v] of Object.entries(late)) if (!(v === '' || v == null)) m[k] = v;
+    m.firstSeen = [old.firstSeen, x.firstSeen].filter(Boolean).sort()[0] || '';
+    // a thin reading has no activity or entity, so its own verdict says «out»; the verdict belongs to the merged tender
+    m.scope = etimadInScope(m.title, m.activity); m.west = etimadWest(m.entity, m.place);
+    if (JSON.stringify(m) !== JSON.stringify(old)) updated++;
+    by.set(x.ref, m);
+  }
+  // who won and what was offered: the later reading's list for a tender replaces the earlier one; a reading with none keeps what is known
+  const lists = (key) => { const mine = new Set(have[key].map((x) => x.ref)), take = add[key].filter((x) => !(olderCopy.has(x.ref) && mine.has(x.ref))), got = new Set(take.map((x) => x.ref));
+    return [...have[key].filter((x) => !got.has(x.ref)), ...take]; };
   return { schema: RADAR_SCHEMA, pulledAt: newer ? add.pulledAt : have.pulledAt, partial: newer ? add.partial : have.partial, tool: add.tool || have.tool, filter: add.filter,
-    total: add.total, tenders: [...by.values()], awards: [...have.awards.filter((x) => !aRefs.has(x.ref)), ...add.awards], offers: [...have.offers.filter((x) => !oRefs.has(x.ref)), ...add.offers],
-    pulls: [...(have.pulls || []), { at: add.pulledAt, n: add.tenders.length, partial: add.partial, filter: add.filter }].slice(-30) };
+    total: add.total, tenders: [...by.values()], awards: lists('awards'), offers: lists('offers'), merged: { added, updated },
+    pulls: [...(have.pulls || []), pull].slice(-30) };
 }
 /** The Etimad tender a register row is: the same number (Etimad's reference number, or the entity's own tender number), then the same
  *  title key. Anything looser is only suggested (radarSuggest), never linked by itself. */

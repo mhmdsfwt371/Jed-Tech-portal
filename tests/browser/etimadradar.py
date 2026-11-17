@@ -88,6 +88,8 @@ with sync_playwright() as p:
       'offers':[{'ref':'261139004629','bidder':'شركة رامي قاسم','price':41000,'tech':'pass'},{'ref':'261139004629','bidder':'شركة أفاقي لتقنية المعلومات','price':45500,'tech':'pass'},
         {'ref':'261139000301','bidder':'شركة رامي قاسم','price':38000,'tech':'pass'},{'ref':'261139000301','bidder':'مؤسسة زيد فارس','price':40000,'tech':'pass'}]}
     drop(pg,'.td-drop-any input','etimad-radar-2.json',RES)
+    mg=pg.locator('.et-merged').inner_text() if pg.locator('.et-merged').count() else ''
+    check('R34 a second pull is written onto the first: the message says how many were added and updated, and that nothing kept was removed (v9.65)', '2 new tenders were added, 1 were updated' in mg and 'nothing that was kept was removed' in mg, mg)
     pg.locator('#tenders-body .pills button').last.click(); pg.wait_for_timeout(300)
     pg.locator('.td-table tr.td-row', has_text='داش كام').locator('.td-subj').click(); pg.wait_for_timeout(900)
     rl=pg.locator('dialog.td-dlg .et-res-line'); check('R19 the card shows who won, at what value, and where our offer stood', rl.count()==1 and 'ranked 2 of 2' in rl.inner_text(), rl.inner_text() if rl.count() else '')

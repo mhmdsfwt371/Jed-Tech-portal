@@ -383,6 +383,14 @@ try {
     const tl=w.XLSX.utils.sheet_to_json(wb.Sheets['Tenders'],{header:1});assert.equal(tl.length,2,'the header and the one tender searched');assert.equal(tl[1][8],400000,'the value is a number');
     wb=null;select('dialog.mk-modal .mk-tab-winners').click();select('dialog.mk-modal .mk-xl-one').click();await wait(()=>wb,'one list written');assert.deepEqual([...wb.SheetNames],['Winning companies']);
     mk.close();assert(!select('dialog.mk-modal'));
+    // (5b) v9.65 (ADR-0138): a second, smaller pull is written onto the first — a winner is added, one tender is new, nothing kept is lost
+    { const more={schema:'afaqy-etimad-radar/v1',pulledAt:'2026-11-20T09:00',tenders:[{ref:'261100000000',title:'منافسة عامة رقم 0',entity:'',status:'awarded',published:'2025-01-10'},{ref:'261139000299',title:'شبكات جديدة',entity:'أمانة جدة',status:'active',published:'2026-11-18'}],
+        awards:[{ref:'261100000000',winner:'شركة جيم',value:5000}],offers:[]};
+      Object.defineProperty(any,'files',{value:[new w.File([JSON.stringify(more)],'radar-2.json',{type:'application/json'})],configurable:true});any.dispatchEvent(new w.Event('change',{bubbles:true}));
+      await wait(()=>select('.et-merged')&&select('.et-merged').textContent.includes('1 new tenders were added, 1 were updated')&&!qa.busy(),'second pull merged');
+      assert(select('.et-merged').textContent.includes('263 tenders are kept now'),select('.et-merged').textContent);
+      const R2=qa.etRadarNow(),t0=R2.tenders.find(x=>x.ref==='261100000000');assert.equal(t0.entity,'جهة 0','an empty value in the new pull erased nothing');assert.equal(t0.status,'awarded');
+      assert.equal(R2.awards.length,4,'the three winners known before, and the new one'); }
     // (6) the radar opens the same window
     select('.td-radar-btn').click();select('dialog.et-modal .et-market').click();assert(select('dialog.mk-modal'),'from the radar');select('dialog.mk-modal').close();w.close();
   }

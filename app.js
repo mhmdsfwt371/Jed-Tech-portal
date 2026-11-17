@@ -1098,18 +1098,18 @@ async function etReadFile(f) {
 // v9.62 (ADR-0135): a pull writes nothing into the register. It is a market study made every three or six months; a tender's
 // reference is its mail files and the analyzer's study. The import only says how many register tenders the pull knows.
 async function etImport(files) {
-  const res = { read: 0, kept: 0, total: 0, found: 0, bad: [], partial: false, pulledAt: '' };
+  const res = { read: 0, kept: 0, total: 0, found: 0, bad: [], partial: false, pulledAt: '', added: 0, updated: 0, all: 0 };
   tdBusy = t('et_reading'); renderTenders();
   try {
     for (const f of files) {
       let r; try { r = await etReadFile(f); } catch { r = { error: 'json' }; }
       if (r.error) { res.bad.push(f.name); continue; }
-      etRadar = radarMerge(etRadar, r); res.read++; res.total += r.total; res.kept += r.tenders.length; res.partial = res.partial || r.partial; res.pulledAt = r.pulledAt;
+      etRadar = radarMerge(etRadar, r); res.added += etRadar.merged.added; res.updated += etRadar.merged.updated; res.all = etRadar.tenders.length; res.read++; res.total += r.total; res.kept += r.tenders.length; res.partial = res.partial || r.partial; res.pulledAt = r.pulledAt;
     }
     if (res.read) { await store.kvPut('radar', etRadar); res.found = (tenders ? tenders.items : []).filter((i) => radarFind(i, etRadar.tenders, tdKey)).length; }
   } finally { tdBusy = ''; }
   etResult = res; renderTenders();
-  toast(res.read ? t('et_done', { k: res.kept, n: res.total, c: res.found }) : t('et_bad', { list: res.bad.join(' · ') }));
+  toast(res.read ? t('et_merged', { a: res.added, u: res.updated, t: res.all }) : t('et_bad', { list: res.bad.join(' · ') }));
 }
 async function etSave(next) { try { await tdCommit(next); return true; } catch { toast(t('td_store_failed')); return false; } }
 async function etFollow(ref) {
@@ -2113,6 +2113,7 @@ function renderTenders() {
     etResult ? el('div', { role: 'status', class: 'td-study-res et-res' },
       el('button', { type: 'button', class: 'icon-btn td-study-close', text: '✕', title: t('td_res_close'), 'aria-label': t('td_res_close'), onclick: () => { etResult = null; renderTenders(); } }),
       el('p', { class: 'hint', text: etResult.read ? t('et_done', { k: etResult.kept, n: etResult.total, c: etResult.found }) : t('et_bad', { list: etResult.bad.join(' · ') }) }),
+      etResult.read ? el('p', { class: 'hint et-merged', text: t('et_merged', { a: etResult.added, u: etResult.updated, t: etResult.all }) }) : null,
       etResult.partial ? el('p', { class: 'note', text: t('et_partial') }) : null,
       etResult.bad.length && etResult.read ? el('p', { class: 'note', text: t('et_bad', { list: etResult.bad.join(' · ') }) }) : null,
       el('button', { type: 'button', class: 'btn tiny', text: t('et_open_radar'), onclick: etOpen })) : null,

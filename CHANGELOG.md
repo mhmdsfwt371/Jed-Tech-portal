@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.65 — 2026-11-17
+
+- رفع سحب جديد من اعتماد يكتب على المحفوظ ولا يحلّ محله: المنافسات الجديدة تُضاف، والموجودة تُحدَّث بما في القراءة الأحدث، ولا يُحذف شيء مما كان محفوظًا، والخانة الفارغة في السحب الجديد لا تمسح قيمة معروفة.
+- رسالة الرفع تقول الآن كم منافسة أُضيفت وكم حُدّثت وكم صار المحفوظ. وملف قديم يُرفع بعد ملف أحدث لا يرجع بالبيانات إلى الوراء.
+
+<details><summary>English</summary>
+
+- Uploading a new Etimad pull writes onto what is kept and does not take its place: new tenders are added, the ones already there are updated with what the later reading holds, nothing that was kept is removed, and an empty field in the new pull never erases a known value.
+- The upload message now says how many tenders were added, how many were updated and how many are kept. An old file uploaded after a newer one does not take the data back in time.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اعتماد کا نیا ڈیٹا اپ لوڈ کرنے پر وہ محفوظ شدہ ڈیٹا کے اوپر لکھا جاتا ہے، اس کی جگہ نہیں لیتا: نئے ٹینڈر شامل ہوتے ہیں، موجود ٹینڈر تازہ تر مطالعے کے مطابق تازہ ہوتے ہیں، پہلے سے محفوظ کوئی چیز نہیں ہٹتی، اور نئے ڈیٹا کا خالی خانہ کسی معلوم قدر کو نہیں مٹاتا۔
+- اپ لوڈ کا پیغام اب بتاتا ہے کہ کتنے ٹینڈر شامل ہوئے، کتنے تازہ ہوئے اور اب کتنے محفوظ ہیں۔ نئی فائل کے بعد اپ لوڈ کی گئی پرانی فائل معلومات کو پیچھے نہیں لے جاتی۔
+
+</div>
+</details>
+
+
 ## v9.64 — 2026-11-17
 
 - جديد في بطاقة كل مناقصة: زر «🧠 ادرسها بالمحلل». يرسل ملفات المناقصة إلى برنامج محلل المناقصات على جهازك، فيدرسها النموذج المجاني بلا مفتاح خدمة ولا اشتراك، ثم ترجع ملفات الدراسة إلى البطاقة وحدها وتُملأ خاناتها.

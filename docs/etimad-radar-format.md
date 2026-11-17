@@ -4,7 +4,7 @@ The pull tool writes this file beside its Excel workbook. The register's «Etima
 made every three or six months; it never changes a tender's data, whose reference is its mail files and the study (ADR-0135). It is small because
 the tool writes only what was asked for (a period, a category). From v9.63 (ADR-0136) the register keeps all of it — every field of
 work, up to 200,000 tenders with their awards and offers — because «Market analysis» studies the whole market; the radar still
-shows AFAQY's scope by default.
+shows AFAQY's scope by default. A later pull is written onto the kept one, never in its place (ADR-0138): each kept tender carries `at`, the time it was read.
 
 ```json
 {
