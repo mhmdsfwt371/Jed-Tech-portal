@@ -1063,6 +1063,14 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   .td-study-text { width: 100%; margin-block-start: 8px; box-sizing: border-box; }
   .td-search { width: min(100%, 260px); }
   .td-history-entry { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding-block: 5px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+  /* v9.57 (ADR-0130): a tender's correspondence — one entry per message; the hand-over the manager marked stands out */
+  .td-thr-list { margin-block: 8px; } .td-thr-entry { padding: 8px 10px; border-inline-start: 3px solid var(--line); border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+  .td-thr-entry.td-thr-on { border-inline-start-color: var(--ok); background: var(--ok-wash); }
+  .td-thr-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; } .td-thr-when { font-variant-numeric: tabular-nums; } .td-thr-who { color: var(--slate); unicode-bidi: plaintext; }
+  .td-thr-head .td-thr-mark { margin-inline-start: auto; } .chip.td-thr-chip { padding: 1px 8px; border-radius: 999px; border-color: var(--ok); color: var(--ok); font-size: 12px; background: transparent; }
+  .td-thr-gist { margin: 6px 0 2px; line-height: 1.7; unicode-bidi: plaintext; } .td-thr-more summary { font-size: 13px; font-weight: 400; } .td-thr-text { white-space: pre-line; margin: 6px 0; line-height: 1.7; unicode-bidi: plaintext; }
+  .crm-wrap td { white-space: normal; overflow-wrap: anywhere; vertical-align: top; } .crm-wrap td:first-child { min-width: 200px; } .crm-wrap td:not(:first-child) { min-width: 120px; }
+  .td-thr-sum { margin-block: 10px; padding: 8px 10px; border: 1px solid var(--line); border-inline-start: 3px solid var(--accent); border-radius: var(--radius-sm); } .td-thr-sum p { margin: 2px 0; } .td-thr-actions { flex-wrap: wrap; gap: 8px; }
   .td-lab { display: grid; gap: 3px; font-size: .82rem; color: var(--slate); } .td-lab input { width: 100%; box-sizing: border-box; }
   .td-cd { white-space: nowrap; } .td-green { border-color: var(--ok); color: var(--ok); } .td-amber { border-color: var(--sig); color: var(--warn); } .td-red { border-color: var(--fail); color: var(--fail); }
   .td-wait { color: var(--fail); font-weight: 700; } .km-tile.td-hot { border-top: 3px solid var(--sig); } .td-stage { max-width: 190px; }

@@ -40,7 +40,10 @@ try {
   const select=s=>d.querySelector(s), event=()=>new w.Event('change',{bubbles:true});
   const choose=(selector,files)=>{const input=select(selector);assert(input,selector);Object.defineProperty(input,'files',{value:files,configurable:true});input.dispatchEvent(event());};
   const button=text=>[...d.querySelectorAll('button')].find(button=>button.textContent===text);
-  const legacy={id:'sample:legacy',subject:'sample: Historical bid',date:'2026-11-01',stage:'submitted',stageAt:'2026-11-10',submittedOn:'2026-11-10',due:'2026-11-15',askDue:'2026-11-08',status:'ready',att:[],etimadNo:'1234'};
+  // v9.57: the deadline is two days from whenever the test runs. It was the fixed day 15 November 2026, so the «closing soon» alert
+  // asserted below existed only until that day passed — and the whole suite turned red on the 16th with no change to the code.
+  const soonDay=new Date(Date.now()+3*36e5+2*864e5).toISOString().slice(0,10);
+  const legacy={id:'sample:legacy',subject:'sample: Historical bid',date:'2026-11-01',stage:'submitted',stageAt:'2026-11-10',submittedOn:'2026-11-10',due:soonDay,askDue:'2026-11-08',status:'ready',att:[],etimadNo:'1234'};
   await qa.tdCommit({items:[legacy],to:null,pulledAt:''});qa.renderTenders();
   const f=await fixtures(), message=await email('sample-import',{attachments:[f.pdf,f.sheet,f.word,new File(['x'],'logo.png')]});
   choose('.td-pull .td-mail-drop input',[message]);
@@ -73,7 +76,7 @@ try {
   }
   assert(row().activity.some(entry=>entry.action==='stage'&&entry.label==='won'));
   assert.equal(row().reason,'QA reason');
-  assert.equal(qa.get().items.find(x=>x.id===legacy.id).due,'2026-11-15');
+  assert.equal(qa.get().items.find(x=>x.id===legacy.id).due,soonDay);
   const backup=JSON.parse(JSON.stringify(await qa.buildBackup()));const backed=backup.tenders.items.find(x=>x.id===row().id);
   assert(backed.files.every(f=>f.data.startsWith('data:')));assert(backed.files.find(f=>f.name==='BOQ.xlsx').analysis.tables[0].rows[1][2]==='30');
   await qa.applyBackup(beforeDuplicate);assert.equal(row().due,'2026-12-04');assert.equal(row().stage,'submitted');assert(!row().files.some(f=>f.name==='logo.png'));
@@ -124,6 +127,66 @@ try {
   const third=await setup(), kept=third.window.qa.get().items.find(x=>x.id==='sample:dates');
   assert.equal(kept.value,null,'an empty estimated value is still empty after reload, save, reload');assert.equal(kept.fees,1500);
   assert(core.tenderNeeds(kept).includes('due')===false&&core.tenderNeeds({...kept,stage:'prep'}).includes('value'),'and it is still asked for while preparing');third.window.close();
+  // ---- v9.57 (ADR-0130): the correspondence read from the mails themselves. Each of these failed on v9.56. ----
+  // A window of its own: the checks above saved from other windows, so the first one holds an older copy of the register and
+  // (rightly) may not write over the newer one.
+  { const dom5=await setup(), w=dom5.window, d=w.document, qa=w.qa, select=s=>d.querySelector(s);
+  // (1) A tender that first reaches the register as a reply: the quoted message is read as its own entry, with its writer and time,
+  //     and the tender takes the day of that oldest message — not the day of the reply.
+  const older=['From: Rami Qasim <r.qasim@example.com>','Sent: Tuesday, November 10, 2026 9:15 AM','To: Zaid Fares <zaid.fares@example.com>','Subject: sample: Thread tender','','The booklet is attached. Submission deadline: 2026-11-19 at 10:00 AM','','Rami Qasim','+966 50 000 0001'];
+  const reply=()=>email('sample-thread-1',{subject:'RE: sample: Thread tender',body:['Thanks, received.','',...older].join('\r\n')});
+  await qa.tdImportEmails([await reply()]);
+  const th=()=>qa.get().items.find(x=>x.id==='sample: thread tender');
+  assert(th(),'the reply registered its tender');
+  assert.deepEqual(th().thread.map(e=>[e.at,e.name||e.addr,e.text]),[['2026-11-10T09:15','Rami Qasim','The booklet is attached. Submission deadline: 2026-11-19 at 10:00 AM'],['2026-11-12T09:00','sample@example.com','Thanks, received.']]);
+  assert.equal(th().date,'2026-11-10','first seen through a reply: the oldest message dates it');assert.equal(th().dateSource,'thread');assert.equal(th().stageAt,'2026-11-10');
+  assert.equal(th().due,'2026-11-19');assert.equal(th().dueTime,'10:00');
+  const panel=()=>select('dialog.td-dlg .td-thread'), entries=()=>[...d.querySelectorAll('dialog.td-dlg .td-thr-entry')];
+  assert(panel().open,'the panel is open when there is something to read');assert.equal(entries().length,2);
+  assert(entries()[0].textContent.includes('Rami Qasim')&&entries()[0].textContent.includes('The booklet is attached'));assert(!panel().textContent.includes('+966'),'no phone number on the page');
+  assert(select('dialog.td-dlg .td-thr-sum').textContent.includes('Messages: 2 · writers: 2'));assert(select('dialog.td-dlg .td-thr-sum').textContent.includes('the deadline: 6'),'Tuesday 10 to Thursday 19 November: six full working days between');
+  assert(select('.td-row.on').textContent.includes('From the oldest message in the thread'),'the list says where the date came from');
+  // (2) The same mail again leaves no mark; a later reply that quotes the whole conversation adds only its own message, and the date stays.
+  await qa.tdImportEmails([await reply()]);assert.equal(th().thread.length,2);assert.equal(th().messages.length,1);
+  const later=await email('sample-thread-2',{subject:'RE: sample: Thread tender',from:'Zaid Fares <zaid.fares@example.com>',sent:'Mon, 16 Nov 2026 18:30:00 +0300',
+    body:['The offer is attached for review.','','Zaid Fares','','From: sample@example.com','Sent: Thursday, November 12, 2026 9:00 AM','Subject: RE: sample: Thread tender','','Thanks, received.','',...older].join('\r\n')});
+  await qa.tdImportEmails([later]);
+  assert.deepEqual(th().thread.map(e=>e.at),['2026-11-10T09:15','2026-11-12T09:00','2026-11-16T18:30'],'three messages, each once');assert.equal(th().thread[2].text,'The offer is attached for review.');
+  assert.equal(th().date,'2026-11-10');assert.equal(th().messages.length,2);
+  // (3) The hand-over is the manager's mark: one message at a time, and the margin to the deadline is worked out only from it.
+  assert(!select('dialog.td-dlg .td-thr-sum').textContent.includes('hand-over'),'nothing is worked out before a message is marked');
+  entries()[2].querySelector('.td-thr-mark').click();await wait(()=>th().thread[2].mark==='handover','hand-over marked');
+  assert(select('dialog.td-dlg .td-thr-sum').textContent.includes('2 d 15 h before the deadline'),select('dialog.td-dlg .td-thr-sum').textContent);
+  assert.equal(d.querySelectorAll('dialog.td-dlg .td-thr-on').length,1);assert.equal(entries()[2].querySelector('.td-thr-mark').getAttribute('aria-pressed'),'true');
+  entries()[0].querySelector('.td-thr-mark').click();await wait(()=>th().thread[0].mark==='handover','mark moved');assert.equal(th().thread.filter(e=>e.mark).length,1,'one hand-over message at a time');
+  entries()[0].querySelector('.td-thr-mark').click();await wait(()=>!th().thread.some(e=>e.mark),'mark removed');
+  entries()[2].querySelector('.td-thr-mark').click();await wait(()=>th().thread[2].mark==='handover','hand-over marked again');
+  // (4) Mails kept before this version are read from their saved files; reading them again writes nothing.
+  const reread=async()=>{select('dialog.td-dlg .td-thr-rebuild').click();await wait(()=>!qa.busy()&&!select('dialog.td-dlg .td-thr-rebuild').disabled,'re-read');await new Promise(r=>setTimeout(r,50));};
+  await reread();assert.equal(th().activity.filter(a=>a.action==='thread').length,0,'nothing new: no history line');assert.equal(th().thread[2].mark,'handover');
+  await qa.tdUpdate(th().id,{thread:[]});qa.renderTenders();assert.equal(entries().length,0);assert(!panel().open);
+  await reread();await wait(()=>th().thread.length===3,'the saved mails were read');assert.equal(th().activity.filter(a=>a.action==='thread').length,1);
+  await reread();assert.equal(th().activity.filter(a=>a.action==='thread').length,1,'a second reading leaves no mark');
+  entries()[2].querySelector('.td-thr-mark').click();await wait(()=>th().thread[2].mark==='handover','hand-over marked after the re-read');
+  // (5) The copied text is the same timeline and the same lines.
+  let copied='';Object.defineProperty(w.navigator,'clipboard',{value:{writeText:async text=>{copied=text;}},configurable:true});
+  select('dialog.td-dlg .td-thr-copy').click();await wait(()=>copied,'copied');
+  assert(copied.startsWith('Correspondence timeline — RE: sample: Thread tender'));assert.equal(copied.split('\n').filter(l=>l.startsWith('- ')).length,3);
+  assert(copied.includes('Zaid Fares: The offer is attached for review. [Offer hand-over]'));assert(copied.includes('2 d 15 h before the deadline'));
+  // (6) The summary window: one row for the tender, with the same facts; the short-notice tile narrows the list.
+  select('dialog.td-dlg').close();
+  select('.td-sum-btn').click();const sum=select('dialog.cr-modal');assert(sum,'the summary window opened');
+  const sumRow=[...sum.querySelectorAll('tbody tr')].find(tr=>tr.textContent.includes('Thread tender'));assert(sumRow,'the tender has its row');
+  assert(sumRow.textContent.includes('working days: 6'));assert(sumRow.textContent.includes('2 d 15 h before the deadline'));assert(sumRow.children[3].textContent.startsWith('3 · '));
+  const allRows=sum.querySelectorAll('tbody tr').length, handTile=[...sum.querySelectorAll('button.km-tile')].find(b=>b.textContent.includes('Hand-over message marked'));
+  assert.equal(handTile.querySelector('b').textContent,'1');handTile.click();assert.equal(sum.querySelectorAll('tbody tr').length,1,'the tile narrows the list to its rows');handTile.click();assert.equal(sum.querySelectorAll('tbody tr').length,allRows);
+  sum.close();
+  // (7) Backup, restore and a reload keep the conversation and the mark.
+  const tb=JSON.parse(JSON.stringify(await qa.buildBackup()));assert.equal(tb.tenders.items.find(x=>x.id==='sample: thread tender').thread.length,3);
+  await qa.tdUpdate(th().id,{thread:[]});await qa.applyBackup(tb);assert.equal(th().thread.length,3);assert.equal(th().thread[2].mark,'handover');assert.equal(th().dateSource,'thread');
+  w.close();const fourth=await setup(), keptThread=fourth.window.qa.get().items.find(x=>x.id==='sample: thread tender');
+  assert.deepEqual(keptThread.thread.map(e=>[e.at,e.mark||'']),[['2026-11-10T09:15',''],['2026-11-12T09:00',''],['2026-11-16T18:30','handover']]);fourth.window.close();
+  }
   assert.deepEqual(errors,[],'uncaught UI errors');
-  console.log('tender-integration: passed Outlook import, source dates, conflict review, categories, table preview, filtering, deletion, deduplication, offer gates, stage transitions, My Projects, alerts, backup/restore, reload, stale tabs, 120-file reading/pagination/search, storage-failure reporting, missing-date rejection, literal HTML display, all management routes, languages, theme and team separation');
+  console.log('tender-integration: passed Outlook import, source dates, conflict review, categories, table preview, filtering, deletion, deduplication, offer gates, stage transitions, My Projects, alerts, backup/restore, reload, stale tabs, 120-file reading/pagination/search, storage-failure reporting, missing-date rejection, literal HTML display, all management routes, languages, theme, team separation and the correspondence timeline (thread reading, de-duplication, hand-over mark, re-read, copy, summary window, backup and reload)');
 } finally { for(const dom of instances) dom.window.close(); }

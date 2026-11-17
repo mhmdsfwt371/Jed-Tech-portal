@@ -97,6 +97,7 @@
 | جودة الإصلاح (القرار 0022) | `repairCheck()`، `parseRepairLines()` |
 | لوحة حسابات ما بعد البيع والأنظمة (القرار 0120) | `accountsBoard()`، `serverIpMap()`، `attachSystems()` |
 | تدقيق 9.55 (القرار 0129) | `tenderAmount()`، `tenderDatePatch()`، `backupDue()` — و`docs/qa-policy.md`، و`tests/browser/audit.py`، و`scripts/browser-suites.mjs` |
+| تسلسل مراسلات المناقصة (القرار 0130) | `mailThread()`، `mailWhen()`، `mailWall()`، `mailGist()`، `tenderThreadMerge()`، `tenderThreadFacts()`، `workDaysBetween()` — والاختبار `tests/browser/tenderthread.py` |
 | دراسة محلل المناقصات في السجل (القرار 0126، 0127) | `parseTenderStudy()`، `matchTenderStudy()`، `applyTenderStudy()`، `tenderStudyFromSheet()`، `tenderAutoStage()` — والصيغة `docs/tender-study-format.md` |
 | مشاريعي: مناقصات وأبسيلنج والحذف الجماعي (القرار 0125) | `projectLine()`، `projectDeletePlan()` |
 | المهام يومًا بيوم وحد البدء (القرار 0121، 0124) | `RESPONSE_RULE`، `startDue()`، `dailyIntake()`، `coveredFrom()`، `firstStart()` |

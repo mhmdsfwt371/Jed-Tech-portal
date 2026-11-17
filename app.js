@@ -15,7 +15,8 @@ import {
   maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply,
   tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds, tenderAmount, tenderDatePatch, backupDue, parseTenderStudy, matchTenderStudy, applyTenderStudy, tenderAutoStage, tenderStudyFromSheet,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
-  tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts } from './core.js';
+  tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
+  mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts } from './core.js';
 
 import { validateSystems } from './systems-core.js';
 
@@ -1005,6 +1006,9 @@ async function tdExcel(rows) {
   X.writeFile(wb, `AFAQY-tenders-${today}.xlsx`);
 }
 let tdMailParser, tdDocumentReader;
+const tdLoadMail = () => (tdMailParser ||= import('./assets/vendor/tender-mail.min.js').catch((error) => { tdMailParser = null; throw error; }));
+// v9.57 (ADR-0130): the conversation a mail carries — its own message and every message quoted beneath it
+const tdThreadOf = (mail) => mailThread(mail.body, { at: mailWall(mail.sentAt), name: mail.senderName, addr: mail.sender });
 const tdFileFilters = new Map();
 const tdActivity = (action, label) => ({ id: crypto.randomUUID(), action, label, at: new Date().toISOString() });
 const tdNewFile = (blob, kind, mailKey = '', id = crypto.randomUUID()) => ({ id, name: blob.name, kind, mailKey, blob });
@@ -1147,8 +1151,7 @@ async function tdImportEmails(files, id = '') {
   tdBusy = t('td_mail_reading');
   renderTenders();
   try {
-    tdMailParser ||= import('./assets/vendor/tender-mail.min.js').catch((error) => { tdMailParser = null; throw error; });
-    const { parse, classify } = await tdMailParser;
+    const { parse, classify } = await tdLoadMail();
     for (const file of files) {
       try {
         const mail = await parse(file);
@@ -1177,9 +1180,13 @@ async function tdImportEmails(files, id = '') {
         };
         const message = { key, messageId, hash, subject, sender: mail.sender.slice(0, 120), date: mail.date,
           schedule: tenderEmailSchedule(mail.body, mail.html), warnings: mail.warnings.length };
+        const thread = tenderThreadMerge(first.thread, tdThreadOf(mail)), oldest = (thread.find((e) => e.at) || { at: '' }).at.slice(0, 10);
         const entry = applyTenderEmailDates({ ...first, etimadNo: first.etimadNo || number,
           ...(dateSource === 'received' && (first.dateSource === 'sent' || (first.dateSource === 'received' && mail.date < first.date)) ? { date: mail.date, dateSource } : {}),
-          messages: [...(first.messages || []), message], files: [...(first.files || []), ...filesToSave],
+          // v9.57: a tender that first reaches the register as a reply did not arrive on the reply's day — the oldest message
+          // quoted in it says when it did. A tender already in the register keeps the date it has.
+          ...(!existing && oldest && oldest < mail.date ? { date: oldest, dateSource: 'thread', stageAt: oldest } : {}),
+          messages: [...(first.messages || []), message], files: [...(first.files || []), ...filesToSave], thread,
           activity: [tdActivity('email', subject), ...(first.activity || [])],
         });
         await tdCommit({ ...state, items: [entry, ...state.items.filter((row) => row.id !== entry.id)].sort((a, b) => b.date.localeCompare(a.date)) });
@@ -1229,6 +1236,69 @@ function tdEmailPicker(id = '') {
     text: t(id ? 'td_mail_link' : 'td_mail_import'), onclick: () => input.click() }), input,
   el('span', { class: 'hint', text: t('td_mail_hint') }));
   return drop;
+}
+// ---------- v9.57 (ADR-0130): a tender's correspondence — who wrote, when and what, read from the mails dropped on it ----------
+const tdWhen = (at) => (at ? new Date(`${at.length > 10 ? at : `${at}T00:00`}:00Z`).toLocaleString(lang === 'ur' ? 'ur-PK' : lang === 'ar' ? 'ar-SA' : 'en-GB',
+  { timeZone: 'UTC', calendar: 'gregory', numberingSystem: 'latn', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', ...(at.length > 10 ? { hour: '2-digit', minute: '2-digit' } : {}) }) : t('td_thr_notime'));
+const tdWhenShort = (at) => (at ? at.replace('T', ' ') : t('td_thr_notime'));   // in a table: the register's own compact form
+const tdSpan = (min) => { const m = Math.abs(min); return m < 60 ? t('td_thr_min', { m }) : m < 2880 ? t('td_thr_hm', { h: Math.floor(m / 60), m: m % 60 }) : t('td_thr_dh', { d: Math.floor(m / 1440), h: Math.floor((m % 1440) / 60) }); };
+// the lines under the list: the same wording on the page, in the copied text and in the summary window
+function tdThreadLines(item, F = tenderThreadFacts(item)) {
+  if (!F.n) return [];
+  return [t('td_thr_facts', { n: F.n, p: F.people, a: F.first ? tdWhen(F.first.at) : '—', b: F.last ? tdWhen(F.last.at) : '—' }),
+    F.dueAt ? t('td_thr_due', { d: tdWhen(F.dueAt), w: F.workDays == null ? '—' : F.workDays }) : t('td_thr_due_none'),
+    F.handover ? (F.leadMin == null ? t('td_thr_handover_nolead', { a: tdWhen(F.handover.at) }) : t(F.leadMin < 0 ? 'td_thr_handover_late' : 'td_thr_handover', { a: tdWhen(F.handover.at), s: tdSpan(F.leadMin) })) : null].filter(Boolean);
+}
+function tdThreadText(item) {
+  const who = (e) => e.name || e.addr || '—';
+  return [t('td_thr_txt_h', { s: item.subject }), '', ...(item.thread || []).map((e) => `- ${tdWhen(e.at)} — ${who(e)}: ${mailGist(e.text) || t('td_thr_notext')}${e.mark ? ` [${t('td_thr_marked')}]` : ''}`), '', t('td_thr_txt_sum'), ...tdThreadLines(item)].join('\n');
+}
+// the mails kept on a tender before v9.57 were stored whole but never read as a conversation; this reads them, once
+async function tdRebuildThread(id) {
+  const item = tenders?.items.find((row) => row.id === id); if (!item || tdBusy) return;
+  const mails = (item.files || []).filter((file) => file.kind === 'original' && /\.(?:msg|eml)$/i.test(file.name));
+  if (!mails.length) { toast(t('td_thr_rebuild_none')); return; }
+  let thread = item.thread || [], read = 0;
+  tdBusy = t('td_mail_reading'); renderTenders();
+  try {
+    const { parse } = await tdLoadMail();
+    for (const file of mails) { try { thread = tenderThreadMerge(thread, tdThreadOf(await parse(new File([file.blob], file.name)))); read++; } catch { /* a mail that cannot be read is left out of the count below */ } }
+  } catch { /* the reader did not load: nothing was read */ } finally { tdBusy = ''; }
+  if (!read) toast(t('td_thr_rebuild_none'));
+  else if (JSON.stringify(thread) === JSON.stringify(item.thread || [])) toast(t('td_thr_same'));   // read again: nothing new, so nothing is written
+  else if (await tdUpdate(id, { thread }, tdActivity('thread', String(thread.length)))) toast(t('td_thr_rebuilt', { n: thread.length, f: read }));
+  renderTenders();
+}
+function tdThreadPanel(item) {
+  const thread = item.thread || [], mails = (item.files || []).some((file) => file.kind === 'original' && /\.(?:msg|eml)$/i.test(file.name));
+  const mark = async (k) => { const next = thread.map((e, j) => { const { mark: was, ...rest } = e; return j === k && !was ? { ...rest, mark: 'handover' } : rest; }); if (await tdUpdate(item.id, { thread: next })) renderTenders(); };
+  return el('details', { class: 'td-subpanel td-thread', ...(thread.length ? { open: '' } : {}) },
+    el('summary', { text: t('td_thr_h', { n: thread.length }) }),
+    el('p', { class: 'hint', text: t(thread.length ? 'td_thr_lead' : 'td_thr_none') }),
+    thread.length ? el('div', { class: 'td-thr-list' }, thread.map((e, k) => { const gist = mailGist(e.text);
+      return el('div', { class: `td-thr-entry${e.mark ? ' td-thr-on' : ''}` },
+        el('div', { class: 'td-thr-head' }, el('b', { class: 'td-thr-when', text: tdWhen(e.at) }), el('span', { class: 'td-thr-who', dir: 'auto', text: e.name || e.addr || '—' }),
+          e.mark ? el('span', { class: 'chip td-thr-chip', text: t('td_thr_marked') }) : null,
+          el('button', { type: 'button', class: 'btn tiny quiet td-thr-mark', disabled: !!tdBusy || !e.at, 'aria-pressed': String(!!e.mark), text: t(e.mark ? 'td_thr_unmark' : 'td_thr_mark'), onclick: () => mark(k) })),
+        el('p', { class: `td-thr-gist${gist ? '' : ' hint'}`, dir: 'auto', text: gist || t('td_thr_notext') }),
+        e.text && e.text !== gist ? el('details', { class: 'td-thr-more' }, el('summary', { text: t('td_thr_full') }), el('p', { class: 'td-thr-text', dir: 'auto', text: e.text })) : null); })) : null,
+    thread.length ? el('div', { class: 'td-thr-sum' }, tdThreadLines(item).map((line) => el('p', { text: line })), el('p', { class: 'hint', text: t('td_thr_wd_hint') })) : null,
+    el('div', { class: 'row td-thr-actions' },
+      thread.length ? el('button', { type: 'button', class: 'btn tiny td-thr-copy', text: `📋 ${t('td_thr_copy')}`, onclick: () => copyText(tdThreadText(item), t('td_thr_copied')) }) : null,
+      mails ? el('button', { type: 'button', class: 'btn tiny quiet td-thr-rebuild', disabled: !!tdBusy, text: `↻ ${t('td_thr_rebuild')}`, onclick: () => tdRebuildThread(item.id) }) : null));
+}
+// the summary of every tender shown on the page whose mails were read — one row each, the same facts as its own window
+function tdThreadSummary(rows) {
+  const L = rows.filter((i) => (i.thread || []).length).map((i) => [i, tenderThreadFacts(i)]);
+  if (!L.length) { toast(t('td_sum_none')); return; }
+  const short = ([, F]) => F.workDays != null && F.workDays < 5, handed = ([, F]) => !!F.handover;
+  crModal({ title: t('td_sum_h'), lead: t('td_sum_lead'), file: 'AFAQY-tender-correspondence', wrap: true,
+    tiles: [[t('td_sum_t_n'), L.length], [t('td_sum_t_msgs'), L.reduce((n, [, F]) => n + F.n, 0)], [t('td_sum_t_short'), L.filter(short).length, t('td_sum_t_short_sub'), (k) => short(L[k])], [t('td_sum_t_hand'), L.filter(handed).length, '', (k) => handed(L[k])]],
+    head: [t('td_col_subject'), t('td_sum_c_first'), t('td_sum_c_due'), t('td_sum_c_msgs'), t('td_sum_c_hand')],   // five columns, as every list window (a sixth pushes the table past the window)
+    rows: L.map(([i, F]) => [i.subject, F.first ? tdWhenShort(F.first.at) : null,
+      F.dueAt ? `${tdWhenShort(F.dueAt)}${F.workDays == null ? '' : ` · ${t('td_sum_wd', { w: F.workDays })}`}` : null,
+      `${F.n}${F.last ? ` · ${tdWhenShort(F.last.at)}` : ''}`,
+      F.handover ? `${tdWhenShort(F.handover.at)}${F.leadMin == null ? '' : ` · ${t(F.leadMin < 0 ? 'td_sum_after' : 'td_sum_before', { s: tdSpan(F.leadMin) })}`}` : null]) });
 }
 function tdDownload(file) {
   const url = URL.createObjectURL(file.blob);
@@ -1459,7 +1529,7 @@ function renderTenders() {
       lab('date', fld(i, 'date', 'date', { required: '' }), i), lab('reason', fld(i, 'reason'), i), lab('owner', fld(i, 'owner'), i), lab('etimadNo', fld(i, 'etimadNo'), i), lab('value', fld(i, 'value', 'number', { min: 0, step: 1 }), i), lab('fees', fld(i, 'fees', 'number', { min: 0, step: 1 }), i), lab('bond', fld(i, 'bond'), i),
       lab('askDue', fld(i, 'askDue', 'date'), i), lab('askDueTime', fld(i, 'askDueTime', 'time', { disabled: !!tdBusy || !i.askDue }), i), lab('visit', fld(i, 'visit', 'date'), i), lab('due', fld(i, 'due', 'date'), i), lab('dueTime', fld(i, 'dueTime', 'time', { disabled: !!tdBusy || !i.due }), i), lab('openAt', fld(i, 'openAt', 'date'), i), lab('submittedOn', fld(i, 'submittedOn', 'date'), i), lab('submitNo', fld(i, 'submitNo'), i),
       lab('decidedOn', fld(i, 'decidedOn', 'date'), i), lab('readyOn', fld(i, 'readyOn', 'date'), i), lab('study', fld(i, 'study'), i), lab('note', fld(i, 'note'), i)),
-    tdDateReview(i), tdInsightsPanel(i), tdFilesPanel(i),
+    tdDateReview(i), tdThreadPanel(i), tdInsightsPanel(i), tdFilesPanel(i),
     el('details', { class: 'td-subpanel', ...(i.studySummary ? { open: '' } : {}) },
       el('summary', { text: t('td_study_summary') }),
       el('textarea', { class: 'td-study-text', rows: 3, maxlength: 4000, dir: 'auto', disabled: !!tdBusy,
@@ -1476,7 +1546,7 @@ function renderTenders() {
     el('tbody', {}, rows.flatMap((i) => { const open = tdOpenId === i.id, days = tdDaysBetween(i.stageAt, today);
       return [el('tr', { 'data-id': i.id, class: `td-row${open ? ' on' : ''}${TD_OPEN.includes(i.stage) ? '' : ' td-closed'}`, tabindex: '0', onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) { tdOpenId = i.id; renderTenders(); } }, onclick: (e) => { if (e.target.closest('select, input, button, a')) return; tdOpenId = i.id; renderTenders(); } },
         el('td', {}, el('div', { class: 'td-subj', text: i.subject, dir: 'auto' }), el('div', {}, i.messages?.length ? el('span', { class: 'chip', text: t('td_why_email') }) : null, i.byFrom ? el('span', { class: 'chip', text: t('td_why_from') }) : null, i.byKr ? el('span', { class: 'chip', text: t('td_why_kr') }) : null, i.manual ? el('span', { class: 'chip td-manual', text: t('td_why_manual') }) : null, i.etimadNo ? el('span', { class: 'chip', text: i.etimadNo }) : null, tenderNeeds(i).length ? el('span', { class: 'chip td-need-chip', text: t('td_need_n', { n: tenderNeeds(i).length }) }) : null)),
-        el('td', { class: 'num' }, i.date, i.dateSource === 'sent' ? el('div', { class: 'hint', text: t('td_sent_date') }) : null), el('td', {}, stageSel(i)),
+        el('td', { class: 'num' }, i.date, i.dateSource === 'sent' ? el('div', { class: 'hint', text: t('td_sent_date') }) : i.dateSource === 'thread' ? el('div', { class: 'hint', text: t('td_thread_date') }) : null), el('td', {}, stageSel(i)),
         el('td', { class: `num${TD_OPEN.includes(i.stage) && ['received', 'screen', 'decide'].includes(i.stage) && days > 3 ? ' td-wait' : ''}`, text: TD_OPEN.includes(i.stage) ? String(days) : '—', title: t('td_col_days') }),
         el('td', {}, cd(i)), el('td', { class: 'num td-tog', text: '↗', title: t('td_open_win') }))]; }))));
   const search = el('input', { name: 'q', type: 'search', class: 'td-f td-search', value: tdQuery, placeholder: t('td_search'), 'aria-label': t('td_search') });
@@ -1494,6 +1564,7 @@ function renderTenders() {
     el('div', { class: 'row', style: 'justify-content:flex-end;gap:8px' },
       el('button', { type: 'button', class: 'btn tiny td-wm', text: `🗓 ${t('td_wm')}`, onclick: () => copyText(tdWeekMessage(), t('td_wm_copied')) }),
       el('a', { class: 'btn tiny td-wm-mail', href: '#', text: `✉ ${t('fl_mail')}`, onclick: (e) => { e.preventDefault(); location.href = `mailto:?subject=${encodeURIComponent(t('td_wm_subject', { a: saudiDay(new Date(Date.now() - 6 * 864e5).toISOString()), b: saudiDay(new Date().toISOString()) }))}&body=${encodeURIComponent(tdWeekMessage())}`; } }),
+      el('button', { type: 'button', class: 'btn tiny td-sum-btn', text: `✉ ${t('td_sum_btn')}`, onclick: () => tdThreadSummary(rows) }),
       el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('td_excel')}`, onclick: () => tdExcel(rows) })),
     tdStageF ? el('div', { class: 'row td-filtered' }, el('span', { class: 'chip', text: t('td_pipe_on', { s: t(`td_st_${tdStageF}`), n: rows.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: `✕ ${t('td_pipe_clear')}`, onclick: () => { tdStageF = null; renderTenders(); } })) : null,
     !tdStageF && tdCardF ? el('div', { class: 'row td-filtered' }, el('span', { class: 'chip', text: t('crm_filtered', { f: t({ waiting: 'td_k_waiting', soon: 'td_k_soon', decided: 'td_k_decided' }[tdCardF]), n: rows.length, all: rowsAll.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: t('crm_show_all'), onclick: () => { tdCardF = null; renderTenders(); } })) : null,
@@ -1538,7 +1609,7 @@ async function openAbout() {
 // ---------- ADR-0090: a control-room number opens its detail — tiles, a bar per engineer, the list, Excel ----------
 /** A number's window: tiles, bars, the list, Excel. ADR-0102: a tile with a filter (its 4th item, (k) => bool on row k) or a person's bar
  *  narrows the list, the bars, the count and Excel to its rows; a second click clears it. bar: (k) => [name, weight] for row k. */
-function crModal({ title, lead, tiles = [], bars = [], bar = null, head = [], rows = [], hot = () => false, file }) {
+function crModal({ title, lead, tiles = [], bars = [], bar = null, head = [], rows = [], hot = () => false, file, wrap = false }) {   // wrap (v9.57): cells that hold a sentence wrap instead of pushing the columns after them out of sight
   const st = { tile: -1, who: '' };
   const keep = () => rows.map((r, k) => k).filter((k) => (st.tile < 0 || !tiles[st.tile][3] || tiles[st.tile][3](k)) && (!st.who || (bar && bar(k)[0] === st.who)));
   const label = () => [st.tile >= 0 ? tiles[st.tile][0] : '', st.who].filter(Boolean).join(' · ');
@@ -1554,7 +1625,7 @@ function crModal({ title, lead, tiles = [], bars = [], bar = null, head = [], ro
       el('span', { class: 'crm-n', text: n }), el('span', { class: 'crm-track' }, el('i', { style: `--w:${(v / max) * 100}%;animation-delay:${k * 40}ms` })), el('b', { text: String(v) }))));
     info.hidden = !on; if (on) set(info, el('span', { text: t('crm_filtered', { f: label(), n: ks.length, all: rows.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: t('crm_show_all'), onclick: () => { st.tile = -1; st.who = ''; draw(); } })); else set(info);   // «Show all» exists only while something is filtered
     const shown = ks.slice(0, 300);
-    set(listBox, el('div', { class: 'table-wrap crm-list' }, el('table', {}, el('thead', {}, el('tr', {}, head.map((h) => el('th', { text: h })))),
+    set(listBox, el('div', { class: `table-wrap crm-list${wrap ? ' crm-wrap' : ''}`, tabindex: wrap ? '0' : null, role: wrap ? 'group' : null, 'aria-label': wrap ? title : null }, el('table', {}, el('thead', {}, el('tr', {}, head.map((h) => el('th', { text: h })))),
       el('tbody', {}, shown.map((k) => el('tr', { class: hot(rows[k], k) ? 'crm-hot' : '' }, rows[k].map((c, ci) => el('td', { class: ci ? 'num' : '', dir: 'auto', text: c == null ? '—' : String(c) }))))))),
       ks.length > shown.length ? el('p', { class: 'hint', text: t('crm_more', { n: ks.length - shown.length }) }) : null, !ks.length ? el('p', { class: 'empty', text: t('crm_none') }) : null);
   };

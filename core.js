@@ -2607,6 +2607,149 @@ export function tenderStudyFromSheet(rows, fileName = '') {
   return { schema: 'afaqy-tender-study/v1', generatedAt: txt('generatedAt'), tool: txt('tool'), tenders: [{ subject: txt('subject'), etimadNo: txt('etimadNo'), entity: txt('entity'), dates,
     fees: amt('fees'), bond: txt('bond'), value: amt('value'), decision: txt('decision'), decisionWhy: txt('decisionWhy'), summary: txt('summary'), studyFile: txt('studyFile') || fileName, evidence: ev }] };
 }
+// ---------- v9.57 (ADR-0130): a tender's correspondence, read from the mail thread itself ----------
+// A reply carries the whole conversation beneath it. The register reads that conversation into entries — who wrote, when, and
+// what — so a tender's history can be read and copied without opening Outlook. Nothing is inferred: a time the mail program
+// wrote in a form with two readings is left empty, and the one-line summary is cut from the writer's own words.
+const MAIL_MONTH = { january: 1, jan: 1, february: 2, feb: 2, march: 3, mar: 3, april: 4, apr: 4, may: 5, june: 6, jun: 6, july: 7, jul: 7, august: 8, aug: 8, september: 9, sept: 9, sep: 9, october: 10, oct: 10, november: 11, nov: 11, december: 12, dec: 12,
+  'يناير': 1, 'فبراير': 2, 'مارس': 3, 'ابريل': 4, 'مايو': 5, 'يونيو': 6, 'يونيه': 6, 'يوليو': 7, 'يوليه': 7, 'اغسطس': 8, 'سبتمبر': 9, 'اكتوبر': 10, 'نوفمبر': 11, 'ديسمبر': 12 };
+const MAIL_MONTH_RE = Object.keys(MAIL_MONTH).sort((a, b) => b.length - a.length).join('|');
+const mailPlain = (s) => tenderDigits(s).normalize('NFKC').replace(/[إأآ]/g, 'ا').replace(/ة/g, 'ه').replace(/[ـً-ْ‎‏‪-‮⁦-⁩]/g, '').toLowerCase();
+/** An instant as the Saudi wall clock, to the minute: `2026-11-17T08:31:01Z` → `2026-11-17T11:31`. */
+export const mailWall = (iso) => { const ms = Date.parse(iso || ''); return Number.isNaN(ms) ? '' : new Date(ms + 3 * 36e5).toISOString().slice(0, 16); };
+/** The date a mail program wrote above a quoted message («Sent: Tuesday, November 17, 2026 11:15 AM», «17 نوفمبر 2026 11:15 ص»),
+ *  as `YYYY-MM-DDTHH:MM` — or the day alone when no time is written. It is the wall clock of whoever replied, kept as written.
+ *  `03/04/2026` has two readings (3 April, 4 March): nothing is guessed, and the result is empty. */
+export function mailWhen(raw) {
+  const s = mailPlain(raw); let y, m, d, x, end = 0;
+  if ((x = s.match(new RegExp(`(?<![\\p{L}])(${MAIL_MONTH_RE})(?![\\p{L}])\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?[,،]?\\s+(20\\d{2})`, 'u')))) [m, d, y] = [MAIL_MONTH[x[1]], +x[2], +x[3]];
+  else if ((x = s.match(new RegExp(`(?<!\\d)(\\d{1,2})\\s+(${MAIL_MONTH_RE})(?![\\p{L}])\\.?[,،]?\\s+(20\\d{2})`, 'u')))) [d, m, y] = [+x[1], MAIL_MONTH[x[2]], +x[3]];
+  else if ((x = s.match(/(?<!\d)(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})(?!\d)/))) [y, m, d] = [+x[1], +x[2], +x[3]];
+  else if ((x = s.match(/(?<!\d)(\d{1,2})[-/.](\d{1,2})[-/.](20\d{2})(?!\d)/))) { const a = +x[1], b = +x[2]; y = +x[3];
+    if (a > 12 && b <= 12) { d = a; m = b; } else if (b > 12 && a <= 12) { m = a; d = b; } else if (a === b) { d = a; m = b; } else return ''; }
+  else return '';
+  const day = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`, ok = new Date(`${day}T00:00:00Z`);
+  if (Number.isNaN(ok.valueOf()) || ok.toISOString().slice(0, 10) !== day) return '';
+  end = x.index + x[0].length;
+  const CLOCK = /(?<!\d)(\d{1,2}):(\d{2})(?::\d{2})?\s*(a\.m\.|p\.m\.|am|pm|صباحا|مساء|ص|م)?(?![\p{L}])/u;
+  const c = s.slice(end).match(CLOCK) || s.slice(0, x.index).match(CLOCK); if (!c) return day;
+  let h = +c[1]; const half = c[3] || '';
+  if (half && h <= 12) h = (h % 12) + (/^(p|م)/.test(half) ? 12 : 0);
+  return h < 24 && +c[2] < 60 ? `${day}T${String(h).padStart(2, '0')}:${c[2]}` : day;
+}
+const mailWho = (value) => {
+  const s = String(value || '').replace(/<mailto:[^>]*>/gi, ' ').replace(/\[mailto:([^\]]*)\]/gi, '<$1>').replace(/\s+/g, ' ').trim();
+  const addr = (s.match(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/) || [''])[0].toLowerCase();
+  const name = s.replace(/<[^<>]*>/g, ' ').replace(/[<>"']/g, ' ').replace(/\s+/g, ' ').trim();
+  return { name: (name.toLowerCase() === addr ? '' : name).slice(0, 80), addr: addr.slice(0, 120) };
+};
+const mailTokens = (s) => mailPlain(s).split(/[^\p{L}]+/u).filter((w) => w.length >= 3 && !['eng', 'mrs', 'the'].includes(w));
+const mailHeaderKey = (label) => ({ from: 'from', 'من': 'from', sent: 'date', date: 'date', 'sent on': 'date', 'تاريخ الارسال': 'date', 'تم الارسال': 'date', 'التاريخ': 'date', 'ارسلت': 'date',
+  to: 'to', 'الى': 'to', cc: 'cc', bcc: 'cc', 'نسخه': 'cc', 'نسخه الى': 'cc', subject: 'subject', 'الموضوع': 'subject' }[mailPlain(label).replace(/[*>]/g, '').replace(/\s+/g, ' ').trim()] || '');
+const MAIL_CLOSING = /^[،,]?\s*(?:best regards|kind regards|warm regards|regards|thanks and regards|many thanks|thanks|thank you|sincerely|yours sincerely|مع اطيب التحيات|مع خالص التحيات|مع خالص التحيه|مع التحيه|تحياتي|وتفضلوا بقبول.*|مع وافر الاحترام|وشكرا|شكرا لكم|ولكم جزيل الشكر|مع الشكر)[\s،,.!]*$/;
+const MAIL_CONTACT = /^(?:(?:m|t|tel|mob|mobile|phone|fax|جوال|هاتف|موبايل)\s*[:.]?\s*)?\+?\d[\d\s().-]{7,}$|^www\.\S+$/i;
+const MAIL_GREETING = /^(?:السلام عليكم|وعليكم السلام|تحيه طيبه|الزملاء الاعزاء|الاخوه الاعزاء|الساده المحترمين|الساده الكرام|عزيزي|(?:الاستاذ|الاستاذه|المهندس|المهندسه|استاذ|مهندس|الاخ|الاخت)\s|dear\b|hi\b|hello\b|good (?:morning|afternoon|evening)\b|صباح الخير|مساء الخير|مرحبا)/;
+/** The words of one message: quote marks, link targets (a sharing link carries its key) and separators removed, and everything
+ *  from the signature on — a closing phrase, the writer's own name on a short line, a phone number — cut away. */
+function mailWords(lines, who) {
+  const mine = new Set([...mailTokens(who.name), ...mailTokens(String(who.addr || '').split('@')[0])]);
+  const rows = lines.map((l) => l.replace(/^\s*(?:>\s?)+/, '').replace(/<(?:https?:|mailto:|tel:)[^>]*>/gi, ' ').replace(/https?:\/\/\S+/gi, ' ').replace(/[‎‏‪-‮⁦-⁩]/g, '').replace(/\s+/g, ' ').trim())
+    .filter((l) => l && !/^[_\-=*\s]{4,}$/.test(l) && !/^-+\s*(?:original message|forwarded message|الرساله الاصليه)\s*-+$/i.test(mailPlain(l)));
+  let cut = rows.length, closing = '';
+  for (const [k, row] of rows.entries()) {
+    const plain = mailPlain(row);
+    if (MAIL_CLOSING.test(plain)) { cut = k; closing = row; break; }
+    if (MAIL_CONTACT.test(plain)) { cut = k; break; }
+    if (row.length <= 60 && row.split(' ').length <= 6 && !/[.!؟?:؛]$/.test(row) && mailTokens(row).some((w) => mine.has(w))) { cut = k; break; }
+  }
+  const kept = rows.slice(0, cut);
+  return (kept.length || !closing ? kept : [closing]).join('\n').slice(0, 1500);   // a message that is only «Thanks» still says it
+}
+/** A mail body split into the messages it carries, oldest first: `{ at, name, addr, text }` each. `top` is the mail itself (its
+ *  own time, writer and address come from the file, not from the text). A quoted message is recognised by the header block the
+ *  mail program wrote above it — «From:» followed by its date line, in English or Arabic — or by «On … wrote:». A line that only
+ *  begins with «From:» is ordinary text. A header whose date cannot be read keeps its place with an empty time. */
+export function mailThread(body, top = {}) {
+  const lines = String(body || '').replace(/\r\n?/g, '\n').split('\n'), parts = [];
+  let cur = { at: String(top.at || ''), ...mailWho(`${top.name || ''} <${top.addr || ''}>`), from: 0 };
+  const field = (line) => { const m = line.replace(/^\s*(?:>\s?)*/, '').match(/^\*?([^:：]{1,24}?)\*?\s*[:：]\s*(.*)$/); const key = m ? mailHeaderKey(m[1]) : ''; return key ? [key, m[2].trim()] : null; };
+  for (let i = 0; i < lines.length; i++) {
+    let next = null, used = 0;
+    const f = field(lines[i]);
+    if (f && f[0] === 'from' && f[1]) {
+      const got = { from: f[1] }; let j = i + 1, last = i, gap = 0;
+      for (; j < lines.length && j <= i + 14; j++) {
+        if (!lines[j].trim()) { if (++gap > 2) break; continue; }
+        const g = field(lines[j]); if (!g || g[0] === 'from') break;
+        gap = 0; last = j; if (!(g[0] in got)) got[g[0]] = g[1]; if (g[0] === 'subject') break;
+      }
+      if ('date' in got) { next = { at: mailWhen(got.date), ...mailWho(got.from) }; used = last - i + 1; }
+    } else {
+      const one = lines[i].replace(/^\s*(?:>\s?)*/, ''), two = /^on\s/i.test(one) && !/wrote:\s*$/i.test(one) && /wrote:\s*$/i.test(lines[i + 1] || '') ? `${one} ${lines[i + 1].replace(/^\s*(?:>\s?)*/, '')}` : one;
+      const w = two.match(/^on\s+(.+?\d{1,2}:\d{2}(?:\s*[ap]\.?m\.?)?)[,\s]+(.+?)\s+wrote:\s*$/i);
+      if (w) { next = { at: mailWhen(w[1]), ...mailWho(w[2]) }; used = two === one ? 1 : 2; }
+    }
+    if (!next) continue;
+    parts.push({ ...cur, to: i }); cur = { ...next, from: i + used }; i += used - 1;
+  }
+  parts.push({ ...cur, to: lines.length });
+  return parts.map((p) => ({ at: p.at, name: p.name, addr: p.addr, text: mailWords(lines.slice(p.from, p.to), p) }))
+    .filter((e, k) => k || e.at || e.name || e.addr || e.text).reverse();
+}
+/** One line for a message, from its own words: the greeting is skipped, the lines joined, and a long text cut at a word. */
+export function mailGist(text, max = 220) {
+  const rows = String(text || '').split('\n').map((l) => l.trim()).filter(Boolean);
+  const said = rows.filter((l) => !(l.split(' ').length <= 8 && MAIL_GREETING.test(mailPlain(l))));
+  const line = (said.length ? said : rows).join(' · ').replace(/\s+/g, ' ');
+  if (line.length <= max) return line;
+  const part = line.slice(0, max + 1), at = part.lastIndexOf(' ');
+  return `${part.slice(0, at > max * 0.5 ? at : max).trim()}…`;
+}
+// the same writer: by address when both carry one; otherwise every word of the shorter name is in the longer («Eng. Zaid Fares»
+// is «Zaid Fares»; two people who share a first name are not one)
+function mailSameWriter(a, b) {
+  if (a.addr && b.addr) return a.addr === b.addr;
+  const words = (e, name) => new Set(name && e.name ? mailTokens(e.name) : mailTokens(String(e.addr || '').split('@')[0]));
+  const both = !!(a.name && b.name), x = words(a, both), y = words(b, both), [small, big] = x.size <= y.size ? [x, y] : [y, x];
+  return small.size > 0 && [...small].every((w) => big.has(w));
+}
+const mailMinutes = (x, y) => (x.length > 10 && y.length > 10 ? Math.round((Date.parse(`${y}:00Z`) - Date.parse(`${x}:00Z`)) / 6e4) : null);
+/** Two readings of one conversation joined: a message already there (the same writer within a minute, or — with no readable
+ *  time — the same writer and words) is not added again; it keeps its mark, gains an address and takes the fuller text. Dated
+ *  entries come first, oldest to newest; the few without a readable time follow. */
+export function tenderThreadMerge(have, add) {
+  const out = [];
+  for (const e of [...(have || []), ...(add || [])]) {
+    if (!e) continue;
+    const squash = (t) => mailPlain(t).replace(/\s+/g, '').slice(0, 60);
+    const old = out.find((o) => mailSameWriter(o, e) && (o.at && e.at ? (o.at.length > 10 && e.at.length > 10 ? Math.abs(mailMinutes(o.at, e.at)) <= 1 : o.at.slice(0, 10) === e.at.slice(0, 10) && squash(o.text) === squash(e.text)) : !o.at && !e.at && squash(o.text) === squash(e.text)));
+    if (!old) { out.push({ at: e.at || '', name: e.name || '', addr: e.addr || '', text: e.text || '', ...(e.mark ? { mark: e.mark } : {}) }); continue; }
+    if (!old.addr && e.addr) old.addr = e.addr; if (!old.name && e.name) old.name = e.name;
+    if ((e.text || '').length > old.text.length) old.text = e.text; if (e.mark && !old.mark) old.mark = e.mark;
+  }
+  const dated = out.filter((e) => e.at).sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
+  return [...dated, ...out.filter((e) => !e.at)].slice(0, 300);
+}
+/** Full working days (Sunday to Thursday) strictly between two days — neither end counted, because the day a tender arrives and
+ *  the day it closes are not whole days of work. `null` when a day is missing or the second is before the first. */
+export function workDaysBetween(from, to) {
+  const a = Date.parse(`${from}T00:00:00Z`), b = Date.parse(`${to}T00:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from || '') || !/^\d{4}-\d{2}-\d{2}$/.test(to || '') || Number.isNaN(a) || Number.isNaN(b) || b < a) return null;
+  let n = 0; for (let t = a + 864e5; t < b; t += 864e5) if (![5, 6].includes(new Date(t).getUTCDay())) n++;
+  return n;
+}
+/** What a tender's correspondence says in numbers: how many messages and writers, the first and the last message, the
+ *  submission deadline as the register holds it, the full working days between the first message and that deadline, and — only
+ *  when the manager marked the message that handed the offer over — how many minutes before the deadline it was sent
+ *  (negative: after it). Nothing is worked out from a time that was not read. */
+export function tenderThreadFacts(item, thread = item && item.thread) {
+  const list = Array.isArray(thread) ? thread : [], dated = list.filter((e) => e.at), first = dated[0] || null, last = dated.at(-1) || null;
+  const writers = []; for (const e of list) if ((e.name || e.addr) && !writers.some((w) => mailSameWriter(w, e))) writers.push(e);
+  const dueAt = item && item.due ? item.due + (item.dueTime ? `T${item.dueTime}` : '') : '';
+  const handover = dated.filter((e) => e.mark === 'handover').at(-1) || null;
+  return { n: list.length, people: writers.length, first, last, dueAt, workDays: first && item && item.due ? workDaysBetween(first.at.slice(0, 10), item.due) : null,
+    handover, leadMin: handover && dueAt ? mailMinutes(handover.at, dueAt) : null };
+}
 export function cleanTenderDetails(item) {
   const string = (value, max) => typeof value === 'string' ? value.slice(0, max) : '';
   const list = (value) => Array.isArray(value) ? value : [];
@@ -2614,7 +2757,7 @@ export function cleanTenderDetails(item) {
   const day = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '';
   const fields = TENDER_DATE_FIELDS;
   return {
-    dateSource: ['received','sent','manual'].includes(item.dateSource) ? item.dateSource : '',
+    dateSource: ['received','sent','manual','thread'].includes(item.dateSource) ? item.dateSource : '',   // 'thread' (v9.57): the day of the oldest message quoted in a reply
     studySummary: string(item.studySummary, 4000),
     dueTime: item.due ? time(item.dueTime) : '', askDueTime: item.askDue ? time(item.askDueTime) : '',
     dateSources: Object.fromEntries(fields.filter((key) => ['mail','document','manual','analyzer'].includes(item.dateSources?.[key])).map((key) => [key,item.dateSources[key]])),
@@ -2632,7 +2775,11 @@ export function cleanTenderDetails(item) {
       ...(cleanTenderAnalysis(file.analysis) ? {analysis:cleanTenderAnalysis(file.analysis)} : {})
     })),
     removedFiles: [...new Set(list(item.removedFiles).filter((id) => typeof id === 'string' && id.length && id.length <= 150))],
-    activity: list(item.activity).filter((entry) => entry && string(entry.id, 150) && ['email','add','remove','stage','date','study','read','category'].includes(entry.action)).map((entry) => ({
+    // v9.57 (ADR-0130): the conversation read from the mails — a time, a writer and the words; a mark only where the manager set one
+    thread: list(item.thread).filter((e) => e && (string(e.name, 80) || string(e.addr, 120) || string(e.text, 1500))).slice(0, 300).map((e) => ({
+      at: /^\d{4}-\d{2}-\d{2}(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/.test(e.at) ? e.at : '', name: string(e.name, 80), addr: string(e.addr, 120), text: string(e.text, 1500), ...(e.mark === 'handover' ? { mark: 'handover' } : {})
+    })),
+    activity: list(item.activity).filter((entry) => entry && string(entry.id, 150) && ['email','add','remove','stage','date','study','read','category','thread'].includes(entry.action)).map((entry) => ({
       id: string(entry.id, 150), action: entry.action, at: string(entry.at, 35), label: string(entry.label, 300)
     })),
   };
@@ -2653,6 +2800,7 @@ export function mergeTenderDetails(base, other) {
     messages: union(base.messages,other.messages,'key'),
     files: [...byFile.values()].filter((file) => !removed.has(file.id)),
     removedFiles,
+    thread: tenderThreadMerge(base.thread,other.thread),
     activity: union(base.activity,other.activity,'id').sort((a,b) => b.at.localeCompare(a.at)),
   };
 }

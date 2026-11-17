@@ -1472,6 +1472,150 @@ test('backup reminder: nothing to lose asks nothing; never saved, or a week old,
   assert.equal(core.backupDue('2026-11-12T20:00:00Z', now, { items: 1, every: 2 }).due, true);
 });
 
+// ---------- v9.57 (ADR-0130): the tender's correspondence, read from the mail thread ----------
+// Invented people and wording only — no real mailbox content belongs in this repository.
+const THREAD_BODY = [
+  'Sending date of the tender: 12/11/2026', '', 'Rami Qasim', 'Bids Officer', 'Sample Company', '+966 50 000 0001', 'www.example.com <https://www.example.com/>', '',
+  'From: Lina Harb <lina.harb@example.com> ',
+  'Sent: Tuesday, November 17, 2026 11:15 AM',
+  'To: Tala Nasser <tala.nasser@example.com>',
+  'Cc: Rami Qasim <r.qasim@example.com>',
+  'Subject: RE: sample: supply of level sensors',
+  '', 'Please add the date the tender was first sent to the branch,', 'so the whole picture can be reviewed.', '', 'Lina Harb', 'Branch Manager', '+966-50-0000-002', '',
+  '________________________________', '',
+  'From: Rami Qasim <r.qasim@example.com <mailto:r.qasim@example.com> >',
+  'Date: Tuesday, 17 November 2026 at 10:02 AM',
+  'To: Zaid Fares <zaid.fares@example.com <mailto:zaid.fares@example.com> >',
+  'Subject: RE: sample: supply of level sensors',
+  '', ' ', '', 'Rami Qasim', 'Bids Officer', '',
+  'From: Zaid Fares <zaid.fares@example.com <mailto:zaid.fares@example.com> >',
+  'Sent: Tuesday, November 17, 2026 9:43 AM',
+  'To: Rami Qasim <r.qasim@example.com>',
+  'Subject: RE: sample: supply of level sensors',
+  '', 'Dear Rami,', 'The offer files are attached for review.', 'Offer deck.pptx <https://files.example.com/s/secret-token-123>', '', 'Best regards,', 'Eng. Zaid Fares', 'Technical Manager', 'M: +966500000003', '',
+  'من: Rami Qasim <r.qasim@example.com>',
+  'تاريخ الإرسال: الخميس، ١٢ نوفمبر ٢٠٢٦ ١١:٠٣ ص',
+  'إلى: Lina Harb',
+  'الموضوع: sample: supply of level sensors',
+  '', 'الزملاء الأعزاء،', 'مرفق كراسة المنافسة، والموعد النهائي للتقديم يوم الثلاثاء.', '', 'مع أطيب التحيات،', 'Rami Qasim',
+].join('\r\n');
+
+test('mail thread: a date written by the mail program is read as written — and an ambiguous one is not guessed', () => {
+  assert.equal(core.mailWhen('Tuesday, November 17, 2026 11:15 AM'), '2026-11-17T11:15');
+  assert.equal(core.mailWhen('Tuesday, 17 November 2026 at 10:02 PM'), '2026-11-17T22:02');
+  assert.equal(core.mailWhen('Tue, Nov 17, 2026 at 12:05 AM'), '2026-11-17T00:05');
+  assert.equal(core.mailWhen('الخميس، ١٢ نوفمبر ٢٠٢٦ ١١:٠٣ ص'), '2026-11-12T11:03');
+  assert.equal(core.mailWhen('12 أكتوبر 2026 3:04 م'), '2026-10-12T15:04');
+  assert.equal(core.mailWhen('2026-11-16 15:04'), '2026-11-16T15:04');
+  assert.equal(core.mailWhen('17/11/2026 09:43'), '2026-11-17T09:43', 'the day is above 12: only one reading');
+  assert.equal(core.mailWhen('11/17/2026 9:43 AM'), '2026-11-17T09:43');
+  assert.equal(core.mailWhen('03/04/2026 10:00'), '', 'March the 4th or April the 3rd: nothing is guessed');
+  assert.equal(core.mailWhen('17 November 2026'), '2026-11-17', 'a day without a time stays a day');
+  assert.equal(core.mailWhen('31 February 2026 10:00'), '', 'a day that does not exist');
+  assert.equal(core.mailWhen('soon'), '');
+  assert.equal(core.mailWall('2026-11-17T08:31:01.000Z'), '2026-11-17T11:31', 'an instant becomes the Saudi wall clock');
+  assert.equal(core.mailWall('2026-11-17T22:31:00Z'), '2026-11-18T01:31');
+  assert.equal(core.mailWall(''), ''); assert.equal(core.mailWall('nonsense'), '');
+});
+
+test('mail thread: a reply is split into its messages, oldest first — writer, time, and the words without the signature', () => {
+  const th = core.mailThread(THREAD_BODY, { at: '2026-11-17T11:31', name: 'Rami Qasim', addr: 'r.qasim@example.com' });
+  assert.deepEqual(th.map((e) => e.at), ['2026-11-12T11:03', '2026-11-17T09:43', '2026-11-17T10:02', '2026-11-17T11:15', '2026-11-17T11:31']);
+  assert.deepEqual(th.map((e) => e.name), ['Rami Qasim', 'Zaid Fares', 'Rami Qasim', 'Lina Harb', 'Rami Qasim']);
+  assert.deepEqual(th.map((e) => e.addr), ['r.qasim@example.com', 'zaid.fares@example.com', 'r.qasim@example.com', 'lina.harb@example.com', 'r.qasim@example.com']);
+  assert.equal(th[0].text, 'الزملاء الأعزاء،\nمرفق كراسة المنافسة، والموعد النهائي للتقديم يوم الثلاثاء.', 'Arabic headers are read, the closing and the name are cut');
+  assert.equal(th[1].text, 'Dear Rami,\nThe offer files are attached for review.\nOffer deck.pptx', 'the link is dropped with its token; the signature and the phone are cut');
+  assert.equal(th[2].text, '', 'a message that is only a picture or a signature has no words — none are invented');
+  assert.equal(th[3].text, 'Please add the date the tender was first sent to the branch,\nso the whole picture can be reviewed.');
+  assert.equal(th[4].text, 'Sending date of the tender: 12/11/2026');
+  assert(!JSON.stringify(th).includes('secret-token'), 'a sharing link is never kept');
+  assert(!JSON.stringify(th).includes('+966'), 'a phone number is never kept');
+  // a body with no quoted message is one entry; an empty body with a known writer is still one (the mail exists)
+  assert.deepEqual(core.mailThread('Only this.', { at: '2026-11-01T08:00', name: 'Tala Nasser', addr: '' }), [{ at: '2026-11-01T08:00', name: 'Tala Nasser', addr: '', text: 'Only this.' }]);
+  assert.equal(core.mailThread('', { at: '2026-11-01T08:00', name: '', addr: 'x@example.com' }).length, 1);
+  assert.deepEqual(core.mailThread('', {}), [], 'nothing known, nothing written');
+  // a line that merely begins with «From:» is not a message without its date line
+  assert.equal(core.mailThread('From: the supplier we received two prices\nand both are high.', { at: '2026-11-01T08:00', name: 'A B', addr: '' }).length, 1);
+  // the «On … wrote:» form, with quoted lines
+  const g = core.mailThread('Agreed.\n\nOn Mon, Nov 16, 2026 at 3:04 PM Rami Qasim <r.qasim@example.com> wrote:\n> Reminder: the deadline is tomorrow at 10:00.\n> Please send the offer.', { at: '2026-11-16T15:30', name: 'Zaid Fares', addr: 'zaid.fares@example.com' });
+  assert.deepEqual(g.map((e) => [e.at, e.name, e.text]), [['2026-11-16T15:04', 'Rami Qasim', 'Reminder: the deadline is tomorrow at 10:00.\nPlease send the offer.'], ['2026-11-16T15:30', 'Zaid Fares', 'Agreed.']]);
+  // a header whose date cannot be read keeps its place and says nothing about the time
+  const u = core.mailThread('Second.\n\nFrom: Tala Nasser\nSent: 03/04/2026 10:00\nSubject: x\n\nFirst.', { at: '2026-04-05T09:00', name: 'Zaid Fares', addr: '' });
+  assert.deepEqual(u.map((e) => [e.at, e.name, e.text]), [['', 'Tala Nasser', 'First.'], ['2026-04-05T09:00', 'Zaid Fares', 'Second.']]);
+});
+
+test('mail thread: the one-line summary is the writer’s own words, after the greeting', () => {
+  assert.equal(core.mailGist('Dear Rami,\nThe offer files are attached for review.\nOffer deck.pptx'), 'The offer files are attached for review. · Offer deck.pptx');
+  assert.equal(core.mailGist('الزملاء الأعزاء،\nمرفق كراسة المنافسة، والموعد النهائي للتقديم يوم الثلاثاء.'), 'مرفق كراسة المنافسة، والموعد النهائي للتقديم يوم الثلاثاء.');
+  assert.equal(core.mailGist('السلام عليكم / أستاذ سالم\nيرجى شراء الكراسة.'), 'يرجى شراء الكراسة.');
+  assert.equal(core.mailGist('Dear all,'), 'Dear all,', 'a message that is only a greeting keeps it rather than showing nothing');
+  assert.equal(core.mailGist(''), '');
+  const long = core.mailGist('word '.repeat(100), 40);
+  assert(long.length <= 41 && long.endsWith('…') && !long.includes('  '), long);
+});
+
+test('mail thread: the same message arriving again in a later reply is one entry — the mark and the fuller text are kept', () => {
+  const first = core.mailThread(THREAD_BODY, { at: '2026-11-17T11:31', name: 'Rami Qasim', addr: 'r.qasim@example.com' });
+  const marked = first.map((e) => (e.at === '2026-11-17T09:43' ? { ...e, mark: 'handover' } : e));
+  // a later reply quotes the same thread: one name comes without its address, one time is a minute off, one text is shorter
+  const later = [{ at: '2026-11-17T09:43', name: 'Zaid Fares', addr: '', text: 'Dear Rami,' }, { at: '2026-11-17T11:32', name: 'Rami Qasim', addr: '', text: 'Sending date of the tender: 12/11/2026' },
+    { at: '2026-11-17T12:40', name: 'Zaid Fares', addr: 'zaid.fares@example.com', text: 'The branch explanation is attached.' }];
+  const merged = core.tenderThreadMerge(marked, later);
+  assert.equal(merged.length, 6, 'only the one new message was added');
+  assert.deepEqual(merged.map((e) => e.at), ['2026-11-12T11:03', '2026-11-17T09:43', '2026-11-17T10:02', '2026-11-17T11:15', '2026-11-17T11:31', '2026-11-17T12:40']);
+  const h = merged.find((e) => e.at === '2026-11-17T09:43');
+  assert.equal(h.mark, 'handover'); assert.equal(h.addr, 'zaid.fares@example.com'); assert(h.text.includes('attached for review'), 'the fuller text wins');
+  assert.equal(core.tenderThreadMerge(merged, merged).length, 6, 'merging twice changes nothing');
+  // two different people in the same minute are two messages
+  assert.equal(core.tenderThreadMerge([{ at: '2026-11-17T09:43', name: 'Zaid Fares', addr: '', text: 'a' }], [{ at: '2026-11-17T09:43', name: 'Lina Harb', addr: '', text: 'b' }]).length, 2);
+  // an entry with no readable time is matched by writer and words, and stays after the dated ones
+  const und = core.tenderThreadMerge([{ at: '', name: 'Tala Nasser', addr: '', text: 'First.' }], [{ at: '', name: 'Tala Nasser', addr: '', text: 'First.' }, { at: '2026-01-01T08:00', name: 'A B', addr: '', text: 'x' }]);
+  assert.deepEqual(und.map((e) => e.at), ['2026-01-01T08:00', '']);
+});
+
+test('mail thread: full working days between two dates — Sunday to Thursday, the two ends not counted', () => {
+  assert.equal(core.workDaysBetween('2026-11-12', '2026-11-17'), 2, 'Thursday to Tuesday: Sunday and Monday');
+  assert.equal(core.workDaysBetween('2026-11-12', '2026-11-15'), 0, 'Thursday to Sunday: a weekend only');
+  assert.equal(core.workDaysBetween('2026-11-15', '2026-11-29'), 9);
+  assert.equal(core.workDaysBetween('2026-11-17', '2026-11-17'), 0);
+  assert.equal(core.workDaysBetween('2026-11-17', '2026-11-12'), null, 'a deadline before the first message is not a duration');
+  assert.equal(core.workDaysBetween('', '2026-11-17'), null); assert.equal(core.workDaysBetween('2026-11-12', ''), null);
+});
+
+test('mail thread: the facts of a tender’s correspondence — first and last message, the deadline, the hand-over and its margin', () => {
+  const thread = core.mailThread(THREAD_BODY, { at: '2026-11-17T11:31', name: 'Rami Qasim', addr: 'r.qasim@example.com' });
+  const item = { due: '2026-11-17', dueTime: '10:00', thread };
+  const f = core.tenderThreadFacts(item);
+  assert.equal(f.n, 5); assert.equal(f.people, 3);
+  assert.equal(f.first.at, '2026-11-12T11:03'); assert.equal(f.last.at, '2026-11-17T11:31');
+  assert.equal(f.dueAt, '2026-11-17T10:00'); assert.equal(f.workDays, 2);
+  assert.equal(f.handover, null); assert.equal(f.leadMin, null, 'no message was marked: no margin is worked out');
+  const marked = { ...item, thread: thread.map((e) => (e.at === '2026-11-17T09:43' ? { ...e, mark: 'handover' } : e)) };
+  const m = core.tenderThreadFacts(marked);
+  assert.equal(m.handover.at, '2026-11-17T09:43'); assert.equal(m.leadMin, 17, 'seventeen minutes before the deadline');
+  const late = core.tenderThreadFacts({ ...item, thread: thread.map((e) => (e.at === '2026-11-17T11:15' ? { ...e, mark: 'handover' } : e)) });
+  assert.equal(late.leadMin, -75, 'after the deadline the margin is negative');
+  // a deadline without its time gives the days but no margin; no deadline gives neither; no thread gives zeros and nulls
+  const noTime = core.tenderThreadFacts({ ...marked, dueTime: '' }); assert.equal(noTime.dueAt, '2026-11-17'); assert.equal(noTime.workDays, 2); assert.equal(noTime.leadMin, null);
+  const noDue = core.tenderThreadFacts({ thread: marked.thread }); assert.equal(noDue.dueAt, ''); assert.equal(noDue.workDays, null); assert.equal(noDue.leadMin, null);
+  assert.deepEqual(core.tenderThreadFacts({}), { n: 0, people: 0, first: null, last: null, dueAt: '', workDays: null, handover: null, leadMin: null });
+});
+
+test('mail thread: what is saved on the tender is cleaned, survives a merge between two devices, and nothing else is dropped', () => {
+  const thread = core.mailThread(THREAD_BODY, { at: '2026-11-17T11:31', name: 'Rami Qasim', addr: 'r.qasim@example.com' });
+  const dirty = [...thread, { at: 'yesterday', name: 'X'.repeat(200), addr: 5, text: 'y'.repeat(5000), mark: 'other' }, null, { at: '2026-11-17T09:43' }];
+  const clean = core.cleanTenderDetails({ dateSource: 'thread', thread: dirty, activity: [{ id: 'a1', action: 'thread', at: '2026-11-17T10:00:00Z', label: '5' }] });
+  assert.equal(clean.dateSource, 'thread', 'a date taken from the oldest message keeps its source');
+  assert.equal(clean.thread.length, 6, 'the entry with nothing in it is dropped');
+  assert.deepEqual(clean.thread.slice(0, 5), thread);
+  assert.deepEqual(clean.thread[5], { at: '', name: 'X'.repeat(80), addr: '', text: 'y'.repeat(1500) });
+  assert.equal(clean.activity.length, 1, 'the history line of a thread reading is kept');
+  assert.deepEqual(core.cleanTenderDetails({}).thread, []);
+  const a = { thread: thread.slice(0, 3).map((e, k) => (k === 1 ? { ...e, mark: 'handover' } : e)) }, b = { thread: thread.slice(2) };
+  const both = core.mergeTenderDetails(a, b).thread;
+  assert.equal(both.length, 5); assert.equal(both[1].mark, 'handover');
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

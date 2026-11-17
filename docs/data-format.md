@@ -140,6 +140,8 @@ Tender records may include the original Outlook messages, classified attachments
 
 From v9.38 a file may also include `kindManual`, `kindAt` and optional `analysis`: `state`, `format`, `readAt`, `highlights` (`topic`, original `text`, page/sheet `locator`), `schedule` (`due`/`askDue` date, time and locator) and bounded `tables`. This is extracted evidence, not a complete analysis. `dateSources` also accepts `document`; explicit `manual` dates remain authoritative. The additive fields survive existing version 2 backups. Deletion tombstones remove the matching file and its extracted evidence on merge.
 
+From v9.57 (ADR-0130) a tender may carry `thread`: the conversation read from its mails, oldest first — entries of `{ at, name, addr, text }` and, on at most one of them, `mark: "handover"` (set by the manager). `at` is the Saudi wall clock as the mail program wrote it, `YYYY-MM-DDTHH:MM`, the day alone, or empty when it could not be read without guessing. `text` is the message's own words without links, phone numbers or the signature, at most 1,500 characters; at most 300 entries. `dateSource` also accepts `thread` (the tender's date is the day of the oldest quoted message), and the activity log accepts the action `thread`. Earlier backups, which have none of these, are read as before.
+
 
 ## Project follow-up (v9.40)
 

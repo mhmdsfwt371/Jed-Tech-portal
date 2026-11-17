@@ -17,6 +17,47 @@
 
 <!-- releases -->
 
+## v9.57 — 2026-11-17
+
+- سجل المناقصات صار يقرأ سلسلة الإيميل نفسها: اسحب إيميل المناقصة (والأفضل آخر رد، لأنه يحمل كل ما قبله) فتظهر في نافذة المناقصة «تسلسل المراسلات» — كل رسالة بوقتها وكاتبها وخلاصة من كلامه هو، من الأقدم إلى الأحدث.
+- تحت التسلسل خلاصته: عدد الرسائل والمرسلين، أول رسالة وآخر رسالة، موعد التقديم المسجل، وأيام العمل الكاملة بين أول رسالة والموعد (من الأحد إلى الخميس، دون يوم الوصول ويوم الإغلاق).
+- علّم الرسالة التي سلّمت فيها العرض، فتحسب الصفحة كم سبقت الموعد أو تأخرت عنه. هذه العلامة منك أنت، والصفحة لا تخمّنها.
+- «انسخ التسلسل» ينسخ التسلسل وخلاصته نصًّا جاهزًا للّصق في إيميل.
+- زر «ملخص المراسلات» في الصفحة: جدول للمناقصات المعروضة التي قُرئت رسائلها — أول رسالة، الموعد وأيام العمل، عدد الرسائل وآخرها، وتسليم العرض — مع تصفية للمناقصات التي مدتها أقل من أسبوع عمل، وتنزيل إكسل.
+- المناقصة التي تدخل السجل لأول مرة من رد تأخذ تاريخ أقدم رسالة في السلسلة لا تاريخ الرد، ويُكتب تحته مصدره. والمناقصة الموجودة من قبل يبقى تاريخها كما هو.
+- لا شيء يُخمَّن ولا يُحفظ ما لا يلزم: الروابط وأرقام الهواتف والتواقيع لا تُحفظ، والرسالة المكررة في رد لاحق لا تتكرر، والوقت المكتوب بصيغة تحتمل قراءتين يُترك «غير مقروء». والإيميلات المحفوظة من قبل تُقرأ بزر «اقرأ التسلسل من الإيميلات المحفوظة».
+- إصلاح داخلي: أحد الفحوص الآلية كان مربوطًا بتاريخ 15 نوفمبر 2026 فصار يفشل من اليوم التالي بلا أي تغيير في البوابة — صار لا يعتمد على تاريخ اليوم.
+
+<details><summary>English</summary>
+
+- The tender register now reads the email thread itself: drop the tender’s email (best of all the latest reply, because it carries everything before it) and the tender’s window shows «Correspondence timeline» — every message with its time, its writer and a summary in the writer’s own words, oldest first.
+- Under the timeline is its summary: how many messages and writers, the first and the last message, the submission deadline on record, and the full working days between the first message and the deadline (Sunday to Thursday, without the day it arrived and the closing day).
+- Mark the message in which you handed the offer over, and the page works out how long before the deadline it was sent, or how long after. That mark is yours alone; the page never guesses it.
+- «Copy the timeline» copies the timeline and its summary as text ready to paste into an email.
+- A «Correspondence summary» button on the page: a table of the tenders shown whose messages were read — first message, the deadline and working days, how many messages and the last, and the offer hand-over — with a filter for tenders that had less than a working week, and an Excel download.
+- A tender that first enters the register through a reply takes the date of the oldest message in the thread, not the date of the reply, and its source is written under it. A tender already in the register keeps the date it has.
+- Nothing is guessed and nothing unneeded is kept: links, phone numbers and signatures are not saved, a message repeated inside a later reply is not repeated, and a time written in a form with two readings is left «not readable». Emails saved earlier are read with «Read the timeline from the saved emails».
+- Internal fix: one of the automatic checks was tied to the date 15 November 2026, so it began to fail the next day with no change to the portal — it no longer depends on today’s date.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹینڈر رجسٹر اب ای میل کے سلسلے کو خود پڑھتا ہے: ٹینڈر کی ای میل ڈالیں (بہتر ہے کہ تازہ ترین جواب ہو، کیونکہ اس میں پہلے کے سب پیغام شامل ہوتے ہیں) تو ٹینڈر کی کھڑکی میں «خط و کتابت کی ترتیب» نظر آتی ہے — ہر پیغام اپنے وقت، لکھنے والے اور اسی کے الفاظ میں خلاصے کے ساتھ، پرانے سے نئے کی ترتیب میں۔
+- ترتیب کے نیچے اس کا خلاصہ ہے: پیغامات اور لکھنے والوں کی تعداد، پہلا اور آخری پیغام، درج شدہ جمع کرانے کی آخری تاریخ، اور پہلے پیغام اور آخری تاریخ کے درمیان پورے کاری دن (اتوار سے جمعرات، آنے کے دن اور بند ہونے کے دن کے بغیر)۔
+- جس پیغام میں آپ نے پیشکش حوالے کی اس پر نشان لگائیں، تو صفحہ بتاتا ہے کہ وہ آخری تاریخ سے کتنا پہلے یا کتنا بعد بھیجا گیا۔ یہ نشان صرف آپ لگاتے ہیں؛ صفحہ اس کا اندازہ نہیں لگاتا۔
+- «ترتیب نقل کریں» ترتیب اور اس کا خلاصہ ایسے متن کی صورت میں نقل کرتا ہے جو ای میل میں چسپاں کیا جا سکے۔
+- صفحے پر «خط و کتابت کا خلاصہ» کا بٹن: ان دکھائے گئے ٹینڈرز کی جدول جن کے پیغام پڑھے گئے — پہلا پیغام، آخری تاریخ اور کاری دن، پیغامات کی تعداد اور آخری پیغام، اور پیشکش حوالگی — ان ٹینڈرز کے فلٹر کے ساتھ جن کی مدت ایک کاری ہفتے سے کم تھی، اور ایکسل ڈاؤن لوڈ کے ساتھ۔
+- جو ٹینڈر پہلی بار کسی جواب کے ذریعے رجسٹر میں آئے وہ جواب کی تاریخ کے بجائے سلسلے کے سب سے پرانے پیغام کی تاریخ لیتا ہے، اور اس کے نیچے اس کا ماخذ لکھا جاتا ہے۔ جو ٹینڈر پہلے سے رجسٹر میں ہے اس کی تاریخ وہی رہتی ہے۔
+- کوئی اندازہ نہیں لگایا جاتا اور غیر ضروری چیز محفوظ نہیں کی جاتی: لنک، فون نمبر اور دستخط محفوظ نہیں ہوتے، کسی بعد کے جواب میں دہرایا گیا پیغام دوبارہ نہیں آتا، اور دو مطلب والی شکل میں لکھا وقت «پڑھا نہیں جا سکا» چھوڑ دیا جاتا ہے۔ پہلے سے محفوظ ای میلز «محفوظ ای میلز سے ترتیب پڑھیں» کے بٹن سے پڑھی جاتی ہیں۔
+- اندرونی درستی: خودکار جانچوں میں سے ایک 15 نومبر 2026 کی تاریخ سے بندھی تھی، اس لیے اگلے ہی دن پورٹل میں کسی تبدیلی کے بغیر ناکام ہونے لگی — اب وہ آج کی تاریخ پر منحصر نہیں۔
+
+</div>
+</details>
+
+
 ## v9.56 — 2026-11-15
 
 - إصلاح: في النوافذ الطويلة (مثل نافذة المناقصة) كان زر «التالي» و«السابق» وأرقام الصفحات لا تستجيب للضغط بالماوس، وكانت عجلة الماوس وحدها تقلّب الصفحات. الآن الأزرار تعمل، حتى لو كان في النافذة شيء يتغير باستمرار مثل إضافة تدقيق الكتابة.

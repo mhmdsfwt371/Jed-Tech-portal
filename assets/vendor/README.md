@@ -10,6 +10,7 @@ and CVE-2024-22363 (ReDoS, fixed in 0.20.2). Newer versions are published only o
 address, the library works offline and the portal makes no request to a third party at run time.
 
 - tender-mail.min.js bundles PostalMime, MSGReader and the attachment classifier from the standalone Tender Register. It is loaded locally on the first Outlook import. Third-party license texts are in tender-mail-LICENSE.txt.
+  Patched in this repository for v9.57 (ADR-0130): `parse()` also returns `sentAt` (the message's sent instant, ISO; the delivery time when there is none) and `senderName` (the writer's display name), for the correspondence timeline. The change is four additions inside the bundle's own `ds`, `ic` and `nc` functions; nothing else differs from the bundle of v9.38.
 
 - `pdf.min.mjs`: PDF.js 6.5.438 (legacy build); SHA-256 `522ad2c83bc8a0010e7f0cc60d0892b77c8d2bf2c9702dc12288311d94270f42`. Local document extraction only.
 

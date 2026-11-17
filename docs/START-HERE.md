@@ -170,6 +170,7 @@
 | `docs/decisions/0127-tender-flow-by-files.md` | Drop anything anywhere: mail registers, study fills and moves the stage, one-file final offer makes it ready; default owner; Undo for every automatic move |
 | `docs/decisions/0128-manual-tender-fields-optional.md` | Nothing the manager fills by hand blocks a tender’s stage; closed tenders ask for nothing |
 | `docs/decisions/0129-audit-and-qa-policy.md` | The audit of 9.55: defects found in windows, dark mode, reloads and repeats; the tender page rebuilt around drop-or-choose; the backup reminder; the QA policy |
+| `docs/decisions/0130-tender-correspondence-timeline.md` | A tender’s mail thread read into its messages (writer, time, own words), the summary with full working days, the manager’s hand-over mark, copy as text, and the summary window |
 
 ## في عشر دقائق: ابنِ وافحص
 ```bash

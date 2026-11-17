@@ -17,10 +17,11 @@ export async function fixtures() {
   const word = '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>كراسة الشروط والمواصفات</w:t></w:r></w:p><w:p><w:r><w:t>الزيارة الميدانية إلزامية</w:t></w:r></w:p><w:p><w:r><w:t>آخر موعد تقديم العروض: ٢٠٢٦/١٢/٠٦</w:t></w:r></w:p></w:body></w:document>';
   return {pdf:new File([await pdf.save()],'terms.pdf'),sheet:new File([X.write(wb,{type:'array',bookType:'xlsx'})],'BOQ.xlsx'),word:new File([zipSync({'word/document.xml':strToU8(word)})],'study.docx')};
 }
-export async function email(id, { subject='sample: Tender #955512', body='Clarification deadline: 2026-11-28', attachments=[], received=true, date=true, references='' }={}) {
-  const lines=['From: sample@example.com','To: qa@example.com','Subject: '+subject,'Message-ID: <'+id+'@example.com>',
-    ...(received ? ['Received: from example.com; Thu, 12 Nov 2026 09:02:00 +0300'] : []),
-    ...(date ? ['Date: Thu, 12 Nov 2026 09:00:00 +0300'] : []),
+// `from` and `sent` (v9.57): a second message of the same conversation needs its own writer and its own time
+export async function email(id, { subject='sample: Tender #955512', body='Clarification deadline: 2026-11-28', attachments=[], received=true, date=true, references='', from='sample@example.com', sent='Thu, 12 Nov 2026 09:00:00 +0300' }={}) {
+  const lines=['From: '+from,'To: qa@example.com','Subject: '+subject,'Message-ID: <'+id+'@example.com>',
+    ...(received ? ['Received: from example.com; '+sent.replace(/:00 \+/,':30 +')] : []),
+    ...(date ? ['Date: '+sent] : []),
     ...(references ? ['In-Reply-To: '+references] : []),'MIME-Version: 1.0','Content-Type: multipart/mixed; boundary="qa"','','--qa','Content-Type: text/plain; charset=utf-8','',body];
   for(const file of attachments) lines.push('--qa','Content-Type: application/octet-stream','Content-Disposition: attachment; filename="'+file.name+'"','Content-Transfer-Encoding: base64','',Buffer.from(await file.arrayBuffer()).toString('base64'));
   lines.push('--qa--',''); return new File([lines.join('\r\n')],id+'.eml');
