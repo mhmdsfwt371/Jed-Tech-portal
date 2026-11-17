@@ -1231,8 +1231,9 @@ function etOpen() {
 // ---------- v9.63 (ADR-0136): «تحليل السوق» — the whole Etimad pull read for a period, a field of work and a status ----------
 const mkF = { period: 'all', from: '', to: '', scope: 'all', west: false, status: 'all', q: '', who: null, tab: 'tenders', sort: {}, limit: 200 };
 let mkMemo = { key: '', radar: null, S: null }, mkTm = 0;
-const MK_TABS = ['tenders', 'winners', 'entities', 'activities', 'bidders', 'ours'];
-const MK_SORTS = { tenders: ['new', 'value', 'bidders', 'due'], ours: ['new', 'value', 'bidders'], winners: ['wins', 'value'], entities: ['count', 'value', 'awarded'], activities: ['count', 'value'], bidders: ['bids', 'wins', 'rate'] };
+const MK_TABS = ['tenders', 'winners', 'entities', 'activities', 'lines', 'bidders', 'ours'];
+const MK_SCOPES = ['all', 'afaqy', 'iiot', 'both'];   // v9.66 (ADR-0139): industrial IoT is a field of its own, alone or with ours
+const MK_SORTS = { tenders: ['new', 'value', 'bidders', 'due'], ours: ['new', 'value', 'bidders'], winners: ['wins', 'value'], entities: ['count', 'value', 'awarded'], activities: ['count', 'value'], lines: ['count', 'value'], bidders: ['bids', 'wins', 'rate'] };
 function mkPeriods(R) {   // the choices the pull can answer: the fixed spans, each year it holds and each quarter of those years
   const years = [...new Set(R.tenders.map((x) => (x.published || '').slice(0, 4)).filter((y) => /^\d{4}$/.test(y)))].sort().reverse();
   return [['all', t('mk_p_all')], ['q', t('mk_p_q')], ['h', t('mk_p_h')], ['ytd', t('mk_p_ytd')], ...years.map((y) => [y, t('mk_p_year', { y })]),
@@ -1245,6 +1246,8 @@ function mkStats() {
   return mkMemo.S;
 }
 const mkNum = (v) => (v == null ? '—' : tdMoney(v));
+const mkLine = (k) => (k ? t(`mk_line_${k}`) : '');
+const mkWhoText = () => t('mk_who', { k: t(`mk_who_k_${mkF.who.kind}`), n: mkF.who.kind === 'line' ? mkLine(mkF.who.name) : mkF.who.name });
 const mkStatus = (x) => t(`et_st_${x.status || 'other'}`);
 function mkSorted(S, tab) {
   const by = mkF.sort[tab] || MK_SORTS[tab][0], v = (n) => (n == null ? -1 : n);
@@ -1257,10 +1260,10 @@ function mkSorted(S, tab) {
 }
 // one list's columns, the same for the page and the Excel: [header, value on the page, value in the file]
 function mkCols(tab, inReg) {
-  const who = (kind) => (x) => el('button', { type: 'button', class: 'linkish mk-who', dir: 'auto', text: x.name, title: t('mk_press'), onclick: () => { mkF.who = { kind, name: x.name }; mkF.tab = 'tenders'; mkF.limit = 200; mkDraw(); } });
+  const who = (kind) => (x) => el('button', { type: 'button', class: 'linkish mk-who', dir: 'auto', text: kind === 'line' ? mkLine(x.name) : x.name, title: t('mk_press'), onclick: () => { mkF.who = { kind, name: x.name }; mkF.tab = 'tenders'; mkF.limit = 200; mkDraw(); } });
   const T = [[t('mk_c_title'), (x) => [el('b', { dir: 'auto', text: x.title }), el('div', { class: 'hint', dir: 'auto', text: [x.entity, x.activity].filter(Boolean).join(' · ') }),
-      el('div', { class: 'td-chips' }, [x.type, x.west ? t('et_west') : '', inReg.has(x.ref) ? t('et_in_reg') : '', x.us ? t('mk_us') : '', `${t('td_card_etimad')} ${x.ref}`].filter(Boolean).map((c) => el('span', { class: 'chip', dir: 'auto', text: c })))], (x) => x.title],
-    [t('mk_c_entity'), null, (x) => x.entity], [t('mk_c_activity'), null, (x) => x.activity], [t('mk_c_type'), null, (x) => x.type],
+      el('div', { class: 'td-chips' }, [x.type, mkLine(x.line), x.west ? t('et_west') : '', inReg.has(x.ref) ? t('et_in_reg') : '', x.us ? t('mk_us') : '', `${t('td_card_etimad')} ${x.ref}`].filter(Boolean).map((c) => el('span', { class: 'chip', dir: 'auto', text: c })))], (x) => x.title],
+    [t('mk_c_entity'), null, (x) => x.entity], [t('mk_c_activity'), null, (x) => x.activity], [t('mk_c_line'), null, (x) => mkLine(x.line)], [t('mk_c_type'), null, (x) => x.type],
     [t('mk_c_published'), (x) => x.published || '—', (x) => x.published], [t('mk_c_due'), (x) => (x.due ? etWhen(x.due, x.dueTime) : '—'), (x) => [x.due, x.dueTime].filter(Boolean).join(' ')],
     [t('mk_c_status'), mkStatus, mkStatus], [t('mk_c_winner'), (x) => x.winners.join(' · ') || '—', (x) => x.winners.join(' · ')],
     [t('mk_c_value'), (x) => mkNum(x.value), (x) => x.value], [t('mk_c_bidders'), (x) => String(x.bidders || '—'), (x) => x.bidders || null],
@@ -1274,6 +1277,8 @@ function mkCols(tab, inReg) {
       [t('mk_c_awarded'), (x) => String(x.awarded), (x) => x.awarded], [t('mk_c_value'), (x) => mkNum(x.value), (x) => x.value], [t('mk_c_valued'), (x) => String(x.valued), (x) => x.valued]],
     activities: [[t('mk_c_name'), who('activity'), (x) => x.name], [t('mk_c_n'), (x) => String(x.n), (x) => x.n], [t('mk_c_awarded'), (x) => String(x.awarded), (x) => x.awarded],
       [t('mk_c_value'), (x) => mkNum(x.value), (x) => x.value], [t('mk_c_valued'), (x) => String(x.valued), (x) => x.valued]],
+    lines: [[t('mk_c_name'), who('line'), (x) => mkLine(x.name)], [t('mk_c_n'), (x) => String(x.n), (x) => x.n], [t('mk_c_awarded'), (x) => String(x.awarded), (x) => x.awarded],
+      [t('mk_c_value'), (x) => mkNum(x.value), (x) => x.value], [t('mk_c_valued'), (x) => String(x.valued), (x) => x.valued]],
     bidders: [[t('mk_c_name'), who('bidder'), (x) => x.name], [t('mk_c_bids'), (x) => String(x.bids), (x) => x.bids], [t('mk_c_wins'), (x) => String(x.wins), (x) => x.wins],
       [t('mk_c_rate'), (x) => (x.winRate == null ? '—' : `${x.winRate}%`), (x) => x.winRate], [t('mk_c_pass'), (x) => String(x.pass), (x) => x.pass], [t('mk_c_fail'), (x) => String(x.fail), (x) => x.fail],
       [t('mk_c_us'), (x) => (x.us ? '✓' : ''), (x) => (x.us ? t('mk_yes') : '')]],
@@ -1281,8 +1286,8 @@ function mkCols(tab, inReg) {
 }
 function mkFilterText(S) {
   const pick = mkPeriods(etRadar).find(([k]) => k === mkF.period), f = mkFilter();
-  return [pick ? pick[1] : '', f.from || f.to ? `${f.from || '…'} → ${f.to || '…'}` : '', t(mkF.scope === 'afaqy' ? 'mk_f_afaqy' : 'mk_f_all'), t(mkF.west ? 'mk_f_west' : 'mk_f_ksa'),
-    t(`mk_f_st_${mkF.status}`), mkF.q ? `«${mkF.q}»` : '', mkF.who ? t('mk_who', { k: t(`mk_who_k_${mkF.who.kind}`), n: mkF.who.name }) : '', t('mk_x_n', { n: S.total })].filter(Boolean).join(' · ');
+  return [pick ? pick[1] : '', f.from || f.to ? `${f.from || '…'} → ${f.to || '…'}` : '', t(`mk_f_${mkF.scope}`), t(mkF.west ? 'mk_f_west' : 'mk_f_ksa'),
+    t(`mk_f_st_${mkF.status}`), mkF.q ? `«${mkF.q}»` : '', mkF.who ? mkWhoText() : '', t('mk_x_n', { n: S.total })].filter(Boolean).join(' · ');
 }
 async function mkExcel(all) {
   const S = mkStats(), X = await loadXlsx(), wb = X.utils.book_new(), rtl = lang !== 'en', inReg = new Set();
@@ -1320,11 +1325,11 @@ function mkOpen() {
         el('label', { class: 'mk-period' }, el('span', { text: t('mk_p_label') }), el('select', { class: 'mk-p', 'aria-label': t('mk_p_label'), onchange: (e) => { mkF.period = e.target.value; mkF.limit = 200; mkDraw(); } },
           mkPeriods(etRadar).map(([k, l]) => el('option', { value: k, text: l, ...(k === mkF.period ? { selected: '' } : {}) })))),
         mkF.period === 'custom' ? [dateIn('from'), dateIn('to')] : null,
-        el('div', { class: 'pills' }, pill(mkF.scope === 'all', t('mk_f_all'), () => { mkF.scope = 'all'; }, 'mk-sc-all'), pill(mkF.scope === 'afaqy', t('mk_f_afaqy'), () => { mkF.scope = 'afaqy'; }, 'mk-sc-afaqy')),
+        el('div', { class: 'pills' }, MK_SCOPES.map((k) => pill(mkF.scope === k, t(`mk_f_${k}`), () => { mkF.scope = k; }, `mk-sc-${k}`))),
         el('div', { class: 'pills' }, pill(!mkF.west, t('mk_f_ksa'), () => { mkF.west = false; }), pill(mkF.west, t('mk_f_west'), () => { mkF.west = true; }, 'mk-west')),
         el('div', { class: 'pills' }, ['all', 'active', 'awarded'].map((st) => pill(mkF.status === st, t(`mk_f_st_${st}`), () => { mkF.status = st; }, `mk-st-${st}`))),
         el('input', { type: 'search', class: 'mk-q', value: mkF.q, placeholder: t('mk_q'), 'aria-label': t('mk_q'), oninput: (e) => { mkF.q = e.target.value; clearTimeout(mkTm); mkTm = setTimeout(() => { mkF.limit = 200; mkDraw(); const n = dlg.querySelector('.mk-q'); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 300); } })),
-      mkF.who ? el('p', { class: 'crm-filter mk-who-on' }, el('span', { text: t('mk_who', { k: t(`mk_who_k_${mkF.who.kind}`), n: mkF.who.name }) }), ' ',
+      mkF.who ? el('p', { class: 'crm-filter mk-who-on' }, el('span', { text: mkWhoText() }), ' ',
         el('button', { type: 'button', class: 'btn tiny quiet mk-who-off', text: `✕ ${t('mk_who_off')}`, onclick: () => { mkF.who = null; mkF.limit = 200; mkDraw(); } })) : null,
       el('p', { class: 'hint mk-span', text: S.total ? t('mk_span', { a: S.first || '—', b: S.last || '—', n: S.total }) : t('mk_none') }),
       S.awarded ? el('p', { class: 'note mk-cover', text: t('mk_cover', { v: S.valueKnown, a: S.awarded, w: S.winnerKnown }) }) : null,
@@ -1339,7 +1344,7 @@ function mkOpen() {
       el('div', { class: 'pills mk-tabs', role: 'group', 'aria-label': t('mk_tabs') }, MK_TABS.map((k) => pill(tab === k, t(`mk_tab_${k}`, { n: count(k) }), () => { mkF.tab = k; }, `mk-tab mk-tab-${k}`))),
       el('div', { class: 'row mk-sortrow' }, el('label', {}, el('span', { text: `${t('mk_sort')} ` }), el('select', { class: 'mk-sort', 'aria-label': t('mk_sort'), onchange: (e) => { mkF.sort[tab] = e.target.value; mkDraw(); } },
         MK_SORTS[tab].map((k) => el('option', { value: k, text: t(`mk_s_${k}`), ...((mkF.sort[tab] || MK_SORTS[tab][0]) === k ? { selected: '' } : {}) })))),
-        ['winners', 'entities', 'activities', 'bidders'].includes(tab) ? el('span', { class: 'hint', text: t('mk_press') }) : null),
+        ['winners', 'entities', 'activities', 'lines', 'bidders'].includes(tab) ? el('span', { class: 'hint', text: t('mk_press') }) : null),
       L.length ? el('div', { class: 'table-wrap crm-list crm-wrap mk-list', tabindex: '0', role: 'group', 'aria-label': t(`mk_tab_${tab}`, { n: L.length }) },
         el('table', { class: `mk-t mk-t-${tab}` }, el('thead', {}, el('tr', {}, C.filter((c) => c[1]).map((c) => el('th', { text: c[0] })))),
           el('tbody', {}, shown.map((x) => el('tr', { class: x.us || x.usWon ? 'et-us' : '' }, C.filter((c) => c[1]).map((c, ci) => { const v = c[1](x); return el('td', { class: ci ? 'num' : '', dir: 'auto' }, v); }))))))

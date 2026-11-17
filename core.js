@@ -2656,6 +2656,24 @@ const SCOPE_OUT = /قطع غيار|محرك|زورق|زوارق|نظافه|تش�
 const SCOPE_ACT = /تقنيه المعلومات|الاتصالات/;
 /** Is an Etimad tender inside AFAQY's scope? By its title first (a clear «out» word wins), then by Etimad's main activity. */
 export function etimadInScope(title, activity = '') { const t = rNorm(title); if (SCOPE_OUT.test(t)) return false; return SCOPE_IN.test(t) || SCOPE_ACT.test(rNorm(activity)); }
+// v9.66 (ADR-0139): industrial IoT is a field of its own beside AFAQY's scope. Read from the title alone — Etimad has no activity
+// for it. `AR` stands for «not an Arabic letter»: «قياس» must not be the tail of «مقياس», nor «آلي» the head of «اليدوي».
+const AR = '[^\\u0621-\\u064A]';
+export const IIOT_LINES = [
+  ['scada', new RegExp(`سكادا|scada|\\bplc\\b|\\brtu\\b|\\bdcs\\b|(ال)?تحكم الي(${AR}|$)|(ال)?(تحكم|مراقبه|قراءه|قياس) (الي )?عن بعد|تيليمتري`)],
+  ['meters', new RegExp(`عدادات? (ال)?ذكي|العدادات الذكي|عدادات? (ال)?(مياه|كهرب|وقود|غاز|تدفق)|(^|${AR})(قياس|قياسات) (ال)?تدفق`)],
+  ['tanks', new RegExp(`(^|${AR})(قياس|مراقبه|رصد) (ال)?(مستوي|منسوب)(${AR}|$)|مستوي (ال)?(وقود|خزان)|مراقبه (ال)?خزانات|اتمته (ال)?محطات|حساسات? (ال)?وقود`)],
+  ['env', new RegExp(`رصد (ال)?(بيئ|هواء)|جوده الهواء|محطات? (ال)?رصد (ال)?(بيئ|جوي|هواء|زلزال|مائي)|رصد (ال)?ضوضاء`)],
+  ['energy', new RegExp(`ادار(ه)? (ال)?طاقه|مراقبه (ال)?(طاقه|استهلاك|مضخات|مولدات)|كشف (ال)?تسرب|صيانه تنبؤي`)],
+  ['city', new RegExp(`(ال)?اناره (ال)?ذكي|(ال)?مواقف (ال)?ذكي|(ال)?حاويات (ال)?ذكي|(^|${AR})(ال)?ري (ال)?ذكي|المدن الذكي|مدينه ذكي|(^|${AR})عد (ال)?(مركبات|حشود|زوار|مشاه)|ميزان جسري|موازين (ال)?(شاحنات|جسري)|الوزن المحوري`)],
+];
+// maintenance and operation stay in (the manager's choice, 18 Nov 2026); parts, consumables, lab and medical purchases are not projects
+const IIOT_OUT = /قطع غيار|spare|part no|data logger|مسجل(ات)? (ال)?بيانات|اعاشه|مستلزمات|مختبر|معايره|ادويه|(^|\s)(ال)?طبي(ه)?(\s|$)|مريض|مرضي/;
+/** The industrial-IoT line an Etimad tender falls in by its title — 'scada', 'meters', 'tanks', 'env', 'energy', 'city' — or ''. */
+export function etimadIiot(title) { const t = rNorm(title).replace(/وكاله [^،,-]{0,40}المدن الذكيه/g, ' ');   // an agency's name is not a project
+  if (!t || IIOT_OUT.test(t)) return '';  const hit = IIOT_LINES.find(([, re]) => re.test(t)); return hit ? hit[0] : ''; }
+const iiotMemo = new WeakMap();
+const iiotOf = (x) => { let v = iiotMemo.get(x); if (v === undefined) { v = etimadIiot(x.title); iiotMemo.set(x, v); } return v; };
 // Etimad's own «region» column came empty for all 30,396 tenders of the first pull, so the West is read from the entity and the place
 const WEST = /جده|مكه|المدينه المنوره|منطقه المدينه|ينبع|الطائف|رابغ|الليث|القنفذه|العلا|الغربيه|خليص|الجموم|بحره/;
 export const etimadWest = (...s) => WEST.test(rNorm(s.join(' ')));
@@ -2963,22 +2981,23 @@ const mAdd = (m, k, init) => { let v = m.get(k); if (!v) { v = init(); m.set(k, 
 export function marketStats(radar, f = {}) {
   const T = (radar && radar.tenders) || [], aw = mGroup(radar && radar.awards), of = mGroup(radar && radar.offers), q = f.q ? rNorm(f.q).trim() : '';
   let rows = T.filter((x) => (!f.from || (x.published && x.published >= f.from)) && (!f.to || (x.published && x.published <= f.to))
-    && (f.scope !== 'afaqy' || x.scope) && (!f.west || x.west) && (!f.status || f.status === 'all' || x.status === f.status)
+    && (f.scope !== 'afaqy' || x.scope) && (f.scope !== 'iiot' || iiotOf(x)) && (f.scope !== 'both' || x.scope || iiotOf(x)) && (!f.west || x.west) && (!f.status || f.status === 'all' || x.status === f.status)
     && (!q || rNorm(`${x.title} ${x.entity} ${x.ref} ${x.no || ''}`).includes(q))).map((x) => {
     const A = aw.get(x.ref) || [], O = of.get(x.ref) || [], prices = O.map((o) => o.price).filter((p) => p != null), vals = A.map((a) => a.value).filter((v) => v != null);
-    return { ...x, winners: [...new Set(A.map((a) => a.winner))], value: vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) * 100) / 100 : null,
+    return { ...x, line: iiotOf(x), winners: [...new Set(A.map((a) => a.winner))], value: vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) * 100) / 100 : null,
       bidders: O.length, low: prices.length ? Math.min(...prices) : null, high: prices.length ? Math.max(...prices) : null,
       us: O.some((o) => etimadIsUs(o.bidder)) || A.some((a) => etimadIsUs(a.winner)), usWon: A.some((a) => etimadIsUs(a.winner)) };
   });
   const w = f.who;
-  if (w && w.name) rows = rows.filter((r) => w.kind === 'winner' ? r.winners.includes(w.name) : w.kind === 'entity' ? r.entity === w.name : w.kind === 'activity' ? r.activity === w.name
+  if (w && w.name) rows = rows.filter((r) => w.kind === 'winner' ? r.winners.includes(w.name) : w.kind === 'entity' ? r.entity === w.name : w.kind === 'activity' ? r.activity === w.name : w.kind === 'line' ? r.line === w.name
     : w.kind === 'bidder' ? (of.get(r.ref) || []).some((o) => o.bidder === w.name) : true);
-  const months = new Map(), entities = new Map(), winners = new Map(), activities = new Map(), bidders = new Map();
+  const months = new Map(), entities = new Map(), winners = new Map(), activities = new Map(), bidders = new Map(), lines = new Map();
   for (const r of rows) {
     const mo = mAdd(months, (r.published || '').slice(0, 7) || '—', () => ({ month: (r.published || '').slice(0, 7) || '—', n: 0, awarded: 0, value: 0, valued: 0 }));
     const en = mAdd(entities, r.entity || '—', () => ({ name: r.entity || '—', n: 0, active: 0, awarded: 0, value: 0, valued: 0 }));
     const ac = mAdd(activities, r.activity || '—', () => ({ name: r.activity || '—', n: 0, awarded: 0, value: 0, valued: 0 }));
-    for (const g of [mo, en, ac]) { g.n++; if (r.status === 'awarded') g.awarded++; if (r.value != null) { g.value += r.value; g.valued++; } }
+    const li = r.line ? mAdd(lines, r.line, () => ({ name: r.line, n: 0, awarded: 0, value: 0, valued: 0 })) : null;
+    for (const g of li ? [mo, en, ac, li] : [mo, en, ac]) { g.n++; if (r.status === 'awarded') g.awarded++; if (r.value != null) { g.value += r.value; g.valued++; } }
     if (r.status === 'active') en.active++;
     for (const a of aw.get(r.ref) || []) {
       const wi = mAdd(winners, a.winner, () => ({ name: a.winner, wins: 0, value: 0, valued: 0, tenders: new Set(), us: etimadIsUs(a.winner) }));
@@ -3003,6 +3022,7 @@ export function marketStats(radar, f = {}) {
     entities: round([...entities.values()]).sort((a, b) => b.n - a.n || b.value - a.value || a.name.localeCompare(b.name)),
     winners: round([...winners.values()].map(({ tenders, ...x }) => x)).sort((a, b) => b.wins - a.wins || b.value - a.value || a.name.localeCompare(b.name)),
     activities: round([...activities.values()]).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)),
+    lines: round([...lines.values()]).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)),
     bidders: [...bidders.values()].map((b) => ({ ...b, winRate: b.bids ? Math.round((b.wins / b.bids) * 100) : null })).sort((a, b) => b.bids - a.bids || b.wins - a.wins || a.name.localeCompare(b.name)),
   };
 }

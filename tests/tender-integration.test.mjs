@@ -346,7 +346,7 @@ try {
   // ---- v9.63 (ADR-0136): «Market analysis» — the whole pull, read for a period, a field of work and a status, every list complete ----
   { const pre=await setup();await pre.window.qa.store.kvPut('radar',null);pre.window.close();   // the earlier sections' pulls add up; this one starts from none
     const dom9=await setup(), w=dom9.window, d=w.document, qa=w.qa, select=s=>d.querySelector(s), all=s=>[...d.querySelectorAll(s)];
-    const T=[];for(let i=0;i<260;i++)T.push({ref:String(261100000000+i),title:`منافسة عامة رقم ${i}`,entity:`جهة ${i%7}`,status:i%2?'awarded':'active',activity:'الأنشطة الطبية',published:`2025-${String(1+i%12).padStart(2,'0')}-10`});
+    const T=[];for(let i=0;i<260;i++)T.push({ref:String(261100000000+i),title:i===1?'تحديث نظام سكادا لمحطات الضخ':i===3?'توريد وتركيب عدادات كهرباء':`منافسة عامة رقم ${i}`,entity:`جهة ${i%7}`,status:i%2?'awarded':'active',activity:'الأنشطة الطبية',published:`2025-${String(1+i%12).padStart(2,'0')}-10`});
     T.push({ref:'261139000201',title:'توريد وتركيب كاميرات مراقبة',entity:'أمانة جدة',status:'awarded',activity:'تقنية المعلومات',published:'2026-03-01'},
       {ref:'261139000202',title:'نظام تتبع المركبات',entity:'أمانة جدة',status:'awarded',activity:'تقنية المعلومات',published:'2026-04-01'});
     const pull={schema:'afaqy-etimad-radar/v1',pulledAt:'2026-11-16T10:00',tenders:T,
@@ -366,6 +366,14 @@ try {
     assert.equal(tile('tenders published'),'2');select('dialog.mk-modal .mk-sc-afaqy').click();assert.equal(tile('tenders published'),'2');
     P.value='all';select('dialog.mk-modal .mk-p').value='all';select('dialog.mk-modal .mk-p').dispatchEvent(new w.Event('change',{bubbles:true}));assert.equal(tile('tenders published'),'2','our field only, over the whole pull');
     select('dialog.mk-modal .mk-sc-all').click();assert.equal(tile('tenders published'),'262');
+    // (2b) v9.66 (ADR-0139): industrial IoT is a field of its own — alone, or with ours — and its «lines» list splits it
+    select('dialog.mk-modal .mk-sc-iiot').click();assert.equal(tile('tenders published'),'2');assert.equal(tile('companies that won tenders'),'1');
+    assert(select('dialog.mk-modal table.mk-t tbody tr .td-chips').textContent.includes('Smart meters and flow measurement'),'the line shows on the tender');
+    select('dialog.mk-modal .mk-tab-lines').click();const ln=[...select('dialog.mk-modal').querySelectorAll('table.mk-t-lines tbody tr')];assert.equal(ln.length,2);
+    const sc=ln.find(r=>r.textContent.includes('SCADA'));assert(sc&&sc.textContent.includes('1,000'),sc&&sc.textContent);sc.querySelector('.mk-who').click();
+    assert.equal(select('dialog.mk-modal').querySelectorAll('table.mk-t tbody tr').length,1);assert(select('dialog.mk-modal .mk-who-on').textContent.includes('SCADA, control and remote monitoring'),select('dialog.mk-modal .mk-who-on').textContent);
+    select('dialog.mk-modal .mk-who-off').click();select('dialog.mk-modal .mk-sc-both').click();assert.equal(tile('tenders published'),'4','our field and industrial IoT together, each tender once');
+    select('dialog.mk-modal .mk-sc-all').click();assert.equal(tile('tenders published'),'262');
     // (3) a winner pressed in his list shows his tenders only; the narrowing says so and can be removed
     select('dialog.mk-modal .mk-tab-winners').click();const top=select('dialog.mk-modal table.mk-t-winners tbody tr');assert(top.textContent.includes('شركة ألف')&&top.textContent.includes('401,000'),top.textContent);
     top.querySelector('.mk-who').click();assert(select('dialog.mk-modal .mk-tab-tenders').classList.contains('on'));assert.equal(select('dialog.mk-modal').querySelectorAll('table.mk-t tbody tr').length,2);
@@ -378,9 +386,9 @@ try {
     let wb=null;w.XLSX.writeFile=(book)=>{wb=book;};w.XLSX.__byAuthor=true;
     select('dialog.mk-modal .mk-q').value='كاميرات';select('dialog.mk-modal .mk-q').dispatchEvent(new w.Event('input',{bubbles:true}));await wait(()=>select('dialog.mk-modal .mk-span')&&select('dialog.mk-modal .mk-span').textContent.includes('1 tenders'),'search applied');
     select('dialog.mk-modal .mk-xl-all').click();await wait(()=>wb,'all lists written');
-    assert.deepEqual([...wb.SheetNames],['Summary','Tenders','Winning companies','Entities','Activities','Bidders',"AFAQY's bids",'Month by month']);
+    assert.deepEqual([...wb.SheetNames],['Summary','Tenders','Winning companies','Entities','Activities','Industrial IoT lines','Bidders',"AFAQY's bids",'Month by month']);
     const sum=w.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1});assert(sum[0][1].includes('«كاميرات»'),sum[0][1]);assert.deepEqual([...sum.find(r=>r[0]==='tenders published')],['tenders published',1]);
-    const tl=w.XLSX.utils.sheet_to_json(wb.Sheets['Tenders'],{header:1});assert.equal(tl.length,2,'the header and the one tender searched');assert.equal(tl[1][8],400000,'the value is a number');
+    const tl=w.XLSX.utils.sheet_to_json(wb.Sheets['Tenders'],{header:1});assert.equal(tl.length,2,'the header and the one tender searched');assert.equal(tl[0][3],'Industrial IoT line');assert.equal(tl[1][9],400000,'the value is a number');
     wb=null;select('dialog.mk-modal .mk-tab-winners').click();select('dialog.mk-modal .mk-xl-one').click();await wait(()=>wb,'one list written');assert.deepEqual([...wb.SheetNames],['Winning companies']);
     mk.close();assert(!select('dialog.mk-modal'));
     // (5b) v9.65 (ADR-0138): a second, smaller pull is written onto the first — a winner is added, one tender is new, nothing kept is lost
@@ -441,7 +449,7 @@ try {
     // (4) the program is there: the two documents go, the study is followed, its files come back and fill the card
     P.busy=false;P.calls.length=0;assert(select('dialog.td-dlg .td-card-acts .an-start'),'the card\'s own row has the button');assert(!select('dialog.td-dlg .td-fold-analyzer').open||true);
     select('dialog.td-dlg .td-card-acts .an-start').click();await wait(()=>select('dialog.td-dlg .td-fold-analyzer')&&select('dialog.td-dlg .td-fold-analyzer').open,'the fold opened by the button');
-    await wait(()=>it().analyzer&&it().analyzer.state==='done'&&!qa.busy(),'study came back');
+    await wait(()=>it().analyzer&&it().analyzer.state==='done'&&it().etimadNo&&!qa.busy(),'study came back and was read into the card');   // «done» is written a moment before the study file is read
     assert.deepEqual(Object.keys(P.files).sort(),['BOQ.xlsx','booklet.pdf']);assert.equal(P.files['booklet.pdf'],'%PDF booklet','the file itself, not a copy of its name');
     assert.match(P.job,/^t-[0-9a-f]{16}$/);assert.equal(it().analyzer.files,3);
     const mine=it().files.filter(f=>f.mailKey===`analyzer:${P.job}`);assert.equal(mine.map(f=>`${f.name}=${f.kind}`).sort().join(' | '),'AFAQY_Tender_T_Inquiries_AR.docx=study | AFAQY_Tender_T_Study_AR.pptx=study | T.tender-study.json=study');

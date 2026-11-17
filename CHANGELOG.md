@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.66 — 2026-11-18
+
+- في «تحليل السوق» مجال جديد: «إنترنت الأشياء الصناعي» — سكادا وأنظمة التحكم والمراقبة عن بعد، والعدادات الذكية، وقياس مستوى الخزانات والوقود، والرصد البيئي، وإدارة الطاقة، والمدن الذكية. اختره وحده أو مع مجال أفاقي لترى من فاز بكل منافسة وبكم.
+- قائمة جديدة «الخطوط» تقسم منافسات إنترنت الأشياء الصناعي على خطوطها بعددها وما رُسّي منها وقيمته، والضغط على خط يعرض منافساته. وملف الإكسل فيه عمود الخط وورقة الخطوط.
+
+<details><summary>English</summary>
+
+- «Market analysis» has a new field of work: «Industrial IoT» — SCADA, control and remote monitoring systems, smart meters, tank and fuel level measurement, environmental monitoring, energy management and smart-city systems. Choose it alone or together with AFAQY's field to see who won each tender and for how much.
+- A new «Lines» list splits the industrial IoT tenders across their lines, with the count, the awarded ones and their value; pressing a line shows its tenders. The Excel file has a line column and a lines sheet.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «مارکیٹ کا تجزیہ» میں کام کا ایک نیا شعبہ ہے: «صنعتی انٹرنیٹ آف تھنگز» — سکاڈا، کنٹرول اور دور سے نگرانی کے نظام، سمارٹ میٹر، ٹینکوں اور ایندھن کی سطح کی پیمائش، ماحول کی نگرانی، توانائی کا انتظام اور سمارٹ سٹی کے نظام۔ اسے اکیلا یا آفاقی کے شعبے کے ساتھ چنیں تاکہ دیکھ سکیں کہ ہر ٹینڈر کس نے اور کتنے میں جیتا۔
+- «لائنیں» کی نئی فہرست صنعتی انٹرنیٹ آف تھنگز کے ٹینڈروں کو ان کی لائنوں میں بانٹتی ہے، تعداد، دیے گئے ٹینڈر اور ان کی مالیت کے ساتھ؛ کسی لائن کو دبانے سے اس کے ٹینڈر دکھتے ہیں۔ ایکسل فائل میں لائن کا کالم اور لائنوں کی شیٹ ہے۔
+
+</div>
+</details>
+
+
 ## v9.65 — 2026-11-17
 
 - رفع سحب جديد من اعتماد يكتب على المحفوظ ولا يحلّ محله: المنافسات الجديدة تُضاف، والموجودة تُحدَّث بما في القراءة الأحدث، ولا يُحذف شيء مما كان محفوظًا، والخانة الفارغة في السحب الجديد لا تمسح قيمة معروفة.

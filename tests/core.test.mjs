@@ -1953,6 +1953,38 @@ test('v9.65: a thinner later reading cannot take a tender out of our scope or ou
   const early = P('2026-11-01T09:00', [{ ref: '261100000022', title: 'عقد خدمات', status: 'active' }]);
   assert.equal(core.radarMerge(core.radarMerge(null, early), late).tenders[0].scope, true);
 });
+// v9.66 (ADR-0139): industrial IoT as a field of its own in the market study
+test('v9.66: an Etimad title is read into its industrial-IoT line, and look-alike words are not', () => {
+  const L = (s) => core.etimadIiot(s);
+  assert.deepEqual(['إعادة تأهيل نظام التحكم الآلي (سكادا/ دي سي اس) لمحطات الضخ', 'فحص وصيانة أنظمة التحكم DCS و PLC بأنظمة نقل المياه بالليث', 'توريد نظام مراقبة عن بعد للمضخات'].map(L), ['scada', 'scada', 'scada']);
+  assert.deepEqual(['توريد وتركيب عدادات كهرباء للمدينة السكنية', 'ربط عدد (15) أجهزة قياس تدفق', 'مشروع العدادات الذكية'].map(L), ['meters', 'meters', 'meters']);
+  assert.deepEqual(['مشروع توريد تركيب حساسات لقياس مستوى الوقود بمحطة التموين', 'مراقبة الخزانات الأرضية'].map(L), ['tanks', 'tanks']);
+  assert.deepEqual(['إنشاء محطات رصد بيئي', 'قياس بيئي لجودة الهواء والماء', 'نظام إدارة الطاقة للمباني', 'كشف التسرب في الشبكة', 'مشروع الإنارة الذكية', 'توريد ميزان جسري'].map(L), ['env', 'env', 'energy', 'energy', 'city', 'city']);
+  assert.equal(L('أجهزة تحكم منطقيPLC للآلات'), 'scada', 'a Latin word glued to an Arabic one is still read');
+  // maintenance stays in; parts, lab and medical purchases and look-alikes stay out
+  for (const no of ['توريد قطع غيار سكادا للمستشفى', 'توريد مقياس تدفق الهواء لجهاز SAS', 'باب كهربائي منزلق ذو قفل للتحكم اليدوي', 'خدمات الإعاشة لمنسوبي الوزارة', 'معالجة ارتفاع منسوب المياه الجوفية',
+    'تطوير منظومة التوثيق السريري الذكي', 'تشغيل مكتب المشاريع بوكالة التحول الرقمي والمدن الذكية', 'Temperature and humidity mini data logger', 'معايرة عدادات تدفق الغاز', 'توريد كاميرات مراقبة', ''])
+    assert.equal(L(no), '', no);
+});
+test('v9.66: the market study can be read for industrial IoT alone, or with our scope, and by line', () => {
+  const R = core.parseRadar({ schema: core.RADAR_SCHEMA, pulledAt: '2026-11-18T09:00', tenders: [
+    { ref: '261100000031', title: 'صيانة نظام التحكم المنطقي (PLC) بمنظومة التحلية في جدة', entity: 'هيئة المياه', status: 'awarded', published: '2026-02-01' },
+    { ref: '261100000032', title: 'توريد وتركيب عدادات كهرباء', entity: 'الإسكان', status: 'awarded', published: '2026-03-01' },
+    { ref: '261100000033', title: 'توريد كاميرات مراقبة', entity: 'أمانة جدة', status: 'active', published: '2026-04-01' },
+    { ref: '261100000034', title: 'حساسات لقياس مستوى الوقود', entity: 'وزارة الدفاع', status: 'active', published: '2026-05-01' },
+    { ref: '261100000035', title: 'توريد أثاث مكتبي', entity: 'جهة', status: 'awarded', published: '2026-05-02' },
+    { ref: '251100000036', title: 'تحديث نظام سكادا', entity: 'هيئة المياه', status: 'awarded', published: '2025-05-02' }],
+  awards: [{ ref: '261100000031', winner: 'شركة ألف', value: 500000 }, { ref: '261100000032', winner: 'شركة باء', value: 70000 }, { ref: '251100000036', winner: 'شركة ألف', value: 900000 }] });
+  const y = core.marketPeriod('2026', '2026-11-18'), S = core.marketStats(R, { ...y, scope: 'iiot' });
+  assert.deepEqual([S.total, S.awarded, S.winnerKnown, S.value], [3, 2, 2, 570000]);
+  assert.deepEqual(S.tenders.map((x) => x.line).sort(), ['meters', 'scada', 'tanks']);
+  assert.deepEqual(S.lines.map((l) => [l.name, l.n, l.awarded, l.value]).sort(), [['meters', 1, 1, 70000], ['scada', 1, 1, 500000], ['tanks', 1, 0, 0]]);
+  assert.deepEqual(S.winners.map((w) => [w.name, w.wins, w.value]), [['شركة ألف', 1, 500000], ['شركة باء', 1, 70000]]);
+  assert.deepEqual(core.marketStats(R, { ...y, scope: 'iiot', who: { kind: 'line', name: 'scada' } }).tenders.map((x) => x.ref), ['261100000031']);
+  // the fuel sensors are in both fields and are counted once; furniture is in neither
+  assert.deepEqual([core.marketStats(R, { ...y, scope: 'afaqy' }).total, core.marketStats(R, { ...y, scope: 'both' }).total, core.marketStats(R, { ...y, scope: 'all' }).total], [2, 4, 5]);
+  assert.deepEqual(core.marketStats(R, { from: '2025-01-01', to: '2026-12-31', scope: 'iiot' }).winners[0], { name: 'شركة ألف', wins: 2, value: 1400000, valued: 2, us: false });
+});
 const key = (s) => String(s || '').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, '').replace(/\s+/g, ' ').trim().toLowerCase();
 test('v9.60: a register row finds its Etimad tender by number or exact title; a looser match is only suggested', () => {
   const L = core.radarFromSheets(radarSheets(), ['261139000002']).tenders;

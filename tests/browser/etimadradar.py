@@ -83,13 +83,14 @@ with sync_playwright() as p:
     # v9.61 (ADR-0133): a later pull publishes the dash-cam tender's offers and award; similar awarded tenders give the market
     RES={'schema':'afaqy-etimad-radar/v1','pulledAt':day(0)+'T12:00','tenders':[dict(PULL['tenders'][0],status='awarded'),
       {'ref':'261139000301','title':'توريد وتركيب داش كام للمركبات','entity':'جهة تجريبية','status':'awarded','published':day(-60)},
-      {'ref':'261139000302','title':'توريد داش كام وكاميرات خلفية للمركبات','entity':'جهة تجريبية','status':'awarded','published':day(-90)}],
+      {'ref':'261139000302','title':'توريد داش كام وكاميرات خلفية للمركبات','entity':'جهة تجريبية','status':'awarded','published':day(-90)},
+      {'ref':'261139000303','title':'تحديث نظام سكادا لمحطات الضخ','entity':'جهة تجريبية','status':'awarded','published':day(-30)}],
       'awards':[{'ref':'261139004629','winner':'شركة رامي قاسم','value':41000},{'ref':'261139000301','winner':'شركة رامي قاسم','value':38000},{'ref':'261139000302','winner':'مؤسسة لينا حرب','value':52000}],
       'offers':[{'ref':'261139004629','bidder':'شركة رامي قاسم','price':41000,'tech':'pass'},{'ref':'261139004629','bidder':'شركة أفاقي لتقنية المعلومات','price':45500,'tech':'pass'},
         {'ref':'261139000301','bidder':'شركة رامي قاسم','price':38000,'tech':'pass'},{'ref':'261139000301','bidder':'مؤسسة زيد فارس','price':40000,'tech':'pass'}]}
     drop(pg,'.td-drop-any input','etimad-radar-2.json',RES)
     mg=pg.locator('.et-merged').inner_text() if pg.locator('.et-merged').count() else ''
-    check('R34 a second pull is written onto the first: the message says how many were added and updated, and that nothing kept was removed (v9.65)', '2 new tenders were added, 1 were updated' in mg and 'nothing that was kept was removed' in mg, mg)
+    check('R34 a second pull is written onto the first: the message says how many were added and updated, and that nothing kept was removed (v9.65)', '3 new tenders were added, 1 were updated' in mg and '8 tenders are kept now' in mg and 'nothing that was kept was removed' in mg, mg)
     pg.locator('#tenders-body .pills button').last.click(); pg.wait_for_timeout(300)
     pg.locator('.td-table tr.td-row', has_text='داش كام').locator('.td-subj').click(); pg.wait_for_timeout(900)
     rl=pg.locator('dialog.td-dlg .et-res-line'); check('R19 the card shows who won, at what value, and where our offer stood', rl.count()==1 and 'ranked 2 of 2' in rl.inner_text(), rl.inner_text() if rl.count() else '')
@@ -110,6 +111,9 @@ with sync_playwright() as p:
     check('R27 the market window opens with a held click and counts every tender in the pull, ours or not', ok and mk.count()==1 and pg.evaluate(TILE,'tenders published')==str(nR) and rows()==nR, (nR, pg.evaluate(TILE,'tenders published'), rows()))
     press_in(pg, mk.locator('.mk-sc-afaqy')); inScope=pg.evaluate(TILE,'tenders published'); press_in(pg, mk.locator('.mk-sc-all'))
     check('R28 «AFAQY\'s field of work only» narrows the numbers, «Every field» brings them back', inScope is not None and int(inScope)<nR and pg.evaluate(TILE,'tenders published')==str(nR), (inScope,nR))
+    press_in(pg, mk.locator('.mk-sc-iiot')); io=pg.evaluate(TILE,'tenders published'); chip=mk.locator('table.mk-t tbody tr .td-chips').first.inner_text() if rows() else ''
+    press_in(pg, mk.locator('.mk-tab-lines')); lr=mk.locator('table.mk-t-lines tbody tr').all_inner_texts(); press_in(pg, mk.locator('.mk-tab-tenders')); press_in(pg, mk.locator('.mk-sc-all'))
+    check('R35 «Industrial IoT» is a field of its own: its tenders, each with its line, and the lines list (v9.66)', io=='1' and 'SCADA' in chip and len(lr)==1 and 'SCADA, control and remote monitoring' in lr[0] and pg.evaluate(TILE,'tenders published')==str(nR), (io,chip,lr))
     press_in(pg, mk.locator('.mk-tab-winners'))
     if not mk.locator('table.mk-t-winners').count(): press_in(pg, mk.locator('.mk-tab-winners'))   # a press that landed while the pager was settling
     wn=mk.locator('table.mk-t-winners tbody tr').count(); top=mk.locator('table.mk-t-winners tbody tr').first.inner_text()
@@ -117,7 +121,7 @@ with sync_playwright() as p:
     check('R29 the winners list is complete, and a winner pressed shows his tenders only', wn==2 and 'شركة رامي قاسم' in top and mk.locator('.mk-who-on').count()==1 and rows()==2, (wn,top,rows()))
     with pg.expect_download() as dl: press_in(pg, mk.locator('.mk-xl-all'))
     import openpyxl, tempfile; xf=os.path.join(tempfile.mkdtemp(),dl.value.suggested_filename); dl.value.save_as(xf); wb=openpyxl.load_workbook(xf); names=wb.sheetnames; tl=list(wb['Tenders'].values)
-    check('R30 «Excel of every list» downloads one sheet per list with the choice applied', names[:2]==['Summary','Tenders'] and len(names)==8 and len(tl)==3 and 'شركة رامي قاسم' in str(list(wb['Summary'].values)[0][1]), (names,len(tl)))
+    check('R30 «Excel of every list» downloads one sheet per list with the choice applied', names[:2]==['Summary','Tenders'] and 'Industrial IoT lines' in names and len(names)==9 and len(tl)==3 and 'شركة رامي قاسم' in str(list(wb['Summary'].values)[0][1]), (names,len(tl)))
     pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
     check('R12 no page error on the laptop', not errs, errs[:2])
     state=c.storage_state(indexed_db=True); c.close()
