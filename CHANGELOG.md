@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.69 — 2026-11-18
+
+- بطاقة «ادرسها بالمحلل» صارت تقول أين تجري الدراسة: إن كان محلل المناقصات (الإصدار 3.4 أو أحدث) يعمل على «سحابة أولاما» ظهر تحت الزر تنبيه واضح بأن نص المستندات يُرسل إلى خوادم أولاما، وأن الملف الذي عليه تصنيف أمني يُدرس على الجهاز ولا يُرسل، وكيف تُبقي كل شيء على الجهاز.
+- الملاحظة العادية تحت زر المحلل صارت تعد بما تفعله البوابة نفسها فقط: ترسل الملفات إلى المحلل على هذا الجهاز ولا ترسلها إلى أي مكان آخر.
+
+<details><summary>English</summary>
+
+- The «Study it with the Analyzer» card now says where the study runs: if the Tender Analyzer (version 3.4 or later) is running on «Ollama cloud», a clear notice appears under the button saying that the text of the documents is sent to Ollama's servers, that a file with a security marking is studied on the computer and is not sent, and how to keep everything on the computer.
+- The plain note under the Analyzer's button now promises only what the portal itself does: it sends the files to the Analyzer on this computer and sends them nowhere else.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «تجزیہ کار سے مطالعہ کریں» والا کارڈ اب بتاتا ہے کہ مطالعہ کہاں ہو رہا ہے: اگر ٹینڈر تجزیہ کار (ورژن 3.4 یا اس کے بعد کا) «اولاما کلاؤڈ» پر چل رہا ہو تو بٹن کے نیچے ایک واضح تنبیہ ظاہر ہوتی ہے کہ دستاویزات کا متن اولاما کے سرورز کو بھیجا جا رہا ہے، کہ جس فائل پر حفاظتی درجہ بندی ہو اس کا مطالعہ کمپیوٹر پر ہی ہوتا ہے اور وہ نہیں بھیجی جاتی، اور سب کچھ کمپیوٹر پر کیسے رکھا جائے۔
+- تجزیہ کار کے بٹن کے نیچے والا عام نوٹ اب صرف اسی بات کا وعدہ کرتا ہے جو پورٹل خود کرتا ہے: وہ فائلیں اسی کمپیوٹر پر موجود تجزیہ کار کو بھیجتا ہے اور کہیں اور نہیں بھیجتا۔
+
+</div>
+</details>
+
+
 ## v9.68 — 2026-11-18
 
 - نافذة «تحليل السوق» صارت شاشة واحدة بلا صفحات: الاختيارات والأرقام ثابتة أمامك، والقائمة تتحرك داخل النافذة وتكمل وحدها كلما نزلت فيها، وزر يخفي الأرقام لتكبر القائمة.

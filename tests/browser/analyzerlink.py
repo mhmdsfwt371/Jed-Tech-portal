@@ -43,7 +43,7 @@ class Prog(http.server.BaseHTTPRequestHandler):
                             'outputs':[{'name':n,'size':len(b)} for n,b in OUTS.items()] if ST['state']=='done' else []}
     def do_GET(self):
         p=urllib.parse.urlsplit(self.path).path
-        if p=='/v1/hello': return self.out(200,{'app':'TenderAnalyzer','version':'3.1.0','engine':'local','busy':ST['state']=='running','job':ST['job'] if ST['state']=='running' else None})
+        if p=='/v1/hello': return self.out(200,{'app':'TenderAnalyzer','version':'3.1.0','engine':ST.get('engine','local'),'busy':ST['state']=='running','job':ST['job'] if ST['state']=='running' else None})
         if ST['job'] and p==f"/v1/jobs/{ST['job']}":
             if ST['state']=='running':
                 ST['looks']+=1
@@ -145,5 +145,19 @@ with sync_playwright() as p:
     fit=ph.evaluate("()=>{const d=document.querySelector('dialog.td-dlg'),x=d.querySelector('.an-box');if(!x)return null;const D=d.getBoundingClientRect();return {page:document.documentElement.scrollWidth>innerWidth+1,over:[x,...x.querySelectorAll('.btn, .an-line, .hint')].filter(n=>{const r=n.getBoundingClientRect();return r.right>D.right+1||r.left<D.left-1}).length,tap:Math.min(...[...x.querySelectorAll('.btn')].map(n=>n.getBoundingClientRect().height))}}")
     check('A14 on a phone the Analyzer box fits and its buttons are large enough to tap', fit and not fit['page'] and fit['over']==0 and fit['tap']>=40, fit)
     check('A15 no page error on the phone', not e3, e3[:2]); c3.close()
+    # v9.69 (ADR-0141): the program may run on Ollama's cloud; the card must say so instead of promising that nothing goes out
+    for theme,lang,word,gone in [('light','en','Ollama\'s servers','no file goes out to the internet'),('dark','ar','خوادم أولاما','لا يخرج أي ملف إلى الإنترنت')]:
+        ST['engine']='local'; c4,w,e4=boot(b,theme,(1366,800),lang,state); open_card(w)
+        w.select_option('dialog.td-dlg .td-file-controls select.td-pick','booklet'); w.locator('dialog.td-dlg .td-file-controls input[type=file]').first.set_input_files(P('كراسة الشروط.txt')); w.wait_for_timeout(1800)   # a saved state carries no file bodies: the card needs a document to send
+        if not w.locator('dialog.td-dlg .an-box .an-go').is_visible(): press(w, w.locator('dialog.td-dlg .td-fold-analyzer > summary'))
+        plain=w.locator('dialog.td-dlg .an-box .hint').last.inner_text(); was=w.locator('dialog.td-dlg .an-box .hint.an-cloud').count()
+        ST['engine']='cloud'; press(w, w.locator('dialog.td-dlg .an-go'))
+        shown=until(w, lambda: w.locator('dialog.td-dlg .an-box .hint.an-cloud').count()==1, 15)
+        note=w.locator('dialog.td-dlg .an-box .hint.an-cloud').inner_text() if shown else ''
+        cr=w.evaluate(LUM,'dialog.td-dlg .an-box .hint.an-cloud') if shown else {'worst':0}
+        check(f'A16[{theme}/{lang}] before the program answers the note promises only what the portal does; once it says «cloud» the card says the text goes to Ollama\'s servers', was==0 and gone not in plain and shown and word in note and gone not in note and cr['worst']>=4.5, (was,plain[:80],shown,note[:90],cr))
+        until(w, lambda: (item(w)['analyzer'] or {}).get('state')=='done', 40)
+        check(f'A17[{theme}/{lang}] no page error with the cloud notice', not e4, e4[:2]); c4.close()
+    ST['engine']='local'
     prog.shutdown()
 print(f'\n{len(fails)} failed' if fails else '\nall passed'); sys.exit(1 if fails else 0)

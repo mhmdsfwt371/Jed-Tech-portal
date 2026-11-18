@@ -15,7 +15,7 @@ import {
   maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply,
   tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds, tenderAmount, tenderDatePatch, backupDue, parseTenderStudy, matchTenderStudy, applyTenderStudy, tenderAutoStage, tenderStudyFromSheet,
   RADAR_SCHEMA, parseRadar, radarFromSheets, radarMerge, radarFind, radarSuggest, applyEtimad, radarToItem, etimadLinkPatch, tenderUndoEtimad, radarResult, tenderOutcome, radarSimilar, radarOurBids, tenderFunnel, tenderArchive, marketStats, marketPeriod,
-  ANALYZER, parseAnalyzerHello, parseAnalyzerJob, analyzerJobId, analyzerSend, analyzerOutputKind, analyzerStudyFile,
+  ANALYZER, parseAnalyzerHello, analyzerNote, parseAnalyzerJob, analyzerJobId, analyzerSend, analyzerOutputKind, analyzerStudyFile,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
   mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts,
@@ -1417,6 +1417,7 @@ async function tdAnalyze(id) {
   anSet(id, { phase: 'connect', pct: 0, msg: '', error: '' });
   const hello = (await anHello()) || (await anWake(id));
   if (!hello) { anSet(id, { phase: 'missing' }); return; }
+  anSet(id, { engine: hello.engine });   // «cloud»: the note under the button changes before anything is sent
   const job = analyzerJobId(id);
   if (hello.busy && hello.job !== job) { anSet(id, { phase: 'busy' }); return; }
   try {
@@ -1495,7 +1496,7 @@ function anBody(i) {
       a && ['lost', 'error'].includes(ph) ? el('button', { type: 'button', class: 'btn tiny an-take', text: t('an_take'), onclick: () => { anSet(i.id, { phase: 'running' }); anFollow(i.id); } }) : null,
       ['missing', 'lost'].includes(ph) ? el('a', { class: 'btn tiny an-open', href: ANALYZER.open, text: t('an_open') }) : null,
       ph === 'missing' ? el('a', { class: 'btn tiny an-get', href: './tender-analyzer.html#install', target: '_blank', rel: 'noopener', text: `⬇ ${t('an_get')}` }) : null),
-    ph === 'missing' ? el('p', { class: 'hint an-help', text: t('an_help') }) : el('p', { class: 'hint', text: t('an_note', { n: send.files.length }) })];
+    ph === 'missing' ? el('p', { class: 'hint an-help', text: t('an_help') }) : el('p', { class: st && st.engine === 'cloud' ? 'hint an-cloud' : 'hint', text: t(analyzerNote(st && st.engine), { n: send.files.length }) })];
 }
 const AN_BUSY = ['connect', 'opening', 'sending', 'running', 'taking'];
 // the fold's own line says where the study stands in two words, so a closed fold still tells

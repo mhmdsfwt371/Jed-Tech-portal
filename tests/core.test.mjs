@@ -2112,6 +2112,22 @@ test('v9.61: the archive lists every closed tender, newest closure first, and no
   assert.deepEqual(A.map((x) => [x.id, x.year, x.files]), [['4', '2026', 0], ['1', '2026', 2], ['3', '2025', 0]]); assert.equal(A[2].reason, 'price'); assert.equal(A[1].value, 100);
 });
 
+// v9.69 (ADR-0141): the Analyzer may run on Ollama's cloud, and then the card must not say «no file goes out to the internet»
+test('v9.69: the program says when a study would go to the cloud, and the card repeats it', () => {
+  const hello = (engine) => core.parseAnalyzerHello({ schema: 'afaqy-analyzer-link/v1', app: 'TenderAnalyzer', version: '3.4.0', engine, busy: false, job: null });
+  assert.equal(hello('cloud').engine, 'cloud', 'kept as said: reading it as «local» made the card promise that nothing leaves the computer');
+  assert.equal(hello('local').engine, 'local');
+  assert.equal(hello('bridge').engine, 'bridge');
+  assert.equal(hello('anything else').engine, 'local', 'an unknown word is not a promise of anything');
+  assert.equal(core.analyzerNote('cloud'), 'an_note_cloud');
+  assert.equal(core.analyzerNote('local'), 'an_note');
+  assert.equal(core.analyzerNote(undefined), 'an_note', 'before the program has answered, the plain note');
+  for (const lang of ['ar', 'en', 'ur']) {
+    const S = STRINGS[lang];
+    assert.ok(S.an_note_cloud && S.an_note_cloud.includes('{n}'), `${lang}: the cloud note exists and counts the files`);
+    assert.ok(!/no file goes out to the internet|لا يخرج أي ملف إلى الإنترنت|کوئی فائل انٹرنیٹ پر نہیں جاتی/.test(S.an_note), `${lang}: the plain note no longer promises what the program may not keep`);
+  }
+});
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

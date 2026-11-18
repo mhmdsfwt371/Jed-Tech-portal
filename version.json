@@ -1,28 +1,22 @@
 {
-  "version": "9.68",
+  "version": "9.69",
   "date": "2026-11-18",
   "notes": {
     "ar": [
-      "نافذة «تحليل السوق» صارت شاشة واحدة بلا صفحات: الاختيارات والأرقام ثابتة أمامك، والقائمة تتحرك داخل النافذة وتكمل وحدها كلما نزلت فيها، وزر يخفي الأرقام لتكبر القائمة.",
-      "بجانب الفترة خانتان «من يوم» و«إلى يوم» لأي تاريخين تختارهما. الفترات الجاهزة باقية كما هي، واختيار واحدة منها يملأ الخانتين.",
-      "كل رقم وكل اسم في تحليل السوق يُضغط فيفتح نافذة خاصة به فوق النافذة، فيها أرقامه وقائمته وزر الإكسل، وإغلاقها يعيدك إلى ما كنت فيه.",
-      "بحث يعمل وأنت تكتب فوق كل قائمة: المنافسات باسمها أو رقمها أو الجهة أو الفائز أو النشاط، وقوائم الأسماء بالاسم. وكل نوافذ القوائم الأخرى في البوابة، مثل أرشيف المناقصات، صار فيها بحث بأي كلمة أو رقم."
+      "بطاقة «ادرسها بالمحلل» صارت تقول أين تجري الدراسة: إن كان محلل المناقصات (الإصدار 3.4 أو أحدث) يعمل على «سحابة أولاما» ظهر تحت الزر تنبيه واضح بأن نص المستندات يُرسل إلى خوادم أولاما، وأن الملف الذي عليه تصنيف أمني يُدرس على الجهاز ولا يُرسل، وكيف تُبقي كل شيء على الجهاز.",
+      "الملاحظة العادية تحت زر المحلل صارت تعد بما تفعله البوابة نفسها فقط: ترسل الملفات إلى المحلل على هذا الجهاز ولا ترسلها إلى أي مكان آخر."
     ],
     "en": [
-      "The «Market analysis» window is now one screen with no pages: the choices and the numbers stay in front of you, the list scrolls inside the window and carries on by itself as you go down it, and a button hides the numbers to give the list more room.",
-      "Beside the period there are two fields, «From day» and «To day», for any two dates you choose. The ready periods are still there as they were, and choosing one of them fills the two fields.",
-      "Every number and every name in the market analysis can be pressed: it opens a window of its own above the window, with its own numbers, its list and the Excel button, and closing it brings you back to where you were.",
-      "A search that works as you type sits above every list: tenders by name, number, entity, winner or activity, and the lists of names by name. Every other list window in the portal, such as the tender archive, now has a search by any word or number."
+      "The «Study it with the Analyzer» card now says where the study runs: if the Tender Analyzer (version 3.4 or later) is running on «Ollama cloud», a clear notice appears under the button saying that the text of the documents is sent to Ollama's servers, that a file with a security marking is studied on the computer and is not sent, and how to keep everything on the computer.",
+      "The plain note under the Analyzer's button now promises only what the portal itself does: it sends the files to the Analyzer on this computer and sends them nowhere else."
     ],
     "ur": [
-      "«مارکیٹ کا تجزیہ» کی ونڈو اب صفحات کے بغیر ایک ہی اسکرین ہے: انتخاب اور اعداد آپ کے سامنے رہتے ہیں، فہرست ونڈو کے اندر سرکتی ہے اور نیچے جاتے ہی خود آگے بڑھتی ہے، اور ایک بٹن اعداد چھپا دیتا ہے تاکہ فہرست کو زیادہ جگہ ملے۔",
-      "مدت کے ساتھ دو خانے ہیں، «اس دن سے» اور «اس دن تک»، تاکہ آپ کوئی بھی دو تاریخیں چن سکیں۔ تیار مدتیں پہلے کی طرح موجود ہیں، اور ان میں سے کسی کو چننے پر دونوں خانے خود بھر جاتے ہیں۔",
-      "مارکیٹ کے تجزیے میں ہر عدد اور ہر نام دبایا جا سکتا ہے: اس سے ونڈو کے اوپر اس کی اپنی ونڈو کھلتی ہے جس میں اس کے اپنے اعداد، اس کی فہرست اور ایکسل کا بٹن ہوتا ہے، اور اسے بند کرنے پر آپ وہیں واپس آ جاتے ہیں جہاں تھے۔",
-      "ہر فہرست کے اوپر ایسی تلاش ہے جو لکھتے ہی کام کرتی ہے: ٹینڈر نام، نمبر، ادارے، جیتنے والے یا سرگرمی سے، اور ناموں کی فہرستیں نام سے۔ پورٹل کی باقی تمام فہرست والی ونڈوز میں بھی، جیسے ٹینڈر آرکائیو، اب کسی بھی لفظ یا نمبر سے تلاش موجود ہے۔"
+      "«تجزیہ کار سے مطالعہ کریں» والا کارڈ اب بتاتا ہے کہ مطالعہ کہاں ہو رہا ہے: اگر ٹینڈر تجزیہ کار (ورژن 3.4 یا اس کے بعد کا) «اولاما کلاؤڈ» پر چل رہا ہو تو بٹن کے نیچے ایک واضح تنبیہ ظاہر ہوتی ہے کہ دستاویزات کا متن اولاما کے سرورز کو بھیجا جا رہا ہے، کہ جس فائل پر حفاظتی درجہ بندی ہو اس کا مطالعہ کمپیوٹر پر ہی ہوتا ہے اور وہ نہیں بھیجی جاتی، اور سب کچھ کمپیوٹر پر کیسے رکھا جائے۔",
+      "تجزیہ کار کے بٹن کے نیچے والا عام نوٹ اب صرف اسی بات کا وعدہ کرتا ہے جو پورٹل خود کرتا ہے: وہ فائلیں اسی کمپیوٹر پر موجود تجزیہ کار کو بھیجتا ہے اور کہیں اور نہیں بھیجتا۔"
     ]
   },
   "counts": {
-    "versions": 193,
+    "versions": 194,
     "decisions": 140
   }
 }

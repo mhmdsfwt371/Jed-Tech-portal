@@ -2921,8 +2921,11 @@ const anStr = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
 /** The program's greeting, checked: only a reply in our protocol counts as the program. */
 export function parseAnalyzerHello(raw) {
   if (!raw || typeof raw !== 'object' || raw.schema !== ANALYZER.schema || raw.app !== 'TenderAnalyzer') return { error: 'schema' };
-  return { version: anStr(raw.version, 20), engine: raw.engine === 'bridge' ? 'bridge' : 'local', busy: raw.busy === true, job: anStr(raw.job, 48) };
+  return { version: anStr(raw.version, 20), engine: ['bridge', 'cloud'].includes(raw.engine) ? raw.engine : 'local', busy: raw.busy === true, job: anStr(raw.job, 48) };
 }
+// The line under the Analyzer's button. At every hello the program says what a study started now would run on. «cloud» is
+// Ollama's servers: the documents' text leaves the computer, so the card says that instead of the plain note (ADR-0141).
+export function analyzerNote(engine) { return engine === 'cloud' ? 'an_note_cloud' : 'an_note'; }
 /** Where a study stands, checked. A file name is a name, never a path; a state we do not know is «failed». */
 export function parseAnalyzerJob(raw) {
   if (!raw || typeof raw !== 'object' || raw.schema !== ANALYZER.schema || !anStr(raw.job, 48)) return { error: 'schema' };
