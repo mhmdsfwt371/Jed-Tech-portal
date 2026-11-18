@@ -17,6 +17,35 @@
 
 <!-- releases -->
 
+## v9.68 — 2026-11-18
+
+- نافذة «تحليل السوق» صارت شاشة واحدة بلا صفحات: الاختيارات والأرقام ثابتة أمامك، والقائمة تتحرك داخل النافذة وتكمل وحدها كلما نزلت فيها، وزر يخفي الأرقام لتكبر القائمة.
+- بجانب الفترة خانتان «من يوم» و«إلى يوم» لأي تاريخين تختارهما. الفترات الجاهزة باقية كما هي، واختيار واحدة منها يملأ الخانتين.
+- كل رقم وكل اسم في تحليل السوق يُضغط فيفتح نافذة خاصة به فوق النافذة، فيها أرقامه وقائمته وزر الإكسل، وإغلاقها يعيدك إلى ما كنت فيه.
+- بحث يعمل وأنت تكتب فوق كل قائمة: المنافسات باسمها أو رقمها أو الجهة أو الفائز أو النشاط، وقوائم الأسماء بالاسم. وكل نوافذ القوائم الأخرى في البوابة، مثل أرشيف المناقصات، صار فيها بحث بأي كلمة أو رقم.
+
+<details><summary>English</summary>
+
+- The «Market analysis» window is now one screen with no pages: the choices and the numbers stay in front of you, the list scrolls inside the window and carries on by itself as you go down it, and a button hides the numbers to give the list more room.
+- Beside the period there are two fields, «From day» and «To day», for any two dates you choose. The ready periods are still there as they were, and choosing one of them fills the two fields.
+- Every number and every name in the market analysis can be pressed: it opens a window of its own above the window, with its own numbers, its list and the Excel button, and closing it brings you back to where you were.
+- A search that works as you type sits above every list: tenders by name, number, entity, winner or activity, and the lists of names by name. Every other list window in the portal, such as the tender archive, now has a search by any word or number.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «مارکیٹ کا تجزیہ» کی ونڈو اب صفحات کے بغیر ایک ہی اسکرین ہے: انتخاب اور اعداد آپ کے سامنے رہتے ہیں، فہرست ونڈو کے اندر سرکتی ہے اور نیچے جاتے ہی خود آگے بڑھتی ہے، اور ایک بٹن اعداد چھپا دیتا ہے تاکہ فہرست کو زیادہ جگہ ملے۔
+- مدت کے ساتھ دو خانے ہیں، «اس دن سے» اور «اس دن تک»، تاکہ آپ کوئی بھی دو تاریخیں چن سکیں۔ تیار مدتیں پہلے کی طرح موجود ہیں، اور ان میں سے کسی کو چننے پر دونوں خانے خود بھر جاتے ہیں۔
+- مارکیٹ کے تجزیے میں ہر عدد اور ہر نام دبایا جا سکتا ہے: اس سے ونڈو کے اوپر اس کی اپنی ونڈو کھلتی ہے جس میں اس کے اپنے اعداد، اس کی فہرست اور ایکسل کا بٹن ہوتا ہے، اور اسے بند کرنے پر آپ وہیں واپس آ جاتے ہیں جہاں تھے۔
+- ہر فہرست کے اوپر ایسی تلاش ہے جو لکھتے ہی کام کرتی ہے: ٹینڈر نام، نمبر، ادارے، جیتنے والے یا سرگرمی سے، اور ناموں کی فہرستیں نام سے۔ پورٹل کی باقی تمام فہرست والی ونڈوز میں بھی، جیسے ٹینڈر آرکائیو، اب کسی بھی لفظ یا نمبر سے تلاش موجود ہے۔
+
+</div>
+</details>
+
+
 ## v9.67 — 2026-11-18
 
 - زر تحميل محلل المناقصات في صفحة دليله يفتح الآن ملف الإصدار 3.1 الجديد، وهو الذي ينزّل النموذج المحلي ويثبّته وحده ويرتبط بزر التحليل في بطاقة المناقصة.

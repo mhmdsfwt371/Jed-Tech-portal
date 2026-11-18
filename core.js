@@ -2982,12 +2982,16 @@ export function marketStats(radar, f = {}) {
   const T = (radar && radar.tenders) || [], aw = mGroup(radar && radar.awards), of = mGroup(radar && radar.offers), q = f.q ? rNorm(f.q).trim() : '';
   let rows = T.filter((x) => (!f.from || (x.published && x.published >= f.from)) && (!f.to || (x.published && x.published <= f.to))
     && (f.scope !== 'afaqy' || x.scope) && (f.scope !== 'iiot' || iiotOf(x)) && (f.scope !== 'both' || x.scope || iiotOf(x)) && (!f.west || x.west) && (!f.status || f.status === 'all' || x.status === f.status)
-    && (!q || rNorm(`${x.title} ${x.entity} ${x.ref} ${x.no || ''}`).includes(q))).map((x) => {
+    // v9.68: the search also finds a tender by who won it, who bid on it and its activity — the names are looked at only when the tender's own words do not match
+    && (!q || rNorm(`${x.title} ${x.entity} ${x.ref} ${x.no || ''} ${x.activity || ''}`).includes(q)
+      || (aw.get(x.ref) || []).some((a) => rNorm(a.winner).includes(q)) || (of.get(x.ref) || []).some((o) => rNorm(o.bidder).includes(q)))).map((x) => {
     const A = aw.get(x.ref) || [], O = of.get(x.ref) || [], prices = O.map((o) => o.price).filter((p) => p != null), vals = A.map((a) => a.value).filter((v) => v != null);
     return { ...x, line: iiotOf(x), winners: [...new Set(A.map((a) => a.winner))], value: vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) * 100) / 100 : null,
       bidders: O.length, low: prices.length ? Math.min(...prices) : null, high: prices.length ? Math.max(...prices) : null,
       us: O.some((o) => etimadIsUs(o.bidder)) || A.some((a) => etimadIsUs(a.winner)), usWon: A.some((a) => etimadIsUs(a.winner)) };
   });
+  if (f.only === 'valued') rows = rows.filter((r) => r.value != null);          // v9.68: the tenders behind a pressed number
+  else if (f.only === 'bids') rows = rows.filter((r) => r.bidders > 0);
   const w = f.who;
   if (w && w.name) rows = rows.filter((r) => w.kind === 'winner' ? r.winners.includes(w.name) : w.kind === 'entity' ? r.entity === w.name : w.kind === 'activity' ? r.activity === w.name : w.kind === 'line' ? r.line === w.name
     : w.kind === 'bidder' ? (of.get(r.ref) || []).some((o) => o.bidder === w.name) : true);

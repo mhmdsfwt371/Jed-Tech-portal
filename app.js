@@ -1229,29 +1229,38 @@ function etOpen() {
   dlg.addEventListener('close', () => { dlg.remove(); etDraw = () => {}; }); document.body.append(dlg); etDraw(); dlg.showModal();
 }
 // ---------- v9.63 (ADR-0136): «تحليل السوق» — the whole Etimad pull read for a period, a field of work and a status ----------
-const mkF = { period: 'all', from: '', to: '', scope: 'all', west: false, status: 'all', q: '', who: null, tab: 'tenders', sort: {}, limit: 200 };
-let mkMemo = { key: '', radar: null, S: null }, mkTm = 0;
+// v9.68 (ADR-0140): one screen, not pages. What chooses and counts stays in view and the list scrolls inside the window; a number
+// or a name pressed opens its own window over this one, with its own numbers, its list and its Excel; every list has a search.
 const MK_TABS = ['tenders', 'winners', 'entities', 'activities', 'lines', 'bidders', 'ours'];
 const MK_SCOPES = ['all', 'afaqy', 'iiot', 'both'];   // v9.66 (ADR-0139): industrial IoT is a field of its own, alone or with ours
+const MK_NAMED = ['winners', 'entities', 'activities', 'lines', 'bidders'];   // lists of names: a name pressed opens its tenders in their own window
+const MK_KIND = { winners: 'winner', entities: 'entity', activities: 'activity', lines: 'line', bidders: 'bidder' };
 const MK_SORTS = { tenders: ['new', 'value', 'bidders', 'due'], ours: ['new', 'value', 'bidders'], winners: ['wins', 'value'], entities: ['count', 'value', 'awarded'], activities: ['count', 'value'], lines: ['count', 'value'], bidders: ['bids', 'wins', 'rate'] };
+const MK_STEP = 200;
+const mkNew = (over = {}) => ({ period: 'all', from: '', to: '', scope: 'all', west: false, status: 'all', q: '', nq: '', who: null, only: '', tab: 'tenders', sort: {}, memo: null, ...over });
+const mkF = mkNew();              // the main window's choice, kept while the page is open
+let mkSeq = 0;
 function mkPeriods(R) {   // the choices the pull can answer: the fixed spans, each year it holds and each quarter of those years
   const years = [...new Set(R.tenders.map((x) => (x.published || '').slice(0, 4)).filter((y) => /^\d{4}$/.test(y)))].sort().reverse();
   return [['all', t('mk_p_all')], ['q', t('mk_p_q')], ['h', t('mk_p_h')], ['ytd', t('mk_p_ytd')], ...years.map((y) => [y, t('mk_p_year', { y })]),
     ...years.flatMap((y) => [4, 3, 2, 1].map((q) => [`${y}-Q${q}`, t('mk_p_quarter', { q, y })])), ['custom', t('mk_p_custom')]];
 }
-function mkFilter() { const p = marketPeriod(mkF.period, tdToday(), mkF.from, mkF.to); return { ...p, scope: mkF.scope, west: mkF.west, status: mkF.status, q: mkF.q, who: mkF.who }; }
-function mkStats() {
-  const f = mkFilter(), key = JSON.stringify(f);
-  if (mkMemo.radar !== etRadar || mkMemo.key !== key) mkMemo = { key, radar: etRadar, S: marketStats(etRadar, f) };
-  return mkMemo.S;
+function mkFilter(st) { const p = marketPeriod(st.period, tdToday(), st.from, st.to); return { ...p, scope: st.scope, west: st.west, status: st.status, q: st.q, who: st.who, only: st.only }; }
+function mkStats(st) {
+  const f = mkFilter(st), key = JSON.stringify(f);
+  if (!st.memo || st.memo.radar !== etRadar || st.memo.key !== key) st.memo = { key, radar: etRadar, S: marketStats(etRadar, f) };
+  return st.memo.S;
 }
 const mkNum = (v) => (v == null ? '—' : tdMoney(v));
 const mkLine = (k) => (k ? t(`mk_line_${k}`) : '');
-const mkWhoText = () => t('mk_who', { k: t(`mk_who_k_${mkF.who.kind}`), n: mkF.who.kind === 'line' ? mkLine(mkF.who.name) : mkF.who.name });
+const mkName = (kind, name) => (kind === 'line' ? mkLine(name) : name);
+const mkWhoText = (who) => t('mk_who', { k: t(`mk_who_k_${who.kind}`), n: mkName(who.kind, who.name) });
 const mkStatus = (x) => t(`et_st_${x.status || 'other'}`);
-function mkSorted(S, tab) {
-  const by = mkF.sort[tab] || MK_SORTS[tab][0], v = (n) => (n == null ? -1 : n);
-  const L = tab === 'ours' ? S.tenders.filter((x) => x.us) : [...S[tab]];
+const txFold = (s) => tenderDigits(s).normalize('NFKC').replace(/[إأآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/[ـً-ْ]/g, '').toLowerCase();
+function mkSorted(S, st, tab) {
+  const by = st.sort[tab] || MK_SORTS[tab][0], v = (n) => (n == null ? -1 : n);
+  let L = tab === 'ours' ? S.tenders.filter((x) => x.us) : [...S[tab]];
+  if (st.nq && MK_NAMED.includes(tab)) { const q = txFold(st.nq).trim(); if (q) L = L.filter((x) => txFold(mkName(MK_KIND[tab], x.name)).includes(q)); }   // a list of names is searched by name
   const cmp = { new: (a, b) => (b.published || '').localeCompare(a.published || ''), value: (a, b) => v(b.value) - v(a.value), bidders: (a, b) => b.bidders - a.bidders,
     due: (a, b) => `${a.due || '9'}${a.dueTime || ''}`.localeCompare(`${b.due || '9'}${b.dueTime || ''}`), wins: (a, b) => b.wins - a.wins || b.value - a.value,
     count: (a, b) => b.n - a.n || b.value - a.value, awarded: (a, b) => b.awarded - a.awarded || b.n - a.n, bids: (a, b) => b.bids - a.bids || b.wins - a.wins,
@@ -1259,9 +1268,9 @@ function mkSorted(S, tab) {
   return cmp ? L.sort(cmp) : L;
 }
 // one list's columns, the same for the page and the Excel: [header, value on the page, value in the file]
-function mkCols(tab, inReg) {
-  const who = (kind) => (x) => el('button', { type: 'button', class: 'linkish mk-who', dir: 'auto', text: kind === 'line' ? mkLine(x.name) : x.name, title: t('mk_press'), onclick: () => { mkF.who = { kind, name: x.name }; mkF.tab = 'tenders'; mkF.limit = 200; mkDraw(); } });
-  const T = [[t('mk_c_title'), (x) => [el('b', { dir: 'auto', text: x.title }), el('div', { class: 'hint', dir: 'auto', text: [x.entity, x.activity].filter(Boolean).join(' · ') }),
+function mkCols(tab, inReg, onName = () => {}) {
+  const who = (kind) => (x) => el('button', { type: 'button', class: 'linkish mk-who', dir: 'auto', text: mkName(kind, x.name), title: t('mk_press'), onclick: () => onName(kind, x.name) });
+  const T = [[t('mk_c_title'), (x) => [el('b', { class: 'mk-ttl', dir: 'auto', text: x.title, title: x.title }), el('div', { class: 'hint mk-ent', dir: 'auto', text: [x.entity, x.activity].filter(Boolean).join(' · '), title: [x.entity, x.activity].filter(Boolean).join(' · ') }),
       el('div', { class: 'td-chips' }, [x.type, mkLine(x.line), x.west ? t('et_west') : '', inReg.has(x.ref) ? t('et_in_reg') : '', x.us ? t('mk_us') : '', `${t('td_card_etimad')} ${x.ref}`].filter(Boolean).map((c) => el('span', { class: 'chip', dir: 'auto', text: c })))], (x) => x.title],
     [t('mk_c_entity'), null, (x) => x.entity], [t('mk_c_activity'), null, (x) => x.activity], [t('mk_c_line'), null, (x) => mkLine(x.line)], [t('mk_c_type'), null, (x) => x.type],
     [t('mk_c_published'), (x) => x.published || '—', (x) => x.published], [t('mk_c_due'), (x) => (x.due ? etWhen(x.due, x.dueTime) : '—'), (x) => [x.due, x.dueTime].filter(Boolean).join(' ')],
@@ -1269,91 +1278,115 @@ function mkCols(tab, inReg) {
     [t('mk_c_value'), (x) => mkNum(x.value), (x) => x.value], [t('mk_c_bidders'), (x) => String(x.bidders || '—'), (x) => x.bidders || null],
     [t('mk_c_low'), (x) => mkNum(x.low), (x) => x.low], [t('mk_c_high'), (x) => mkNum(x.high), (x) => x.high],
     [t('mk_c_ref'), null, (x) => x.ref], [t('mk_c_link'), (x) => (x.link ? el('a', { class: 'btn tiny quiet', href: x.link, target: '_blank', rel: 'noopener noreferrer', text: `${t('et_page')} ↗` }) : '—'), (x) => x.link]];
+  const counted = (kind) => [[t('mk_c_name'), who(kind), (x) => mkName(kind, x.name)], [t('mk_c_n'), (x) => String(x.n), (x) => x.n], [t('mk_c_awarded'), (x) => String(x.awarded), (x) => x.awarded],
+    [t('mk_c_value'), (x) => mkNum(x.value), (x) => x.value], [t('mk_c_valued'), (x) => String(x.valued), (x) => x.valued]];
   return {
     tenders: T, ours: T,
     winners: [[t('mk_c_name'), who('winner'), (x) => x.name], [t('mk_c_wins'), (x) => String(x.wins), (x) => x.wins], [t('mk_c_value'), (x) => mkNum(x.value), (x) => x.value],
       [t('mk_c_valued'), (x) => String(x.valued), (x) => x.valued], [t('mk_c_us'), (x) => (x.us ? '✓' : ''), (x) => (x.us ? t('mk_yes') : '')]],
     entities: [[t('mk_c_name'), who('entity'), (x) => x.name], [t('mk_c_n'), (x) => String(x.n), (x) => x.n], [t('mk_c_active'), (x) => String(x.active), (x) => x.active],
       [t('mk_c_awarded'), (x) => String(x.awarded), (x) => x.awarded], [t('mk_c_value'), (x) => mkNum(x.value), (x) => x.value], [t('mk_c_valued'), (x) => String(x.valued), (x) => x.valued]],
-    activities: [[t('mk_c_name'), who('activity'), (x) => x.name], [t('mk_c_n'), (x) => String(x.n), (x) => x.n], [t('mk_c_awarded'), (x) => String(x.awarded), (x) => x.awarded],
-      [t('mk_c_value'), (x) => mkNum(x.value), (x) => x.value], [t('mk_c_valued'), (x) => String(x.valued), (x) => x.valued]],
-    lines: [[t('mk_c_name'), who('line'), (x) => mkLine(x.name)], [t('mk_c_n'), (x) => String(x.n), (x) => x.n], [t('mk_c_awarded'), (x) => String(x.awarded), (x) => x.awarded],
-      [t('mk_c_value'), (x) => mkNum(x.value), (x) => x.value], [t('mk_c_valued'), (x) => String(x.valued), (x) => x.valued]],
+    activities: counted('activity'), lines: counted('line'),
     bidders: [[t('mk_c_name'), who('bidder'), (x) => x.name], [t('mk_c_bids'), (x) => String(x.bids), (x) => x.bids], [t('mk_c_wins'), (x) => String(x.wins), (x) => x.wins],
       [t('mk_c_rate'), (x) => (x.winRate == null ? '—' : `${x.winRate}%`), (x) => x.winRate], [t('mk_c_pass'), (x) => String(x.pass), (x) => x.pass], [t('mk_c_fail'), (x) => String(x.fail), (x) => x.fail],
       [t('mk_c_us'), (x) => (x.us ? '✓' : ''), (x) => (x.us ? t('mk_yes') : '')]],
   }[tab];
 }
-function mkFilterText(S) {
-  const pick = mkPeriods(etRadar).find(([k]) => k === mkF.period), f = mkFilter();
-  return [pick ? pick[1] : '', f.from || f.to ? `${f.from || '…'} → ${f.to || '…'}` : '', t(`mk_f_${mkF.scope}`), t(mkF.west ? 'mk_f_west' : 'mk_f_ksa'),
-    t(`mk_f_st_${mkF.status}`), mkF.q ? `«${mkF.q}»` : '', mkF.who ? mkWhoText() : '', t('mk_x_n', { n: S.total })].filter(Boolean).join(' · ');
+function mkFilterText(S, st) {
+  const pick = mkPeriods(etRadar).find(([k]) => k === st.period), f = mkFilter(st);
+  return [pick ? pick[1] : '', f.from || f.to ? `${f.from || '…'} → ${f.to || '…'}` : '', t(`mk_f_${st.scope}`), t(st.west ? 'mk_f_west' : 'mk_f_ksa'),
+    t(`mk_f_st_${st.status}`), st.only ? t(`mk_only_${st.only}`) : '', st.q ? `«${st.q}»` : '', st.who ? mkWhoText(st.who) : '', t('mk_x_n', { n: S.total })].filter(Boolean).join(' · ');
 }
-async function mkExcel(all) {
-  const S = mkStats(), X = await loadXlsx(), wb = X.utils.book_new(), rtl = lang !== 'en', inReg = new Set();
+async function mkExcel(st, all) {
+  const S = mkStats(st), X = await loadXlsx(), wb = X.utils.book_new(), rtl = lang !== 'en', inReg = new Set();
   const sheet = (name, aoa, widths) => { const ws = X.utils.aoa_to_sheet(aoa); ws['!views'] = [{ RTL: rtl }]; ws['!cols'] = widths.map((w) => ({ wch: w })); X.utils.book_append_sheet(wb, ws, name.slice(0, 30)); };
-  const list = (tab) => { const C = mkCols(tab, inReg); sheet(t(`mk_tab_${tab}`, { n: '' }).replace(/[()\s]+$/, ''), [C.map((c) => c[0]), ...mkSorted(S, tab).map((x) => C.map((c) => { const v = c[2](x); return v == null || v === '' ? null : v; }))], C.map((c, k) => (k ? 16 : 54))); };
+  const list = (tab) => { const C = mkCols(tab, inReg); sheet(t(`mk_tab_${tab}`, { n: '' }).replace(/[()\s]+$/, ''), [C.map((c) => c[0]), ...mkSorted(S, st, tab).map((x) => C.map((c) => { const v = c[2](x); return v == null || v === '' ? null : v; }))], C.map((c, k) => (k ? 16 : 54))); };
   if (all) {
-    sheet(t('mk_x_sum'), [[t('mk_x_filter'), mkFilterText(S)], [t('mk_k_total'), S.total], [t('mk_k_active'), S.active], [t('mk_k_awarded'), S.awarded], [t('mk_x_wknown'), S.winnerKnown],
+    sheet(t('mk_x_sum'), [[t('mk_x_filter'), mkFilterText(S, st)], [t('mk_k_total'), S.total], [t('mk_k_active'), S.active], [t('mk_k_awarded'), S.awarded], [t('mk_x_wknown'), S.winnerKnown],
       [t('mk_k_value'), S.value], [t('mk_x_vknown'), S.valueKnown], [t('mk_k_median'), S.medianValue], [t('mk_k_bidders'), S.medianBidders], [t('mk_k_entities'), S.entities.length],
       [t('mk_k_winners'), S.winners.length], [t('mk_k_us'), S.us], [t('mk_x_uswon'), S.usWon], [t('mk_x_pulled'), etRadar.pulledAt || '']], [34, 60]);
     for (const tab of MK_TABS) list(tab);
     sheet(t('mk_x_months'), [[t('mk_c_month'), t('mk_c_n'), t('mk_c_awarded'), t('mk_c_value'), t('mk_c_valued')], ...S.months.map((m) => [m.month, m.n, m.awarded, m.value, m.valued])], [12, 12, 12, 18, 14]);
-  } else list(mkF.tab);
-  X.writeFile(wb, `AFAQY-market-${all ? 'all' : mkF.tab}-${mkF.period}${mkF.who || mkF.q ? '-filtered' : ''}-${tdToday()}.xlsx`);
+  } else list(st.tab);
+  X.writeFile(wb, `AFAQY-market-${all ? 'all' : st.tab}-${st.period}${st.who || st.q || st.nq || st.only ? '-filtered' : ''}-${tdToday()}.xlsx`);
 }
-let mkDraw = () => {};
-function mkOpen() {
-  if (!etRadar || !etRadar.tenders.length) { toast(t('mk_empty')); return; }
-  const body = el('div', { class: 'mk-body' });
-  const dlg = el('dialog', { class: 'cr-modal et-modal mk-modal', 'aria-labelledby': 'mk-h' },
-    el('div', { class: 'crm-head' }, el('h2', { id: 'mk-h', text: `📊 ${t('mk_title')}` }),
-      el('span', { class: 'row mk-xl' }, el('button', { type: 'button', class: 'btn tiny mk-xl-one', text: `⬇ ${t('mk_xl_list')}`, onclick: () => mkExcel(false) }),
-        el('button', { type: 'button', class: 'btn tiny primary mk-xl-all', text: `⬇ ${t('mk_xl_all')}`, onclick: () => mkExcel(true) }))),
-    el('p', { class: 'hint', text: t('mk_lead') }), body);
-  mkDraw = () => {
+// One market window. The main one has every choice; a window opened from a pressed number or name («drill») starts from the
+// choice of the window under it, narrowed to what was pressed, and can itself be searched, sorted, narrowed by date and exported.
+function mkWindow(st, title = '') {
+  if (!etRadar || !etRadar.tenders.length) { toast(t('mk_empty')); return null; }
+  const drill = !!title, id = `mk-h-${mkSeq += 1}`, body = el('div', { class: 'mk-body' });
+  const dlg = el('dialog', { class: `cr-modal et-modal mk-modal${drill ? ' mk-drill' : ''}`, 'aria-labelledby': id, 'data-own-scroll': '' },
+    el('div', { class: 'crm-head mk-head' }, el('h2', { id, dir: 'auto', text: drill ? title : `📊 ${t('mk_title')}` }),
+      el('span', { class: 'row mk-xl' }, el('button', { type: 'button', class: 'btn tiny mk-xl-one', text: `⬇ ${t('mk_xl_list')}`, onclick: () => mkExcel(st, false) }),
+        el('button', { type: 'button', class: 'btn tiny primary mk-xl-all', text: `⬇ ${t('mk_xl_all')}`, onclick: () => mkExcel(st, true) }))), body);
+  let shownN = MK_STEP, tm = 0, folded = false;
+  const inReg = new Set();
+  for (const i of tenders ? tenders.items : []) { const x = radarFind(i, etRadar.tenders, tdKey); if (x) inReg.add(x.ref); }
+  // what was pressed opens over this window, starting from this window's own choice
+  const open = (over, name) => mkWindow(mkNew({ period: st.period, from: st.from, to: st.to, scope: st.scope, west: st.west, status: st.status, q: st.q, who: st.who, only: st.only, ...over }), name);
+  const onName = (kind, name) => open({ who: { kind, name }, tab: 'tenders' }, mkWhoText({ kind, name }));
+  const draw = (focus) => {
     if (!dlg.isConnected) return;
-    const S = mkStats(), inReg = new Set();
-    for (const i of tenders ? tenders.items : []) { const x = radarFind(i, etRadar.tenders, tdKey); if (x) inReg.add(x.ref); }
-    const pill = (on, text, f, cls = '') => el('button', { type: 'button', class: `pill-btn${on ? ' on' : ''}${cls ? ` ${cls}` : ''}`, 'aria-pressed': String(on), text, onclick: () => { f(); mkF.limit = 200; mkDraw(); } });
-    const tile = (v, l, s) => el('div', { class: 'km-tile' }, el('b', { text: String(v) }), el('span', { text: l }), s ? el('small', { class: 'hint', text: s }) : null);
-    const dateIn = (k) => el('label', { class: 'mk-date' }, el('span', { text: t(`mk_${k}`) }), el('input', { type: 'date', value: mkF[k], class: `mk-${k}`, onchange: (e) => { mkF[k] = e.target.value; mkF.limit = 200; mkDraw(); } }));
+    const S = mkStats(st), f = mkFilter(st), tab = st.tab, named = MK_NAMED.includes(tab);
+    const again = (sel) => { shownN = MK_STEP; draw(sel); };
+    const pill = (on, text, fn, cls = '') => el('button', { type: 'button', class: `pill-btn${on ? ' on' : ''}${cls ? ` ${cls}` : ''}`, 'aria-pressed': String(on), text, onclick: () => { fn(); again(); } });
+    // a number is a door: pressing it opens the tenders (or the names) it counts, in their own window
+    const tile = (cls, v, l, s, over) => el('button', { type: 'button', class: `km-tile crm-tile-f mk-tile mk-k-${cls}`, title: [s, t('mk_tile_open')].filter(Boolean).join(' — '), onclick: () => open({ nq: '', ...over }, l) },
+      el('b', { text: String(v) }), el('span', { text: l }));
+    // the period and the two days say the same thing: a period chosen fills the days, a day changed makes it «a period I choose»
+    const dateIn = (k) => el('label', { class: 'mk-date' }, el('span', { text: t(`mk_${k}`) }), el('input', { type: 'date', value: (st.period === 'custom' ? st[k] : f[k]) || '', class: `mk-${k}`,
+      onchange: (e) => { if (st.period !== 'custom') { st.from = f.from || ''; st.to = f.to || ''; st.period = 'custom'; } st[k] = e.target.value; again(`.mk-${k}`); } }));
     const maxM = Math.max(1, ...S.months.map((m) => m.n));
-    const tab = mkF.tab, C = mkCols(tab, inReg), L = mkSorted(S, tab), shown = L.slice(0, mkF.limit), count = (k) => (k === 'ours' ? S.us : k === 'tenders' ? S.total : S[k].length);
+    const C = mkCols(tab, inReg, onName), L = mkSorted(S, st, tab), cols = C.filter((c) => c[1]), count = (k) => (k === 'ours' ? S.us : k === 'tenders' ? S.total : S[k].length);
+    const row = (x) => el('tr', { class: x.us || x.usWon ? 'et-us' : '' }, cols.map((c, ci) => el('td', { class: ci ? 'num' : '', dir: 'auto' }, c[1](x))));
+    const tbody = el('tbody', {}, L.slice(0, shownN).map(row)), shownText = el('span', { class: 'hint mk-shown' }), moreBtn = el('button', { type: 'button', class: 'btn tiny mk-more' });
+    const moreRow = el('p', { class: 'row mk-more-row' }, shownText, moreBtn);
+    const tell = () => { const a = Math.min(shownN, L.length); moreRow.hidden = a >= L.length; shownText.textContent = t('mk_shown', { a, n: L.length }); moreBtn.textContent = t('mk_more', { n: Math.min(300, L.length - a) }); };
+    const more = () => { if (shownN >= L.length) return; const from = shownN; shownN = Math.min(L.length, shownN + 300); tbody.append(...L.slice(from, shownN).map(row)); tell(); };   // rows are added under the ones in view: the place in the list is kept
+    moreBtn.onclick = more; tell();
+    const qVal = named ? st.nq : st.q, qText = t(named ? 'mk_nq' : 'mk_q');
+    const search = el('input', { type: 'search', class: 'mk-q', value: qVal, placeholder: qText, 'aria-label': qText, oninput: (e) => { if (named) st.nq = e.target.value; else st.q = e.target.value; clearTimeout(tm); tm = setTimeout(() => again('.mk-q'), 250); } });
+    const list = L.length ? el('div', { class: 'table-wrap crm-wrap mk-list', tabindex: '0', role: 'group', 'aria-label': t(`mk_tab_${tab}`, { n: L.length }),
+        onscroll: (e) => { const n = e.currentTarget; if (n.scrollTop + n.clientHeight > n.scrollHeight - 260) more(); } },
+        el('table', { class: `mk-t mk-t-${tab}` }, el('thead', {}, el('tr', {}, cols.map((c) => el('th', { text: c[0] })))), tbody), moreRow)
+      : el('p', { class: 'empty mk-list', text: t(named && st.nq ? 'mk_nq_none' : 'mk_none') });
     set(body,
-      el('div', { class: 'row mk-filters' },
-        el('label', { class: 'mk-period' }, el('span', { text: t('mk_p_label') }), el('select', { class: 'mk-p', 'aria-label': t('mk_p_label'), onchange: (e) => { mkF.period = e.target.value; mkF.limit = 200; mkDraw(); } },
-          mkPeriods(etRadar).map(([k, l]) => el('option', { value: k, text: l, ...(k === mkF.period ? { selected: '' } : {}) })))),
-        mkF.period === 'custom' ? [dateIn('from'), dateIn('to')] : null,
-        el('div', { class: 'pills' }, MK_SCOPES.map((k) => pill(mkF.scope === k, t(`mk_f_${k}`), () => { mkF.scope = k; }, `mk-sc-${k}`))),
-        el('div', { class: 'pills' }, pill(!mkF.west, t('mk_f_ksa'), () => { mkF.west = false; }), pill(mkF.west, t('mk_f_west'), () => { mkF.west = true; }, 'mk-west')),
-        el('div', { class: 'pills' }, ['all', 'active', 'awarded'].map((st) => pill(mkF.status === st, t(`mk_f_st_${st}`), () => { mkF.status = st; }, `mk-st-${st}`))),
-        el('input', { type: 'search', class: 'mk-q', value: mkF.q, placeholder: t('mk_q'), 'aria-label': t('mk_q'), oninput: (e) => { mkF.q = e.target.value; clearTimeout(mkTm); mkTm = setTimeout(() => { mkF.limit = 200; mkDraw(); const n = dlg.querySelector('.mk-q'); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 300); } })),
-      mkF.who ? el('p', { class: 'crm-filter mk-who-on' }, el('span', { text: mkWhoText() }), ' ',
-        el('button', { type: 'button', class: 'btn tiny quiet mk-who-off', text: `✕ ${t('mk_who_off')}`, onclick: () => { mkF.who = null; mkF.limit = 200; mkDraw(); } })) : null,
-      el('p', { class: 'hint mk-span', text: S.total ? t('mk_span', { a: S.first || '—', b: S.last || '—', n: S.total }) : t('mk_none') }),
-      S.awarded ? el('p', { class: 'note mk-cover', text: t('mk_cover', { v: S.valueKnown, a: S.awarded, w: S.winnerKnown }) }) : null,
-      el('div', { class: 'crm-tiles mk-tiles' },
-        tile(S.total, t('mk_k_total')), tile(S.active, t('mk_k_active')), tile(S.awarded, t('mk_k_awarded')),
-        tile(tdMoney(S.value), t('mk_k_value'), t('mk_k_value_s', { n: S.valueKnown })), tile(mkNum(S.medianValue), t('mk_k_median')),
-        tile(S.medianBidders == null ? '—' : S.medianBidders, t('mk_k_bidders')), tile(S.entities.length, t('mk_k_entities')), tile(S.winners.length, t('mk_k_winners')),
-        tile(S.us, t('mk_k_us'), t('mk_k_us_s', { w: S.usWon }))),
-      S.months.length > 1 ? el('details', { class: 'mk-months', open: '' }, el('summary', { text: t('mk_months_h') }),
-        el('div', { class: 'crm-bars', role: 'group', tabindex: '0', 'aria-label': t('mk_months_h') }, S.months.map((m, k) => el('div', { class: 'crm-bar', title: t('mk_month_tip', { n: m.n, a: m.awarded, v: tdMoney(m.value) }) },
-          el('span', { class: 'crm-n', text: m.month }), el('span', { class: 'crm-track' }, el('i', { style: `--w:${(m.n / maxM) * 100}%;animation-delay:${Math.min(k, 20) * 30}ms` })), el('b', { text: String(m.n) }))))) : null,
-      el('div', { class: 'pills mk-tabs', role: 'group', 'aria-label': t('mk_tabs') }, MK_TABS.map((k) => pill(tab === k, t(`mk_tab_${k}`, { n: count(k) }), () => { mkF.tab = k; }, `mk-tab mk-tab-${k}`))),
-      el('div', { class: 'row mk-sortrow' }, el('label', {}, el('span', { text: `${t('mk_sort')} ` }), el('select', { class: 'mk-sort', 'aria-label': t('mk_sort'), onchange: (e) => { mkF.sort[tab] = e.target.value; mkDraw(); } },
-        MK_SORTS[tab].map((k) => el('option', { value: k, text: t(`mk_s_${k}`), ...((mkF.sort[tab] || MK_SORTS[tab][0]) === k ? { selected: '' } : {}) })))),
-        ['winners', 'entities', 'activities', 'lines', 'bidders'].includes(tab) ? el('span', { class: 'hint', text: t('mk_press') }) : null),
-      L.length ? el('div', { class: 'table-wrap crm-list crm-wrap mk-list', tabindex: '0', role: 'group', 'aria-label': t(`mk_tab_${tab}`, { n: L.length }) },
-        el('table', { class: `mk-t mk-t-${tab}` }, el('thead', {}, el('tr', {}, C.filter((c) => c[1]).map((c) => el('th', { text: c[0] })))),
-          el('tbody', {}, shown.map((x) => el('tr', { class: x.us || x.usWon ? 'et-us' : '' }, C.filter((c) => c[1]).map((c, ci) => { const v = c[1](x); return el('td', { class: ci ? 'num' : '', dir: 'auto' }, v); }))))))
-        : el('p', { class: 'empty', text: t('mk_none') }),
-      L.length > shown.length ? el('p', { class: 'row mk-more-row' }, el('span', { class: 'hint', text: t('mk_shown', { a: shown.length, n: L.length }) }),
-        el('button', { type: 'button', class: 'btn tiny mk-more', text: t('mk_more', { n: Math.min(300, L.length - shown.length) }), onclick: () => { mkF.limit += 300; mkDraw(); } })) : null);
+      el('div', { class: 'mk-top', hidden: folded ? '' : null },
+        drill ? el('p', { class: 'hint mk-sub', dir: 'auto', text: mkFilterText(S, st) }) : el('details', { class: 'mk-about' }, el('summary', { text: t('mk_about') }), el('p', { class: 'hint', text: t('mk_lead') })),
+        el('div', { class: 'row mk-filters' },
+          el('label', { class: 'mk-period' }, el('span', { text: t('mk_p_label') }), el('select', { class: 'mk-p', 'aria-label': t('mk_p_label'), onchange: (e) => { st.period = e.target.value; if (st.period !== 'custom') { st.from = ''; st.to = ''; } again('.mk-p'); } },
+            mkPeriods(etRadar).map(([k, l]) => el('option', { value: k, text: l, ...(k === st.period ? { selected: '' } : {}) })))),
+          dateIn('from'), dateIn('to'),
+          drill ? null : [el('div', { class: 'pills' }, MK_SCOPES.map((k) => pill(st.scope === k, t(`mk_f_${k}`), () => { st.scope = k; }, `mk-sc-${k}`))),
+            el('div', { class: 'pills' }, pill(!st.west, t('mk_f_ksa'), () => { st.west = false; }), pill(st.west, t('mk_f_west'), () => { st.west = true; }, 'mk-west')),
+            el('div', { class: 'pills' }, ['all', 'active', 'awarded'].map((k) => pill(st.status === k, t(`mk_f_st_${k}`), () => { st.status = k; }, `mk-st-${k}`)))]),
+        el('p', { class: 'hint mk-span', text: S.total ? t('mk_span', { a: S.first || '—', b: S.last || '—', n: S.total }) : t('mk_none') }),
+        el('div', { class: 'crm-tiles mk-tiles', role: 'group', 'aria-label': t('mk_tiles') },
+          tile('total', S.total, t('mk_k_total'), '', { tab: 'tenders' }), tile('active', S.active, t('mk_k_active'), '', { status: 'active', tab: 'tenders' }),
+          tile('awarded', S.awarded, t('mk_k_awarded'), '', { status: 'awarded', tab: 'tenders' }),
+          tile('value', tdMoney(S.value), t('mk_k_value'), t('mk_k_value_s', { n: S.valueKnown }), { only: 'valued', tab: 'tenders', sort: { tenders: 'value' } }),
+          tile('median', mkNum(S.medianValue), t('mk_k_median'), '', { only: 'valued', tab: 'tenders', sort: { tenders: 'value' } }),
+          tile('bids', S.medianBidders == null ? '—' : S.medianBidders, t('mk_k_bidders'), '', { only: 'bids', tab: 'tenders', sort: { tenders: 'bidders' } }),
+          tile('entities', S.entities.length, t('mk_k_entities'), '', { tab: 'entities' }), tile('winners', S.winners.length, t('mk_k_winners'), '', { tab: 'winners' }),
+          tile('us', S.us, t('mk_k_us'), t('mk_k_us_s', { w: S.usWon }), { tab: 'ours' })),
+        S.awarded ? el('p', { class: 'note mk-cover', text: t('mk_cover', { v: S.valueKnown, a: S.awarded, w: S.winnerKnown }) }) : null,
+        S.months.length > 1 ? el('details', { class: 'mk-months' }, el('summary', { text: t('mk_months_h') }),
+          el('div', { class: 'crm-bars', role: 'group', tabindex: '0', 'aria-label': t('mk_months_h') }, S.months.map((m, k) => el('div', { class: 'crm-bar', title: t('mk_month_tip', { n: m.n, a: m.awarded, v: tdMoney(m.value) }) },
+            el('span', { class: 'crm-n', text: m.month }), el('span', { class: 'crm-track' }, el('i', { style: `--w:${(m.n / maxM) * 100}%;animation-delay:${Math.min(k, 20) * 30}ms` })), el('b', { text: String(m.n) }))))) : null),
+      el('div', { class: 'mk-bar' },
+        el('div', { class: 'pills mk-tabs', role: 'group', 'aria-label': t('mk_tabs') }, MK_TABS.map((k) => pill(tab === k, t(`mk_tab_${k}`, { n: count(k) }), () => { st.tab = k; }, `mk-tab mk-tab-${k}`))),
+        el('div', { class: 'row mk-sortrow' }, search,
+          el('label', { class: 'mk-sortl' }, el('span', { text: `${t('mk_sort')} ` }), el('select', { class: 'mk-sort', 'aria-label': t('mk_sort'), onchange: (e) => { st.sort[tab] = e.target.value; again('.mk-sort'); } },
+            MK_SORTS[tab].map((k) => el('option', { value: k, text: t(`mk_s_${k}`), ...((st.sort[tab] || MK_SORTS[tab][0]) === k ? { selected: '' } : {}) })))),
+          el('button', { type: 'button', class: 'btn tiny quiet mk-fold', 'aria-expanded': String(!folded), text: t(folded ? 'mk_fold_show' : 'mk_fold_hide'), onclick: () => { folded = !folded; draw('.mk-fold'); } }),
+          named ? el('span', { class: 'hint mk-hint', text: t('mk_press') }) : null)),
+      list);
+    if (focus) { const n = dlg.querySelector(focus); if (n) { n.focus({ preventScroll: true }); if (n.type === 'search') n.setSelectionRange(n.value.length, n.value.length); } }
   };
-  dlg.addEventListener('close', () => { dlg.remove(); mkDraw = () => {}; }); document.body.append(dlg); mkDraw(); dlg.showModal();
+  dlg.addEventListener('close', () => { clearTimeout(tm); dlg.remove(); }); document.body.append(dlg); draw(); dlg.showModal();
+  return dlg;
 }
+function mkOpen() { return mkWindow(mkF); }
 // ---------- v9.64 (ADR-0137): the Tender Analyzer inside the card ----------
 // The card hands the tender's documents to the program on this computer (its own address only — nothing goes to the network), the
 // free local model studies them there, and the study's files come back to the card by themselves. The page speaks our own
@@ -2289,20 +2322,24 @@ async function openAbout() {
 /** A number's window: tiles, bars, the list, Excel. ADR-0102: a tile with a filter (its 4th item, (k) => bool on row k) or a person's bar
  *  narrows the list, the bars, the count and Excel to its rows; a second click clears it. bar: (k) => [name, weight] for row k. */
 function crModal({ title, lead, tiles = [], bars = [], bar = null, head = [], rows = [], hot = () => false, file, wrap = false }) {   // wrap (v9.57): cells that hold a sentence wrap instead of pushing the columns after them out of sight
-  const st = { tile: -1, who: '' };
-  const keep = () => rows.map((r, k) => k).filter((k) => (st.tile < 0 || !tiles[st.tile][3] || tiles[st.tile][3](k)) && (!st.who || (bar && bar(k)[0] === st.who)));
-  const label = () => [st.tile >= 0 ? tiles[st.tile][0] : '', st.who].filter(Boolean).join(' · ');
+  const st = { tile: -1, who: '', q: '' };
+  // v9.68 (ADR-0140): every list window is searched as you type, by any word or number in a row; the search joins what a tile or a bar narrowed
+  let hay = null, qTm = 0;
+  const words = () => { const q = txFold(st.q).trim(); if (q && !hay) hay = rows.map((r) => txFold(r.map((c) => (c == null ? '' : String(c))).join(' '))); return q; };
+  const keep = () => { const q = words(); return rows.map((r, k) => k).filter((k) => (st.tile < 0 || !tiles[st.tile][3] || tiles[st.tile][3](k)) && (!st.who || (bar && bar(k)[0] === st.who)) && (!q || hay[k].includes(q))); };
+  const label = () => [st.tile >= 0 ? tiles[st.tile][0] : '', st.who, st.q.trim() ? `«${st.q.trim()}»` : ''].filter(Boolean).join(' · ');
+  const search = rows.length > 1 ? el('input', { type: 'search', class: 'crm-q', placeholder: t('crm_q'), 'aria-label': t('crm_q'), oninput: (e) => { st.q = e.target.value; clearTimeout(qTm); qTm = setTimeout(() => draw(), 200); } }) : null;
   const xl = async () => { const ks = keep(), X = await loadXlsx(), ws = X.utils.aoa_to_sheet([head, ...ks.map((k) => rows[k])]); ws['!views'] = [{ RTL: lang !== 'en' }]; ws['!cols'] = head.map((h, k) => ({ wch: k === 0 ? 50 : 16 })); const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, title.slice(0, 30)); X.writeFile(wb, `${file}${label() ? '-filtered' : ''}-${saudiDay(new Date().toISOString())}.xlsx`); };
   const tilesBox = tiles.length ? el('div', { class: 'crm-tiles' }) : null, barsBox = el('div', { class: 'crm-bars', role: 'group', 'aria-label': t('crm_bars') }), info = el('div', { class: 'crm-filter', hidden: true }), listBox = el('div');
   const draw = () => {
-    const ks = keep(), on = st.tile >= 0 || st.who;
+    const ks = keep(), on = st.tile >= 0 || st.who || !!st.q.trim();
     if (tilesBox) set(tilesBox, tiles.map(([l, v, s, f], ti) => f ? el('button', { type: 'button', class: `km-tile crm-tile-f${st.tile === ti ? ' on' : ''}`, 'aria-pressed': String(st.tile === ti), title: t(st.tile === ti ? 'crm_f_off' : 'crm_f_on'), onclick: () => { st.tile = st.tile === ti ? -1 : ti; draw(); } },
       el('b', { text: String(v) }), el('span', { text: l }), s ? el('small', { class: 'hint', text: s }) : null)
       : el('div', { class: 'km-tile' }, el('b', { text: String(v) }), el('span', { text: l }), s ? el('small', { class: 'hint', text: s }) : null)));
     const B = bar ? [...ks.reduce((m, k) => { const [n, w] = bar(k); m.set(n, (m.get(n) || 0) + (+w || 0)); return m; }, new Map())].map(([n, v]) => [n, Math.round(v * 10) / 10]).sort((p, q) => q[1] - p[1]) : bars, max = Math.max(1, ...B.map((b) => b[1]));
     barsBox.hidden = !B.length; set(barsBox, B.slice(0, 15).map(([n, v], k) => el(bar ? 'button' : 'div', { type: bar ? 'button' : null, class: `crm-bar${bar ? ' crm-bar-f' : ''}${st.who === n ? ' on' : ''}`, 'aria-pressed': bar ? String(st.who === n) : null, title: bar ? t(st.who === n ? 'crm_f_off' : 'crm_f_who') : null, onclick: bar ? () => { st.who = st.who === n ? '' : n; draw(); } : null },
       el('span', { class: 'crm-n', text: n }), el('span', { class: 'crm-track' }, el('i', { style: `--w:${(v / max) * 100}%;animation-delay:${k * 40}ms` })), el('b', { text: String(v) }))));
-    info.hidden = !on; if (on) set(info, el('span', { text: t('crm_filtered', { f: label(), n: ks.length, all: rows.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: t('crm_show_all'), onclick: () => { st.tile = -1; st.who = ''; draw(); } })); else set(info);   // «Show all» exists only while something is filtered
+    info.hidden = !on; if (on) set(info, el('span', { text: t('crm_filtered', { f: label(), n: ks.length, all: rows.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: t('crm_show_all'), onclick: () => { st.tile = -1; st.who = ''; st.q = ''; if (search) search.value = ''; draw(); } })); else set(info);   // «Show all» exists only while something is filtered
     const shown = ks.slice(0, 300);
     set(listBox, el('div', { class: `table-wrap crm-list${wrap ? ' crm-wrap' : ''}`, tabindex: wrap ? '0' : null, role: wrap ? 'group' : null, 'aria-label': wrap ? title : null }, el('table', {}, el('thead', {}, el('tr', {}, head.map((h) => el('th', { text: h })))),
       el('tbody', {}, shown.map((k) => el('tr', { class: hot(rows[k], k) ? 'crm-hot' : '' }, rows[k].map((c, ci) => el('td', { class: ci ? 'num' : '', dir: 'auto', text: c == null ? '—' : String(c) }))))))),
@@ -2310,8 +2347,8 @@ function crModal({ title, lead, tiles = [], bars = [], bar = null, head = [], ro
   };
   const dlg = el('dialog', { class: 'cr-modal', 'aria-labelledby': 'crm-h' },
     el('div', { class: 'crm-head' }, el('h2', { id: 'crm-h', text: title }), el('button', { type: 'button', class: 'btn tiny crm-xl', text: `⬇ ${t('td_excel')}`, onclick: xl })),
-    lead ? el('p', { class: 'hint', text: lead }) : null, tilesBox, (tiles.some((x) => x[3]) || bar) ? el('p', { class: 'hint crm-how', text: t('crm_how') }) : null, barsBox, info, listBox);
-  draw(); dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
+    lead ? el('p', { class: 'hint', text: lead }) : null, tilesBox, (tiles.some((x) => x[3]) || bar) ? el('p', { class: 'hint crm-how', text: t('crm_how') }) : null, barsBox, search ? el('div', { class: 'row crm-find' }, search) : null, info, listBox);
+  draw(); dlg.addEventListener('close', () => { clearTimeout(qTm); dlg.remove(); }); document.body.append(dlg); dlg.showModal();
 }
 
 // ---------- ADR-0093: three mail pulls, each said plainly where it lives — what it answers, where it goes in, where it shows ----------
@@ -3398,6 +3435,7 @@ function pagerGo(dlg, page, quiet) {
   if (!quiet && st.sc.contains(document.activeElement) && document.activeElement !== prev && document.activeElement !== next && !st.bar.contains(document.activeElement)) { /* focus stays where the person put it */ }
 }
 function pagerAttach(dlg) {
+  if (dlg.hasAttribute('data-own-scroll')) return;          // v9.68 (ADR-0140): a working window — its choices stay in view and its list scrolls inside it
   if (typeof ResizeObserver !== 'function' || typeof MutationObserver !== 'function' || typeof requestAnimationFrame !== 'function') return;   // an old browser keeps the plain scroll
   let st = PAGERS.get(dlg);
   if (!st) {

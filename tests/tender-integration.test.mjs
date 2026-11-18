@@ -337,6 +337,11 @@ try {
     // (6) the archive: every closed tender, filtered by outcome, with its reason
     select('.td-arch-btn').click();const ar=select('dialog.cr-modal');assert(ar.textContent.includes('Tender archive'));
     const arRows=()=>[...ar.querySelectorAll('tbody tr')].map(tr=>tr.textContent);assert(arRows().some(x=>x.includes('Market tender')&&x.includes('Lost')));assert(arRows().some(x=>x.includes('Won tender')&&x.includes('500,000')));
+    // v9.68 (ADR-0140): every list window is searched as you type, by any word in a row; «Show all» clears the search too
+    { const q=ar.querySelector('.crm-q'), n0=arRows().length;assert(q,'the archive has a search');q.value='Won tender';q.dispatchEvent(new w.Event('input',{bubbles:true}));await wait(()=>arRows().length===1&&arRows()[0].includes('Won tender'),'archive searched');
+      assert(ar.querySelector('.crm-filter').textContent.includes('«Won tender»'),ar.querySelector('.crm-filter').textContent);
+      q.value='nothing has these words';q.dispatchEvent(new w.Event('input',{bubbles:true}));await wait(()=>arRows().length===0,'nothing found');
+      [...ar.querySelectorAll('.crm-filter button')][0].click();assert.equal(q.value,'');assert.equal(arRows().length,n0,'every row is back'); }
     [...ar.querySelectorAll('button.km-tile')].find(b=>b.textContent.includes('Won')).click();assert(arRows().every(x=>x.includes('Won')),arRows());ar.close();
     // (7) the year report opens with the funnel from what Etimad published to what we won
     select('.td-year-btn').click();const yr=select('dialog.td-yr-dlg');assert(yr.querySelector('.td-yr-funnel'),'the funnel');
@@ -356,7 +361,8 @@ try {
     await wait(()=>select('.et-res')&&!qa.busy(),'pull read');
     assert.equal(qa.etRadarNow().tenders.length,262,'the whole pull is kept, not only our scope');
     select('.td-market-btn').click();const mk=select('dialog.mk-modal');assert(mk,'the market window opened');
-    const tile=(l)=>[...mk.querySelectorAll('.km-tile')].find(x=>x.querySelector('span').textContent===l).querySelector('b').textContent;
+    const tileIn=(d,l)=>[...d.querySelectorAll('.km-tile')].find(x=>x.querySelector('span').textContent===l).querySelector('b').textContent;
+    const tile=(l)=>tileIn(select('dialog.mk-modal:not(.mk-drill)'),l), tileBtn=(l)=>[...select('dialog.mk-modal:not(.mk-drill)').querySelectorAll('.km-tile')].find(x=>x.querySelector('span').textContent===l);
     assert.equal(tile('tenders published'),'262');assert.equal(tile('companies that won tenders'),'2');assert.equal(tile('tenders AFAQY bid on'),'2');
     assert(mk.querySelector('.mk-cover').textContent.includes('published for 3 of 132'),mk.querySelector('.mk-cover').textContent);
     // (1) every tender is listed, 200 at a time, and «show more» adds the rest — nothing is cut to a top ten
@@ -371,20 +377,45 @@ try {
     assert(select('dialog.mk-modal table.mk-t tbody tr .td-chips').textContent.includes('Smart meters and flow measurement'),'the line shows on the tender');
     select('dialog.mk-modal .mk-tab-lines').click();const ln=[...select('dialog.mk-modal').querySelectorAll('table.mk-t-lines tbody tr')];assert.equal(ln.length,2);
     const sc=ln.find(r=>r.textContent.includes('SCADA'));assert(sc&&sc.textContent.includes('1,000'),sc&&sc.textContent);sc.querySelector('.mk-who').click();
-    assert.equal(select('dialog.mk-modal').querySelectorAll('table.mk-t tbody tr').length,1);assert(select('dialog.mk-modal .mk-who-on').textContent.includes('SCADA, control and remote monitoring'),select('dialog.mk-modal .mk-who-on').textContent);
-    select('dialog.mk-modal .mk-who-off').click();select('dialog.mk-modal .mk-sc-both').click();assert.equal(tile('tenders published'),'4','our field and industrial IoT together, each tender once');
+    // v9.68 (ADR-0140): a name pressed opens its own window over this one — its numbers, its list — and this window stays as it was
+    { const dr=select('dialog.mk-drill');assert(dr&&dr.open,'the line opened in its own window');assert(dr.querySelector('h2').textContent.includes('SCADA, control and remote monitoring'),dr.querySelector('h2').textContent);
+      assert.equal(dr.querySelectorAll('table.mk-t tbody tr').length,1);assert.equal(tileIn(dr,'tenders published'),'1');assert.equal(select('dialog.mk-modal:not(.mk-drill)').querySelectorAll('table.mk-t-lines tbody tr').length,2);
+      dr.close();assert(!select('dialog.mk-drill'),'closing it comes back to the window under it'); }
+    select('dialog.mk-modal .mk-sc-both').click();assert.equal(tile('tenders published'),'4','our field and industrial IoT together, each tender once');
     select('dialog.mk-modal .mk-sc-all').click();assert.equal(tile('tenders published'),'262');
     // (3) a winner pressed in his list shows his tenders only; the narrowing says so and can be removed
     select('dialog.mk-modal .mk-tab-winners').click();const top=select('dialog.mk-modal table.mk-t-winners tbody tr');assert(top.textContent.includes('شركة ألف')&&top.textContent.includes('401,000'),top.textContent);
-    top.querySelector('.mk-who').click();assert(select('dialog.mk-modal .mk-tab-tenders').classList.contains('on'));assert.equal(select('dialog.mk-modal').querySelectorAll('table.mk-t tbody tr').length,2);
-    assert(select('dialog.mk-modal .mk-who-on').textContent.includes('شركة ألف'));select('dialog.mk-modal .mk-who-off').click();assert(!select('dialog.mk-modal .mk-who-on'));
+    top.querySelector('.mk-who').click();
+    { const dr=select('dialog.mk-drill');assert(dr&&dr.querySelector('h2').textContent.includes('شركة ألف'));assert(dr.querySelector('.mk-tab-tenders').classList.contains('on'));
+      assert.equal(dr.querySelectorAll('table.mk-t tbody tr').length,2);assert.equal(tileIn(dr,'tenders published'),'2');assert.equal(tileIn(dr,'companies that won tenders'),'1');
+      // a name inside it opens one more window; each closes back to the one under it
+      dr.querySelector('.mk-tab-entities').click();const dr1=[...all('dialog.mk-drill')].pop();dr1.querySelector('table.mk-t-entities tbody tr .mk-who').click();assert.equal(all('dialog.mk-drill').length,2);
+      [...all('dialog.mk-drill')].pop().close();assert.equal(all('dialog.mk-drill').length,1);[...all('dialog.mk-drill')].pop().close();assert(!select('dialog.mk-drill')); }
+    // (3b) a number is a door: «awarded» opens the awarded tenders with their own numbers; the value opens only the tenders that have one, biggest first
+    { tileBtn('awarded').click();const dr=select('dialog.mk-drill');assert.equal(tileIn(dr,'tenders published'),'132');assert.equal(tileIn(dr,'active when pulled'),'0');assert(dr.querySelector('.mk-sub').textContent.includes('Awarded'),dr.querySelector('.mk-sub').textContent);dr.close();
+      tileBtn('total of the published award values').click();const dv=select('dialog.mk-drill');assert.equal(tileIn(dv,'tenders published'),'3');assert(dv.querySelector('table.mk-t tbody tr').textContent.includes('كاميرات مراقبة'),'the biggest award first');
+      assert(dv.querySelector('.mk-sub').textContent.includes('award value was published'));dv.close(); }
+    // (3c) the period and the two days say the same thing; a day changed is «a period I choose», and every number follows
+    { const P2=select('dialog.mk-modal .mk-p');P2.value='2026';P2.dispatchEvent(new w.Event('change',{bubbles:true}));assert.deepEqual([select('dialog.mk-modal .mk-from').value,select('dialog.mk-modal .mk-to').value],['2026-01-01','2026-12-31']);assert.equal(tile('tenders published'),'2');
+      const F=select('dialog.mk-modal .mk-from');F.value='2026-03-15';F.dispatchEvent(new w.Event('change',{bubbles:true}));assert.equal(select('dialog.mk-modal .mk-p').value,'custom');assert.equal(select('dialog.mk-modal .mk-to').value,'2026-12-31','the other day is kept');assert.equal(tile('tenders published'),'1');
+      const P3=select('dialog.mk-modal .mk-p');P3.value='all';P3.dispatchEvent(new w.Event('change',{bubbles:true}));assert.equal(select('dialog.mk-modal .mk-from').value,'');assert.equal(tile('tenders published'),'262'); }
+    // (3d) every list is searched as you type: tenders by winner or activity, a list of names by name
+    { const type=async(v,until,why)=>{const q=select('dialog.mk-modal .mk-q');q.value=v;q.dispatchEvent(new w.Event('input',{bubbles:true}));await wait(until,why);};
+      select('dialog.mk-modal .mk-tab-tenders').click();await type('شركة ألف',()=>tile('tenders published')==='2','search by winner');await type('الأنشطة الطبية',()=>tile('tenders published')==='260','search by activity');await type('',()=>tile('tenders published')==='262','search cleared');
+      select('dialog.mk-modal .mk-tab-winners').click();assert.equal(select('dialog.mk-modal .mk-q').getAttribute('placeholder'),'Search this list by name');
+      await type('أفاقي',()=>select('dialog.mk-modal').querySelectorAll('table.mk-t-winners tbody tr').length===1,'names searched');assert.equal(tile('tenders published'),'262','a search in a list of names does not narrow the numbers');
+      await type('لا أحد بهذا الاسم',()=>!!select('dialog.mk-modal p.mk-list'),'no name');assert(select('dialog.mk-modal p.mk-list').textContent.includes('No name in this list'));await type('',()=>select('dialog.mk-modal').querySelectorAll('table.mk-t-winners tbody tr').length===2,'names back'); }
+    // (3e) one screen: the window keeps its own scrolling list and is never cut into pages; the numbers can be folded away
+    assert(mk.hasAttribute('data-own-scroll'));assert(!mk.querySelector('.dlg-pager'));
+    select('dialog.mk-modal .mk-fold').click();assert(select('dialog.mk-modal .mk-top').hidden);select('dialog.mk-modal .mk-fold').click();assert(!select('dialog.mk-modal .mk-top').hidden);
+    select('dialog.mk-modal .mk-tab-tenders').click();
     // (4) sorting by value puts the biggest award first; the entities list is complete
     select('dialog.mk-modal .mk-sort').value='value';select('dialog.mk-modal .mk-sort').dispatchEvent(new w.Event('change',{bubbles:true}));
     assert(select('dialog.mk-modal table.mk-t tbody tr').textContent.includes('كاميرات مراقبة'));
     select('dialog.mk-modal .mk-tab-entities').click();assert.equal(select('dialog.mk-modal').querySelectorAll('table.mk-t-entities tbody tr').length,8);
     // (5) Excel: the list shown, or every list, with the choice applied — numbers stay numbers
     let wb=null;w.XLSX.writeFile=(book)=>{wb=book;};w.XLSX.__byAuthor=true;
-    select('dialog.mk-modal .mk-q').value='كاميرات';select('dialog.mk-modal .mk-q').dispatchEvent(new w.Event('input',{bubbles:true}));await wait(()=>select('dialog.mk-modal .mk-span')&&select('dialog.mk-modal .mk-span').textContent.includes('1 tenders'),'search applied');
+    select('dialog.mk-modal .mk-tab-tenders').click();select('dialog.mk-modal .mk-q').value='كاميرات';select('dialog.mk-modal .mk-q').dispatchEvent(new w.Event('input',{bubbles:true}));await wait(()=>select('dialog.mk-modal .mk-span')&&select('dialog.mk-modal .mk-span').textContent.includes('1 tenders'),'search applied');
     select('dialog.mk-modal .mk-xl-all').click();await wait(()=>wb,'all lists written');
     assert.deepEqual([...wb.SheetNames],['Summary','Tenders','Winning companies','Entities','Activities','Industrial IoT lines','Bidders',"AFAQY's bids",'Month by month']);
     const sum=w.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1});assert(sum[0][1].includes('«كاميرات»'),sum[0][1]);assert.deepEqual([...sum.find(r=>r[0]==='tenders published')],['tenders published',1]);

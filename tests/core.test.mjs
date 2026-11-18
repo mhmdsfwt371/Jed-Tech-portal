@@ -1985,6 +1985,28 @@ test('v9.66: the market study can be read for industrial IoT alone, or with our 
   assert.deepEqual([core.marketStats(R, { ...y, scope: 'afaqy' }).total, core.marketStats(R, { ...y, scope: 'both' }).total, core.marketStats(R, { ...y, scope: 'all' }).total], [2, 4, 5]);
   assert.deepEqual(core.marketStats(R, { from: '2025-01-01', to: '2026-12-31', scope: 'iiot' }).winners[0], { name: 'شركة ألف', wins: 2, value: 1400000, valued: 2, us: false });
 });
+// v9.68 (ADR-0140): the market study answers a search by winner or activity, and a pressed number by its own tenders
+test('v9.68: the market search also finds a winner, a bidder or an activity; a pressed number keeps only its own tenders', () => {
+  const R = core.parseRadar({ schema: core.RADAR_SCHEMA, pulledAt: '2026-11-18T09:00', tenders: [
+    { ref: '261100000041', title: 'توريد كاميرات مراقبة', entity: 'أمانة جدة', activity: 'تقنية المعلومات', status: 'awarded', published: '2026-02-01' },
+    { ref: '261100000042', title: 'صيانة شبكة الحاسب', entity: 'جامعة الملك عبدالعزيز', activity: 'الاتصالات', status: 'awarded', published: '2026-03-01' },
+    { ref: '261100000043', title: 'نظام تتبع المركبات', entity: 'أمانة جدة', activity: 'تقنية المعلومات', status: 'active', published: '2026-04-01' }],
+  awards: [{ ref: '261100000041', winner: 'شركة ألف للتقنية', value: 500000 }, { ref: '261100000042', winner: 'مؤسسة باء' }],
+  offers: [{ ref: '261100000041', bidder: 'شركة ألف للتقنية', price: 500000, tech: 'pass' }, { ref: '261100000041', bidder: 'شركة جيم المحدودة', price: 620000, tech: 'pass' }] });
+  const refs = (f) => core.marketStats(R, f).tenders.map((x) => x.ref).sort();
+  assert.deepEqual(refs({ q: 'ألف للتقنيه' }), ['261100000041'], 'by the winner, however the name is typed');
+  assert.deepEqual(refs({ q: 'جيم' }), ['261100000041'], 'by a company that only bid');
+  assert.deepEqual(refs({ q: 'الاتصالات' }), ['261100000042'], 'by the activity');
+  assert.deepEqual(refs({ q: '261100000043' }), ['261100000043'], 'by the number, as before');
+  assert.deepEqual(refs({ q: 'أمانة جدة' }), ['261100000041', '261100000043'], 'by the entity, as before');
+  assert.deepEqual(refs({ q: 'لا يوجد هذا' }), []);
+  // a pressed number: the tenders behind «total of the published values» and behind «middle number of bidders»
+  assert.deepEqual(refs({ only: 'valued' }), ['261100000041']);
+  assert.deepEqual(refs({ only: 'bids' }), ['261100000041']);
+  const S = core.marketStats(R, { only: 'valued' });
+  assert.deepEqual([S.total, S.awarded, S.value, S.winners.length], [1, 1, 500000, 1], 'every number follows the narrowing');
+  assert.deepEqual(refs({}), ['261100000041', '261100000042', '261100000043']);
+});
 const key = (s) => String(s || '').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, '').replace(/\s+/g, ' ').trim().toLowerCase();
 test('v9.60: a register row finds its Etimad tender by number or exact title; a looser match is only suggested', () => {
   const L = core.radarFromSheets(radarSheets(), ['261139000002']).tenders;
