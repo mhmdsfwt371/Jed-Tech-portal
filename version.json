@@ -1,22 +1,19 @@
 {
-  "version": "9.66",
+  "version": "9.67",
   "date": "2026-11-18",
   "notes": {
     "ar": [
-      "في «تحليل السوق» مجال جديد: «إنترنت الأشياء الصناعي» — سكادا وأنظمة التحكم والمراقبة عن بعد، والعدادات الذكية، وقياس مستوى الخزانات والوقود، والرصد البيئي، وإدارة الطاقة، والمدن الذكية. اختره وحده أو مع مجال أفاقي لترى من فاز بكل منافسة وبكم.",
-      "قائمة جديدة «الخطوط» تقسم منافسات إنترنت الأشياء الصناعي على خطوطها بعددها وما رُسّي منها وقيمته، والضغط على خط يعرض منافساته. وملف الإكسل فيه عمود الخط وورقة الخطوط."
+      "زر تحميل محلل المناقصات في صفحة دليله يفتح الآن ملف الإصدار 3.1 الجديد، وهو الذي ينزّل النموذج المحلي ويثبّته وحده ويرتبط بزر التحليل في بطاقة المناقصة."
     ],
     "en": [
-      "«Market analysis» has a new field of work: «Industrial IoT» — SCADA, control and remote monitoring systems, smart meters, tank and fuel level measurement, environmental monitoring, energy management and smart-city systems. Choose it alone or together with AFAQY's field to see who won each tender and for how much.",
-      "A new «Lines» list splits the industrial IoT tenders across their lines, with the count, the awarded ones and their value; pressing a line shows its tenders. The Excel file has a line column and a lines sheet."
+      "The download button for the Tender Analyzer on its guide page now opens the new version 3.1 file, the one that downloads and installs the local model by itself and links to the analyse button in the tender card."
     ],
     "ur": [
-      "«مارکیٹ کا تجزیہ» میں کام کا ایک نیا شعبہ ہے: «صنعتی انٹرنیٹ آف تھنگز» — سکاڈا، کنٹرول اور دور سے نگرانی کے نظام، سمارٹ میٹر، ٹینکوں اور ایندھن کی سطح کی پیمائش، ماحول کی نگرانی، توانائی کا انتظام اور سمارٹ سٹی کے نظام۔ اسے اکیلا یا آفاقی کے شعبے کے ساتھ چنیں تاکہ دیکھ سکیں کہ ہر ٹینڈر کس نے اور کتنے میں جیتا۔",
-      "«لائنیں» کی نئی فہرست صنعتی انٹرنیٹ آف تھنگز کے ٹینڈروں کو ان کی لائنوں میں بانٹتی ہے، تعداد، دیے گئے ٹینڈر اور ان کی مالیت کے ساتھ؛ کسی لائن کو دبانے سے اس کے ٹینڈر دکھتے ہیں۔ ایکسل فائل میں لائن کا کالم اور لائنوں کی شیٹ ہے۔"
+      "ٹینڈر اینالائزر کی رہنما صفحے پر ڈاؤن لوڈ کا بٹن اب نئے ورژن 3.1 کی فائل کھولتا ہے، وہی جو مقامی ماڈل خود ڈاؤن لوڈ اور انسٹال کرتا ہے اور ٹینڈر کارڈ کے تجزیے کے بٹن سے جڑتا ہے۔"
     ]
   },
   "counts": {
-    "versions": 191,
+    "versions": 192,
     "decisions": 139
   }
 }

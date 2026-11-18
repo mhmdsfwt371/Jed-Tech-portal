@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.67 — 2026-11-18
+
+- زر تحميل محلل المناقصات في صفحة دليله يفتح الآن ملف الإصدار 3.1 الجديد، وهو الذي ينزّل النموذج المحلي ويثبّته وحده ويرتبط بزر التحليل في بطاقة المناقصة.
+
+<details><summary>English</summary>
+
+- The download button for the Tender Analyzer on its guide page now opens the new version 3.1 file, the one that downloads and installs the local model by itself and links to the analyse button in the tender card.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹینڈر اینالائزر کی رہنما صفحے پر ڈاؤن لوڈ کا بٹن اب نئے ورژن 3.1 کی فائل کھولتا ہے، وہی جو مقامی ماڈل خود ڈاؤن لوڈ اور انسٹال کرتا ہے اور ٹینڈر کارڈ کے تجزیے کے بٹن سے جڑتا ہے۔
+
+</div>
+</details>
+
+
 ## v9.66 — 2026-11-18
 
 - في «تحليل السوق» مجال جديد: «إنترنت الأشياء الصناعي» — سكادا وأنظمة التحكم والمراقبة عن بعد، والعدادات الذكية، وقياس مستوى الخزانات والوقود، والرصد البيئي، وإدارة الطاقة، والمدن الذكية. اختره وحده أو مع مجال أفاقي لترى من فاز بكل منافسة وبكم.
