@@ -1,25 +1,22 @@
 {
-  "version": "9.71",
+  "version": "9.72",
   "date": "2026-11-20",
   "notes": {
     "ar": [
-      "خطوة واحدة من الإيميل إلى الدراسة: في سجل المناقصات خانة جديدة «ادرس كل مناقصة جديدة بالمحلل فور تسجيلها». فعّلها والمحلل مفتوح، ثم أسقط إيميل المناقصة: تُسجَّل، وتذهب مستنداتها إلى محلل المناقصات على جهازك، وترجع الدراسة والاستفسارات والمواعيد إلى بطاقتها دون ضغطة أخرى.",
-      "الخانة تقول أين يُدرس نص المستندات وقت تفعيلها. وإن تغيّر المكان بعدها (مثلًا شُغّلت «سحابة أولاما» في المحلل) لا تبدأ دراسة وحدها، وتخبرك الصفحة لتوافق من جديد.",
-      "بطاقة المحلل صارت تقول الحقيقة أيضًا حين يعمل المحلل على «عندي اشتراك»: نص المستندات يذهب إلى خدمة كلود بمفتاحك، والملف الذي عليه تصنيف أمني لا يُرسل أبدًا."
+      "زر «تحميل البرنامج» في صفحة محلل المناقصات صار يفتح ملف الإصدار 3.6: مع كل دراسة ملف «مرجع السوق» بالمنافسات المشابهة المرساة على اعتماد (الفائز، قيمة الترسية، عدد العروض، أقل عرض مطابق فنيًا)، وإيميل الإدارة يحمل مواعيد التسليم الداخلي للرياض.",
+      "صفحة دليل المحلل صارت تقول أين تُدرس المستندات بدقة (على الجهاز، أو سحابة أولاما، أو خدمة كلود بمفتاحك)، وتشرح خطوة «سجّل وادرس» الواحدة."
     ],
     "en": [
-      "One step from the email to the study: the tender register has a new box, «Study every new tender with the Analyzer as soon as it is registered». Turn it on while the Analyzer is open, then drop the tender's email: it is registered, its documents go to the Tender Analyzer on your computer, and the study, the inquiries and the dates come back to its card without another click.",
-      "The box says where the text of the documents is studied at the moment you turn it on. If that place changes afterwards (for example «Ollama cloud» is switched on in the Analyzer), no study starts by itself, and the page tells you so that you can agree again.",
-      "The Analyzer's card now also tells the truth when the Analyzer runs on «I have a subscription»: the text of the documents goes to the Claude service with your own key, and a file that carries a security marking is never sent."
+      "The «Download the program» button on the Tender Analyzer page now opens the file of version 3.6: every study comes with a «Market reference» file of similar tenders awarded on Etimad (the winner, the award value, the number of offers, the lowest technically compliant offer), and the email to management carries head office's internal hand-over deadlines.",
+      "The Analyzer's guide page now says precisely where the documents are studied (on the computer, on Ollama cloud, or on the Claude service with your own key), and explains the single «register and study» step."
     ],
     "ur": [
-      "ای میل سے مطالعے تک ایک ہی قدم: ٹینڈر رجسٹر میں ایک نیا خانہ ہے، «ہر نئے ٹینڈر کا اندراج ہوتے ہی تجزیہ کار سے مطالعہ کریں»۔ اسے اس وقت فعال کریں جب تجزیہ کار کھلا ہو، پھر ٹینڈر کی ای میل چھوڑیں: اس کا اندراج ہو جاتا ہے، اس کی دستاویزات آپ کے کمپیوٹر پر موجود ٹینڈر تجزیہ کار کو جاتی ہیں، اور مطالعہ، استفسارات اور تاریخیں کسی اور کلک کے بغیر اس کے کارڈ پر واپس آ جاتی ہیں۔",
-      "یہ خانہ بتاتا ہے کہ اسے فعال کرتے وقت دستاویزات کے متن کا مطالعہ کہاں ہوتا ہے۔ اگر بعد میں وہ جگہ بدل جائے (مثلاً تجزیہ کار میں «اولاما کلاؤڈ» چلا دیا جائے) تو کوئی مطالعہ خود بخود شروع نہیں ہوتا، اور صفحہ آپ کو بتا دیتا ہے تاکہ آپ دوبارہ اتفاق کر سکیں۔",
-      "تجزیہ کار کا کارڈ اب اس وقت بھی سچ بتاتا ہے جب تجزیہ کار «میرے پاس سبسکرپشن ہے» پر چل رہا ہو: دستاویزات کا متن آپ کی اپنی کلید کے ساتھ کلاڈ سروس کو جاتا ہے، اور جس فائل پر حفاظتی درجہ بندی ہو وہ کبھی نہیں بھیجی جاتی۔"
+      "ٹینڈر تجزیہ کار کے صفحے پر «پروگرام ڈاؤن لوڈ کریں» کا بٹن اب ورژن 3.6 کی فائل کھولتا ہے: ہر مطالعے کے ساتھ «مارکیٹ حوالہ» کی فائل آتی ہے جس میں اعتماد پر ایوارڈ ہونے والے ملتے جلتے ٹینڈر ہوتے ہیں (جیتنے والا، ایوارڈ کی رقم، پیشکشوں کی تعداد، فنی طور پر مطابق سب سے کم پیشکش)، اور انتظامیہ کی ای میل میں ریاض کو حوالگی کی اندرونی تاریخیں شامل ہوتی ہیں۔",
+      "تجزیہ کار کی رہنمائی کا صفحہ اب ٹھیک ٹھیک بتاتا ہے کہ دستاویزات کا مطالعہ کہاں ہوتا ہے (کمپیوٹر پر، اولاما کلاؤڈ پر، یا آپ کی اپنی کلید کے ساتھ کلاڈ سروس پر)، اور «اندراج اور مطالعہ» کے ایک ہی قدم کی وضاحت کرتا ہے۔"
     ]
   },
   "counts": {
-    "versions": 196,
+    "versions": 197,
     "decisions": 140
   }
 }

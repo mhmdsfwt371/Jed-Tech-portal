@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.72 — 2026-11-20
+
+- زر «تحميل البرنامج» في صفحة محلل المناقصات صار يفتح ملف الإصدار 3.6: مع كل دراسة ملف «مرجع السوق» بالمنافسات المشابهة المرساة على اعتماد (الفائز، قيمة الترسية، عدد العروض، أقل عرض مطابق فنيًا)، وإيميل الإدارة يحمل مواعيد التسليم الداخلي للرياض.
+- صفحة دليل المحلل صارت تقول أين تُدرس المستندات بدقة (على الجهاز، أو سحابة أولاما، أو خدمة كلود بمفتاحك)، وتشرح خطوة «سجّل وادرس» الواحدة.
+
+<details><summary>English</summary>
+
+- The «Download the program» button on the Tender Analyzer page now opens the file of version 3.6: every study comes with a «Market reference» file of similar tenders awarded on Etimad (the winner, the award value, the number of offers, the lowest technically compliant offer), and the email to management carries head office's internal hand-over deadlines.
+- The Analyzer's guide page now says precisely where the documents are studied (on the computer, on Ollama cloud, or on the Claude service with your own key), and explains the single «register and study» step.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹینڈر تجزیہ کار کے صفحے پر «پروگرام ڈاؤن لوڈ کریں» کا بٹن اب ورژن 3.6 کی فائل کھولتا ہے: ہر مطالعے کے ساتھ «مارکیٹ حوالہ» کی فائل آتی ہے جس میں اعتماد پر ایوارڈ ہونے والے ملتے جلتے ٹینڈر ہوتے ہیں (جیتنے والا، ایوارڈ کی رقم، پیشکشوں کی تعداد، فنی طور پر مطابق سب سے کم پیشکش)، اور انتظامیہ کی ای میل میں ریاض کو حوالگی کی اندرونی تاریخیں شامل ہوتی ہیں۔
+- تجزیہ کار کی رہنمائی کا صفحہ اب ٹھیک ٹھیک بتاتا ہے کہ دستاویزات کا مطالعہ کہاں ہوتا ہے (کمپیوٹر پر، اولاما کلاؤڈ پر، یا آپ کی اپنی کلید کے ساتھ کلاڈ سروس پر)، اور «اندراج اور مطالعہ» کے ایک ہی قدم کی وضاحت کرتا ہے۔
+
+</div>
+</details>
+
+
 ## v9.71 — 2026-11-20
 
 - خطوة واحدة من الإيميل إلى الدراسة: في سجل المناقصات خانة جديدة «ادرس كل مناقصة جديدة بالمحلل فور تسجيلها». فعّلها والمحلل مفتوح، ثم أسقط إيميل المناقصة: تُسجَّل، وتذهب مستنداتها إلى محلل المناقصات على جهازك، وترجع الدراسة والاستفسارات والمواعيد إلى بطاقتها دون ضغطة أخرى.
