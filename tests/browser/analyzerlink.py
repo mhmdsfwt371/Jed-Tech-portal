@@ -159,5 +159,36 @@ with sync_playwright() as p:
         until(w, lambda: (item(w)['analyzer'] or {}).get('state')=='done', 40)
         check(f'A17[{theme}/{lang}] no page error with the cloud notice', not e4, e4[:2]); c4.close()
     ST['engine']='local'
+    # v9.71 (ADR-0142): register and study in one step — a mail dropped on the register is registered and studied by itself,
+    # and never by itself toward a place the user did not agree to when the switch was turned on
+    from email.message import EmailMessage
+    def eml(name, subject):
+        m=EmailMessage(); m['Subject']=subject; m['From']='etimad@example.com'; m['To']='x@example.com'; m['Date']=(now-datetime.timedelta(hours=5)).strftime('%a, %d %b %Y %H:%M:%S +0300'); m['Message-ID']=f'<{name}@example.com>'
+        m.set_content('منافسة جديدة، والمرفقات كراسة الشروط وجدول الكميات.')
+        m.add_attachment('كراسة الشروط والمواصفات\nالضمان الابتدائي 1%\n'.encode(), maintype='text', subtype='plain', filename='كراسة الشروط.txt')
+        m.add_attachment('م,البند,الكمية\n1,كاميرا,4\n'.encode(), maintype='text', subtype='csv', filename='BOQ.csv')
+        open(P(name),'wb').write(bytes(m)); return P(name)
+    AUTO='sample: Auto tender'; mails=lambda w: w.locator('#tenders-body .td-mail-drop input[type=file]').first
+    find=lambda w,subj: w.evaluate("async(s)=>{const r=indexedDB.open('afaqy-portal',1);const db=await new Promise(o=>{r.onsuccess=()=>o(r.result)});const t=await new Promise(o=>{const q=db.transaction('kv').objectStore('kv').get('tenders');q.onsuccess=()=>o(q.result)});const i=(t?t.items:[]).find(x=>x.subject.includes(s));return i?{etimadNo:i.etimadNo||'',analyzer:i.analyzer||null,files:(i.files||[]).map(f=>f.name)}:null}",subj)
+    OUTS['T.tender-study.json']=json.dumps({'schema':'afaqy-tender-study/v1','tool':'Tender Analyzer 3','tenders':[{'subject':AUTO,'etimadNo':'261139008888','fees':'300','decision':'go','decisionWhy':'within scope'}]},ensure_ascii=False).encode()
+    prog.shutdown(); prog.server_close()
+    c5,w,e5=boot(b); sw=w.locator('#tenders-body .an-auto-box'); note=lambda: w.locator('#tenders-body .an-auto p').inner_text()
+    check('B1 the register\'s mail box carries one switch, off, that says what one step means', sw.count()==1 and not sw.is_checked() and 'One step' in note(), note()[:80])
+    sw.check(); w.wait_for_timeout(1500); sw=w.locator('#tenders-body .an-auto-box')
+    check('B2 the program does not answer: the switch stays off and the page says why', not sw.is_checked() and w.locator('#toast', has_text='not answering').count()>=1, note()[:80])
+    prog=start_program(); ST.update(engine='local', job=None, state='waiting', files={}, need=3)
+    sw.check(); until(w, lambda: w.locator('#tenders-body .an-auto-box').is_checked() and 'does not leave it' in note(), 8)
+    check('B3 turned on in front of the program: the note names where the text stays', w.locator('#tenders-body .an-auto-box').is_checked() and 'does not leave it' in note() and w.locator('#tenders-body .an-auto .an-cloud').count()==0, note()[:90])
+    mails(w).set_input_files(eml('auto1.eml', AUTO))
+    done=until(w, lambda: ((find(w,'Auto tender') or {}).get('analyzer') or {}).get('state')=='done', 60); it=find(w,'Auto tender') or {}
+    check('B4 one step: the mail is registered, its two documents go to the program, and the study comes back and fills the card — no other click', done and sorted(ST['files'])==['BOQ.csv','كراسة الشروط.txt'] and it.get('etimadNo')=='261139008888' and 'AFAQY_Tender_T_Inquiries_AR.docx' in it.get('files',[]), (done,sorted(ST['files']),it))
+    ST.update(engine='cloud', files={}); job=ST['job']
+    mails(w).set_input_files(eml('auto2.eml', 'sample: Second tender'))
+    said=until(w, lambda: w.locator('#toast', has_text='different place').count()>=1, 25); w.wait_for_timeout(1500); it2=find(w,'Second tender') or {}
+    check('B5 the program moved to the cloud since the switch was turned on: the mail is registered, nothing is sent, and the page says why', said and it2!={} and it2.get('analyzer') is None and ST['files']=={} and ST['job']==job, (said,it2,list(ST['files'])))
+    w.reload(); w.wait_for_timeout(1500); w.evaluate("location.hash='#tenders'"); w.wait_for_timeout(900)
+    check('B6 the switch is still on after the page is opened again', w.locator('#tenders-body .an-auto-box').is_checked(), '')
+    check('B7 no page error in the one-step flow', not e5, e5[:2]); c5.close()
+    ST['engine']='local'
     prog.shutdown()
 print(f'\n{len(fails)} failed' if fails else '\nall passed'); sys.exit(1 if fails else 0)

@@ -2128,6 +2128,38 @@ test('v9.69: the program says when a study would go to the cloud, and the card r
     assert.ok(!/no file goes out to the internet|لا يخرج أي ملف إلى الإنترنت|کوئی فائل انٹرنیٹ پر نہیں جاتی/.test(S.an_note), `${lang}: the plain note no longer promises what the program may not keep`);
   }
 });
+// v9.71 (ADR-0142): one step — a mail dropped on the register is registered and studied. The switch is turned on once, under
+// the place the program said the text would go that day; a study never starts by itself toward another place.
+test('v9.71: a new tender is studied by itself only when it is safe to start without asking', () => {
+  const hello = (engine, busy = false) => core.parseAnalyzerHello({ schema: 'afaqy-analyzer-link/v1', app: 'TenderAnalyzer', version: '3.5.0', engine, busy, job: null });
+  assert.equal(hello('api').engine, 'api', 'the key mode is kept as said: read as «local», the card promised that the text stays on the computer');
+  assert.equal(core.analyzerNote('api'), 'an_note_api');
+  const files = { files: [{ id: 'f1', name: 'كراسة.pdf' }], skipped: 0 }, none = { files: [], skipped: 0 };
+  const on = (engine) => core.cleanAnalyzerAuto(JSON.stringify({ on: true, engine }));
+  assert.deepEqual(core.cleanAnalyzerAuto(null), { on: false, engine: 'local' }, 'never turned on');
+  assert.deepEqual(core.cleanAnalyzerAuto('{broken'), { on: false, engine: 'local' });
+  assert.deepEqual(core.cleanAnalyzerAuto(JSON.stringify({ on: true, engine: 'mars' })), { on: true, engine: 'local' }, 'an unknown place is no consent to anything but the computer');
+  assert.equal(core.analyzerAuto(core.cleanAnalyzerAuto(null), hello('local'), files), 'off');
+  assert.equal(core.analyzerAuto(on('local'), hello('local'), none), 'nofiles', 'a mail with no documents is registered and left alone');
+  assert.equal(core.analyzerAuto(on('local'), null, files), 'closed', 'the program does not answer: nothing is opened behind the user\'s back');
+  assert.equal(core.analyzerAuto(on('local'), hello('local'), files), 'run');
+  assert.equal(core.analyzerAuto(on('local'), hello('cloud'), files), 'ask', 'turned on when the text stayed on the computer: it does not start by itself toward Ollama');
+  assert.equal(core.analyzerAuto(on('local'), hello('api'), files), 'ask');
+  assert.equal(core.analyzerAuto(on('cloud'), hello('api'), files), 'ask', 'one place agreed to is not another');
+  assert.equal(core.analyzerAuto(on('cloud'), hello('cloud'), files), 'run');
+  assert.equal(core.analyzerAuto(on('api'), hello('api'), files), 'run');
+  assert.equal(core.analyzerAuto(on('api'), hello('local'), files), 'run', 'the computer itself is always inside what was agreed to');
+  assert.equal(core.analyzerAuto(on('local'), hello('bridge'), files), 'ask', 'the copy-and-paste way needs the person');
+  assert.equal(core.analyzerAutoNote({ on: false, engine: 'local' }), 'an_auto_hint');
+  assert.equal(core.analyzerAutoNote(on('local')), 'an_auto_note_local');
+  assert.equal(core.analyzerAutoNote(on('cloud')), 'an_auto_note_cloud');
+  assert.equal(core.analyzerAutoNote(on('api')), 'an_auto_note_api');
+  for (const lang of ['ar', 'en', 'ur']) {
+    const S = STRINGS[lang];
+    for (const k of ['an_auto', 'an_auto_hint', 'an_auto_note_local', 'an_auto_note_cloud', 'an_auto_note_api', 'an_auto_closed', 'an_auto_changed', 'an_note_api']) assert.ok(S[k] && S[k].length > 20, `${lang}: ${k}`);
+    assert.ok(S.an_note_api.includes('{n}'), `${lang}: the key note counts the files`);
+  }
+});
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

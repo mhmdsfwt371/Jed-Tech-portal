@@ -6,7 +6,7 @@ The portal's tender card talks to the Tender Analyzer through a small service th
 
 | Request | Body | Reply |
 |---|---|---|
-| `GET /v1/hello` | — | `{ app: "TenderAnalyzer", version, engine: "local"\|"bridge"\|"cloud", busy, job }` — `job` is the job running now, or null |
+| `GET /v1/hello` | — | `{ app: "TenderAnalyzer", version, engine: "local"\|"bridge"\|"cloud"\|"api", busy, job }` — `job` is the job running now, or null |
 | `POST /v1/jobs` | `{ id, subject }` | the job's view (below). `id` is the tender's job name, `t-` and 16 hex digits (`analyzerJobId()`) |
 | `PUT /v1/jobs/<job>/files/<name>` | the file itself | `{ name, size }`. A name is never a path; only document types are taken; 409 while the job runs |
 | `POST /v1/jobs/<job>/start` | `{}` | the job's view; 409 `busy` when another study is running |
@@ -31,6 +31,11 @@ program is opened.
 | `local` | The free model on this computer. Nothing leaves it. | The plain note. |
 | `bridge` | The user's own chat app (the program's «I have a subscription» switch). A study from the portal still runs on the local route. | The plain note. |
 | `cloud` | Ollama's cloud (program 3.4 and later, the «Ollama cloud» switch): the text of the documents is sent to Ollama's servers. A file with a security marking is studied on the computer instead. | The cloud notice, in place of the plain note, from the hello on. |
+| `api` | The Claude service with the user's own key (program 3.5, «I have a subscription» with a saved key): the text of the documents is sent to that service. A file with a security marking is never sent on a job from the portal. | The key notice (`an_note_api`), in the same warning style (v9.71, ADR-0142). |
 
 The program reads its settings at every hello, so the word is true at the moment the portal asks. Any other word is read as `local`
 and promises nothing: the plain note itself no longer says «no file goes out to the internet».
+
+## Register and study in one step (v9.71, ADR-0142)
+
+The register's mail box has a switch that starts a study for every tender a mail has just registered. It is turned on only after a hello answers, and it remembers the `engine` of that hello. `analyzerAuto(pref, hello, send)` starts a study by itself only when the program answers, the tender has documents, and the `engine` named now is `local` or the remembered one; otherwise the card's button stays the only way.

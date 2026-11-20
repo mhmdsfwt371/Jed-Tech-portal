@@ -15,7 +15,7 @@ import {
   maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply,
   tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds, tenderAmount, tenderDatePatch, backupDue, parseTenderStudy, matchTenderStudy, applyTenderStudy, tenderAutoStage, tenderStudyFromSheet,
   RADAR_SCHEMA, parseRadar, radarFromSheets, radarMerge, radarFind, radarSuggest, applyEtimad, radarToItem, etimadLinkPatch, tenderUndoEtimad, radarResult, tenderOutcome, radarSimilar, radarOurBids, tenderFunnel, tenderArchive, marketStats, marketPeriod,
-  ANALYZER, parseAnalyzerHello, analyzerNote, parseAnalyzerJob, analyzerJobId, analyzerSend, analyzerOutputKind, analyzerStudyFile,
+  ANALYZER, parseAnalyzerHello, analyzerNote, cleanAnalyzerAuto, analyzerAuto, analyzerAutoNote, parseAnalyzerJob, analyzerJobId, analyzerSend, analyzerOutputKind, analyzerStudyFile,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
   mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts,
@@ -1496,7 +1496,7 @@ function anBody(i) {
       a && ['lost', 'error'].includes(ph) ? el('button', { type: 'button', class: 'btn tiny an-take', text: t('an_take'), onclick: () => { anSet(i.id, { phase: 'running' }); anFollow(i.id); } }) : null,
       ['missing', 'lost'].includes(ph) ? el('a', { class: 'btn tiny an-open', href: ANALYZER.open, text: t('an_open') }) : null,
       ph === 'missing' ? el('a', { class: 'btn tiny an-get', href: './tender-analyzer.html#install', target: '_blank', rel: 'noopener', text: `⬇ ${t('an_get')}` }) : null),
-    ph === 'missing' ? el('p', { class: 'hint an-help', text: t('an_help') }) : el('p', { class: st && st.engine === 'cloud' ? 'hint an-cloud' : 'hint', text: t(analyzerNote(st && st.engine), { n: send.files.length }) })];
+    ph === 'missing' ? el('p', { class: 'hint an-help', text: t('an_help') }) : el('p', { class: st && ['cloud', 'api'].includes(st.engine) ? 'hint an-cloud' : 'hint', text: t(analyzerNote(st && st.engine), { n: send.files.length }) })];
 }
 const AN_BUSY = ['connect', 'opening', 'sending', 'running', 'taking'];
 // the fold's own line says where the study stands in two words, so a closed fold still tells
@@ -1522,6 +1522,35 @@ function anDraw(id) {
   }
 }
 // ADR-0127: the final offer (one file, or several) goes onto its tender and makes it ready
+// v9.71 (ADR-0142): register and study in one step. Tenders a mail has just registered go to the program one after the other,
+// because the program runs one study at a time. analyzerAuto() decides; anything short of «run» leaves the card's button.
+const AN_AUTO = 'an.auto';
+const anAutoPref = () => cleanAnalyzerAuto(pref(AN_AUTO));
+async function anAutoRun(ids) {
+  const p = anAutoPref(); if (!p.on || !ids.length) return;
+  for (const id of ids) {
+    const item = tenders?.items.find((r) => r.id === id); if (!item) continue;
+    const plan = analyzerAuto(p, await anHello(), analyzerSend(item));
+    if (plan === 'closed') { toast(t('an_auto_closed')); return; }
+    if (plan === 'ask') { toast(t('an_auto_changed')); return; }
+    if (plan !== 'run') continue;
+    await tdAnalyze(id);
+    while (AN_BUSY.includes((anRun.get(id) || {}).phase)) await anSleep(AN_T.poll);
+  }
+}
+function anAutoSwitch() {
+  const p = anAutoPref();
+  const box = el('input', { type: 'checkbox', class: 'an-auto-box', checked: p.on ? '' : null, onchange: async (e) => {
+    const want = e.target.checked;
+    if (!want) { pref(AN_AUTO, JSON.stringify({ on: false, engine: 'local' })); renderTenders(); return; }
+    e.target.disabled = true;
+    const hello = await anHello();   // turned on only in front of the program: its answer is the place the user agrees to
+    if (!hello) { toast(t('an_auto_closed')); renderTenders(); return; }
+    pref(AN_AUTO, JSON.stringify({ on: true, engine: cleanAnalyzerAuto({ on: true, engine: hello.engine }).engine })); renderTenders();
+  } });
+  return el('div', { class: 'an-auto' }, el('label', { class: 'an-auto-l' }, box, el('span', { text: t('an_auto') })),
+    el('p', { class: p.on && p.engine !== 'local' ? 'hint an-cloud' : 'hint', text: t(analyzerAutoNote(p)) }));
+}
 async function tdAddFilesAs(id, files, kind) {
   const cur = tenders?.items.find((i) => i.id === id); if (!cur || !files.length) return;
   const upload = files.map((f) => ({ ...tdNewFile(f, kind), kindManual: true }));
@@ -1598,7 +1627,7 @@ async function tdAnalyzeFiles(id, ids) {
 }
 async function tdImportEmails(files, id = '') {
   if (tdBusy || !files.length) return;
-  const imported = [];
+  const imported = [], fresh = [];
   let added = 0, linked = 0, skipped = 0, failed = 0, warnings = 0;
   const failures = [];
   tdBusy = t('td_mail_reading');
@@ -1644,7 +1673,7 @@ async function tdImportEmails(files, id = '') {
         });
         await tdCommit({ ...state, items: [entry, ...state.items.filter((row) => row.id !== entry.id)].sort((a, b) => b.date.localeCompare(a.date)) });
         imported.push(entry.id);
-        if (existing) linked++; else added++;
+        if (existing) linked++; else { added++; fresh.push(entry.id); }
         warnings += mail.warnings.length;
       } catch (error) {
         failures.push({ name: file.name, key: ['td_mail_ambiguous','td_mail_missing_date'].includes(error.message) ? error.message : 'td_mail_failed' });
@@ -1670,6 +1699,7 @@ async function tdImportEmails(files, id = '') {
     const item = tenders.items.find(row => row.id === tenderId);
     await tdAnalyzeFiles(tenderId, (item.files || []).filter(file => file.kind !== 'original' && !file.analysis).map(file => file.id));
   }
+  void anAutoRun([...new Set(fresh)]);
 }
 function tdEmailPicker(id = '') {
   const input = el('input', { type: 'file', accept: '.msg,.eml', multiple: '', hidden: true, onchange: async (event) => {
@@ -1687,7 +1717,7 @@ function tdEmailPicker(id = '') {
   } },
   el('button', { type: 'button', class: id ? 'btn tiny' : 'btn primary', disabled: !!tdBusy,
     text: t(id ? 'td_mail_link' : 'td_mail_import'), onclick: () => input.click() }), input,
-  el('span', { class: 'hint', text: t('td_mail_hint') }));
+  el('span', { class: 'hint', text: t('td_mail_hint') }), id ? null : anAutoSwitch());
   return drop;
 }
 // ---------- v9.57 (ADR-0130): a tender's correspondence — who wrote, when and what, read from the mails dropped on it ----------

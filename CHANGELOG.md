@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.71 — 2026-11-20
+
+- خطوة واحدة من الإيميل إلى الدراسة: في سجل المناقصات خانة جديدة «ادرس كل مناقصة جديدة بالمحلل فور تسجيلها». فعّلها والمحلل مفتوح، ثم أسقط إيميل المناقصة: تُسجَّل، وتذهب مستنداتها إلى محلل المناقصات على جهازك، وترجع الدراسة والاستفسارات والمواعيد إلى بطاقتها دون ضغطة أخرى.
+- الخانة تقول أين يُدرس نص المستندات وقت تفعيلها. وإن تغيّر المكان بعدها (مثلًا شُغّلت «سحابة أولاما» في المحلل) لا تبدأ دراسة وحدها، وتخبرك الصفحة لتوافق من جديد.
+- بطاقة المحلل صارت تقول الحقيقة أيضًا حين يعمل المحلل على «عندي اشتراك»: نص المستندات يذهب إلى خدمة كلود بمفتاحك، والملف الذي عليه تصنيف أمني لا يُرسل أبدًا.
+
+<details><summary>English</summary>
+
+- One step from the email to the study: the tender register has a new box, «Study every new tender with the Analyzer as soon as it is registered». Turn it on while the Analyzer is open, then drop the tender's email: it is registered, its documents go to the Tender Analyzer on your computer, and the study, the inquiries and the dates come back to its card without another click.
+- The box says where the text of the documents is studied at the moment you turn it on. If that place changes afterwards (for example «Ollama cloud» is switched on in the Analyzer), no study starts by itself, and the page tells you so that you can agree again.
+- The Analyzer's card now also tells the truth when the Analyzer runs on «I have a subscription»: the text of the documents goes to the Claude service with your own key, and a file that carries a security marking is never sent.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ای میل سے مطالعے تک ایک ہی قدم: ٹینڈر رجسٹر میں ایک نیا خانہ ہے، «ہر نئے ٹینڈر کا اندراج ہوتے ہی تجزیہ کار سے مطالعہ کریں»۔ اسے اس وقت فعال کریں جب تجزیہ کار کھلا ہو، پھر ٹینڈر کی ای میل چھوڑیں: اس کا اندراج ہو جاتا ہے، اس کی دستاویزات آپ کے کمپیوٹر پر موجود ٹینڈر تجزیہ کار کو جاتی ہیں، اور مطالعہ، استفسارات اور تاریخیں کسی اور کلک کے بغیر اس کے کارڈ پر واپس آ جاتی ہیں۔
+- یہ خانہ بتاتا ہے کہ اسے فعال کرتے وقت دستاویزات کے متن کا مطالعہ کہاں ہوتا ہے۔ اگر بعد میں وہ جگہ بدل جائے (مثلاً تجزیہ کار میں «اولاما کلاؤڈ» چلا دیا جائے) تو کوئی مطالعہ خود بخود شروع نہیں ہوتا، اور صفحہ آپ کو بتا دیتا ہے تاکہ آپ دوبارہ اتفاق کر سکیں۔
+- تجزیہ کار کا کارڈ اب اس وقت بھی سچ بتاتا ہے جب تجزیہ کار «میرے پاس سبسکرپشن ہے» پر چل رہا ہو: دستاویزات کا متن آپ کی اپنی کلید کے ساتھ کلاڈ سروس کو جاتا ہے، اور جس فائل پر حفاظتی درجہ بندی ہو وہ کبھی نہیں بھیجی جاتی۔
+
+</div>
+</details>
+
+
 ## v9.70 — 2026-11-18
 
 - زر «تحميل البرنامج» في صفحة محلل المناقصات صار يفتح ملف الإصدار 3.4، وفيه مفتاح «سحابة أولاما» المجاني (دراسة في دقائق بلا مفتاح وبلا اشتراك) ومفتاح «نموذج سريع»، وقراءة أسرع للمنافسة على الجهاز.

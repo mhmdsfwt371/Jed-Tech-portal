@@ -2921,11 +2921,29 @@ const anStr = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
 /** The program's greeting, checked: only a reply in our protocol counts as the program. */
 export function parseAnalyzerHello(raw) {
   if (!raw || typeof raw !== 'object' || raw.schema !== ANALYZER.schema || raw.app !== 'TenderAnalyzer') return { error: 'schema' };
-  return { version: anStr(raw.version, 20), engine: ['bridge', 'cloud'].includes(raw.engine) ? raw.engine : 'local', busy: raw.busy === true, job: anStr(raw.job, 48) };
+  return { version: anStr(raw.version, 20), engine: ['bridge', 'cloud', 'api'].includes(raw.engine) ? raw.engine : 'local', busy: raw.busy === true, job: anStr(raw.job, 48) };
 }
 // The line under the Analyzer's button. At every hello the program says what a study started now would run on. «cloud» is
-// Ollama's servers: the documents' text leaves the computer, so the card says that instead of the plain note (ADR-0141).
-export function analyzerNote(engine) { return engine === 'cloud' ? 'an_note_cloud' : 'an_note'; }
+// Ollama's servers and «api» is the subscription service reached with the user's own key: in both the documents' text leaves
+// the computer, so the card says where it goes instead of the plain note (ADR-0141, ADR-0142).
+export function analyzerNote(engine) { return engine === 'cloud' ? 'an_note_cloud' : engine === 'api' ? 'an_note_api' : 'an_note'; }
+// v9.71 (ADR-0142): «register and study» in one step. The switch on the mail box is turned on once, and it remembers where the
+// program said the text would go at that moment. A study starts by itself only toward that place or the computer itself —
+// a place the user never saw named gets the card's button and its note, never a silent start.
+const AN_PLACES = ['local', 'cloud', 'api'];
+export function cleanAnalyzerAuto(raw) {
+  let v = null; try { v = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch { v = null; }
+  return { on: !!(v && v.on === true), engine: v && AN_PLACES.includes(v.engine) ? v.engine : 'local' };
+}
+/** What to do with a tender just registered from a mail: 'off' | 'nofiles' | 'closed' | 'ask' | 'run'. */
+export function analyzerAuto(pref, hello, send) {
+  if (!pref || !pref.on) return 'off';
+  if (!send || !send.files || !send.files.length) return 'nofiles';
+  if (!hello) return 'closed';   // a closed program is not opened behind the user's back
+  if (!AN_PLACES.includes(hello.engine)) return 'ask';   // the copy-and-paste way needs the person
+  return hello.engine === 'local' || hello.engine === pref.engine ? 'run' : 'ask';
+}
+export function analyzerAutoNote(pref) { return pref && pref.on ? `an_auto_note_${AN_PLACES.includes(pref.engine) ? pref.engine : 'local'}` : 'an_auto_hint'; }
 /** Where a study stands, checked. A file name is a name, never a path; a state we do not know is «failed». */
 export function parseAnalyzerJob(raw) {
   if (!raw || typeof raw !== 'object' || raw.schema !== ANALYZER.schema || !anStr(raw.job, 48)) return { error: 'schema' };
