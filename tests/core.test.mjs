@@ -2160,6 +2160,33 @@ test('v9.71: a new tender is studied by itself only when it is safe to start wit
     assert.ok(S.an_note_api.includes('{n}'), `${lang}: the key note counts the files`);
   }
 });
+// v9.73 (ADR-0143): every date of a tender in one agenda — the platform's dates and head office's internal ones — with a notice
+test('v9.73: a tender\'s dates, the internal ones included, come out as one agenda', () => {
+  const T = { id: 't1', subject: 'كاميرات', stage: 'prep', askDue: '2026-11-26', due: '2026-12-02', dueTime: '11:00', openAt: '2026-12-03', bond: '1%' };
+  const m = core.tenderMilestones(T), day = (k) => (m.find((x) => x.key === k) || {}).day;
+  assert.deepEqual(m.map((x) => x.key), ['askUp', 'askDue', 'bondCost', 'handover', 'due', 'openAt'], 'in the order of the calendar');
+  assert.equal(day('askUp'), '2026-11-25', 'the inquiries go up a working day before their last day');
+  assert.equal(day('bondCost'), '2026-11-29', 'three working days before a Wednesday closing is Sunday');
+  assert.equal(day('handover'), '2026-11-30');
+  assert.equal(m.find((x) => x.key === 'due').time, '11:00');
+  assert.ok(!core.tenderMilestones({ ...T, bond: 'لا يوجد' }).some((x) => x.key === 'bondCost'), 'no guarantee asked: no cost to send');
+  assert.ok(core.tenderMilestones({ ...T, bond: '' }).some((x) => x.key === 'bondCost'), 'not known yet: the date is kept so it is not missed');
+  assert.deepEqual(core.tenderMilestones({ ...T, stage: 'submitted' }).map((x) => x.key), ['openAt'], 'once submitted only the opening is left');
+  assert.deepEqual(core.tenderMilestones({ ...T, stage: 'ready', readyOn: '2026-11-28' }).map((x) => x.key), ['due', 'openAt'], 'handed over: the internal dates are done');
+  assert.deepEqual(core.tenderMilestones({ ...T, stage: 'lost' }), [], 'a closed tender has no agenda');
+  assert.deepEqual(core.tenderMilestones(null), []);
+  const A = core.tenderAgenda([T, { id: 't2', subject: 'بصمة', stage: 'decide', askDue: '2026-11-22', due: '2026-12-03', dueTime: '09:59', bond: 'لا يوجد' }, { id: 't3', subject: 'قديمة', stage: 'won', due: '2026-11-24' }], '2026-11-24', 7);
+  assert.deepEqual(A.map((x) => `${x.id}:${x.key}:${x.left}:${x.tone}`), ['t1:askUp:1:soon', 't1:askDue:2:soon', 't1:bondCost:5:later', 't1:handover:6:later', 't2:handover:7:later'],
+    'the next seven days, nearest first; a platform date already past is history, and a closed tender is not in');
+  const late = core.tenderAgenda([T], '2026-12-01', 7);
+  assert.deepEqual(late.map((x) => `${x.key}:${x.left}:${x.tone}`), ['bondCost:-2:late', 'handover:-1:late', 'due:1:soon', 'openAt:2:soon'], 'an internal date missed while the tender is still open stays on top, in red');
+  assert.equal(core.tenderAgenda([T], '2026-11-25', 7)[0].tone, 'today');
+  const due = core.tenderNotices(core.tenderAgenda([T], '2026-11-25', 14), ['t1:askUp:2026-11-25']);
+  assert.deepEqual(due.map((x) => x.key), ['askDue'], 'said once: what is a day away or less and not said before — nothing further out');
+  assert.equal(core.tenderNoticeId(due[0]), 't1:askDue:2026-11-26');
+  for (const lang of ['ar', 'en', 'ur']) for (const k of ['td_col_askUp', 'td_col_bondCost', 'ag_h', 'ag_empty', 'ag_today', 'ag_tomorrow', 'ag_late', 'ag_bell', 'ag_bell_on', 'ag_bell_note', 'ag_bell_denied', 'ag_ics', 'ag_notice', 'ag_days'])
+    assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
+});
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

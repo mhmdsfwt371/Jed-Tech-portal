@@ -3240,6 +3240,51 @@ export function tenderHandoverDue(item) {
   while (left > 0) { day = tdDayShift(day, -1); if (tdWorkDay(day)) left--; }
   return day + (item.dueTime ? `T${item.dueTime}` : '');
 }
+// ---------- v9.73 (ADR-0143): one agenda for every date of a tender ----------
+/** Head office asks for the guarantee's cost this many working days before the platform closes (their mail of 17 Nov 2026). */
+export const TENDER_BOND_DAYS = 3;
+const tdBack = (day, n) => { let d = day, left = n; while (left > 0) { d = tdDayShift(d, -1); if (tdWorkDay(d)) left--; } return d; };
+const tdNoBond = (v) => /^\s*(لا|بدون|غير مطلوب|none|no\b|n\/a|0\s*%?\s*$|—|-)/i.test(String(v || ''));
+const TD_DAY = /^\d{4}-\d{2}-\d{2}$/;
+/** Every date still ahead of an open tender, in calendar order: the platform's own (inquiries, visit, closing, opening) and the
+ *  internal ones worked out from them — inquiries uploaded a working day early, the guarantee's cost and the complete offer to
+ *  head office. A date whose work is done is not listed: nothing internal once handed over, only the opening once submitted. */
+export function tenderMilestones(item) {
+  if (!item || TENDER_CLOSED.includes(item.stage)) return [];
+  const ok = (v) => TD_DAY.test(v || ''), out = [], add = (key, day, time) => { if (ok(day)) out.push({ key, day, time: time || '' }); };
+  const sent = item.stage === 'submitted', handed = sent || item.stage === 'ready' || !!tenderHandedAt(item);
+  if (!handed) {
+    if (ok(item.askDue)) { add('askUp', tdBack(item.askDue, 1)); add('askDue', item.askDue, item.askDueTime); }
+    add('visit', item.visit, item.visitTime);
+    if (ok(item.due)) { if (!tdNoBond(item.bond)) add('bondCost', tdBack(item.due, TENDER_BOND_DAYS)); add('handover', tenderHandoverDue(item).slice(0, 10), item.dueTime); }
+  }
+  if (!sent) add('due', item.due, item.dueTime);
+  add('openAt', item.openAt, item.openAtTime);
+  const order = ['askUp', 'askDue', 'visit', 'bondCost', 'handover', 'due', 'openAt'];
+  return out.sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : order.indexOf(a.key) - order.indexOf(b.key)));
+}
+const TD_INTERNAL = ['askUp', 'bondCost', 'handover'];
+/** The agenda of all open tenders from `today` for `days` days, nearest first. An internal date that was missed stays on top
+ *  while its tender can still be saved (a week at most); a platform date that passed is history and is not listed. */
+export function tenderAgenda(items, today, days = 14) {
+  const gap = (d) => Math.round((Date.parse(`${d}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 864e5), out = [];
+  for (const item of Array.isArray(items) ? items : []) {
+    const ms = tenderMilestones(item), askOpen = TD_DAY.test(item.askDue || '') && item.askDue >= today;
+    for (const m of ms) {
+      const left = gap(m.day);
+      if (left > days || left < -7) continue;
+      if (left < 0 && (!TD_INTERNAL.includes(m.key) || (m.key === 'askUp' && !askOpen))) continue;
+      out.push({ id: item.id, subject: item.subject || '', entity: item.entity || '', ...m, left, tone: left < 0 ? 'late' : left === 0 ? 'today' : left <= 3 ? 'soon' : 'later' });
+    }
+  }
+  return out.sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+}
+export const tenderNoticeId = (x) => `${x.id}:${x.key}:${x.day}`;
+/** What deserves a notice now: a day away or less (or missed), and not said before. */
+export function tenderNotices(agenda, seen) {
+  const said = new Set(Array.isArray(seen) ? seen : []);
+  return (Array.isArray(agenda) ? agenda : []).filter((x) => x.left <= 1 && !said.has(tenderNoticeId(x)));
+}
 /** When the offer was handed over: the message the manager marked as the hand-over, else the day it was marked ready. Never guessed. */
 export function tenderHandedAt(item) {
   const marked = (Array.isArray(item && item.thread) ? item.thread : []).filter((e) => e && e.mark === 'handover' && e.at).at(-1);

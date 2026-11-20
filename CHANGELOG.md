@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.73 — 2026-11-20
+
+- «المواعيد القادمة» أعلى سجل المناقصات: شريط واحد بمواعيد كل المناقصات المفتوحة يومًا بيوم، ومعها المواعيد الداخلية المحسوبة لك: رفع الاستفسارات، وتكلفة الضمان إلى الرياض، والتسليم لفريق المنافسات. اضغط أي موعد لتفتح مناقصته.
+- زر «نبّهني بالمواعيد»: تنبيه على جهازك لكل موعد بقي عليه يوم أو أقل ما دامت البوابة مفتوحة. ولتذكير يصلك على الجوال والبوابة مغلقة نزّل «كل المواعيد للتقويم» وافتحه في أوتلوك.
+- خط المواعيد داخل بطاقة المناقصة صار يحمل الموعدين الداخليين الجديدين أيضًا، وما فات منهما يظهر بالأحمر.
+
+<details><summary>English</summary>
+
+- «Upcoming dates» at the top of the tender register: one strip with the dates of every open tender day by day, together with the internal dates worked out for you: uploading the inquiries, the guarantee's cost to Riyadh, and the hand-over to the tenders team. Press any date to open its tender.
+- The «Notify me of the dates» button: a notice on your device for every date a day away or less while the portal is open. For a reminder that reaches your phone while the portal is closed, download «All dates for the calendar» and open it in Outlook.
+- The line of dates inside the tender's card now carries the two new internal dates as well, and one that was missed shows in red.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹینڈر رجسٹر کے اوپر «آنے والی تاریخیں»: ایک ہی پٹی جس میں ہر کھلے ٹینڈر کی تاریخیں دن بہ دن ہیں، اور ان کے ساتھ آپ کے لیے نکالی گئی اندرونی تاریخیں: استفسارات اپ لوڈ کرنا، ضمانت کی لاگت ریاض کو بھیجنا، اور ٹینڈر ٹیم کو حوالگی۔ کسی بھی تاریخ کو دبائیں تو اس کا ٹینڈر کھل جاتا ہے۔
+- «مجھے تاریخوں کی اطلاع دیں» کا بٹن: جب تک پورٹل کھلا ہو، آپ کے آلے پر ہر اس تاریخ کی اطلاع جس میں ایک دن یا اس سے کم باقی ہو۔ پورٹل بند ہونے پر بھی فون تک پہنچنے والی یاد دہانی کے لیے «کیلنڈر کے لیے تمام تاریخیں» ڈاؤن لوڈ کریں اور اسے آؤٹ لک میں کھولیں۔
+- ٹینڈر کے کارڈ کے اندر تاریخوں کی لکیر میں اب دونوں نئی اندرونی تاریخیں بھی شامل ہیں، اور جو گزر جائے وہ سرخ رنگ میں دکھائی دیتی ہے۔
+
+</div>
+</details>
+
+
 ## v9.72 — 2026-11-20
 
 - زر «تحميل البرنامج» في صفحة محلل المناقصات صار يفتح ملف الإصدار 3.6: مع كل دراسة ملف «مرجع السوق» بالمنافسات المشابهة المرساة على اعتماد (الفائز، قيمة الترسية، عدد العروض، أقل عرض مطابق فنيًا)، وإيميل الإدارة يحمل مواعيد التسليم الداخلي للرياض.

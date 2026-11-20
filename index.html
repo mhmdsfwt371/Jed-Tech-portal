@@ -1134,6 +1134,18 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   }
   /* ===== ADR-0086: light, moving lines, things that answer the hand ===== */
   /* the tender pipeline */
+  .td-agenda { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; }
+  .ag-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; } .ag-head h2 { margin: 0; font-size: 1.05rem; }
+  .ag-count { min-inline-size: 26px; padding: 2px 8px; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-weight: 700; font-size: .82rem; text-align: center; }
+  .ag-tools { display: inline-flex; flex-wrap: wrap; gap: 8px; margin-inline-start: auto; } .ag-bell.on { border-color: var(--ok); color: var(--ok); }
+  .ag-days { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; scroll-snap-type: x proximity; }
+  .ag-day { flex: 0 0 232px; display: flex; flex-direction: column; gap: 6px; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--paper); scroll-snap-align: start; }
+  .ag-day h3 { margin: 0; font-size: .92rem; } .ag-day.today { border-color: var(--accent); box-shadow: inset 0 3px 0 var(--accent); } .ag-day.late { border-color: var(--fail); box-shadow: inset 0 3px 0 var(--fail); }
+  .ag-item { display: flex; flex-direction: column; gap: 2px; inline-size: 100%; min-block-size: 44px; padding: 8px 10px; text-align: start; font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--line-strong); border-inline-start: 4px solid var(--line-strong); border-radius: var(--radius-sm); cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; }
+  .ag-item:hover, .ag-item:focus-visible { transform: translateY(-1px); box-shadow: var(--shadow); } .ag-item b { font-size: .86rem; } .ag-item span, .ag-item small { font-size: .8rem; color: var(--ink-2); overflow-wrap: anywhere; }
+  .ag-item.ag-late { border-inline-start-color: var(--fail); } .ag-item.ag-today { border-inline-start-color: var(--accent); } .ag-item.ag-soon { border-inline-start-color: var(--sig); } .ag-item.ag-later { border-inline-start-color: var(--ok); }
+  @media (prefers-reduced-motion: reduce) { .ag-item { transition: none; } .ag-item:hover, .ag-item:focus-visible { transform: none; } }
+  @media (max-width: 640px) { .ag-day { flex-basis: 78vw; } .ag-tools { margin-inline-start: 0; } }
   .td-pipe { display: flex; align-items: center; overflow-x: auto; padding: 8px 2px 12px; margin: 4px 0 10px; scrollbar-width: thin; }
   .td-pipe-node { position: relative; flex: 0 0 auto; min-width: 96px; min-height: 64px; display: grid; justify-items: center; align-content: center; gap: 2px; padding: 8px 12px; border-radius: 16px;
     border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; overflow: hidden; transition: transform .18s cubic-bezier(.2,.9,.3,1.3), box-shadow .2s, border-color .2s; }

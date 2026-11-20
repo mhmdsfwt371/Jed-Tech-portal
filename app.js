@@ -19,7 +19,7 @@ import {
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
   mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts,
-  TENDER_HANDOVER_DAYS, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
+  TENDER_HANDOVER_DAYS, tenderMilestones, tenderAgenda, tenderNotices, tenderNoticeId, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
 
 import { validateSystems } from './systems-core.js';
 
@@ -821,6 +821,51 @@ const TD_STAGES = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted',
 const TD_OPEN = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted'], TD_NEED_REASON = ['declined', 'lost', 'missed'];
 const tdDaysBetween = (a, b) => Math.round((new Date(`${b}T00:00:00Z`) - new Date(`${a}T00:00:00Z`)) / 864e5);
 /** The nearest coming date of a tender and what it is, for the countdown. */
+// ---------- v9.73 (ADR-0143): the agenda — every date of every open tender on one strip, with a notice on this device ----------
+let agDays = Number(pref('td.agdays')) || 14;
+const AG_ON = 'td.notify', AG_SEEN = 'td.noticed';
+const agCan = () => typeof Notification !== 'undefined';
+const agOn = () => agCan() && pref(AG_ON) === '1' && Notification.permission === 'granted';
+const agDayName = (day) => new Intl.DateTimeFormat(lang === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : lang === 'ur' ? 'ur-PK-u-nu-latn' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${day}T00:00:00Z`));
+const agWhen = (x) => (x.left < 0 ? t('ag_late') : x.left === 0 ? t('ag_today') : x.left === 1 ? t('ag_tomorrow') : agDayName(x.day));
+/** Said once per date, and only while the portal is open in this browser — a page has no way to speak when it is closed. */
+function tdNotify() {
+  if (!tenders || !agOn()) return;
+  let seen = []; try { seen = JSON.parse(pref(AG_SEEN) || '[]'); } catch { seen = []; }
+  const due = tenderNotices(tenderAgenda(tenders.items, saudiDay(new Date().toISOString()), 2), seen);
+  for (const x of due.slice(0, 6)) { try { new Notification(t('ag_notice', { what: t(`td_col_${x.key}`), when: agWhen(x) + (x.time ? ` ${x.time}` : '') }), { body: x.subject.slice(0, 140), tag: tenderNoticeId(x), lang }); } catch { return; } }
+  if (due.length) pref(AG_SEEN, JSON.stringify([...seen, ...due.map(tenderNoticeId)].slice(-400)));
+}
+function tdIcsAll(rows) {
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z', esc = (v) => String(v).replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//AFAQY Jeddah portal//tenders agenda//AR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
+  for (const x of rows) { const next = new Date(`${x.day}T00:00:00Z`); next.setUTCDate(next.getUTCDate() + 1);
+    L.push('BEGIN:VEVENT', `UID:${x.id.replace(/[^a-z0-9]/gi, '').slice(0, 40)}-${x.key}@afaqy-jeddah-portal`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${x.day.replace(/-/g, '')}`, `DTEND;VALUE=DATE:${next.toISOString().slice(0, 10).replace(/-/g, '')}`,
+      `SUMMARY:${esc(`${t(`td_col_${x.key}`)}${x.time ? ` ${x.time}` : ''} — ${x.subject}`)}`, `DESCRIPTION:${esc(t('nav_tenders'))}`, 'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY', `DESCRIPTION:${esc(x.subject)}`, 'END:VALARM', 'END:VEVENT'); }
+  L.push('END:VCALENDAR'); return L.join('\r\n');
+}
+function tdAgenda(today) {
+  const all = tenderAgenda(tenders.items, today, agDays); if (!tenderAgenda(tenders.items, today, 90).length) return null;
+  const groups = []; for (const x of all) { const g = x.left < 0 ? 'late' : x.day; let G = groups.find((y) => y.g === g); if (!G) groups.push(G = { g, rows: [] }); G.rows.push(x); }
+  groups.sort((a, b) => (a.g === 'late' ? -1 : b.g === 'late' ? 1 : a.g < b.g ? -1 : 1));
+  const open = (x) => { tdOpenId = x.id; tdKind = 'all'; tdStageF = tdCardF = null; tdQuery = ''; renderTenders(); requestAnimationFrame(() => { const r = document.querySelector(`#tenders-body tr.td-row.on`); if (r) r.scrollIntoView({ block: 'center', behavior: 'smooth' }); }); };
+  const bell = agCan() ? el('button', { type: 'button', class: `btn tiny ag-bell${agOn() ? ' on' : ''}`, 'aria-pressed': String(agOn()), title: t('ag_bell_note'), text: `🔔 ${t(agOn() ? 'ag_bell_on' : 'ag_bell')}`, onclick: async () => {
+    if (agOn()) { pref(AG_ON, ''); renderTenders(); return; }
+    let perm = Notification.permission; if (perm === 'default') { try { perm = await Notification.requestPermission(); } catch { perm = 'denied'; } }
+    if (perm !== 'granted') { toast(t('ag_bell_denied')); return; }
+    pref(AG_ON, '1'); renderTenders(); toast(t('ag_bell_note')); tdNotify(); } }) : null;
+  const ics = el('button', { type: 'button', class: 'btn tiny ag-ics', text: t('ag_ics'), onclick: () => { const rows = tenderAgenda(tenders.items, today, 120).filter((x) => x.left >= 0); const b = new Blob([tdIcsAll(rows)], { type: 'text/calendar' }), u = URL.createObjectURL(b);
+    const a = el('a', { href: u, download: `tenders-agenda-${today}.ics` }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 5000); } });
+  const range = el('div', { class: 'pills ag-range', role: 'group', 'aria-label': t('ag_h') }, [7, 14, 30].map((n) => el('button', { type: 'button', class: `pill-btn${agDays === n ? ' on' : ''}`, 'aria-pressed': String(agDays === n), text: t('ag_days', { n }), onclick: () => { agDays = n; pref('td.agdays', String(n)); renderTenders(); } })));
+  return el('section', { class: 'td-agenda', 'aria-label': t('ag_h') },
+    el('div', { class: 'ag-head' }, el('h2', { text: t('ag_h') }), el('span', { class: 'ag-count', text: String(all.length) }), range, el('span', { class: 'ag-tools' }, bell, ics)),
+    all.length ? el('div', { class: 'ag-days', tabindex: '0', role: 'group', 'aria-label': t('ag_h') }, groups.map((G) => el('div', { class: `ag-day${G.g === 'late' ? ' late' : G.rows[0].left === 0 ? ' today' : ''}` },
+      el('h3', { text: G.g === 'late' ? t('ag_late') : G.rows[0].left === 0 ? t('ag_today') : G.rows[0].left === 1 ? t('ag_tomorrow') : agDayName(G.g) }),
+      G.g !== 'late' && G.rows[0].left <= 1 ? el('small', { class: 'hint', text: agDayName(G.g) }) : null,
+      G.rows.map((x) => el('button', { type: 'button', class: `ag-item ag-${x.tone} ag-k-${x.key}`, 'data-id': x.id, 'data-key': x.key, onclick: () => open(x) },
+        el('b', { text: t(`td_col_${x.key}`) + (x.time ? ` · ${x.time}` : '') }), el('span', { dir: 'auto', text: x.subject.slice(0, 70) }), G.g === 'late' ? el('small', { text: agDayName(x.day) }) : null)))))
+      : el('p', { class: 'hint', text: t('ag_empty', { n: agDays }) }));
+}
 function tdNextDate(i, today) { return [['askDue', i.askDue], ['visit', i.visit], ['handover', ['received', 'screen', 'decide', 'prep'].includes(i.stage) && !tenderHandedAt(i) ? tenderHandoverDue(i).slice(0, 10) : ''], ['due', i.due], ['openAt', i.openAt]].filter(([, v]) => v && v >= today).sort((x, y) => (x[1] < y[1] ? -1 : 1))[0] || null; }
 /** The period's own numbers: how many we joined, won, how long a decision took, how many were in on time. */
 function tdKpis(rows, today) {
@@ -1808,10 +1853,11 @@ function tdStepper(i) {
 function tdTimeline(i, now) {
   const hand = tenderHandoverDue(i), handed = tenderHandedAt(i), closed = TENDER_CLOSED.includes(i.stage), dueAt = tdAt(i.due, i.dueTime);
   const key = (at) => (at.length > 10 ? at : `${at}T23:59`);
-  const pts = [['date', i.date], ['handover', hand], ['askDue', tdAt(i.askDue, i.askDueTime)], ['visit', i.visit], ['due', dueAt], ['openAt', i.openAt], ['readyOn', i.readyOn], ['submittedOn', i.submittedOn]]
+  const inner = tenderMilestones(i).filter((x) => ['askUp', 'bondCost'].includes(x.key)).map((x) => [x.key, x.day]);   // v9.73: the dates worked out from the platform's
+  const pts = [['date', i.date], ...inner, ['handover', hand], ['askDue', tdAt(i.askDue, i.askDueTime)], ['visit', i.visit], ['due', dueAt], ['openAt', i.openAt], ['readyOn', i.readyOn], ['submittedOn', i.submittedOn]]
     .filter(([, at]) => at).sort((a, b) => (key(a[1]) < key(b[1]) ? -1 : key(a[1]) > key(b[1]) ? 1 : 0));
   if (pts.length < 2) return null;
-  const late = (k, at) => !closed && key(at) < now && ((k === 'handover' && !handed) || (k === 'due' && !i.submittedOn));
+  const late = (k, at) => !closed && key(at) < now && ((k === 'handover' && !handed) || (k === 'due' && !i.submittedOn) || k === 'bondCost' || (k === 'askUp' && tdAt(i.askDue, i.askDueTime) && key(tdAt(i.askDue, i.askDueTime)) >= now));
   const nextAt = pts.findIndex(([, at]) => key(at) >= now);
   const items = pts.map(([k, at], n) => el('li', { class: `td-tl-pt ${late(k, at) ? 'late' : ['readyOn', 'submittedOn'].includes(k) ? 'done' : key(at) < now ? 'past' : n === nextAt ? 'next' : ''}` },
     el('b', { text: tdDayShort(at) }), el('span', { text: t(`td_col_${k}`) }), at.length > 10 ? el('small', { text: at.slice(11) }) : null));
@@ -2297,7 +2343,8 @@ function renderTenders() {
   const searchForm = el('form', { class: 'row td-file-controls', onsubmit: (event) => {
     event.preventDefault(); tdQuery = search.value; renderTenders();
   } }, search, el('button', { type: 'submit', class: 'btn tiny', text: t('td_search_go') }));
-  set(body, mailSrc('tenders', false), pull,
+  tdNotify();
+  set(body, mailSrc('tenders', false), tdAgenda(today), pull,
     el('div', { class: 'row td-filter' }, kinds, pick, searchForm),
 
     pipe,
@@ -6092,6 +6139,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   keepStorage().then((ok) => { storageKept = ok; renderDatasets(); });
   loadRelease(); announceUpdate(); showInstall();
   setInterval(loadRelease, 15 * 60 * 1000);
+  setInterval(() => { try { tdNotify(); } catch (e) { console.error(e); } }, 30 * 60 * 1000);   // v9.73: a date that comes due while the portal stays open
   document.addEventListener('visibilitychange', () => { if (!document.hidden) loadRelease(); });
   $('install-btn').addEventListener('click', doInstall);
 })();
