@@ -1,25 +1,34 @@
 {
-  "version": "9.73",
+  "version": "9.74",
   "date": "2026-11-20",
   "notes": {
     "ar": [
-      "«المواعيد القادمة» أعلى سجل المناقصات: شريط واحد بمواعيد كل المناقصات المفتوحة يومًا بيوم، ومعها المواعيد الداخلية المحسوبة لك: رفع الاستفسارات، وتكلفة الضمان إلى الرياض، والتسليم لفريق المنافسات. اضغط أي موعد لتفتح مناقصته.",
-      "زر «نبّهني بالمواعيد»: تنبيه على جهازك لكل موعد بقي عليه يوم أو أقل ما دامت البوابة مفتوحة. ولتذكير يصلك على الجوال والبوابة مغلقة نزّل «كل المواعيد للتقويم» وافتحه في أوتلوك.",
-      "خط المواعيد داخل بطاقة المناقصة صار يحمل الموعدين الداخليين الجديدين أيضًا، وما فات منهما يظهر بالأحمر."
+      "صفحة سجل المناقصات بتصميم جديد يمشي بترتيب الشغل: أولًا بطاقة «اسحب المناقصات» تُسقط فيها الإيميل أو أي ملف وبجانبها رادار اعتماد وتحليل السوق، ثم «المواعيد القادمة»، ثم الأرقام ومراحل المناقصات، ثم القائمة.",
+      "ما يُستعمل من وقت لآخر (إضافة مناقصة بيدك، وأمر المساعد، وملف PST، واستيراد الدراسة، ومسؤول الملف الافتراضي، ورسالة الإدارة الأسبوعية، وملخص المراسلات) صار في قائمة «المزيد» على البطاقة، تُغلق بضغطة خارجها أو بزر Escape.",
+      "على طرف كل صف في القائمة لون مرحلته: البرتقالي لما ينتظر الفرز أو القرار، والأزرق لما يُحضَّر أو قُدِّم، والأخضر للفوز، والأحمر للخسارة أو فوات الموعد.",
+      "كل نوافذ السجل صارت بإطار واحد: العنوان وأدوات النافذة وزر «إغلاق» في صف ثابت أعلاها، وأزرار الحفظ ثابتة أسفلها. وعلى الجوال يبقى «إغلاق» بجانب العنوان مهما طال، ولا تخرج قائمة طويلة عن عرض النافذة.",
+      "بطاقة المناقصة: العنوان والمرحلة والجهة ورقم اعتماد والمسؤول ثابتة أعلى النافذة وأنت تتنقل بين صفحاتها، وأزرار العمل (ادرسها بالمحلل، والنسخ، والبريد، والتقويم) أول ما تراه، والنافذة تفتح على زر «إغلاق» حتى لا يغيّر سهم في لوحة المفاتيح المرحلة بالخطأ.",
+      "في البطاقة الطويلة على الجوال أو الشاشة الصغيرة، «كل التسلسل» و«كل الملفات ونقاطها المهمة» تفتح الجزء المطلوب وتنقلك إلى صفحته مباشرة بدل أن تبقى على الصفحة الأولى."
     ],
     "en": [
-      "«Upcoming dates» at the top of the tender register: one strip with the dates of every open tender day by day, together with the internal dates worked out for you: uploading the inquiries, the guarantee's cost to Riyadh, and the hand-over to the tenders team. Press any date to open its tender.",
-      "The «Notify me of the dates» button: a notice on your device for every date a day away or less while the portal is open. For a reminder that reaches your phone while the portal is closed, download «All dates for the calendar» and open it in Outlook.",
-      "The line of dates inside the tender's card now carries the two new internal dates as well, and one that was missed shows in red."
+      "The tender register page has a new design that follows the order of the work: first the «Pull tenders» card, where you drop the email or any file, with the Etimad radar and the market analysis beside it; then «Upcoming dates»; then the numbers and the tender stages; then the list.",
+      "What is used now and then (adding a tender by hand, the assistant's prompt, a PST file, importing a study, the default file owner, the weekly management message and the correspondence summary) is now in the «More» menu on that card, which closes with a click outside it or with Escape.",
+      "Each row of the list carries its stage's colour on its edge: amber for what waits for screening or a decision, blue for what is being prepared or was submitted, green for a win, and red for a loss or a missed deadline.",
+      "Every window of the register now has one frame: the title, the window's tools and «Close» on one row pinned at its top, and the save buttons pinned at its foot. On a phone «Close» stays beside the title however long it is, and a long list of names no longer stretches the window past the screen.",
+      "The tender's card: the title, the stage, the entity, the Etimad number and the owner stay at the top of the window while you move through its pages, the working buttons (study it with the Analyzer, the copies, the mail, the calendar) are the first thing you see, and the window opens on «Close» so an arrow key cannot change the stage by mistake.",
+      "In a long card on a phone or a small screen, «The whole timeline» and «All files and their key points» open their part and take you straight to its page, instead of leaving you on the first page."
     ],
     "ur": [
-      "ٹینڈر رجسٹر کے اوپر «آنے والی تاریخیں»: ایک ہی پٹی جس میں ہر کھلے ٹینڈر کی تاریخیں دن بہ دن ہیں، اور ان کے ساتھ آپ کے لیے نکالی گئی اندرونی تاریخیں: استفسارات اپ لوڈ کرنا، ضمانت کی لاگت ریاض کو بھیجنا، اور ٹینڈر ٹیم کو حوالگی۔ کسی بھی تاریخ کو دبائیں تو اس کا ٹینڈر کھل جاتا ہے۔",
-      "«مجھے تاریخوں کی اطلاع دیں» کا بٹن: جب تک پورٹل کھلا ہو، آپ کے آلے پر ہر اس تاریخ کی اطلاع جس میں ایک دن یا اس سے کم باقی ہو۔ پورٹل بند ہونے پر بھی فون تک پہنچنے والی یاد دہانی کے لیے «کیلنڈر کے لیے تمام تاریخیں» ڈاؤن لوڈ کریں اور اسے آؤٹ لک میں کھولیں۔",
-      "ٹینڈر کے کارڈ کے اندر تاریخوں کی لکیر میں اب دونوں نئی اندرونی تاریخیں بھی شامل ہیں، اور جو گزر جائے وہ سرخ رنگ میں دکھائی دیتی ہے۔"
+      "ٹینڈر رجسٹر کا صفحہ نئے ڈیزائن کے ساتھ جو کام کی ترتیب پر چلتا ہے: پہلے «ٹینڈر لائیں» کارڈ جس پر آپ ای میل یا کوئی بھی فائل چھوڑتے ہیں، اور اس کے ساتھ اعتماد ریڈار اور مارکیٹ کا تجزیہ؛ پھر «آنے والی تاریخیں»؛ پھر اعداد اور ٹینڈر کے مراحل؛ پھر فہرست۔",
+      "جو چیزیں کبھی کبھار استعمال ہوتی ہیں (ہاتھ سے ٹینڈر شامل کرنا، اسسٹنٹ کا پرامپٹ، PST فائل، مطالعہ درآمد کرنا، فائل کا طے شدہ ذمہ دار، ہفتہ وار انتظامی پیغام اور خط و کتابت کا خلاصہ) اب اسی کارڈ پر «مزید» کی فہرست میں ہیں، جو اس سے باہر کلک کرنے یا Escape دبانے سے بند ہو جاتی ہے۔",
+      "فہرست کی ہر قطار کے کنارے پر اس کے مرحلے کا رنگ ہے: نارنجی اس کے لیے جو جانچ یا فیصلے کا منتظر ہے، نیلا اس کے لیے جس کی تیاری ہو رہی ہے یا جو جمع ہو چکا، سبز جیت کے لیے، اور سرخ ہار یا گزری ہوئی آخری تاریخ کے لیے۔",
+      "رجسٹر کی ہر کھڑکی کا اب ایک ہی فریم ہے: عنوان، کھڑکی کے اوزار اور «بند کریں» اوپر ایک قطار میں جو اپنی جگہ ٹھہری رہتی ہے، اور محفوظ کرنے کے بٹن نیچے ٹھہرے رہتے ہیں۔ فون پر «بند کریں» عنوان کتنا ہی لمبا ہو اس کے ساتھ رہتا ہے، اور ناموں کی لمبی فہرست اب کھڑکی کو اسکرین سے باہر نہیں پھیلاتی۔",
+      "ٹینڈر کا کارڈ: عنوان، مرحلہ، ادارہ، اعتماد نمبر اور ذمہ دار کھڑکی کے اوپر نظر آتے رہتے ہیں جب آپ اس کے صفحات میں آگے پیچھے جاتے ہیں، کام کے بٹن (تجزیہ کار سے مطالعہ، نقلیں، میل، کیلنڈر) سب سے پہلے دکھتے ہیں، اور کھڑکی «بند کریں» پر کھلتی ہے تاکہ کی بورڈ کا کوئی تیر غلطی سے مرحلہ نہ بدل دے۔",
+      "فون یا چھوٹی اسکرین پر لمبے کارڈ میں «پوری ترتیب» اور «تمام فائلیں اور ان کے اہم نکات» مطلوبہ حصہ کھولتے ہیں اور آپ کو سیدھا اس کے صفحے پر لے جاتے ہیں، پہلے صفحے پر نہیں چھوڑتے۔"
     ]
   },
   "counts": {
-    "versions": 198,
-    "decisions": 140
+    "versions": 199,
+    "decisions": 144
   }
 }

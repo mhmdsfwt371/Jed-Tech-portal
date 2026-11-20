@@ -814,7 +814,7 @@ function rankFor(id, ym) {   // his team: the same team leader in the team file,
 let tenders = null;   // { items: [...], to, pulledAt } — on this device, carried by the backup
 let tdDlg = null;   // the tender's detail window (ADR-0122)
 let tdKind = pref('tdkind') || 'month', tdPick = '', tdFrom = '', tdTo = '', tdBusy = '', tdOpenId = null, tdStageF = null, tdCardF = null;   // ADR-0102: a card's filter
-let tdQuery = '', tdMailResult = null, tdStudyResult = null, tdMoreOpen = pref('tdmore') === '1';   // tdStudyResult: the last analyzer import (ADR-0126)
+let tdQuery = '', tdMailResult = null, tdStudyResult = null, tdMoreOpen = false;   // v9.74: «More» is a menu — closed when the page opens, kept open while it redraws   // tdStudyResult: the last analyzer import (ADR-0126)
 const TD_FROM = 'a.ibrahim@afaqy.com';
 // ADR-0083: the lifecycle. Open stages in order, then the closed ones. declined/lost need a reason.
 const TD_STAGES = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted', 'won', 'lost', 'missed', 'cancelled', 'declined'];   // missed (v9.58): we meant to bid and the platform closed first
@@ -941,11 +941,25 @@ async function tdTake(text) {
   try { await tdCommit(r.state); } catch { toast(t('td_store_failed')); return false; }
   toast(t('td_loaded', { a: r.added, m: r.merged, r: r.replies, o: r.other })); renderTenders(); return true;
 }
+// ---------- v9.74 (ADR-0144): one frame for the tender register's windows ----------
+// The title, its tools and «Close» on one row pinned at the top; the body under it; the window's own actions in a row pinned at
+// its foot. The row is the window's «.dlg-bar», so the shared hook (every window gets a close bar) finds it and adds no second
+// one, and ADR-0119's pages start under it. Widths: tw-sm for a short form, tw-md for a list, tw-lg for a working window.
+// The pinned rows tell their window how tall they are (--tw-head-h, --tw-foot-h): its scroll padding keeps whatever is brought into
+// view — a fold opened from a button, a field reached with Tab — from landing under them.
+function twSized(node, prop) {
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => { const d = node.closest('dialog'); if (d) d.style.setProperty(prop, `${Math.ceil(node.offsetHeight)}px`); }).observe(node);
+  return node;
+}
+function twHead(title, { tools = null, cls = '' } = {}) {
+  return twSized(el('div', { class: `dlg-bar tw-head${cls ? ` ${cls}` : ''}` }, el('div', { class: 'tw-titles' }, title), tools ? el('div', { class: 'tw-tools' }, tools) : null,
+    el('button', { type: 'button', class: 'dlg-x', autofocus: '', 'aria-label': t('close'), text: `✕ ${t('close')}`, onclick: (e) => e.currentTarget.closest('dialog').close() })), '--tw-head-h');
+}
+const twFoot = (...kids) => twSized(el('div', { class: 'tw-foot' }, kids), '--tw-foot-h');
 function tdPasteDialog() {
   const ta = el('textarea', { rows: 10, class: 'td-paste-ta', dir: 'ltr', placeholder: '{ "schema": "afaqy-tenders-from-mail/v1", … }' });
-  const dlg = el('dialog', { class: 'proj-edit td-paste', 'aria-labelledby': 'td-paste-h' }, el('h2', { id: 'td-paste-h', text: t('td_paste_h') }), el('p', { class: 'hint', text: t('td_paste_lead') }), ta,
-    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary td-paste-go', text: t('td_paste_go'), onclick: async () => { if (await tdTake(ta.value)) dlg.close(); } }),
-      null));
+  const dlg = el('dialog', { class: 'proj-edit td-paste tw tw-sm', 'aria-labelledby': 'td-paste-h' }, twHead(el('h2', { id: 'td-paste-h', text: t('td_paste_h') })), el('p', { class: 'hint', text: t('td_paste_lead') }), ta,
+    twFoot(el('button', { type: 'button', class: 'btn primary td-paste-go', text: t('td_paste_go'), onclick: async () => { if (await tdTake(ta.value)) dlg.close(); } })));
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal(); ta.focus();
 }
 function cleanTenders(x) {
@@ -1024,11 +1038,11 @@ function tdAddManual() {
   const files = el('input', { type: 'file', multiple: '' });
   const s = el('input', { type: 'text', class: 'td-m-subject', required: '', maxlength: 300, dir: 'auto' }), d = el('input', { type: 'date', class: 'td-m-date', value: today, max: today }),
     w = el('input', { type: 'text', class: 'td-m-from', maxlength: 120, dir: 'auto', placeholder: t('td_m_from_ph') });
-  const dlg = el('dialog', { class: 'proj-edit td-add', 'aria-labelledby': 'td-add-h' }, el('h2', { id: 'td-add-h', text: t('td_add_h') }),
+  const dlg = el('dialog', { class: 'proj-edit td-add tw tw-sm', 'aria-labelledby': 'td-add-h' }, twHead(el('h2', { id: 'td-add-h', text: t('td_add_h') })),
     el('label', { class: 'fl-label' }, el('span', { text: t('td_col_subject') }), s), el('label', { class: 'fl-label' }, el('span', { text: t('td_col_date') }), d),
     el('label', { class: 'fl-label' }, el('span', { text: t('td_col_from') }), w),
     el('label', { class: 'fl-label' }, el('span', { text: t('td_file_add') }), files),
-    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary td-m-save', text: t('td_add_save'), onclick: async () => {
+    twFoot(el('button', { type: 'button', class: 'btn primary td-m-save', text: t('td_add_save'), onclick: async () => {
       const subject = s.value.trim(), date = d.value; if (!subject || !/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast(t('td_add_need')); return; }
       if (tenders && tenders.items.some((i) => i.id === tdKey(subject))) { toast(t('td_add_exists')); return; }
       const r = tdImport({ schema: 'afaqy-tenders-from-mail/v1', to: (tenders && tenders.to) || null, tenders: [{ subject, from_address: w.value.trim(), received: `${date}T12:00:00+03:00`, attachments: [], manual: true }] });
@@ -1186,7 +1200,7 @@ function tdArchiveOpen() {
   const A = tenderArchive(tenders ? tenders.items : []);
   if (!A.length) { toast(t('td_arch_none')); return; }
   const is = (s) => (k) => A[k].stage === s, money = (v) => (v != null ? tdMoney(v) : '—');
-  crModal({ title: t('td_arch_h', { n: A.length }), lead: t('td_arch_lead'), file: 'AFAQY-tenders-archive', wrap: true,
+  crModal({ title: t('td_arch_h', { n: A.length }), lead: t('td_arch_lead'), file: 'AFAQY-tenders-archive', wrap: true, frame: 'md',
     tiles: ['won', 'lost', 'missed', 'declined', 'cancelled'].map((s) => [t(`td_st_${s}`), A.filter((x) => x.stage === s).length, null, is(s)]),
     bar: (k) => [A[k].year, 1],
     head: [t('td_col_subject'), t('td_col_entity'), t('td_col_date'), t('td_arch_closed'), t('td_col_stage'), t('td_col_reason'), t('td_col_value'), t('td_col_etimadNo'), t('td_arch_files')],
@@ -1212,8 +1226,8 @@ function tdMarketFold(i, x, res) {
 let etDraw = () => {};
 function etOpen() {
   const body = el('div', { class: 'et-body' }), up = el('input', { type: 'file', accept: '.json,.xlsx,.xlsm', multiple: '', hidden: '', onchange: async (e) => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) { await etImport(fs); etDraw(); } } });
-  const dlg = el('dialog', { class: 'cr-modal et-modal', 'aria-labelledby': 'et-h' },
-    el('h2', { id: 'et-h', class: 'et-head', text: `📡 ${t('et_title')}` }),   // the window's own bar carries «Close»
+  const dlg = el('dialog', { class: 'cr-modal et-modal tw tw-lg', 'aria-labelledby': 'et-h' },
+    twHead(el('h2', { id: 'et-h', class: 'et-head', text: `📡 ${t('et_title')}` })),   // v9.74: the title and «Close» on one row
     el('p', { class: 'hint', text: t('et_lead') }), body, up);
   etDraw = () => {
     if (!dlg.isConnected) return;
@@ -1360,10 +1374,10 @@ async function mkExcel(st, all) {
 function mkWindow(st, title = '') {
   if (!etRadar || !etRadar.tenders.length) { toast(t('mk_empty')); return null; }
   const drill = !!title, id = `mk-h-${mkSeq += 1}`, body = el('div', { class: 'mk-body' });
-  const dlg = el('dialog', { class: `cr-modal et-modal mk-modal${drill ? ' mk-drill' : ''}`, 'aria-labelledby': id, 'data-own-scroll': '' },
-    el('div', { class: 'crm-head mk-head' }, el('h2', { id, dir: 'auto', text: drill ? title : `📊 ${t('mk_title')}` }),
-      el('span', { class: 'row mk-xl' }, el('button', { type: 'button', class: 'btn tiny mk-xl-one', text: `⬇ ${t('mk_xl_list')}`, onclick: () => mkExcel(st, false) }),
-        el('button', { type: 'button', class: 'btn tiny primary mk-xl-all', text: `⬇ ${t('mk_xl_all')}`, onclick: () => mkExcel(st, true) }))), body);
+  const dlg = el('dialog', { class: `cr-modal et-modal mk-modal tw${drill ? ' mk-drill' : ''}`, 'aria-labelledby': id, 'data-own-scroll': '' },
+    twHead(el('h2', { id, dir: 'auto', text: drill ? title : `📊 ${t('mk_title')}` }), { cls: 'crm-head mk-head', tools: el('span', { class: 'row mk-xl' },
+      el('button', { type: 'button', class: 'btn tiny mk-xl-one', text: `⬇ ${t('mk_xl_list')}`, onclick: () => mkExcel(st, false) }),
+      el('button', { type: 'button', class: 'btn tiny primary mk-xl-all', text: `⬇ ${t('mk_xl_all')}`, onclick: () => mkExcel(st, true) })) }), body);
   let shownN = MK_STEP, tm = 0, folded = false;
   const inReg = new Set();
   for (const i of tenders ? tenders.items : []) { const x = radarFind(i, etRadar.tenders, tdKey); if (x) inReg.add(x.ref); }
@@ -1624,11 +1638,11 @@ function tdDropAsk(files, hintId) {
   const prep = open.filter((i) => i.stage === 'prep'), guess = hintId || (prep.length === 1 ? prep[0].id : (open.find((i) => i.etimadNo && files.some((f) => f.name.includes(i.etimadNo))) || {}).id) || '';
   const sel = el('select', { class: 'td-drop-tender', 'aria-label': t('td_drop_which') }, guess ? null : el('option', { value: '', text: t('td_drop_pick') }), open.map((i) => el('option', { value: i.id, selected: i.id === guess ? '' : null, text: `${i.subject.slice(0, 90)} — ${t(`td_st_${i.stage}`)}` })));
   const kind = el('select', { class: 'td-drop-kind', 'aria-label': t('td_file_type') }, ['offer', 'study', 'booklet', 'boq', 'proof', 'other'].map((k) => el('option', { value: k, text: t(tdFileKind[k] || `td_file_${k}`) })));
-  const dlg = el('dialog', { class: 'proj-edit td-drop-dlg', 'aria-labelledby': 'td-drop-h' }, el('h2', { id: 'td-drop-h', text: t('td_drop_h') }),
+  const dlg = el('dialog', { class: 'proj-edit td-drop-dlg tw tw-sm', 'aria-labelledby': 'td-drop-h' }, twHead(el('h2', { id: 'td-drop-h', text: t('td_drop_h') })),
     el('p', { class: 'hint', dir: 'auto', text: files.map((f) => f.name).join(' · ').slice(0, 300) }),
     el('div', { class: 'form-grid' }, el('label', { class: 'wide' }, el('span', { text: t('td_drop_which') }), sel), el('label', { class: 'wide' }, el('span', { text: t('td_file_type') }), kind)),
     el('p', { class: 'hint', text: t('td_drop_note') }),
-    el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary td-drop-ok', text: t('td_drop_ok'), onclick: async () => { if (!sel.value) { toast(t('td_drop_pick')); return; } const id = sel.value, k = kind.value; dlg.close(); await tdAddFilesAs(id, files, k); } }),
+    twFoot(el('button', { type: 'button', class: 'btn primary td-drop-ok', text: t('td_drop_ok'), onclick: async () => { if (!sel.value) { toast(t('td_drop_pick')); return; } const id = sel.value, k = kind.value; dlg.close(); await tdAddFilesAs(id, files, k); } }),
       el('button', { type: 'button', class: 'btn quiet', text: t('cancel'), onclick: () => dlg.close() })));
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
 }
@@ -1821,7 +1835,7 @@ function tdThreadSummary(rows) {
   const L = rows.filter((i) => (i.thread || []).length).map((i) => [i, tenderThreadFacts(i)]);
   if (!L.length) { toast(t('td_sum_none')); return; }
   const short = ([, F]) => F.workDays != null && F.workDays < 5, handed = ([, F]) => !!F.handover;
-  crModal({ title: t('td_sum_h'), lead: t('td_sum_lead'), file: 'AFAQY-tender-correspondence', wrap: true,
+  crModal({ title: t('td_sum_h'), lead: t('td_sum_lead'), file: 'AFAQY-tender-correspondence', wrap: true, frame: 'md',
     tiles: [[t('td_sum_t_n'), L.length], [t('td_sum_t_msgs'), L.reduce((n, [, F]) => n + F.n, 0)], [t('td_sum_t_short'), L.filter(short).length, t('td_sum_t_short_sub'), (k) => short(L[k])], [t('td_sum_t_hand'), L.filter(handed).length, '', (k) => handed(L[k])]],
     head: [t('td_col_subject'), t('td_sum_c_first'), t('td_sum_c_due'), t('td_sum_c_msgs'), t('td_sum_c_hand')],   // five columns, as every list window (a sixth pushes the table past the window)
     rows: L.map(([i, F]) => [i.subject, F.first ? tdWhenShort(F.first.at) : null,
@@ -1864,6 +1878,12 @@ function tdTimeline(i, now) {
   items.splice(nextAt < 0 ? items.length : nextAt, 0, el('li', { class: 'td-tl-now', 'aria-label': t('td_tl_now') }, el('span', { text: t('td_tl_now') })));
   return el('section', { class: 'td-box td-tl-box' }, el('h3', { text: t('td_card_dates') }), el('ol', { class: 'td-tl' }, items));
 }
+/** v9.74 (ADR-0144): who the tender is for and how to find it — in the card window's pinned header, beside its stage. */
+function tdCardChips(i) {
+  const chips = [i.entity, i.etimadNo ? `${t('td_card_etimad')} ${i.etimadNo}` : '', i.owner ? `${t('td_col_owner')}: ${i.owner}` : '', i.site].filter(Boolean);
+  return chips.length || i.link ? el('div', { class: 'td-chips td-card-chips' }, chips.map((c) => el('span', { class: 'chip', dir: 'auto', text: c })),
+    i.link ? el('a', { class: 'chip et-chip-link', href: i.link, target: '_blank', rel: 'noopener noreferrer', text: `${t('et_page')} ↗` }) : null) : null;
+}
 function tdCard(i, { field, needsFields, today }) {
   const now = tdNowWall(), st = i.stage || 'received', closed = TENDER_CLOSED.includes(st), dueAt = tdAt(i.due, i.dueTime);
   const hand = tenderHandoverDue(i), handed = tenderHandedAt(i), onTime = tenderHandoverOnTime(i), lead = tenderLead(i), needs = tenderNeeds(i);
@@ -1880,7 +1900,6 @@ function tdCard(i, { field, needsFields, today }) {
       lead.workDays == null ? grey(t('td_b_needs_due')) : lead.handoverBeforeArrival ? ['red', t('td_b_before_arrival')] : lead.short ? ['amber', t('td_b_short')] : ['ok', t('td_b_enough')]),
     tile('value', t('td_col_value'), i.value != null && i.value !== '' ? money(i.value) : t('td_none_rec'), null,
       [i.fees != null && i.fees !== '' ? `${t('td_col_fees')}: ${money(i.fees)}` : '', i.bond ? `${t('td_col_bond')}: ${i.bond}` : ''].filter(Boolean).join(' · ') || null));
-  const chips = [i.entity, i.etimadNo ? `${t('td_card_etimad')} ${i.etimadNo}` : '', i.owner ? `${t('td_col_owner')}: ${i.owner}` : '', i.site].filter(Boolean);
   // v9.60 (ADR-0132): what Etimad changed on this tender, and — before it is linked — the Etimad tender it may be
   const srcName = (x) => (x ? t(`et_src_${x}`) : t('et_src_none'));
   // v9.62 (ADR-0135): what the latest pull says about this tender — a note, never applied: where it differs, and what the register lacks
@@ -1928,27 +1947,26 @@ function tdCard(i, { field, needsFields, today }) {
     (i.files || []).length ? el('button', { type: 'button', class: 'btn tiny quiet td-card-files', text: t('td_card_all_files'), onclick: () => tdOpenFold('files') }) : null);
   const dataFields = tenderShownFields(i).filter((k) => !needsFields.includes(k));
   const study = tdStudyInput(i.id);
-  return el('div', { class: 'td-detail td-card' },
-    chips.length || i.link ? el('div', { class: 'td-chips td-card-chips' }, chips.map((c) => el('span', { class: 'chip', dir: 'auto', text: c })),
-      i.link ? el('a', { class: 'chip et-chip-link', href: i.link, target: '_blank', rel: 'noopener noreferrer', text: `${t('et_page')} ↗` }) : null) : null,
+  // v9.74 (ADR-0144): what can be done with the tender comes first; what is missing and the files before the summary and the mails
+  const acts = el('div', { class: 'row td-card-acts' },
+      anStartBtn(i),
+      el('button', { type: 'button', class: 'btn tiny td-copy-sum', text: `📋 ${t('td_copy_sum')}`, onclick: () => copyText(tdTenderText(i), t('td_copied_sum')) }),
+      el('button', { type: 'button', class: 'btn tiny td-team-msg', text: `📋 ${t('td_team_copy')}`, onclick: () => copyText(tdTeamText(i), t('td_team_copied')) }),
+      el('a', { class: 'btn tiny td-team-mail', href: `mailto:${TD_FROM}?subject=${encodeURIComponent(t('td_fd_subject', { s: tdTitle(i.subject) }))}&body=${encodeURIComponent(tdTeamText(i))}`, text: `✉ ${t('td_team_mail')}` }),
+      el('button', { type: 'button', class: 'btn tiny td-ics', disabled: !(i.askDue || i.visit || i.due || i.openAt), text: `📅 ${t('td_ics')}`, onclick: () => { const b = new Blob([tdIcs(i)], { type: 'text/calendar' }), u = URL.createObjectURL(b); const x = el('a', { href: u, download: `tender-${(i.etimadNo || i.date).replace(/[^\w-]/g, '')}.ics` }); document.body.append(x); x.click(); x.remove(); setTimeout(() => URL.revokeObjectURL(u), 5000); } }),
+      el('button', { type: 'button', class: 'btn tiny quiet', text: `📊 ${t('td_study_import_one')}`, onclick: () => study.click() }), study,
+      el('span', { class: 'hint td-card-from', dir: 'auto', text: i.from }),
+      el('button', { type: 'button', class: 'btn tiny quiet', disabled: !!tdBusy, text: `✕ ${t('td_del')}`, onclick: async () => { if (!confirm(t('td_del_confirm', { s: i.subject }))) return; try { await tdCommit({ ...tenders, items: tenders.items.filter((x) => x.id !== i.id) }); renderTenders(); } catch { toast(t('td_store_failed')); } } }));
+  return el('div', { class: 'td-detail td-card' }, acts,
     tdStepper(i), tiles, etBox, tdTimeline(i, now),
-    el('div', { class: 'td-cols' }, sumBox, msgBox),
     el('div', { class: 'td-cols' }, needBox, fileBox),
+    el('div', { class: 'td-cols' }, sumBox, msgBox),
     el('div', { class: 'td-folds' },
       tdFold('data', t('td_fold_data', { n: dataFields.length }), el('div', { class: 'td-grid' }, dataFields.map((k) => field(i, k))),
         tdDateReview(i, TENDER_DATE_FIELDS.filter((k) => i[k])),
         el('label', { class: 'td-lab td-study-lab' }, el('span', { text: t('td_study_summary') }), el('textarea', { class: 'td-study-text', rows: 4, maxlength: 4000, dir: 'auto', disabled: !!tdBusy,
           placeholder: t('td_study_placeholder'), onchange: async (event) => { if (await tdUpdate(i.id, { studySummary: event.target.value.trim() }, tdActivity('study', ''))) renderTenders(); } }, i.studySummary || ''))),
-      etRadar ? tdMarketFold(i, etX, etRes) : null, tdThreadPanel(i), tdFold('files', t('td_fold_files', { n: (i.files || []).length }), tdInsightsPanel(i), ...tdFilesList(i)), anBox(i), tdInquiries(i), tdHistory(i)),
-    el('div', { class: 'row td-card-acts' },
-      el('button', { type: 'button', class: 'btn tiny primary td-copy-sum', text: `📋 ${t('td_copy_sum')}`, onclick: () => copyText(tdTenderText(i), t('td_copied_sum')) }),
-      el('button', { type: 'button', class: 'btn tiny td-team-msg', text: `📋 ${t('td_team_copy')}`, onclick: () => copyText(tdTeamText(i), t('td_team_copied')) }),
-      el('a', { class: 'btn tiny td-team-mail', href: `mailto:${TD_FROM}?subject=${encodeURIComponent(t('td_fd_subject', { s: tdTitle(i.subject) }))}&body=${encodeURIComponent(tdTeamText(i))}`, text: `✉ ${t('td_team_mail')}` }),
-      el('button', { type: 'button', class: 'btn tiny td-ics', disabled: !(i.askDue || i.visit || i.due || i.openAt), text: `📅 ${t('td_ics')}`, onclick: () => { const b = new Blob([tdIcs(i)], { type: 'text/calendar' }), u = URL.createObjectURL(b); const x = el('a', { href: u, download: `tender-${(i.etimadNo || i.date).replace(/[^\w-]/g, '')}.ics` }); document.body.append(x); x.click(); x.remove(); setTimeout(() => URL.revokeObjectURL(u), 5000); } }),
-      anStartBtn(i),
-      el('button', { type: 'button', class: 'btn tiny quiet', text: `📊 ${t('td_study_import_one')}`, onclick: () => study.click() }), study,
-      el('span', { class: 'hint td-card-from', dir: 'auto', text: i.from }),
-      el('button', { type: 'button', class: 'btn tiny quiet', disabled: !!tdBusy, text: `✕ ${t('td_del')}`, onclick: async () => { if (!confirm(t('td_del_confirm', { s: i.subject }))) return; try { await tdCommit({ ...tenders, items: tenders.items.filter((x) => x.id !== i.id) }); renderTenders(); } catch { toast(t('td_store_failed')); } } })));
+      etRadar ? tdMarketFold(i, etX, etRes) : null, tdThreadPanel(i), tdFold('files', t('td_fold_files', { n: (i.files || []).length }), tdInsightsPanel(i), ...tdFilesList(i)), anBox(i), tdInquiries(i), tdHistory(i)));
 }
 // the questions raised to the entity: the branch cannot see them on the platform, so they are written down here with their answers
 const tdInqDrafts = new Map();
@@ -2057,10 +2075,9 @@ function tdYearReport(year = null) {
   const tableEl = (rows, cls) => el('div', { class: `table-wrap td-yr-table ${cls}`, tabindex: '0', role: 'group', 'aria-label': rows[0][0] }, el('table', {}, el('thead', {}, el('tr', {}, rows[0].map((h) => el('th', { text: h })))),
     el('tbody', {}, rows.slice(1).map((r) => el('tr', {}, r.map((c, k) => el('td', { class: k && typeof c === 'number' ? 'num' : '', dir: 'auto', text: String(c) })))))));
   const dl = () => { const u = URL.createObjectURL(new Blob([tdYearHtml(R)], { type: 'text/html' })); const a = el('a', { href: u, download: `AFAQY-tenders-${R.year}-report.html` }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 5000); };
-  const dlg = el('dialog', { class: 'cr-modal td-yr-dlg', 'aria-labelledby': 'td-yr-h' },
-    el('div', { class: 'crm-head' }, el('h2', { id: 'td-yr-h', text: t('td_yr_h', { y }) }),
-      el('div', { class: 'row td-yr-tools' }, el('select', { class: 'td-yr-pick', 'aria-label': t('td_year'), onchange: (e) => { dlg.close(); tdYearReport(e.target.value); } }, years.map((v) => el('option', { value: v, text: v, ...(v === y ? { selected: '' } : {}) }))),
-        el('button', { type: 'button', class: 'btn tiny td-yr-html', text: `⬇ ${t('td_yr_dl')}`, onclick: dl }), el('button', { type: 'button', class: 'btn tiny td-yr-xl', text: `⬇ ${t('td_excel')}`, onclick: () => tdYearExcel(R) }))),
+  const dlg = el('dialog', { class: 'cr-modal td-yr-dlg tw tw-md', 'aria-labelledby': 'td-yr-h' },
+    twHead(el('h2', { id: 'td-yr-h', text: t('td_yr_h', { y }) }), { cls: 'crm-head', tools: el('div', { class: 'row td-yr-tools' }, el('select', { class: 'td-yr-pick', 'aria-label': t('td_year'), onchange: (e) => { dlg.close(); tdYearReport(e.target.value); } }, years.map((v) => el('option', { value: v, text: v, ...(v === y ? { selected: '' } : {}) }))),
+        el('button', { type: 'button', class: 'btn tiny td-yr-html', text: `⬇ ${t('td_yr_dl')}`, onclick: dl }), el('button', { type: 'button', class: 'btn tiny td-yr-xl', text: `⬇ ${t('td_excel')}`, onclick: () => tdYearExcel(R) })) }),
     el('p', { class: 'hint', text: t('td_yr_lead_text') }),
     S.funnel ? el('section', { class: 'td-yr-funnel' }, el('h3', { class: 'td-yr-h3', text: t('et_fun_h') }),
       el('ol', { class: 'et-funnel' }, S.funnel.map(([l, v, x]) => el('li', {}, el('b', { text: String(v) }), el('span', { text: l }), x ? el('small', { class: 'hint', text: x }) : null))),
@@ -2082,7 +2099,7 @@ function tdDownload(file) {
 const tdLocator = (file, locator) => locator ? t(file.analysis?.format === 'pdf' ? 'td_doc_page' : file.analysis?.format === 'sheet' ? 'td_doc_sheet' : 'td_doc_section', {value:locator}) : file.name;
 function tdDocumentView(file) {
   const analysis = file.analysis;
-  const dlg = el('dialog', {class:'proj-edit td-doc-dialog'}, el('h2',{text:file.name,dir:'auto'}),
+  const dlg = el('dialog', {class:'proj-edit td-doc-dialog tw tw-lg'}, twHead(el('h2',{text:file.name,dir:'auto'})),
     el('p',{class:'hint',text:t('td_doc_evidence')}),
     el('p',{class:'hint',text:t(`td_doc_${analysis?.state || 'pending'}`)}),
     ...(analysis?.highlights || []).map(fact => el('div',{class:'td-subpanel'},
@@ -2208,9 +2225,14 @@ function tdFold(id, title, ...content) {
 }
 function tdOpenFold(id) {
   tdFoldSet.add(id); renderTenders();
-  const f = tdDlg && tdDlg.querySelector(`.td-fold-${id}`); if (f) { f.open = true; f.scrollIntoView?.({ block: 'start' }); f.querySelector('summary')?.focus(); }   // an old browser without scrollIntoView still opens the fold
+  const f = tdDlg && tdDlg.querySelector(`.td-fold-${id}`); if (f) { f.open = true; pagerReveal(tdDlg, f); f.querySelector('summary')?.focus({ preventScroll: true }); }   // v9.74: on its page when the card is in pages
 }
 
+// v9.74 (ADR-0144): «More» behaves as a menu — a click outside it or Escape closes it (a window opened from it keeps it as it is)
+document.addEventListener('click', (e) => { const d = document.querySelector('#tenders-body details.td-how[open]:not(.td-how-inline)');
+  if (d && !d.contains(e.target) && !(e.target.closest && e.target.closest('dialog'))) d.open = false; });
+document.addEventListener('keydown', (e) => { if (e.key !== 'Escape' || document.querySelector('dialog[open]')) return;
+  const d = document.querySelector('#tenders-body details.td-how[open]:not(.td-how-inline)'); if (d) { d.open = false; const sm = d.querySelector('summary'); if (sm) sm.focus(); } });
 function renderTenders() {
   const body = $('tenders-body'); if (!body || isTeamPortal) return; const today = saudiDay(new Date().toISOString());
   const up = el('input', { type: 'file', class: 'td-up-in', accept: '.json,.txt,application/json,text/plain', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; await tdTake(await f.text()); } });
@@ -2218,23 +2240,48 @@ function renderTenders() {
   const dIn2 = (cls, val, on) => el('input', { type: 'date', class: cls, 'aria-label': t(cls === 'td-from' ? 'td_from' : 'td_to'), value: val, max: today, onchange: (e) => on(e.target.value) });
   const empty = !tenders || !tenders.items.length;
   // ADR-0085: one compact bar — the period and the five actions; how each way works is folded, open only while the register is empty
-  const pull = el('section', { class: 'dt-quick td-pull' },
-    el('div', { class: 'td-pull-head' }, el('h2', { text: t('td_pull_h') }), tenders && tenders.pulledAt ? el('span', { class: 'hint', text: t('td_last', { to: tenders.to || '—', n: tenders.items.length }) }) : null),
-    tdEmailPicker(),
-    (() => { const R = etRadar, act = R ? R.tenders.filter((x) => etOpenNow(x) && x.scope && !etIgnored().has(x.ref)).length : 0;   // v9.60 (ADR-0132)
+  // v9.74 (ADR-0144): one command card — register a tender (drop or choose its mail, or any file), the radar and the market,
+  // and «More» for what is used now and then; what the last action said sits under it.
+  const howReports = el('div', { class: 'td-how-reports' });   // the period's reports and messages, filled once its rows are known
+  const pull = el('section', { class: `dt-quick td-pull td-cmd${empty ? ' td-cmd-empty' : ''}` },
+    el('div', { class: 'td-cmd-intake' }, el('div', { class: 'td-pull-head' }, el('h2', { text: t('td_pull_h') }), tenders && tenders.pulledAt ? el('span', { class: 'hint', text: t('td_last', { to: tenders.to || '—', n: tenders.items.length }) }) : null),
+      tdEmailPicker()),
+    (() => { const any = el('input', { type: 'file', multiple: '', hidden: true, onchange: (e) => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) void tdRouteDrop(fs, null); } });
+      return el('p', { class: 'hint td-drop-any' }, el('span', { text: `⤓ ${t('td_drop_any')}` }), ' ', el('button', { type: 'button', class: 'btn tiny td-any-btn', disabled: !!tdBusy, text: t('td_any_pick'), onclick: () => any.click() }), any); })(),
+    el('div', { class: 'td-cmd-tools' }, (() => { const R = etRadar, act = R ? R.tenders.filter((x) => etOpenNow(x) && x.scope && !etIgnored().has(x.ref)).length : 0;   // v9.60 (ADR-0132)
       return el('p', { class: 'td-radar-line' }, el('button', { type: 'button', class: 'btn td-radar-btn', disabled: !!tdBusy, text: `📡 ${t('et_title')}${R ? ` · ${t('et_btn_n', { n: act })}` : ''}`, onclick: etOpen }), ' ',
         R ? el('button', { type: 'button', class: 'btn td-market-btn', disabled: !!tdBusy, text: `📊 ${t('mk_btn')}`, onclick: mkOpen }) : null, ' ',
         el('span', { class: 'hint', text: R ? t('et_btn_at', { at: R.pulledAt ? tdWhen(R.pulledAt) : '—' }) : t('et_btn_none') })); })(),
-    etResult ? el('div', { role: 'status', class: 'td-study-res et-res' },
+      // v9.55: the page is built around the least-touch flow — drop (or choose) the mail, the study, the final offer. Every other
+      // way in, the one setting and the period's reports sit in «More»: open in the card while the register is empty, a menu
+      // once it holds tenders — closed when the page opens, kept open while the page redraws (ADR-0144).
+      el('details', { class: `td-how${empty ? ' td-how-inline' : ''}`, ...(empty || tdMoreOpen ? { open: '' } : {}), ontoggle: (e) => { if (!empty) tdMoreOpen = e.target.open; } },
+        el('summary', { class: 'td-how-btn', title: t('td_more'), text: empty ? t('td_more') : `⋯ ${t('td_more_btn')}` }),
+        el('div', { class: 'td-how-panel' }, empty ? null : el('h3', { class: 'td-how-h', text: t('td_more') }), howReports,
+          el('label', { class: 'td-owner-def' }, el('span', { class: 'hint', text: t('td_owner_def') }), el('input', { type: 'text', class: 'td-owner-in', value: pref('tdowner') || '', placeholder: t('td_owner_ph'), onchange: async (e) => { pref('tdowner', e.target.value.trim().slice(0, 80)); if (tenders) { await tdCommit(tenders); renderTenders(); } } })),
+          el('div', { class: 'td-actions' },
+        el('button', { type: 'button', class: 'btn td-add-btn', disabled: !!tdBusy, text: `＋ ${t('td_add')}`, onclick: tdAddManual }),
+        (() => { const inp = tdStudyInput(); return el('span', {}, el('button', { type: 'button', class: 'btn td-study-btn', disabled: !!tdBusy, text: `📊 ${t('td_study_import')}`, onclick: () => inp.click() }), inp); })()),
+          el('div', { class: 'td-way' }, el('h3', { text: t('td_way_claude') }), el('p', { class: 'hint', text: t('td_pull_lead', { from: tdFrom || tdDefaultFrom() }) }),
+        el('div', { class: 'row td-period' }, el('span', { text: t('td_from') }), dIn2('td-from', tdFrom || tdDefaultFrom(), (v) => { tdFrom = v; }), el('span', { text: t('td_to') }), dIn2('td-to', tdTo || today, (v) => { tdTo = v; })),
+        el('div', { class: 'td-actions' },
+          el('button', { type: 'button', class: 'btn primary td-copy', text: `📋 ${t('td_copy')}`, onclick: () => copyText(tdPrompt(), t('td_copied')) }),
+          el('a', { class: 'btn td-bm', href: tdBookmarklet(), title: t('td_bm_hint'), onclick: (e) => { e.preventDefault(); toast(t('td_bm_hint')); }, text: `📌 ${t('td_bm')}` }),
+          el('button', { type: 'button', class: 'btn', disabled: !!tdBusy, text: `⬆ ${t('td_upload')}`, onclick: () => up.click() }), up,
+          el('button', { type: 'button', class: 'btn td-paste-btn', disabled: !!tdBusy, text: `📥 ${t('td_paste')}`, onclick: tdPasteDialog })),
+        el('p', { class: 'hint', text: t('td_bm_hint') }),
+        el('a', { class: 'btn tiny', href: 'https://outlook.office.com/mail/', target: '_blank', rel: 'noopener', text: t('proj_open_outlook') })),
+          el('div', { class: 'td-way' }, el('h3', { text: t('td_way_pst') }), el('p', { class: 'hint', text: t('td_pst_lead') }),
+        el('button', { type: 'button', class: 'btn td-pst-btn', disabled: !!tdBusy, text: `📂 ${t('td_pst_pick')}`, onclick: () => pst.click() }), pst),
+          el('div', { class: 'td-way' }, el('h3', { text: t('td_way_manual') }), el('p', { class: 'hint', text: t('td_manual_lead') }))))),
+    el('div', { class: 'td-cmd-status' }, etResult ? el('div', { role: 'status', class: 'td-study-res et-res' },
       el('button', { type: 'button', class: 'icon-btn td-study-close', text: '✕', title: t('td_res_close'), 'aria-label': t('td_res_close'), onclick: () => { etResult = null; renderTenders(); } }),
       el('p', { class: 'hint', text: etResult.read ? t('et_done', { k: etResult.kept, n: etResult.total, c: etResult.found }) : t('et_bad', { list: etResult.bad.join(' · ') }) }),
       etResult.read ? el('p', { class: 'hint et-merged', text: t('et_merged', { a: etResult.added, u: etResult.updated, t: etResult.all }) }) : null,
       etResult.partial ? el('p', { class: 'note', text: t('et_partial') }) : null,
       etResult.bad.length && etResult.read ? el('p', { class: 'note', text: t('et_bad', { list: etResult.bad.join(' · ') }) }) : null,
       el('button', { type: 'button', class: 'btn tiny', text: t('et_open_radar'), onclick: etOpen })) : null,
-    (() => { const any = el('input', { type: 'file', multiple: '', hidden: true, onchange: (e) => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) void tdRouteDrop(fs, null); } });
-      return el('p', { class: 'hint td-drop-any' }, el('span', { text: `⤓ ${t('td_drop_any')}` }), ' ', el('button', { type: 'button', class: 'btn tiny td-any-btn', disabled: !!tdBusy, text: t('td_any_pick'), onclick: () => any.click() }), any); })(),
-    tdStudyResult ? el('div', { role: 'status', class: 'td-study-res' },
+      tdStudyResult ? el('div', { role: 'status', class: 'td-study-res' },
       el('button', { type: 'button', class: 'icon-btn td-study-close', text: '✕', title: t('td_res_close'), 'aria-label': t('td_res_close'), onclick: () => { tdStudyResult = null; renderTenders(); } }),
       el('p', { class: 'hint', text: t('td_study_done', { n: tdStudyResult.fields, m: tdStudyResult.tenders, d: tdStudyResult.differs.length, u: tdStudyResult.unmatched.length }) }),
       // v9.55: a tender's Arabic name inside an English sentence took the whole line's direction with it («dir: auto» reads the
@@ -2247,31 +2294,12 @@ function renderTenders() {
       (tdStudyResult.nosheet || []).length ? el('p', { class: 'note', text: t('td_study_nosheet', { list: tdStudyResult.nosheet.map(bidi).join(' · ') }) }) : null,
       (tdStudyResult.moves || []).map((m) => el('p', { class: 'td-move' }, el('span', { text: t('td_moved', { s: bidi(m.subject.slice(0, 80)), to: t(`td_st_${m.to}`) }) }), ' ',
         el('button', { type: 'button', class: 'btn tiny quiet td-undo', text: t('td_undo'), onclick: async () => { if (await tdUpdate(m.id, m.back, tdActivity('stage', t('td_undone')))) { tdStudyResult.moves = tdStudyResult.moves.filter((x) => x !== m); renderTenders(); } } })))) : null,
-    tdMailResult ? el('div', { role: 'status' },
+      tdMailResult ? el('div', { role: 'status' },
       el('p', { class: 'hint', text: t('td_mail_result', tdMailResult) }),
       tdMailResult.failures.map(({ name, key }) => el('p', { class: 'hint', dir: 'auto', text: [name, t(key)].filter(Boolean).join(' · ') }))) : null,
-    (() => { const st = backupState(); if (!st.due || empty) return null;
+      (() => { const st = backupState(); if (!st.due || empty) return null;
       return el('p', { class: 'note td-backup' }, el('span', { text: st.days == null ? t('bk_never') : t('bk_old', { n: st.days }) }), ' ', el('button', { type: 'button', class: 'btn tiny td-backup-btn', text: `⬇ ${t('bk_now')}`, onclick: () => $('export-btn').click() })); })(),
-    tdBusy ? el('p', { class: 'note td-busy', role: 'status', text: tdBusy }) : null,
-    // v9.55: the page is built around the least-touch flow — drop (or choose) the mail, the study, the final offer. Every other
-    // way in, and the one setting, sit folded below: open while the register is empty, and they stay as the manager left them.
-    el('details', { class: 'td-how', ...(empty || tdMoreOpen ? { open: '' } : {}), ontoggle: (e) => { if (!empty) { tdMoreOpen = e.target.open; pref('tdmore', tdMoreOpen ? '1' : ''); } } }, el('summary', { text: t('td_more') }),
-      el('label', { class: 'td-owner-def' }, el('span', { class: 'hint', text: t('td_owner_def') }), el('input', { type: 'text', class: 'td-owner-in', value: pref('tdowner') || '', placeholder: t('td_owner_ph'), onchange: async (e) => { pref('tdowner', e.target.value.trim().slice(0, 80)); if (tenders) { await tdCommit(tenders); renderTenders(); } } })),
-      el('div', { class: 'td-actions' },
-        el('button', { type: 'button', class: 'btn td-add-btn', disabled: !!tdBusy, text: `＋ ${t('td_add')}`, onclick: tdAddManual }),
-        (() => { const inp = tdStudyInput(); return el('span', {}, el('button', { type: 'button', class: 'btn td-study-btn', disabled: !!tdBusy, text: `📊 ${t('td_study_import')}`, onclick: () => inp.click() }), inp); })()),
-      el('div', { class: 'td-way' }, el('h3', { text: t('td_way_claude') }), el('p', { class: 'hint', text: t('td_pull_lead', { from: tdFrom || tdDefaultFrom() }) }),
-        el('div', { class: 'row td-period' }, el('span', { text: t('td_from') }), dIn2('td-from', tdFrom || tdDefaultFrom(), (v) => { tdFrom = v; }), el('span', { text: t('td_to') }), dIn2('td-to', tdTo || today, (v) => { tdTo = v; })),
-        el('div', { class: 'td-actions' },
-          el('button', { type: 'button', class: 'btn primary td-copy', text: `📋 ${t('td_copy')}`, onclick: () => copyText(tdPrompt(), t('td_copied')) }),
-          el('a', { class: 'btn td-bm', href: tdBookmarklet(), title: t('td_bm_hint'), onclick: (e) => { e.preventDefault(); toast(t('td_bm_hint')); }, text: `📌 ${t('td_bm')}` }),
-          el('button', { type: 'button', class: 'btn', disabled: !!tdBusy, text: `⬆ ${t('td_upload')}`, onclick: () => up.click() }), up,
-          el('button', { type: 'button', class: 'btn td-paste-btn', disabled: !!tdBusy, text: `📥 ${t('td_paste')}`, onclick: tdPasteDialog })),
-        el('p', { class: 'hint', text: t('td_bm_hint') }),
-        el('a', { class: 'btn tiny', href: 'https://outlook.office.com/mail/', target: '_blank', rel: 'noopener', text: t('proj_open_outlook') })),
-      el('div', { class: 'td-way' }, el('h3', { text: t('td_way_pst') }), el('p', { class: 'hint', text: t('td_pst_lead') }),
-        el('button', { type: 'button', class: 'btn td-pst-btn', disabled: !!tdBusy, text: `📂 ${t('td_pst_pick')}`, onclick: () => pst.click() }), pst),
-      el('div', { class: 'td-way' }, el('h3', { text: t('td_way_manual') }), el('p', { class: 'hint', text: t('td_manual_lead') }))));
+      tdBusy ? el('p', { class: 'note td-busy', role: 'status', text: tdBusy }) : null));
   if (!tenders || !tenders.items.length) { set(body, mailSrc('tenders'), pull, el('p', { class: 'note', text: t('td_empty') })); return; }
   const periods = [...new Set(tenders.items.map((i) => tdPeriodOf(i.date, tdKind)))].sort().reverse();
   if (tdKind === 'all') tdPick = 'all'; else if (!periods.includes(tdPick)) tdPick = periods.includes(tdPeriodOf(today, tdKind)) ? tdPeriodOf(today, tdKind) : periods[0];
@@ -2334,8 +2362,8 @@ function renderTenders() {
   const table = el('div', { class: 'table-wrap' }, el('table', { class: 'td-table' },
     el('thead', {}, el('tr', {}, ['td_col_subject', 'td_col_date', 'td_col_stage', 'td_col_days', 'td_col_next', ''].map((k) => el('th', { text: k ? t(k) : '' })))),
     el('tbody', {}, rows.flatMap((i) => { const open = tdOpenId === i.id, days = tdDaysBetween(i.stageAt, today);
-      return [el('tr', { 'data-id': i.id, class: `td-row${open ? ' on' : ''}${TD_OPEN.includes(i.stage) ? '' : ' td-closed'}`, tabindex: '0', onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) { tdOpenId = i.id; renderTenders(); } }, onclick: (e) => { if (e.target.closest('select, input, button, a')) return; tdOpenId = i.id; renderTenders(); } },
-        el('td', {}, el('div', { class: 'td-subj', text: i.subject, dir: 'auto' }), el('div', {}, i.messages?.length ? el('span', { class: 'chip', text: t('td_why_email') }) : null, i.byFrom ? el('span', { class: 'chip', text: t('td_why_from') }) : null, i.byKr ? el('span', { class: 'chip', text: t('td_why_kr') }) : null, i.manual ? el('span', { class: 'chip td-manual', text: t('td_why_manual') }) : null, TD_OPEN.includes(i.stage) && tenderLead(i).short ? el('span', { class: 'chip td-short-chip', text: t('td_short_chip', { n: tenderLead(i).workDays }) }) : null, i.etimadNo ? el('span', { class: 'chip', text: i.etimadNo }) : null, tenderNeeds(i).length ? el('span', { class: 'chip td-need-chip', text: t('td_need_n', { n: tenderNeeds(i).length }) }) : null)),
+      return [el('tr', { 'data-id': i.id, 'data-stage': i.stage, class: `td-row${open ? ' on' : ''}${TD_OPEN.includes(i.stage) ? '' : ' td-closed'}`, tabindex: '0', onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) { tdOpenId = i.id; renderTenders(); } }, onclick: (e) => { if (e.target.closest('select, input, button, a')) return; tdOpenId = i.id; renderTenders(); } },
+        el('td', {}, el('div', { class: 'td-subj', text: i.subject, dir: 'auto' }), i.entity ? el('div', { class: 'hint td-row-ent', dir: 'auto', text: i.entity }) : null, el('div', {}, i.messages?.length ? el('span', { class: 'chip', text: t('td_why_email') }) : null, i.byFrom ? el('span', { class: 'chip', text: t('td_why_from') }) : null, i.byKr ? el('span', { class: 'chip', text: t('td_why_kr') }) : null, i.manual ? el('span', { class: 'chip td-manual', text: t('td_why_manual') }) : null, TD_OPEN.includes(i.stage) && tenderLead(i).short ? el('span', { class: 'chip td-short-chip', text: t('td_short_chip', { n: tenderLead(i).workDays }) }) : null, i.etimadNo ? el('span', { class: 'chip', text: i.etimadNo }) : null, tenderNeeds(i).length ? el('span', { class: 'chip td-need-chip', text: t('td_need_n', { n: tenderNeeds(i).length }) }) : null)),
         el('td', { class: 'num' }, i.date, i.dateSource === 'sent' ? el('div', { class: 'hint', text: t('td_sent_date') }) : i.dateSource === 'thread' ? el('div', { class: 'hint', text: t('td_thread_date') }) : null), el('td', {}, stageSel(i)),
         el('td', { class: `num${TD_OPEN.includes(i.stage) && ['received', 'screen', 'decide'].includes(i.stage) && days > 3 ? ' td-wait' : ''}`, text: TD_OPEN.includes(i.stage) ? String(days) : '—', title: t('td_col_days') }),
         el('td', {}, cd(i)), el('td', { class: 'num td-tog', text: '↗', title: t('td_open_win') }))]; }))));
@@ -2344,39 +2372,37 @@ function renderTenders() {
     event.preventDefault(); tdQuery = search.value; renderTenders();
   } }, search, el('button', { type: 'submit', class: 'btn tiny', text: t('td_search_go') }));
   tdNotify();
-  set(body, mailSrc('tenders', false), tdAgenda(today), pull,
-    el('div', { class: 'row td-filter' }, kinds, pick, searchForm),
-
-    pipe,
-    el('div', { class: 'km-tiles td-tiles' },
+  set(body, pull, tdAgenda(today),
+    el('section', { class: 'td-overview', 'aria-label': t('td_overview') }, el('div', { class: 'km-tiles td-tiles' },
       tile('km-total', K.n, 'td_k_in_all', t('td_k_in_all_sub'), 'all'), tile(K.waiting ? 'km-other td-hot' : 'km-other', K.waiting, 'td_k_waiting', K.waiting ? t('td_k_waitmax', { d: K.waitMax }) : '', 'waiting'),
       tile('km-email', K.soon, 'td_k_soon', K.late ? t('td_k_late', { n: K.late }) : '', 'soon'), tile('km-points', K.winRate == null ? '—' : `${K.winRate}%`, 'td_k_winrate', K.winRate == null ? t('td_k_norate') : t('td_k_won_of', { w: K.won, n: K.closed }), 'decided')),
-    el('p', { class: 'hint td-kpis', text: t('td_kpi_line', { j: K.joined, n: K.n, d: K.avgDecision == null ? '—' : K.avgDecision, o: K.onTime == null ? '—' : `${K.onTime}%`, v: K.value ? K.value.toLocaleString('en') : '0' }) }),
-    el('div', { class: 'row', style: 'justify-content:flex-end;gap:8px' },
-      el('button', { type: 'button', class: 'btn tiny td-wm', text: `🗓 ${t('td_wm')}`, onclick: () => copyText(tdWeekMessage(), t('td_wm_copied')) }),
-      el('a', { class: 'btn tiny td-wm-mail', href: '#', text: `✉ ${t('fl_mail')}`, onclick: (e) => { e.preventDefault(); location.href = `mailto:?subject=${encodeURIComponent(t('td_wm_subject', { a: saudiDay(new Date(Date.now() - 6 * 864e5).toISOString()), b: saudiDay(new Date().toISOString()) }))}&body=${encodeURIComponent(tdWeekMessage())}`; } }),
-      el('button', { type: 'button', class: 'btn tiny td-year-btn', text: `📈 ${t('td_yr_btn')}`, onclick: () => tdYearReport() }),
-      el('button', { type: 'button', class: 'btn tiny td-arch-btn', text: `🗄 ${t('td_arch_btn')}`, onclick: () => tdArchiveOpen() }),
-      el('button', { type: 'button', class: 'btn tiny td-sum-btn', text: `✉ ${t('td_sum_btn')}`, onclick: () => tdThreadSummary(rows) }),
-      el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('td_excel')}`, onclick: () => tdExcel(rows) })),
+      pipe, el('p', { class: 'hint td-kpis', text: t('td_kpi_line', { j: K.joined, n: K.n, d: K.avgDecision == null ? '—' : K.avgDecision, o: K.onTime == null ? '—' : `${K.onTime}%`, v: K.value ? K.value.toLocaleString('en') : '0' }) })),
+    el('div', { class: 'td-listbar' }, el('div', { class: 'row td-filter' }, kinds, pick, searchForm),
+      el('div', { class: 'td-list-acts' }, el('button', { type: 'button', class: 'btn tiny td-year-btn', text: `📈 ${t('td_yr_btn')}`, onclick: () => tdYearReport() }),
+        el('button', { type: 'button', class: 'btn tiny td-arch-btn', text: `🗄 ${t('td_arch_btn')}`, onclick: () => tdArchiveOpen() }),
+        el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('td_excel')}`, onclick: () => tdExcel(rows) }))),
     tdStageF ? el('div', { class: 'row td-filtered' }, el('span', { class: 'chip', text: t('td_pipe_on', { s: t(`td_st_${tdStageF}`), n: rows.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: `✕ ${t('td_pipe_clear')}`, onclick: () => { tdStageF = null; renderTenders(); } })) : null,
     !tdStageF && tdCardF ? el('div', { class: 'row td-filtered' }, el('span', { class: 'chip', text: t('crm_filtered', { f: t({ waiting: 'td_k_waiting', soon: 'td_k_soon', decided: 'td_k_decided' }[tdCardF]), n: rows.length, all: rowsAll.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: t('crm_show_all'), onclick: () => { tdCardF = null; renderTenders(); } })) : null,
-    rows.length ? table : el('p', { class: 'note', text: t('td_none_period') }));
+    rows.length ? table : el('p', { class: 'note', text: t('td_none_period') }),
+    mailSrc('tenders', false));
+  set(howReports, el('h4', { text: t('td_how_reports') }), el('div', { class: 'td-how-row' }, el('button', { type: 'button', class: 'btn tiny td-wm', text: `🗓 ${t('td_wm')}`, onclick: () => copyText(tdWeekMessage(), t('td_wm_copied')) }),
+    el('a', { class: 'btn tiny td-wm-mail', href: '#', text: `✉ ${t('fl_mail')}`, onclick: (e) => { e.preventDefault(); location.href = `mailto:?subject=${encodeURIComponent(t('td_wm_subject', { a: saudiDay(new Date(Date.now() - 6 * 864e5).toISOString()), b: saudiDay(new Date().toISOString()) }))}&body=${encodeURIComponent(tdWeekMessage())}`; } }),
+    el('button', { type: 'button', class: 'btn tiny td-sum-btn', text: `✉ ${t('td_sum_btn')}`, onclick: () => tdThreadSummary(rows) })));
   // v9.47 (ADR-0122): a tender's details open in a window over the list, not as a long panel inside it. The window stays open
   // while a field saves and the list behind redraws; focus returns to the field the manager moved to.
   if (!body.dataset.tdDrop) { body.dataset.tdDrop = '1'; tdDropBind(body, null); }
   const cur = tdOpenId ? (tenders ? tenders.items : []).find((x) => x.id === tdOpenId) : null;
   if (!cur) { if (tdDlg && tdDlg.open) { const d = tdDlg; tdOpenId = null; d.close(); } return; }
-  if (!tdDlg) { tdDlg = el('dialog', { class: 'td-dlg', 'aria-labelledby': 'td-dlg-h' }, el('div', { class: 'td-dlg-body' }));
+  if (!tdDlg) { tdDlg = el('dialog', { class: 'td-dlg tw tw-lg', 'aria-labelledby': 'td-dlg-h' }, twHead(null, { cls: 'td-dlg-head' }), el('div', { class: 'td-dlg-body' }));
     tdDropBind(tdDlg, () => tdOpenId);
     tdDlg.addEventListener('close', () => { if (tdOpenId) { tdOpenId = null; renderTenders(); } }); document.body.append(tdDlg); }
-  const box = tdDlg.querySelector('.td-dlg-body'), act = document.activeElement, was = act && box.contains(act) ? [...act.classList].find((c) => /^td-(?!f$|need$)/.test(c)) : '';
+  const box = tdDlg.querySelector('.td-dlg-body'), act = document.activeElement, was = act && tdDlg.contains(act) ? [...act.classList].find((c) => /^td-(?!f$|need$)/.test(c)) : '';
   if (tdFoldsFor !== cur.id || !tdDlg.open) { tdFoldSet.clear(); tdFoldsFor = cur.id; }   // another tender, or the window reopened: its folds start closed
-  set(box, el('h2', { id: 'td-dlg-h', class: 'td-dlg-h', dir: 'auto', title: cur.subject, text: tdTitle(cur.subject) }),
-    el('div', { class: 'row td-dlg-top' }, el('span', { class: 'hint', text: t('td_col_stage') }), stageSel(cur), el('span', { class: 'hint', text: `${t('td_col_date')}: ${tdWhen(cur.date)}` })),
-    detail(cur));
+  set(tdDlg.querySelector('.td-dlg-head .tw-titles'), el('h2', { id: 'td-dlg-h', class: 'td-dlg-h', dir: 'auto', title: cur.subject, text: tdTitle(cur.subject) }),
+    el('div', { class: 'row td-dlg-top' }, stageSel(cur), el('span', { class: 'hint td-dlg-first', text: `${t('td_col_date')}: ${tdWhen(cur.date)}` }), tdCardChips(cur)));
+  set(box, detail(cur));
   if (!tdDlg.open) tdDlg.showModal();
-  else if (was) { const again = box.querySelector(`.${was}`); if (again && !again.disabled) again.focus(); }
+  else if (was) { const again = tdDlg.querySelector(`.${was}`); if (again && !again.disabled) again.focus(); }
 }
 
 // ---------- ADR-0090: authorship — who designed and built the portal (not a claim of ownership: built for AFAQY's work) ----------
@@ -2399,7 +2425,7 @@ async function openAbout() {
 // ---------- ADR-0090: a control-room number opens its detail — tiles, a bar per engineer, the list, Excel ----------
 /** A number's window: tiles, bars, the list, Excel. ADR-0102: a tile with a filter (its 4th item, (k) => bool on row k) or a person's bar
  *  narrows the list, the bars, the count and Excel to its rows; a second click clears it. bar: (k) => [name, weight] for row k. */
-function crModal({ title, lead, tiles = [], bars = [], bar = null, head = [], rows = [], hot = () => false, file, wrap = false }) {   // wrap (v9.57): cells that hold a sentence wrap instead of pushing the columns after them out of sight
+function crModal({ title, lead, tiles = [], bars = [], bar = null, head = [], rows = [], hot = () => false, file, wrap = false, frame = '' }) {   // frame (v9.74): a tender register list takes its windows' frame   // wrap (v9.57): cells that hold a sentence wrap instead of pushing the columns after them out of sight
   const st = { tile: -1, who: '', q: '' };
   // v9.68 (ADR-0140): every list window is searched as you type, by any word or number in a row; the search joins what a tile or a bar narrowed
   let hay = null, qTm = 0;
@@ -2423,8 +2449,9 @@ function crModal({ title, lead, tiles = [], bars = [], bar = null, head = [], ro
       el('tbody', {}, shown.map((k) => el('tr', { class: hot(rows[k], k) ? 'crm-hot' : '' }, rows[k].map((c, ci) => el('td', { class: ci ? 'num' : '', dir: 'auto', text: c == null ? '—' : String(c) }))))))),
       ks.length > shown.length ? el('p', { class: 'hint', text: t('crm_more', { n: ks.length - shown.length }) }) : null, !ks.length ? el('p', { class: 'empty', text: t('crm_none') }) : null);
   };
-  const dlg = el('dialog', { class: 'cr-modal', 'aria-labelledby': 'crm-h' },
-    el('div', { class: 'crm-head' }, el('h2', { id: 'crm-h', text: title }), el('button', { type: 'button', class: 'btn tiny crm-xl', text: `⬇ ${t('td_excel')}`, onclick: xl })),
+  const xlBtn = el('button', { type: 'button', class: 'btn tiny crm-xl', text: `⬇ ${t('td_excel')}`, onclick: xl }), head2 = el('h2', { id: 'crm-h', text: title });
+  const dlg = el('dialog', { class: `cr-modal${frame ? ` tw tw-${frame}` : ''}`, 'aria-labelledby': 'crm-h' },
+    frame ? twHead(head2, { cls: 'crm-head', tools: xlBtn }) : el('div', { class: 'crm-head' }, head2, xlBtn),
     lead ? el('p', { class: 'hint', text: lead }) : null, tilesBox, (tiles.some((x) => x[3]) || bar) ? el('p', { class: 'hint crm-how', text: t('crm_how') }) : null, barsBox, search ? el('div', { class: 'row crm-find' }, search) : null, info, listBox);
   draw(); dlg.addEventListener('close', () => { clearTimeout(qTm); dlg.remove(); }); document.body.append(dlg); dlg.showModal();
 }
@@ -3437,6 +3464,7 @@ function pagerRefresh(dlg) {
   const st = PAGERS.get(dlg); if (!st || !dlg.open) return;
   if (st.press) { st.pending = true; return; }   // v9.56: never rebuild the buttons under a press — every path that recounts comes through here
   const keepTop = st.paged && st.starts[st.page] ? st.starts[st.page].y : null, hadFirst = st.first;
+  const reveal = st.reveal && st.reveal.isConnected ? st.reveal : null; st.reveal = null;   // v9.74: what a button asked to show (pagerReveal)
   const a = document.activeElement, keepFocus = st.bar && a && st.bar.contains(a) ? (a.classList.contains('dp-prev') ? '.dp-prev' : a.classList.contains('dp-next') ? '.dp-next' : '.dp-next') : null;
   pgNatural(st);
   const sc = pgScroller(dlg); st.sc = sc; st.starts = [{ y: 0, top: 0 }]; st.paged = false; st.freed = [];
@@ -3491,6 +3519,7 @@ function pagerRefresh(dlg) {
   sc.style.setProperty('--dp-top', `${inset}px`); if (bg) sc.style.setProperty('--dp-bg', bg);
   const first = [...sc.children].find((c) => c !== st.bar && c !== st.pad) || null; st.first = first;
   let page = 0; if (keepTop != null && first === hadFirst) for (let i = 0; i < starts.length; i += 1) if (starts[i].y <= keepTop + 2) page = i;
+  if (reveal && sc.contains(reveal)) { const y = at(reveal.getBoundingClientRect().top); page = 0; for (let i = 0; i < starts.length; i += 1) if (starts[i].y <= y + 2) page = i; }
   st.page = -1; pagerGo(dlg, page, true);
   // something inside is still moving into place (a list sliding in as the window opens): count the pages again once it has settled
   if (!st.waiting) { const moving = (sc.getAnimations ? sc.getAnimations({ subtree: true }) : []).filter((x) => x.playState === 'running' && Number.isFinite(x.effect && x.effect.getComputedTiming().endTime));
@@ -3499,6 +3528,16 @@ function pagerRefresh(dlg) {
   done();
 }
 const pgSig = (st) => (st.sc ? `${st.sc.clientWidth}x${st.sc.clientHeight}:${st.paged && st.pad ? Math.round(st.pad.offsetTop) : st.sc.scrollHeight}` : '');
+// v9.74 (ADR-0144): bring a part of a window into view — in a window of pages, the page that holds it (now, and again when the
+// window has finished redrawing: a fold that opens can be what turns the window into pages); otherwise a scroll that stops
+// under the window's pinned head. Before this, «All messages» opened its fold on page 2 and left the window on page 1.
+function pagerReveal(dlg, node) {
+  const st = PAGERS.get(dlg); if (!node) return;
+  if (st) st.reveal = node;
+  if (st && st.paged && st.sc && st.sc.contains(node)) { const r = st.sc.getBoundingClientRect(), y = node.getBoundingClientRect().top - r.top - st.sc.clientTop + st.sc.scrollTop;
+    let p = 0; for (let i = 0; i < st.starts.length; i += 1) if (st.starts[i].y <= y + 2) p = i; pagerGo(dlg, p, true); }
+  else node.scrollIntoView?.({ block: 'start' });   // an old browser without scrollIntoView still opens the fold
+}
 function pagerGo(dlg, page, quiet) {
   const st = PAGERS.get(dlg); if (!st || !st.paged) return;
   const n = st.starts.length, p = Math.max(0, Math.min(n - 1, page)), s = st.starts[p], nextY = p + 1 < n ? st.starts[p + 1].y : null;

@@ -20,18 +20,28 @@ now=datetime.datetime.now(datetime.UTC).replace(tzinfo=None)+datetime.timedelta(
 REG={'schema':'afaqy-tenders-from-mail/v1','to':day(0),'tenders':[{'subject':'sample: Card tender with time','received':day(-2),'from_address':'x@example.com','attachments':['كراسة الشروط.pdf'],'manual':True},
   {'subject':'sample: Short tender','received':day(-1),'from_address':'x@example.com','attachments':['كراسة الشروط.pdf'],'manual':True}]}
 def reach(pg, loc):
-    for _ in range(14):
+    # A person finds a control: on the page shown, or page by page from the first (v9.74: the window's head is pinned and can
+    # cover the top of a page, and the page shown after a save may be past the control — so the search starts again at page 1).
+    hit=lambda bx: bx and loc.evaluate("(n,[x,y])=>{const h=document.elementFromPoint(x,y);return !!h&&(h===n||n.contains(h))}",[bx['x']+bx['width']/2,bx['y']+bx['height']/2])
+    def here():
         bx=loc.bounding_box(); vh=pg.viewport_size['height']
-        if bx and bx['height']>0 and bx['y']>=0 and bx['y']+bx['height']<=vh:
-            hit=loc.evaluate("(n,[x,y])=>{const h=document.elementFromPoint(x,y);return !!h&&(h===n||n.contains(h))}",[bx['x']+bx['width']/2,bx['y']+bx['height']/2])
-            if hit: return bx
-        nx=pg.locator('dialog.td-dlg .dlg-pager .dp-next')
-        if not nx.count() or nx.is_disabled() or not nx.is_visible():
-            loc.scroll_into_view_if_needed(); pg.wait_for_timeout(200); bx=loc.bounding_box()
-            if bx and loc.evaluate("(n,[x,y])=>{const h=document.elementFromPoint(x,y);return !!h&&(h===n||n.contains(h))}",[bx['x']+bx['width']/2,bx['y']+bx['height']/2]): return bx
-            break
-        nx.click(); pg.wait_for_timeout(350)
-    return None
+        return bx if bx and bx['height']>0 and bx['y']>=0 and bx['y']+bx['height']<=vh and hit(bx) else None
+    bx=here()
+    if bx: return bx
+    pv=pg.locator('dialog.td-dlg .dlg-pager .dp-prev'); nx=pg.locator('dialog.td-dlg .dlg-pager .dp-next')
+    if nx.count() and nx.is_visible():
+        for _ in range(20):
+            if pv.is_disabled(): break
+            pv.click(); pg.wait_for_timeout(150)
+        for _ in range(20):
+            bx=here()
+            if bx or nx.is_disabled(): return bx
+            nx.click(); pg.wait_for_timeout(350)
+        return None
+    loc.scroll_into_view_if_needed(); pg.wait_for_timeout(200); bx=loc.bounding_box()
+    if hit(bx): return bx
+    loc.evaluate("n=>n.scrollIntoView({block:'center'})"); pg.wait_for_timeout(200); bx=loc.bounding_box()   # under the pinned head: scroll on
+    return bx if hit(bx) else None
 def press(pg, loc, hold=150):   # a person holds a click for about a tenth of a second (the lesson of v9.56)
     bx=reach(pg, loc)
     if not bx: return False

@@ -1446,6 +1446,137 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   .et-funnel li { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 10px; background: var(--surface); display: flex; flex-direction: column; gap: 2px; }
   .et-funnel li b { font-size: 22px; } .et-funnel li + li { border-inline-start: 4px solid var(--accent); }
   @media (max-width: 640px) { .et-funnel { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+  /* ===== v9.74 (ADR-0144): the tender desk — one command card, the agenda, a summary band and the list; one frame for its windows ===== */
+  /* the command card: register a tender, the radar and the market, «More»; what the last action said under it */
+  #tenders-body .td-cmd { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, auto); grid-template-areas: "intake tools" "any tools" "status status";
+    gap: 10px 20px; align-items: start; padding: 16px 18px; margin: 0 0 14px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--lift); }
+  #tenders-body .td-cmd.td-cmd-empty { grid-template-columns: minmax(0, 1fr); grid-template-areas: "intake" "any" "tools" "status"; }
+  #tenders-body .td-cmd-intake { grid-area: intake; display: grid; gap: 10px; min-width: 0; }
+  #tenders-body .td-cmd .td-pull-head { gap: 4px 12px; } #tenders-body .td-cmd .td-pull-head h2 { font-size: 1.05rem; margin: 0; }
+  #tenders-body .td-cmd .td-mail-drop { margin: 0; padding: 14px 16px; gap: 10px 14px; border: 2px dashed var(--line-strong); border-radius: var(--radius-sm); background: var(--paper); transition: border-color .15s ease, background-color .15s ease; }
+  #tenders-body .td-cmd .td-mail-drop:hover { border-color: var(--accent); }
+  #tenders-body .td-cmd .td-mail-drop.on { border-color: var(--accent); background: var(--accent-wash); }
+  #tenders-body .td-cmd .td-mail-drop > .hint { margin: 0; flex: 1 1 220px; }
+  #tenders-body .td-cmd .an-auto { padding-top: 10px; border-top: 1px solid var(--line); }
+  #tenders-body .td-cmd > .td-drop-any { grid-area: any; margin: 0; font-size: 13px; }
+  #tenders-body .td-cmd-tools { grid-area: tools; display: flex; flex-direction: column; align-items: stretch; gap: 8px; min-width: 0; }
+  #tenders-body .td-cmd .td-radar-line { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin: 0; }
+  #tenders-body .td-cmd .td-radar-line .btn { justify-content: center; } #tenders-body .td-cmd .td-radar-line .hint { margin: 0; font-size: 12.5px; text-align: center; }
+  #tenders-body .td-cmd-status { grid-area: status; display: grid; gap: 8px; } #tenders-body .td-cmd-status:empty { display: none; }
+  #tenders-body .td-cmd-status > * { margin: 0; }
+  /* «More»: a menu that opens over the page; on an empty register the same ways sit open in the card */
+  #tenders-body .td-how { position: relative; margin: 0; }
+  #tenders-body .td-how > summary.td-how-btn { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 8px 16px;
+    border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--ink); font-weight: 650; }
+  #tenders-body .td-how > summary.td-how-btn::-webkit-details-marker { display: none; }
+  #tenders-body .td-how > summary.td-how-btn:hover, #tenders-body .td-how[open] > summary.td-how-btn { border-color: var(--accent); background: var(--accent-wash); }
+  #tenders-body .td-how.td-how-inline > summary.td-how-btn { justify-content: flex-start; border-radius: var(--radius-sm); }
+  #tenders-body .td-how:not(.td-how-inline) > .td-how-panel { position: absolute; z-index: 45; top: calc(100% + 8px); inset-inline-end: 0; width: min(640px, calc(100vw - 48px));
+    max-height: min(72vh, 680px); overflow: auto; overscroll-behavior: contain; padding: 16px 18px; background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: 0 26px 64px -22px rgba(8,19,28,.5); animation: tw-in .16s ease-out; }
+  #tenders-body .td-how.td-how-inline > .td-how-panel { padding: 8px 2px 0; }
+  #tenders-body .td-how-h { margin: 0 0 10px; font-size: 1rem; }
+  #tenders-body .td-how-reports { padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px dashed var(--line); } #tenders-body .td-how-reports:empty { display: none; }
+  #tenders-body .td-how-reports h4 { margin: 0 0 8px; font-size: .88rem; color: var(--slate); font-weight: 650; } #tenders-body .td-how-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  /* the summary band: the period's numbers and where its tenders stand */
+  #tenders-body .td-overview { display: grid; gap: 12px; padding: 14px 16px; margin: 0 0 14px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--lift); }
+  #tenders-body .td-overview .km-tiles { grid-auto-rows: minmax(76px, auto); gap: 10px; margin: 0; }
+  #tenders-body .td-overview .km-tile { box-shadow: none; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--paper); }
+  #tenders-body .td-overview .km-tile b { font-size: 1.45rem; }
+  #tenders-body .td-overview .td-pipe { margin: 0; padding: 2px 2px 8px; }
+  #tenders-body .td-overview .td-pipe-node { min-width: 84px; min-height: 54px; padding: 6px 10px; border-radius: 12px; }
+  #tenders-body .td-overview .td-pipe-node b { font-size: 1.15rem; }
+  #tenders-body .td-overview .td-kpis { margin: 0; }
+  /* the list: its period, search and exports on one bar; a row per tender with its stage marked on its edge */
+  #tenders-body .td-listbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 0 0 10px; }
+  #tenders-body .td-listbar .td-filter { margin: 0; flex: 1 1 auto; } #tenders-body .td-list-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+  #tenders-body .table-wrap:has(> .td-table) { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--lift); }
+  #tenders-body .td-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  #tenders-body .td-table thead th { padding: 10px 12px; font-size: 12.5px; font-weight: 650; color: var(--slate); text-align: start; background: var(--paper); border-bottom: 1px solid var(--line); }
+  #tenders-body .td-table thead th:first-child { border-start-start-radius: var(--radius); } #tenders-body .td-table thead th:last-child { border-start-end-radius: var(--radius); }
+  #tenders-body .td-table tbody tr.td-row > td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: middle; transition: background-color .12s ease; }
+  #tenders-body .td-table tbody tr.td-row:last-child > td { border-bottom: 0; }
+  #tenders-body .td-table tr.td-row:hover > td, #tenders-body .td-table tr.td-row:focus-visible > td { background: var(--accent-wash); }
+  #tenders-body .td-table tr.td-row > td:first-child { border-inline-start: 4px solid var(--line-strong); }
+  #tenders-body .td-table tr.td-row:is([data-stage="received"], [data-stage="screen"], [data-stage="decide"]) > td:first-child { border-inline-start-color: var(--sig); }
+  #tenders-body .td-table tr.td-row:is([data-stage="prep"], [data-stage="ready"], [data-stage="submitted"]) > td:first-child { border-inline-start-color: var(--accent); }
+  #tenders-body .td-table tr.td-row[data-stage="won"] > td:first-child { border-inline-start-color: var(--ok); }
+  #tenders-body .td-table tr.td-row:is([data-stage="lost"], [data-stage="missed"]) > td:first-child { border-inline-start-color: var(--fail); }
+  #tenders-body .td-table .td-subj { font-size: 15px; } #tenders-body .td-table .td-row-ent { margin: 2px 0 0; font-size: 13px; }
+  #tenders-body .td-table .td-tog { font-size: 1.1rem; color: var(--accent); }
+  #tenders-body > .mail-src { margin-top: 18px; }
+  @media (max-width: 820px) {
+    #tenders-body .td-cmd { grid-template-columns: minmax(0, 1fr); grid-template-areas: "intake" "any" "tools" "status"; padding: 14px; }
+    #tenders-body .td-cmd-tools, #tenders-body .td-cmd .td-radar-line { flex-direction: row; flex-wrap: wrap; } #tenders-body .td-cmd .td-radar-line .btn { flex: 1 1 160px; }
+    #tenders-body .td-cmd .td-radar-line { flex: 1 1 100%; } #tenders-body .td-cmd .td-radar-line .hint { flex: 1 1 100%; text-align: start; }
+    /* on a narrow screen «More» opens in the card itself, under its button: the page section is animated in, and an animated parent
+       holds a fixed panel inside it, so a sheet pinned to the screen's foot would land below the screen */
+    #tenders-body .td-how { flex: 1 1 100%; }
+    #tenders-body .td-how:not(.td-how-inline) > .td-how-panel { position: static; width: auto; max-height: none; overflow: visible; margin-top: 8px; box-shadow: none; }
+    #tenders-body .td-listbar { align-items: stretch; } #tenders-body .td-list-acts .btn { flex: 1 1 auto; }
+    #tenders-body .td-table tr.td-row > td:first-child { border-inline-start: 0; } #tenders-body .td-table tr.td-row { border-inline-start: 4px solid var(--line-strong); }
+    #tenders-body .td-table tr.td-row:is([data-stage="received"], [data-stage="screen"], [data-stage="decide"]) { border-inline-start-color: var(--sig); }
+    #tenders-body .td-table tr.td-row:is([data-stage="prep"], [data-stage="ready"], [data-stage="submitted"]) { border-inline-start-color: var(--accent); }
+    #tenders-body .td-table tr.td-row[data-stage="won"] { border-inline-start-color: var(--ok); } #tenders-body .td-table tr.td-row:is([data-stage="lost"], [data-stage="missed"]) { border-inline-start-color: var(--fail); }
+    #tenders-body .td-table tbody tr.td-row > td { padding: 0; border-bottom: 0; }
+  }
+  /* one frame for the register's windows: title, tools and «Close» on one pinned row; the window's actions pinned at its foot */
+  @keyframes tw-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  dialog.tw { --tw-pad: 22px; padding: 0 var(--tw-pad) 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); color: var(--text); box-shadow: 0 30px 80px -26px rgba(8,19,28,.6);
+    scroll-padding-top: calc(var(--tw-head-h, 0px) + 10px); scroll-padding-bottom: calc(var(--tw-foot-h, 0px) + 10px); }
+  dialog.tw[open] { animation: tw-in .18s ease-out; }
+  @media (min-width: 641px) {
+    dialog.tw.tw-sm[open] { width: min(560px, calc(100% - 32px)); max-width: 560px; }
+    dialog.tw.tw-md[open] { width: min(920px, calc(100% - 32px)); max-width: 920px; }
+    dialog.tw.tw-lg[open] { width: min(1140px, calc(100% - 32px)); max-width: 1140px; }
+  }
+  /* a grid, not a wrapping row: a long title takes its own column and wraps inside it, so «Close» never drops under it */
+  dialog.tw > .tw-head { position: sticky; top: 0; z-index: 20; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: start; gap: 10px 14px;
+    margin: 0 calc(-1 * var(--tw-pad)) 16px; padding: 16px var(--tw-pad) 14px; background: var(--card); border-bottom: 1px solid var(--line); }
+  dialog.tw > .tw-head .tw-titles { grid-column: 1; grid-row: 1; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; } dialog.tw > .tw-head .tw-titles > * { min-width: 0; }
+  dialog.tw > .tw-head h2 { margin: 0; font-size: 1.14rem; line-height: 1.45; color: var(--title); overflow-wrap: anywhere; }
+  dialog.tw > .tw-head .tw-tools { grid-column: 2; grid-row: 1; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; align-items: center; }
+  dialog.tw > .tw-head .tw-tools > .row { margin: 0; flex-wrap: wrap; gap: 8px; }
+  dialog.tw > .tw-head .dlg-x { grid-column: 3; grid-row: 1; min-height: 36px; padding: 6px 14px; margin: 0; }
+  dialog.tw > p.hint:first-of-type { margin-top: 0; }
+  dialog.tw .tw-foot { position: sticky; bottom: -20px; z-index: 15; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 18px calc(-1 * var(--tw-pad)) -20px; padding: 12px var(--tw-pad) 14px;
+    background: var(--card); border-top: 1px solid var(--line); }
+  dialog.tw.proj-edit textarea, dialog.tw .td-paste-ta { width: 100%; min-height: 200px; }
+  /* a list of long tender names keeps to the window's width: the names are read in the open list, not by widening the window */
+  dialog.tw .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } dialog.tw .form-grid > label { min-width: 0; }
+  dialog.tw .form-grid select, dialog.tw .form-grid input:not([type=checkbox]):not([type=radio]) { width: 100%; min-width: 0; max-width: 100%; }
+  @media (max-width: 640px) { dialog.tw { --tw-pad: 14px; } dialog.tw > .tw-head { grid-template-columns: minmax(0, 1fr) auto; }
+    dialog.tw > .tw-head .tw-tools { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; } dialog.tw > .tw-head .dlg-x { grid-column: 2; } }
+  /* the tender card in that frame: title, stage, first arrival and who it is for pinned; what can be done first */
+  dialog.td-dlg .td-dlg-head .td-dlg-h { font-size: 1.16rem; margin: 0; }
+  dialog.td-dlg .td-dlg-head .td-dlg-top { margin: 0; gap: 8px 10px; align-items: center; flex-wrap: wrap; }
+  dialog.td-dlg .td-dlg-head .td-stage { min-height: 34px; border-radius: 999px; font-weight: 700; border-color: var(--accent); }
+  dialog.td-dlg .td-dlg-head .td-dlg-first { margin: 0; font-size: 13px; }
+  dialog.td-dlg .td-dlg-head .td-card-chips { margin: 0; gap: 6px; }
+  dialog.td-dlg .td-card { padding: 0; }
+  dialog.td-dlg .td-card > .td-card-acts { gap: 8px; padding: 0 0 14px; margin: 0 0 14px; border-bottom: 1px dashed var(--line); }
+  dialog.td-dlg .td-card .td-box { border-radius: var(--radius-sm); padding: 14px 16px; background: var(--card); }
+  dialog.td-dlg .td-card .td-tile { border-radius: var(--radius-sm); background: var(--paper); }
+  dialog.td-dlg .td-card .td-tl-box { background: var(--paper); }
+  dialog.td-dlg .td-card .td-fold { border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--paper); }
+  dialog.td-dlg .td-card .td-fold > summary { font-weight: 650; cursor: pointer; }
+  dialog.td-dlg .td-card .td-fold[open] { background: var(--card); }
+  dialog.td-dlg .td-dlg-head .td-card-chips .chip { font-size: 13px; font-weight: 600; padding: 3px 10px; min-height: 0; }
+  dialog.td-dlg .td-card > .td-card-acts .td-card-from { font-size: 12.5px; }
+  /* on a phone the pinned head stays short: smaller chips that wrap — nothing slides sideways out of reach of the keyboard */
+  @media (max-width: 640px) {
+    dialog.td-dlg .td-dlg-head .td-dlg-h { font-size: 1.04rem; }
+    dialog.td-dlg .td-dlg-head .td-dlg-top { gap: 6px 10px; }
+    dialog.td-dlg .td-dlg-head .td-dlg-first { font-size: 12.5px; }
+    dialog.td-dlg .td-dlg-head .td-card-chips { flex: 1 1 100%; gap: 4px 6px; }
+    dialog.td-dlg .td-dlg-head .td-card-chips .chip { font-size: 12px; padding: 2px 8px; max-width: 100%; overflow-wrap: anywhere; }
+  }
+  #tenders-body .td-listbar .td-file-controls { margin: 0; flex-wrap: nowrap; gap: 6px; } #tenders-body .td-listbar .td-search { min-width: 200px; }
+  #tenders-body .td-listbar .td-file-controls > :not(input) { flex: 0 0 auto; white-space: nowrap; }
+  dialog.mk-modal.tw > .tw-head { margin-bottom: 8px; padding-block: 12px; } dialog.mk-modal.tw { padding-bottom: 12px; }
+  @media (max-width: 640px) { #tenders-body .td-listbar .td-file-controls { flex: 1 1 100%; } #tenders-body .td-listbar .td-search { min-width: 0; flex: 1 1 auto; } }
+  @media (prefers-reduced-motion: reduce) { dialog.tw[open], #tenders-body .td-how:not(.td-how-inline) > .td-how-panel { animation: none; } #tenders-body .td-table tbody tr.td-row > td { transition: none; } }
 </style>
 </head>
 <body>

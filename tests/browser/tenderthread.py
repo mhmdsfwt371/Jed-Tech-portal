@@ -57,6 +57,9 @@ def open_tender(pg):
 # v9.58: the card shows the latest messages; «The whole timeline» opens the conversation's fold
 def all_msgs(pg):
     if not pg.evaluate("!!document.querySelector('dialog.td-dlg .td-thread[open]')"): pg.locator('dialog.td-dlg .td-card-all').click(); pg.wait_for_timeout(600)
+def more(pg):   # v9.74: the period's reports sit in the page's «More» menu; open it as a person would, once
+    if not pg.evaluate("()=>{const d=document.querySelector('#tenders-body details.td-how');return !d||d.open}"):
+        pg.locator('#tenders-body details.td-how > summary').click(); pg.wait_for_timeout(300)
 with sync_playwright() as p:
     b=p.chromium.launch(); c=b.new_context(viewport={'width':1366,'height':900}, service_workers='block'); c.grant_permissions(['clipboard-read','clipboard-write'])
     pg=c.new_page(); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)[:200]))
@@ -103,7 +106,7 @@ with sync_playwright() as p:
     check('C14 reading the saved mail again finds nothing new and writes no history line', t and len(t['entries'])==3 and hist==0, hist)
     pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
     # the summary window
-    pg.locator('#tenders-body .td-sum-btn').click(); pg.wait_for_timeout(700)
+    more(pg); pg.locator('#tenders-body .td-sum-btn').click(); pg.wait_for_timeout(700)
     s=pg.evaluate("()=>{const d=document.querySelector('dialog.cr-modal');if(!d||!d.open)return null;return {h:d.querySelector('h2').textContent,head:[...d.querySelectorAll('thead th')].map(x=>x.textContent),rows:[...d.querySelectorAll('tbody tr')].map(r=>[...r.children].map(x=>x.textContent)),tiles:[...d.querySelectorAll('.km-tile')].map(x=>x.querySelector('b').textContent+' '+x.querySelector('span').textContent),wide:d.scrollWidth>d.clientWidth+1||d.querySelector('.crm-list').scrollWidth>d.querySelector('.crm-list').clientWidth+1,last:d.querySelector('tbody tr').lastElementChild.getBoundingClientRect().left>=d.getBoundingClientRect().left}}")
     check('C15 «Correspondence summary» opens one row for the tender with the same facts', s and s['h']=='Tender correspondence summary' and len(s['rows'])==1 and len(s['head'])==5 and 'Level sensors' in s['rows'][0][0] and '09:15' in s['rows'][0][1] and 'working days: 6' in s['rows'][0][2] and s['rows'][0][3].startswith('3 · ') and '2 d 15 h before the deadline' in s['rows'][0][4], s)
     check('C16 its tiles count the tenders, the messages and the marked hand-overs; six working days is not «less than a working week»', s and s['tiles'][0].startswith('1 ') and s['tiles'][1].startswith('3 ') and s['tiles'][2].startswith('0 ') and s['tiles'][3].startswith('1 '), s and s['tiles'])
@@ -117,7 +120,7 @@ with sync_playwright() as p:
         dirn=pg.evaluate("()=>getComputedStyle(document.querySelector('dialog.td-dlg .td-thr-sum')).direction")
         check(f'C18[{lg}] the panel is written in the language, right to left, with no raw key and Latin digits in its times', t and len(t['entries'])==3 and not raw and dirn=='rtl' and '2026' in t['entries'][0]['when'] and '(3)' in t['head'], (raw,dirn,t and t['entries'][0]['when']))
         pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
-        pg.locator('#tenders-body .td-sum-btn').click(); pg.wait_for_timeout(600)
+        more(pg); pg.locator('#tenders-body .td-sum-btn').click(); pg.wait_for_timeout(600)
         raw2=pg.evaluate("()=>{const d=document.querySelector('dialog.cr-modal');return d?/td_thr_|td_sum_/.test(d.textContent):true}")
         check(f'C19[{lg}] and so is the summary window', not raw2, raw2)
         pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
@@ -129,7 +132,7 @@ with sync_playwright() as p:
         if os.path.exists(AXE):
             pg.add_script_tag(path=AXE); reach(pg, pg.locator('dialog.td-dlg .td-thr-entry').nth(2).locator('.td-thr-mark')); v=pg.evaluate(SCAN)
             check(f'C20b[{theme}] the WCAG 2.1 A and AA scan passes in the tender’s window, on the page that holds the conversation', not v, v[:3])
-            pg.keyboard.press('Escape'); pg.wait_for_timeout(300); pg.locator('#tenders-body .td-sum-btn').click(); pg.wait_for_timeout(600); v=pg.evaluate(SCAN)
+            pg.keyboard.press('Escape'); pg.wait_for_timeout(300); more(pg); pg.locator('#tenders-body .td-sum-btn').click(); pg.wait_for_timeout(600); v=pg.evaluate(SCAN)
             check(f'C20c[{theme}] and in the summary window', not v, v[:3])
         else: print('NOTE  the accessibility scan was skipped: run npm ci, or set AXE_JS to axe.min.js')
         pg.keyboard.press('Escape'); pg.wait_for_timeout(300); pg.locator('#theme-btn').click(); pg.wait_for_timeout(400)
@@ -149,7 +152,7 @@ with sync_playwright() as p:
     q.locator('dialog.td-dlg .td-thr-entry').nth(1).locator('.td-thr-mark').click(); q.wait_for_timeout(900)
     on=q.evaluate("()=>[...document.querySelectorAll('dialog.td-dlg .td-thr-entry')].map(e=>e.classList.contains('td-thr-on'))")
     check('C23 and a message can be marked there', on==[False,True,False], on)
-    q.keyboard.press('Escape'); q.wait_for_timeout(300); q.locator('#tenders-body .td-sum-btn').scroll_into_view_if_needed(); q.locator('#tenders-body .td-sum-btn').click(); q.wait_for_timeout(700)
+    q.keyboard.press('Escape'); q.wait_for_timeout(300); more(q); q.locator('#tenders-body .td-sum-btn').scroll_into_view_if_needed(); q.locator('#tenders-body .td-sum-btn').click(); q.wait_for_timeout(700)
     ps=q.evaluate("()=>{const d=document.querySelector('dialog.cr-modal');if(!d||!d.open)return null;const r=d.getBoundingClientRect(),l=d.querySelector('.crm-list');return {fits:r.left>=-1&&r.right<=innerWidth+1,page:document.documentElement.scrollWidth>innerWidth+1,rows:d.querySelectorAll('tbody tr').length,reach:l.tabIndex===0||l.scrollWidth<=l.clientWidth+1}}")
     check('C25 the summary window fits the phone; its table scrolls inside its own box and can be reached from the keyboard', ps and ps['fits'] and not ps['page'] and ps['rows']==1 and ps['reach'], ps)
     check('C24 no page error on the phone', not perr, perr[:2])
