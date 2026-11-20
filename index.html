@@ -1569,6 +1569,9 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
     dialog.td-dlg .td-dlg-head .td-dlg-h { font-size: 1.04rem; }
     dialog.td-dlg .td-dlg-head .td-dlg-top { gap: 6px 10px; }
     dialog.td-dlg .td-dlg-head .td-dlg-first { font-size: 12.5px; }
+    /* the stage and the chips take the head's whole width under the title and «Close», not the title's narrow column */
+    dialog.td-dlg > .tw-head .tw-titles { display: contents; } dialog.td-dlg > .tw-head .td-dlg-h { grid-column: 1; grid-row: 1; }
+    dialog.td-dlg > .tw-head .td-dlg-top { grid-column: 1 / -1; grid-row: 2; }
     dialog.td-dlg .td-dlg-head .td-card-chips { flex: 1 1 100%; gap: 4px 6px; }
     dialog.td-dlg .td-dlg-head .td-card-chips .chip { font-size: 12px; padding: 2px 8px; max-width: 100%; overflow-wrap: anywhere; }
   }
@@ -1576,6 +1579,17 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   #tenders-body .td-listbar .td-file-controls > :not(input) { flex: 0 0 auto; white-space: nowrap; }
   dialog.mk-modal.tw > .tw-head { margin-bottom: 8px; padding-block: 12px; } dialog.mk-modal.tw { padding-bottom: 12px; }
   @media (max-width: 640px) { #tenders-body .td-listbar .td-file-controls { flex: 1 1 100%; } #tenders-body .td-listbar .td-search { min-width: 0; flex: 1 1 auto; } }
+  /* v9.75 (ADR-0145): the tender mail folder — under the mail drop, a line that says what was read and when */
+  #tenders-body .td-dir { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--line); } #tenders-body .td-dir:empty { display: none; }
+  #tenders-body .td-dir .md-row { margin: 0; gap: 8px; align-items: center; flex-wrap: wrap; }
+  #tenders-body .td-dir .md-name { font-weight: 650; max-width: 100%; overflow-wrap: anywhere; }
+  #tenders-body .td-dir .hint { margin: 0; } #tenders-body .td-dir .md-err { color: var(--fail); font-weight: 650; }
+  #tenders-body .td-dir .md-ask { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--sig); border-radius: var(--radius-sm); background: var(--paper); }
+  #tenders-body .td-dir .md-ask p { margin: 0; } #tenders-body .td-dir .md-ask .row { margin: 0; gap: 8px; }
+  dialog.md-how .md-steps { margin: 6px 0 12px; padding-inline-start: 22px; display: grid; gap: 8px; line-height: 1.7; }
+  dialog.md-how .md-name-h { margin: 0 0 6px; font-weight: 650; }
+  dialog.md-how .md-code { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--paper); color: var(--ink);
+    font: 13px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; text-align: left; }
   @media (prefers-reduced-motion: reduce) { dialog.tw[open], #tenders-body .td-how:not(.td-how-inline) > .td-how-panel { animation: none; } #tenders-body .td-table tbody tr.td-row > td { transition: none; } }
 </style>
 </head>

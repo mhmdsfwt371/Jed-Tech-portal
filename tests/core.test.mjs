@@ -2187,6 +2187,23 @@ test('v9.73: a tender\'s dates, the internal ones included, come out as one agen
   for (const lang of ['ar', 'en', 'ur']) for (const k of ['td_col_askUp', 'td_col_bondCost', 'ag_h', 'ag_empty', 'ag_today', 'ag_tomorrow', 'ag_late', 'ag_bell', 'ag_bell_on', 'ag_bell_note', 'ag_bell_denied', 'ag_ics', 'ag_notice', 'ag_days'])
     assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
 });
+// v9.75 (ADR-0145): Power Automate saves each tender mail as a file in a folder synced to the computer; the register reads that
+// folder. Which files are new is decided here: mails only, never a hidden or half-written one, oldest first, a few at a time.
+test('v9.75: the mail folder gives the register only new mails, oldest first, a few at a time', () => {
+  const names = ['2026-11-21_090500_b.eml', '2026-11-20_181500_a.EML', 'desktop.ini', '~$draft.msg', '.sync.eml', 'old-tender.msg', 'x.eml.tmp', 'notes.txt', '2026-11-21_101000_c.eml'];
+  const r = core.mailDirNew(names, ['old-tender.msg'], 2);
+  assert.deepEqual(r.fresh, ['2026-11-20_181500_a.EML', '2026-11-21_090500_b.eml'], 'mails only, the flow\'s names sort oldest first, two at a time');
+  assert.equal(r.waiting, 1, 'the third new mail waits for the next round');
+  assert.equal(r.mails, 4, 'four mails in the folder: no hidden file, no temporary one, no other kind');
+  assert.deepEqual(core.mailDirNew(names, [...names], 10).fresh, [], 'everything seen: nothing to read');
+  assert.deepEqual(core.mailDirNew(null, null).fresh, [], 'an empty folder');
+  assert.equal(core.mailDirNew(names, []).fresh.length, 4, 'ten at a time by default');
+  assert.deepEqual(core.mailDirSeen(['gone.eml', 'old-tender.msg'], names, ['2026-11-21_090500_b.eml', '2026-11-21_090500_b.eml']),
+    ['old-tender.msg', '2026-11-21_090500_b.eml'], 'what left the folder is forgotten, what was read is kept, once');
+  assert.equal(core.MAILDIR_ASK, 25, 'a folder that already holds more mails than this asks before it reads them all');
+  for (const lang of ['ar', 'en', 'ur']) for (const k of ['md_connect', 'md_how', 'md_allow', 'md_read', 'md_off', 'md_on', 'md_last', 'md_none', 'md_new', 'md_wait', 'md_ask', 'md_ask_all', 'md_ask_new', 'md_hint', 'md_allow_hint', 'md_lost', 'md_unsupported', 'md_done', 'md_h', 'md_lead', 'md_s1', 'md_s2', 'md_s3', 'md_s4', 'md_s5', 'md_s6', 'md_s7', 'md_note', 'md_name_h', 'md_copy', 'md_copied', 'md_private', 'an_auto_on_closed'])
+    assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
+});
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

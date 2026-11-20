@@ -3285,6 +3285,26 @@ export function tenderNotices(agenda, seen) {
   const said = new Set(Array.isArray(seen) ? seen : []);
   return (Array.isArray(agenda) ? agenda : []).filter((x) => x.left <= 1 && !said.has(tenderNoticeId(x)));
 }
+
+// ---------- v9.75 (ADR-0145): the tender mail folder ----------
+// Power Automate saves every tender mail as a file in a folder that OneDrive keeps on the computer; the register reads that folder
+// (read only) while the page is open. The flow names each file by the time the mail arrived, so the names sort oldest first.
+/** A folder that already holds more mails than this when it is connected asks before reading them all. */
+export const MAILDIR_ASK = 25;
+const MAILDIR_MAIL = /\.(eml|msg)$/i, MAILDIR_SKIP = /^(~\$|\.)/;   // Office's lock files and hidden files are never mails
+/** Which files of the folder are new mails: oldest first, at most `max` this round; how many wait; how many mails it holds. */
+export function mailDirNew(names, seen, max = 10) {
+  const known = new Set(Array.isArray(seen) ? seen : []);
+  const mails = (Array.isArray(names) ? names : []).filter((n) => typeof n === 'string' && MAILDIR_MAIL.test(n) && !MAILDIR_SKIP.test(n));
+  const fresh = mails.filter((n) => !known.has(n)).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  return { fresh: fresh.slice(0, max), waiting: Math.max(0, fresh.length - max), mails: mails.length };
+}
+/** The names to remember as read: those still in the folder, and those just read — each once. A name the folder no longer has is
+ * forgotten, so the list never outgrows the folder. */
+export function mailDirSeen(seen, names, done) {
+  const here = new Set(Array.isArray(names) ? names : []);
+  return [...new Set([...(Array.isArray(seen) ? seen : []).filter((n) => here.has(n)), ...(Array.isArray(done) ? done : [])])];
+}
 /** When the offer was handed over: the message the manager marked as the hand-over, else the day it was marked ready. Never guessed. */
 export function tenderHandedAt(item) {
   const marked = (Array.isArray(item && item.thread) ? item.thread : []).filter((e) => e && e.mark === 'handover' && e.at).at(-1);

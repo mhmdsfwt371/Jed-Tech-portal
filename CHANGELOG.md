@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.75 — 2026-11-21
+
+- إيميلات المناقصات تدخل السجل وحدها: يحفظ Power Automate كل إيميل مناقصة يصل ملفًا في فولدر على OneDrive، و«اربط فولدر الإيميلات» في بطاقة «اسحب المناقصات» يجعل البوابة تقرؤه وحدها وهي مفتوحة وتسجّل المناقصة. «إزاي؟» يعرض خطوات الـ Flow: نحو خمس دقائق، دون صلاحية أدمن، ولا يخرج شيء من جهازك.
+- حين لا يرد محلل المناقصات وأنت تفعّل خانة «ادرس كل مناقصة جديدة بالمحلل»، صارت الرسالة تقول ما تفعل: افتح المحلل (run.bat) واتركه مفتوحًا ثم فعّل الخانة، واسمح لكروم إن سألك — بدل رسالة «لم تبدأ الدراسة».
+- على الجوال صار رأس بطاقة المناقصة أقصر: المرحلة والجهة ورقم اعتماد تأخذ عرض البطاقة كله تحت العنوان.
+
+<details><summary>English</summary>
+
+- Tender mails reach the register by themselves: Power Automate saves every tender mail that arrives as a file in a OneDrive folder, and «Connect the mail folder» on the «Pull tenders» card has the portal read it by itself while it is open and register the tender. «How?» shows the flow's steps: about five minutes, no admin rights, and nothing leaves your computer.
+- When the Tender Analyzer does not answer as you turn on «Study every new tender with the Analyzer», the message now says what to do: open the Analyzer (run.bat), leave it open, turn the box on, and allow Chrome if it asks — instead of «the study did not start».
+- On a phone the tender card's head is shorter: the stage, the entity and the Etimad number take the card's whole width under the title.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹینڈر ای میلیں خود رجسٹر تک پہنچتی ہیں: Power Automate ہر آنے والی ٹینڈر ای میل کو OneDrive کے ایک فولڈر میں فائل کے طور پر محفوظ کرتا ہے، اور «ٹینڈر لائیں» کارڈ پر «ای میل فولڈر جوڑیں» سے پورٹل کھلا ہو تو اسے خود پڑھتا ہے اور ٹینڈر درج کرتا ہے۔ «کیسے؟» فلو کے مراحل دکھاتا ہے: تقریباً پانچ منٹ، ایڈمن اجازت کے بغیر، اور آپ کے کمپیوٹر سے کچھ باہر نہیں جاتا۔
+- جب آپ «ہر نئے ٹینڈر کا اندراج ہوتے ہی تجزیہ کار سے مطالعہ کریں» فعال کریں اور ٹینڈر تجزیہ کار جواب نہ دے، تو پیغام اب بتاتا ہے کہ کیا کرنا ہے: تجزیہ کار (run.bat) کھولیں، اسے کھلا رہنے دیں، خانہ فعال کریں، اور اگر Chrome پوچھے تو اجازت دیں — «مطالعہ شروع نہیں ہوا» کے بجائے۔
+- فون پر ٹینڈر کارڈ کا سر چھوٹا ہو گیا ہے: مرحلہ، ادارہ اور اعتماد نمبر عنوان کے نیچے کارڈ کی پوری چوڑائی لیتے ہیں۔
+
+</div>
+</details>
+
+
 ## v9.74 — 2026-11-20
 
 - صفحة سجل المناقصات بتصميم جديد يمشي بترتيب الشغل: أولًا بطاقة «اسحب المناقصات» تُسقط فيها الإيميل أو أي ملف وبجانبها رادار اعتماد وتحليل السوق، ثم «المواعيد القادمة»، ثم الأرقام ومراحل المناقصات، ثم القائمة.

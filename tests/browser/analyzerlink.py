@@ -175,7 +175,7 @@ with sync_playwright() as p:
     c5,w,e5=boot(b); sw=w.locator('#tenders-body .an-auto-box'); note=lambda: w.locator('#tenders-body .an-auto p').inner_text()
     check('B1 the register\'s mail box carries one switch, off, that says what one step means', sw.count()==1 and not sw.is_checked() and 'One step' in note(), note()[:80])
     sw.check(); w.wait_for_timeout(1500); sw=w.locator('#tenders-body .an-auto-box')
-    check('B2 the program does not answer: the switch stays off and the page says why', not sw.is_checked() and w.locator('#toast', has_text='not answering').count()>=1, note()[:80])
+    check('B2 the program does not answer: the switch stays off and the page says why and what to do — not «the study did not start» (v9.75)', not sw.is_checked() and w.locator('#toast', has_text='so the box was not turned on').count()>=1 and w.locator('#toast', has_text='run.bat').count()>=1, w.locator('#toast').inner_text()[:120])
     prog=start_program(); ST.update(engine='local', job=None, state='waiting', files={}, need=3)
     sw.check(); until(w, lambda: w.locator('#tenders-body .an-auto-box').is_checked() and 'does not leave it' in note(), 8)
     check('B3 turned on in front of the program: the note names where the text stays', w.locator('#tenders-body .an-auto-box').is_checked() and 'does not leave it' in note() and w.locator('#tenders-body .an-auto .an-cloud').count()==0, note()[:90])

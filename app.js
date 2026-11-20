@@ -19,7 +19,7 @@ import {
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
   mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts,
-  TENDER_HANDOVER_DAYS, tenderMilestones, tenderAgenda, tenderNotices, tenderNoticeId, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
+  TENDER_HANDOVER_DAYS, tenderMilestones, tenderAgenda, tenderNotices, tenderNoticeId, MAILDIR_ASK, mailDirNew, mailDirSeen, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
 
 import { validateSystems } from './systems-core.js';
 
@@ -1604,7 +1604,7 @@ function anAutoSwitch() {
     if (!want) { pref(AN_AUTO, JSON.stringify({ on: false, engine: 'local' })); renderTenders(); return; }
     e.target.disabled = true;
     const hello = await anHello();   // turned on only in front of the program: its answer is the place the user agrees to
-    if (!hello) { toast(t('an_auto_closed')); renderTenders(); return; }
+    if (!hello) { toast(t('an_auto_on_closed')); renderTenders(); return; }   // v9.75: what to do to turn it on, not «the study did not start»
     pref(AN_AUTO, JSON.stringify({ on: true, engine: cleanAnalyzerAuto({ on: true, engine: hello.engine }).engine })); renderTenders();
   } });
   return el('div', { class: 'an-auto' }, el('label', { class: 'an-auto-l' }, box, el('span', { text: t('an_auto') })),
@@ -1684,8 +1684,8 @@ async function tdAnalyzeFiles(id, ids) {
   } catch { toast(t('td_doc_error')); }
   finally { tdBusy = ''; renderTenders(); }
 }
-async function tdImportEmails(files, id = '') {
-  if (tdBusy || !files.length) return;
+async function tdImportEmails(files, id = '', { quiet = false } = {}) {   // quiet (v9.75): read from the mail folder — nothing opens, the period shown stays
+  if (tdBusy || !files.length) return null;
   const imported = [], fresh = [];
   let added = 0, linked = 0, skipped = 0, failed = 0, warnings = 0;
   const failures = [];
@@ -1745,7 +1745,7 @@ async function tdImportEmails(files, id = '') {
   } finally {
     tdBusy = '';
   }
-  if (imported.length) {
+  if (imported.length && !quiet) {
     const last = tenders.items.find((row) => row.id === imported.at(-1));
     tdOpenId = last.id;
     tdPick = tdPeriodOf(last.date, tdKind);
@@ -1759,6 +1759,7 @@ async function tdImportEmails(files, id = '') {
     await tdAnalyzeFiles(tenderId, (item.files || []).filter(file => file.kind !== 'original' && !file.analysis).map(file => file.id));
   }
   void anAutoRun([...new Set(fresh)]);
+  return { a: added, l: linked, s: skipped, f: failed };
 }
 function tdEmailPicker(id = '') {
   const input = el('input', { type: 'file', accept: '.msg,.eml', multiple: '', hidden: true, onchange: async (event) => {
@@ -1778,6 +1779,111 @@ function tdEmailPicker(id = '') {
     text: t(id ? 'td_mail_link' : 'td_mail_import'), onclick: () => input.click() }), input,
   el('span', { class: 'hint', text: t('td_mail_hint') }), id ? null : anAutoSwitch());
   return drop;
+}
+// ---------- v9.75 (ADR-0145): the tender mail folder ----------
+// Power Automate saves every tender mail that arrives as a file (eml) in a OneDrive folder kept on this computer. The manager
+// connects that folder once; the page reads it — read only — every minute while it is open and whenever he comes back to it,
+// and registers what is new exactly as a dropped mail (and studies it when the one-step switch is on, ADR-0142). The folder's
+// handle stays in this browser's storage and is never in the backup; no file leaves the computer.
+const MD_KEY = 'tdmaildir', MD_EVERY = 60000, MD_BATCH = 10;
+const MD_FLOW_NAME = "concat(formatDateTime(triggerOutputs()?['body/receivedDateTime'],'yyyy-MM-dd_HHmmss'),'_',guid(),'.eml')";
+let mdRec = null, mdTimer = 0, mdLoaded = false, mdBox = null;   // mdRec: { handle, name, seen: [], at, first, keep }
+let mdState = { perm: '', busy: false, last: '', got: 0, waiting: 0, ask: 0, names: [], error: '' };
+const mdCan = () => typeof window.showDirectoryPicker === 'function';
+// A private (incognito) window keeps the folder for the visit only: in Chromium's own test browser, a folder kept by such a window
+// and read back closed the whole browser. It is told apart as the usual check does — its storage quota is well under twice the
+// script heap, where a normal window's is a share of the disk.
+async function mdKeepable() {
+  try { const e = await navigator.storage.estimate(), heap = (performance.memory && performance.memory.jsHeapSizeLimit) || 1073741824;
+    return !(e && typeof e.quota === 'number' && e.quota < 2 * heap); } catch { return true; }
+}
+async function mdSave() { if (mdRec && mdRec.keep) await store.kvPut(MD_KEY, mdRec); }   // kept in this browser only — never in the backup
+async function mdLoad() {
+  if (mdLoaded || isTeamPortal || !mdCan()) return; mdLoaded = true;
+  const rec = await store.kvGet(MD_KEY); if (!rec || !rec.handle) return;
+  mdRec = { seen: [], first: false, ...rec, keep: true }; await mdCheck(false);
+}
+// what the browser allows now; with «ask» (a press of «Allow») it asks — once per visit until «Allow on every visit» is chosen
+async function mdCheck(ask) {
+  if (!mdRec) return;
+  try { let p = await mdRec.handle.queryPermission({ mode: 'read' }); if (p !== 'granted' && ask) p = await mdRec.handle.requestPermission({ mode: 'read' }); mdState.perm = p; }
+  catch { mdState.perm = 'prompt'; }
+  if (mdState.perm === 'granted') { mdArm(); await mdScan(); } else mdDraw();
+}
+function mdArm() { clearInterval(mdTimer); mdTimer = setInterval(() => { if (!document.hidden) void mdScan(); }, MD_EVERY); }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && mdRec && mdState.perm === 'granted') void mdScan(); });
+async function mdConnect() {
+  let h; try { h = await window.showDirectoryPicker({ id: 'afaqy-tender-mail', mode: 'read' }); }
+  catch (e) { if (!e || e.name !== 'AbortError') toast(t('md_lost')); return; }
+  mdRec = { handle: h, name: h.name, seen: [], at: '', first: true, keep: await mdKeepable() };
+  mdState = { ...mdState, perm: 'granted', error: '', ask: 0, last: '', got: 0, waiting: 0 };
+  await mdSave(); mdArm(); await mdScan();
+}
+async function mdOff() { clearInterval(mdTimer); mdRec = null; mdState = { perm: '', busy: false, last: '', got: 0, waiting: 0, ask: 0, names: [], error: '' }; await store.kvPut(MD_KEY, null); mdDraw(); }
+// one round: list the folder, read what is new (ten at a time), hand it to the register; what could not be read yet (OneDrive is
+// still bringing it down) is tried again next round, and a folder that already holds many mails asks once before reading them all
+async function mdScan(all = false) {
+  if (!mdRec || mdState.busy || mdState.perm !== 'granted') return;
+  if (tdBusy) { setTimeout(() => { void mdScan(all); }, 3000); return; }
+  mdState.busy = true; mdDraw();
+  let again = false;
+  try {
+    const names = [], handles = new Map();
+    for await (const h of mdRec.handle.values()) if (h.kind === 'file') { names.push(h.name); handles.set(h.name, h); }
+    const { fresh, waiting, mails } = mailDirNew(names, mdRec.seen, MD_BATCH);
+    if (mdRec.first && !all && !mdRec.seen.length && mails > MAILDIR_ASK) { mdState = { ...mdState, ask: mails, names }; return; }
+    const read = [];
+    for (const n of fresh) {
+      try { const f = await handles.get(n).getFile(); if (!f.size) continue; read.push([n, new File([await f.arrayBuffer()], n, { type: f.type || 'message/rfc822', lastModified: f.lastModified })]); }
+      catch { /* not on the computer yet: next round */ }
+    }
+    const res = read.length ? await tdImportEmails(read.map(([, f]) => f), '', { quiet: true }) : null;
+    if (read.length && !res) { again = true; return; }   // the register was busy with something else: nothing was read
+    mdRec = { ...mdRec, first: false, seen: mailDirSeen(mdRec.seen, names, read.map(([n]) => n)), at: tdNowWall() };
+    mdState = { ...mdState, last: mdRec.at, got: read.length, waiting: waiting + fresh.length - read.length, ask: 0, names: [], error: '' };
+    await mdSave();
+    if (res && (res.a || res.l)) toast(t('md_done', { a: res.a, l: res.l }));
+    again = waiting > 0;
+  } catch (e) {
+    mdState.error = 'lost'; if (e && e.name === 'NotAllowedError') mdState.perm = 'prompt';
+  } finally { mdState.busy = false; mdDraw(); }
+  if (again) setTimeout(() => { void mdScan(true); }, 1500);
+}
+async function mdFromNow() {   // the mails already in the folder are taken as read: only what arrives from now on is registered
+  mdRec = { ...mdRec, first: false, seen: mailDirSeen([], mdState.names, mailDirNew(mdState.names, [], 1e9).fresh), at: tdNowWall() };
+  mdState = { ...mdState, ask: 0, names: [], last: mdRec.at, got: 0, waiting: 0 }; await mdSave(); mdDraw();
+}
+function mdRow() {
+  if (isTeamPortal) return [];
+  const how = el('button', { type: 'button', class: 'btn tiny quiet md-how-btn', text: `؟ ${t('md_how')}`, onclick: mdHow });
+  if (!mdCan()) return matchMedia('(pointer: coarse)').matches ? [] : [el('p', { class: 'hint md-un', text: t('md_unsupported') })];
+  if (!mdRec) return [el('div', { class: 'row md-row' }, el('button', { type: 'button', class: 'btn md-connect', text: `📂 ${t('md_connect')}`, onclick: () => { void mdConnect(); } }), how),
+    el('p', { class: 'hint md-hint', text: t('md_hint') })];
+  const name = el('span', { class: 'chip md-name', dir: 'auto', title: t('md_on', { name: mdRec.name }), text: `📂 ${mdRec.name}` });
+  const off = el('button', { type: 'button', class: 'btn tiny quiet md-off', text: `✕ ${t('md_off')}`, onclick: () => { void mdOff(); } });
+  if (mdState.perm !== 'granted') return [el('div', { class: 'row md-row' }, name, el('button', { type: 'button', class: 'btn primary md-allow', text: t('md_allow'), onclick: () => { void mdCheck(true); } }), off, how),
+    el('p', { class: 'hint', text: t('md_allow_hint') })];
+  const line = mdState.error ? t('md_lost') : mdState.busy ? t('td_mail_reading') : [mdState.last ? t('md_last', { at: tdWhen(mdState.last) }) : '',
+    mdState.last ? (mdState.got ? t('md_new', { n: mdState.got }) : t('md_none')) : '', mdState.waiting ? t('md_wait', { n: mdState.waiting }) : ''].filter(Boolean).join(' · ');
+  return [el('div', { class: 'row md-row' }, name, el('button', { type: 'button', class: 'btn tiny md-read', disabled: mdState.busy || !!tdBusy, text: `↻ ${t('md_read')}`, onclick: () => { void mdScan(); } }), off, how),
+    el('p', { class: `hint md-line${mdState.error ? ' md-err' : ''}`, text: line }),   // not a live region: it changes every minute; what is new is said by the toast
+    mdRec.keep ? null : el('p', { class: 'hint md-private', text: t('md_private') }),
+    mdState.ask ? el('div', { class: 'md-ask' }, el('p', { text: t('md_ask', { n: mdState.ask }) }),
+      el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary md-all', text: t('md_ask_all'), onclick: () => { mdState.ask = 0; void mdScan(true); } }),
+        el('button', { type: 'button', class: 'btn md-new', text: t('md_ask_new'), onclick: () => { void mdFromNow(); } }))) : null];
+}
+function mdDraw() { if (mdBox && mdBox.isConnected) set(mdBox, ...mdRow()); }
+// the steps of the flow, where they are needed: in a window of the register's own frame, the file name ready to copy
+function mdHow() {
+  const dlg = el('dialog', { class: 'proj-edit md-how tw tw-md', 'aria-labelledby': 'md-how-h' }, twHead(el('h2', { id: 'md-how-h', text: t('md_h') })),
+    el('p', { class: 'hint', text: t('md_lead') }),
+    el('ol', { class: 'md-steps' }, ['md_s1', 'md_s2', 'md_s3', 'md_s4', 'md_s5', 'md_s6', 'md_s7'].map((k) => el('li', { text: t(k) }))),
+    el('p', { class: 'md-name-h', text: t('md_name_h') }),
+    el('pre', { class: 'md-code', dir: 'ltr', tabindex: '0', 'aria-label': t('md_name_h'), text: MD_FLOW_NAME }),
+    el('p', { class: 'note', text: t('md_note') }),
+    twFoot(el('button', { type: 'button', class: 'btn md-copy', text: `📋 ${t('md_copy')}`, onclick: () => copyText(MD_FLOW_NAME, t('md_copied')) }),
+      mdCan() && !mdRec ? el('button', { type: 'button', class: 'btn primary md-connect2', text: `📂 ${t('md_connect')}`, onclick: () => { dlg.close(); void mdConnect(); } }) : null));
+  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
 }
 // ---------- v9.57 (ADR-0130): a tender's correspondence — who wrote, when and what, read from the mails dropped on it ----------
 const tdWhen = (at) => (at ? new Date(`${at.length > 10 ? at : `${at}T00:00`}:00Z`).toLocaleString(lang === 'ur' ? 'ur-PK' : lang === 'ar' ? 'ar-SA' : 'en-GB',
@@ -2245,7 +2351,7 @@ function renderTenders() {
   const howReports = el('div', { class: 'td-how-reports' });   // the period's reports and messages, filled once its rows are known
   const pull = el('section', { class: `dt-quick td-pull td-cmd${empty ? ' td-cmd-empty' : ''}` },
     el('div', { class: 'td-cmd-intake' }, el('div', { class: 'td-pull-head' }, el('h2', { text: t('td_pull_h') }), tenders && tenders.pulledAt ? el('span', { class: 'hint', text: t('td_last', { to: tenders.to || '—', n: tenders.items.length }) }) : null),
-      tdEmailPicker()),
+      tdEmailPicker(), mdBox = el('div', { class: 'td-dir' }, mdRow())),   // v9.75 (ADR-0145): the mail folder Power Automate fills
     (() => { const any = el('input', { type: 'file', multiple: '', hidden: true, onchange: (e) => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) void tdRouteDrop(fs, null); } });
       return el('p', { class: 'hint td-drop-any' }, el('span', { text: `⤓ ${t('td_drop_any')}` }), ' ', el('button', { type: 'button', class: 'btn tiny td-any-btn', disabled: !!tdBusy, text: t('td_any_pick'), onclick: () => any.click() }), any); })(),
     el('div', { class: 'td-cmd-tools' }, (() => { const R = etRadar, act = R ? R.tenders.filter((x) => etOpenNow(x) && x.scope && !etIgnored().has(x.ref)).length : 0;   // v9.60 (ADR-0132)
@@ -6166,6 +6272,7 @@ $('update-btn').addEventListener('click', () => location.reload());
   await loadStrings(['ar', lang]);   // Arabic is every key's fallback; the reader's language besides
   applyLang();   // renders everything and routes
   paintThemeButton();
+  if (!isTeamPortal) void mdLoad();   // v9.75 (ADR-0145): the tender mail folder, read while the page is open
   document.documentElement.classList.remove('booting');   // the first frame the reader sees is the finished, translated page
   if (managerImportNonce) {
     managerImportStatus('mgr_auto_wait');
