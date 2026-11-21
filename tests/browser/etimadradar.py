@@ -25,7 +25,14 @@ PULL={'schema':'afaqy-etimad-radar/v1','pulledAt':day(0)+'T08:00','partial':Fals
 def drop(pg, sel, name, obj):
     pg.evaluate("""([s,n,j])=>{const f=new File([JSON.stringify(j)],n,{type:'application/json'});const i=document.querySelector(s);const dt=new DataTransfer();dt.items.add(f);i.files=dt.files;i.dispatchEvent(new Event('change',{bubbles:true}));}""",[sel,name,obj]); pg.wait_for_timeout(1200)
 def press(pg, loc, hold=150):
-    loc.scroll_into_view_if_needed(); bx=loc.bounding_box()
+    # the window may draw itself again while the test reaches for a button (a search re-renders its list): find it again rather
+    # than fail on the copy that was just replaced — a slow machine hits that moment, a fast one does not
+    bx=None
+    for _ in range(20):
+        try: loc.scroll_into_view_if_needed(timeout=2000); bx=loc.bounding_box(timeout=2000)
+        except Exception: bx=None
+        if bx: break
+        pg.wait_for_timeout(250)
     if not bx: return False
     pg.mouse.move(bx['x']+bx['width']/2,bx['y']+bx['height']/2); pg.mouse.down(); pg.wait_for_timeout(hold); pg.mouse.up(); pg.wait_for_timeout(500); return True
 def boot(b, theme='light', vp=(1366,800), lang='en', state=None):
@@ -128,9 +135,15 @@ with sync_playwright() as p:
     mk.locator('.mk-q').fill('رامي قاسم'); pg.wait_for_timeout(700); byWin=pg.evaluate(TILE,'tenders published'); foc=pg.evaluate("document.activeElement&&document.activeElement.classList.contains('mk-q')")
     mk.locator('.mk-q').fill(''); pg.wait_for_timeout(700)
     check('R38 the search works as you type and finds tenders by their winner; the cursor stays in the box', byWin=='2' and foc and pg.evaluate(TILE,'tenders published')==str(nR), (byWin,foc))
-    press(pg, mk.locator('.mk-k-awarded')); pg.wait_for_timeout(400)
+    press(pg, mk.locator('.mk-k-awarded'))
+    for _ in range(40):   # the window of its own, and its rows, drawn
+        if dr.count() and dr.locator('table.mk-t tbody tr').count(): break
+        pg.wait_for_timeout(100)
     dn=(dr.count(), dr.locator('.km-tile').first.locator('b').inner_text() if dr.count() else '', dr.locator('.mk-sub').inner_text() if dr.count() else '', dr.locator('table.mk-t tbody tr').count() if dr.count() else 0)
-    pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
+    pg.keyboard.press('Escape')
+    for _ in range(40):   # wait for the window to close — not a fixed time, which a slow machine overran
+        if dr.count()==0: break
+        pg.wait_for_timeout(100)
     check('R39 a number pressed opens its tenders in a window of their own, with their own numbers; Escape comes back', dn[0]==1 and dn[1]==str(dn[3]) and int(dn[1])>=1 and 'Awarded' in dn[2] and dr.count()==0 and mk.count()==1, dn)
     press(pg, mk.locator('.mk-tab-winners'))
     press(pg, mk.locator('table.mk-t-winners tbody tr').first.locator('.mk-who')); pg.wait_for_timeout(300)

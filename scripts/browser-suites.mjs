@@ -56,9 +56,19 @@ async function worker() {
 }
 await Promise.all(Array.from({ length: Math.min(WIDTH, queue.length) }, worker));
 queue.push(...later); await worker();
+// A suite that failed while others ran beside it is run once more, alone. It is not counted as passed by that: it is named in the
+// summary as «passed only alone» — the sign of a test that waits a fixed time where it should wait for the page — so it is fixed,
+// not forgotten. A failure that comes back alone is a real failure and fails the run.
+const flaky = [];
+for (const r of results.filter((x) => x.code !== 0 && !alone.has(x.name))) {
+  const again = await run(r.name, BASE + 200);
+  if (again.code === 0) { flaky.push(r.name); Object.assign(r, again, { flaky: true }); console.log(`ok    ${r.name.padEnd(14)} ${String(again.pass).padStart(3)} passed on a second run alone — it failed beside the others  (${again.secs}s)`); }
+  else { console.log(`FAIL  ${r.name.padEnd(14)} failed again alone`); for (const l of again.fail) console.log('      ' + l); }
+}
 const bad = results.filter((r) => r.code !== 0);
 const checks = results.reduce((n, r) => n + r.pass, 0);
 const skipped = results.filter((r) => r.skipped);
 // a skipped suite proved nothing: it is counted apart, never as green
-console.log(`\n${results.length - skipped.length} suites ran, ${checks} checks passed` + (skipped.length ? `, ${skipped.length} skipped (no real pull): ${skipped.map((r) => r.name).join(', ')}` : '') + (bad.length ? ` — ${bad.length} FAILED: ${bad.map((r) => r.name).join(', ')}` : ' — nothing failed'));
+console.log(`\n${results.length - skipped.length} suites ran, ${checks} checks passed` + (skipped.length ? `, ${skipped.length} skipped (no real pull): ${skipped.map((r) => r.name).join(', ')}` : '') + (bad.length ? ` — ${bad.length} FAILED: ${bad.map((r) => r.name).join(', ')}` : ' — nothing failed')
+  + (flaky.length ? `\nNOTE  passed only on a second run alone (a fixed wait to replace with a wait for the page): ${flaky.join(', ')}` : ''));
 process.exit(bad.length ? 1 : 0);

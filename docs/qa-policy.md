@@ -84,3 +84,11 @@ is `docs/qa/audit-v9.55.md`.
   from press to release) ended on a button that no longer existed. Every suite passed. A control that redraws itself must be
   tested with a held click (`mouse.down` → wait → `mouse.up`), and with something else in the window changing while it is
   pressed. The pager suite does both (W21, W22).
+
+## A suite that passes only alone (v9.77)
+`npm run test:browser` runs the suites side by side. A suite that fails there is run once more, alone; if it then passes, the run
+does not fail but the summary names it under «passed only on a second run alone». That is not a pass to forget: it is a test that
+waits a fixed time where it should wait for the page to reach a state, and it is fixed by replacing that wait (as `etimadradar.py`
+R39 and its `press()` were on 21 November 2026). A failure that comes back alone fails the run. GitHub runs two suites at once,
+as they are run before a push.
+

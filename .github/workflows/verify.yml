@@ -26,3 +26,5 @@ jobs:
       - run: pip install playwright==1.63.0 openpyxl==3.1.5 pillow==12.3.0
       - run: python -m playwright install --with-deps chromium
       - run: npm run test:browser
+        env:
+          SUITES_AT_ONCE: '2'   # the hosted runner is slower than a desk computer: two suites at once, as they are run before a push
