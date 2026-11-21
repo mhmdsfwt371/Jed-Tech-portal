@@ -2182,8 +2182,10 @@ test('v9.73: a tender\'s dates, the internal ones included, come out as one agen
   assert.deepEqual(late.map((x) => `${x.key}:${x.left}:${x.tone}`), ['bondCost:-2:late', 'handover:-1:late', 'due:1:soon', 'openAt:2:soon'], 'an internal date missed while the tender is still open stays on top, in red');
   assert.equal(core.tenderAgenda([T], '2026-11-25', 7)[0].tone, 'today');
   const due = core.tenderNotices(core.tenderAgenda([T], '2026-11-25', 14), ['t1:askUp:2026-11-25']);
-  assert.deepEqual(due.map((x) => x.key), ['askDue'], 'said once: what is a day away or less and not said before — nothing further out');
-  assert.equal(core.tenderNoticeId(due[0]), 't1:askDue:2026-11-26');
+  assert.deepEqual(due.map((x) => x.key), [], 'v9.76: the upload day was said, and it carried the deadline with it — not said again the next day');
+  const due2 = core.tenderNotices(core.tenderAgenda([T], '2026-11-25', 14), []);
+  assert.deepEqual(due2.map((x) => `${x.key}+${x.also ? x.also.key : ''}`), ['askUp+askDue'], 'one notice for the upload day and the deadline after it');
+  assert.equal(core.tenderNoticeId(due2[0].also), 't1:askDue:2026-11-26');
   for (const lang of ['ar', 'en', 'ur']) for (const k of ['td_col_askUp', 'td_col_bondCost', 'ag_h', 'ag_empty', 'ag_today', 'ag_tomorrow', 'ag_late', 'ag_bell', 'ag_bell_on', 'ag_bell_note', 'ag_bell_denied', 'ag_ics', 'ag_notice', 'ag_days'])
     assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
 });
@@ -2202,6 +2204,43 @@ test('v9.75: the mail folder gives the register only new mails, oldest first, a 
     ['old-tender.msg', '2026-11-21_090500_b.eml'], 'what left the folder is forgotten, what was read is kept, once');
   assert.equal(core.MAILDIR_ASK, 25, 'a folder that already holds more mails than this asks before it reads them all');
   for (const lang of ['ar', 'en', 'ur']) for (const k of ['md_connect', 'md_how', 'md_allow', 'md_read', 'md_off', 'md_on', 'md_last', 'md_none', 'md_new', 'md_wait', 'md_ask', 'md_ask_all', 'md_ask_new', 'md_hint', 'md_allow_hint', 'md_lost', 'md_unsupported', 'md_done', 'md_h', 'md_lead', 'md_s1', 'md_s2', 'md_s3', 'md_s4', 'md_s5', 'md_s6', 'md_s7', 'md_note', 'md_name_h', 'md_copy', 'md_copied', 'md_private', 'an_auto_on_closed'])
+    assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
+});
+// v9.76 (ADR-0146): «Check the folder» — every mail file in the folder said against the register, so «were all of them read?» has
+// an answer; and a mail that could not be registered is kept by name with its reason instead of being forgotten.
+test('v9.76: the mail folder checked against the register, and the mails that could not be registered kept with their reason', () => {
+  const items = [{ id: 'a', subject: 'Cameras', messages: [{ key: 'id:<m1>', hash: 'h1' }, { key: 'id:<m2>', hash: 'h2' }] }, { id: 'b', subject: 'Fuel', messages: [{ key: 'sha:h3', hash: 'h3' }] }];
+  const files = [
+    { name: '2026-11-20_0900_a.eml', size: 10, key: 'id:<m1>', hash: 'h1' },
+    { name: '2026-11-20_0905_b.eml', size: 10, key: 'id:<m1>', hash: 'hx' },   // the same mail saved by both flows
+    { name: '2026-11-20_0910_c.eml', size: 10, key: 'sha:h3', hash: 'h3' },
+    { name: '2026-11-20_0915_d.eml', size: 10, key: 'id:<m9>', hash: 'h9' },   // read, not in the register: it failed
+    { name: '2026-11-20_0920_e.eml', size: 10, key: 'id:<m8>', hash: 'h8' },   // read, not in the register, no failure on record
+    { name: '2026-11-20_0925_f.eml', size: 10, key: 'id:<m7>', hash: 'h7' },   // not read yet
+    { name: '2026-11-20_0930_g.eml', size: 0 },                                 // still being written
+    { name: '2026-11-20_0935_h.eml', size: 10, bad: true },                      // the reader could not open it
+    { name: 'desktop.ini', size: 10 }, { name: '~$lock.eml', size: 10 }];
+  const seen = files.map((f) => f.name).filter((n) => !n.includes('_f.') && !n.includes('_g.'));
+  const r = core.mailDirReport(files, items, seen, [{ name: '2026-11-20_0915_d.eml', key: 'td_mail_ambiguous' }]);
+  assert.deepEqual(r.rows.map((x) => x.status), ['in', 'same', 'in', 'out', 'out', 'wait', 'empty', 'bad'], 'one row per mail, in the folder\'s order; other files are not mails');
+  assert.deepEqual([r.rows[0].id, r.rows[1].id, r.rows[2].subject], ['a', 'a', 'Fuel'], 'a mail in the register names its tender, a second copy too');
+  assert.equal(r.rows[3].why, 'td_mail_ambiguous', 'a mail that failed says why');
+  assert.equal(r.rows[4].why, 'md_ck_gone', 'read but not in the register, no failure kept: removed from the register since, or never registered');
+  assert.deepEqual(r.n, { mails: 8, in: 2, same: 1, tenders: 2, out: 2, wait: 1, empty: 1, bad: 1 }, 'the counts the window opens with');
+  assert.deepEqual(core.mailDirReport(null, null, null, null).n, { mails: 0, in: 0, same: 0, tenders: 0, out: 0, wait: 0, empty: 0, bad: 0 });
+  // what failed is kept by name until it leaves the folder or is registered
+  const kept = core.mailDirFailed([{ name: 'gone.eml', key: 'td_mail_failed' }, { name: 'x.eml', key: 'td_mail_failed' }, { name: 'y.eml', key: 'td_mail_missing_date' }],
+    ['x.eml', 'y.eml', 'z.eml'], [{ name: 'x.eml', kind: 'a' }, { name: 'z.eml', kind: 'f', key: 'td_mail_ambiguous' }]);
+  assert.deepEqual(kept, [{ name: 'y.eml', key: 'td_mail_missing_date' }, { name: 'z.eml', key: 'td_mail_ambiguous' }], 'left the folder: forgotten; registered now: forgotten; a new failure: kept');
+  assert.deepEqual(core.mailDirFailed(null, null, null), []);
+  // the booklet's own Hijri dates table, as pdf.js gives it (letters reversed and spaced, the day glued to the year) and as a clean copy
+  const bk = core.bookletHijriSchedule(['1448 / 06 / 08   : ﺔ ﺳ ا ﺮ ﻜ ﻟ ح ا ﺮ ﻃ   ﺦ ﻳ ر ﺎ ﺗ', '131448 / 06 /   رات ﺎ ﺴ ﻔ ﺘ ﺳ والا   ﺔ ﻠ ﺌ ﺳ ل الأ ﺎ ﺳ إر',
+    '231448 / 06 /   وض ﺮ ﻌ ﻟ ا   ﻢ ﻳ ﺪ ﻘ ﺗ', '   فتح العروض', '221448 / 09 /   ﺔ ﻴ ﺳ ﺮ ﺘ ﻟ ا', '22 ص   09:00 1448 / 06 /   ﻢ ﻴ ﻠ ﺴ ﺘ ﻟ ا   ﺖ ﻗ و', '33 الأسئلة والاستفسارات'].join('\n'));
+  assert.deepEqual(bk, { askDue: [{ date: '2026-11-23', hijri: '1448-06-13' }], due: [{ date: '2026-12-03', hijri: '1448-06-23' }], openAt: [] }, 'the inquiries and the submission rows; the empty opening row, the award, the paper delivery and the contents page give nothing');
+  assert.deepEqual(core.bookletHijriSchedule('تقديم العروض 20/06/1448\nإرسال الأسئلة والاستفسارات 05/06/1448').due, [{ date: '2026-11-30', hijri: '1448-06-20' }], 'a clean copy: day, month, year');
+  assert.deepEqual(core.bookletHijriSchedule('إرسال الأسئلة والاستفسارات 05/06/1448').askDue, [], 'day and month both possible both ways: not guessed');
+  assert.deepEqual(core.tenderDocumentInsights([{ text: '231448 / 06 /   وض ﺮ ﻌ ﻟ ا   ﻢ ﻳ ﺪ ﻘ ﺗ', locator: '3' }]).schedule.due, [{ date: '2026-12-03', time: '', locator: '3' }], 'a booklet dropped on a tender offers its submission date for review');
+  for (const lang of ['ar', 'en', 'ur']) for (const k of ['ag_also', 'md_ck', 'md_ck_h', 'md_ck_reading', 'md_ck_sum', 'md_ck_all_in', 'md_ck_in', 'md_ck_same', 'md_ck_out', 'md_ck_wait', 'md_ck_empty', 'md_ck_bad', 'md_ck_gone', 'md_ck_reg', 'md_ck_copy', 'md_ck_copied', 'md_ck_open', 'md_ck_none', 'md_failed', 'md_ck_col_file', 'md_ck_col_state', 'md_ck_col_tender', 'td_busy_card'])
     assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
 });
 for (const [name, fn] of tests) {

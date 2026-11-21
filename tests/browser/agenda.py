@@ -59,6 +59,14 @@ with sync_playwright() as p:
     check('G9 turned on: what is a day away or less is said, with the tender\'s name', pg.locator('.td-agenda .ag-bell').get_attribute('aria-pressed')=='true' and len(n1)>=1 and any('Agenda far tender' in x[1] for x in n1) and not any('Agenda cameras' in x[1] for x in n1), n1)
     pg.locator('.td-agenda .ag-range button', has_text='30').click(); pg.wait_for_timeout(500); n2=pg.evaluate('window.__n.length')
     check('G10 and said once: drawing the page again repeats nothing', n2==len(n1), (len(n1),n2))
+    # v9.76 (ADR-0146): the inquiries' upload day and the platform's deadline after it are one notice and one calendar entry
+    pg.evaluate('window.__n=[]'); dates(pg,'Agenda far tender',day(12),day(2)); pg.locator('.td-agenda .ag-range button', has_text='14').click(); pg.wait_for_timeout(700)
+    inq=[x for x in pg.evaluate('window.__n') if 'Agenda far tender' in x[1] and 'nquir' in x[0]+x[1]]
+    with pg.expect_download() as dl: pg.locator('.td-agenda .ag-ics').click()
+    ev=[e for e in open(dl.value.path(),encoding='utf-8').read().split('BEGIN:VEVENT') if 'Agenda far tender' in e and 'nquir' in e]
+    strip=[x for x in items(pg) if 'Agenda far tender' in x[2] and x[0] in ('askUp','askDue')]
+    check('G13 the inquiries for one tender are one notice and one calendar entry — the upload day, carrying the deadline after it — while the strip still shows both days',
+        len(inq)==1 and 'Upload the inquiries' in inq[0][0] and 'Inquiries deadline' in inq[0][1] and len(ev)==1 and 'Inquiries deadline' in ev[0].replace('\r\n ','') and len(strip)==2, (inq, len(ev), strip))
     check('G11 no page error', not errs, errs[:2])
     for theme,vp,lang,word in (('dark',(390,800),'ar','المواعيد القادمة'),('light',(1366,800),'ur','آنے والی تاریخیں')):
         # the same register, opened again in another language, theme and width (the register lives in this browser's own store)

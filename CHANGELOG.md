@@ -17,6 +17,38 @@
 
 <!-- releases -->
 
+## v9.76 — 2026-11-21
+
+- زر «افحص الفولدر» بجوار فولدر الإيميلات: يقرأ كل إيميل في الفولدر ويقول هل هو في السجل وفي أي مناقصة، أو أنه نسخة ثانية، أو أنه لم يُسجَّل ولماذا — ومعه زر يسجّل ما بقي. هكذا تتأكد أن كل ما حفظه Power Automate وصل إلى السجل.
+- الإيميل الذي لم يُسجَّل من الفولدر صار يبقى ظاهرًا بسببه تحت الفولدر بدل أن يُتجاوز بلا كلمة.
+- بطاقة المناقصة تقول الآن لماذا المرحلة والحقول مقفولة وهي تقرأ الإيميلات، وتفتحها وحدها حين تنتهي.
+- كراسة اعتماد التي تسحبها على مناقصة: تقرأ البوابة الآن جدول مواعيدها المكتوب بالهجري (الاستفسارات، وتقديم العروض، وفتح العروض) وتحوّله إلى الميلادي، وتعرضه عليك للمراجعة مع رقم الصفحة.
+- رفع الاستفسارات وآخر موعد لها على المنصة صارا تنبيهًا واحدًا وموعدًا واحدًا في التقويم، بدل تنبيهين في يومين متتاليين للمناقصة نفسها.
+
+<details><summary>English</summary>
+
+- A «Check the folder» button beside the mail folder: it reads every mail in the folder and says whether it is in the register and in which tender, or is a second copy, or was not registered and why — with a button that registers what is left. This is how you make sure everything Power Automate saved reached the register.
+- A mail from the folder that could not be registered now stays on show under the folder with its reason, instead of being passed over without a word.
+- A tender's card now says why its stage and fields are locked while mails are being read, and opens them again by itself when the reading ends.
+- An Etimad booklet you drop on a tender: the portal now reads its dates table written in Hijri (inquiries, submitting the offers, opening them), converts it to the Gregorian calendar, and offers it for your review with its page number.
+- Uploading the inquiries and the platform's inquiries deadline after it are now one notice and one calendar entry, instead of two notices on two days in a row for the same tender.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ای میل فولڈر کے ساتھ «فولڈر جانچیں» کا بٹن: یہ فولڈر کی ہر ای میل پڑھ کر بتاتا ہے کہ وہ رجسٹر میں ہے اور کس ٹینڈر میں، یا دوسری نقل ہے، یا درج نہیں ہوئی اور کیوں — اور ساتھ ایک بٹن جو باقی کو درج کرتا ہے۔ اسی سے آپ یقین کرتے ہیں کہ Power Automate نے جو کچھ محفوظ کیا وہ سب رجسٹر تک پہنچا۔
+- فولڈر کی جو ای میل درج نہ ہو سکی وہ اب اپنی وجہ کے ساتھ فولڈر کے نیچے دکھائی دیتی رہتی ہے، بغیر کچھ کہے چھوڑ دی نہیں جاتی۔
+- ٹینڈر کارڈ اب بتاتا ہے کہ ای میلیں پڑھتے وقت اس کا مرحلہ اور خانے کیوں بند ہیں، اور پڑھائی ختم ہوتے ہی انہیں خود کھول دیتا ہے۔
+- ٹینڈر پر چھوڑی گئی اعتماد کی کراسہ: پورٹل اب ہجری میں لکھا اس کا تاریخوں والا جدول (استفسارات، پیشکشیں جمع کرانا، انہیں کھولنا) پڑھتا ہے، عیسوی میں بدلتا ہے، اور صفحہ نمبر کے ساتھ آپ کے جائزے کے لیے پیش کرتا ہے۔
+- استفسارات اپ لوڈ کرنا اور اس کے بعد پلیٹ فارم پر استفسارات کی آخری تاریخ اب ایک اطلاع اور کیلنڈر کا ایک اندراج ہیں، ایک ہی ٹینڈر کے لیے لگاتار دو دنوں میں دو اطلاعات کے بجائے۔
+
+</div>
+</details>
+
+
 ## v9.75 — 2026-11-21
 
 - إيميلات المناقصات تدخل السجل وحدها: يحفظ Power Automate كل إيميل مناقصة يصل ملفًا في فولدر على OneDrive، و«اربط فولدر الإيميلات» في بطاقة «اسحب المناقصات» يجعل البوابة تقرؤه وحدها وهي مفتوحة وتسجّل المناقصة. «إزاي؟» يعرض خطوات الـ Flow: نحو خمس دقائق، دون صلاحية أدمن، ولا يخرج شيء من جهازك.

@@ -2441,6 +2441,8 @@ export function tenderDocumentInsights(segments) {
     if ((/جدول (?:الكميات|البنود)|bill of quantities|\bboq\b/.test(norm)) || (/\b(?:qty|quantity)\b|الكميه/.test(norm) && /\b(?:item|description|unit)\b|وصف البند|وحده القياس/.test(norm))) kind = 'boq';
     const dates = tenderEmailSchedule(text);
     for (const field of TENDER_DATE_FIELDS) for (const date of dates[field]) schedule[field].push({...date,locator});
+    const bk = bookletHijriSchedule(text);   // v9.76: the booklet's own Hijri dates table
+    for (const [field, list] of Object.entries(bk)) for (const x of list) if (!schedule[field].some((d) => d.date === x.date)) schedule[field].push({ date: x.date, time: '', locator });
     const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
     for (const [index,line] of lines.entries()) {
       const normalized = tenderNormalizeText(line);
@@ -2638,6 +2640,29 @@ export function hijriInQuote(quote) {
   const y = Number(yr[0]), out = new Map();
   for (const d of nums) for (const m of nums) { if (d === m && nums.filter((n) => n === d).length < 2) continue; const g = hijriToGregorian(y, m, d); if (g) out.set(g, { hijri: `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`, date: g }); }
   return [...out.values()];
+}
+// v9.76 (ADR-0146): the dates table of an Etimad booklet («إرسال الأسئلة والاستفسارات / تقديم العروض / فتح العروض»), written in
+// Hijri. The PDF's text comes out of a right-to-left page in pieces — letters spaced and reversed, the day glued to the year
+// («131448 / 06 /») — so a row is known by the letters it holds, whatever their order, and its date by the shape of its numbers.
+const BK_LETTERS = (s) => [...String(s || '').normalize('NFKC').replace(/[إأآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/[^\u0621-\u064A]/g, '')].sort().join('');
+const BK_ROWS = [['askDue', BK_LETTERS('إرسال الأسئلة والاستفسارات')], ['due', BK_LETTERS('تقديم العروض')], ['openAt', BK_LETTERS('فتح العروض')]];
+/** The booklet's own dates table, as Gregorian days: { askDue, due, openAt } each a list of { date, hijri }. A row with no date
+ *  (Etimad leaves «فتح العروض» empty) gives nothing; a date whose day and month could be read two ways is left out, not guessed. */
+export function bookletHijriSchedule(text) {
+  const out = { askDue: [], due: [], openAt: [] };
+  for (const line of tenderDigits(String(text || '').slice(0, 180000)).split(/\r?\n/)) {
+    if (!/14\d{2}/.test(line)) continue;
+    const row = BK_ROWS.find(([, sig]) => sig === BK_LETTERS(line)); if (!row) continue;
+    const nums = line.replace(/\b\d{1,2}\s*:\s*\d{2}\b/g, ' ').match(/\d+/g) || []; let y = 0, d = 0, m = 0;
+    const glued = nums.findIndex((n) => /^\d{1,2}14\d{2}$/.test(n));
+    if (glued >= 0) { const g = nums[glued]; y = Number(g.slice(-4)); d = Number(g.slice(0, -4)); m = Number(nums.find((n, i) => i !== glued && /^\d{1,2}$/.test(n))); }   // «131448 / 06 /»: the day is glued to the year
+    else { const yi = nums.findIndex((n) => /^14\d{2}$/.test(n)), rest = nums.filter((n, i) => i !== yi && /^\d{1,2}$/.test(n)).map(Number); if (yi < 0 || rest.length !== 2) continue;
+      y = Number(nums[yi]); [m, d] = yi === 0 ? rest : [rest[1], rest[0]]; }   // «1448 / 06 / 08» reads year, month, day; «08/06/1448» day, month, year
+    const date = y && m && d ? hijriToGregorian(y, m, d) : ''; if (!date) continue;
+    if (m <= 12 && d <= 12 && m !== d && glued < 0 && hijriToGregorian(y, d, m)) continue;   // both orders are real days: not guessed
+    if (!out[row[0]].some((x) => x.date === date)) out[row[0]].push({ date, hijri: `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}` });
+  }
+  return out;
 }
 /** Does a date match the Hijri date in its own quote? ok:true when the quote holds no Hijri date or one reading matches. Otherwise
  *  `date` is the one reading the quote allows ('' when it allows several), so the caller can take it or leave the field empty. */
@@ -3282,8 +3307,16 @@ export function tenderAgenda(items, today, days = 14) {
 export const tenderNoticeId = (x) => `${x.id}:${x.key}:${x.day}`;
 /** What deserves a notice now: a day away or less (or missed), and not said before. */
 export function tenderNotices(agenda, seen) {
-  const said = new Set(Array.isArray(seen) ? seen : []);
-  return (Array.isArray(agenda) ? agenda : []).filter((x) => x.left <= 1 && !said.has(tenderNoticeId(x)));
+  const said = new Set(Array.isArray(seen) ? seen : []), was = (x) => said.has(tenderNoticeId(x)) || (x.also && said.has(tenderNoticeId(x.also)));
+  return agendaFold(agenda).filter((x) => x.left <= 1 && !was(x));
+}
+/** v9.76 (ADR-0146): one tender's «upload the inquiries» and the platform's inquiries deadline the next working day are one job,
+ *  so they are one notice and one calendar entry: the deadline rides on the upload day as `also`. Without the upload day (it has
+ *  passed) the deadline stands alone. The strip on the page still shows both days. */
+export function agendaFold(agenda) {
+  const list = Array.isArray(agenda) ? agenda : [], up = new Map(list.filter((x) => x.key === 'askUp').map((x) => [x.id, x]));
+  const dueOf = new Map(list.filter((x) => x.key === 'askDue' && up.has(x.id)).map((x) => [x.id, x]));
+  return list.filter((x) => !(x.key === 'askDue' && up.has(x.id))).map((x) => (x.key === 'askUp' && dueOf.has(x.id) ? { ...x, also: dueOf.get(x.id) } : x));
 }
 
 // ---------- v9.75 (ADR-0145): the tender mail folder ----------
@@ -3304,6 +3337,44 @@ export function mailDirNew(names, seen, max = 10) {
 export function mailDirSeen(seen, names, done) {
   const here = new Set(Array.isArray(names) ? names : []);
   return [...new Set([...(Array.isArray(seen) ? seen : []).filter((n) => here.has(n)), ...(Array.isArray(done) ? done : [])])];
+}
+// ---------- v9.76 (ADR-0146): the folder checked against the register ----------
+/** Every mail file in the folder said against the register. `files`: { name, size, key, hash, bad } read from the folder (key and
+ *  hash as the importer makes them); `seen`: the names already read; `failed`: { name, key } kept when a mail could not be registered.
+ *  A mail is «in» the register when one of its tenders holds the message (by key or by the file's own hash), «same» when an earlier
+ *  file in the folder is the same message (both flows saved it), «out» when it was read and is not there — with the reason kept, or
+ *  «md_ck_gone» (removed from the register since, or never registered) — «wait» when it was not read yet, «empty» while it is still
+ *  being written and «bad» when the reader could not open it. Nothing here guesses: it says only what the register holds. */
+export function mailDirReport(files, items, seen, failed) {
+  const byKey = new Map(), byHash = new Map(), known = new Set(Array.isArray(seen) ? seen : []);
+  for (const it of Array.isArray(items) ? items : []) for (const m of Array.isArray(it && it.messages) ? it.messages : []) {
+    if (m && m.key && !byKey.has(m.key)) byKey.set(m.key, it); if (m && m.hash && !byHash.has(m.hash)) byHash.set(m.hash, it); }
+  const why = new Map((Array.isArray(failed) ? failed : []).filter((f) => f && f.name).map((f) => [f.name, f.key || 'td_mail_failed']));
+  const met = new Set(), rows = [], n = { mails: 0, in: 0, same: 0, tenders: 0, out: 0, wait: 0, empty: 0, bad: 0 }, ids = new Set();
+  const list = (Array.isArray(files) ? files : []).filter((f) => f && typeof f.name === 'string' && MAILDIR_MAIL.test(f.name) && !MAILDIR_SKIP.test(f.name))
+    .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  for (const f of list) {
+    let row;
+    if (!f.size) row = { name: f.name, status: 'empty' };
+    else if (f.bad) row = { name: f.name, status: 'bad', why: why.get(f.name) || 'td_mail_failed' };
+    else {
+      const it = byKey.get(f.key) || byHash.get(f.hash);
+      if (it) { row = { name: f.name, status: met.has(f.key) ? 'same' : 'in', id: it.id, subject: it.subject || '' }; ids.add(it.id); }
+      else row = known.has(f.name) ? { name: f.name, status: 'out', why: why.get(f.name) || 'md_ck_gone' } : { name: f.name, status: 'wait' };
+      met.add(f.key);
+    }
+    rows.push(row); n.mails++; n[row.status]++;
+  }
+  n.tenders = ids.size;
+  return { rows, n };
+}
+/** The mails that could not be registered, kept by name with the reason: a name the folder no longer has is forgotten, and so is
+ *  one registered since; a new failure is added (the latest reason wins). */
+export function mailDirFailed(prev, names, results) {
+  const here = new Set(Array.isArray(names) ? names : []), out = new Map();
+  for (const f of Array.isArray(prev) ? prev : []) if (f && here.has(f.name)) out.set(f.name, { name: f.name, key: f.key || 'td_mail_failed' });
+  for (const r of Array.isArray(results) ? results : []) { if (!r || !r.name) continue; if (r.kind === 'f') out.set(r.name, { name: r.name, key: r.key || 'td_mail_failed' }); else out.delete(r.name); }
+  return [...out.values()];
 }
 /** When the offer was handed over: the message the manager marked as the hand-over, else the day it was marked ready. Never guessed. */
 export function tenderHandedAt(item) {

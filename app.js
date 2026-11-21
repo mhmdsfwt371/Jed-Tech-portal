@@ -19,7 +19,7 @@ import {
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
   mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts,
-  TENDER_HANDOVER_DAYS, tenderMilestones, tenderAgenda, tenderNotices, tenderNoticeId, MAILDIR_ASK, mailDirNew, mailDirSeen, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
+  TENDER_HANDOVER_DAYS, tenderMilestones, tenderAgenda, tenderNotices, tenderNoticeId, agendaFold, MAILDIR_ASK, mailDirNew, mailDirSeen, mailDirReport, mailDirFailed, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
 
 import { validateSystems } from './systems-core.js';
 
@@ -833,15 +833,17 @@ function tdNotify() {
   if (!tenders || !agOn()) return;
   let seen = []; try { seen = JSON.parse(pref(AG_SEEN) || '[]'); } catch { seen = []; }
   const due = tenderNotices(tenderAgenda(tenders.items, saudiDay(new Date().toISOString()), 2), seen);
-  for (const x of due.slice(0, 6)) { try { new Notification(t('ag_notice', { what: t(`td_col_${x.key}`), when: agWhen(x) + (x.time ? ` ${x.time}` : '') }), { body: x.subject.slice(0, 140), tag: tenderNoticeId(x), lang }); } catch { return; } }
-  if (due.length) pref(AG_SEEN, JSON.stringify([...seen, ...due.map(tenderNoticeId)].slice(-400)));
+  // v9.76: the inquiries' upload day carries the platform's deadline after it — one notice for both (agendaFold)
+  const also = (x) => (x.also ? t('ag_also', { what: t(`td_col_${x.also.key}`), when: agWhen(x.also) + (x.also.time ? ` ${x.also.time}` : '') }) : '');
+  for (const x of due.slice(0, 6)) { try { new Notification(t('ag_notice', { what: t(`td_col_${x.key}`), when: agWhen(x) + (x.time ? ` ${x.time}` : '') }), { body: [also(x), x.subject.slice(0, 140)].filter(Boolean).join('\n'), tag: tenderNoticeId(x), lang }); } catch { return; } }
+  if (due.length) pref(AG_SEEN, JSON.stringify([...seen, ...due.flatMap((x) => [tenderNoticeId(x), ...(x.also ? [tenderNoticeId(x.also)] : [])])].slice(-400)));
 }
 function tdIcsAll(rows) {
   const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z', esc = (v) => String(v).replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
   const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//AFAQY Jeddah portal//tenders agenda//AR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
-  for (const x of rows) { const next = new Date(`${x.day}T00:00:00Z`); next.setUTCDate(next.getUTCDate() + 1);
+  for (const x of agendaFold(rows)) { const next = new Date(`${x.day}T00:00:00Z`); next.setUTCDate(next.getUTCDate() + 1);
     L.push('BEGIN:VEVENT', `UID:${x.id.replace(/[^a-z0-9]/gi, '').slice(0, 40)}-${x.key}@afaqy-jeddah-portal`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${x.day.replace(/-/g, '')}`, `DTEND;VALUE=DATE:${next.toISOString().slice(0, 10).replace(/-/g, '')}`,
-      `SUMMARY:${esc(`${t(`td_col_${x.key}`)}${x.time ? ` ${x.time}` : ''} — ${x.subject}`)}`, `DESCRIPTION:${esc(t('nav_tenders'))}`, 'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY', `DESCRIPTION:${esc(x.subject)}`, 'END:VALARM', 'END:VEVENT'); }
+      `SUMMARY:${esc(`${t(`td_col_${x.key}`)}${x.time ? ` ${x.time}` : ''}${x.also ? ` · ${t('ag_also', { what: t(`td_col_${x.also.key}`), when: x.also.day + (x.also.time ? ` ${x.also.time}` : '') })}` : ''} — ${x.subject}`)}`, `DESCRIPTION:${esc(t('nav_tenders'))}`, 'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY', `DESCRIPTION:${esc(x.subject)}`, 'END:VALARM', 'END:VEVENT'); }
   L.push('END:VCALENDAR'); return L.join('\r\n');
 }
 function tdAgenda(today) {
@@ -1686,7 +1688,7 @@ async function tdAnalyzeFiles(id, ids) {
 }
 async function tdImportEmails(files, id = '', { quiet = false } = {}) {   // quiet (v9.75): read from the mail folder — nothing opens, the period shown stays
   if (tdBusy || !files.length) return null;
-  const imported = [], fresh = [];
+  const imported = [], fresh = [], per = [];   // per (v9.76): what became of each file, for the mail folder
   let added = 0, linked = 0, skipped = 0, failed = 0, warnings = 0;
   const failures = [];
   tdBusy = t('td_mail_reading');
@@ -1699,7 +1701,7 @@ async function tdImportEmails(files, id = '', { quiet = false } = {}) {   // qui
         const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', await file.arrayBuffer())), (byte) => byte.toString(16).padStart(2, '0')).join('');
         const messageId = mail.id.slice(0, 320), key = messageId ? 'id:' + messageId : 'sha:' + hash;
         const state = tenders || { items: [], to: null, pulledAt: '' };
-        if (state.items.some((row) => row.messages?.some((m) => m.key === key || m.hash === hash))) { skipped++; continue; }
+        if (state.items.some((row) => row.messages?.some((m) => m.key === key || m.hash === hash))) { skipped++; per.push({ name: file.name, kind: 's' }); continue; }
         const number = tenderDigits(mail.number);
         const subject = mail.subject.slice(0, 300), subjectKey = tdKey(subject);
         const byNumber = number ? state.items.filter((row) => tenderDigits(row.etimadNo) === number) : [];
@@ -1733,15 +1735,17 @@ async function tdImportEmails(files, id = '', { quiet = false } = {}) {   // qui
         await tdCommit({ ...state, items: [entry, ...state.items.filter((row) => row.id !== entry.id)].sort((a, b) => b.date.localeCompare(a.date)) });
         imported.push(entry.id);
         if (existing) linked++; else { added++; fresh.push(entry.id); }
+        per.push({ name: file.name, kind: existing ? 'l' : 'a', id: entry.id });
         warnings += mail.warnings.length;
       } catch (error) {
-        failures.push({ name: file.name, key: ['td_mail_ambiguous','td_mail_missing_date'].includes(error.message) ? error.message : 'td_mail_failed' });
+        const key = ['td_mail_ambiguous','td_mail_missing_date'].includes(error.message) ? error.message : 'td_mail_failed';
+        failures.push({ name: file.name, key }); per.push({ name: file.name, kind: 'f', key });
         failed++;
       }
     }
   } catch {
     failures.push({ name: '', key: 'td_mail_failed' });
-    failed += files.length;
+    failed += files.length; for (const f of files) if (!per.some((x) => x.name === f.name)) per.push({ name: f.name, kind: 'f', key: 'td_mail_failed' });
   } finally {
     tdBusy = '';
   }
@@ -1759,7 +1763,7 @@ async function tdImportEmails(files, id = '', { quiet = false } = {}) {   // qui
     await tdAnalyzeFiles(tenderId, (item.files || []).filter(file => file.kind !== 'original' && !file.analysis).map(file => file.id));
   }
   void anAutoRun([...new Set(fresh)]);
-  return { a: added, l: linked, s: skipped, f: failed };
+  return { a: added, l: linked, s: skipped, f: failed, per };
 }
 function tdEmailPicker(id = '') {
   const input = el('input', { type: 'file', accept: '.msg,.eml', multiple: '', hidden: true, onchange: async (event) => {
@@ -1787,7 +1791,7 @@ function tdEmailPicker(id = '') {
 // handle stays in this browser's storage and is never in the backup; no file leaves the computer.
 const MD_KEY = 'tdmaildir', MD_EVERY = 60000, MD_BATCH = 10;
 const MD_FLOW_NAME = "concat(formatDateTime(triggerOutputs()?['body/receivedDateTime'],'yyyy-MM-dd_HHmmss'),'_',guid(),'.eml')";
-let mdRec = null, mdTimer = 0, mdLoaded = false, mdBox = null;   // mdRec: { handle, name, seen: [], at, first, keep }
+let mdRec = null, mdTimer = 0, mdLoaded = false, mdBox = null;   // mdRec: { handle, name, seen: [], failed: [], at, first, keep }
 let mdState = { perm: '', busy: false, last: '', got: 0, waiting: 0, ask: 0, names: [], error: '' };
 const mdCan = () => typeof window.showDirectoryPicker === 'function';
 // A private (incognito) window keeps the folder for the visit only: in Chromium's own test browser, a folder kept by such a window
@@ -1839,7 +1843,9 @@ async function mdScan(all = false) {
     }
     const res = read.length ? await tdImportEmails(read.map(([, f]) => f), '', { quiet: true }) : null;
     if (read.length && !res) { again = true; return; }   // the register was busy with something else: nothing was read
-    mdRec = { ...mdRec, first: false, seen: mailDirSeen(mdRec.seen, names, read.map(([n]) => n)), at: tdNowWall() };
+    // v9.76: a mail that could not be registered is still taken as read (it would fail every minute), but kept by name with its
+    // reason until it is registered or leaves the folder, so the card says so and «Check the folder» lists it
+    mdRec = { ...mdRec, first: false, seen: mailDirSeen(mdRec.seen, names, read.map(([n]) => n)), failed: mailDirFailed(mdRec.failed, names, res ? res.per : []), at: tdNowWall() };
     mdState = { ...mdState, last: mdRec.at, got: read.length, waiting: waiting + fresh.length - read.length, ask: 0, names: [], error: '' };
     await mdSave();
     if (res && (res.a || res.l)) toast(t('md_done', { a: res.a, l: res.l }));
@@ -1865,8 +1871,10 @@ function mdRow() {
     el('p', { class: 'hint', text: t('md_allow_hint') })];
   const line = mdState.error ? t('md_lost') : mdState.busy ? t('td_mail_reading') : [mdState.last ? t('md_last', { at: tdWhen(mdState.last) }) : '',
     mdState.last ? (mdState.got ? t('md_new', { n: mdState.got }) : t('md_none')) : '', mdState.waiting ? t('md_wait', { n: mdState.waiting }) : ''].filter(Boolean).join(' · ');
-  return [el('div', { class: 'row md-row' }, name, el('button', { type: 'button', class: 'btn tiny md-read', disabled: mdState.busy || !!tdBusy, text: `↻ ${t('md_read')}`, onclick: () => { void mdScan(); } }), off, how),
+  const bad = (mdRec.failed || []).length, ck = (cls) => el('button', { type: 'button', class: `btn tiny ${cls}`, disabled: mdState.busy, text: `🔍 ${t('md_ck')}`, onclick: () => { void mdAudit(); } });
+  return [el('div', { class: 'row md-row' }, name, el('button', { type: 'button', class: 'btn tiny md-read', disabled: mdState.busy || !!tdBusy, text: `↻ ${t('md_read')}`, onclick: () => { void mdScan(); } }), ck('md-ck-btn'), off, how),
     el('p', { class: `hint md-line${mdState.error ? ' md-err' : ''}`, text: line }),   // not a live region: it changes every minute; what is new is said by the toast
+    bad && !mdState.error ? el('p', { class: 'note md-failed' }, el('span', { text: t('md_failed', { n: bad }) })) : null,
     mdRec.keep ? null : el('p', { class: 'hint md-private', text: t('md_private') }),
     mdState.ask ? el('div', { class: 'md-ask' }, el('p', { text: t('md_ask', { n: mdState.ask }) }),
       el('div', { class: 'row' }, el('button', { type: 'button', class: 'btn primary md-all', text: t('md_ask_all'), onclick: () => { mdState.ask = 0; void mdScan(true); } }),
@@ -1884,6 +1892,62 @@ function mdHow() {
     twFoot(el('button', { type: 'button', class: 'btn md-copy', text: `📋 ${t('md_copy')}`, onclick: () => copyText(MD_FLOW_NAME, t('md_copied')) }),
       mdCan() && !mdRec ? el('button', { type: 'button', class: 'btn primary md-connect2', text: `📂 ${t('md_connect')}`, onclick: () => { dlg.close(); void mdConnect(); } }) : null));
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
+}
+// v9.76 (ADR-0146): «Check the folder» — every mail file said against the register: in which tender it is, a second copy of a mail
+// already there, not registered and why, not read yet, still being written, or one the reader cannot open. It reads the folder
+// only; «Register the ones not in the register» hands those to the importer as the minute's reading does.
+async function mdAudit() {
+  if (!mdRec || mdState.perm !== 'granted') return;
+  const sum = el('p', { class: 'md-ck-sum', role: 'status', text: t('md_ck_reading', { i: 0, n: '…' }) }), list = el('div', { class: 'md-ck-list' });
+  const reg = el('button', { type: 'button', class: 'btn primary md-ck-reg', hidden: '' }), copy = el('button', { type: 'button', class: 'btn md-ck-copy', disabled: '', text: `📋 ${t('md_ck_copy')}` });
+  const dlg = el('dialog', { class: 'proj-edit md-ck-dlg tw tw-lg', 'aria-labelledby': 'md-ck-h' }, twHead(el('h2', { id: 'md-ck-h', dir: 'auto', text: t('md_ck_h', { name: mdRec.name }) })),
+    sum, list, twFoot(reg, copy));
+  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
+  const handles = new Map(); let rep = null;
+  const ORDER = ['out', 'bad', 'wait', 'empty', 'in', 'same'];
+  const state = (r) => [t(`md_ck_${r.status}`), r.why ? t(r.why) : ''].filter(Boolean).join(' — ');
+  const draw = () => {
+    const n = rep.n, todo = rep.rows.filter((r) => r.status === 'out' || r.status === 'wait');
+    sum.textContent = !n.mails ? t('md_ck_none') : n.out + n.wait + n.bad + n.empty ? t('md_ck_sum', n) : t('md_ck_all_in', n);
+    const rows = [...rep.rows].sort((a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status) || (a.name < b.name ? -1 : 1));
+    set(list, n.mails ? el('div', { class: 'table-wrap' }, el('table', { class: 'md-ck-table' },
+      el('thead', {}, el('tr', {}, ['md_ck_col_file', 'md_ck_col_state', 'md_ck_col_tender'].map((k) => el('th', { text: t(k) })))),
+      el('tbody', {}, rows.map((r) => el('tr', { 'data-st': r.status },
+        el('td', { class: 'md-ck-name', dir: 'ltr', text: r.name }), el('td', { text: state(r) }),
+        el('td', {}, r.id ? el('button', { type: 'button', class: 'btn tiny quiet md-ck-open', dir: 'auto', title: t('md_ck_open'), text: tdTitle(r.subject).slice(0, 90),
+          onclick: () => { dlg.close(); tdOpenId = r.id; renderTenders(); } }) : '—')))))) : null);
+    reg.hidden = !todo.length; reg.disabled = !!tdBusy; reg.textContent = `＋ ${t('md_ck_reg', { n: todo.length })}`;
+    reg.onclick = async () => {
+      if (tdBusy) { toast(t('td_busy_wait')); return; }
+      reg.disabled = true; const files = [];
+      for (const r of todo) { try { const f = await handles.get(r.name).getFile(); if (f.size) files.push(new File([await f.arrayBuffer()], r.name, { type: f.type || 'message/rfc822', lastModified: f.lastModified })); } catch { /* not on the computer yet */ } }
+      const res = files.length ? await tdImportEmails(files, '', { quiet: true }) : null;
+      if (res && mdRec) { const names = [...handles.keys()];
+        mdRec = { ...mdRec, seen: mailDirSeen(mdRec.seen, names, files.map((f) => f.name)), failed: mailDirFailed(mdRec.failed, names, res.per) }; await mdSave(); mdDraw();
+        toast(t('md_done', { a: res.a, l: res.l })); }
+      if (dlg.open) await run();
+    };
+    copy.disabled = !n.mails; copy.onclick = () => copyText([sum.textContent, ...rows.map((r) => [r.name, state(r), r.subject || ''].filter(Boolean).join(' · '))].join('\n'), t('md_ck_copied'));
+  };
+  const run = async () => {
+    sum.textContent = t('md_ck_reading', { i: 0, n: '…' });
+    try {
+      const { parse } = await tdLoadMail(), all = [];
+      for await (const h of mdRec.handle.values()) if (h.kind === 'file') all.push(h);
+      const mails = all.filter((h) => mailDirNew([h.name], [], 1).mails), files = []; handles.clear();
+      for (const [k, h] of mails.entries()) {
+        if (!dlg.open) return; sum.textContent = t('md_ck_reading', { i: k + 1, n: mails.length }); handles.set(h.name, h);
+        let f; try { f = await h.getFile(); } catch { files.push({ name: h.name, size: 0 }); continue; }   // not on the computer yet
+        if (!f.size) { files.push({ name: h.name, size: 0 }); continue; }
+        try { const buf = await f.arrayBuffer(), mail = await parse(new File([buf], h.name, { type: 'message/rfc822' }));
+          const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', buf)), (b) => b.toString(16).padStart(2, '0')).join(''), id = mail.id.slice(0, 320);
+          files.push({ name: h.name, size: f.size, key: id ? 'id:' + id : 'sha:' + hash, hash }); }   // the key and hash exactly as the importer makes them
+        catch { files.push({ name: h.name, size: f.size, bad: true }); }
+      }
+      rep = mailDirReport(files, tenders ? tenders.items : [], mdRec.seen, mdRec.failed); draw();
+    } catch (e) { sum.textContent = t('md_lost'); if (e && e.name === 'NotAllowedError') { mdState.perm = 'prompt'; mdDraw(); } }
+  };
+  await run();
 }
 // ---------- v9.57 (ADR-0130): a tender's correspondence — who wrote, when and what, read from the mails dropped on it ----------
 const tdWhen = (at) => (at ? new Date(`${at.length > 10 ? at : `${at}T00:00`}:00Z`).toLocaleString(lang === 'ur' ? 'ur-PK' : lang === 'ar' ? 'ar-SA' : 'en-GB',
@@ -2505,7 +2569,9 @@ function renderTenders() {
   const box = tdDlg.querySelector('.td-dlg-body'), act = document.activeElement, was = act && tdDlg.contains(act) ? [...act.classList].find((c) => /^td-(?!f$|need$)/.test(c)) : '';
   if (tdFoldsFor !== cur.id || !tdDlg.open) { tdFoldSet.clear(); tdFoldsFor = cur.id; }   // another tender, or the window reopened: its folds start closed
   set(tdDlg.querySelector('.td-dlg-head .tw-titles'), el('h2', { id: 'td-dlg-h', class: 'td-dlg-h', dir: 'auto', title: cur.subject, text: tdTitle(cur.subject) }),
-    el('div', { class: 'row td-dlg-top' }, stageSel(cur), el('span', { class: 'hint td-dlg-first', text: `${t('td_col_date')}: ${tdWhen(cur.date)}` }), tdCardChips(cur)));
+    el('div', { class: 'row td-dlg-top' }, stageSel(cur), el('span', { class: 'hint td-dlg-first', text: `${t('td_col_date')}: ${tdWhen(cur.date)}` }), tdCardChips(cur)),
+    // v9.76: while mails or files are being read the card's fields are locked; it says so, and opens again by itself when it ends
+    tdBusy ? el('p', { class: 'note td-dlg-busy', role: 'status', text: `⏳ ${t('td_busy_card')}` }) : null);
   set(box, detail(cur));
   if (!tdDlg.open) tdDlg.showModal();
   else if (was) { const again = tdDlg.querySelector(`.${was}`); if (again && !again.disabled) again.focus(); }

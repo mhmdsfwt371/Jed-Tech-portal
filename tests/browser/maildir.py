@@ -139,7 +139,50 @@ with sync_playwright() as p:
             pg.add_script_tag(path=AXE); v=pg.evaluate(SCAN,'dialog.md-how'); pg.keyboard.press('Escape'); pg.wait_for_timeout(300); v2=pg.evaluate(SCAN,'#tenders-body .td-cmd')
             check(f'M16[{theme}/{lang}] the WCAG 2.1 A and AA scan passes in the steps window and on the card with the folder', not v and not v2, (v[:2],v2[:2]))
         else: pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
-    check('M17 no page error in three languages and both themes', not errs, errs[:2]); c.close()
+    check('M17 no page error in three languages and both themes', not errs, errs[:2])
+    # v9.76 (ADR-0146): «Check the folder». A folder of its own: two mails registered, a second copy of one, a reply that cannot be
+    # placed (two tenders share its subject), a file still empty — then one more arrives that is not read yet.
+    pg.select_option('#lang-select','en'); pg.wait_for_timeout(500); pg.locator('#tenders-body .td-dir .md-off').click(); pg.wait_for_timeout(500); flags(pg, __mdDir='Check Folder')
+    write(pg,'2026-11-22_080000_c1.eml',eml('sample: Check cameras','ck-1',9)); write(pg,'2026-11-22_080500_c2.eml',eml('sample: Check fuel','ck-2',8))
+    write(pg,'2026-11-22_081000_c3.eml',eml('sample: Check cameras','ck-1',9))   # the same mail, saved by the second flow
+    write(pg,'2026-11-22_081500_c4.eml',eml('sample: Check twin','ck-3',7)); write(pg,'2026-11-22_081600_c5.eml',eml('sample: Check twin','ck-4',7))
+    nodate='\n'.join(l for l in eml('sample: Check no date','ck-5',6).split('\n') if not l.startswith('Date:'))
+    write(pg,'2026-11-22_081700_c6.eml',nodate)   # no date anywhere: the importer will not invent an arrival day, so it is not registered
+    write(pg,'2026-11-22_081800_c7.eml','')
+    pg.locator('#tenders-body .td-dir .md-connect').click(); pg.wait_for_timeout(4000)
+    fl=pg.locator('#tenders-body .td-dir .md-failed')
+    check('M20 a mail that could not be registered is said under the folder by count, and stays said after another round', fl.count()==1 and 'not registered: 1' in fl.inner_text() and (read_now(pg,2000) or True) and pg.locator('#tenders-body .td-dir .md-failed').count()==1, line(pg)[:200])
+    write(pg,'2026-11-22_090000_c8.eml',eml('sample: Check late arrival','ck-6',1))
+    pg.locator('#tenders-body .td-dir .md-ck-btn').click(); until(pg, lambda: 'Reading the files' not in (pg.locator('dialog.md-ck-dlg .md-ck-sum').inner_text() if pg.locator('dialog.md-ck-dlg').count() else 'Reading the files'), 20)
+    ck=pg.evaluate("()=>{const d=document.querySelector('dialog.md-ck-dlg[open]');if(!d)return null;return {sum:d.querySelector('.md-ck-sum').textContent,rows:[...d.querySelectorAll('tbody tr')].map(r=>[r.dataset.st,r.cells[0].textContent,r.cells[1].textContent,r.cells[2].textContent]),reg:d.querySelector('.md-ck-reg').hidden?'':d.querySelector('.md-ck-reg').textContent,x:document.activeElement===d.querySelector('.dlg-x')}}")
+    st={r[1]:r[0] for r in (ck['rows'] if ck else [])}
+    check('M21 «Check the folder» says every mail against the register: in which tender, a second copy, not registered and why, not read yet, still being written — problems first, the counts above',
+        ck and st.get('2026-11-22_080000_c1.eml')=='in' and st.get('2026-11-22_081000_c3.eml')=='same' and st.get('2026-11-22_081700_c6.eml')=='out' and st.get('2026-11-22_090000_c8.eml')=='wait' and st.get('2026-11-22_081800_c7.eml')=='empty'
+        and ck['rows'][0][0]=='out' and 'Mails in the folder: 8' in ck['sum'] and 'In the register: 4, across 3 tenders' in ck['sum'] and 'missing' in ' '.join(r[2] for r in ck['rows'] if r[0]=='out').lower() and 'sample: Check cameras' in ' '.join(r[3] for r in ck['rows']) and ck['x'] and 'Register the ones not in the register (2)' in ck['reg'], ck)
+    n0=pg.evaluate(REG)['n']; pg.locator('dialog.md-ck-dlg .md-ck-reg').click()
+    ST2="()=>Object.fromEntries([...document.querySelectorAll('dialog.md-ck-dlg tbody tr')].map(r=>[r.cells[0].textContent,r.dataset.st]))"
+    until(pg, lambda: pg.evaluate(ST2).get('2026-11-22_090000_c8.eml')=='in', 25); st2=pg.evaluate(ST2)
+    check('M22 «Register the ones not in the register» registers the mail not read yet and checks again; the one that cannot be placed stays with its reason', pg.evaluate(REG)['n']==n0+1 and st2.get('2026-11-22_090000_c8.eml')=='in' and st2.get('2026-11-22_081700_c6.eml')=='out', (pg.evaluate(REG)['n']-n0, st2))
+    pg.locator('dialog.md-ck-dlg .md-ck-open').first.click(); pg.wait_for_timeout(900)
+    op=pg.evaluate("()=>({ck:!!document.querySelector('dialog.md-ck-dlg'),card:document.querySelector('dialog.td-dlg[open] .td-dlg-h')?.textContent||''})")
+    check('M23 a tender\'s name in the check opens its card', not op['ck'] and 'sample: Check' in op['card'], op)
+    # the card says why it is locked while mails are being read
+    write(pg,'2026-11-22_100000_c9.eml',eml('sample: Check while the card is open','ck-7',1))
+    pg.evaluate("()=>document.querySelector('#tenders-body .td-dir .md-read')?.click()")   # the card is open over the page; the folder is read behind it
+    saw=until(pg, lambda: pg.evaluate("()=>{const d=document.querySelector('dialog.td-dlg[open]');return !!d&&!!d.querySelector('.td-dlg-busy')&&d.querySelector('select.td-stage').disabled}"), 10)
+    back=until(pg, lambda: pg.evaluate("()=>{const d=document.querySelector('dialog.td-dlg[open]');return !!d&&!d.querySelector('.td-dlg-busy')&&!d.querySelector('select.td-stage').disabled}"), 20)
+    check('M24 while the folder is read, the open card says its stage is locked and why; when the reading ends it opens by itself', saw and back, (saw,back))
+    pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
+    for theme,lang in (('dark','ar'),('light','ur')):
+        pg.emulate_media(color_scheme=theme); pg.select_option('#lang-select',lang); pg.wait_for_timeout(600)
+        pg.locator('#tenders-body .td-dir .md-ck-btn').click(); until(pg, lambda: pg.locator('dialog.md-ck-dlg tbody tr').count()>0, 20)
+        txt=pg.evaluate("()=>document.querySelector('dialog.md-ck-dlg[open]').innerText+document.querySelector('#tenders-body .td-dir').innerText"); raw=[k for k in ('md_ck','md_failed','td_mail') if k in txt]
+        dirn=pg.evaluate("getComputedStyle(document.querySelector('dialog.md-ck-dlg .md-ck-sum')).direction"); nm=pg.evaluate("getComputedStyle(document.querySelector('dialog.md-ck-dlg .md-ck-name')).direction")
+        v=[]
+        if axe: pg.add_script_tag(path=AXE); v=pg.evaluate(SCAN,'dialog.md-ck-dlg')
+        check(f'M24[{theme}/{lang}] the check is written in the language with no raw key, the file names stay left to right, and the WCAG scan passes', not raw and dirn=='rtl' and nm=='ltr' and not v, (raw,dirn,nm,v[:2]))
+        pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
+    check('M24 no page error in the check', not errs, errs[:2]); c.close()
     b=p.chromium.launch(channel='chromium')
     # a private window: the folder is read for the visit, never kept — reading a kept one back there closes the whole browser
     c,pg,errs=fresh(b)
