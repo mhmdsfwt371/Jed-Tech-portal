@@ -168,8 +168,10 @@ with sync_playwright() as p:
     check('M23 a tender\'s name in the check opens its card', not op['ck'] and 'sample: Check' in op['card'], op)
     # the card says why it is locked while mails are being read
     write(pg,'2026-11-22_100000_c9.eml',eml('sample: Check while the card is open','ck-7',1))
+    # the lock lasts as long as the reading — under a second for one small mail — so it is recorded as it happens, not polled for
+    pg.evaluate("()=>{window.__locked=false;const d=document.querySelector('dialog.td-dlg[open]');const see=()=>{if(d.querySelector('.td-dlg-busy')&&d.querySelector('select.td-stage')?.disabled)window.__locked=true};window.__lockObs=new MutationObserver(see);window.__lockObs.observe(d,{subtree:true,childList:true,attributes:true});see()}")
     pg.evaluate("()=>document.querySelector('#tenders-body .td-dir .md-read')?.click()")   # the card is open over the page; the folder is read behind it
-    saw=until(pg, lambda: pg.evaluate("()=>{const d=document.querySelector('dialog.td-dlg[open]');return !!d&&!!d.querySelector('.td-dlg-busy')&&d.querySelector('select.td-stage').disabled}"), 10)
+    saw=until(pg, lambda: pg.evaluate('window.__locked'), 10)
     back=until(pg, lambda: pg.evaluate("()=>{const d=document.querySelector('dialog.td-dlg[open]');return !!d&&!d.querySelector('.td-dlg-busy')&&!d.querySelector('select.td-stage').disabled}"), 20)
     check('M24 while the folder is read, the open card says its stage is locked and why; when the reading ends it opens by itself', saw and back, (saw,back))
     pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
