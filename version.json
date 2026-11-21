@@ -1,19 +1,19 @@
 {
-  "version": "9.82",
+  "version": "9.83",
   "date": "2026-11-21",
   "notes": {
     "ar": [
-      "زر التحميل في صفحة «محلل المناقصات» ينزّل الآن الإصدار ٣٫٧٫١ من رابط شيربوينت الجديد: نافذة البرنامج على قدّ الشاشة، وأزرار الملفات في صف واحد."
+      "زر التحميل في صفحة «محلل المناقصات» ينزّل الآن الإصدار ٣٫٧٫٢: لما البوابة تبعت مناقصة للدراسة، نافذة البرنامج تعرض اسمها وخطواتها وآخر ما تعمله، ولا تطلب اختيار فولدر."
     ],
     "en": [
-      "The download button on the «Tender Analyzer» page now gets version 3.7.1 from the new SharePoint link: the program window fits the screen, and the file buttons sit in one row."
+      "The download button on the «Tender Analyzer» page now gets version 3.7.2: when the portal sends a tender to be studied, the program window shows its name, its steps and what it is doing now, and asks for no folder."
     ],
     "ur": [
-      "«ٹینڈر اینالائزر» صفحے کا ڈاؤن لوڈ بٹن اب نئے شیئرپوائنٹ لنک سے ورژن 3.7.1 دیتا ہے: پروگرام کی ونڈو اسکرین کے سائز کے مطابق کھلتی ہے، اور فائلوں کے بٹن ایک قطار میں ہیں۔"
+      "«ٹینڈر اینالائزر» صفحے کا ڈاؤن لوڈ بٹن اب ورژن 3.7.2 دیتا ہے: جب پورٹل کوئی ٹینڈر مطالعے کے لیے بھیجتا ہے تو پروگرام کی ونڈو اس کا نام، اس کے مراحل اور وہ ابھی کیا کر رہا ہے دکھاتی ہے، اور کوئی فولڈر منتخب کرنے کو نہیں کہتی۔"
     ]
   },
   "counts": {
-    "versions": 207,
+    "versions": 208,
     "decisions": 150
   }
 }

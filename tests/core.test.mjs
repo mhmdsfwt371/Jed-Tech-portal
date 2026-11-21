@@ -2312,11 +2312,11 @@ test('v9.79: a ZIP the backup is written in and read back, and the sync file sea
   for (const lang of ['ar', 'en', 'ur']) for (const k of ['bk_building', 'bk_failed', 'bk_not_file', 'zip_too_big', 'bk_usage'])
     assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
 });
-test('v9.82: the analyzer page downloads 3.7.1 and names the files it now writes', () => {
+test('v9.83: the analyzer page downloads 3.7.2 and names the files it now writes', () => {
   const page = readFileSync(new URL('../tender-analyzer.html', import.meta.url), 'utf8');
-  const link = 'IQAgyJcj5y0fT6dgEKIc2YjUAbscQodCi8qd_ScFMRMTXZQ';
-  assert.equal(page.split(link).length - 1, 2, 'the header button and the install step both point at 3.7.1');
-  assert.ok(!page.includes('IQCb5C6IN4qRSqqUqBkSCB3LAcmcVg2U') && !page.includes('IQDdtynmxL_6S4Efi3dCGrwRARIOC'), 'no link to 3.6 or 3.7.0 is left');
+  const link = 'IQChn8x4ZUkzSJVdTTsM8XNJAcopDqrEYPGdGNEabBt6q4k';
+  assert.equal(page.split(link).length - 1, 2, 'the header button and the install step both point at 3.7.2');
+  assert.ok(!page.includes('IQCb5C6IN4qRSqqUqBkSCB3LAcmcVg2U') && !page.includes('IQDdtynmxL_6S4Efi3dCGrwRARIOC') && !page.includes('IQAgyJcj5y0fT6dgEKIc2YjUAbscQ'), 'no link to an older version is left');
   for (const f of ['_Study_AR.docx', '_Study_EN.docx', '_Inquiries_AR.docx', '_BOQ_Priced_EN.xlsx', '_Offer_AR.pptx', '.tender-study.json'])
     assert.ok(page.includes(f), f);
   assert.ok(page.includes('السجلات والشهادات'), 'the certificates in the offer are described');

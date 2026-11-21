@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.83 — 2026-11-21
+
+- زر التحميل في صفحة «محلل المناقصات» ينزّل الآن الإصدار ٣٫٧٫٢: لما البوابة تبعت مناقصة للدراسة، نافذة البرنامج تعرض اسمها وخطواتها وآخر ما تعمله، ولا تطلب اختيار فولدر.
+
+<details><summary>English</summary>
+
+- The download button on the «Tender Analyzer» page now gets version 3.7.2: when the portal sends a tender to be studied, the program window shows its name, its steps and what it is doing now, and asks for no folder.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «ٹینڈر اینالائزر» صفحے کا ڈاؤن لوڈ بٹن اب ورژن 3.7.2 دیتا ہے: جب پورٹل کوئی ٹینڈر مطالعے کے لیے بھیجتا ہے تو پروگرام کی ونڈو اس کا نام، اس کے مراحل اور وہ ابھی کیا کر رہا ہے دکھاتی ہے، اور کوئی فولڈر منتخب کرنے کو نہیں کہتی۔
+
+</div>
+</details>
+
+
 ## v9.82 — 2026-11-21
 
 - زر التحميل في صفحة «محلل المناقصات» ينزّل الآن الإصدار ٣٫٧٫١ من رابط شيربوينت الجديد: نافذة البرنامج على قدّ الشاشة، وأزرار الملفات في صف واحد.
