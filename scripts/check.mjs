@@ -407,8 +407,9 @@ if (!/function setGroup\(/.test(app)) note('app.js: the menu groups no longer fo
 //     exactly the keys of the Arabic file (Arabic is every key's fallback).
 {
   const kv = [...new Set([...app.matchAll(/s\.(?:get|put|delete)\('([a-z]+)'/g)].map((m) => m[1]))];
-  const exp = (app.match(/backup: 'afaqy-portal\/v2'[\s\S]*?\};/) || [''])[0];
-  if (!exp) note('backup: the v2 export is missing');
+  // v9.79 (ADR-0149): the same object is the ZIP's backup.json (v3) and, for the old shape, the JSON (v2)
+  const exp = (app.match(/backup: refs \? 'afaqy-portal\/v3' : 'afaqy-portal\/v2'[\s\S]*?\};/) || app.match(/backup: 'afaqy-portal\/v2'[\s\S]*?\};/) || [''])[0];
+  if (!exp) note('backup: the v2/v3 export is missing');
   for (const k of kv) if (!new RegExp(`\\b${k}\\b`).test(exp)) note(`backup: the store "${k}" is not in the device backup — a cleared browser would lose it`);
   for (const l of ['ar', 'en', 'ur']) if (!sw.includes(`'./i18n/${l}.js'`)) note(`sw.js: i18n/${l}.js must be precached so the language works offline`);
   for (const l of ['en', 'ur']) { const extra = Object.keys(STRINGS[l]).filter((k) => !(k in STRINGS.ar)); if (extra.length) note(`i18n/${l}.js: keys not in ar.js: ${extra.slice(0, 5).join(', ')}`); }

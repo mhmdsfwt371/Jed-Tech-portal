@@ -124,7 +124,14 @@ with sync_playwright() as p:
     d.evaluate("d=>d.close()"); pg.wait_for_timeout(100); cl=pg.evaluate("(()=>{ const d=document.getElementById('t-dlg'); return [d.querySelectorAll('.dlg-pager, .dlg-pad').length, d.hasAttribute('data-paged'), d.style.overflowY] })()")
     pg.evaluate("document.getElementById('t-dlg').showModal()"); pg.wait_for_timeout(250); re=pg.locator('#t-dlg').evaluate("d=>__state(d)")
     check(f'W13 closing puts the window back as it was; opening it again starts at page 1 of {re.get("pages")}', cl==[0,False,''] and re['paged'] and re['page']==1, (cl,re)); shut(pg)
-    pg.evaluate("__mk('<h2>Framed</h2><p>Top text</p><div class=\"table-wrap\" style=\"max-height:300px;overflow:auto\"><table style=\"width:100%\"><tbody>'+__rows(140)+'</tbody></table></div><p id=\"after\">After the frame.</p>'+'<p>more</p>'.repeat(30))"); pg.wait_for_timeout(300)
+    pg.evaluate("__mk('<h2>Framed</h2><p>Top text</p><div class=\"table-wrap\" style=\"max-height:300px;overflow:auto\"><table style=\"width:100%\"><tbody>'+__rows(140)+'</tbody></table></div><p id=\"after\">After the frame.</p>'+'<p>more</p>'.repeat(30))")
+    # the frame is opened into the pages on a later frame; a loaded machine took longer than the 300 ms this waited (one run in
+    # three on 21 Nov 2026, a row cut at the foot) — so wait until the pages stop changing: the same count for four polls running
+    last, same = None, 0
+    for _ in range(40):
+        pg.wait_for_timeout(100); now = pg.locator('#t-dlg').evaluate("d=>{const s=__state(d);return [s.paged,s.pages,d.querySelector('.table-wrap')&&d.querySelector('.table-wrap').style.maxHeight]}")
+        same = same + 1 if now == last and now[0] else 0; last = now
+        if same >= 4: break
     st,cuts,rows,end,inview=walk(pg); fr=pg.locator('#t-dlg .table-wrap').evaluate("w=>[w.scrollHeight<=w.clientHeight+1, w.style.maxHeight]")
     check(f'W13b a long table in a frame of its own inside the window is opened into the pages ({st.get("pages")} pages): no scroll left inside, no row cut, all 140 rows', st['paged'] and fr==[True,'none'] and not cuts and len(rows)==140 and end, (fr,cuts[:3],len(rows),end))
     pg.locator('#t-dlg').evaluate("d=>d.close()"); pg.wait_for_timeout(100); back=pg.evaluate("(()=>{ const w=document.querySelector('#t-dlg .table-wrap'); return [w.style.maxHeight, w.style.overflowY, w.scrollHeight>w.clientHeight] })()")

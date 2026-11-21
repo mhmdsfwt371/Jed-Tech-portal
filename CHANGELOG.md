@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.79 — 2026-11-21
+
+- النسخة الاحتياطية و«أرسل إلى جهازي الآخر» صارا يعملان مهما كبرت المرفقات: كانا يتوقفان برسالة «تعذّر حفظ بيانات المناقصات» بعد أن تجاوزت الكراسات والإيميلات نحو ٣٨٠ ميجابايت، ولم يكن شيء يُحفظ أصلًا. لم يضِع شيء من بياناتك.
+- النسخة الاحتياطية صارت ملف ZIP يفتحه ويندوز: فيه كل كراسة وكل مرفق كما هو، فتأخذ منه أي ملف مباشرة. والنسخ القديمة (JSON) وملفات المزامنة القديمة تُقرأ كما كانت.
+- صفحة «البيانات» تقول كم تحفظ البوابة على هذا الجهاز، وإذا لم يكتمل ملف تقول السبب بدل رسالة الحفظ.
+
+<details><summary>English</summary>
+
+- The backup and «Send to my other device» now work however large the attachments grow: they stopped with «Could not save the tender data» once the booklets and mails passed about 380 MB, although nothing was being saved. None of your data was lost.
+- The backup is now a ZIP file that Windows opens: every booklet and attachment is in it as itself, so you can take any file out directly. Older backups (JSON) and older sync files are still read as before.
+- The Data page says how much the portal keeps on this device, and when a file is not completed it says why instead of the saving message.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- بیک اپ اور «میری دوسری ڈیوائس پر بھیجیں» اب منسلکات جتنے بھی بڑے ہوں کام کرتے ہیں: کراسے اور ای میلیں تقریباً 380 MB سے بڑھنے کے بعد یہ «ٹینڈر کا ڈیٹا محفوظ نہیں ہو سکا» کے پیغام پر رک جاتے تھے، حالانکہ کچھ محفوظ ہو ہی نہیں رہا تھا۔ آپ کا کوئی ڈیٹا ضائع نہیں ہوا۔
+- بیک اپ اب ZIP فائل ہے جسے Windows کھولتا ہے: ہر کراسہ اور ہر منسلکہ اس میں جیسا ہے ویسا ہے، اس لیے آپ کوئی بھی فائل براہ راست نکال سکتے ہیں۔ پرانے بیک اپ (JSON) اور پرانی مطابقت فائلیں پہلے کی طرح پڑھی جاتی ہیں۔
+- «ڈیٹا» کا صفحہ بتاتا ہے کہ پورٹل اس ڈیوائس پر کتنا رکھتا ہے، اور جب کوئی فائل مکمل نہ ہو تو محفوظ کرنے کے پیغام کے بجائے وجہ بتاتا ہے۔
+
+</div>
+</details>
+
+
 ## v9.78 — 2026-11-21
 
 - «المواعيد القادمة»: المناقصة تظهر مرة واحدة على أقرب مواعيدها، وفي بطاقتها ما بعده — بدل أن تظهر في أكثر من يوم.

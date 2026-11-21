@@ -3411,6 +3411,85 @@ export function mailDirFailed(prev, names, results) {
   for (const r of Array.isArray(results) ? results : []) { if (!r || !r.name) continue; if (r.kind === 'f') out.set(r.name, { name: r.name, key: r.key || 'td_mail_failed' }); else out.delete(r.name); }
   return [...out.values()];
 }
+// ---------- v9.79 (ADR-0149): the backup and the sync file are built without one giant string ----------
+// Until 9.78 both put every tender attachment into one JSON text as base64. A browser cannot hold a string longer than about
+// 512 MB (V8's limit), so a register whose mails and booklets passed roughly 380 MB could no longer be backed up or sent at all.
+// Now the files travel as files: a ZIP — `backup.json` for everything else, and each attachment as itself — that Windows opens
+// too. These pieces build and read its headers; the page joins them to the files themselves without ever copying them into text.
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+/** CRC-32, the one ZIP uses, carried across pieces: crc32(b, crc32(a)) is the CRC of a then b. */
+export function crc32(bytes, crc = 0) {
+  let c = ~crc >>> 0; const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  for (let i = 0; i < u8.length; i++) c = CRC_TABLE[(c ^ u8[i]) & 0xff] ^ (c >>> 8);
+  return ~c >>> 0;
+}
+const ZIP_UTF8 = 0x0800, ZIP_LIMIT = 0xFFFFFFFF;
+const zipDos = (at) => { const d = at instanceof Date && !Number.isNaN(at.getTime()) ? at : new Date(); const y = Math.max(1980, d.getFullYear());
+  return { time: (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), date: ((y - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate() }; };
+/** A ZIP entry's local header. `method` 0 keeps the bytes as they are (PDFs, pictures), 8 is deflate (the JSON). Names are UTF-8
+ *  and say so, so Arabic names show right in Windows. Sizes above 4 GB are refused rather than written wrong. */
+export function zipLocalHeader({ name, crc, size, csize = size, method = 0, at = null }) {
+  if (size > ZIP_LIMIT || csize > ZIP_LIMIT) throw new Error('zip_too_big');
+  const n = new TextEncoder().encode(name), h = new Uint8Array(30 + n.length), v = new DataView(h.buffer), { time, date } = zipDos(at);
+  v.setUint32(0, 0x04034b50, true); v.setUint16(4, 20, true); v.setUint16(6, ZIP_UTF8, true); v.setUint16(8, method, true); v.setUint16(10, time, true); v.setUint16(12, date, true);
+  v.setUint32(14, crc >>> 0, true); v.setUint32(18, csize, true); v.setUint32(22, size, true); v.setUint16(26, n.length, true); v.setUint16(28, 0, true); h.set(n, 30);
+  return h;
+}
+/** The central directory and its end record for the entries written, `offset` being where the directory starts. */
+export function zipDirectory(entries, offset) {
+  if (entries.length > 0xFFFF || offset > ZIP_LIMIT) throw new Error('zip_too_big');
+  const enc = new TextEncoder(), names = entries.map((e) => enc.encode(e.name)), size = names.reduce((s, n) => s + 46 + n.length, 0);
+  const out = new Uint8Array(size + 22), v = new DataView(out.buffer); let p = 0;
+  entries.forEach((e, i) => { const n = names[i], { time, date } = zipDos(e.at);
+    v.setUint32(p, 0x02014b50, true); v.setUint16(p + 4, 20, true); v.setUint16(p + 6, 20, true); v.setUint16(p + 8, ZIP_UTF8, true); v.setUint16(p + 10, e.method || 0, true);
+    v.setUint16(p + 12, time, true); v.setUint16(p + 14, date, true); v.setUint32(p + 16, e.crc >>> 0, true); v.setUint32(p + 20, e.csize ?? e.size, true); v.setUint32(p + 24, e.size, true);
+    v.setUint16(p + 28, n.length, true); v.setUint16(p + 30, 0, true); v.setUint16(p + 32, 0, true); v.setUint16(p + 34, 0, true); v.setUint16(p + 36, 0, true); v.setUint32(p + 38, 0, true);
+    v.setUint32(p + 42, e.offset, true); out.set(n, p + 46); p += 46 + n.length; });
+  v.setUint32(p, 0x06054b50, true); v.setUint16(p + 4, 0, true); v.setUint16(p + 6, 0, true); v.setUint16(p + 8, entries.length, true); v.setUint16(p + 10, entries.length, true);
+  v.setUint32(p + 12, size, true); v.setUint32(p + 16, offset, true); v.setUint16(p + 20, 0, true);
+  return out;
+}
+/** Where a ZIP's directory is, read from its last bytes (`tail`, at most 65,557 of them) and its whole size; null when it is not one. */
+export function zipFindEnd(tail, total) {
+  const u8 = tail instanceof Uint8Array ? tail : new Uint8Array(tail), v = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  for (let p = u8.length - 22; p >= 0; p--) if (v.getUint32(p, true) === 0x06054b50) {
+    const count = v.getUint16(p + 10, true), size = v.getUint32(p + 12, true), offset = v.getUint32(p + 16, true);
+    if (offset + size > total) return null; return { count, size, offset };
+  }
+  return null;
+}
+/** The entries a ZIP's central directory lists: name, method, CRC, both sizes and where each local header starts. */
+export function zipEntries(dir, count) {
+  const u8 = dir instanceof Uint8Array ? dir : new Uint8Array(dir), v = new DataView(u8.buffer, u8.byteOffset, u8.byteLength), dec = new TextDecoder(), out = [];
+  let p = 0;
+  for (let i = 0; i < count && p + 46 <= u8.length; i++) {
+    if (v.getUint32(p, true) !== 0x02014b50) break;
+    const nl = v.getUint16(p + 28, true), xl = v.getUint16(p + 30, true), cl = v.getUint16(p + 32, true);
+    out.push({ name: dec.decode(u8.subarray(p + 46, p + 46 + nl)), method: v.getUint16(p + 10, true), crc: v.getUint32(p + 16, true), csize: v.getUint32(p + 20, true), size: v.getUint32(p + 24, true), offset: v.getUint32(p + 42, true) });
+    p += 46 + nl + xl + cl;
+  }
+  return out;
+}
+/** How many bytes a local header takes before its data (its own name and extra field may differ from the directory's). */
+export function zipDataStart(head) {
+  const u8 = head instanceof Uint8Array ? head : new Uint8Array(head), v = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  if (u8.length < 30 || v.getUint32(0, true) !== 0x04034b50) return -1;
+  return 30 + v.getUint16(26, true) + v.getUint16(28, true);
+}
+/** A file name safe inside a ZIP and on Windows: no folders, none of \ / : * ? " < > |, at most 90 characters, never empty. */
+export function zipSafeName(name) {
+  const s = String(name || '').replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '_').replace(/^\.+/, '').trim().slice(0, 90);
+  return s || 'file';
+}
+// The sync file, version 2: the ZIP sealed in pieces of 4 MB with AES-GCM, so neither side holds it as one buffer. Each piece's IV is
+// the file's random 8 bytes and the piece's number; the additional data names the number and whether it is the last piece, so a
+// piece moved, dropped or cut off at the end does not open.
+export const SYNC_PIECE = 4 * 1048576;
+export function syncPieceIv(nonce, index, last) {
+  const iv = new Uint8Array(12); iv.set(nonce.subarray(0, 8), 0); new DataView(iv.buffer).setUint32(8, index, false);
+  const aad = new Uint8Array(5); new DataView(aad.buffer).setUint32(0, index, false); aad[4] = last ? 1 : 0;
+  return { iv, aad };
+}
 /** When the offer was handed over: the message the manager marked as the hand-over, else the day it was marked ready. Never guessed. */
 export function tenderHandedAt(item) {
   const marked = (Array.isArray(item && item.thread) ? item.thread : []).filter((e) => e && e.mark === 'handover' && e.at).at(-1);

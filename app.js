@@ -19,7 +19,7 @@ import {
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
   mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts,
-  TENDER_HANDOVER_DAYS, tenderMilestones, tenderAgenda, tenderNotices, tenderNoticeId, agendaFold, agendaByTender, tenderAgendaMove, MAILDIR_ASK, mailDirNew, mailDirSeen, mailDirReport, mailDirFailed, tenderDateChanges, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
+  TENDER_HANDOVER_DAYS, tenderMilestones, tenderAgenda, tenderNotices, tenderNoticeId, agendaFold, agendaByTender, tenderAgendaMove, MAILDIR_ASK, mailDirNew, mailDirSeen, mailDirReport, mailDirFailed, tenderDateChanges, crc32, zipLocalHeader, zipDirectory, zipFindEnd, zipEntries, zipDataStart, zipSafeName, SYNC_PIECE, syncPieceIv, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
 
 import { validateSystems } from './systems-core.js';
 
@@ -2927,10 +2927,83 @@ async function syncUnpack(buf, pass) {
   return JSON.parse(await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
 }
 const syncCount = (j) => ({ tasks: (j.datasets || []).reduce((s, d) => s + (d.tasks || []).length, 0), tenders: j.tenders && j.tenders.items ? j.tenders.items.length : 0, mail: j.mailact && j.mailact.recs ? j.mailact.recs.length : 0 });
+// ---------- v9.79 (ADR-0149): the backup and the sync file as a ZIP of files — never one giant string ----------
+async function blobCrc(blob) { let c = 0; const r = blob.stream().getReader(); for (;;) { const { done, value } = await r.read(); if (done) return c; c = crc32(value, c); } }
+// A ZIP built from parts: each header's few bytes, then the file itself as the Blob it already is — the browser joins them without
+// copying the files into this page's memory as text. `deflate` squeezes the JSON; PDFs and pictures are kept as they are.
+async function zipBuild(list) {
+  const parts = [], dir = []; let off = 0;
+  for (const f of list) {
+    const crc = await blobCrc(f.blob), data = f.deflate ? await new Response(f.blob.stream().pipeThrough(new CompressionStream('deflate-raw'))).blob() : f.blob;
+    const e = { name: f.name, crc, size: f.blob.size, csize: data.size, method: f.deflate ? 8 : 0, offset: off, at: f.at ? new Date(f.at) : new Date() };
+    const head = zipLocalHeader(e); parts.push(head, data); dir.push(e); off += head.length + data.size;
+  }
+  parts.push(zipDirectory(dir, off));
+  return new Blob(parts, { type: 'application/zip' });
+}
+// Opened by slices: the end record, the directory, then each entry only when it is asked for (a stored file is a slice of the file).
+async function zipOpen(blob) {
+  const tailLen = Math.min(blob.size, 65557), end = zipFindEnd(new Uint8Array(await blob.slice(blob.size - tailLen).arrayBuffer()), blob.size);
+  if (!end) throw new Error('bk_not_file');
+  const entries = zipEntries(new Uint8Array(await blob.slice(end.offset, end.offset + end.size).arrayBuffer()), end.count), by = new Map(entries.map((e) => [e.name, e]));
+  const get = async (name, type = '') => { const e = by.get(name); if (!e) return null;
+    const start = e.offset + zipDataStart(new Uint8Array(await blob.slice(e.offset, e.offset + 30).arrayBuffer())), raw = blob.slice(start, start + e.csize, type);
+    return e.method === 8 ? new Blob([await new Response(raw.stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()], { type }) : raw; };
+  return { entries, get };
+}
+// The full backup as a ZIP: `backup.json` (afaqy-portal/v3 — what the JSON backup held, each attachment named by its place in the
+// ZIP instead of written into it) and the attachments under files/. Returns the manifest too, for the counts the page shows.
+async function backupZip() {
+  const refs = [], manifest = await buildBackup(refs);
+  const blob = await zipBuild([{ name: 'backup.json', blob: new Blob([JSON.stringify(manifest)], { type: 'application/json' }), deflate: true }, ...refs.map((r) => ({ name: r.path, blob: r.blob, at: r.at }))]);
+  return { manifest, blob };
+}
+// A backup file of any age: the ZIP (v3) — its attachments put back as files — or the JSON of before (v1, v2) as it always was read.
+async function readBackupFile(f) {
+  const sig = new Uint8Array(await f.slice(0, 4).arrayBuffer());
+  if (!(sig[0] === 0x50 && sig[1] === 0x4b && sig[2] === 3 && sig[3] === 4)) return JSON.parse(await f.text());
+  const z = await zipOpen(f), mj = await z.get('backup.json', 'application/json'); if (!mj) throw new Error('bk_not_file');
+  const j = JSON.parse(await mj.text());
+  const back = async (file) => { if (!file || !file.zip) return file; const blob = await z.get(file.zip, file.type || ''); const { zip, ...rest } = file; return blob ? { ...rest, blob } : null; };
+  if (j.tenders && Array.isArray(j.tenders.items)) j.tenders.items = await Promise.all(j.tenders.items.map(async (it) => ({ ...it, files: (await Promise.all((it.files || []).map(back))).filter(Boolean) })));
+  if (j.projfiles && typeof j.projfiles === 'object') for (const id of Object.keys(j.projfiles)) j.projfiles[id] = (await Promise.all((j.projfiles[id] || []).map(back))).filter(Boolean);
+  return j;
+}
+const SYNC_MAGIC2 = [0x41, 0x46, 0x51, 0x53, 2];
+async function syncPack2(zip, pass) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), nonce = crypto.getRandomValues(new Uint8Array(8)), key = await syncKey(pass, salt);
+  const head = new Uint8Array(33); head.set(SYNC_MAGIC2); head.set(salt, 5); head.set(nonce, 21); new DataView(head.buffer).setUint32(29, SYNC_PIECE, true);
+  const parts = [head], n = Math.max(1, Math.ceil(zip.size / SYNC_PIECE));
+  for (let i = 0; i < n; i++) {
+    const { iv, aad } = syncPieceIv(nonce, i, i === n - 1);
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: aad }, key, await zip.slice(i * SYNC_PIECE, (i + 1) * SYNC_PIECE).arrayBuffer()));
+    const len = new Uint8Array(4); new DataView(len.buffer).setUint32(0, ct.length, true); parts.push(len, new Blob([ct]));
+  }
+  return new Blob(parts, { type: 'application/octet-stream' });
+}
+async function syncUnpack2(f, pass) {
+  const head = new Uint8Array(await f.slice(0, 33).arrayBuffer()); if (head.length < 33) throw new Error('sync_not_file');
+  const salt = head.slice(5, 21), nonce = head.slice(21, 29), key = await syncKey(pass, salt), out = [];
+  let pos = 33, i = 0;
+  for (;;) {
+    if (pos + 4 > f.size) throw new Error('sync_not_file');
+    const len = new DataView(await f.slice(pos, pos + 4).arrayBuffer()).getUint32(0, true), end = pos + 4 + len, last = end === f.size;
+    if (end > f.size) throw new Error('sync_not_file');
+    const { iv, aad } = syncPieceIv(nonce, i, last);
+    let pt; try { pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv, additionalData: aad }, key, await f.slice(pos + 4, end).arrayBuffer()); }
+    catch { throw new Error(i === 0 ? 'sync_bad_pass' : 'sync_not_file'); }
+    out.push(new Blob([pt])); pos = end; i++; if (last) break;
+  }
+  return new Blob(out, { type: 'application/zip' });
+}
+// a file the page made, saved: the link stays alive long enough for a large file to start downloading
+function saveBlob(name, blob) { const u = URL.createObjectURL(blob), a = el('a', { href: u, download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 120000); }
+// what went wrong, in words the manager can act on — and never «could not save» when nothing was being saved
+const bkWhy = (e) => (e && /^(bk_|sync_|zip_)/.test(e.message || '') ? t(e.message) : e && e.name === 'QuotaExceededError' ? t('bk_space') : `${(e && e.name) || 'Error'}${e && e.message ? `: ${String(e.message).slice(0, 80)}` : ''}`);
 async function syncSend(pass) {
   if (String(pass || '').length < 6) { toast(t('sync_pass_short')); return; }
   let all, blob;
-  try { all = await buildBackup(); blob = await syncPack(all, pass); } catch { toast(t('td_store_failed')); return; }
+  try { const z = await backupZip(); all = z.manifest; blob = await syncPack2(z.blob, pass); } catch (e) { console.error(e); toast(t('bk_failed', { why: bkWhy(e) })); return; }   // v9.79: nothing here saves anything
   const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
   const file = new File([blob], `afaqy-sync-${stamp}.afqs`, { type: 'application/octet-stream' }), c = syncCount(all);
   const last = { sentAt: new Date().toISOString(), ...c, kb: Math.round(blob.size / 1024) }; await store.kvPut('syncsent', last);
@@ -2940,7 +3013,9 @@ async function syncSend(pass) {
 }
 async function syncReceive(f, pass) {
   if (String(pass || '').length < 6) { toast(t('sync_pass_short')); return false; }
-  let j; try { j = await syncUnpack(await f.arrayBuffer(), pass); } catch (e) { toast(t(e && /^sync_/.test(e.message) ? e.message : 'sync_not_file')); return false; }
+  let j; try { const h = new Uint8Array(await f.slice(0, 5).arrayBuffer());   // v9.79: version 2 is the sealed ZIP; version 1 (before) still opens
+    j = h.length === 5 && SYNC_MAGIC2.every((v, i) => h[i] === v) ? await readBackupFile(await syncUnpack2(f, pass)) : await syncUnpack(await f.arrayBuffer(), pass); }
+  catch (e) { toast(t(e && /^(sync_|bk_)/.test(e.message) ? e.message : 'sync_not_file')); return false; }
   const before = syncCount({ datasets, tenders, mailact: mailAct });
   try { await applyBackup(j); } catch { toast(t('td_store_failed')); return false; }
   const after = syncCount({ datasets, tenders, mailact: mailAct });
@@ -2951,7 +3026,7 @@ async function renderSync() {
   const box = $('sync-card'); if (!box) return;
   const sent = await store.kvGet('syncsent'), got = await store.kvGet('syncgot'), when = (iso) => (iso ? `${saudiDay(iso)} ${new Date(iso).toLocaleTimeString(lang === 'en' ? 'en-GB' : 'ar-SA-u-nu-latn', { hour: '2-digit', minute: '2-digit' })}` : '');
   const pass = el('input', { type: 'password', class: 'sync-pass', autocomplete: 'new-password', minlength: '6', placeholder: t('sync_pass_ph'), 'aria-label': t('sync_pass_ph') });
-  const up = el('input', { type: 'file', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) await syncReceive(f, pass.value); } });   // no «accept»: iOS greys out an extension it does not know — the file is checked by its own header and the passphrase
+  const up = el('input', { type: 'file', class: 'sync-recv-in', hidden: true, onchange: async (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) await syncReceive(f, pass.value); } });   // no «accept»: iOS greys out an extension it does not know — the file is checked by its own header and the passphrase
   set(box, el('h2', {}, `🔄 ${t('sync_h')}`), el('p', { class: 'hint', text: t('sync_lead') }),
     el('ol', { class: 'sync-steps' }, ['sync_s1', 'sync_s2', 'sync_s3'].map((k) => el('li', { text: t(k) }))),
     el('div', { class: 'row sync-row' }, pass,
@@ -3515,14 +3590,16 @@ function projWorkspaceBody() {
   const src = el('p', { class: 'hint' }, [myRegister ? t('proj_src_reg', { d: myRegister.asOf, n: myRegister.items.length, b: myRegister.board.length }) : t('proj_src_noreg'), myProjects ? ` · ${t('proj_src', { from: myProjects.from, to: myProjects.to, d: myProjects.importedAt })}` : ` · ${t('proj_src_nomail')}`].join(''));
   return el('section', { class: 'proj' }, head, projView === 'mail' ? mailSrc('projects', false) : null, src, el('div', { class: 'row proj-tools' }, tabs, period), el('div', { class: 'row proj-tools' }, lines, delAll), page);
 }
-async function projFilesExport() {
+async function projFilesExport(refs = null) {
   const out = {}; for (const it of (myRegister ? myRegister.items : [])) { if (!it.files) continue; const files = (await store.kvGet(`pf:${it.id}`)) || [];
+    if (refs) { out[it.id] = files.filter((f) => f.blob instanceof Blob).map((f) => { const path = `files/${String(refs.length + 1).padStart(4, '0')}_${zipSafeName(f.name)}`; refs.push({ path, blob: f.blob }); return { name: f.name, type: f.type, size: f.size, kind: f.kind, at: f.at, zip: path }; }); continue; }   // v9.79
     out[it.id] = await Promise.all(files.map((f) => new Promise((res) => { const fr = new FileReader(); fr.onload = () => res({ name: f.name, type: f.type, size: f.size, kind: f.kind, at: f.at, data: fr.result }); fr.onerror = () => res(null); fr.readAsDataURL(f.blob); }))).then((l) => l.filter(Boolean)); }
   return out;
 }
 async function projFilesImport(map) {
   for (const [id, list] of Object.entries(map)) { if (!Array.isArray(list) || (await store.kvGet(`pf:${id}`))) continue;
-    const files = []; for (const f of list.slice(0, 50)) { try { const m = /^data:([^;,]*)(;base64)?,(.*)$/s.exec(String(f.data)); if (!m) continue; const bin = m[2] ? atob(m[3]) : decodeURIComponent(m[3]); const u8 = new Uint8Array(bin.length); for (let q = 0; q < bin.length; q++) u8[q] = bin.charCodeAt(q); const blob = new Blob([u8], { type: m[1] || 'application/octet-stream' }); files.push({ name: String(f.name).slice(0, 160), type: String(f.type || blob.type), size: blob.size, kind: ['technical', 'financial', 'photo', 'other'].includes(f.kind) ? f.kind : 'other', at: String(f.at || '').slice(0, 10), blob }); } catch { /* skip a broken file */ } }
+    const files = []; for (const f of list.slice(0, 50)) { try { if (f.blob instanceof Blob) { files.push({ name: String(f.name).slice(0, 160), type: String(f.type || f.blob.type), size: f.blob.size, kind: ['technical', 'financial', 'photo', 'other'].includes(f.kind) ? f.kind : 'other', at: String(f.at || '').slice(0, 10), blob: f.blob }); continue; }   // v9.79: from the ZIP
+      const m = /^data:([^;,]*)(;base64)?,(.*)$/s.exec(String(f.data)); if (!m) continue; const bin = m[2] ? atob(m[3]) : decodeURIComponent(m[3]); const u8 = new Uint8Array(bin.length); for (let q = 0; q < bin.length; q++) u8[q] = bin.charCodeAt(q); const blob = new Blob([u8], { type: m[1] || 'application/octet-stream' }); files.push({ name: String(f.name).slice(0, 160), type: String(f.type || blob.type), size: blob.size, kind: ['technical', 'financial', 'photo', 'other'].includes(f.kind) ? f.kind : 'other', at: String(f.at || '').slice(0, 10), blob }); } catch { /* skip a broken file */ } }
     if (files.length) await store.kvPut(`pf:${id}`, files); }
 }
 async function projToggleOk(r) {
@@ -6241,8 +6318,11 @@ $('file-in').addEventListener('change', async (e) => { for (const f of e.target.
 // The device backup carries EVERYTHING this device holds — data, reports, closed month cards, one-to-ones, the repair list,
 // the weights draft, the team-file edits and the person's own profile — so a cleared browser loses nothing (ADR-0023).
 /** ADR-0103: everything this device holds — the backup file and the sync file carry the same thing. */
-async function tdBackupData(state) {
+async function tdBackupData(state, refs = null) {
   if (!state) return null;
+  // v9.79 (ADR-0149): for the ZIP each file stays a file — named here by its place in the ZIP, handed over in `refs`
+  if (refs) return { ...state, items: state.items.map((item) => ({ ...item, files: (item.files || []).filter((f) => f.blob instanceof Blob).map(({ blob, ...file }) => {
+    const path = `files/${String(refs.length + 1).padStart(4, '0')}_${zipSafeName(file.name)}`; refs.push({ path, blob }); return { ...file, type: blob.type || '', zip: path }; }) })) };
   const items = await Promise.all(state.items.map(async (item) => {
     const files = await Promise.all((item.files || []).map(({ blob, ...file }) => new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -6259,6 +6339,7 @@ function tdRestoreData(state) {
   return cleanTenders({ ...state, items: state.items.map((item) => {
     if (!item || !Array.isArray(item.files)) return item;
     const files = item.files.filter((file) => file && typeof file === 'object').flatMap(({ data, ...file }) => {
+      if (file.blob instanceof Blob) return [file];   // v9.79: read back from the ZIP as the file it is
       const match = /^data:([^;,]*);base64,([\w+/=]*)$/.exec(data || '');
       if (!match) return [];
       try { return [{ ...file, blob: new Blob([Uint8Array.from(atob(match[2]), (char) => char.charCodeAt(0))], { type: match[1] }) }]; }
@@ -6267,26 +6348,32 @@ function tdRestoreData(state) {
     return { ...item, files };
   }) });
 }
-async function buildBackup() {
+async function buildBackup(refs = null) {   // refs (v9.79): the files go into the ZIP by reference — afaqy-portal/v3
   if (plannerFile === undefined) plannerFile = (await store.getPlanner()) || null;   // ADR-0071: the planner travels with the backup
-  const all = { backup: 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION, planner: plannerFile || null, tenders: isTeamPortal ? null : await tdBackupData(tenders || await store.kvGet('tenders')), mailrules: mfState.rules || (await store.kvGet('mailrules')) || null, mailact: mailAct, mailids: mailIds,
-    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: (viewAs ? (meDerived ? null : realMe) : (meDerived ? null : me)) || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projectwork:isTeamPortal?null:projectWork, projfiles: await projFilesExport(), devplans: devPlans };
+  const all = { backup: refs ? 'afaqy-portal/v3' : 'afaqy-portal/v2', exportedAt: new Date().toISOString(), version: PORTAL_VERSION, planner: plannerFile || null, tenders: isTeamPortal ? null : await tdBackupData(tenders || await store.kvGet('tenders'), refs), mailrules: mfState.rules || (await store.kvGet('mailrules')) || null, mailact: mailAct, mailids: mailIds,
+    datasets, reports, cards: monthCards, oneonone: meet, repairs, privlinks: privLinks, mailrows: mailRows, weights: weightsDevice || null, roster: rosterDevice || null, me: (viewAs ? (meDerived ? null : realMe) : (meDerived ? null : me)) || null, names: nameFixes(), pending: pendingList(), projects: myProjects, register: myRegister, projectwork:isTeamPortal?null:projectWork, projfiles: await projFilesExport(refs), devplans: devPlans };
   return all;
 }
 // v9.55: the backup is the only other copy of what the manager typed and attached — the device remembers when it was last saved
-$('export-btn').addEventListener('click', async () => { try { download(`afaqy-portal-backup-${ymd(new Date())}.json`, JSON.stringify(await buildBackup(), null, 1)); pref('bkat', new Date().toISOString()); backupNote(); if (location.hash === '#tenders') renderTenders(); } catch (error) { console.error(error); toast(t('td_store_failed')); } });
+$('export-btn').addEventListener('click', async () => {   // v9.79 (ADR-0149): a ZIP — backup.json and every attachment as a file
+  const btn = $('export-btn'); if (btn.disabled) return; btn.disabled = true; toast(t('bk_building'));
+  try { const { blob } = await backupZip(); saveBlob(`afaqy-portal-backup-${ymd(new Date())}.zip`, blob); pref('bkat', new Date().toISOString()); backupNote(); if (location.hash === '#tenders') renderTenders(); }
+  catch (error) { console.error(error); toast(t('bk_failed', { why: bkWhy(error) })); } finally { btn.disabled = false; } });
 const backupState = () => backupDue(pref('bkat') || '', new Date().toISOString(), { items: ((tenders && tenders.items.length) || 0) + ((myRegister && myRegister.items && myRegister.items.length) || 0) });
+let bkMb = 0;
 function backupNote() {
   const n = $('bk-last'); if (!n) return; const at = pref('bkat'), st = backupState();
-  n.textContent = at ? t('bk_last', { d: saudiDay(at), n: st.days == null ? 0 : st.days }) : t('bk_never_short'); n.className = `hint${st.due ? ' bk-due' : ''}`;
+  n.textContent = (at ? t('bk_last', { d: saudiDay(at), n: st.days == null ? 0 : st.days }) : t('bk_never_short')) + (bkMb ? ` · ${t('bk_usage', { mb: bkMb.toLocaleString('en') })}` : ''); n.className = `hint${st.due ? ' bk-due' : ''}`;
+  // v9.79: how much the portal keeps on this device — near the size a backup or a sync file will be; drawn again when it changes
+  if (navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then((e) => { const mb = Math.round(((e && e.usage) || 0) / 1048576); if (mb >= 1 && mb !== bkMb) { bkMb = mb; backupNote(); } }).catch(() => {});
 }
 
 /** Restore or sync: merge, never overwrite. Settings (weights, team file, profile, rules, planner) stay as this device has them. */
 async function applyBackup(j) {
-  if (!['afaqy-portal/v1', 'afaqy-portal/v2'].includes(j.backup) || !Array.isArray(j.datasets)) throw new Error('format');
+  if (!['afaqy-portal/v1', 'afaqy-portal/v2', 'afaqy-portal/v3'].includes(j.backup) || !Array.isArray(j.datasets)) throw new Error('format');
     for (const d of j.datasets) datasets = mergeDataset(datasets, d);
     await store.put(datasets);
-    if (j.backup === 'afaqy-portal/v2') {
+    if (j.backup === 'afaqy-portal/v2' || j.backup === 'afaqy-portal/v3') {
       // merge, never overwrite: what this device already has stays, what the backup adds joins it
       for (const r of Array.isArray(j.reports) ? j.reports : []) if (r && r.key && !reports.some((x) => x.key === r.key)) reports.push(r);
       await store.putReports(reports);
@@ -6328,8 +6415,8 @@ async function applyBackup(j) {
 $('import-in').addEventListener('change', async (e) => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try {
-    const j = JSON.parse(await f.text()); await applyBackup(j);
-    toast(t(j.backup === 'afaqy-portal/v2' ? 'backup_restored_all' : 'loaded', { n: datasets.reduce((s, d) => s + d.tasks.length, 0), range: '' }));
+    const j = await readBackupFile(f); await applyBackup(j);
+    toast(t(j.backup === 'afaqy-portal/v2' || j.backup === 'afaqy-portal/v3' ? 'backup_restored_all' : 'loaded', { n: datasets.reduce((s, d) => s + d.tasks.length, 0), range: '' }));
   } catch { toast(t('err_json')); }
 });
 

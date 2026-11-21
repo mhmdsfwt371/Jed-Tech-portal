@@ -2283,6 +2283,34 @@ test('v9.78: one card per tender on the strip, and a reminder moved to another d
   for (const lang of ['ar', 'en', 'ur']) for (const k of ['ag_then', 'ag_move', 'ag_moved', 'ag_unmove', 'ag_drop', 'ag_moved_toast', 'ag_none_day'])
     assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
 });
+// v9.79 (ADR-0149): the backup and the sync file without one giant string — a ZIP of files, its pieces built and read here.
+test('v9.79: a ZIP the backup is written in and read back, and the sync file sealed in pieces', () => {
+  const enc = new TextEncoder();
+  assert.equal(core.crc32(enc.encode('123456789')), 0xCBF43926, 'the CRC every ZIP reader checks');
+  assert.equal(core.crc32(enc.encode('56789'), core.crc32(enc.encode('1234'))), 0xCBF43926, 'carried across pieces');
+  // two entries — a stored file with an Arabic name, and a second one — then the directory, read back the way the page reads a file
+  const a = enc.encode('%PDF-1.7 كراسة'), b = new Uint8Array([0, 1, 2, 250, 251, 252]);
+  const e1 = { name: 'files/0001_كراسة الشروط.pdf', crc: core.crc32(a), size: a.length, method: 0, offset: 0 };
+  const h1 = core.zipLocalHeader(e1), e2 = { name: 'files/0002_boq.xlsx', crc: core.crc32(b), size: b.length, method: 0, offset: h1.length + a.length };
+  const h2 = core.zipLocalHeader(e2), dir = core.zipDirectory([e1, e2], e2.offset + h2.length + b.length);
+  const zip = new Uint8Array([...h1, ...a, ...h2, ...b, ...dir]);
+  assert.equal(new DataView(h1.buffer).getUint16(6, true) & 0x0800, 0x0800, 'names are marked UTF-8, so Windows shows Arabic names right');
+  const end = core.zipFindEnd(zip.slice(-100), zip.length);
+  assert.deepEqual([end.count, end.offset], [2, e2.offset + h2.length + b.length]);
+  const list = core.zipEntries(zip.slice(end.offset, end.offset + end.size), end.count);
+  assert.deepEqual(list.map((x) => [x.name, x.size, x.crc]), [[e1.name, a.length, e1.crc], [e2.name, b.length, e2.crc]]);
+  const start = list[0].offset + core.zipDataStart(zip.slice(list[0].offset, list[0].offset + 30));
+  assert.deepEqual([...zip.slice(start, start + list[0].csize)], [...a], 'a stored file is its own bytes, unchanged');
+  assert.equal(core.zipFindEnd(new Uint8Array(40), 40), null, 'not a ZIP');
+  assert.throws(() => core.zipLocalHeader({ name: 'x', crc: 0, size: 2 ** 32 }), /zip_too_big/, 'a file over 4 GB is refused, never written wrong');
+  assert.equal(core.zipSafeName('a/b\\c:d*?"<>|.pdf'), 'a_b_c_d_.pdf');
+  assert.equal(core.zipSafeName(''), 'file');
+  // the sync file's pieces: each its own IV, and the last one marked, so a piece moved or cut off does not open
+  const nonce = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]), p0 = core.syncPieceIv(nonce, 0, false), p1 = core.syncPieceIv(nonce, 1, true);
+  assert.notDeepEqual([...p0.iv], [...p1.iv]); assert.deepEqual([...p1.aad], [0, 0, 0, 1, 1]); assert.equal(core.SYNC_PIECE, 4 * 1048576);
+  for (const lang of ['ar', 'en', 'ur']) for (const k of ['bk_building', 'bk_failed', 'bk_not_file', 'zip_too_big', 'bk_usage'])
+    assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
+});
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

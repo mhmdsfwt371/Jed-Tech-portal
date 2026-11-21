@@ -32,7 +32,7 @@ async function setup(team=false) {
   const source=readFileSync(new URL('app.js',root),'utf8').replace(/^import[\s\S]*?from\s+'[^']+';\s*$/gm,match=>{
     const names=match.slice(match.indexOf('{')+1,match.lastIndexOf('}')).split(',').map(x=>x.trim().replace(/\s+as\s+/,': '));return 'const {'+names.join(',')+'}=injected;';
   }).replaceAll("import('./assets/vendor/tender-mail.min.js')","imp('./assets/vendor/tender-mail.min.js')").replaceAll("import('./assets/tender-documents.js')","imp('./assets/tender-documents.js')");
-  w.eval(source+'\nwindow.qa={store,tdCommit,tdUpdate,tdImportEmails,tdImportStudies,tdAnalyzeFiles,tdDocumentView,buildBackup,applyBackup,projectsModel,renderTenders,tdStartAlerts,route,busy:()=>tdBusy,get:()=>tenders,etRadarNow:()=>etRadar,anT:typeof AN_T==="object"?AN_T:null,anRun:typeof anRun==="object"?anRun:null,tdTeamText:typeof tdTeamText==="function"?tdTeamText:null,tdTenderText:typeof tdTenderText==="function"?tdTenderText:null,tdYearHtml:typeof tdYearHtml==="function"?tdYearHtml:null,tenderYearReport:injected.tenderYearReport};');
+  w.eval(source+'\nwindow.qa={store,tdCommit,tdUpdate,tdImportEmails,tdImportStudies,tdAnalyzeFiles,tdDocumentView,buildBackup,applyBackup,backupZip:typeof backupZip==="function"?backupZip:null,readBackupFile:typeof readBackupFile==="function"?readBackupFile:null,syncPack2:typeof syncPack2==="function"?syncPack2:null,syncUnpack2:typeof syncUnpack2==="function"?syncUnpack2:null,projectsModel,renderTenders,tdStartAlerts,route,busy:()=>tdBusy,get:()=>tenders,etRadarNow:()=>etRadar,anT:typeof AN_T==="object"?AN_T:null,anRun:typeof anRun==="object"?anRun:null,tdTeamText:typeof tdTeamText==="function"?tdTeamText:null,tdTenderText:typeof tdTenderText==="function"?tdTenderText:null,tdYearHtml:typeof tdYearHtml==="function"?tdYearHtml:null,tenderYearReport:injected.tenderYearReport};');
   await wait(()=>w.document.querySelector('#tenders-body')?.childElementCount || team&&w.document.querySelector('#version').textContent==='v'+config.PORTAL_VERSION,'boot');
   return dom;
 }
@@ -82,6 +82,23 @@ try {
   assert(backed.files.every(f=>f.data.startsWith('data:')));assert(backed.files.find(f=>f.name==='BOQ.xlsx').analysis.tables[0].rows[1][2]==='30');
   await qa.applyBackup(beforeDuplicate);assert.equal(row().due,'2026-12-04');assert.equal(row().stage,'submitted');assert(!row().files.some(f=>f.name==='logo.png'));
   await qa.applyBackup(backup);assert.equal(row().files.find(f=>f.name==='study.docx').kind,'study');
+  // v9.79 (ADR-0149): the backup as a ZIP — backup.json names each attachment, the attachment is the file itself — read back and merged;
+  // and the sync file sealed in pieces, opened with the passphrase only. Nothing passes through one string of the whole register.
+  assert(qa.backupZip,'v9.79: the backup is a ZIP');
+  const zipped=await qa.backupZip();assert.equal(zipped.manifest.backup,'afaqy-portal/v3');
+  const zf=zipped.manifest.tenders.items.find(x=>x.id===row().id).files;assert(zf.length&&zf.every(f=>f.zip&&!f.data),'files are named by their place in the ZIP, not written into the JSON');
+  const boq=row().files.find(f=>f.name==='BOQ.xlsx'),boqBytes=Buffer.from(await boq.blob.arrayBuffer());
+  const zfile=new File([zipped.blob],'afaqy-portal-backup.zip'),back=await qa.readBackupFile(zfile);
+  const backBoq=back.tenders.items.find(x=>x.id===row().id).files.find(f=>f.name==='BOQ.xlsx');
+  assert(Buffer.from(await backBoq.blob.arrayBuffer()).equals(boqBytes),'an attachment comes out of the ZIP byte for byte');
+  await qa.tdUpdate(row().id,{files:row().files.filter(f=>f.name!=='BOQ.xlsx')});assert(!row().files.some(f=>f.name==='BOQ.xlsx'));
+  await qa.applyBackup(back);const restored=row().files.find(f=>f.name==='BOQ.xlsx');
+  assert(restored&&Buffer.from(await restored.blob.arrayBuffer()).equals(boqBytes),'restoring the ZIP puts the file back as it was');
+  assert.equal(restored.analysis.tables[0].rows[1][2],'30','with what was read from it');
+  const sealed=await qa.syncPack2(zipped.blob,'secret-pass'),opened=await qa.syncUnpack2(new File([sealed],'x.afqs'),'secret-pass');
+  assert(Buffer.from(await opened.arrayBuffer()).equals(Buffer.from(await zipped.blob.arrayBuffer())),'the sync file opens to the same ZIP');
+  await assert.rejects(qa.syncUnpack2(new File([sealed],'x.afqs'),'wrong-pass'),/sync_bad_pass/,'a wrong passphrase opens nothing');
+  await assert.rejects(qa.syncUnpack2(new File([sealed.slice(0,sealed.size-9)],'x.afqs'),'secret-pass'),/sync_not_file/,'a file cut short opens nothing');
   const reopened=await setup();assert.equal(reopened.window.qa.get().items.find(x=>x.id===row().id).stage,'submitted');reopened.window.close();
   const stale=await setup(), staleState=stale.window.qa.get();
   await qa.tdUpdate(row().id,{note:'Newer tab'});
