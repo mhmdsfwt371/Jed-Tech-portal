@@ -2321,6 +2321,31 @@ test('v9.83: the analyzer page downloads 3.7.2 and names the files it now writes
     assert.ok(page.includes(f), f);
   assert.ok(page.includes('السجلات والشهادات'), 'the certificates in the offer are described');
 });
+test('v9.84: «اشتراكاتي» is a place the card names, and a date read twice says whether the two readings meet', () => {
+  assert.equal(core.parseAnalyzerHello({ schema: core.ANALYZER.schema, app: 'TenderAnalyzer', engine: 'subs' }).engine, 'subs', 'the program says «subs»');
+  assert.equal(core.analyzerNote('subs'), 'an_note_subs', 'the card says the text goes to the user\'s own subscriptions');
+  assert.equal(core.analyzerAuto({ on: true, engine: 'subs' }, { engine: 'subs' }, { files: [1] }), 'run', 'agreed once for «subs»: a new tender is studied by itself');
+  assert.equal(core.analyzerAuto({ on: true, engine: 'local' }, { engine: 'subs' }, { files: [1] }), 'ask', 'agreed for the computer only: «subs» is asked first');
+  const checks = { due: { agree: true, other: '', by: 'claude' }, askDue: { agree: false, other: '2026-11-26', by: 'claude' }, visit: { agree: false, other: '2026-11-20', by: 'gemini' },
+    openAt: { agree: 'yes', other: '', by: 'claude' }, bogus: { agree: true, other: '', by: 'claude' } };
+  const clean = core.cleanDateChecks(checks);
+  assert.deepEqual(Object.keys(clean).sort(), ['askDue', 'due', 'visit'], 'only the four dates, only well-formed');
+  const study = { schema: 'afaqy-tender-study/v1', tenders: [{ subject: 'كاميرات', etimadNo: '261139005826', dates: { due: { date: '2026-11-30', time: '' }, askDue: { date: '2026-11-25', time: '' } }, evidence: {}, checks }] };
+  const parsed = core.parseTenderStudy(study).tenders[0];
+  assert.deepEqual(parsed.checks, clean, 'the study file carries them in');
+  const { patch } = core.applyTenderStudy({ id: 'x', due: '', askDue: '', dateSources: {} }, parsed);
+  assert.deepEqual(patch.dateChecks, clean, 'the tender keeps them');
+  const item = { ...core.cleanTenderDetails({ ...patch }), due: '2026-11-30', askDue: '2026-11-25', visit: '' };
+  assert.deepEqual(item.dateChecks, clean, 'kept through the store');
+  assert.equal(core.dateCheckTag(item, 'due').kind, 'agree');
+  assert.deepEqual(core.dateCheckTag(item, 'askDue'), { kind: 'differ', by: 'claude', other: '2026-11-26' });
+  assert.deepEqual(core.dateCheckTag(item, 'visit'), { kind: 'missing', by: 'gemini', other: '2026-11-20' }, 'the study found none: the second reading is offered');
+  assert.equal(core.dateCheckTag({ ...item, dateSources: { askDue: 'manual' } }, 'askDue'), null, 'typed by hand: the manager decided, no mark');
+  assert.equal(core.dateCheckTag({ ...item, askDue: '2026-11-26' }, 'askDue'), null, 'set to the second reading: nothing left to settle');
+  assert.equal(core.applyTenderStudy({ ...item }, { ...parsed }).patch.dateChecks, undefined, 'the same study again changes nothing');
+  for (const lang of ['ar', 'en', 'ur']) for (const k of ['an_note_subs', 'an_auto_note_subs', 'an_by_gemini', 'an_by_claude', 'an_by_codex', 'td_chk_agree', 'td_chk_differ', 'td_chk_missing', 'td_chk_agree_t', 'td_chk_bad_t'])
+    assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
+});
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

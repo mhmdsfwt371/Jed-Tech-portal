@@ -1,19 +1,25 @@
 {
-  "version": "9.83",
+  "version": "9.84",
   "date": "2026-11-21",
   "notes": {
     "ar": [
-      "زر التحميل في صفحة «محلل المناقصات» ينزّل الآن الإصدار ٣٫٧٫٢: لما البوابة تبعت مناقصة للدراسة، نافذة البرنامج تعرض اسمها وخطواتها وآخر ما تعمله، ولا تطلب اختيار فولدر."
+      "محلل المناقصات ٣٫٨ يدرس المناقصة باشتراكاتك أنت — جيميناي وكلود، وشات جي بي تي احتياطيًا — بدل النموذج المحلي البطيء، بلا مفتاح ولا دفع بالاستخدام. وبطاقة المناقصة تقول قبل البدء إن نص المستندات يذهب إلى اشتراكاتك، والملف السري لا يُرسل أبدًا.",
+      "بعد الدراسة يقرأ نموذج ثانٍ المواعيد الأربعة وحده: بجوار كل موعد في البطاقة «✓ مؤكَّد بنموذج ثانٍ» لو اتفقت القراءتان، أو علامة حمراء بالقراءة الثانية لو اختلفتا، تختفي حين تكتب الموعد الصحيح من الكراسة.",
+      "صفحة «محلل المناقصات» فيها قسم جديد «المحرك: اشتراكاتي» يشرح الأدوات الثلاث ومراجعة المواعيد والتجهيز مرة واحدة."
     ],
     "en": [
-      "The download button on the «Tender Analyzer» page now gets version 3.7.2: when the portal sends a tender to be studied, the program window shows its name, its steps and what it is doing now, and asks for no folder."
+      "Tender Analyzer 3.8 studies a tender on your own subscriptions — Gemini and Claude, with ChatGPT as a fallback — instead of the slow local model, with no key and no pay-per-use. Before it starts, the tender's card says that the documents' text goes to your subscriptions, and a classified file is never sent.",
+      "After the study, a second model reads the four dates on its own: beside each date on the card you see «✓ Confirmed by a second model» when the two readings meet, or a red mark with the second reading when they differ, which goes away once you type the right date from the booklet.",
+      "The «Tender Analyzer» page has a new section, «Engine: My subscriptions», explaining the three tools, the date check and the one-time setup."
     ],
     "ur": [
-      "«ٹینڈر اینالائزر» صفحے کا ڈاؤن لوڈ بٹن اب ورژن 3.7.2 دیتا ہے: جب پورٹل کوئی ٹینڈر مطالعے کے لیے بھیجتا ہے تو پروگرام کی ونڈو اس کا نام، اس کے مراحل اور وہ ابھی کیا کر رہا ہے دکھاتی ہے، اور کوئی فولڈر منتخب کرنے کو نہیں کہتی۔"
+      "ٹینڈر اینالائزر 3.8 سست مقامی ماڈل کی بجائے آپ کی اپنی سبسکرپشنز — جیمینائی اور کلاڈ، اور بیک اپ کے طور پر چیٹ جی پی ٹی — سے ٹینڈر کا مطالعہ کرتا ہے، بغیر کسی کلید اور بغیر استعمال کے مطابق ادائیگی کے۔ شروع کرنے سے پہلے ٹینڈر کا کارڈ بتاتا ہے کہ دستاویزات کا متن آپ کی سبسکرپشنز کو جاتا ہے، اور خفیہ فائل کبھی نہیں بھیجی جاتی۔",
+      "مطالعے کے بعد ایک دوسرا ماڈل چاروں تاریخیں خود پڑھتا ہے: کارڈ پر ہر تاریخ کے ساتھ «✓ دوسرے ماڈل سے تصدیق شدہ» نظر آتا ہے جب دونوں قراءتیں ملیں، یا دوسری قراءت کے ساتھ سرخ نشان جب وہ مختلف ہوں، جو کتابچے سے درست تاریخ لکھتے ہی ہٹ جاتا ہے۔",
+      "«ٹینڈر اینالائزر» صفحے پر ایک نیا حصہ «انجن: میری سبسکرپشنز» ہے جو تینوں ٹولز، تاریخوں کی جانچ اور ایک بار کی تیاری سمجھاتا ہے۔"
     ]
   },
   "counts": {
-    "versions": 208,
-    "decisions": 150
+    "versions": 209,
+    "decisions": 151
   }
 }

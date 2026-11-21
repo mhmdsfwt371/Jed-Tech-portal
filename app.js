@@ -15,7 +15,7 @@ import {
   maParse, maMerge, maCovers, maStats, maSuggest, maDay, maOwnText, maCategory, maIsReply,
   tenderDigits, tenderEmailSchedule, tenderDeadlineCandidates, applyTenderEmailDates, TENDER_FILE_KINDS, TENDER_DATE_FIELDS, tenderNeeds, tenderAmount, tenderDatePatch, backupDue, parseTenderStudy, matchTenderStudy, applyTenderStudy, tenderAutoStage, tenderStudyFromSheet,
   RADAR_SCHEMA, parseRadar, radarFromSheets, radarMerge, radarFind, radarSuggest, applyEtimad, radarToItem, etimadLinkPatch, tenderUndoEtimad, radarResult, tenderOutcome, radarSimilar, radarOurBids, tenderFunnel, tenderArchive, marketStats, marketPeriod,
-  ANALYZER, parseAnalyzerHello, analyzerNote, cleanAnalyzerAuto, analyzerAuto, analyzerAutoNote, parseAnalyzerJob, analyzerJobId, analyzerSend, analyzerOutputKind, analyzerStudyFile,
+  ANALYZER, parseAnalyzerHello, analyzerNote, cleanAnalyzerAuto, analyzerAuto, analyzerAutoNote, parseAnalyzerJob, analyzerJobId, analyzerSend, analyzerOutputKind, analyzerStudyFile, dateCheckTag,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
   mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts,
@@ -1667,7 +1667,7 @@ function anBody(i) {
       a && ['lost', 'error'].includes(ph) ? el('button', { type: 'button', class: 'btn tiny an-take', text: t('an_take'), onclick: () => { anSet(i.id, { phase: 'running' }); anFollow(i.id); } }) : null,
       ['missing', 'lost'].includes(ph) ? el('a', { class: 'btn tiny an-open', href: ANALYZER.open, text: t('an_open') }) : null,
       ph === 'missing' ? el('a', { class: 'btn tiny an-get', href: './tender-analyzer.html#install', target: '_blank', rel: 'noopener', text: `⬇ ${t('an_get')}` }) : null),
-    ph === 'missing' ? el('p', { class: 'hint an-help', text: t('an_help') }) : el('p', { class: st && ['cloud', 'api'].includes(st.engine) ? 'hint an-cloud' : 'hint', text: t(analyzerNote(st && st.engine), { n: send.files.length }) })];
+    ph === 'missing' ? el('p', { class: 'hint an-help', text: t('an_help') }) : el('p', { class: st && ['cloud', 'api', 'subs'].includes(st.engine) ? 'hint an-cloud' : 'hint', text: t(analyzerNote(st && st.engine), { n: send.files.length }) })];
 }
 const AN_BUSY = ['connect', 'opening', 'sending', 'running', 'taking'];
 // the fold's own line says where the study stands in two words, so a closed fold still tells
@@ -2646,7 +2646,11 @@ function renderTenders() {
     return el('label', { class: `td-lab${need ? ' td-lab-need' : ''}` }, el('span', {}, t(`td_col_${k}`), need ? el('b', { class: 'td-need-tag', text: t('td_need_tag') }) : null,
       ['mail', 'document'].includes(src) ? el('i', { class: 'td-auto-tag', text: t(src === 'mail' ? 'td_auto_mail' : 'td_auto_doc') }) : null,
       i && i[k] != null && i[k] !== '' && (src === 'etimad' || (i.fieldSources && i.fieldSources[k] === 'etimad')) ? el('i', { class: 'td-auto-tag td-auto-et', title: i.etimadAt ? t('et_tag_at', { at: tdWhen(i.etimadAt) }) : '', text: t('et_tag') }) : null,   // v9.60
-      i && i[k] != null && i[k] !== '' && (src === 'analyzer' || (i.fieldSources && i.fieldSources[k] === 'analyzer')) ? el('i', { class: 'td-auto-tag td-auto-an', title: (() => { const e = i.evidence && i.evidence[k]; return e ? `${e.file}${e.page ? ` · ${t('td_page', { p: e.page })}` : ''}${e.quote ? ` — «${e.quote}»` : ''}` : ''; })(), text: t('td_auto_an') }) : null), node); };
+      i && i[k] != null && i[k] !== '' && (src === 'analyzer' || (i.fieldSources && i.fieldSources[k] === 'analyzer')) ? el('i', { class: 'td-auto-tag td-auto-an', title: (() => { const e = i.evidence && i.evidence[k]; return e ? `${e.file}${e.page ? ` · ${t('td_page', { p: e.page })}` : ''}${e.quote ? ` — «${e.quote}»` : ''}` : ''; })(), text: t('td_auto_an') }) : null,
+      (() => { const c = i && dateCheckTag(i, k); if (!c) return null;   // v9.84 (ADR-0151): the second model's reading of this date
+        const by = t(`an_by_${c.by}`), d = `\u2066${c.other}\u2069`;   // isolated, so right-to-left text never turns the date around
+        return el('i', { class: `td-auto-tag td-chk td-chk-${c.kind}`, title: c.kind === 'agree' ? t('td_chk_agree_t', { by }) : t('td_chk_bad_t', { by, d }),
+          text: c.kind === 'agree' ? t('td_chk_agree') : t(c.kind === 'differ' ? 'td_chk_differ' : 'td_chk_missing', { d }) }); })()), node); };
   const stageSel = (i) => el('select', { class: 'td-stage', disabled: !!tdBusy, 'aria-label': t('td_col_stage'), onchange: async (e) => { const st = e.target.value, patch = { stage: st, stageAt: today };
       // ADR-0128: nothing the manager fills by hand blocks a stage — offer files and the reason are optional
       if (TD_NEED_REASON.includes(st)) { const r = window.prompt(t(st === 'lost' ? 'td_why_lost' : st === 'missed' ? 'td_why_missed' : 'td_why_declined'), i.reason || ''); if (r == null) { e.target.value = i.stage; return; } if (r.trim()) patch.reason = r.trim().slice(0, 300); }

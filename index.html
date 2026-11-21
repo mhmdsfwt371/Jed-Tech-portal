@@ -1605,6 +1605,8 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   @media (max-width: 760px) { .td-pipe { flex-wrap: wrap; gap: 6px; } .td-pipe-line { display: none; } .td-pipe-node { flex: 1 1 calc(33% - 6px); min-height: 56px; } }
   /* the coming dates: every day in view on a laptop (rows of days), not a strip to drag sideways */
   @media (min-width: 761px) { .ag-days { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); overflow-x: visible; } .ag-day { min-width: 0; } }
+  /* v9.84 (ADR-0151): the second model's reading beside a date */
+  .td-auto-tag.td-chk-agree { color: var(--ok); border-color: var(--ok); } .td-auto-tag.td-chk-differ, .td-auto-tag.td-chk-missing { color: var(--fail); border-color: var(--fail); font-weight: 700; }
   /* v9.81 (ADR-0150): a table never scrolls sideways — its end columns fold into the row's «the rest» — and a long page folds into parts */
   table.ph-fold .ph-h { display: none; } table.ph-measure { table-layout: auto !important; width: auto !important; min-width: 0 !important; } table.ph-fold { min-width: 0 !important; } :is(table.ph-measure, table.ph-fold) th { white-space: normal; }
   .ph-more-btn { float: inline-start; margin-block: 1px; inline-size: 26px; block-size: 26px; min-height: 26px; margin-inline-end: 6px; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--card); color: var(--accent); font: inherit; font-weight: 700; line-height: 1; cursor: pointer; vertical-align: middle; }

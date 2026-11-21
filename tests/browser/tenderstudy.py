@@ -22,6 +22,9 @@ study=lambda subj,no='',dec='go': {'subject':subj,'etimadNo':no,'entity':'جهة
 f1=J('s1.json',{'schema':'afaqy-tender-study/v1','generatedAt':'2026-11-14T18:00:00Z','tool':'Tender Analyzer','tenders':[study('منافسة توريد وتركيب كاميرات مراقبة','123456'),study('منافسة لا وجود لها')]})
 f2=J('s2.json',{'schema':'afaqy-tender-study/v1','generatedAt':'2026-11-14T18:00:00Z','tool':'Tender Analyzer','tenders':[study('عنوان مختلف تمامًا في الكراسة','999','no-go')]})
 bad=J('bad.json',{'schema':'something-else'})
+# v9.84 (ADR-0151): the same study, with the four dates read again by a second model
+chk=dict(study('عنوان مختلف تمامًا في الكراسة','999','no-go'), checks={'due':{'agree':True,'other':'','by':'claude'},'askDue':{'agree':False,'other':'2026-11-21','by':'claude'}})
+f3=J('s3.json',{'schema':'afaqy-tender-study/v1','generatedAt':'2026-11-21T18:00:00Z','tool':'Tender Analyzer 3.8.0','tenders':[chk]})
 # v9.58 (ADR-0131): the tender's card keeps everything but its summary in folds; a test opens a fold the way a person does
 def open_fold(pg, name):
     if not pg.evaluate(f"!!document.querySelector('dialog.td-dlg .td-fold-{name}[open]')"):
@@ -53,5 +56,19 @@ with sync_playwright() as p:
     pg.locator('dialog.td-dlg .row input[type=file][accept^=".json"]').set_input_files(f2); pg.wait_for_timeout(1500)
     r=pg.evaluate("()=>{const d=document.querySelector('dialog.td-dlg');return {open:d.open,fees:d.querySelector('input.td-fees').value,dec:(d.querySelector('.td-study-dec')||{}).textContent||''}}")
     check('S6 from a tender’s own window a study with another title goes into that tender', r['fees']=='1500' and 'Do not bid' in r['dec'], r)
+    pg.locator('dialog.td-dlg .row input[type=file][accept^=".json"]').set_input_files(f3); pg.wait_for_timeout(1500)
+    tags=pg.evaluate("()=>{const d=document.querySelector('dialog.td-dlg');const g=(k)=>{const l=d.querySelector('input.td-'+k).closest('label');const i=l&&l.querySelector('.td-chk');return i?{cls:i.className,text:i.textContent,title:i.title}:null};return {due:g('due'),askDue:g('askDue'),visit:g('visit')}}")
+    check('S8 beside each date, what a second model read: confirmed in green, a different reading in red with its date and the booklet as judge',
+          tags['due'] and 'td-chk-agree' in tags['due']['cls'] and 'Confirmed' in tags['due']['text'] and 'Claude' in tags['due']['title']
+          and tags['askDue'] and 'td-chk-differ' in tags['askDue']['cls'] and '2026-11-21' in tags['askDue']['text'] and 'booklet' in tags['askDue']['text'] and not tags['visit'], tags)
+    open_fold(pg,'data')   # the date may sit on another page of the window: it is typed the way the change handler hears it
+    pg.evaluate("()=>{const e=document.querySelector('dialog.td-dlg input.td-askDue');e.value='2026-11-21';e.dispatchEvent(new Event('change',{bubbles:true}))}"); pg.wait_for_timeout(800)
+    gone=pg.evaluate("()=>{const l=document.querySelector('dialog.td-dlg input.td-askDue').closest('label');return !l.querySelector('.td-chk')}")
+    check('S9 the date settled by hand: the red mark goes', gone)
+    pg.keyboard.press('Escape'); pg.wait_for_timeout(400); pg.reload(); pg.wait_for_timeout(1500)
+    pg.evaluate("location.hash='#tenders'"); pg.wait_for_timeout(900)
+    pg.locator('.td-table tr.td-row', has_text='ألياف').locator('.td-subj').click(); pg.wait_for_timeout(900)
+    kept=pg.evaluate("()=>{const l=document.querySelector('dialog.td-dlg input.td-due').closest('label');const i=l.querySelector('.td-chk');return i?i.className:''}")
+    check('S10 after the page is opened again, the confirmation is still there', 'td-chk-agree' in kept, kept)
     check('S7 no page error', not errs, errs[:2])
 print(f'\n{len(fails)} failed' if fails else '\nall passed'); sys.exit(1 if fails else 0)

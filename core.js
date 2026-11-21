@@ -2503,6 +2503,25 @@ export function tenderAmount(v) {
   if (!/^(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?$/.test(x)) return null;
   return Math.round(Number(x.replace(/,/g, '')) * 100) / 100;
 }
+// v9.84 (ADR-0151): the four dates read again by a second model, alone. {field: {agree: true|false|null, other, by}}: agree true =
+// the two readings meet; false = they differ (other = the second reading) or the first found none; null = the second found none.
+const CHECK_BY = ['gemini', 'claude', 'codex'];
+export function cleanDateChecks(raw) {
+  const out = {}; if (!raw || typeof raw !== 'object') return out;
+  for (const k of ['askDue', 'visit', 'due', 'openAt']) { const c = raw[k]; if (!c || typeof c !== 'object' || ![true, false, null].includes(c.agree) || !CHECK_BY.includes(c.by)) continue;
+    const other = /^\d{4}-\d{2}-\d{2}$/.test(String(c.other || '')) ? c.other : ''; out[k] = { agree: c.agree, other: c.agree ? '' : other, by: c.by }; }
+  return out;
+}
+/** What the card says beside a date: 'agree' (confirmed by a second model), 'differ' (the second read `other` — settle it from the
+ *  booklet), 'missing' (the study found none; the second read `other`) — or null. A date typed by hand is the manager's: no tag. */
+export function dateCheckTag(item, k) {
+  const c = item && item.dateChecks && item.dateChecks[k]; if (!c || (item.dateSources && item.dateSources[k] === 'manual')) return null;
+  const v = item[k] || '';
+  if (c.agree === true && v) return { kind: 'agree', by: c.by, other: '' };
+  if (c.agree === false && c.other && v && v !== c.other) return { kind: 'differ', by: c.by, other: c.other };
+  if (c.agree === false && c.other && !v) return { kind: 'missing', by: c.by, other: c.other };
+  return null;
+}
 export function parseTenderStudy(raw) {
   let j = raw; if (typeof raw === 'string') { try { j = JSON.parse(raw); } catch { return { error: 'json' }; } }
   if (!j || j.schema !== 'afaqy-tender-study/v1' || !Array.isArray(j.tenders)) return { error: 'schema' };
@@ -2532,7 +2551,8 @@ export function parseTenderStudy(raw) {
     const no = String(x.etimadNo ?? '').replace(/[^\d]/g, '').slice(0, 40), fees = money('fees'), value = money('value');
     return { subject: str(x.subject, 300), etimadNo: no,
       entity: str(x.entity, 160), dates, fees, bond: str(typeof x.bond === 'number' ? String(x.bond) : x.bond, 120), value,
-      decision: ['go', 'no-go', 'review'].includes(x.decision) ? x.decision : '', why: str(x.decisionWhy, 400), summary: str(x.summary, 4000), studyFile: str(x.studyFile, 300), evidence, skipped, fixed };
+      decision: ['go', 'no-go', 'review'].includes(x.decision) ? x.decision : '', why: str(x.decisionWhy, 400), summary: str(x.summary, 4000), studyFile: str(x.studyFile, 300), evidence, skipped, fixed,
+      checks: cleanDateChecks(x.checks) };
   }).filter((x) => x && (x.subject || x.etimadNo));
   return tenders.length ? { tenders, generatedAt: str(j.generatedAt, 35), tool: str(j.tool, 80) } : { error: 'empty' };
 }
@@ -2566,6 +2586,8 @@ export function applyTenderStudy(item, study, at = new Date().toISOString()) {
   const decided = !!study.decision && (item.studyDecision !== study.decision || (item.studyWhy || '') !== (study.why || ''));
   if (decided) { patch.studyDecision = study.decision; patch.studyWhy = study.why; patch.studyAt = at; }
   if (filled.length) Object.assign(patch, { fieldSources, dateSources, evidence });
+  // v9.84: the newest study's second reading replaces the one before; a study without one leaves the card as it was
+  if (study.checks && Object.keys(study.checks).length && JSON.stringify(study.checks) !== JSON.stringify(item.dateChecks || {})) patch.dateChecks = study.checks;
   return { patch, filled, differs };
 }
 
@@ -2963,16 +2985,17 @@ const anStr = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
 /** The program's greeting, checked: only a reply in our protocol counts as the program. */
 export function parseAnalyzerHello(raw) {
   if (!raw || typeof raw !== 'object' || raw.schema !== ANALYZER.schema || raw.app !== 'TenderAnalyzer') return { error: 'schema' };
-  return { version: anStr(raw.version, 20), engine: ['bridge', 'cloud', 'api'].includes(raw.engine) ? raw.engine : 'local', busy: raw.busy === true, job: anStr(raw.job, 48) };
+  return { version: anStr(raw.version, 20), engine: ['bridge', 'cloud', 'api', 'subs'].includes(raw.engine) ? raw.engine : 'local', busy: raw.busy === true, job: anStr(raw.job, 48) };
 }
 // The line under the Analyzer's button. At every hello the program says what a study started now would run on. «cloud» is
 // Ollama's servers and «api» is the subscription service reached with the user's own key: in both the documents' text leaves
 // the computer, so the card says where it goes instead of the plain note (ADR-0141, ADR-0142).
-export function analyzerNote(engine) { return engine === 'cloud' ? 'an_note_cloud' : engine === 'api' ? 'an_note_api' : 'an_note'; }
+// v9.84 (ADR-0151): «subs» is the user's own subscriptions (Gemini, Claude, ChatGPT through their vendors' tools): the text leaves too
+export function analyzerNote(engine) { return engine === 'cloud' ? 'an_note_cloud' : engine === 'api' ? 'an_note_api' : engine === 'subs' ? 'an_note_subs' : 'an_note'; }
 // v9.71 (ADR-0142): «register and study» in one step. The switch on the mail box is turned on once, and it remembers where the
 // program said the text would go at that moment. A study starts by itself only toward that place or the computer itself —
 // a place the user never saw named gets the card's button and its note, never a silent start.
-const AN_PLACES = ['local', 'cloud', 'api'];
+const AN_PLACES = ['local', 'cloud', 'api', 'subs'];
 export function cleanAnalyzerAuto(raw) {
   let v = null; try { v = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch { v = null; }
   return { on: !!(v && v.on === true), engine: v && AN_PLACES.includes(v.engine) ? v.engine : 'local' };
@@ -3565,6 +3588,7 @@ export function cleanTenderDetails(item) {
     dateSources: Object.fromEntries(fields.filter((key) => ['mail','document','manual','analyzer','etimad'].includes(item.dateSources?.[key])).map((key) => [key,item.dateSources[key]])),
     // ADR-0126: what the Tender Analyzer filled, its evidence, and its bid decision
     fieldSources: Object.fromEntries(TENDER_STUDY_FIELDS.filter((key) => ['analyzer','etimad'].includes(item.fieldSources?.[key])).map((key) => [key,item.fieldSources[key]])),
+    dateChecks: cleanDateChecks(item.dateChecks),   // v9.84 (ADR-0151)
     // v9.60 (ADR-0132): the tender on Etimad — its page, when it was last read from a pull, and what Etimad replaced
     link: /^https:\/\/tenders\.etimad\.sa\//i.test(item.link || '') ? string(item.link, 400) : '', etimadAt: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(item.etimadAt || '') ? item.etimadAt : '',
     etimadWas: list(item.etimadWas).filter((w) => w && [...fields, 'fees'].includes(w.field)).slice(-10).map((w) => ({ field: w.field, was: string(w.was, 40), src: ['mail','document','manual','analyzer','etimad',''].includes(w.src) ? w.src : '' })),
