@@ -2261,6 +2261,28 @@ test('v9.77: reading the booklets again says which dates changed and which wait 
   for (const lang of ['ar', 'en', 'ur']) for (const k of ['td_rr', 'td_rr_h', 'td_rr_sum', 'td_rr_none', 'td_rr_changed', 'td_rr_review', 'td_rr_nofiles', 'td_rr_reading'])
     assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
 });
+// v9.78 (ADR-0148): the strip shows a tender once, on its nearest date, carrying the dates after it; and a reminder can be moved
+// to another day (dragged, or picked) without touching the platform's date.
+test('v9.78: one card per tender on the strip, and a reminder moved to another day', () => {
+  const T = { id: 't1', subject: 'كاميرات', stage: 'prep', askDue: '2026-11-26', due: '2026-12-03', dueTime: '11:00', bond: '5%' };
+  const A = core.tenderAgenda([T, { id: 't2', subject: 'بصمة', stage: 'decide', askDue: '2026-11-25', due: '2026-12-10' }], '2026-11-24', 14);
+  const G = core.agendaByTender(A);
+  assert.deepEqual(G.map((x) => `${x.id}:${x.key}`), ['t2:askUp', 't1:askUp'], 'each tender once, on its nearest date, nearest first');
+  assert.deepEqual(G[1].later.map((x) => x.key), ['askDue', 'bondCost', 'handover', 'due'], 'the dates after it ride inside its card');
+  // moved: the upload reminder of t1 from 25 Nov to 30 Nov — the platform's deadline stays 26 Nov
+  const mv = core.tenderAgendaMove(T, 'askUp', '2026-11-25', '2026-11-30');
+  assert.deepEqual(mv, { askUp: { from: '2026-11-25', to: '2026-11-30' } });
+  const M = core.tenderMilestones({ ...T, agendaMoves: mv });
+  assert.deepEqual(M.filter((x) => x.key === 'askUp' || x.key === 'askDue').map((x) => `${x.key}:${x.day}:${x.from || ''}`), ['askDue:2026-11-26:', 'askUp:2026-11-30:2026-11-25'], 'the reminder sits on its new day and remembers where it came from; the deadline does not move');
+  assert.deepEqual(core.tenderAgendaMove({ ...T, agendaMoves: mv }, 'askUp', '2026-11-25', '2026-11-25'), {}, 'moved back to its own day: the move is forgotten');
+  // the date under it changed (an extension): the old move no longer applies
+  assert.equal(core.tenderMilestones({ ...T, askDue: '2026-12-01', agendaMoves: mv }).find((x) => x.key === 'askUp').from, undefined, 'a move made for another date is dropped when that date changes');
+  assert.deepEqual(core.agendaByTender(null), []);
+  assert.deepEqual(core.cleanTenderDetails({ id: 'x', subject: 's', date: '2026-11-20', agendaMoves: { askUp: { from: '2026-11-25', to: '2026-11-30' }, bad: { from: '2026-11-25', to: '2026-11-30' }, due: { from: 'x', to: '2026-11-30' } } }).agendaMoves,
+    { askUp: { from: '2026-11-25', to: '2026-11-30' } }, 'kept when the register is saved; anything else is dropped');
+  for (const lang of ['ar', 'en', 'ur']) for (const k of ['ag_then', 'ag_move', 'ag_moved', 'ag_unmove', 'ag_drop', 'ag_moved_toast', 'ag_none_day'])
+    assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
+});
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

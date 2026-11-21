@@ -32,7 +32,8 @@ def dates(pg, needle, due, ask=None):
     setv(pg,'input.td-due',due)
     if ask: setv(pg,'input.td-askDue',ask)
     pg.keyboard.press('Escape'); pg.wait_for_timeout(500)
-items=lambda pg: pg.evaluate("()=>[...document.querySelectorAll('#tenders-body .td-agenda .ag-item')].map(b=>[b.dataset.key,b.className,b.innerText.replace(/\\n/g,' | ')])")
+items=lambda pg: pg.evaluate("()=>[...document.querySelectorAll('#tenders-body .td-agenda .ag-item')].map(b=>[b.dataset.key,b.className,b.innerText.replace(/\\n/g,' | '),[...b.querySelectorAll('.ag-later li')].map(l=>l.dataset.key),b.closest('.ag-day').dataset.day||'late'])")
+dates_n=lambda it: sum(1+len(x[3]) for x in it)   # every date on the strip: each card's own and the ones it carries
 with sync_playwright() as p:
     b=p.chromium.launch(); c,pg,errs=boot(b)
     check('G1 an empty register has no agenda', pg.locator('#tenders-body .td-agenda').count()==0)
@@ -40,13 +41,16 @@ with sync_playwright() as p:
     check('G2 tenders with no date yet: still no agenda, nothing empty is drawn', pg.locator('#tenders-body .td-agenda').count()==0)
     dates(pg,'Agenda cameras',day(9),day(4)); dates(pg,'Agenda far tender',day(40))
     it=items(pg); keys=[x[0] for x in it]
-    check('G3 the agenda comes right under the card that registers a tender, before the numbers and the list, with the platform\'s dates and the internal ones, nearest first', pg.evaluate("()=>{const q=(s)=>document.querySelector('#tenders-body '+s),a=q('.td-agenda');return !!a&&!!(a.compareDocumentPosition(q('.td-pull'))&2)&&!!(a.compareDocumentPosition(q('.td-overview'))&4)&&!!(a.compareDocumentPosition(q('.td-table'))&4)&&a.previousElementSibling===q('.td-pull')}") and keys[:2]==['askUp','askDue'] and 'bondCost' in keys and 'handover' in keys and keys.index('bondCost')<keys.index('handover')<keys.index('due'), it)
+    check('G3 the agenda comes right under the card that registers a tender, before the numbers and the list, with the platform\'s dates and the internal ones, nearest first', pg.evaluate("()=>{const q=(s)=>document.querySelector('#tenders-body '+s),a=q('.td-agenda');return !!a&&!!(a.compareDocumentPosition(q('.td-pull'))&2)&&!!(a.compareDocumentPosition(q('.td-overview'))&4)&&!!(a.compareDocumentPosition(q('.td-table'))&4)&&a.previousElementSibling===q('.td-pull')}") and [x for x in it if 'Agenda cameras' in x[2]][0][0]=='askUp' and len([x for x in it if 'Agenda cameras' in x[2]])==1
+        and (lambda L: L[:1]==['askDue'] and 'bondCost' in L and 'handover' in L and L.index('bondCost')<L.index('handover'))([x for x in it if 'Agenda cameras' in x[2]][0][3]), it)
+    check('G3b v9.78: a tender is on the strip once, on its nearest date, and carries the dates after it; every day of the range is a column to drop on',
+        len([x for x in it if 'Agenda cameras' in x[2]])==1 and pg.locator('.td-agenda .ag-day[data-day]').count()>=8 and pg.locator('.td-agenda .ag-day.empty').count()>=1, (len(it), pg.locator('.td-agenda .ag-day[data-day]').count()))
     check('G4 a tender whose dates are beyond the period is not on it, and the count says how many are', not any('far tender' in x[2] for x in it) and pg.locator('.td-agenda .ag-count').inner_text()==str(len(it)), it)
     pg.locator('.td-agenda .ag-range button', has_text='30').click(); pg.wait_for_timeout(400); it30=items(pg)
     pg.locator('.td-agenda .ag-range button', has_text='7').click(); pg.wait_for_timeout(400); it7=items(pg)
-    check('G5 the period widens and narrows the strip', len(it7)<len(it)<=len(it30) and pg.locator('.td-agenda .ag-range button[aria-pressed=true]').inner_text().startswith('7'), (len(it7),len(it),len(it30)))
+    check('G5 the period widens and narrows the strip', dates_n(it7)<dates_n(it)<=dates_n(it30) and pg.locator('.td-agenda .ag-range button[aria-pressed=true]').inner_text().startswith('7'), (dates_n(it7),dates_n(it),dates_n(it30)))
     pg.locator('.td-agenda .ag-range button', has_text='14').click(); pg.wait_for_timeout(300)
-    pg.locator('.td-agenda .ag-item[data-key=bondCost]').first.click(); pg.wait_for_timeout(900)
+    pg.locator('.td-agenda .ag-item', has_text='Agenda cameras').locator('.ag-open').click(); pg.wait_for_timeout(900)
     card=pg.evaluate("()=>{const d=document.querySelector('dialog.td-dlg[open]');return d?{t:d.innerText.includes('Agenda cameras'),tl:[...d.querySelectorAll('.td-tl-pt span')].map(x=>x.innerText)}:null}")
     check('G6 a date on the strip opens its tender, and the card\'s own line of dates carries the two internal ones', card and card['t'] and 'Guarantee cost to Riyadh' in card['tl'] and 'Upload the inquiries to the platform' in card['tl'], card)
     pg.keyboard.press('Escape'); pg.wait_for_timeout(400)
@@ -64,9 +68,27 @@ with sync_playwright() as p:
     inq=[x for x in pg.evaluate('window.__n') if 'Agenda far tender' in x[1] and 'nquir' in x[0]+x[1]]
     with pg.expect_download() as dl: pg.locator('.td-agenda .ag-ics').click()
     ev=[e for e in open(dl.value.path(),encoding='utf-8').read().split('BEGIN:VEVENT') if 'Agenda far tender' in e and 'nquir' in e]
-    strip=[x for x in items(pg) if 'Agenda far tender' in x[2] and x[0] in ('askUp','askDue')]
-    check('G13 the inquiries for one tender are one notice and one calendar entry — the upload day, carrying the deadline after it — while the strip still shows both days',
-        len(inq)==1 and 'Upload the inquiries' in inq[0][0] and 'Inquiries deadline' in inq[0][1] and len(ev)==1 and 'Inquiries deadline' in ev[0].replace('\r\n ','') and len(strip)==2, (inq, len(ev), strip))
+    strip=[x for x in items(pg) if 'Agenda far tender' in x[2]]
+    check('G13 the inquiries for one tender are one notice, one calendar entry and one card — the upload day, carrying the deadline after it',
+        len(inq)==1 and 'Upload the inquiries' in inq[0][0] and 'Inquiries deadline' in inq[0][1] and len(ev)==1 and 'Inquiries deadline' in ev[0].replace('\r\n ','') and len(strip)==1 and strip[0][0]=='askUp' and 'askDue' in strip[0][3], (inq, len(ev), strip))
+    # v9.78 (ADR-0148): a card dragged onto another day moves that reminder there; the platform's date stays as it is
+    RG="async()=>{const r=indexedDB.open('afaqy-portal',1);const db=await new Promise(o=>{r.onsuccess=()=>o(r.result)});const t=await new Promise(o=>{const q=db.transaction('kv').objectStore('kv').get('tenders');q.onsuccess=()=>o(q.result)});const i=t.items.find(x=>x.subject.includes('Agenda far tender'));return {askDue:i.askDue,moves:i.agendaMoves||{}}}"
+    before=pg.evaluate(RG); far=lambda: [x for x in items(pg) if 'Agenda far tender' in x[2]][0]
+    target=day(3); pg.locator('.td-agenda .ag-item', has_text='Agenda far tender').drag_to(pg.locator(f'.td-agenda .ag-day[data-day="{target}"]'), source_position={'x':40,'y':12})   # taken by its title, as a hand would; pg.wait_for_timeout(900)
+    after=pg.evaluate(RG); f=far()
+    check('G14 a card dragged onto another day moves its reminder there and says where it came from; the platform\'s inquiries deadline does not move',
+        after['moves'].get('askUp',{}).get('to')==target and after['askDue']==before['askDue'] and 'moved from' in f[2] and 'now falls on' in pg.locator('#toast').inner_text(), (f, before, after))
+    pg.reload(); pg.wait_for_timeout(1500); pg.evaluate("location.hash='#tenders'"); pg.wait_for_timeout(900); pg.locator('.td-agenda .ag-range button', has_text='14').click(); pg.wait_for_timeout(500)
+    check('G15 the moved reminder is still where it was put after the page is opened again', pg.evaluate(RG)['moves'].get('askUp',{}).get('to')==target and 'moved from' in far()[2], far())
+    head=far()[0]; pg.locator('.td-agenda .ag-item', has_text='Agenda far tender').locator('.ag-move-in').fill(day(8)); pg.locator('.td-agenda .ag-item', has_text='Agenda far tender').locator('.ag-move-in').dispatch_event('change'); pg.wait_for_timeout(900)
+    g16=pg.evaluate(RG)
+    check('G16 without a mouse (a phone, the keyboard): the day picked on the card moves its reminder the same way', g16['moves'].get(head,{}).get('to')==day(8) and g16['askDue']==before['askDue'], (head, g16))
+    for _ in range(4):
+        u=pg.locator('.td-agenda .ag-item', has_text='Agenda far tender').locator('.ag-unmove')
+        if not u.count(): break
+        u.first.click(); pg.wait_for_timeout(700)
+    back=pg.evaluate(RG)
+    check('G17 «Back to its own day» puts each reminder back where the deadline puts it, and the moves are forgotten', back['moves']=={} and 'moved from' not in far()[2] and far()[0]=='askUp', (far(), back))
     check('G11 no page error', not errs, errs[:2])
     for theme,vp,lang,word in (('dark',(390,800),'ar','المواعيد القادمة'),('light',(1366,800),'ur','آنے والی تاریخیں')):
         # the same register, opened again in another language, theme and width (the register lives in this browser's own store)

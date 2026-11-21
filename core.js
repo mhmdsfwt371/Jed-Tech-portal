@@ -3302,6 +3302,10 @@ export function tenderMilestones(item) {
   }
   if (!sent) add('due', item.due, item.dueTime);
   add('openAt', item.openAt, item.openAtTime);
+  // v9.78 (ADR-0148): a reminder the manager moved to another day sits there — while the date it was moved from is still the date
+  // (an extension moves the date under it, and the old move is dropped). The platform's own date is never changed by a move.
+  const mv = item.agendaMoves && typeof item.agendaMoves === 'object' ? item.agendaMoves : {};
+  for (const [k, m] of out.entries()) { const x = mv[m.key]; if (x && x.from === m.day && ok(x.to)) out[k] = { ...m, day: x.to, from: m.day }; }
   const order = ['askUp', 'askDue', 'visit', 'bondCost', 'handover', 'due', 'openAt'];
   return out.sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : order.indexOf(a.key) - order.indexOf(b.key)));
 }
@@ -3322,6 +3326,20 @@ export function tenderAgenda(items, today, days = 14) {
   return out.sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
 export const tenderNoticeId = (x) => `${x.id}:${x.key}:${x.day}`;
+/** v9.78 (ADR-0148): the strip shows a tender once — on its nearest date (a missed internal one first) — and the dates after it
+ *  ride inside that card as `later`. The agenda's own order (nearest first) decides which date leads. */
+export function agendaByTender(agenda) {
+  const by = new Map(), out = [];
+  for (const x of Array.isArray(agenda) ? agenda : []) { const h = by.get(x.id); if (h) h.later.push(x); else { const y = { ...x, later: [] }; by.set(x.id, y); out.push(y); } }
+  return out;
+}
+/** The tender's reminder moves after one is moved: `key`'s date `from` (its own day) now reminds on `to`. Moved back to its own
+ *  day, the move is forgotten. Only the reminder moves — the platform's dates are changed in the card. */
+export function tenderAgendaMove(item, key, from, to) {
+  const mv = { ...(item && item.agendaMoves && typeof item.agendaMoves === 'object' ? item.agendaMoves : {}) };
+  if (!TD_DAY.test(from || '') || !TD_DAY.test(to || '') || from === to) delete mv[key]; else mv[key] = { from, to };
+  return mv;
+}
 /** What deserves a notice now: a day away or less (or missed), and not said before. */
 export function tenderNotices(agenda, seen) {
   const said = new Set(Array.isArray(seen) ? seen : []), was = (x) => said.has(tenderNoticeId(x)) || (x.also && said.has(tenderNoticeId(x.also)));
@@ -3487,6 +3505,9 @@ export function cleanTenderDetails(item) {
     // v9.58 (ADR-0131): the questions raised to the entity on the platform — the branch cannot see them there, so they are kept here
     inquiries: list(item.inquiries).filter((q) => q && string(q.id, 80) && String(q.text || '').trim()).slice(0, 60).map((q) => ({
       id: string(q.id, 80), text: String(q.text).trim().slice(0, 600), askedOn: day(q.askedOn), answeredOn: day(q.answeredOn), answer: string(q.answer, 1500) })),
+    // v9.78 (ADR-0148): reminders the manager moved to another day — the key, the day it was and the day it reminds on
+    agendaMoves: Object.fromEntries(Object.entries(item.agendaMoves && typeof item.agendaMoves === 'object' ? item.agendaMoves : {})
+      .filter(([k, m]) => ['askUp', 'askDue', 'visit', 'bondCost', 'handover', 'due', 'openAt'].includes(k) && m && day(m.from) && day(m.to)).map(([k, m]) => [k, { from: day(m.from), to: day(m.to) }])),
     // v9.57 (ADR-0130): the conversation read from the mails — a time, a writer and the words; a mark only where the manager set one
     thread: list(item.thread).filter((e) => e && (string(e.name, 80) || string(e.addr, 120) || string(e.text, 1500))).slice(0, 300).map((e) => ({
       at: /^\d{4}-\d{2}-\d{2}(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/.test(e.at) ? e.at : '', name: string(e.name, 80), addr: string(e.addr, 120), text: string(e.text, 1500), ...(e.mark === 'handover' ? { mark: 'handover' } : {})

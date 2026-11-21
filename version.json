@@ -1,19 +1,22 @@
 {
-  "version": "9.77",
+  "version": "9.78",
   "date": "2026-11-21",
   "notes": {
     "ar": [
-      "زر «أعد قراءة الكراسات» تحت سطر سحب الإيميل: يقرأ كراسات كل مناقصة مفتوحة من جديد، فتصل مواعيدها الهجرية الصحيحة إلى المناقصات المسجلة من قبل، ثم يقول لك ما تغيّر في كل مناقصة وما ينتظر أن تختار تاريخه. التاريخ الذي كتبته بيدك لا يتغيّر."
+      "«المواعيد القادمة»: المناقصة تظهر مرة واحدة على أقرب مواعيدها، وفي بطاقتها ما بعده — بدل أن تظهر في أكثر من يوم.",
+      "اسحب أي موعد إلى يوم آخر لتنقل تذكيره إليه (أو اختر اليوم من البطاقة على الجوال). موعد المنصة نفسه لا يتغيّر، و«أرجعه ليومه» يعيده."
     ],
     "en": [
-      "A «Read the booklets again» button under the mail drop line: it reads every open tender's booklets again, so their correct Hijri dates reach the tenders registered earlier, then tells you what changed in each tender and which ones wait for you to choose a date. A date you typed by hand does not change."
+      "«Upcoming dates»: a tender appears once, on its nearest date, with the dates after it in its card — instead of on several days.",
+      "Drag any date onto another day to move its reminder there (or pick the day on the card on a phone). The platform's own date does not change, and «Back to its own day» puts it back."
     ],
     "ur": [
-      "ای میل چھوڑنے والی سطر کے نیچے «کراسے دوبارہ پڑھیں» کا بٹن: یہ ہر کھلے ٹینڈر کے کراسے دوبارہ پڑھتا ہے، تاکہ ان کی درست ہجری تاریخیں پہلے درج ٹینڈروں تک پہنچیں، پھر بتاتا ہے کہ ہر ٹینڈر میں کیا بدلا اور کون سے ٹینڈر منتظر ہیں کہ آپ تاریخ چنیں۔ آپ کی ہاتھ سے لکھی تاریخ نہیں بدلتی۔"
+      "«آنے والی تاریخیں»: ٹینڈر ایک ہی بار، اپنی قریب ترین تاریخ پر دکھائی دیتا ہے، اور اس کے بعد کی تاریخیں اس کے کارڈ میں ہیں — کئی دنوں پر دکھائی دینے کے بجائے۔",
+      "کسی بھی تاریخ کو کسی اور دن پر کھینچیں تاکہ اس کی یاد دہانی وہاں منتقل ہو (یا فون پر کارڈ میں دن چنیں)۔ پلیٹ فارم کی اپنی تاریخ نہیں بدلتی، اور «اپنے دن پر واپس» اسے واپس رکھ دیتا ہے۔"
     ]
   },
   "counts": {
-    "versions": 202,
-    "decisions": 147
+    "versions": 203,
+    "decisions": 148
   }
 }

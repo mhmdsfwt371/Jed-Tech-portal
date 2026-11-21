@@ -19,7 +19,7 @@ import {
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
   mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts,
-  TENDER_HANDOVER_DAYS, tenderMilestones, tenderAgenda, tenderNotices, tenderNoticeId, agendaFold, MAILDIR_ASK, mailDirNew, mailDirSeen, mailDirReport, mailDirFailed, tenderDateChanges, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
+  TENDER_HANDOVER_DAYS, tenderMilestones, tenderAgenda, tenderNotices, tenderNoticeId, agendaFold, agendaByTender, tenderAgendaMove, MAILDIR_ASK, mailDirNew, mailDirSeen, mailDirReport, mailDirFailed, tenderDateChanges, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
 
 import { validateSystems } from './systems-core.js';
 
@@ -848,8 +848,6 @@ function tdIcsAll(rows) {
 }
 function tdAgenda(today) {
   const all = tenderAgenda(tenders.items, today, agDays); if (!tenderAgenda(tenders.items, today, 90).length) return null;
-  const groups = []; for (const x of all) { const g = x.left < 0 ? 'late' : x.day; let G = groups.find((y) => y.g === g); if (!G) groups.push(G = { g, rows: [] }); G.rows.push(x); }
-  groups.sort((a, b) => (a.g === 'late' ? -1 : b.g === 'late' ? 1 : a.g < b.g ? -1 : 1));
   const open = (x) => { tdOpenId = x.id; tdKind = 'all'; tdStageF = tdCardF = null; tdQuery = ''; renderTenders(); requestAnimationFrame(() => { const r = document.querySelector(`#tenders-body tr.td-row.on`); if (r) r.scrollIntoView({ block: 'center', behavior: 'smooth' }); }); };
   const bell = agCan() ? el('button', { type: 'button', class: `btn tiny ag-bell${agOn() ? ' on' : ''}`, 'aria-pressed': String(agOn()), title: t('ag_bell_note'), text: `🔔 ${t(agOn() ? 'ag_bell_on' : 'ag_bell')}`, onclick: async () => {
     if (agOn()) { pref(AG_ON, ''); renderTenders(); return; }
@@ -859,14 +857,43 @@ function tdAgenda(today) {
   const ics = el('button', { type: 'button', class: 'btn tiny ag-ics', text: t('ag_ics'), onclick: () => { const rows = tenderAgenda(tenders.items, today, 120).filter((x) => x.left >= 0); const b = new Blob([tdIcsAll(rows)], { type: 'text/calendar' }), u = URL.createObjectURL(b);
     const a = el('a', { href: u, download: `tenders-agenda-${today}.ics` }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 5000); } });
   const range = el('div', { class: 'pills ag-range', role: 'group', 'aria-label': t('ag_h') }, [7, 14, 30].map((n) => el('button', { type: 'button', class: `pill-btn${agDays === n ? ' on' : ''}`, 'aria-pressed': String(agDays === n), text: t('ag_days', { n }), onclick: () => { agDays = n; pref('td.agdays', String(n)); renderTenders(); } })));
+  // v9.78 (ADR-0148): a tender once, on its nearest date, the dates after it inside its card; every day of the range is a column, so
+  // a card can be dropped on a day that has nothing yet. Dropping (or picking a day on the card) moves the reminder only.
+  const cards = agendaByTender(all), late = cards.filter((x) => x.left < 0), dayList = [];
+  for (let k = 0; k <= agDays; k++) { const d = new Date(`${today}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + k); dayList.push(d.toISOString().slice(0, 10)); }
+  const lab = (x) => t(`td_col_${x.key}`) + (x.time ? ` · ${x.time}` : '');
+  const card = (x) => el('div', { class: `ag-item ag-${x.tone} ag-k-${x.key}${x.from ? ' ag-moved' : ''}`, 'data-id': x.id, 'data-key': x.key, draggable: 'true',
+      ondragstart: (e) => { e.dataTransfer.setData('text/plain', JSON.stringify({ id: x.id, key: x.key, from: x.from || x.day })); e.dataTransfer.effectAllowed = 'move'; e.currentTarget.classList.add('dragging'); },
+      ondragend: (e) => e.currentTarget.classList.remove('dragging') },
+    el('button', { type: 'button', class: 'ag-open', onclick: () => open(x) }, el('b', { text: lab(x) }), el('span', { dir: 'auto', text: x.subject.slice(0, 70) }),
+      x.left < 0 ? el('small', { text: agDayName(x.day) }) : null, x.from ? el('small', { class: 'ag-from', text: t('ag_moved', { d: agDayName(x.from) }) }) : null),
+    x.later.length ? el('ul', { class: 'ag-later' }, x.later.map((l) => el('li', { 'data-key': l.key, class: l.from ? 'ag-moved' : '', draggable: 'true', title: t('ag_move', { what: lab(l) }),
+        ondragstart: (e) => { e.stopPropagation(); e.dataTransfer.setData('text/plain', JSON.stringify({ id: l.id, key: l.key, from: l.from || l.day })); e.dataTransfer.effectAllowed = 'move'; } },
+      el('span', { text: t('ag_then', { when: agDayName(l.day), what: lab(l) }) }), l.from ? el('small', { class: 'ag-from', text: ` · ${t('ag_moved', { d: agDayName(l.from) })} ` }) : null,
+      l.from ? el('button', { type: 'button', class: 'btn tiny quiet ag-unmove', text: t('ag_unmove'), onclick: () => { void tdAgMove(l, l.from); } }) : null))) : null,
+    el('div', { class: 'ag-move-row' }, el('label', { class: 'ag-move' }, el('span', { 'aria-hidden': 'true', text: '↦' }),
+      el('input', { type: 'date', class: 'ag-move-in', value: x.day, 'aria-label': t('ag_move', { what: lab(x) }), onchange: (e) => { if (e.target.value) void tdAgMove(x, e.target.value); } })),
+      x.from ? el('button', { type: 'button', class: 'btn tiny quiet ag-unmove', text: t('ag_unmove'), onclick: () => { void tdAgMove(x, x.from); } }) : null));
+  const column = (d, rows, isLate) => { const left = Math.round((Date.parse(`${d}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 864e5);
+    return el('div', { class: `ag-day${isLate ? ' late' : left === 0 ? ' today' : ''}${rows.length ? '' : ' empty'}`, ...(isLate ? {} : { 'data-day': d, 'aria-label': t('ag_drop', { d: agDayName(d) }),
+        ondragover: (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; e.currentTarget.classList.add('drop'); },
+        ondragleave: (e) => { if (!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.classList.remove('drop'); },
+        ondrop: (e) => { e.preventDefault(); e.currentTarget.classList.remove('drop'); let m = null; try { m = JSON.parse(e.dataTransfer.getData('text/plain')); } catch { m = null; } if (m && m.id && m.key) void tdAgMove(m, d); } }) },
+      el('h3', { text: isLate ? t('ag_late') : left === 0 ? t('ag_today') : left === 1 ? t('ag_tomorrow') : agDayName(d) }),
+      !isLate && left <= 1 ? el('small', { class: 'hint', text: agDayName(d) }) : null,
+      rows.length ? rows.map(card) : el('small', { class: 'hint ag-none', text: t('ag_none_day') })); };
   return el('section', { class: 'td-agenda', 'aria-label': t('ag_h') },
-    el('div', { class: 'ag-head' }, el('h2', { text: t('ag_h') }), el('span', { class: 'ag-count', text: String(all.length) }), range, el('span', { class: 'ag-tools' }, bell, ics)),
-    all.length ? el('div', { class: 'ag-days', tabindex: '0', role: 'group', 'aria-label': t('ag_h') }, groups.map((G) => el('div', { class: `ag-day${G.g === 'late' ? ' late' : G.rows[0].left === 0 ? ' today' : ''}` },
-      el('h3', { text: G.g === 'late' ? t('ag_late') : G.rows[0].left === 0 ? t('ag_today') : G.rows[0].left === 1 ? t('ag_tomorrow') : agDayName(G.g) }),
-      G.g !== 'late' && G.rows[0].left <= 1 ? el('small', { class: 'hint', text: agDayName(G.g) }) : null,
-      G.rows.map((x) => el('button', { type: 'button', class: `ag-item ag-${x.tone} ag-k-${x.key}`, 'data-id': x.id, 'data-key': x.key, onclick: () => open(x) },
-        el('b', { text: t(`td_col_${x.key}`) + (x.time ? ` · ${x.time}` : '') }), el('span', { dir: 'auto', text: x.subject.slice(0, 70) }), G.g === 'late' ? el('small', { text: agDayName(x.day) }) : null)))))
+    el('div', { class: 'ag-head' }, el('h2', { text: t('ag_h') }), el('span', { class: 'ag-count', text: String(cards.length) }), range, el('span', { class: 'ag-tools' }, bell, ics)),
+    cards.length ? el('div', { class: 'ag-days', tabindex: '0', role: 'group', 'aria-label': t('ag_h'),
+      // dragging near either edge scrolls the strip, so a day out of view can be reached
+      ondragover: (e) => { const r = e.currentTarget.getBoundingClientRect(), edge = 70; if (e.clientX < r.left + edge) e.currentTarget.scrollBy({ left: -24 }); else if (e.clientX > r.right - edge) e.currentTarget.scrollBy({ left: 24 }); } }, late.length ? column('', late, true) : null, dayList.map((d) => column(d, cards.filter((x) => x.left >= 0 && x.day === d), false)))
       : el('p', { class: 'hint', text: t('ag_empty', { n: agDays }) }));
+}
+// v9.78 (ADR-0148): a reminder moved to another day — dragged onto it, or picked on its card. The platform's date is not touched.
+async function tdAgMove(x, to) {
+  const item = tenders && tenders.items.find((r) => r.id === x.id); if (!item || tdBusy) return;
+  const from = x.from || x.day, moves = tenderAgendaMove(item, x.key, from, to);
+  if (await tdUpdate(x.id, { agendaMoves: moves })) { renderTenders(); toast(t('ag_moved_toast', { what: t(`td_col_${x.key}`), when: agDayName(to) })); }
 }
 function tdNextDate(i, today) { return [['askDue', i.askDue], ['visit', i.visit], ['handover', ['received', 'screen', 'decide', 'prep'].includes(i.stage) && !tenderHandedAt(i) ? tenderHandoverDue(i).slice(0, 10) : ''], ['due', i.due], ['openAt', i.openAt]].filter(([, v]) => v && v >= today).sort((x, y) => (x[1] < y[1] ? -1 : 1))[0] || null; }
 /** The period's own numbers: how many we joined, won, how long a decision took, how many were in on time. */
