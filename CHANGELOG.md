@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.82 — 2026-11-21
+
+- زر التحميل في صفحة «محلل المناقصات» ينزّل الآن الإصدار ٣٫٧٫١ من رابط شيربوينت الجديد: نافذة البرنامج على قدّ الشاشة، وأزرار الملفات في صف واحد.
+
+<details><summary>English</summary>
+
+- The download button on the «Tender Analyzer» page now gets version 3.7.1 from the new SharePoint link: the program window fits the screen, and the file buttons sit in one row.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «ٹینڈر اینالائزر» صفحے کا ڈاؤن لوڈ بٹن اب نئے شیئرپوائنٹ لنک سے ورژن 3.7.1 دیتا ہے: پروگرام کی ونڈو اسکرین کے سائز کے مطابق کھلتی ہے، اور فائلوں کے بٹن ایک قطار میں ہیں۔
+
+</div>
+</details>
+
+
 ## v9.81 — 2026-11-21
 
 - لا جدول في البوابة يُسحب يمينًا ويسارًا بعد اليوم: على شاشة ضيقة تبقى أعمدته الأولى، وزر «+» في أول كل صف يفتح باقي بياناته تحته باسم كل عمود.
