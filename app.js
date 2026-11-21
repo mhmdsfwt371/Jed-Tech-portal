@@ -52,6 +52,89 @@ function el(tag, attrs = {}, ...kids) {
 }
 const set = (node, ...kids) => { node.replaceChildren(...kids.flat(Infinity).filter((k) => k != null && k !== false)); };
 
+// ---------- v9.81 (ADR-0150): no table scrolls sideways — on a narrow screen the end columns fold into a «the rest» row ----------
+// Columns are hidden from the end until the table fits its box; the first column, a column marked `keep`, and a column holding a
+// control (a field, a list, a button) always stay. Each row then gets one button that opens what was hidden under it, label by value.
+// Works on every table inside a .table-wrap, wherever it is drawn (page or window), and again when the width changes.
+function fitTable(tbl) {
+  const wrap = tbl.parentElement; if (!wrap || !wrap.classList.contains('table-wrap') || tbl.classList.contains('w-cards')) return;
+  // fitted already at this width with these rows: left alone, so a row someone opened stays open while the page changes elsewhere
+  const key = `${wrap.clientWidth}:${tbl.querySelectorAll('tr:not(.ph-detail)').length}`; if (tbl.dataset.fit === key) return; tbl.dataset.fit = key;
+  if (!wrap.clientWidth) return;
+  const was = tbl.dataset.fitCols || '';
+  // measured again with classes only — the rows and their buttons stay where they are, so nothing moves unless the fold changes
+  tbl.querySelectorAll('.ph-h').forEach((c) => c.classList.remove('ph-h')); tbl.classList.remove('ph-fold');
+  const hidden = new Set(); let hg = null, bg = null, body = null;
+  tbl.classList.add('ph-measure'); const over = () => tbl.scrollWidth > wrap.clientWidth + 2;
+  try {
+    if (over() && tbl.tHead) {
+      // which columns each cell covers, header rows (with their merged cells) included
+      const span = (rows) => { const grid = []; rows.forEach((r, ri) => { let c = 0; grid[ri] = grid[ri] || [];
+        for (const cell of r.cells) { while (grid[ri][c]) c++; for (let dr = 0; dr < cell.rowSpan; dr++) for (let dc = 0; dc < cell.colSpan; dc++) { grid[ri + dr] = grid[ri + dr] || []; grid[ri + dr][c + dc] = cell; } c += cell.colSpan; } }); return grid; };
+      hg = span([...tbl.tHead.rows]); const n = hg[0].length;
+      body = [...tbl.tBodies, ...(tbl.tFoot ? [tbl.tFoot] : [])].flatMap((b) => [...b.rows]).filter((r) => !r.classList.contains('ph-detail'));
+      bg = body.map((r) => span([r])[0]);
+      if (n >= 3 && hg.every((r) => r.length === n) && bg.every((r) => r.length === n)) {   // a row that does not line up: left as it is rather than folded wrong
+        const cellsOf = (j) => new Set([...hg.map((r) => r[j]), ...bg.map((r) => r[j])]);
+        const fixed = (j) => j === 0 || hg.some((r) => r[j].classList.contains('keep')) || bg.some((r) => r[j].colSpan === 1 && r[j].querySelector('input,select,textarea,button:not(.ph-more-btn)'));
+        const apply = () => { const all = new Set(); for (let j = 0; j < n; j++) cellsOf(j).forEach((c) => all.add(c));
+          for (const c of all) { const cs = []; for (let j = 0; j < n; j++) if (cellsOf(j).has(c)) cs.push(j); c.classList.toggle('ph-h', cs.every((j) => hidden.has(j))); } };
+        for (let j = n - 1; j > 0 && n - hidden.size > 2 && over(); ) {
+          const top = hg[0][j]; let a = j; while (a > 0 && hg[0][a - 1] === top) a--;   // a header group folds as one
+          const unit = []; for (let k = a; k <= j; k++) unit.push(k);
+          if (!unit.some(fixed) && n - hidden.size - unit.length >= 2) { unit.forEach((k) => hidden.add(k)); apply(); }
+          j = a - 1;
+        }
+      }
+    }
+  } finally { tbl.classList.remove('ph-measure'); }
+  if (hidden.size) tbl.classList.add('ph-fold');
+  const now = [...hidden].sort((x, y) => x - y).join(','); tbl.dataset.fitCols = now;
+  if (now === was) return;   // the same fold as before: its buttons, and any row someone opened, stay as they are
+  tbl.querySelectorAll('tr.ph-detail, .ph-more-btn').forEach((x) => x.remove());
+  if (!hidden.size) return;
+  const n = hg[0].length, label = (j) => [...new Set(hg.map((r) => r[j]))].map((c) => c.textContent.trim()).filter(Boolean).join(' — ');
+  const shown = n - hidden.size, cols = [...hidden].sort((x, y) => x - y);
+  body.forEach((r, ri) => {
+    const cells = [...new Set(cols.map((j) => bg[ri][j]))].filter((c) => c.classList.contains('ph-h'));
+    if (!cells.some((c) => c.textContent.trim())) return;
+    const btn = el('button', { type: 'button', class: 'ph-more-btn', 'aria-expanded': 'false', 'aria-label': t('ph_more'), title: t('ph_more') });
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (r.nextElementSibling && r.nextElementSibling.classList.contains('ph-detail')) { r.nextElementSibling.remove(); btn.setAttribute('aria-expanded', 'false'); return; }
+      const dl = el('dl', { class: 'ph-dl' }, cells.map((c) => { const js = cols.filter((j) => bg[ri][j] === c); return [el('dt', { text: label(js[0]) }), el('dd', {}, [...c.cloneNode(true).childNodes].filter((x) => !(x.classList && x.classList.contains('ph-more-btn'))))]; }));
+      r.after(el('tr', { class: 'ph-detail' }, el('td', { colspan: String(shown) }, dl))); btn.setAttribute('aria-expanded', 'true');
+    });
+    bg[ri][0].prepend(btn);
+  });
+}
+let fitBusy = false, fitW = 0;
+function fitTables(root = document) { if (fitBusy) return; fitBusy = true; try { root.querySelectorAll('.table-wrap > table').forEach(fitTable); } finally { fitBusy = false; } }
+(() => {
+  let queued = false;
+  const frame = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (f) => setTimeout(f, 16);   // the page tests run without a frame clock
+  const later = () => { if (queued) return; queued = true; frame(() => { queued = false; fitTables(); if (obs) obs.takeRecords(); }); };
+  if (typeof MutationObserver !== 'function') return;
+  const obs = new MutationObserver((list) => { if (!fitBusy && list.some((m) => [...m.addedNodes].some((x) => x.nodeType === 1 && !x.matches('.ph-detail, .ph-more-btn') && !(x.closest && x.closest('.dlg-pager')) && (x.matches('.table-wrap, table, tbody, tr') || (x.querySelector && x.querySelector('.table-wrap > table')))))) later(); });
+  const start = () => { obs.observe(document.body, { childList: true, subtree: true }); later(); };
+  if (document.body) start(); else addEventListener('DOMContentLoaded', start);
+  addEventListener('resize', () => { if (innerWidth !== fitW) { fitW = innerWidth; later(); } });
+  addEventListener('hashchange', later);
+  document.addEventListener('toggle', later, true);   // a window or a folded part opening: its tables now have a width to measure
+})();
+// A part of a long page that folds: only its title shows, and opening one closes the others in the same `group` (the `name` of
+// <details>). Which part is open survives the page being redrawn, so editing inside it does not close it.
+const foldOpen = {};
+function fold(group, id, summary, body, cls = '') {
+  const d = el('details', { class: `fold ${cls}`.trim(), name: group, 'data-fold': id, ...(foldOpen[group] === id ? { open: '' } : {}) }, el('summary', {}, summary), el('div', { class: 'fold-body' }, body));
+  d.addEventListener('toggle', () => { if (d.open) foldOpen[group] = id; else if (foldOpen[group] === id) delete foldOpen[group]; });
+  return d;
+}
+// print shows every part, folded or not, and every column
+// (the group's name is lifted first: with it, opening one part would close the others)
+addEventListener('beforeprint', () => { document.querySelectorAll('details.fold').forEach((d) => { d.dataset.printWas = `${d.open ? 1 : 0}${d.getAttribute('name') || ''}`; d.removeAttribute('name'); d.open = true; }); });
+addEventListener('afterprint', () => { document.querySelectorAll('details.fold[data-print-was]').forEach((d) => { const w = d.dataset.printWas; delete d.dataset.printWas; d.open = w[0] === '1'; if (w.slice(1)) d.setAttribute('name', w.slice(1)); }); });
+
 function toast(msg) {
   const n = $('toast'); n.textContent = msg; n.classList.add('on');
   clearTimeout(toast.h); toast.h = setTimeout(() => n.classList.remove('on'), 3200);
@@ -5611,11 +5694,12 @@ function renderWeights() {
     admin ? el('p', { class: diff.count ? 'note' : 'hint',
       text: diff.count ? t('weights_draft_notice', { n: diff.count }) : t('weights_official_notice') }) : null,
     perBox,
-    groups.map(simpleTable),
-    el('h2', {}, t('weights_acts_h'), helpQ('help_weights_acts')),
-    el('div', { class: 'table-wrap' }, el('table', {},
-      el('thead', {}, el('tr', {}, ['w_col_category', 'w_col_weight'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
-      el('tbody', {}, Object.entries(wt.activities).map(([k, w]) => el('tr', {}, el('td', { text: pretty(k) }), el('td', { class: 'num' }, stepSel(w, (nw) => save({ activities: { [k]: nw } }), admin || mayEdit(k)))))))),
+    // ADR-0150: each team's types, and the activities, fold under their title — one open at a time, and it stays open while you edit
+    groups.map((g) => { const part = simpleTable(g); return part ? fold('weights', g.id, part[0], part[1]) : null; }),
+    fold('weights', 'acts', el('h2', {}, t('weights_acts_h')), [helpQ('help_weights_acts'),
+      el('div', { class: 'table-wrap' }, el('table', {},
+        el('thead', {}, el('tr', {}, ['w_col_category', 'w_col_weight'].map((k, i) => el('th', { class: i ? 'num' : null, text: t(k) })))),
+        el('tbody', {}, Object.entries(wt.activities).map(([k, w]) => el('tr', {}, el('td', { text: pretty(k) }), el('td', { class: 'num' }, stepSel(w, (nw) => save({ activities: { [k]: nw } }), admin || mayEdit(k))))))))]),
     el('div', { class: 'row', style: 'margin:12px 0' },
       admin ? el('button', { type: 'button', class: 'btn primary', text: `⇪ ${t('weights_publish_team')}`, onclick: () => { localStorage.setItem('afaqy.weights.publish', approvedJson()); window.open('./manage-systems.html#weights', '_blank', 'noopener'); toast(t('weights_publish_opened')); } }) : null,
       el('button', { type: 'button', class: 'btn', text: t('weights_download'), onclick: download }),
@@ -5959,8 +6043,9 @@ function renderGuide() {
       el('button', { type: 'button', class: 'btn no-print', text: t('g_print'), onclick: () => window.print() })),
     el('div', { class: 'intro-card' }, el('div', { class: 'ic-txt' }, el('b', { text: t('intro_h') }), el('span', { text: t('intro_b') })),
       el('div', { class: 'ic-acts' }, el('a', { class: 'btn primary', href: overviewDoc(lang === 'ar'), target: '_blank', rel: 'noopener', text: t('intro_view') }), el('a', { class: 'btn', href: overviewDoc(lang === 'ar'), download: '', text: t('intro_dl') }), el('a', { class: 'ic-alt', href: overviewDoc(lang !== 'ar'), target: '_blank', rel: 'noopener', text: t('intro_alt') }))),
-    GUIDE.map(([h, b]) => el('section', {}, el('h3', { text: t(h) }), el('p', { text: t(b) }))),
-    el('section', {}, el('h3', { text: t('definitions') }), el('ul', { class: 'defs' }, DEFINITIONS.map((k) => el('li', { text: t(k) })))));
+    // ADR-0150: the titles only — one part opens at a time, so the guide is a page and not twenty screens
+    GUIDE.map(([h, b]) => fold('guide', h, el('h3', { text: t(h) }), el('p', { text: t(b) }), 'g-part')),
+    fold('guide', 'definitions', el('h3', { text: t('definitions') }), el('ul', { class: 'defs' }, DEFINITIONS.map((k) => el('li', { text: t(k) }))), 'g-part'));
 }
 
 // ---------- version: what is new, and a newer version waiting ----------

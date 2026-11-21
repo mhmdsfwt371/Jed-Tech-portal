@@ -117,7 +117,8 @@ with sync_playwright() as p:
     for v in ['kpi','overtime','tenders','dev','readings']:
         pg.evaluate(f"location.hash='#{v}'"); pg.wait_for_timeout(900)
         out+=pg.evaluate("(v)=>[...document.querySelectorAll('#view-'+v+' .table-wrap, #view-'+v+' .td-pipe')].filter(n=>n.getBoundingClientRect().width>1&&(n.scrollWidth>n.clientWidth+2)).map(n=>({v,cls:n.className.slice(0,30),tab:n.tabIndex,name:n.getAttribute('aria-label')||n.getAttribute('aria-labelledby')||''}))", v)
-    check(f'A9 on a phone every box that scrolls sideways ({len(out)}) can be reached by keyboard and says what it is', len(out)>=3 and all(o['tab']==0 and o['name'] for o in out), [o for o in out if o['tab']!=0 or not o['name']][:3] or len(out))
+    # since 9.81 (ADR-0150) a wide table folds instead of scrolling, so there may be none; any box that still scrolls must be reachable
+    check(f'A9 on a phone every box that scrolls sideways ({len(out)}) can be reached by keyboard and says what it is', all(o['tab']==0 and o['name'] for o in out), [o for o in out if o['tab']!=0 or not o['name']][:3])
     c.close()
     # --- page-wide promises
     c,pg,errs=boot(b,'light')

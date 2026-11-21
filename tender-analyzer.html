@@ -29,7 +29,15 @@
   .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; } .card { background: var(--soft); border-radius: 12px; padding: 12px 14px; border-top: 4px solid var(--teal); } .card b { display: block; margin-bottom: 4px; }
   footer { text-align: center; color: #5A6B78; font-size: 13px; padding: 20px; }
   @media (max-width: 820px) { .wrap { grid-template-columns: 1fr; } nav { position: static; } }
-  @media print { nav { display: none } .wrap { grid-template-columns: 1fr } body { background:#FFFFFF } section { break-inside: avoid } }
+  /* every part folds under its title, one open at a time, so the page is a list and not eight screens to scroll (ADR-0150) */
+  main section { padding: 0; } details > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 14px 22px; }
+  details > summary::-webkit-details-marker { display: none; } details > summary h2 { margin: 0; }
+  details > summary::after { content: ''; margin-inline-start: auto; width: 9px; height: 9px; border-right: 2px solid var(--navy); border-bottom: 2px solid var(--navy); transform: rotate(45deg); transition: transform .18s; flex: none; }
+  details[open] > summary::after { transform: rotate(-135deg); } details > summary:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; border-radius: 14px; }
+  .fb { padding: 0 22px 18px; } nav a.on { background: var(--soft); font-weight: 700; }
+  @media (max-width: 820px) { nav { display: none; } .fb { padding: 0 16px 16px; } details > summary { padding: 12px 16px; } }
+  @media (max-width: 560px) { table, thead, tbody, tr, th, td { display: block; } thead tr, table tr:first-child:has(th) { display: none; } td { border: 0; padding: 2px 0; } tr { border-bottom: 1px solid var(--line); padding: 8px 0; } td:first-child { font-weight: 700; } }
+  @media print { details > .fb { display: block } summary::after { display: none }  nav { display: none } .wrap { grid-template-columns: 1fr } body { background:#FFFFFF } section { break-inside: avoid } }
 </style>
 </head>
 <body>
@@ -41,16 +49,16 @@
   <a href="#cost">الأمان والتكلفة</a><a href="#team">العمل كفريق</a><a href="#trouble">حل المشكلات</a>
 </nav>
 <main>
-<section id="what"><h2>ما البرنامج</h2>
+<section id="what"><details name="ta" open><summary><h2>ما البرنامج</h2></summary><div class="fb">
   <p>ضع ملفات المنافسة كلها في فولدر واحد — الكراسة والملاحق وجدول الكميات — واسحب الفولدر على البرنامج. يقرأ كل الملفات ويخرج الملفات النهائية بلا محادثة، بالعربية والإنجليزية، وعليها توقيعك:</p>
   <div class="cards">
-    <div class="card"><b>دراسة المنافسة</b>عرض وإكسل: هل المنافسة في نطاق آفاقي، ومن ينفذ كل جزء، والقرار، والمخاطر، والاستفسارات، وخطة إعداد العرض.</div>
-    <div class="card"><b>جدول الكميات والأجهزة</b>إكسل: جهاز لكل بند، وتكلفة كل مكوّن بعملته ومصدره. الربح يُكتب يدويًّا.</div>
-    <div class="card"><b>العرض الفني والمالي</b>عرض واحد: دباجة آفاقي الثابتة، ثم بند في كل صفحة، ثم العرض المالي — ومعه PDF حين يكون أوفيس مثبتًا.</div>
-    <div class="card"><b>الاستفسارات والشات</b>استفسارات جاهزة للرفع على اعتماد، ومحادثة تجيب من ملفات المنافسة فقط.</div>
+    <div class="card"><b>دراسة المنافسة</b>وورد مختصر بالعربية والإنجليزية: هل المنافسة في نطاق آفاقي، والقرار، وجدول المواعيد، والمخاطر، والاستفسارات، والشهادات التي تحتاج تجديدًا.</div>
+    <div class="card"><b>جدول الكميات والأجهزة</b>إكسل الجهة نفسه بالعربية والإنجليزية: جهاز لكل بند، ورابط ورقة بياناته، وتكلفته — وورقة بالتكاليف التي لا بند لها. الربح يُكتب يدويًّا.</div>
+    <div class="card"><b>العرض الفني والمالي</b>عرض واحد: دباجة آفاقي الثابتة، ثم بند في كل صفحة، ثم شهادات آفاقي السارية، ثم العرض المالي — ومعه PDF حين يكون أوفيس مثبتًا.</div>
+    <div class="card"><b>الاستفسارات والشات</b>خطاب استفسارات للجهة بالأسئلة التي لا يجيب عنها غيرها، ومحادثة تجيب من ملفات المنافسة فقط.</div>
   </div>
-</section>
-<section id="need"><h2>المتطلبات</h2>
+</div></details></section>
+<section id="need"><details name="ta"><summary><h2>المتطلبات</h2></summary><div class="fb">
   <table><tr><th>المطلوب</th><th>التفاصيل</th></tr>
   <tr><td>ويندوز</td><td>البرنامج يعمل على ويندوز.</td></tr>
   <tr><td>بايثون 3.10 أو أحدث</td><td>من <code>python.org</code> — علّم على «Add Python to PATH» أثناء التثبيت.</td></tr>
@@ -59,8 +67,8 @@
   <tr><td>إنترنت</td><td>مرة واحدة لتنزيل النموذج. بعدها الدراسة تعمل والملفات لا تخرج من الجهاز.</td></tr>
   <tr><td>اشتراك في تطبيق محادثة (اختياري)</td><td>لمن عنده اشتراك في كلود أو شات جي بي تي أو جيميناي: يضيف اختيار الأجهزة وأسعارها وأوراق بياناتها وملف العرض.</td></tr>
   <tr><td>أوفيس أو ليبر أوفيس (اختياري)</td><td>لإخراج نسخة PDF من العرض وملف أوراق البيانات.</td></tr></table>
-</section>
-<section id="install"><h2>التثبيت</h2>
+</div></details></section>
+<section id="install"><details name="ta"><summary><h2>التثبيت</h2></summary><div class="fb">
   <ol class="steps">
     <li>نزّل ملف البرنامج المضغوط من <a href="https://afaqyitegy-my.sharepoint.com/:u:/g/personal/mohammed_safwat_afaqy_com/IQDdtynmxL_6S4Efi3dCGrwRARIOC-9UACo34FTQmNoC6ow?e=VSFlBe" target="_blank" rel="noopener">رابط شيربوينت</a> (يحتاج حساب آفاقي)، وفك الضغط في مجلد ثابت (مثل <code>C:\TenderAnalyzer</code>).</li>
     <li>شغّل <code>setup.bat</code> بنقرة مزدوجة: يثبّت مكتبات بايثون المطلوبة. لا يسأل عن أي مفتاح.</li>
@@ -68,9 +76,9 @@
     <li>في أول دراسة ينزّل البرنامج النموذج المجاني ويثبّته وحده، مرة واحدة، دون أي سؤال.</li>
   </ol>
   <div class="ok">بعد فتح البرنامج مرة واحدة يتعرف عليه ويندوز، فيفتحه زر «افتح المحلل» من بطاقة المناقصة في البوابة.</div>
-</section>
+</div></details></section>
 
-<section id="portal"><h2>من بطاقة المناقصة في البوابة</h2>
+<section id="portal"><details name="ta"><summary><h2>من بطاقة المناقصة في البوابة</h2></summary><div class="fb">
   <ol class="steps">
     <li>ارفع إيميل المناقصة على سجل المناقصات، فتُحفظ الكراسة وجدول الكميات في بطاقتها.</li>
     <li>افتح البطاقة واضغط «ادرسها بالمحلل». إن كان البرنامج مغلقًا تفتحه البوابة، وقد يسألك المتصفح مرة واحدة أن تسمح للبوابة بالوصول إلى البرامج على جهازك: اسمح.</li>
@@ -79,15 +87,15 @@
     <li>لخطوة واحدة بدل خطوتين: فعّل خانة «ادرس كل مناقصة جديدة بالمحلل فور تسجيلها» في صندوق رسائل السجل والبرنامج مفتوح. بعدها كل إيميل تسقطه يُسجَّل ويُدرس وترجع دراسته واستفساراته ومواعيده إلى بطاقته دون ضغطة أخرى.</li>
   </ol>
   <div class="note">البوابة ترسل الملفات إلى البرنامج على جهازك وحده. وأين يدرسها البرنامج يُكتب تحت الزر قبل البدء: على الجهاز نفسه بالنموذج المجاني، أو على «سحابة أولاما»، أو على خدمة كلود بمفتاحك إن شغّلت «عندي اشتراك» — والملف الذي عليه تصنيف أمني لا يُرسل من طلبات البوابة. ويمكنك إغلاق صفحة البوابة أثناء الدراسة؛ عند فتح البطاقة من جديد تُستكمل المتابعة وتُستلم الملفات.</div>
-</section>
-<section id="run"><h2>التشغيل لأول مرة</h2>
+</div></details></section>
+<section id="run"><details name="ta"><summary><h2>التشغيل لأول مرة</h2></summary><div class="fb">
   <ol class="steps">
     <li>افتح <code>TenderAnalyzer.pyw</code> أو <code>run.bat</code>. تفتح نافذة البرنامج (لا شاشة سوداء).</li>
     <li>عند أول فتح يطلب توقيعك (الاسم والمنصب) ليظهر على كل الملفات، وينشئ اختصارًا باسم «محلل المناقصات» على سطح المكتب وقائمة ابدأ.</li>
     <li>لغة الواجهة عربية أو إنجليزية — تتبدل من رأس النافذة.</li>
   </ol>
-</section>
-<section id="use"><h2>تحليل منافسة من البرنامج نفسه</h2>
+</div></details></section>
+<section id="use"><details name="ta"><summary><h2>تحليل منافسة من البرنامج نفسه</h2></summary><div class="fb">
   <ol class="steps">
     <li>ضع ملفات المنافسة في فولدر واحد.</li>
     <li>اسحب الفولدر على النافذة واضغط «ابدأ التحليل». النموذج المجاني على الجهاز هو الأساس؛ ومن عنده اشتراك يشغّل مفتاح «عندي اشتراك» لتمر الدراسة بتطبيق المحادثة بالنسخ واللصق.</li>
@@ -95,8 +103,8 @@
     <li>كل جولة مكتملة تُحفظ داخل المنافسة في <code>_analysis</code> — إن توقف التشغيل وأعدته يكمل من حيث توقف.</li>
   </ol>
   <div class="note">بالنموذج المحلي لا يُرفع أي ملف. وعبر تطبيق المحادثة ترفع الملفات بنفسك، فإذا وُجد تصنيف أمني مثل «سري للغاية» يتوقف البرنامج ويطلب موافقتك، أو يمنع حسب الإعداد <code>classified_policy</code>.</div>
-</section>
-<section id="out"><h2>المخرجات</h2>
+</div></details></section>
+<section id="out"><details name="ta"><summary><h2>المخرجات</h2></summary><div class="fb">
   <h3>داخل فولدر المنافسة</h3>
   <p>من الإصدار ٣٫٧ أربعة ملفات لكل منافسة — الدراسة والخطاب وجدول الكميات بالعربية والإنجليزية، والعرض بالعربية حتى يُعتمد نص «عن آفاقي» بالإنجليزية:</p>
   <table><tr><th>الملف</th><th>ما فيه</th></tr>
@@ -108,20 +116,20 @@
   <h3>بجانب البرنامج</h3>
   <p>سجل المنافسات <code>AFAQY_Tenders_Register.xlsx</code> يُحدَّث بعد كل تحليل. عمودا «الحالة» و«ملاحظات القرار» للفريق ولا يغيرهما البرنامج، والنتائج المسجلة فيه (ترسية أو عدمها وسببها) يقرؤها في توصيات المنافسات التالية.</p>
   <div class="note">إذا كان أحد ملفات المخرجات مفتوحًا في أوفيس، لا يتوقف التحليل: يحفظ نسخة جديدة بجواره باسمه ووقت الحفظ.</div>
-</section>
-<section id="offer"><h2>ملف العرض (لمن عنده اشتراك)</h2>
+</div></details></section>
+<section id="offer"><details name="ta"><summary><h2>ملف العرض (لمن عنده اشتراك)</h2></summary><div class="fb">
   <p>زر «إعداد ملف العرض» يحتاج بحثًا في الويب عن الطراز وورقة بياناته وسعره، والنموذج المحلي لا يبحث في الويب. لذلك يعمل عبر تطبيق المحادثة باشتراكك: يختار جهازًا لكل بند في جدول الكميات مفضّلًا شركاء آفاقي، ويبني العرض الفني (بند في كل صفحة) والمالي، وجدول كميات الجهة مسعّرًا بثلاثة أعمدة بالعربية والإنجليزية، وملف أوراق البيانات، ويضيف إلى العرض شهادات آفاقي السارية يوم تقديم العروض، ويتوقف عند التكلفة — والربح تضيفه أنت لكل بند. شغّل البحث في الويب داخل المحادثة قبل لصق التعليمات.</p>
-</section>
-<section id="chat"><h2>اسأل ووجّه</h2>
+</div></details></section>
+<section id="chat"><details name="ta"><summary><h2>اسأل ووجّه</h2></summary><div class="fb">
   <p>رابط «اسأل ووجّه» يفتح محادثة عن المنافسة المختارة، يجيب عنها النموذج المجاني على الجهاز. الإجابات من ملفاتها فقط، ومع كل معلومة مصدرها (الملف ورقم الصفحة)، وما لا يرد في الملفات يُقال إنه لم يرد. اكتب قاعدة أو تصحيحًا واضغط «احفظ كتوجيه»، فيُطبَّق في كل مرة تضغط «إعداد ملف العرض».</p>
-</section>
-<section id="restart"><h2>البدء من جديد</h2>
+</div></details></section>
+<section id="restart"><details name="ta"><summary><h2>البدء من جديد</h2></summary><div class="fb">
   <table><tr><th>اختيارك</th><th>ما يحدث</th></tr>
   <tr><td>نعم</td><td>يُعاد كل شيء: قراءة الملفات، والدراسة، والعرض.</td></tr>
   <tr><td>لا</td><td>ملف العرض فقط (الأجهزة والبحث والأسعار)، مع الإبقاء على القراءة والدراسة — وهو الأوفر.</td></tr>
   <tr><td>إلغاء</td><td>لا شيء. ملفات المنافسة نفسها لا تُمس أبدًا.</td></tr></table>
-</section>
-<section id="settings"><h2>الإعدادات</h2>
+</div></details></section>
+<section id="settings"><details name="ta"><summary><h2>الإعدادات</h2></summary><div class="fb">
   <p>في <code>settings.txt</code> بجانب البرنامج، قيمة في كل سطر:</p>
   <table><tr><th>الإعداد</th><th>المعنى</th></tr>
   <tr><td><code>engine</code></td><td>local = النموذج المجاني على الجهاز (الأساس). bridge = «عندي اشتراك»: تطبيق المحادثة. يكتبه المفتاح الذي في النافذة.</td></tr>
@@ -132,21 +140,33 @@
   <tr><td><code>english</code></td><td>off = الدراسة وخطاب الاستفسارات وجدول الكميات بالعربية فقط، بلا نسخ إنجليزية.</td></tr>
   <tr><td><code>classified_policy</code></td><td>ask / block / off — التعامل مع الملفات ذات التصنيف الأمني.</td></tr>
   <tr><td><code>shared_dir</code></td><td>مجلد فريق مشترك (مثل مكتبة شيربوينت متزامنة).</td></tr></table>
-</section>
-<section id="cost"><h2>الأمان والتكلفة</h2>
+</div></details></section>
+<section id="cost"><details name="ta"><summary><h2>الأمان والتكلفة</h2></summary><div class="fb">
   <p>لا مفتاح خدمة في البرنامج، ولا تكلفة تشغيل. بالنموذج المحلي لا يخرج أي ملف من الجهاز. الربط مع البوابة يعمل على الجهاز نفسه فقط، ولا يجيب البرنامج إلا صفحة البوابة. علامة «للاستخدام الداخلي» في تذييل كل ملف.</p>
-</section>
-<section id="team"><h2>العمل كفريق</h2>
+</div></details></section>
+<section id="team"><details name="ta"><summary><h2>العمل كفريق</h2></summary><div class="fb">
   <p>ضع مسار مجلد مشترك في <code>shared_dir</code>: تُقرأ منه مكتبة آفاقي والتصنيفات والمسرد والهوية، ويُحفظ فيه الأرشيف وسجلات المنافسات — لكل مستخدم سجله دون تعارض. والتوقيع شخصي ولا يُحفظ في المجلد المشترك.</p>
-</section>
-<section id="trouble"><h2>حل المشكلات</h2>
+</div></details></section>
+<section id="trouble"><details name="ta"><summary><h2>حل المشكلات</h2></summary><div class="fb">
   <table><tr><th>المشكلة</th><th>الحل</th></tr>
   <tr><td>«Python is not installed or not on PATH»</td><td>ثبّت بايثون 3.10+ مع علامة «Add Python to PATH»، ثم شغّل <code>setup.bat</code> مرة أخرى.</td></tr>
   <tr><td>فُتح مثبّت النموذج أمامك بدل أن يكتمل وحده</td><td>أكمل التثبيت ثم اضغط «ابدأ التحليل» مرة أخرى.</td></tr>
   <tr><td>البطاقة تقول «لم يُعثر على المحلل على هذا الجهاز»</td><td>افتح البرنامج مرة واحدة من <code>run.bat</code>، ثم اضغط «ادرسها بالمحلل». وإن سألك المتصفح عن السماح بالوصول إلى الجهاز فاسمح.</td></tr>
   <tr><td>الدراسة بطيئة</td><td>النموذج المحلي بطيء على جهاز بلا كرت شاشة. اتركه يعمل؛ ما يكتمل من الجولات لا يُعاد.</td></tr>
   <tr><td>تريد التحليل من الصفر</td><td>«ابدأ من جديد» في الواجهة، أو احذف مجلد <code>_analysis</code> داخل المنافسة.</td></tr></table>
-</section>
+</div></details></section>
 </main></div>
 <footer>آفاقي — الإدارة الفنية للمنطقة الغربية · للاستخدام الداخلي</footer>
+<script>
+// a link to a part (#install from the tender card, or the list on the side) opens that part — the others close, being one group
+(function () {
+  function go() { var id = location.hash.slice(1), sec = id && document.getElementById(id), d = sec && sec.querySelector('details');
+    if (d) { d.open = true; sec.scrollIntoView({ block: 'start' }); }
+    document.querySelectorAll('nav a').forEach(function (a) { a.classList.toggle('on', a.getAttribute('href') === '#' + id); }); }
+  addEventListener('hashchange', go); go();
+  // print shows every part
+  addEventListener('beforeprint', function () { document.querySelectorAll('main details').forEach(function (d) { d.dataset.was = d.open ? '1' : ''; d.removeAttribute('name'); d.open = true; }); });
+  addEventListener('afterprint', function () { document.querySelectorAll('main details').forEach(function (d) { d.open = d.dataset.was === '1'; d.setAttribute('name', 'ta'); }); });
+})();
+</script>
 </body></html>

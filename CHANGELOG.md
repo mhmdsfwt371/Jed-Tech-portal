@@ -17,6 +17,35 @@
 
 <!-- releases -->
 
+## v9.81 — 2026-11-21
+
+- لا جدول في البوابة يُسحب يمينًا ويسارًا بعد اليوم: على شاشة ضيقة تبقى أعمدته الأولى، وزر «+» في أول كل صف يفتح باقي بياناته تحته باسم كل عمود.
+- الدليل والأوزان وصفحة محلل المناقصات صارت عناوين تُفتح بضغطة، وفتح جزء يطوي غيره: الدليل من ١٢ شاشة سحب إلى أقل من ٣، والأوزان من ٥ إلى أقل من شاشتين.
+- مراحل المناقصات تظهر كلها في عرض الصفحة، و«المواعيد القادمة» صفوف أيام على اللابتوب بدل شريط يُسحب جانبيًّا.
+- محلل المناقصات ٣٫٧٫١: النافذة على قدّ الشاشة فلا يضيع أسفلها، وأزرار الملفات في صف واحد، والإعدادات تُطوى بجوار النتائج.
+
+<details><summary>English</summary>
+
+- No table in the portal scrolls sideways any more: on a narrow screen its first columns stay, and the «+» at the start of each row opens the rest of that row beneath it, each value under its column name.
+- The guide, the weights page and the Tender Analyzer page are now titles that open with one press, and opening one part folds the others: the guide went from 12 screens of scrolling to under 3, the weights from 5 to under 2.
+- Every tender stage now shows within the page width, and «Coming dates» is rows of days on a laptop instead of a strip you drag sideways.
+- Tender Analyzer 3.7.1: the window fits the screen so its bottom is never cut off, the file buttons sit in one row, and the settings fold away beside the results.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- اب پورٹل کا کوئی جدول دائیں بائیں نہیں کھسکتا: تنگ اسکرین پر اس کے پہلے کالم نظر آتے رہتے ہیں، اور ہر قطار کے شروع میں «+» اس قطار کا باقی ڈیٹا اس کے نیچے ہر کالم کے نام کے ساتھ کھول دیتا ہے۔
+- رہنما، وزن کا صفحہ اور ٹینڈر اینالائزر کا صفحہ اب ایسے عنوانات ہیں جو ایک دباؤ سے کھلتے ہیں، اور ایک حصہ کھولنے سے باقی سمٹ جاتے ہیں: رہنما 12 اسکرینوں کے اسکرول سے کم ہو کر 3 سے کم رہ گیا، اور وزن کا صفحہ 5 سے 2 سے کم۔
+- ٹینڈر کے تمام مراحل اب صفحے کی چوڑائی کے اندر نظر آتے ہیں، اور «آنے والی تاریخیں» لیپ ٹاپ پر دائیں بائیں کھینچی جانے والی پٹی کی بجائے دنوں کی قطاروں میں ہیں۔
+- ٹینڈر اینالائزر 3.7.1: ونڈو اسکرین کے سائز کے مطابق کھلتی ہے اس لیے اس کا نچلا حصہ کبھی نہیں کٹتا، فائلوں کے بٹن ایک قطار میں ہیں، اور نتائج کے ساتھ ترتیبات سمٹ جاتی ہیں۔
+
+</div>
+</details>
+
+
 ## v9.80 — 2026-11-21
 
 - صفحة «محلل المناقصات» تنزّل الآن الإصدار ٣٫٧ من رابط شيربوينت الجديد، في زر التنزيل أعلى الصفحة وفي خطوة التثبيت معًا.
