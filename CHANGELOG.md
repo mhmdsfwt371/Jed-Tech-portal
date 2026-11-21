@@ -17,6 +17,29 @@
 
 <!-- releases -->
 
+## v9.80 — 2026-11-21
+
+- صفحة «محلل المناقصات» تنزّل الآن الإصدار ٣٫٧ من رابط شيربوينت الجديد، في زر التنزيل أعلى الصفحة وفي خطوة التثبيت معًا.
+- قسم «المخرجات» في الصفحة يصف ما يكتبه الإصدار ٣٫٧ لكل منافسة: دراسة وورد مختصرة فيها جدول المواعيد والاستفسارات، وخطاب استفسارات للجهة، وجدول الكميات مسعّرًا مع ورقة التكاليف غير المسعّرة — كلها بالعربية والإنجليزية — والعرض النهائي بالعربية ومعه شهادات آفاقي السارية يوم تقديم العروض، وملف السجل الذي تقرؤه البوابة.
+
+<details><summary>English</summary>
+
+- The «Tender Analyzer» page now downloads version 3.7 from the new SharePoint link — both the download button at the top of the page and the install step point to it.
+- The page’s «Outputs» section now describes what version 3.7 writes for each tender: a short Word study with the dates table and the inquiries, an inquiries letter to the entity, and the priced bill of quantities with a sheet of costs it does not price — all in Arabic and English — plus the final offer in Arabic carrying AFAQY’s certificates that are still valid on the submission day, and the register file the portal reads.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «ٹینڈر اینالائزر» کا صفحہ اب نئے شیئرپوائنٹ لنک سے ورژن 3.7 ڈاؤن لوڈ کرتا ہے — صفحے کے اوپر والا ڈاؤن لوڈ بٹن اور انسٹال کا مرحلہ دونوں اسی لنک پر جاتے ہیں۔
+- صفحے کا «آؤٹ پٹ» حصہ اب بتاتا ہے کہ ورژن 3.7 ہر ٹینڈر کے لیے کیا لکھتا ہے: تاریخوں کے جدول اور سوالات کے ساتھ ایک مختصر ورڈ اسٹڈی، ادارے کے نام سوالات کا خط، اور قیمتوں کے ساتھ مقداروں کا جدول جس میں ان اخراجات کی الگ شیٹ ہے جن کی قیمت نہیں لگائی گئی — یہ سب عربی اور انگریزی میں — اور عربی میں حتمی پیشکش جس میں آفاقی کے وہ سرٹیفکیٹ شامل ہیں جو پیشکش جمع کرانے کے دن تک کارآمد ہیں، اور رجسٹر کی فائل جو پورٹل پڑھتا ہے۔
+
+</div>
+</details>
+
+
 ## v9.79 — 2026-11-21
 
 - النسخة الاحتياطية و«أرسل إلى جهازي الآخر» صارا يعملان مهما كبرت المرفقات: كانا يتوقفان برسالة «تعذّر حفظ بيانات المناقصات» بعد أن تجاوزت الكراسات والإيميلات نحو ٣٨٠ ميجابايت، ولم يكن شيء يُحفظ أصلًا. لم يضِع شيء من بياناتك.

@@ -14,6 +14,7 @@ import {
 } from '../core.js';
 await (await import('../core.js')).loadStrings();
 import { gzipSync } from 'node:zlib';
+import { readFileSync } from 'node:fs';
 
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
@@ -2310,6 +2311,15 @@ test('v9.79: a ZIP the backup is written in and read back, and the sync file sea
   assert.notDeepEqual([...p0.iv], [...p1.iv]); assert.deepEqual([...p1.aad], [0, 0, 0, 1, 1]); assert.equal(core.SYNC_PIECE, 4 * 1048576);
   for (const lang of ['ar', 'en', 'ur']) for (const k of ['bk_building', 'bk_failed', 'bk_not_file', 'zip_too_big', 'bk_usage'])
     assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
+});
+test('v9.80: the analyzer page downloads 3.7 and names the files it now writes', () => {
+  const page = readFileSync(new URL('../tender-analyzer.html', import.meta.url), 'utf8');
+  const link = 'IQDdtynmxL_6S4Efi3dCGrwRARIOC-9UACo34FTQmNoC6ow';
+  assert.equal(page.split(link).length - 1, 2, 'the header button and the install step both point at 3.7');
+  assert.ok(!page.includes('IQCb5C6IN4qRSqqUqBkSCB3LAcmcVg2U'), 'no link to 3.6 is left');
+  for (const f of ['_Study_AR.docx', '_Study_EN.docx', '_Inquiries_AR.docx', '_BOQ_Priced_EN.xlsx', '_Offer_AR.pptx', '.tender-study.json'])
+    assert.ok(page.includes(f), f);
+  assert.ok(page.includes('السجلات والشهادات'), 'the certificates in the offer are described');
 });
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
