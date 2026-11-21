@@ -2383,6 +2383,23 @@ export function tenderDeadlineCandidates(item, field) {
   for (const candidate of unique) if (candidate.time) candidate.sources.push(...unique.filter(other => other.date === candidate.date && !other.time).flatMap(other => other.sources));
   return unique.filter(entry => entry.time || !unique.some(other => other.date === entry.date && other.time));
 }
+/** v9.77 (ADR-0147): what reading the files again did to each tender's dates. `before`: Map id → the date fields as they were.
+ *  A date that moved or was found is «changed»; a date the reading left empty because its sources now disagree (the mail and the
+ *  booklet) is «review» — chosen in the card. Only the tenders in `before` are looked at, and only those with something to say. */
+export function tenderDateChanges(before, items) {
+  const out = []; if (!(before instanceof Map)) return out;
+  for (const it of Array.isArray(items) ? items : []) {
+    const was = before.get(it && it.id); if (!was) continue;
+    const changed = [], review = [];
+    for (const f of TENDER_DATE_FIELDS) {
+      const a = was[f] || '', b = it[f] || '';
+      if (!b && tenderDeadlineCandidates(it, f).length > 1) { if (a !== b || !a) review.push(f); continue; }
+      if (a !== b) changed.push({ field: f, was: a, now: b });
+    }
+    if (changed.length || review.length) out.push({ id: it.id, subject: it.subject || '', changed, review });
+  }
+  return out;
+}
 export function applyTenderEmailDates(item) {
   item = {...item,dateSources:{...item.dateSources}};
   for (const field of Object.keys(tenderDeadlineFields)) {

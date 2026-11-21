@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.77 — 2026-11-21
+
+- زر «أعد قراءة الكراسات» تحت سطر سحب الإيميل: يقرأ كراسات كل مناقصة مفتوحة من جديد، فتصل مواعيدها الهجرية الصحيحة إلى المناقصات المسجلة من قبل، ثم يقول لك ما تغيّر في كل مناقصة وما ينتظر أن تختار تاريخه. التاريخ الذي كتبته بيدك لا يتغيّر.
+
+<details><summary>English</summary>
+
+- A «Read the booklets again» button under the mail drop line: it reads every open tender's booklets again, so their correct Hijri dates reach the tenders registered earlier, then tells you what changed in each tender and which ones wait for you to choose a date. A date you typed by hand does not change.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ای میل چھوڑنے والی سطر کے نیچے «کراسے دوبارہ پڑھیں» کا بٹن: یہ ہر کھلے ٹینڈر کے کراسے دوبارہ پڑھتا ہے، تاکہ ان کی درست ہجری تاریخیں پہلے درج ٹینڈروں تک پہنچیں، پھر بتاتا ہے کہ ہر ٹینڈر میں کیا بدلا اور کون سے ٹینڈر منتظر ہیں کہ آپ تاریخ چنیں۔ آپ کی ہاتھ سے لکھی تاریخ نہیں بدلتی۔
+
+</div>
+</details>
+
+
 ## v9.76 — 2026-11-21
 
 - زر «افحص الفولدر» بجوار فولدر الإيميلات: يقرأ كل إيميل في الفولدر ويقول هل هو في السجل وفي أي مناقصة، أو أنه نسخة ثانية، أو أنه لم يُسجَّل ولماذا — ومعه زر يسجّل ما بقي. هكذا تتأكد أن كل ما حفظه Power Automate وصل إلى السجل.

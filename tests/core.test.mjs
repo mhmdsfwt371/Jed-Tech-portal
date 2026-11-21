@@ -2243,6 +2243,24 @@ test('v9.76: the mail folder checked against the register, and the mails that co
   for (const lang of ['ar', 'en', 'ur']) for (const k of ['ag_also', 'md_ck', 'md_ck_h', 'md_ck_reading', 'md_ck_sum', 'md_ck_all_in', 'md_ck_in', 'md_ck_same', 'md_ck_out', 'md_ck_wait', 'md_ck_empty', 'md_ck_bad', 'md_ck_gone', 'md_ck_reg', 'md_ck_copy', 'md_ck_copied', 'md_ck_open', 'md_ck_none', 'md_failed', 'md_ck_col_file', 'md_ck_col_state', 'md_ck_col_tender', 'td_busy_card'])
     assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
 });
+// v9.77 (ADR-0147): «Read the booklets again» — the open tenders' files read again with today's reader; what it changed is said.
+test('v9.77: reading the booklets again says which dates changed and which wait for a choice', () => {
+  const before = new Map([['a', { due: '2026-11-19', dueTime: '', askDue: '', askDueTime: '' }], ['b', { due: '2026-12-03', dueTime: '10:00' }], ['c', { due: '2026-11-17', dueTime: '10:00' }]]);
+  const book = (field, date) => ({ id: 'f', name: 'booklet.pdf', analysis: { schedule: { [field]: [{ date, time: '', locator: '3' }] } } });
+  const items = [
+    { id: 'a', subject: 'Dash cams', due: '2026-11-30', dueTime: '', askDue: '2026-11-25', askDueTime: '', files: [book('due', '2026-11-30')] },
+    { id: 'b', subject: 'Fingerprint', due: '2026-12-03', dueTime: '10:00', files: [] },
+    { id: 'c', subject: 'Fuel', due: '', dueTime: '', messages: [{ key: 'k', subject: 'mail', schedule: { due: [{ date: '2026-11-17', time: '10:00' }] } }], files: [book('due', '2026-11-19')] },
+    { id: 'd', subject: 'Not read', due: '2026-12-09' }];
+  const r = core.tenderDateChanges(before, items);
+  assert.deepEqual(r.map((x) => x.id), ['a', 'c'], 'only the tenders read and touched; one that did not change is not listed');
+  assert.deepEqual(r[0].changed, [{ field: 'due', was: '2026-11-19', now: '2026-11-30' }, { field: 'askDue', was: '', now: '2026-11-25' }], 'a date put right and one found');
+  assert.deepEqual(r[0].review, []);
+  assert.deepEqual([r[1].changed, r[1].review], [[], ['due']], 'the mail and the booklet disagree: the field waits for a choice in the card, it is not «changed»');
+  assert.deepEqual(core.tenderDateChanges(null, null), []);
+  for (const lang of ['ar', 'en', 'ur']) for (const k of ['td_rr', 'td_rr_h', 'td_rr_sum', 'td_rr_none', 'td_rr_changed', 'td_rr_review', 'td_rr_nofiles', 'td_rr_reading'])
+    assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
+});
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

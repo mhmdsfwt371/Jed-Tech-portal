@@ -19,7 +19,7 @@ import {
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
   mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts,
-  TENDER_HANDOVER_DAYS, tenderMilestones, tenderAgenda, tenderNotices, tenderNoticeId, agendaFold, MAILDIR_ASK, mailDirNew, mailDirSeen, mailDirReport, mailDirFailed, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
+  TENDER_HANDOVER_DAYS, tenderMilestones, tenderAgenda, tenderNotices, tenderNoticeId, agendaFold, MAILDIR_ASK, mailDirNew, mailDirSeen, mailDirReport, mailDirFailed, tenderDateChanges, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
 
 import { validateSystems } from './systems-core.js';
 
@@ -1949,6 +1949,25 @@ async function mdAudit() {
   };
   await run();
 }
+// v9.77 (ADR-0147): «Read the booklets again» — every open tender's files (not the mails themselves, not the signature pictures)
+// are read again with today's reader, so what it learnt since (the booklet's Hijri dates table, v9.76) reaches the tenders already
+// registered. A date typed by hand is never touched (applyTenderEmailDates); the window says what moved and what waits for a choice.
+async function tdReread() {
+  if (tdBusy || !tenders) return;
+  const open = tenders.items.filter((i) => TD_OPEN.includes(i.stage) && i.stage !== 'submitted'), jobs = open.map((i) => [i, (i.files || []).filter((f) => f.kind !== 'original' && !tdIsMailPicture(f)).map((f) => f.id)]).filter(([, ids]) => ids.length);
+  if (!jobs.length) { toast(t('td_rr_nofiles')); return; }
+  const before = new Map(jobs.map(([i]) => [i.id, Object.fromEntries(TENDER_DATE_FIELDS.flatMap((f) => [[f, i[f] || ''], [`${f}Time`, i[`${f}Time`] || '']]))]));
+  for (const [i, ids] of jobs) await tdAnalyzeFiles(i.id, ids);
+  const res = tenderDateChanges(before, tenders.items), files = jobs.reduce((a, [, ids]) => a + ids.length, 0);
+  const lab = (f) => t(`td_col_${f}`);
+  const dlg = el('dialog', { class: 'proj-edit td-rr-dlg tw tw-md', 'aria-labelledby': 'td-rr-h' }, twHead(el('h2', { id: 'td-rr-h', text: t('td_rr_h') })),
+    el('p', { class: 'td-rr-sum', text: t('td_rr_sum', { f: files, t: jobs.length, c: res.filter((x) => x.changed.length).length, r: res.filter((x) => x.review.length).length }) }),
+    res.length ? el('ul', { class: 'td-rr-list' }, res.map((x) => el('li', {},
+      el('button', { type: 'button', class: 'btn tiny quiet td-rr-open', dir: 'auto', text: tdTitle(x.subject).slice(0, 100), onclick: () => { dlg.close(); tdOpenId = x.id; renderTenders(); } }),
+      x.changed.map((c) => el('div', { class: 'hint', text: t('td_rr_changed', { what: lab(c.field), was: c.was || '—', now: c.now || '—' }) })),
+      x.review.map((f) => el('div', { class: 'note', text: t('td_rr_review', { what: lab(f) }) }))))) : el('p', { class: 'hint', text: t('td_rr_none') }));
+  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
+}
 // ---------- v9.57 (ADR-0130): a tender's correspondence — who wrote, when and what, read from the mails dropped on it ----------
 const tdWhen = (at) => (at ? new Date(`${at.length > 10 ? at : `${at}T00:00`}:00Z`).toLocaleString(lang === 'ur' ? 'ur-PK' : lang === 'ar' ? 'ar-SA' : 'en-GB',
   { timeZone: 'UTC', calendar: 'gregory', numberingSystem: 'latn', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', ...(at.length > 10 ? { hour: '2-digit', minute: '2-digit' } : {}) }) : t('td_thr_notime'));
@@ -2417,7 +2436,8 @@ function renderTenders() {
     el('div', { class: 'td-cmd-intake' }, el('div', { class: 'td-pull-head' }, el('h2', { text: t('td_pull_h') }), tenders && tenders.pulledAt ? el('span', { class: 'hint', text: t('td_last', { to: tenders.to || '—', n: tenders.items.length }) }) : null),
       tdEmailPicker(), mdBox = el('div', { class: 'td-dir' }, mdRow())),   // v9.75 (ADR-0145): the mail folder Power Automate fills
     (() => { const any = el('input', { type: 'file', multiple: '', hidden: true, onchange: (e) => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) void tdRouteDrop(fs, null); } });
-      return el('p', { class: 'hint td-drop-any' }, el('span', { text: `⤓ ${t('td_drop_any')}` }), ' ', el('button', { type: 'button', class: 'btn tiny td-any-btn', disabled: !!tdBusy, text: t('td_any_pick'), onclick: () => any.click() }), any); })(),
+      return el('p', { class: 'hint td-drop-any' }, el('span', { text: `⤓ ${t('td_drop_any')}` }), ' ', el('button', { type: 'button', class: 'btn tiny td-any-btn', disabled: !!tdBusy, text: t('td_any_pick'), onclick: () => any.click() }), any,
+        empty ? null : el('button', { type: 'button', class: 'btn tiny td-rr-btn', disabled: !!tdBusy, title: t('td_rr_reading'), text: `📑 ${t('td_rr')}`, onclick: () => { void tdReread(); } })); })(),   // v9.77
     el('div', { class: 'td-cmd-tools' }, (() => { const R = etRadar, act = R ? R.tenders.filter((x) => etOpenNow(x) && x.scope && !etIgnored().has(x.ref)).length : 0;   // v9.60 (ADR-0132)
       return el('p', { class: 'td-radar-line' }, el('button', { type: 'button', class: 'btn td-radar-btn', disabled: !!tdBusy, text: `📡 ${t('et_title')}${R ? ` · ${t('et_btn_n', { n: act })}` : ''}`, onclick: etOpen }), ' ',
         R ? el('button', { type: 'button', class: 'btn td-market-btn', disabled: !!tdBusy, text: `📊 ${t('mk_btn')}`, onclick: mkOpen }) : null, ' ',
