@@ -3,7 +3,7 @@
 # file names; the message is marked «Offer hand-over», the tender moves to «Submitted» on the mail's day, and no second tender is
 # made. A hand-over mail whose tender is not clear is not registered at all and says why. The whole of it survives a reload; Arabic
 # and Urdu show no raw key; a hand-over registered by 9.84 as a tender of its own is moved into its tender on opening the page. Made-up people and wording only.
-import threading, http.server, socketserver, functools, os, io, tempfile, pathlib
+import threading, http.server, socketserver, functools, os, io, tempfile, pathlib, zipfile
 from email.message import EmailMessage
 from email.utils import format_datetime
 from datetime import datetime, timezone, timedelta
@@ -19,12 +19,12 @@ def check(n,c,d=''):
     if not c: fails.append(n)
 tmp=tempfile.mkdtemp(); P=lambda n: os.path.join(tmp,n)
 KSA=timezone(timedelta(hours=3))
-def deck():
-    from pptx import Presentation
-    pr=Presentation(); s=pr.slides.add_slide(pr.slide_layouts[5]); s.shapes.title.text='Sample offer'; b=io.BytesIO(); pr.save(b); return b.getvalue()
-def book():
-    import openpyxl
-    wb=openpyxl.Workbook(); wb.active.append(['Item','Qty','Unit price']); wb.active.append(['Sensor',4,1200]); b=io.BytesIO(); wb.save(b); return b.getvalue()
+# the hand-over is told by the attachments' kinds, not their insides: a small zip stands for each, so the suite needs no Office library
+def office(part):
+    b=io.BytesIO()
+    with zipfile.ZipFile(b,'w') as z: z.writestr('[Content_Types].xml','<Types/>'); z.writestr(part,'<sample/>')
+    return b.getvalue()
+deck=lambda: office('ppt/presentation.xml'); book=lambda: office('xl/workbook.xml')
 def mail(name, frm, subject, when, body, files=(), mid=None):
     m=EmailMessage(); m['From']=frm; m['To']='Tenders Team <tenders.team@example.com>'; m['Subject']=subject
     m['Date']=format_datetime(when); m['Message-ID']=f'<{mid or name}@example.com>'; m.set_content(body)
