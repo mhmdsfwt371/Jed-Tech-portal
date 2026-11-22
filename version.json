@@ -1,25 +1,25 @@
 {
-  "version": "9.84",
-  "date": "2026-11-21",
+  "version": "9.85",
+  "date": "2026-11-22",
   "notes": {
     "ar": [
-      "محلل المناقصات ٣٫٨ يدرس المناقصة باشتراكاتك أنت — جيميناي وكلود، وشات جي بي تي احتياطيًا — بدل النموذج المحلي البطيء، بلا مفتاح ولا دفع بالاستخدام. وبطاقة المناقصة تقول قبل البدء إن نص المستندات يذهب إلى اشتراكاتك، والملف السري لا يُرسل أبدًا.",
-      "بعد الدراسة يقرأ نموذج ثانٍ المواعيد الأربعة وحده: بجوار كل موعد في البطاقة «✓ مؤكَّد بنموذج ثانٍ» لو اتفقت القراءتان، أو علامة حمراء بالقراءة الثانية لو اختلفتا، تختفي حين تكتب الموعد الصحيح من الكراسة.",
-      "صفحة «محلل المناقصات» فيها قسم جديد «المحرك: اشتراكاتي» يشرح الأدوات الثلاث ومراجعة المواعيد والتجهيز مرة واحدة."
+      "رسالة تسليم العرض لقسم المنافسات تُقرأ وحدها: أي رسالة من الفرع فيها ملف العرض (بوربوينت) وجدول الكميات (إكسل) تنضم لمناقصتها ولو كان عنوانها مختلفًا — برقم المنافسة أو بكلمات العنوان وأسماء الملفات — وتُعلَّم في المراسلات «تسليم العرض»، وتنتقل المناقصة إلى «تم التقديم» بتاريخ الرسالة. قبل ذلك كانت تصبح مناقصة جديدة منفصلة، فلا يظهر التسليم في تاريخ المناقصة.",
+      "رسائل التسليم التي سُجلت من قبل كمناقصات منفصلة تنتقل وحدها إلى مناقصاتها عند فتح الصفحة، ورسالة تسليم لا تتضح مناقصتها لا تُسجل، وتظهر في «افحص الفولدر» بسببها.",
+      "خطوات Power Automate فيها خطوة 8 جديدة: Flow ثانٍ يحفظ ما ترسله أنت لقسم المنافسات من «Sent Items»، وقاعدة Outlook لما يرسله زميل وأنت في النسخة — بدونها لا تصل رسائل التسليم إلى فولدر الإيميلات أصلًا."
     ],
     "en": [
-      "Tender Analyzer 3.8 studies a tender on your own subscriptions — Gemini and Claude, with ChatGPT as a fallback — instead of the slow local model, with no key and no pay-per-use. Before it starts, the tender's card says that the documents' text goes to your subscriptions, and a classified file is never sent.",
-      "After the study, a second model reads the four dates on its own: beside each date on the card you see «✓ Confirmed by a second model» when the two readings meet, or a red mark with the second reading when they differ, which goes away once you type the right date from the booklet.",
-      "The «Tender Analyzer» page has a new section, «Engine: My subscriptions», explaining the three tools, the date check and the one-time setup."
+      "The mail that hands the offer over to the tenders team is read by itself: any branch mail carrying the offer file (PowerPoint) and the bill of quantities (Excel) joins its tender even under a different subject — by the tender number, or by the words of its subject and file names — is marked «Offer hand-over» in the correspondence, and the tender moves to «Submitted» on the mail's date. Before, it became a separate new tender, so the hand-over never showed in the tender's history.",
+      "Hand-over mails that were registered earlier as separate tenders move into their tenders by themselves when the page opens, and a hand-over mail whose tender is not clear is not registered: it shows in «Check the folder» with its reason.",
+      "The Power Automate steps have a new step 8: a second flow that saves what you send to the tenders team from «Sent Items», and an Outlook rule for what a colleague sends with you in copy — without them, hand-over mails never reach the mail folder at all."
     ],
     "ur": [
-      "ٹینڈر اینالائزر 3.8 سست مقامی ماڈل کی بجائے آپ کی اپنی سبسکرپشنز — جیمینائی اور کلاڈ، اور بیک اپ کے طور پر چیٹ جی پی ٹی — سے ٹینڈر کا مطالعہ کرتا ہے، بغیر کسی کلید اور بغیر استعمال کے مطابق ادائیگی کے۔ شروع کرنے سے پہلے ٹینڈر کا کارڈ بتاتا ہے کہ دستاویزات کا متن آپ کی سبسکرپشنز کو جاتا ہے، اور خفیہ فائل کبھی نہیں بھیجی جاتی۔",
-      "مطالعے کے بعد ایک دوسرا ماڈل چاروں تاریخیں خود پڑھتا ہے: کارڈ پر ہر تاریخ کے ساتھ «✓ دوسرے ماڈل سے تصدیق شدہ» نظر آتا ہے جب دونوں قراءتیں ملیں، یا دوسری قراءت کے ساتھ سرخ نشان جب وہ مختلف ہوں، جو کتابچے سے درست تاریخ لکھتے ہی ہٹ جاتا ہے۔",
-      "«ٹینڈر اینالائزر» صفحے پر ایک نیا حصہ «انجن: میری سبسکرپشنز» ہے جو تینوں ٹولز، تاریخوں کی جانچ اور ایک بار کی تیاری سمجھاتا ہے۔"
+      "ٹینڈرز ٹیم کو آفر حوالے کرنے والی ای میل اب خود پڑھی جاتی ہے: برانچ کی کوئی بھی ای میل جس میں آفر کی فائل (پاورپوائنٹ) اور مقداروں کا جدول (ایکسل) ہو، عنوان مختلف ہونے پر بھی اپنے ٹینڈر سے جڑ جاتی ہے — ٹینڈر نمبر سے، یا عنوان اور فائلوں کے ناموں کے الفاظ سے — خط و کتابت میں «آفر کی حوالگی» کے طور پر نشان زد ہوتی ہے، اور ٹینڈر ای میل کی تاریخ پر «جمع کرا دیا گیا» میں چلا جاتا ہے۔ پہلے یہ ایک الگ نیا ٹینڈر بن جاتی تھی، اس لیے حوالگی ٹینڈر کی تاریخ میں کبھی نظر نہیں آتی تھی۔",
+      "حوالگی کی جو ای میلز پہلے الگ ٹینڈرز کے طور پر درج ہو گئی تھیں، صفحہ کھلتے ہی خود اپنے ٹینڈرز میں منتقل ہو جاتی ہیں، اور جس حوالگی کی ای میل کا ٹینڈر واضح نہ ہو وہ درج نہیں ہوتی: وہ اپنی وجہ کے ساتھ «فولڈر جانچیں» میں دکھائی دیتی ہے۔",
+      "Power Automate کے مراحل میں ایک نیا مرحلہ 8 ہے: ایک دوسرا Flow جو آپ کی طرف سے ٹینڈرز ٹیم کو بھیجی گئی ای میلز «Sent Items» سے محفوظ کرتا ہے، اور Outlook کا ایک اصول اس ای میل کے لیے جو کوئی ساتھی آپ کو کاپی میں رکھ کر بھیجے — ان کے بغیر حوالگی کی ای میلز ای میل فولڈر تک پہنچتی ہی نہیں۔"
     ]
   },
   "counts": {
-    "versions": 209,
-    "decisions": 151
+    "versions": 210,
+    "decisions": 152
   }
 }

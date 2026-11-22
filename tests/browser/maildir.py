@@ -73,7 +73,7 @@ with sync_playwright() as p:
     row.locator('.md-how-btn').click(); pg.wait_for_timeout(700)
     hw=pg.evaluate("()=>{const d=document.querySelector('dialog.md-how[open]');if(!d)return null;const x=d.querySelector(':scope > .tw-head .dlg-x'),h=d.querySelector('h2');return {tw:d.classList.contains('tw'),steps:d.querySelectorAll('.md-steps li').length,code:d.querySelector('.md-code').textContent,row:x.getBoundingClientRect().top<h.getBoundingClientRect().bottom,focus:document.activeElement===x,text:d.innerText}}")
     pg.locator('dialog.md-how .md-copy').click(); pg.wait_for_timeout(400); clip=pg.evaluate("navigator.clipboard.readText()")
-    check('M2 «How?» opens the steps in the register\'s frame: seven steps, the trigger and the two actions by their names, the file name ready to copy', hw and hw['tw'] and hw['steps']==7 and hw['code']==FLOW and clip==FLOW and hw['row'] and hw['focus']
+    check('M2 «How?» opens the steps in the register\'s frame: eight steps (the last for the mails we send), the trigger and the two actions by their names, the file name ready to copy', hw and hw['tw'] and hw['steps']==8 and hw['code']==FLOW and clip==FLOW and hw['row'] and hw['focus']
         and all(k in hw['text'] for k in ['When a new email arrives (V3)','Export email (V2)','Create file','Always keep on this device','Allow on every visit']), (hw and {k:v for k,v in hw.items() if k!='text'}, clip[:40]))
     pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
     # cancelling the folder picker changes nothing

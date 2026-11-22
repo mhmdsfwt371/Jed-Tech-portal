@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.85 — 2026-11-22
+
+- رسالة تسليم العرض لقسم المنافسات تُقرأ وحدها: أي رسالة من الفرع فيها ملف العرض (بوربوينت) وجدول الكميات (إكسل) تنضم لمناقصتها ولو كان عنوانها مختلفًا — برقم المنافسة أو بكلمات العنوان وأسماء الملفات — وتُعلَّم في المراسلات «تسليم العرض»، وتنتقل المناقصة إلى «تم التقديم» بتاريخ الرسالة. قبل ذلك كانت تصبح مناقصة جديدة منفصلة، فلا يظهر التسليم في تاريخ المناقصة.
+- رسائل التسليم التي سُجلت من قبل كمناقصات منفصلة تنتقل وحدها إلى مناقصاتها عند فتح الصفحة، ورسالة تسليم لا تتضح مناقصتها لا تُسجل، وتظهر في «افحص الفولدر» بسببها.
+- خطوات Power Automate فيها خطوة 8 جديدة: Flow ثانٍ يحفظ ما ترسله أنت لقسم المنافسات من «Sent Items»، وقاعدة Outlook لما يرسله زميل وأنت في النسخة — بدونها لا تصل رسائل التسليم إلى فولدر الإيميلات أصلًا.
+
+<details><summary>English</summary>
+
+- The mail that hands the offer over to the tenders team is read by itself: any branch mail carrying the offer file (PowerPoint) and the bill of quantities (Excel) joins its tender even under a different subject — by the tender number, or by the words of its subject and file names — is marked «Offer hand-over» in the correspondence, and the tender moves to «Submitted» on the mail's date. Before, it became a separate new tender, so the hand-over never showed in the tender's history.
+- Hand-over mails that were registered earlier as separate tenders move into their tenders by themselves when the page opens, and a hand-over mail whose tender is not clear is not registered: it shows in «Check the folder» with its reason.
+- The Power Automate steps have a new step 8: a second flow that saves what you send to the tenders team from «Sent Items», and an Outlook rule for what a colleague sends with you in copy — without them, hand-over mails never reach the mail folder at all.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹینڈرز ٹیم کو آفر حوالے کرنے والی ای میل اب خود پڑھی جاتی ہے: برانچ کی کوئی بھی ای میل جس میں آفر کی فائل (پاورپوائنٹ) اور مقداروں کا جدول (ایکسل) ہو، عنوان مختلف ہونے پر بھی اپنے ٹینڈر سے جڑ جاتی ہے — ٹینڈر نمبر سے، یا عنوان اور فائلوں کے ناموں کے الفاظ سے — خط و کتابت میں «آفر کی حوالگی» کے طور پر نشان زد ہوتی ہے، اور ٹینڈر ای میل کی تاریخ پر «جمع کرا دیا گیا» میں چلا جاتا ہے۔ پہلے یہ ایک الگ نیا ٹینڈر بن جاتی تھی، اس لیے حوالگی ٹینڈر کی تاریخ میں کبھی نظر نہیں آتی تھی۔
+- حوالگی کی جو ای میلز پہلے الگ ٹینڈرز کے طور پر درج ہو گئی تھیں، صفحہ کھلتے ہی خود اپنے ٹینڈرز میں منتقل ہو جاتی ہیں، اور جس حوالگی کی ای میل کا ٹینڈر واضح نہ ہو وہ درج نہیں ہوتی: وہ اپنی وجہ کے ساتھ «فولڈر جانچیں» میں دکھائی دیتی ہے۔
+- Power Automate کے مراحل میں ایک نیا مرحلہ 8 ہے: ایک دوسرا Flow جو آپ کی طرف سے ٹینڈرز ٹیم کو بھیجی گئی ای میلز «Sent Items» سے محفوظ کرتا ہے، اور Outlook کا ایک اصول اس ای میل کے لیے جو کوئی ساتھی آپ کو کاپی میں رکھ کر بھیجے — ان کے بغیر حوالگی کی ای میلز ای میل فولڈر تک پہنچتی ہی نہیں۔
+
+</div>
+</details>
+
+
 ## v9.84 — 2026-11-21
 
 - محلل المناقصات ٣٫٨ يدرس المناقصة باشتراكاتك أنت — جيميناي وكلود، وشات جي بي تي احتياطيًا — بدل النموذج المحلي البطيء، بلا مفتاح ولا دفع بالاستخدام. وبطاقة المناقصة تقول قبل البدء إن نص المستندات يذهب إلى اشتراكاتك، والملف السري لا يُرسل أبدًا.

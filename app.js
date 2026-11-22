@@ -18,7 +18,7 @@ import {
   ANALYZER, parseAnalyzerHello, analyzerNote, cleanAnalyzerAuto, analyzerAuto, analyzerAutoNote, parseAnalyzerJob, analyzerJobId, analyzerSend, analyzerOutputKind, analyzerStudyFile, dateCheckTag,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
-  mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts,
+  mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts, mailHandsOver, tenderForHandover, tenderHandoverPatch, tenderHandoverRelink, tenderHandoverKind,
   TENDER_HANDOVER_DAYS, tenderMilestones, tenderAgenda, tenderNotices, tenderNoticeId, agendaFold, agendaByTender, tenderAgendaMove, MAILDIR_ASK, mailDirNew, mailDirSeen, mailDirReport, mailDirFailed, tenderDateChanges, crc32, zipLocalHeader, zipDirectory, zipFindEnd, zipEntries, zipDataStart, zipSafeName, SYNC_PIECE, syncPieceIv, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
 
 import { validateSystems } from './systems-core.js';
@@ -1817,14 +1817,20 @@ async function tdImportEmails(files, id = '', { quiet = false } = {}) {   // qui
         const byNumber = number ? state.items.filter((row) => tenderDigits(row.etimadNo) === number) : [];
         const byThread = state.items.filter((row) => row.messages?.some((m) => mail.references.includes(m.messageId) && m.messageId));
         const bySubject = state.items.filter((row) => tdKey(row.subject) === subjectKey);
-        const candidates = id ? state.items.filter((row) => row.id === id) : byNumber.length ? byNumber : byThread.length ? byThread : bySubject;
+        let candidates = id ? state.items.filter((row) => row.id === id) : byNumber.length ? byNumber : byThread.length ? byThread : bySubject;
+        // v9.85 (ADR-0152): the mail that carries the offer deck and the priced BOQ to the tenders team is the hand-over. Its subject
+        // is often its own («the final files»), so it finds its tender by the Etimad number or the words of its subject and file
+        // names; it never becomes a tender of its own.
+        const names = mail.attachments.map((a) => a.name || ''), hands = mailHandsOver(mail.sender, names, tdIsAI);
+        if (hands && !id && !candidates.length) { const hid = tenderForHandover(state.items, subject, names); if (hid) candidates = state.items.filter((row) => row.id === hid); }
         if (candidates.length > 1 || (id && !candidates.length)) throw new Error('td_mail_ambiguous');
         const existing = candidates[0];
         if (existing?.etimadNo && number && tenderDigits(existing.etimadNo) !== number) throw new Error('td_mail_ambiguous');
         // A missing receipt date must not turn today's import into a false arrival.
+        if (!existing && hands) throw new Error('td_mail_no_tender');
         if (!existing && (!subjectKey || !mail.date)) throw new Error('td_mail_missing_date');
         const filesToSave = [tdNewFile(file, 'original', key)];
-        for (const attachment of mail.attachments) filesToSave.push(tdNewFile(attachment, await classify(attachment), key));
+        for (const attachment of mail.attachments) { const k = await classify(attachment); filesToSave.push(tdNewFile(attachment, hands ? tenderHandoverKind({ name: attachment.name, kind: k }) : k, key)); }
         const dateSource = mail.dateSource === 'ورود' ? 'received' : 'sent';
         const first = existing || {
           id: subjectKey, subject, date: mail.date, dateSource, from: mail.sender.slice(0, 120),
@@ -1834,7 +1840,7 @@ async function tdImportEmails(files, id = '', { quiet = false } = {}) {   // qui
         const message = { key, messageId, hash, subject, sender: mail.sender.slice(0, 120), date: mail.date,
           schedule: tenderEmailSchedule(mail.body, mail.html), warnings: mail.warnings.length };
         const thread = tenderThreadMerge(first.thread, tdThreadOf(mail)), oldest = (thread.find((e) => e.at) || { at: '' }).at.slice(0, 10);
-        const entry = applyTenderEmailDates({ ...first, etimadNo: first.etimadNo || number,
+        let entry = applyTenderEmailDates({ ...first, etimadNo: first.etimadNo || number,
           ...(dateSource === 'received' && (first.dateSource === 'sent' || (first.dateSource === 'received' && mail.date < first.date)) ? { date: mail.date, dateSource } : {}),
           // v9.57: a tender that first reaches the register as a reply did not arrive on the reply's day — the oldest message
           // quoted in it says when it did. A tender already in the register keeps the date it has.
@@ -1842,13 +1848,15 @@ async function tdImportEmails(files, id = '', { quiet = false } = {}) {   // qui
           messages: [...(first.messages || []), message], files: [...(first.files || []), ...filesToSave], thread,
           activity: [tdActivity('email', subject), ...(first.activity || [])],
         });
+        if (hands) { const ho = tenderHandoverPatch(entry, { at: mailWall(mail.sentAt) || mail.date, name: mail.senderName, addr: String(mail.sender || '').toLowerCase() });
+          entry = { ...entry, ...ho, activity: [tdActivity('handover', mail.senderName || mail.sender), ...entry.activity] }; }
         await tdCommit({ ...state, items: [entry, ...state.items.filter((row) => row.id !== entry.id)].sort((a, b) => b.date.localeCompare(a.date)) });
         imported.push(entry.id);
         if (existing) linked++; else { added++; fresh.push(entry.id); }
         per.push({ name: file.name, kind: existing ? 'l' : 'a', id: entry.id });
         warnings += mail.warnings.length;
       } catch (error) {
-        const key = ['td_mail_ambiguous','td_mail_missing_date'].includes(error.message) ? error.message : 'td_mail_failed';
+        const key = ['td_mail_ambiguous','td_mail_missing_date','td_mail_no_tender'].includes(error.message) ? error.message : 'td_mail_failed';
         failures.push({ name: file.name, key }); per.push({ name: file.name, kind: 'f', key });
         failed++;
       }
@@ -1995,7 +2003,7 @@ function mdDraw() { if (mdBox && mdBox.isConnected) set(mdBox, ...mdRow()); }
 function mdHow() {
   const dlg = el('dialog', { class: 'proj-edit md-how tw tw-md', 'aria-labelledby': 'md-how-h' }, twHead(el('h2', { id: 'md-how-h', text: t('md_h') })),
     el('p', { class: 'hint', text: t('md_lead') }),
-    el('ol', { class: 'md-steps' }, ['md_s1', 'md_s2', 'md_s3', 'md_s4', 'md_s5', 'md_s6', 'md_s7'].map((k) => el('li', { text: t(k) }))),
+    el('ol', { class: 'md-steps' }, ['md_s1', 'md_s2', 'md_s3', 'md_s4', 'md_s5', 'md_s6', 'md_s7', 'md_s8'].map((k) => el('li', { text: t(k) }))),
     el('p', { class: 'md-name-h', text: t('md_name_h') }),
     el('pre', { class: 'md-code', dir: 'ltr', tabindex: '0', 'aria-label': t('md_name_h'), text: MD_FLOW_NAME }),
     el('p', { class: 'note', text: t('md_note') }),
@@ -6548,6 +6556,11 @@ $('update-btn').addEventListener('click', () => location.reload());
   if (tenders && tenders.items.some((x) => (x.etimadWas || []).length)) {   // v9.62 (ADR-0135): what 9.60–9.61 replaced with Etimad's value goes back to the mail's or the study's
     const items = tenders.items.map((x) => { const u = tenderUndoEtimad(x); return u ? { ...x, ...u.patch, activity: u.fields.length ? [tdActivity('etimad', t('et_undo_act', { list: u.fields.map((f) => t(`td_col_${f}`)).join(' · ') })), ...(x.activity || [])] : x.activity } : x; });
     try { await tdCommit({ ...tenders, items }); } catch { /* tried again on the next load */ } }
+  if (tenders) {   // v9.85 (ADR-0152): a hand-over mail registered before as a tender of its own goes into its tender
+    const r = tenderHandoverRelink(tenders.items, tdIsAI), was = new Map(tenders.items.map((x) => [x.id, x.subject]));
+    // the history keeps the moved card's subject, not a sentence: the sentence is written in the language shown at the time it is read
+    const acts = (id) => r.moved.filter((m) => m.to === id).map((m) => tdActivity('relinked', String(was.get(m.from) || '').slice(0, 300)));
+    if (r.moved.length) try { await tdCommit({ ...tenders, items: r.items.map((x) => (acts(x.id).length ? { ...x, activity: [...acts(x.id), ...(x.activity || [])] } : x)) }); } catch { /* tried again on the next load */ } }
   mailAct = (await store.kvGet('mailact')) || { imports: [], recs: [] }; mailIds = (await store.kvGet('mailids')) || { map: {}, ignored: [] };   // ADR-0095
   myRegister = await store.getRegister();
   projectWork=isTeamPortal?cleanProjectWork(null):cleanProjectWork(await store.kvGet('projectwork'));

@@ -3292,6 +3292,83 @@ export function tenderThreadFacts(item, thread = item && item.thread) {
   return { n: list.length, people: writers.length, first, last, dueAt, workDays: first && item && item.due ? workDaysBetween(first.at.slice(0, 10), item.due) : null,
     handover, leadMin: handover && dueAt ? mailMinutes(handover.at, dueAt) : null };
 }
+// ---------- v9.85 (ADR-0152): the offer handed to the tenders team, read from the mail itself ----------
+// For the Jeddah branch a tender is done when its files reach the tenders team in Riyadh: the mail that carries the offer deck
+// and the priced BOQ (a datasheet may come with them), written by anyone but the tenders team. That mail is read as the hand-over.
+const HO_DECK = /\.(?:pptx|pptm|ppt)$/i, HO_BOOK = /\.(?:xlsx|xlsm|xls)$/i;
+/** Does a mail hand an offer over? Its writer is not the tenders team, and it carries a deck and a workbook. */
+export function mailHandsOver(sender, names, isTeam) {
+  if (!String(sender || '').trim() || (isTeam && isTeam(sender))) return false;
+  const n = (names || []).map((x) => String(x || ''));
+  return n.some((x) => HO_DECK.test(x)) && n.some((x) => HO_BOOK.test(x));
+}
+const HO_STOP = new Set(['توريد', 'تركيب', 'تشغيل', 'صيانه', 'اعمال', 'مشروع', 'منافسه', 'مناقصه', 'عرض', 'فني', 'مالي', 'ملفات', 'ملف', 'نهائيه', 'نهائي',
+  'مرفق', 'مرفقات', 'بخصوص', 'offer', 'boq', 'priced', 'afaqy', 'final', 'files', 'tender', 'datasheet', 'the', 'and', 'for', 'eml', 'msg']);
+const HO_PREFIX = /^\s*(?:(?:re|fw|fwd|aw|wg)\s*:|رد\s*:|إعادة توجيه\s*:|اعادة توجيه\s*:|تحويل\s*:)\s*/i;
+function hoWords(text) {
+  const out = new Set();
+  for (let w of mailPlain(text).replace(/[^\p{L}\p{N}]+/gu, ' ').split(' ')) {
+    if (/^\d+$/.test(w)) continue;
+    if (w.length > 5 && w.startsWith('وال')) w = w.slice(3); else if (w.length > 4 && w.startsWith('ال')) w = w.slice(2); else if (w.length > 4 && w.startsWith('و')) w = w.slice(1);
+    if (w.length >= 3 && !HO_STOP.has(w)) out.add(w);
+  }
+  return out;
+}
+/** The open tender a hand-over mail belongs to: the one whose Etimad number it names, else the one whose subject's words its
+ *  subject and file names carry (the offer files are named after the tender) — at least 60% of them, and clearly more than any
+ *  other tender. null when none or two fit: the mail is then left for the manager rather than guessed. */
+export function tenderForHandover(items, subject, names) {
+  let sub = String(subject || ''); while (HO_PREFIX.test(sub)) sub = sub.replace(HO_PREFIX, '');
+  const text = [sub, ...(names || []).map((n) => String(n || '').replace(/\.[a-z0-9]{2,5}$/i, ''))].join(' ');
+  const nums = new Set((tenderDigits(text).match(/\d{6,}/g) || []));
+  const open = (items || []).filter((i) => i && !TENDER_CLOSED.includes(i.stage));
+  const byNo = open.filter((i) => i.etimadNo && nums.has(tenderDigits(i.etimadNo)));
+  if (byNo.length === 1) return byNo[0].id;
+  if (byNo.length > 1) return null;
+  const got = hoWords(text);
+  const scored = open.map((i) => { const w = hoWords(i.subject); let hit = 0; for (const x of w) if (got.has(x)) hit++; return [i, w.size >= 2 ? hit / w.size : 0]; })
+    .sort((a, b) => b[1] - a[1]);
+  if (!scored.length || scored[0][1] < 0.6) return null;
+  return scored.length > 1 && scored[0][1] - scored[1][1] < 0.15 ? null : scored[0][0].id;
+}
+/** What the hand-over changes on its tender: the message is marked as the hand-over, and a tender not yet past it moves to
+ *  «submitted» on the mail's day (the days it was decided and ready are kept when already set). A tender already submitted or
+ *  closed keeps its stage. `who` is the mail's own message: its time on the Saudi wall clock, writer and address. */
+export function tenderHandoverPatch(item, who) {
+  const at = String((who && who.at) || ''), day = at.slice(0, 10);
+  const thread = (Array.isArray(item && item.thread) ? item.thread : []).map((e) => ({ ...e }));
+  const same = (e) => mailSameWriter(e, who || {}) && (e.at && at.length > 10 && e.at.length > 10 ? Math.abs(mailMinutes(e.at, at)) <= 1 : !!e.at && e.at.slice(0, 10) === day);
+  const k = thread.map(same).lastIndexOf(true);
+  if (k >= 0) thread[k].mark = 'handover';
+  const patch = { thread };
+  if (/^\d{4}-\d{2}-\d{2}$/.test(day) && !TENDER_CLOSED.includes(item.stage) && item.stage !== 'submitted')
+    Object.assign(patch, { stage: 'submitted', stageAt: day, submittedOn: item.submittedOn || day, readyOn: item.readyOn || day, decidedOn: item.decidedOn || day });
+  return patch;
+}
+const hoKind = (f) => (['other', 'sheet'].includes(f.kind) ? (HO_DECK.test(f.name || '') ? 'offer' : HO_BOOK.test(f.name || '') ? 'boq' : f.kind) : f.kind);
+/** Before v9.85 a hand-over mail whose subject was not the tender's own became a tender of its own. Such a card — one mail, from
+ *  anyone but the tenders team, carrying the deck and the workbook, still at «received» — is moved into the tender it belongs to
+ *  (see tenderForHandover), with its mail, files and messages, and that tender takes the hand-over. Nothing else is touched. */
+export function tenderHandoverRelink(items, isTeam) {
+  let list = [...(items || [])]; const moved = [];
+  for (const s of [...list]) {
+    if (!s || (s.stage || 'received') !== 'received' || (s.messages || []).length !== 1) continue;
+    const names = (s.files || []).filter((f) => f.kind !== 'original').map((f) => f.name);
+    if (!mailHandsOver(s.from, names, isTeam)) continue;
+    const id = tenderForHandover(list.filter((x) => x !== s && x.id !== s.id), s.subject, names);
+    if (!id) continue;
+    const to = list.find((x) => x.id === id);
+    const mine = (s.thread || []).filter((e) => e.at && mailSameWriter(e, { addr: String(s.from || '').toLowerCase() })).at(-1);
+    const merged = { ...to, messages: [...(to.messages || []), ...(s.messages || [])], files: [...(to.files || []), ...(s.files || []).map((f) => ({ ...f, kind: hoKind(f) }))],
+      thread: tenderThreadMerge(to.thread, s.thread) };
+    const who = mine || { at: s.date || '', addr: String(s.from || '').toLowerCase() };
+    list = list.filter((x) => x !== s).map((x) => (x === to ? { ...merged, ...tenderHandoverPatch(merged, who) } : x));
+    moved.push({ from: s.id, to: id });
+  }
+  return { items: list, moved };
+}
+/** The kind a hand-over mail's attachment is filed as: the deck is the offer, the workbook the priced BOQ. */
+export const tenderHandoverKind = hoKind;
 // ---------- v9.58 (ADR-0131): following a tender from arrival to result ----------
 /** The tenders team in Riyadh asks for the offer at least this many working days before the platform closes (their mail of 17 Nov 2026). */
 export const TENDER_HANDOVER_DAYS = 2;
@@ -3615,7 +3692,7 @@ export function cleanTenderDetails(item) {
     thread: list(item.thread).filter((e) => e && (string(e.name, 80) || string(e.addr, 120) || string(e.text, 1500))).slice(0, 300).map((e) => ({
       at: /^\d{4}-\d{2}-\d{2}(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/.test(e.at) ? e.at : '', name: string(e.name, 80), addr: string(e.addr, 120), text: string(e.text, 1500), ...(e.mark === 'handover' ? { mark: 'handover' } : {})
     })),
-    activity: list(item.activity).filter((entry) => entry && string(entry.id, 150) && ['email','add','remove','stage','date','study','read','category','thread','inq','etimad'].includes(entry.action)).map((entry) => ({
+    activity: list(item.activity).filter((entry) => entry && string(entry.id, 150) && ['email','add','remove','stage','date','study','read','category','thread','inq','etimad','handover','relinked'].includes(entry.action)).map((entry) => ({
       id: string(entry.id, 150), action: entry.action, at: string(entry.at, 35), label: string(entry.label, 300)
     })),
   };

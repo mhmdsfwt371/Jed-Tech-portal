@@ -2346,6 +2346,67 @@ test('v9.84: «اشتراكاتي» is a place the card names, and a date read t
   for (const lang of ['ar', 'en', 'ur']) for (const k of ['an_note_subs', 'an_auto_note_subs', 'an_by_gemini', 'an_by_claude', 'an_by_codex', 'td_chk_agree', 'td_chk_differ', 'td_chk_missing', 'td_chk_agree_t', 'td_chk_bad_t'])
     assert.ok(STRINGS[lang][k], `${lang}: ${k}`);
 });
+// ---------- v9.85 (ADR-0152): the offer handed to the tenders team, read from the mail ----------
+const HO_TEAM = (a) => String(a).toLowerCase() === 'tenders.team@example.com';
+test('a mail from the branch carrying the offer deck and the priced BOQ hands the offer over; the tenders team\'s own mail does not', () => {
+  const names = ['Supply of dash cams - Health Affairs.pptx', 'AFAQY_DashCam_BOQ_Priced_AR.xlsx', 'Datasheet.pdf'];
+  assert.equal(core.mailHandsOver('m.ali@example.com', names, HO_TEAM), true);
+  assert.equal(core.mailHandsOver('tenders.team@example.com', names, HO_TEAM), false, 'the tenders team sends tenders, it does not hand them over');
+  assert.equal(core.mailHandsOver('m.ali@example.com', ['Offer.pptx', 'Datasheet.pdf'], HO_TEAM), false, 'no priced BOQ: not the whole offer');
+  assert.equal(core.mailHandsOver('m.ali@example.com', ['BOQ.xlsx'], HO_TEAM), false, 'a BOQ alone is not the offer');
+  assert.equal(core.mailHandsOver('', names, HO_TEAM), false);
+});
+test('the hand-over mail finds its tender by the Etimad number, else by the words of its subject and file names — and only when one tender stands out', () => {
+  const items = [
+    { id: 'a', subject: 'توريد وتركيب كاميرات مراقبة لفرع الوزارة بمنطقة جازان', stage: 'prep', etimadNo: '' },
+    { id: 'b', subject: 'توريد وتركيب حساسات قياس مستوى الوقود لمحطة الإمداد', stage: 'prep', etimadNo: '260939000999' },
+    { id: 'c', subject: 'توريد وتركيب كاميرات مراقبة لفرع الوزارة بمنطقة نجران', stage: 'prep', etimadNo: '' },
+    { id: 'd', subject: 'توريد وتركيب كاميرات مراقبة لفرع الوزارة بمنطقة جازان', stage: 'lost', etimadNo: '' },
+  ];
+  assert.equal(core.tenderForHandover(items, 'الملفات النهائية - منافسة 260939000999', ['Offer.pptx', 'BOQ.xlsx']), 'b', 'the number decides');
+  assert.equal(core.tenderForHandover(items, 'FW: ملفات العرض', ['توريد وتركيب كاميرات مراقبة لفرع الوزارة بمنطقة جازان.pptx', 'BOQ.xlsx']), 'a', 'the deck is named after the tender; a closed tender is not a candidate');
+  assert.equal(core.tenderForHandover(items, 'الملفات النهائية لمنافسة كاميرات المراقبة', ['Offer.pptx', 'BOQ.xlsx']), null, 'Jazan and Najran both fit: nothing is guessed');
+  assert.equal(core.tenderForHandover(items, 'RE: عرض حساسات الوقود لمحطة الإمداد', ['a.pptx', 'b.xlsx']), 'b');
+  assert.equal(core.tenderForHandover(items, 'ملفات', ['a.pptx', 'b.xlsx']), null);
+});
+test('the hand-over moves the tender to «submitted» on the mail\'s day and marks the message; a tender already past it keeps its stage', () => {
+  const item = { id: 'a', subject: 'x', stage: 'prep', readyOn: '', submittedOn: '', decidedOn: '2026-11-10',
+    thread: [{ at: '2026-11-10T09:00', name: 'Tenders', addr: 'tenders.team@example.com', text: 'booklet' }, { at: '2026-11-22T14:05', name: 'M Ali', addr: 'm.ali@example.com', text: 'files attached' }] };
+  const p = core.tenderHandoverPatch(item, { at: '2026-11-22T14:05', addr: 'm.ali@example.com', name: 'M Ali' });
+  assert.equal(p.stage, 'submitted'); assert.equal(p.submittedOn, '2026-11-22'); assert.equal(p.readyOn, '2026-11-22'); assert.equal(p.stageAt, '2026-11-22');
+  assert.deepEqual(p.thread.map((e) => e.mark || ''), ['', 'handover']);
+  assert.equal(core.tenderThreadFacts({ ...item, ...p }).handover.at, '2026-11-22T14:05');
+  const won = core.tenderHandoverPatch({ ...item, stage: 'won', submittedOn: '2026-11-20' }, { at: '2026-11-22T14:05', addr: 'm.ali@example.com' });
+  assert.equal(won.stage, undefined); assert.equal(won.submittedOn, undefined); assert.equal(won.thread[1].mark, 'handover', 'the message is still marked');
+  const kept = core.tenderHandoverPatch({ ...item, readyOn: '2026-11-21' }, { at: '2026-11-22T14:05', addr: 'm.ali@example.com' });
+  assert.equal(kept.readyOn, '2026-11-21', 'an earlier «ready» day stays');
+});
+test('a hand-over mail registered before v9.85 as a tender of its own is moved into the tender it belongs to', () => {
+  const team = { id: 'a', subject: 'توريد وتركيب كاميرات مراقبة لفرع الوزارة بمنطقة جازان', stage: 'prep', date: '2026-11-10', from: 'tenders.team@example.com',
+    messages: [{ key: 'id:1', sender: 'tenders.team@example.com', date: '2026-11-10' }], files: [{ id: 'f1', name: 'booklet.pdf', kind: 'booklet' }],
+    thread: [{ at: '2026-11-10T09:00', name: 'Tenders', addr: 'tenders.team@example.com', text: 'booklet' }], activity: [] };
+  const stray = { id: 'الملفات النهائيه', subject: 'الملفات النهائية', stage: 'received', date: '2026-11-22', from: 'm.ali@example.com',
+    messages: [{ key: 'id:2', sender: 'm.ali@example.com', date: '2026-11-22' }],
+    files: [{ id: 'f2', name: 'mail.eml', kind: 'original' }, { id: 'f3', name: 'توريد وتركيب كاميرات مراقبة لفرع الوزارة بمنطقة جازان.pptx', kind: 'other' }, { id: 'f4', name: 'BOQ.xlsx', kind: 'sheet' }],
+    thread: [{ at: '2026-11-22T14:05', name: 'M Ali', addr: 'm.ali@example.com', text: 'files attached' }], activity: [] };
+  const other = { id: 'z', subject: 'ملاحظة', stage: 'received', date: '2026-11-21', from: 'x@example.com', messages: [{ key: 'id:3', sender: 'x@example.com' }], files: [], thread: [] };
+  const r = core.tenderHandoverRelink([stray, team, other], HO_TEAM);
+  assert.deepEqual(r.moved, [{ from: 'الملفات النهائيه', to: 'a' }]);
+  assert.deepEqual(r.items.map((i) => i.id), ['a', 'z'], 'the stray card is gone, the unrelated one stays');
+  const a = r.items[0];
+  assert.equal(a.stage, 'submitted'); assert.equal(a.submittedOn, '2026-11-22');
+  assert.deepEqual(a.messages.map((m) => m.key), ['id:1', 'id:2']);
+  assert.deepEqual(a.files.map((f) => [f.id, f.kind]), [['f1', 'booklet'], ['f2', 'original'], ['f3', 'offer'], ['f4', 'boq']]);
+  assert.deepEqual(a.thread.map((e) => [e.at, e.mark || '']), [['2026-11-10T09:00', ''], ['2026-11-22T14:05', 'handover']]);
+  assert.equal(core.tenderHandoverRelink(r.items, HO_TEAM).moved.length, 0, 'run again: nothing moves');
+});
+
+test('the hand-over\'s two history lines survive a reload and a backup (the register keeps only actions it knows)', () => {
+  const at = '2026-11-22T11:05:00.000Z';
+  const kept = core.cleanTenderDetails({ id: 'a', subject: 'x', date: '2026-11-10', activity: [{ id: '1', action: 'handover', label: 'Sample Engineer', at }, { id: '2', action: 'relinked', label: 'Final files', at }] });
+  assert.deepEqual(kept.activity.map((e) => e.action), ['handover', 'relinked']);
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }
