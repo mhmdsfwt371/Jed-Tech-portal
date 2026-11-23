@@ -3746,7 +3746,7 @@ export function cleanTenderDetails(item) {
     thread: list(item.thread).filter((e) => e && (string(e.name, 80) || string(e.addr, 120) || string(e.text, 1500))).slice(0, 300).map((e) => ({
       at: /^\d{4}-\d{2}-\d{2}(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/.test(e.at) ? e.at : '', name: string(e.name, 80), addr: string(e.addr, 120), text: string(e.text, 1500), ...(e.mark === 'handover' ? { mark: 'handover' } : {})
     })),
-    activity: list(item.activity).filter((entry) => entry && string(entry.id, 150) && ['email','add','remove','stage','date','study','read','category','thread','inq','etimad','handover','relinked'].includes(entry.action)).map((entry) => ({
+    activity: list(item.activity).filter((entry) => entry && string(entry.id, 150) && ['email','add','remove','stage','date','study','read','category','thread','inq','etimad','handover','relinked','merged'].includes(entry.action)).map((entry) => ({
       id: string(entry.id, 150), action: entry.action, at: string(entry.at, 35), label: string(entry.label, 300),
       // v9.86 (ADR-0153): a mail's line keeps the mail's own time and who wrote it, beside the moment it was registered
       ...(/^\d{4}-\d{2}-\d{2}(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/.test(entry.mailAt || '') ? { mailAt: entry.mailAt } : {}), ...(string(entry.who, 120) ? { who: string(entry.who, 120) } : {})
@@ -3774,6 +3774,74 @@ export function mergeTenderDetails(base, other) {
     inquiries: [...new Map([...(other.inquiries || []), ...(base.inquiries || [])].map((q) => [q.id, q])).values()].map((q) => { const twin = [...(base.inquiries || []), ...(other.inquiries || [])].find((x) => x.id === q.id && (x.answer || x.answeredOn)); return twin || q; }),
     activity: union(base.activity,other.activity,'id').sort((a,b) => b.at.localeCompare(a.at)),
   };
+}
+// ---------- v9.87 (ADR-0154): only tenders in the register, and each of them once ----------
+// The mail folder is fed by a flow, and a flow saves what its rule lets through: a complaint, a shared link, a note on the
+// system. Each became a «tender» and the count of tenders stopped meaning anything. And one tender whose subject was typed
+// two ways became two. A mail now opens a tender only when something in it says «tender»; a mail that follows a tender
+// already there still joins it whatever it says. The Etimad reference — the one name every party uses — is read from the
+// subject, the file names and the text, so mails find their tender by it first.
+const REF_RUN = /\d+/g, REF_OK = /^2[5-9]\d{10}$/;
+const refsIn = (text) => [...new Set((tenderDigits(String(text || '').slice(0, 60000)).match(REF_RUN) || []).filter((n) => REF_OK.test(n)))];
+/** The Etimad reference a mail speaks of: twelve digits that open with the Hijri-era year. Read from the subject, then the
+ *  attachment names, then the text — and only where exactly one stands, since a mail that lists two is not about either. */
+export function mailEtimadRef(subject, names, body) {
+  for (const text of [subject, (names || []).join(' \n '), body]) { const r = refsIn(text); if (r.length === 1) return r[0]; if (r.length > 1) return ''; }
+  return '';
+}
+// «tender» as a word of its own: a circular on «the tendering process» is not a tender
+const TENDER_WORD = /منافس|مناقص|كراس|\btenders?\b|\brf[pq]\b/i, TENDER_FILE = /كراس|منافس|مناقص|جدول الكميات|جدول_الكميات|boq|tender/i;
+/** Does this mail open a tender? One sign is enough: an Etimad reference, a conditions booklet among its files, the tenders
+ *  team as its writer or quoted in it, the word in its subject, or a file named as a tender's papers. */
+export function mailIsTender(m) {
+  const x = m || {};
+  return !!(x.number || x.booklet || x.fromTeam || x.threadHasTeam || TENDER_WORD.test(mailPlain(x.subject))
+    || (x.names || []).some((n) => TENDER_FILE.test(String(n || '')) || TENDER_FILE.test(mailPlain(n))));
+}
+/** The reference of a tender in the register: the one written on it, else the one its subject, its mails' subjects or its files name. */
+export function tenderRefOf(item) {
+  const own = tenderDigits(item && item.etimadNo).replace(/\D/g, ''); if (REF_OK.test(own)) return own;
+  const i = item || {};
+  return mailEtimadRef([i.subject, ...(i.messages || []).map((m) => m.subject)].join(' \n '), (i.files || []).filter((f) => f.kind !== 'original').map((f) => f.name), '');
+}
+/** Does a register entry look like a tender? Added by hand, or carrying any of the signs a mail needs to open one. */
+export function tenderLooksReal(item, isTeam) {
+  const i = item || {}, team = (a) => !!(isTeam && a && isTeam(a));
+  if (i.manual || i.byFrom || i.byKr || tenderRefOf(i)) return true;
+  const files = (i.files || []).filter((f) => f.kind !== 'original');
+  return mailIsTender({ subject: [i.subject, ...(i.messages || []).map((m) => m.subject)].join(' '), booklet: files.some((f) => f.kind === 'booklet'),
+    fromTeam: team(i.from) || (i.messages || []).some((m) => team(m.sender)), threadHasTeam: (i.thread || []).some((e) => team(e.addr)), names: [...files.map((f) => f.name), ...(i.att || [])] });
+}
+const DUP_PREFIX = /^\s*(?:(?:re|fw|fwd|aw|wg)\s*:|رد\s*:|إعادة توجيه\s*:|اعادة توجيه\s*:|تحويل\s*:)\s*/i;
+// the title with what people type differently taken out: the prefixes, the spaces and marks, and the alef («كاميرات» and «كميرات»)
+function titleBones(subject) { let s = String(subject || ''); while (DUP_PREFIX.test(s)) s = s.replace(DUP_PREFIX, ''); return mailPlain(s).replace(/ى/g, 'ي').replace(/[^\p{L}\p{N}]+/gu, '').replace(/ا/g, ''); }
+/** What to tidy in the register: the entries that do not look like tenders, and the groups that are one tender entered more
+ *  than once — the same reference, or the same title once spelling habits are taken out. Two entries with two different
+ *  references are never one tender, whatever their titles. Nothing is changed here; the manager decides. */
+export function tenderCleanup(items, isTeam) {
+  const list = (Array.isArray(items) ? items : []).filter(Boolean);
+  const notTenders = list.filter((i) => !tenderLooksReal(i, isTeam)).map((i) => i.id), out = new Set(notTenders);
+  const rest = list.filter((i) => !out.has(i.id)), ref = rest.map(tenderRefOf), bones = rest.map((i) => titleBones(i.subject));
+  const head = rest.map((_, k) => k), find = (k) => (head[k] === k ? k : (head[k] = find(head[k])));
+  for (let a = 0; a < rest.length; a++) for (let b = a + 1; b < rest.length; b++) {
+    if (ref[a] && ref[b] ? ref[a] !== ref[b] : !(bones[a].length >= 8 && bones[a] === bones[b])) continue;
+    head[find(b)] = find(a);
+  }
+  const groups = new Map(); rest.forEach((i, k) => { const h = find(k); groups.set(h, [...(groups.get(h) || []), i.id]); });
+  return { notTenders, duplicates: [...groups.values()].filter((g) => g.length > 1) };
+}
+const MERGE_FLOW = ['received', 'screen', 'decide', 'prep', 'ready', 'submitted'];
+const mergeRank = (s) => (TENDER_CLOSED.includes(s) ? 10 : Math.max(0, MERGE_FLOW.indexOf(s || 'received')));
+const mergeEmpty = (v) => v == null || v === '' || v === false || (Array.isArray(v) && !v.length) || (typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date) && !Object.keys(v).length);
+/** Two entries of one tender made one: `keep` stays (its id and title), with the older arrival, the stage that is further
+ *  along, every mail, file and message once, and whatever `other` knew that `keep` did not. The history says what was merged. */
+export function tenderMerge(keep, other, now = new Date().toISOString()) {
+  const out = { ...keep };
+  for (const [k, v] of Object.entries(other || {})) if (!['id', 'subject', 'date', 'dateSource', 'stage', 'stageAt', 'status'].includes(k) && mergeEmpty(out[k]) && !mergeEmpty(v)) out[k] = v;
+  if (other.date && (!keep.date || other.date < keep.date)) { out.date = other.date; out.dateSource = other.dateSource || keep.dateSource; }
+  if (mergeRank(other.stage) > mergeRank(keep.stage)) { out.stage = other.stage; out.stageAt = other.stageAt || keep.stageAt; if (other.status) out.status = other.status; if (other.reason) out.reason = other.reason; }
+  const d = mergeTenderDetails(keep, other);
+  return { ...out, ...d, activity: [{ id: `merged:${String(other.id).slice(0, 80)}:${now}`.slice(0, 150), action: 'merged', at: now, label: String(other.subject || '').slice(0, 300) }, ...d.activity] };
 }
 // Project follow-up is additive: tender decisions and original register fields remain the source.
 const PW_SCHEMA = 'afaqy-project-followup/v1';

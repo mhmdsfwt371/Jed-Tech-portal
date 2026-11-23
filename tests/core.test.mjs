@@ -2437,6 +2437,55 @@ test('the register from a day: the tenders that arrived on or after it, oldest f
   assert.deepEqual(f, { mails: 2, first: { at: '2026-07-01T10:00', who: 'Desk' }, last: { at: '2026-07-09T16:00', who: 'Safwat' }, handover: { at: '2026-07-09T16:00', who: 'Safwat' } });
 });
 
+// v9.87 (ADR-0154): only tenders are registered, each once
+test('a mail\'s Etimad reference is read from its subject, its file names or its text — and only when it is one number', () => {
+  assert.equal(core.mailEtimadRef('RE: منافسة بالرقم المرجعي 261139004470', [], ''), '261139004470');
+  assert.equal(core.mailEtimadRef('Fw: كاميرات', ['كراسة منافسة 261139003078.pdf', 'BOQ.xlsx'], ''), '261139003078');
+  assert.equal(core.mailEtimadRef('Fw: كاميرات', [], 'الرقم المرجعي: ٢٦١٠٣٩٠٠٣٦٣٤ ... +966 58 150 0057'), '261039003634');
+  assert.equal(core.mailEtimadRef('x', [], 'two tenders 261139002122 and 261139002820'), '');   // two numbers: not this mail's own
+  assert.equal(core.mailEtimadRef('call 966581500057', [], ''), '');                             // a phone number is not a reference
+});
+test('a mail starts a tender only when something in it says «tender»', () => {
+  const no = { subject: 'Terminated clients process', names: [], number: '', booklet: false, fromTeam: false, threadHasTeam: false };
+  assert.equal(core.mailIsTender(no), false);
+  assert.equal(core.mailIsTender({ ...no, subject: 'ملاحظات على نظام افاقي', names: ['image001.png', 'invoice.pdf'] }), false);
+  assert.equal(core.mailIsTender({ ...no, number: '261139004470' }), true);
+  assert.equal(core.mailIsTender({ ...no, booklet: true }), true);
+  assert.equal(core.mailIsTender({ ...no, fromTeam: true }), true);
+  assert.equal(core.mailIsTender({ ...no, threadHasTeam: true }), true);
+  assert.equal(core.mailIsTender({ ...no, subject: 'مستندات المنافسة' }), true);
+  assert.equal(core.mailIsTender({ ...no, subject: 'Tender for the supply of cameras' }), true);
+  assert.equal(core.mailIsTender({ ...no, subject: 'RE: Enhancing Our Tendering & Bidding Process' }), false);
+  assert.equal(core.mailIsTender({ ...no, names: ['كراسة الشروط والمواصفات.pdf'] }), true);
+});
+test('the register is checked: what does not look like a tender, and what is the same tender twice', () => {
+  const team = (a) => a === 'desk@example.com';
+  const items = [
+    { id: 'w1', subject: 'تامين كاميرات مراقبة امنية للمنطقة الغربية', date: '2026-10-13', stage: 'received', messages: [{ key: 'a', subject: 'تامين كاميرات مراقبة امنية للمنطقة الغربية', sender: 'desk@example.com' }], files: [], thread: [] },
+    { id: 'w2', subject: 'RE:  تامين كميرات مراقبة امنية للمنطقة الغربية', date: '2026-10-24', stage: 'submitted', messages: [{ key: 'b', subject: 'x', sender: 'boss@example.com' }, { key: 'c', subject: 'y', sender: 'boss@example.com' }], files: [{ id: 'f', name: 'كراسة الشروط.pdf', kind: 'booklet' }], thread: [] },
+    { id: 'n1', subject: 'Terminated clients process', date: '2026-11-01', stage: 'received', messages: [{ key: 'd', subject: 'Terminated clients process', sender: 'boss@example.com' }], files: [], thread: [] },
+    { id: 'r1', subject: 'RE: منافسة بالرقم المرجعي 261139004470', date: '2026-11-15', stage: 'received', messages: [{ key: 'e', subject: 'RE: منافسة بالرقم المرجعي 261139004470', sender: 'eng@example.com' }], files: [], thread: [] },
+    { id: 'r2', subject: 'الرصد الذكي المتنقل', date: '2026-11-16', stage: 'received', etimadNo: '261139004470', byFrom: true, messages: [{ key: 'g', subject: 'الرصد', sender: 'desk@example.com' }], files: [], thread: [] },
+    { id: 'm1', subject: 'ورشة', date: '2026-11-17', stage: 'received', manual: true, messages: [], files: [], thread: [] }];
+  const c = core.tenderCleanup(items, team);
+  assert.deepEqual(c.notTenders, ['n1']);
+  assert.deepEqual(c.duplicates.map((g) => [...g].sort()), [['w1', 'w2'], ['r1', 'r2']]);
+  assert.equal(core.tenderRefOf(items[3]), '261139004470');
+});
+test('two entries of one tender become one: the older arrival, the further stage, every mail and file once', () => {
+  const a = { id: 'w1', subject: 'تامين كاميرات', date: '2026-10-13', dateSource: 'received', stage: 'received', stageAt: '2026-10-13', etimadNo: '', entity: 'رئاسة الأركان',
+    messages: [{ key: 'a' }], files: [{ id: 'f1', name: 'a.pdf' }], thread: [{ at: '2026-10-13T10:00', name: 'Desk', addr: 'desk@example.com', text: 'one' }], activity: [{ id: '1', action: 'email', label: 's', at: '2026-11-23T08:00:00.000Z' }] };
+  const b = { id: 'w2', subject: 'تامين كميرات', date: '2026-10-24', dateSource: 'received', stage: 'submitted', stageAt: '2026-10-25', etimadNo: '261039003634', entity: '', submittedOn: '2026-10-25',
+    messages: [{ key: 'a' }, { key: 'b' }], files: [{ id: 'f1', name: 'a.pdf' }, { id: 'f2', name: 'b.pdf' }], thread: [{ at: '2026-10-24T11:00', name: 'Boss', addr: 'boss@example.com', text: 'two' }], activity: [{ id: '2', action: 'email', label: 't', at: '2026-11-23T09:00:00.000Z' }] };
+  const m = core.tenderMerge(a, b);
+  assert.equal(m.id, 'w1'); assert.equal(m.date, '2026-10-13'); assert.equal(m.stage, 'submitted'); assert.equal(m.stageAt, '2026-10-25'); assert.equal(m.submittedOn, '2026-10-25');
+  assert.equal(m.etimadNo, '261039003634'); assert.equal(m.entity, 'رئاسة الأركان');
+  assert.deepEqual(m.messages.map((x) => x.key), ['a', 'b']); assert.deepEqual(m.files.map((x) => x.id), ['f1', 'f2']); assert.equal(m.thread.length, 2);
+  assert.deepEqual(m.activity.map((x) => x.action), ['merged', 'email', 'email']); assert.equal(m.activity[0].label, 'تامين كميرات');
+  const c = core.cleanTenderDetails({ ...m, activity: m.activity });
+  assert.equal(c.activity[0].action, 'merged');
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

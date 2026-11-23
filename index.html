@@ -1066,6 +1066,13 @@ section[id^="view-"]:not([hidden]) { animation: bt-page .42s cubic-bezier(.2,.8,
   .td-history-entry { display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: baseline; gap: 4px 12px; padding-block: 5px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
   .td-history-entry .td-h-at { flex: 0 0 auto; min-width: 9.5em; color: var(--slate); font-variant-numeric: tabular-nums; }
   .td-history-entry.td-h-handover span { font-weight: 700; }
+  .td-cl-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 8px 0 0; padding: 8px 12px; border: 1px solid var(--line); border-inline-start: 4px solid var(--amber); border-radius: 8px; }
+  .td-cl-sec { margin-block: 12px; }
+  .td-cl-sec h3 { margin: 0 0 4px; font-size: 1rem; }
+  .td-cl-row { display: flex; align-items: flex-start; gap: 10px; padding-block: 7px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .td-cl-row input { flex: 0 0 auto; margin-top: 4px; }
+  .td-cl-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+  .td-cl-t small { color: var(--slate); }
   /* v9.58 (ADR-0131): the tender's card — one screen; boxes on the card's own colour, folds below */
   .td-card { padding: 4px 0 0; } .td-card .td-box { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; min-width: 0; }
   .td-card h3 { margin: 0 0 8px; font-size: .9rem; color: var(--accent-dark); } .td-chips { display: flex; flex-wrap: wrap; gap: 6px; } .td-card-chips { margin: 0 0 10px; }

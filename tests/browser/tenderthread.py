@@ -17,12 +17,12 @@ def check(n,c,d=''):
     print(('PASS  ' if c else '**FAIL** ')+n+('' if c else f'  -> {d}'))
     if not c: fails.append(n)
 tmp=tempfile.mkdtemp(); P=lambda n: os.path.join(tmp,n)
-MAIL='\r\n'.join(['From: Zaid Fares <zaid.fares@example.com>','To: qa@example.com','Subject: RE: sample: Level sensors supply','Message-ID: <thread-b1@example.com>',
+MAIL='\r\n'.join(['From: Zaid Fares <zaid.fares@example.com>','To: qa@example.com','Subject: RE: sample: Tender — Level sensors supply','Message-ID: <thread-b1@example.com>',
   'Date: Mon, 16 Nov 2026 18:30:00 +0300','MIME-Version: 1.0','Content-Type: text/plain; charset=utf-8','',
   'The offer is attached for review.','Offer deck.pptx <https://files.example.com/s/secret-token-123>','','Best regards,','Zaid Fares','M: +966500000003','',
-  'From: Lina Harb <lina.harb@example.com>','Sent: Thursday, November 12, 2026 2:26 PM','To: Zaid Fares <zaid.fares@example.com>','Subject: RE: sample: Level sensors supply','',
+  'From: Lina Harb <lina.harb@example.com>','Sent: Thursday, November 12, 2026 2:26 PM','To: Zaid Fares <zaid.fares@example.com>','Subject: RE: sample: Tender — Level sensors supply','',
   'الزملاء الأعزاء،','يرجى العمل على الملفات مع الأخذ في الاعتبار الإطار الزمني.','','Lina Harb','Branch Manager','',
-  'From: Rami Qasim <r.qasim@example.com>','Sent: Tuesday, November 10, 2026 9:15 AM','To: Lina Harb <lina.harb@example.com>','Subject: sample: Level sensors supply','',
+  'From: Rami Qasim <r.qasim@example.com>','Sent: Tuesday, November 10, 2026 9:15 AM','To: Lina Harb <lina.harb@example.com>','Subject: sample: Tender — Level sensors supply','',
   'The booklet is attached. Submission deadline: 2026-11-19 at 10:00 AM','','Rami Qasim','+966 50 000 0001',''])
 open(P('reply.eml'),'w',encoding='utf-8',newline='').write(MAIL)
 THREAD="""()=>{const d=document.querySelector('dialog.td-dlg');if(!d||!d.open)return null;const p=d.querySelector('.td-thread');
@@ -89,7 +89,7 @@ with sync_playwright() as p:
     full=pg.locator('dialog.td-dlg .td-thr-entry').nth(2).locator('.td-thr-text').inner_text()
     check('C10 «Full text» shows the message line by line, still without the signature', full.strip().split('\n')==['The offer is attached for review.','Offer deck.pptx'], full)
     press(pg, pg.locator('dialog.td-dlg .td-thr-copy')); pg.wait_for_timeout(500); clip=pg.evaluate("navigator.clipboard.readText()")
-    check('C11 «Copy the timeline» puts the same lines and the same summary on the clipboard', clip.startswith('Correspondence timeline — RE: sample: Level sensors supply') and len([l for l in clip.split('\n') if l.startswith('- ')])==3 and '[Offer hand-over]' in clip and '2 d 15 h before the deadline' in clip, clip[:400])
+    check('C11 «Copy the timeline» puts the same lines and the same summary on the clipboard', clip.startswith('Correspondence timeline — RE: sample: Tender — Level sensors supply') and len([l for l in clip.split('\n') if l.startswith('- ')])==3 and '[Offer hand-over]' in clip and '2 d 15 h before the deadline' in clip, clip[:400])
     pg.keyboard.press('Escape'); pg.wait_for_timeout(400)
     # twice: the same mail again leaves no mark
     pg.keyboard.press('Escape'); pg.wait_for_timeout(300)

@@ -114,7 +114,7 @@ try {
   assert.equal(await qa.tdUpdate(row().id,{note:'Must not appear saved'}),false);assert.equal(row().note,'Newer tab');qa.store.putTenders=originalPut;
   const invalid=await email('sample-missing-date',{subject:'sample: Missing date',received:false,date:false});
   await qa.tdImportEmails([invalid]);assert.equal(qa.get().items.length,2,'missing receipt and sent dates must not invent today');
-  const hostile=await email('sample-hostile',{subject:'sample: <img src=x onerror=alert(1)>',body:'Scope of work: <script>alert(1)</script>'});
+  const hostile=await email('sample-hostile',{subject:'sample: tender <img src=x onerror=alert(1)>',body:'Scope of work: <script>alert(1)</script>'});
   await qa.tdImportEmails([hostile]);assert.equal(d.querySelectorAll('#tenders-body img').length,0);assert(d.querySelector('#tenders-body').textContent.includes('<img src=x onerror=alert(1)>'));
   for(const route of ['home','me','tools','data','kpi','team','weights','dev','guide','mailfile','overtime','planner','readings','tenders']) {w.location.hash='#'+route;qa.route();assert(!select('#view-'+route).hidden,'route '+route);}
   for(const lang of ['ar','ur','en']) {const langSelect=select('#lang-select');langSelect.value=lang;langSelect.dispatchEvent(event());await wait(()=>d.documentElement.lang===lang,'language '+lang);}

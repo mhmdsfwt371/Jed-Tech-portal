@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.87 — 2026-11-24
+
+- سجل المناقصات للمناقصات وحدها: الإيميل الذي ليس مناقصة (شكوى، ملاحظات، رابط مشاركة) لا يُسجَّل بعد الآن كمناقصة جديدة، ويظهر لك سبب تركه.
+- كل إيميل يجد مناقصته من الرقم المرجعي في اعتماد أولًا — من عنوانه أو أسماء ملفاته أو نصه — فلا تتكرر المناقصة إذا تغيّر عنوان الإيميل، والرقم يُكتب على البطاقة تلقائيًّا.
+- سطر جديد «راجع ونظّف السجل» يظهر إذا كان في السجل ما ليس مناقصة أو مناقصة مسجلة مرتين: نافذة واحدة تحذف الأول وتدمج الثاني في بطاقة واحدة فيها كل الإيميلات بتسلسلها، ولا يتغير شيء قبل موافقتك.
+
+<details><summary>English</summary>
+
+- The tender register is for tenders alone: an email that is not a tender (a complaint, notes, a shared link) is no longer registered as a new tender, and you are shown why it was left out.
+- Every email finds its tender by the Etimad reference number first — in its subject, its file names or its text — so a tender is not entered twice when an email’s subject changes, and the number is written on the card by itself.
+- A new line «Review and tidy the register» appears when the register holds something that is not a tender or one tender entered twice: one window removes the first and merges the second into a single card with every email in order, and nothing changes before you agree.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ٹینڈر رجسٹر صرف ٹینڈرز کے لیے ہے: جو ای میل ٹینڈر نہیں (شکایت، نوٹس، شیئر کیا گیا لنک) وہ اب نئے ٹینڈر کے طور پر درج نہیں ہوتی، اور آپ کو بتایا جاتا ہے کہ اسے کیوں چھوڑا گیا۔
+- ہر ای میل سب سے پہلے اعتماد کے حوالہ نمبر سے اپنا ٹینڈر ڈھونڈتی ہے — اپنے عنوان، فائلوں کے ناموں یا متن میں سے — اس لیے ای میل کا عنوان بدلنے پر ٹینڈر دو بار درج نہیں ہوتا، اور نمبر خود بخود کارڈ پر لکھ دیا جاتا ہے۔
+- نئی سطر «رجسٹر دیکھیں اور صاف کریں» تب ظاہر ہوتی ہے جب رجسٹر میں کوئی ایسی چیز ہو جو ٹینڈر نہیں یا ایک ٹینڈر دو بار درج ہو: ایک ہی ونڈو پہلی کو حذف کرتی ہے اور دوسری کو ایک کارڈ میں ضم کرتی ہے جس میں ہر ای میل ترتیب سے موجود ہوتی ہے، اور آپ کی منظوری سے پہلے کچھ نہیں بدلتا۔
+
+</div>
+</details>
+
+
 ## v9.86 — 2026-11-23
 
 - سجل كل مناقصة صار بترتيب ما حدث: كل إيميل بيومه وساعته كما كُتب، لا بيوم سحبه إلى البوابة، ومعه اسم من كتبه، والأقدم أولًا. وما سُجّل من قبل يُصحَّح وحده عند فتح المناقصة.
