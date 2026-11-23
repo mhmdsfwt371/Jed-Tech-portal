@@ -1,25 +1,25 @@
 {
-  "version": "9.85",
-  "date": "2026-11-22",
+  "version": "9.86",
+  "date": "2026-11-23",
   "notes": {
     "ar": [
-      "رسالة تسليم العرض لقسم المنافسات تُقرأ وحدها: أي رسالة من الفرع فيها ملف العرض (بوربوينت) وجدول الكميات (إكسل) تنضم لمناقصتها ولو كان عنوانها مختلفًا — برقم المنافسة أو بكلمات العنوان وأسماء الملفات — وتُعلَّم في المراسلات «تسليم العرض»، وتنتقل المناقصة إلى «تم التقديم» بتاريخ الرسالة. قبل ذلك كانت تصبح مناقصة جديدة منفصلة، فلا يظهر التسليم في تاريخ المناقصة.",
-      "رسائل التسليم التي سُجلت من قبل كمناقصات منفصلة تنتقل وحدها إلى مناقصاتها عند فتح الصفحة، ورسالة تسليم لا تتضح مناقصتها لا تُسجل، وتظهر في «افحص الفولدر» بسببها.",
-      "خطوات Power Automate فيها خطوة 8 جديدة: Flow ثانٍ يحفظ ما ترسله أنت لقسم المنافسات من «Sent Items»، وقاعدة Outlook لما يرسله زميل وأنت في النسخة — بدونها لا تصل رسائل التسليم إلى فولدر الإيميلات أصلًا."
+      "سجل كل مناقصة صار بترتيب ما حدث: كل إيميل بيومه وساعته كما كُتب، لا بيوم سحبه إلى البوابة، ومعه اسم من كتبه، والأقدم أولًا. وما سُجّل من قبل يُصحَّح وحده عند فتح المناقصة.",
+      "فوق قائمة المناقصات سطر يقول كم إيميلًا كُتب اليوم ولكم مناقصة.",
+      "زر «إكسل من تاريخ»: كل مناقصة وصلت من اليوم الذي تختاره، بمرحلتها وعدد إيميلاتها وآخر إيميل ومن كتبه، ومتى سُلّم العرض لقسم المنافسات ومن سلّمه."
     ],
     "en": [
-      "The mail that hands the offer over to the tenders team is read by itself: any branch mail carrying the offer file (PowerPoint) and the bill of quantities (Excel) joins its tender even under a different subject — by the tender number, or by the words of its subject and file names — is marked «Offer hand-over» in the correspondence, and the tender moves to «Submitted» on the mail's date. Before, it became a separate new tender, so the hand-over never showed in the tender's history.",
-      "Hand-over mails that were registered earlier as separate tenders move into their tenders by themselves when the page opens, and a hand-over mail whose tender is not clear is not registered: it shows in «Check the folder» with its reason.",
-      "The Power Automate steps have a new step 8: a second flow that saves what you send to the tenders team from «Sent Items», and an Outlook rule for what a colleague sends with you in copy — without them, hand-over mails never reach the mail folder at all."
+      "Each tender's history now reads in the order things happened: every email at the day and hour it was written, not the day it was dragged into the portal, with the name of whoever wrote it, oldest first. What was registered before is put right by itself when the tender is opened.",
+      "Above the list of tenders, a line says how many emails were written today and for how many tenders.",
+      "The «Excel from a date» button: every tender that arrived from the day you choose, with its stage, the number of its emails, the latest email and who wrote it, and when the offer was handed to the tenders team and by whom."
     ],
     "ur": [
-      "ٹینڈرز ٹیم کو آفر حوالے کرنے والی ای میل اب خود پڑھی جاتی ہے: برانچ کی کوئی بھی ای میل جس میں آفر کی فائل (پاورپوائنٹ) اور مقداروں کا جدول (ایکسل) ہو، عنوان مختلف ہونے پر بھی اپنے ٹینڈر سے جڑ جاتی ہے — ٹینڈر نمبر سے، یا عنوان اور فائلوں کے ناموں کے الفاظ سے — خط و کتابت میں «آفر کی حوالگی» کے طور پر نشان زد ہوتی ہے، اور ٹینڈر ای میل کی تاریخ پر «جمع کرا دیا گیا» میں چلا جاتا ہے۔ پہلے یہ ایک الگ نیا ٹینڈر بن جاتی تھی، اس لیے حوالگی ٹینڈر کی تاریخ میں کبھی نظر نہیں آتی تھی۔",
-      "حوالگی کی جو ای میلز پہلے الگ ٹینڈرز کے طور پر درج ہو گئی تھیں، صفحہ کھلتے ہی خود اپنے ٹینڈرز میں منتقل ہو جاتی ہیں، اور جس حوالگی کی ای میل کا ٹینڈر واضح نہ ہو وہ درج نہیں ہوتی: وہ اپنی وجہ کے ساتھ «فولڈر جانچیں» میں دکھائی دیتی ہے۔",
-      "Power Automate کے مراحل میں ایک نیا مرحلہ 8 ہے: ایک دوسرا Flow جو آپ کی طرف سے ٹینڈرز ٹیم کو بھیجی گئی ای میلز «Sent Items» سے محفوظ کرتا ہے، اور Outlook کا ایک اصول اس ای میل کے لیے جو کوئی ساتھی آپ کو کاپی میں رکھ کر بھیجے — ان کے بغیر حوالگی کی ای میلز ای میل فولڈر تک پہنچتی ہی نہیں۔"
+      "ہر ٹینڈر کی تاریخچہ اب اسی ترتیب میں ہے جس میں کام ہوئے: ہر ای میل اسی دن اور گھنٹے پر جب وہ لکھی گئی، اس دن پر نہیں جب اسے پورٹل میں ڈالا گیا، لکھنے والے کے نام کے ساتھ، اور سب سے پرانی پہلے۔ جو پہلے درج ہوا وہ ٹینڈر کھلتے ہی خود درست ہو جاتا ہے۔",
+      "ٹینڈرز کی فہرست کے اوپر ایک سطر بتاتی ہے کہ آج کتنی ای میلز لکھی گئیں اور کتنے ٹینڈرز کے لیے۔",
+      "«تاریخ سے ایکسل» کا بٹن: ہر وہ ٹینڈر جو آپ کے چنے ہوئے دن سے آیا، اس کے مرحلے، ای میلز کی تعداد، آخری ای میل اور اس کے لکھنے والے، اور آفر کب اور کس نے ٹینڈرز ٹیم کے حوالے کی، کے ساتھ۔"
     ]
   },
   "counts": {
-    "versions": 210,
-    "decisions": 152
+    "versions": 211,
+    "decisions": 153
   }
 }

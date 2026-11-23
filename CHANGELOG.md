@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.86 — 2026-11-23
+
+- سجل كل مناقصة صار بترتيب ما حدث: كل إيميل بيومه وساعته كما كُتب، لا بيوم سحبه إلى البوابة، ومعه اسم من كتبه، والأقدم أولًا. وما سُجّل من قبل يُصحَّح وحده عند فتح المناقصة.
+- فوق قائمة المناقصات سطر يقول كم إيميلًا كُتب اليوم ولكم مناقصة.
+- زر «إكسل من تاريخ»: كل مناقصة وصلت من اليوم الذي تختاره، بمرحلتها وعدد إيميلاتها وآخر إيميل ومن كتبه، ومتى سُلّم العرض لقسم المنافسات ومن سلّمه.
+
+<details><summary>English</summary>
+
+- Each tender's history now reads in the order things happened: every email at the day and hour it was written, not the day it was dragged into the portal, with the name of whoever wrote it, oldest first. What was registered before is put right by itself when the tender is opened.
+- Above the list of tenders, a line says how many emails were written today and for how many tenders.
+- The «Excel from a date» button: every tender that arrived from the day you choose, with its stage, the number of its emails, the latest email and who wrote it, and when the offer was handed to the tenders team and by whom.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- ہر ٹینڈر کی تاریخچہ اب اسی ترتیب میں ہے جس میں کام ہوئے: ہر ای میل اسی دن اور گھنٹے پر جب وہ لکھی گئی، اس دن پر نہیں جب اسے پورٹل میں ڈالا گیا، لکھنے والے کے نام کے ساتھ، اور سب سے پرانی پہلے۔ جو پہلے درج ہوا وہ ٹینڈر کھلتے ہی خود درست ہو جاتا ہے۔
+- ٹینڈرز کی فہرست کے اوپر ایک سطر بتاتی ہے کہ آج کتنی ای میلز لکھی گئیں اور کتنے ٹینڈرز کے لیے۔
+- «تاریخ سے ایکسل» کا بٹن: ہر وہ ٹینڈر جو آپ کے چنے ہوئے دن سے آیا، اس کے مرحلے، ای میلز کی تعداد، آخری ای میل اور اس کے لکھنے والے، اور آفر کب اور کس نے ٹینڈرز ٹیم کے حوالے کی، کے ساتھ۔
+
+</div>
+</details>
+
+
 ## v9.85 — 2026-11-22
 
 - رسالة تسليم العرض لقسم المنافسات تُقرأ وحدها: أي رسالة من الفرع فيها ملف العرض (بوربوينت) وجدول الكميات (إكسل) تنضم لمناقصتها ولو كان عنوانها مختلفًا — برقم المنافسة أو بكلمات العنوان وأسماء الملفات — وتُعلَّم في المراسلات «تسليم العرض»، وتنتقل المناقصة إلى «تم التقديم» بتاريخ الرسالة. قبل ذلك كانت تصبح مناقصة جديدة منفصلة، فلا يظهر التسليم في تاريخ المناقصة.

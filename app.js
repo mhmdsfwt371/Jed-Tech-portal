@@ -18,7 +18,7 @@ import {
   ANALYZER, parseAnalyzerHello, analyzerNote, cleanAnalyzerAuto, analyzerAuto, analyzerAutoNote, parseAnalyzerJob, analyzerJobId, analyzerSend, analyzerOutputKind, analyzerStudyFile, dateCheckTag,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
-  mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts, mailHandsOver, tenderForHandover, tenderHandoverPatch, tenderHandoverRelink, tenderHandoverKind,
+  mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts, mailHandsOver, tenderForHandover, tenderHandoverPatch, tenderHandoverRelink, tenderHandoverKind, tenderHistory, mailsOnDay, tenderMailFacts, tendersFrom,
   TENDER_HANDOVER_DAYS, tenderMilestones, tenderAgenda, tenderNotices, tenderNoticeId, agendaFold, agendaByTender, tenderAgendaMove, MAILDIR_ASK, mailDirNew, mailDirSeen, mailDirReport, mailDirFailed, tenderDateChanges, crc32, zipLocalHeader, zipDirectory, zipFindEnd, zipEntries, zipDataStart, zipSafeName, SYNC_PIECE, syncPieceIv, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
 
 import { validateSystems } from './systems-core.js';
@@ -1169,24 +1169,38 @@ function tdAddManual() {
       el('button', { type: 'button', class: 'btn quiet', text: t('close'), onclick: () => dlg.close() })));
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal(); s.focus();
 }
-async function tdExcel(rows) {
+async function tdExcel(rows, from = '') {
   const X = await loadXlsx(), today = saudiDay(new Date().toISOString());
-  const H = ['td_col_subject', 'td_col_entity', 'td_col_handover', 'td_tile_lead', 'td_col_date', 'td_col_from', 'td_col_why', 'td_col_stage', 'td_col_stageAt', 'td_col_days', 'td_col_reason', 'td_col_owner', 'td_col_etimadNo', 'td_col_value', 'td_col_fees', 'td_col_bond', 'td_col_askDue', 'td_col_visit', 'td_col_due', 'td_col_openAt', 'td_col_submittedOn', 'td_col_submitNo', 'td_col_decidedOn', 'td_col_study', 'td_col_studyDecision', 'td_col_note'].map((k) => t(k));
+  // v9.86 (ADR-0153): what the mails say beside each tender's stage — how many, the last one and who wrote it, and the hand-over
+  const H = ['td_col_subject', 'td_col_entity', 'td_col_handover', 'td_tile_lead', 'td_col_date', 'td_col_from', 'td_col_why', 'td_col_stage', 'td_col_stageAt', 'td_x_mails', 'td_x_last', 'td_x_last_who', 'td_x_handed', 'td_x_handed_who', 'td_col_days', 'td_col_reason', 'td_col_owner', 'td_col_etimadNo', 'td_col_value', 'td_col_fees', 'td_col_bond', 'td_col_askDue', 'td_col_visit', 'td_col_due', 'td_col_openAt', 'td_col_submittedOn', 'td_col_submitNo', 'td_col_decidedOn', 'td_col_study', 'td_col_studyDecision', 'td_col_note'].map((k) => t(k));
   const why = (i) => [i.messages?.length ? t('td_why_email') : '', i.byFrom ? t('td_why_from') : '', i.byKr ? t('td_why_kr') : '', i.manual ? t('td_why_manual') : ''].filter(Boolean).join(' + ');
-  const ws = X.utils.aoa_to_sheet([H, ...rows.map((i) => [i.subject, i.entity || '', tenderHandoverDue(i).replace('T', ' '), tenderLead(i).workDays ?? '', i.date, i.from, why(i), t(`td_st_${i.stage}`), i.stageAt, tdDaysBetween(i.stageAt, today), i.reason, i.owner, i.etimadNo, i.value, i.fees, i.bond, i.askDue, i.visit, i.due, i.openAt, i.submittedOn, i.submitNo, i.decidedOn, i.study, i.studyDecision ? t(`td_dec_${i.studyDecision.replace("-", "")}`) : '', i.note])]);
-  ws['!cols'] = [60, 26, 16, 10, 12, 26, 24, 18, 12, 8, 30, 16, 16, 14, 12, 18, 14, 14, 14, 14, 14, 16, 14, 30, 14, 40].map((w) => ({ wch: w })); ws['!views'] = [{ RTL: lang !== 'en' }];
-  const months = [...new Set(tenders.items.map((i) => i.date.slice(0, 7)))].sort();
+  const mf = (i) => { const f = tenderMailFacts(i); return [f.mails, f.last ? f.last.at.replace('T', ' ') : '', f.last ? f.last.who : '', f.handover ? f.handover.at.replace('T', ' ') : '', f.handover ? f.handover.who : '']; };
+  const ws = X.utils.aoa_to_sheet([H, ...rows.map((i) => [i.subject, i.entity || '', tenderHandoverDue(i).replace('T', ' '), tenderLead(i).workDays ?? '', i.date, i.from, why(i), t(`td_st_${i.stage}`), i.stageAt, ...mf(i), tdDaysBetween(i.stageAt, today), i.reason, i.owner, i.etimadNo, i.value, i.fees, i.bond, i.askDue, i.visit, i.due, i.openAt, i.submittedOn, i.submitNo, i.decidedOn, i.study, i.studyDecision ? t(`td_dec_${i.studyDecision.replace("-", "")}`) : '', i.note])]);
+  ws['!cols'] = [60, 26, 16, 10, 12, 26, 24, 18, 12, 8, 16, 26, 16, 26, 8, 30, 16, 16, 14, 12, 18, 14, 14, 14, 14, 14, 16, 14, 30, 14, 40].map((w) => ({ wch: w })); ws['!views'] = [{ RTL: lang !== 'en' }];
+  const base = from ? rows : tenders.items, months = [...new Set(base.map((i) => i.date.slice(0, 7)))].sort();
   const sum = X.utils.aoa_to_sheet([[t('td_col_month'), t('td_k_in'), t('td_k_joined'), t('td_st_declined'), t('td_k_submitted'), t('td_st_won'), t('td_st_lost'), t('td_k_winrate'), t('td_k_decision'), t('td_k_ontime')],
-    ...months.map((m) => { const k = tdKpis(tenders.items.filter((i) => i.date.startsWith(m)), today); return [m, k.n, k.joined, k.declined, k.submitted, k.won, k.closed - k.won, k.winRate == null ? '' : `${k.winRate}%`, k.avgDecision == null ? '' : k.avgDecision, k.onTime == null ? '' : `${k.onTime}%`]; })]);
+    ...months.map((m) => { const k = tdKpis(base.filter((i) => i.date.startsWith(m)), today); return [m, k.n, k.joined, k.declined, k.submitted, k.won, k.closed - k.won, k.winRate == null ? '' : `${k.winRate}%`, k.avgDecision == null ? '' : k.avgDecision, k.onTime == null ? '' : `${k.onTime}%`]; })]);
   sum['!views'] = [{ RTL: lang !== 'en' }]; const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, t('td_sheet')); X.utils.book_append_sheet(wb, sum, t('td_sheet_sum'));
-  X.writeFile(wb, `AFAQY-tenders-${today}.xlsx`);
+  X.writeFile(wb, from ? `AFAQY-tenders-from-${from}-${today}.xlsx` : `AFAQY-tenders-${today}.xlsx`);
+}
+/** v9.86 (ADR-0153): the whole register from a day the manager picks — every kind and stage, oldest first. */
+function tdExcelFrom() {
+  const today = saudiDay(new Date().toISOString()), oldest = (tenders?.items || []).map((i) => i.date).filter(Boolean).sort()[0] || today;
+  const d = el('input', { type: 'date', class: 'td-xf-date', value: oldest, max: today }), n = el('p', { class: 'hint td-xf-n', 'aria-live': 'polite' });
+  const count = () => { n.textContent = t('td_xf_n', { n: tendersFrom(tenders?.items, d.value).length }); }; d.addEventListener('input', count); count();
+  const dlg = el('dialog', { class: 'proj-edit td-xf tw tw-sm', 'aria-labelledby': 'td-xf-h' }, twHead(el('h2', { id: 'td-xf-h', text: t('td_xf_h') })),
+    el('p', { class: 'hint', text: t('td_xf_lead') }), el('label', { class: 'fl-label' }, el('span', { text: t('td_xf_from') }), d), n,
+    twFoot(el('button', { type: 'button', class: 'btn primary td-xf-go', text: `⬇ ${t('td_excel')}`, onclick: async () => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d.value)) { d.focus(); return; } const rows = tendersFrom(tenders?.items, d.value);
+      if (!rows.length) { toast(t('td_xf_none')); return; } await tdExcel(rows, d.value); dlg.close(); } })));
+  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal(); d.focus();
 }
 let tdMailParser, tdDocumentReader;
 const tdLoadMail = () => (tdMailParser ||= import('./assets/vendor/tender-mail.min.js').catch((error) => { tdMailParser = null; throw error; }));
 // v9.57 (ADR-0130): the conversation a mail carries — its own message and every message quoted beneath it
 const tdThreadOf = (mail) => mailThread(mail.body, { at: mailWall(mail.sentAt), name: mail.senderName, addr: mail.sender });
 const tdFileFilters = new Map();
-const tdActivity = (action, label) => ({ id: crypto.randomUUID(), action, label, at: new Date().toISOString() });
+const tdActivity = (action, label, extra = {}) => ({ id: crypto.randomUUID(), action, label, at: new Date().toISOString(), ...extra });   // extra (v9.86): a mail's own time and writer
 const tdNewFile = (blob, kind, mailKey = '', id = crypto.randomUUID()) => ({ id, name: blob.name, kind, mailKey, blob });
 const tdFileKind = { technical: 'proj_fk_technical', financial: 'proj_fk_financial' };   // other kinds: td_file_<kind>
 function tdDateText(day, time) { return day + (time ? ' · ' + time : ''); }
@@ -1837,7 +1851,8 @@ async function tdImportEmails(files, id = '', { quiet = false } = {}) {   // qui
           byFrom: tdIsAI(mail.sender), byKr: filesToSave.some((entry) => entry.kind === 'booklet'), att: [],
           status: 'open', stage: 'received', stageAt: mail.date,
         };
-        const message = { key, messageId, hash, subject, sender: mail.sender.slice(0, 120), date: mail.date,
+        const mailAt = mailWall(mail.sentAt), who = String(mail.senderName || mail.sender || '').slice(0, 120);   // v9.86 (ADR-0153): the history is by the mail's own time
+        const message = { key, messageId, hash, subject, sender: mail.sender.slice(0, 120), date: mail.date, ...(mailAt ? { at: mailAt } : {}), ...(mail.senderName ? { name: mail.senderName.slice(0, 80) } : {}),
           schedule: tenderEmailSchedule(mail.body, mail.html), warnings: mail.warnings.length };
         const thread = tenderThreadMerge(first.thread, tdThreadOf(mail)), oldest = (thread.find((e) => e.at) || { at: '' }).at.slice(0, 10);
         let entry = applyTenderEmailDates({ ...first, etimadNo: first.etimadNo || number,
@@ -1846,10 +1861,10 @@ async function tdImportEmails(files, id = '', { quiet = false } = {}) {   // qui
           // quoted in it says when it did. A tender already in the register keeps the date it has.
           ...(!existing && oldest && oldest < mail.date ? { date: oldest, dateSource: 'thread', stageAt: oldest } : {}),
           messages: [...(first.messages || []), message], files: [...(first.files || []), ...filesToSave], thread,
-          activity: [tdActivity('email', subject), ...(first.activity || [])],
+          activity: [tdActivity('email', subject, { ...(mailAt ? { mailAt } : {}), who }), ...(first.activity || [])],
         });
         if (hands) { const ho = tenderHandoverPatch(entry, { at: mailWall(mail.sentAt) || mail.date, name: mail.senderName, addr: String(mail.sender || '').toLowerCase() });
-          entry = { ...entry, ...ho, activity: [tdActivity('handover', mail.senderName || mail.sender), ...entry.activity] }; }
+          entry = { ...entry, ...ho, activity: [tdActivity('handover', mail.senderName || mail.sender, { ...(mailAt ? { mailAt } : {}), who }), ...entry.activity] }; }
         await tdCommit({ ...state, items: [entry, ...state.items.filter((row) => row.id !== entry.id)].sort((a, b) => b.date.localeCompare(a.date)) });
         imported.push(entry.id);
         if (existing) linked++; else { added++; fresh.push(entry.id); }
@@ -2517,12 +2532,16 @@ function tdDateReview(item, which = TENDER_DATE_FIELDS) {   // v9.58: the card a
         } }),el('small',{class:'td-date-source hint',dir:'auto',text:candidate.sources.map(source=>source.label+(source.locator?' · '+source.locator:'')).join(' / ')})))));
   });
 }
+// a Saudi wall time «YYYY-MM-DDTHH:MM» (or a day) as the manager reads it: the Gregorian day, then the time
+const tdWallText = (at) => { const s = String(at || ''); if (!/^\d{4}-\d{2}-\d{2}/.test(s)) return ''; const [y, m, d] = s.slice(0, 10).split('-'); return `${d}/${m}/${y}${s.length > 10 ? ` · ${s.slice(11, 16)}` : ''}`; };
 function tdHistory(item) {
   return tdFold('history', t('td_history'),
     el('p', { class: 'hint', text: t('td_history_first', { date: item.date }) }),
-    (item.activity || []).map((entry) => el('div', { class: 'td-history-entry' },
-      el('span', { text: t(`td_history_${entry.action}`, { value: entry.action === 'stage' ? t(`td_st_${entry.label}`) : entry.label }) }),
-      el('small', { class: 'hint', text: new Date(entry.at).toLocaleString(lang === 'ur' ? 'ur-PK' : lang === 'ar' ? 'ar-SA' : 'en-GB', { timeZone: 'Asia/Riyadh', calendar: 'gregory' }) }))));
+    // v9.86 (ADR-0153): oldest first, each line at the time it happened — a mail at the mail's own time, with who wrote it
+    tenderHistory(item).map((entry) => el('div', { class: `td-history-entry td-h-${entry.action}`, title: entry.logged && entry.logged !== entry.at ? t('td_history_logged', { at: tdWallText(entry.logged) }) : null },
+      el('small', { class: 'td-h-at', dir: 'ltr', text: tdWallText(entry.at) }),
+      el('span', { dir: 'auto', text: entry.action === 'email' && entry.who ? t('td_history_mail', { who: entry.who, value: entry.label })
+        : t(`td_history_${entry.action}`, { value: entry.action === 'stage' ? t(`td_st_${entry.label}`) : entry.label }) }))));
 }
 // v9.58: the folds under a tender's card stay as the manager left them while he works on it; a new window starts with them closed
 const tdFoldSet = new Set(); let tdFoldsFor = null;
@@ -2688,11 +2707,14 @@ function renderTenders() {
     el('section', { class: 'td-overview', 'aria-label': t('td_overview') }, el('div', { class: 'km-tiles td-tiles' },
       tile('km-total', K.n, 'td_k_in_all', t('td_k_in_all_sub'), 'all'), tile(K.waiting ? 'km-other td-hot' : 'km-other', K.waiting, 'td_k_waiting', K.waiting ? t('td_k_waitmax', { d: K.waitMax }) : '', 'waiting'),
       tile('km-email', K.soon, 'td_k_soon', K.late ? t('td_k_late', { n: K.late }) : '', 'soon'), tile('km-points', K.winRate == null ? '—' : `${K.winRate}%`, 'td_k_winrate', K.winRate == null ? t('td_k_norate') : t('td_k_won_of', { w: K.won, n: K.closed }), 'decided')),
-      pipe, el('p', { class: 'hint td-kpis', text: t('td_kpi_line', { j: K.joined, n: K.n, d: K.avgDecision == null ? '—' : K.avgDecision, o: K.onTime == null ? '—' : `${K.onTime}%`, v: K.value ? K.value.toLocaleString('en') : '0' }) })),
+      pipe, el('p', { class: 'hint td-kpis', text: t('td_kpi_line', { j: K.joined, n: K.n, d: K.avgDecision == null ? '—' : K.avgDecision, o: K.onTime == null ? '—' : `${K.onTime}%`, v: K.value ? K.value.toLocaleString('en') : '0' }) }),
+      // v9.86: the mails written today, by each mail's own day
+      (() => { const d = mailsOnDay(tenders?.items, today); return el('p', { class: 'hint td-today-mails', text: d.mails ? t('td_today_mails', { n: d.mails, m: d.tenders }) : t('td_today_none') }); })()),
     el('div', { class: 'td-listbar' }, el('div', { class: 'row td-filter' }, kinds, pick, searchForm),
       el('div', { class: 'td-list-acts' }, el('button', { type: 'button', class: 'btn tiny td-year-btn', text: `📈 ${t('td_yr_btn')}`, onclick: () => tdYearReport() }),
         el('button', { type: 'button', class: 'btn tiny td-arch-btn', text: `🗄 ${t('td_arch_btn')}`, onclick: () => tdArchiveOpen() }),
-        el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('td_excel')}`, onclick: () => tdExcel(rows) }))),
+        el('button', { type: 'button', class: 'btn tiny', text: `⬇ ${t('td_excel')}`, onclick: () => tdExcel(rows) }),
+        el('button', { type: 'button', class: 'btn tiny td-xf-btn', text: `⬇ ${t('td_xf_btn')}`, onclick: () => tdExcelFrom() }))),
     tdStageF ? el('div', { class: 'row td-filtered' }, el('span', { class: 'chip', text: t('td_pipe_on', { s: t(`td_st_${tdStageF}`), n: rows.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: `✕ ${t('td_pipe_clear')}`, onclick: () => { tdStageF = null; renderTenders(); } })) : null,
     !tdStageF && tdCardF ? el('div', { class: 'row td-filtered' }, el('span', { class: 'chip', text: t('crm_filtered', { f: t({ waiting: 'td_k_waiting', soon: 'td_k_soon', decided: 'td_k_decided' }[tdCardF]), n: rows.length, all: rowsAll.length }) }), el('button', { type: 'button', class: 'btn tiny quiet', text: t('crm_show_all'), onclick: () => { tdCardF = null; renderTenders(); } })) : null,
     rows.length ? table : el('p', { class: 'note', text: t('td_none_period') }),

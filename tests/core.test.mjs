@@ -2407,6 +2407,36 @@ test('the hand-over\'s two history lines survive a reload and a backup (the regi
   assert.deepEqual(kept.activity.map((e) => e.action), ['handover', 'relinked']);
 });
 
+// v9.86 (ADR-0153): the history by the day things happened
+test('a tender\'s history is by the mails\' own times, oldest first, with who wrote each — even for lines saved before v9.86', () => {
+  // as 9.85 saved it: lines newest first, each stamped when the manager imported it (all on 23 Nov), not when the mail was written
+  const item = { id: 'a', subject: 'Fuel sensors', date: '2026-07-03',
+    messages: [{ key: '1', subject: 'Fuel sensors', sender: 'desk@example.com', date: '2026-07-03' }, { key: '2', subject: 'RE: Fuel sensors', sender: 'eng@example.com', date: '2026-07-20' }, { key: '3', subject: 'Final files', sender: 'me@example.com', date: '2026-08-02' }],
+    thread: [{ at: '2026-07-03T09:10', name: 'Tenders Desk', addr: 'desk@example.com', text: 'booklet' }, { at: '2026-07-20T13:00', name: 'Eng Ali', addr: 'eng@example.com', text: 'q' }, { at: '2026-08-02T15:30', name: 'Safwat', addr: 'me@example.com', text: 'files', mark: 'handover' }],
+    activity: [{ id: 'h', action: 'handover', label: 'Safwat', at: '2026-11-23T08:03:00.000Z' }, { id: 'e3', action: 'email', label: 'Final files', at: '2026-11-23T08:03:00.000Z' },
+      { id: 'n', action: 'stage', label: 'prep', at: '2026-07-21T07:00:00.000Z' }, { id: 'e2', action: 'email', label: 'RE: Fuel sensors', at: '2026-11-23T08:02:00.000Z' }, { id: 'e1', action: 'email', label: 'Fuel sensors', at: '2026-11-23T08:01:00.000Z' }] };
+  const h = core.tenderHistory(item);
+  assert.deepEqual(h.map((r) => [r.action, r.at, r.who]), [['email', '2026-07-03T09:10', 'Tenders Desk'], ['email', '2026-07-20T13:00', 'Eng Ali'], ['stage', '2026-07-21T10:00', ''], ['email', '2026-08-02T15:30', 'Safwat'], ['handover', '2026-08-02T15:30', 'Safwat']]);
+  // from v9.86 a line carries the mail's time itself
+  const now = core.tenderHistory({ messages: [], thread: [], activity: [{ id: 'x', action: 'email', label: 'S', at: '2026-11-23T08:00:00.000Z', mailAt: '2026-07-05T08:00', who: 'Desk' }] });
+  assert.deepEqual(now.map((r) => [r.at, r.who]), [['2026-07-05T08:00', 'Desk']]);
+});
+test('the mail\'s own time and writer survive a reload; mails of a day are counted by the mail\'s own day', () => {
+  const c = core.cleanTenderDetails({ id: 'a', subject: 'x', date: '2026-11-10', messages: [{ key: 'k', at: '2026-11-23T09:15', name: 'Moamen', date: '2026-11-23' }],
+    activity: [{ id: '1', action: 'email', label: 's', at: '2026-11-23T06:15:00.000Z', mailAt: '2026-11-23T09:15', who: 'Moamen' }] });
+  assert.equal(c.messages[0].at, '2026-11-23T09:15'); assert.equal(c.messages[0].name, 'Moamen');
+  assert.equal(c.activity[0].mailAt, '2026-11-23T09:15'); assert.equal(c.activity[0].who, 'Moamen');
+  const items = [{ id: 'a', messages: [{ at: '2026-11-23T09:15', date: '2026-11-23' }, { date: '2026-11-22' }] }, { id: 'b', messages: [{ date: '2026-11-23' }] }, { id: 'c', messages: [] }];
+  assert.deepEqual(core.mailsOnDay(items, '2026-11-23'), { mails: 2, tenders: 2 });
+});
+test('the register from a day: the tenders that arrived on or after it, oldest first, with what their mails say', () => {
+  const items = [{ id: 'n', date: '2026-11-20' }, { id: 'j', date: '2026-06-30' }, { id: 'k', date: '2026-07-01' }];
+  assert.deepEqual(core.tendersFrom(items, '2026-07-01').map((i) => i.id), ['k', 'n']);
+  const f = core.tenderMailFacts({ messages: [{ sender: 'desk@example.com', date: '2026-07-01' }, { sender: 'me@example.com', date: '2026-07-09' }],
+    thread: [{ at: '2026-07-01T10:00', name: 'Desk', addr: 'desk@example.com' }, { at: '2026-07-09T16:00', name: 'Safwat', addr: 'me@example.com', mark: 'handover' }] });
+  assert.deepEqual(f, { mails: 2, first: { at: '2026-07-01T10:00', who: 'Desk' }, last: { at: '2026-07-09T16:00', who: 'Safwat' }, handover: { at: '2026-07-09T16:00', who: 'Safwat' } });
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

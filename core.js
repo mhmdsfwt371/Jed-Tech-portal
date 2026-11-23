@@ -3369,6 +3369,58 @@ export function tenderHandoverRelink(items, isTeam) {
 }
 /** The kind a hand-over mail's attachment is filed as: the deck is the offer, the workbook the priced BOQ. */
 export const tenderHandoverKind = hoKind;
+// ---------- v9.86 (ADR-0153): the tender's history by the day things happened, and the register from a date ----------
+// The history used to stamp each line with the moment the manager imported it, so a mail of 3 July dragged in today read «today»
+// and the lines stood in import order. A mail's line now carries the mail's own time and writer; older lines get them back from
+// the tender's messages and its conversation, and the history reads oldest first.
+const histWall = (iso) => mailWall(iso);
+const histLow = (s) => String(s || '').trim().toLowerCase();
+/** When a stored message was written and by whom: its own time when it has one (v9.86), else the conversation's message by the
+ *  same address on the same day, else its day. */
+function messageWhen(m, thread) {
+  const addr = histLow(m.sender), dayOf = String(m.date || '');
+  const same = thread.filter((e) => e.at && histLow(e.addr) === addr && (!dayOf || e.at.slice(0, 10) === dayOf));
+  const hit = same.find((e) => e.at.length > 10) || same[0] || null;
+  return { at: m.at || (hit ? hit.at : dayOf), who: m.name || (hit && hit.name) || m.sender || '' };
+}
+/** The tender's history, oldest first: { at, action, label, who }. `at` is a Saudi wall time «YYYY-MM-DDTHH:MM», or a day when
+ *  only the day is known. A mail's line is at the mail's time and names its writer; every other line is at the moment it was done. */
+export function tenderHistory(item) {
+  const acts = Array.isArray(item && item.activity) ? item.activity : [], thread = Array.isArray(item && item.thread) ? item.thread : [];
+  const msgs = (Array.isArray(item && item.messages) ? item.messages : []).map((m) => ({ subject: String(m.subject || ''), ...messageWhen(m, thread) }));
+  // lines written before v9.86 carry no mail time: each «email» line, oldest first, takes the oldest unused message of its subject,
+  // and failing that the oldest unused message
+  const used = new Set(), mailOf = new Map();
+  const older = acts.map((a, i) => ({ a, i })).reverse();
+  for (const { a, i } of older) if (a.action === 'email' && !a.mailAt) { const k = msgs.findIndex((m, j) => !used.has(j) && m.subject === String(a.label || '')); if (k >= 0) { used.add(k); mailOf.set(i, msgs[k]); } }
+  for (const { a, i } of older) if (a.action === 'email' && !a.mailAt && !mailOf.has(i)) { const k = msgs.findIndex((_, j) => !used.has(j)); if (k >= 0) { used.add(k); mailOf.set(i, msgs[k]); } }
+  const handed = thread.filter((e) => e.mark === 'handover' && e.at);
+  const rows = acts.map((a, i) => {
+    const base = { action: a.action, label: String(a.label || ''), who: String(a.who || ''), at: histWall(a.at), logged: histWall(a.at) };
+    if (a.action === 'email') { const m = a.mailAt ? { at: a.mailAt, who: a.who } : mailOf.get(i); return m ? { ...base, at: m.at || base.at, who: m.who || base.who } : base; }
+    if (a.action === 'handover') { if (a.mailAt) return { ...base, at: a.mailAt, who: a.who || base.label };
+      const e = handed.find((x) => histLow(x.name) === histLow(a.label) || histLow(x.addr) === histLow(a.label)) || handed.at(-1);
+      return e ? { ...base, at: e.at, who: e.name || e.addr || base.label } : { ...base, who: base.label }; }
+    return base;
+  });
+  return rows.map((r, i) => ({ r, i })).sort((x, y) => (x.r.at || '').localeCompare(y.r.at || '') || y.i - x.i).map((x) => x.r);
+}
+/** How many mails were written on a day, and for how many tenders — by each mail's own time (or its day). */
+export function mailsOnDay(items, day) {
+  let mails = 0; const tenders = new Set();
+  for (const i of Array.isArray(items) ? items : []) for (const m of Array.isArray(i.messages) ? i.messages : []) {
+    if (String(m.at || m.date || '').slice(0, 10) === day) { mails++; tenders.add(i.id); } }
+  return { mails, tenders: tenders.size };
+}
+/** What the mails say of one tender, for the register's Excel: how many, the first and the last (time and writer), and the hand-over. */
+export function tenderMailFacts(item) {
+  const thread = Array.isArray(item && item.thread) ? item.thread : [], msgs = Array.isArray(item && item.messages) ? item.messages : [];
+  const seen = msgs.map((m) => messageWhen(m, thread)).filter((m) => m.at).sort((a, b) => a.at.localeCompare(b.at));
+  const f = tenderThreadFacts(item || {}), last = [f.last && { at: f.last.at, who: f.last.name || f.last.addr }, seen.at(-1)].filter(Boolean).sort((a, b) => a.at.localeCompare(b.at)).at(-1) || null;
+  return { mails: msgs.length, first: seen[0] || null, last, handover: f.handover ? { at: f.handover.at, who: f.handover.name || f.handover.addr } : null };
+}
+/** The register from a day on: the tenders that arrived on or after it, oldest first. */
+export const tendersFrom = (items, from) => (Array.isArray(items) ? items : []).filter((i) => /^\d{4}-\d{2}-\d{2}$/.test(from) ? String(i.date || '') >= from : true).sort((a, b) => String(a.date).localeCompare(String(b.date)));
 // ---------- v9.58 (ADR-0131): following a tender from arrival to result ----------
 /** The tenders team in Riyadh asks for the offer at least this many working days before the platform closes (their mail of 17 Nov 2026). */
 export const TENDER_HANDOVER_DAYS = 2;
@@ -3674,7 +3726,9 @@ export function cleanTenderDetails(item) {
     ...(cleanAnalyzer(item.analyzer) ? { analyzer: cleanAnalyzer(item.analyzer) } : {}),   // v9.64 (ADR-0137): the study by the program on this computer
     messages: list(item.messages).filter((m) => m && string(m.key, 400)).map((m) => ({
       key: string(m.key, 400), messageId: string(m.messageId, 320), hash: string(m.hash, 64),
-      subject: string(m.subject, 300), sender: string(m.sender, 120), date: day(m.date), warnings: Number.isSafeInteger(m.warnings) && m.warnings > 0 ? m.warnings : 0,
+      subject: string(m.subject, 300), sender: string(m.sender, 120), date: day(m.date),
+      ...(/^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d$/.test(m.at || '') ? { at: m.at } : {}), ...(string(m.name, 80) ? { name: string(m.name, 80) } : {}),   // v9.86: the mail's own time and writer
+      warnings: Number.isSafeInteger(m.warnings) && m.warnings > 0 ? m.warnings : 0,
       schedule: Object.fromEntries(fields.map((key) => [key,list(m.schedule?.[key]).filter((entry) => entry && day(entry.date)).map((entry) => ({date:day(entry.date),time:time(entry.time)}))]))
     })),
     files: list(item.files).filter((file) => file && string(file.id, 150) && TENDER_FILE_KINDS.includes(file.kind) && file.blob instanceof Blob).map((file) => ({
@@ -3693,7 +3747,9 @@ export function cleanTenderDetails(item) {
       at: /^\d{4}-\d{2}-\d{2}(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/.test(e.at) ? e.at : '', name: string(e.name, 80), addr: string(e.addr, 120), text: string(e.text, 1500), ...(e.mark === 'handover' ? { mark: 'handover' } : {})
     })),
     activity: list(item.activity).filter((entry) => entry && string(entry.id, 150) && ['email','add','remove','stage','date','study','read','category','thread','inq','etimad','handover','relinked'].includes(entry.action)).map((entry) => ({
-      id: string(entry.id, 150), action: entry.action, at: string(entry.at, 35), label: string(entry.label, 300)
+      id: string(entry.id, 150), action: entry.action, at: string(entry.at, 35), label: string(entry.label, 300),
+      // v9.86 (ADR-0153): a mail's line keeps the mail's own time and who wrote it, beside the moment it was registered
+      ...(/^\d{4}-\d{2}-\d{2}(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/.test(entry.mailAt || '') ? { mailAt: entry.mailAt } : {}), ...(string(entry.who, 120) ? { who: string(entry.who, 120) } : {})
     })),
   };
 }
