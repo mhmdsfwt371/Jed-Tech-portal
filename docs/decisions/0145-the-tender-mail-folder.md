@@ -53,3 +53,7 @@ once he allows it («Allow on every visit», Chrome 122). The manager chose this
 real path runs — kept, read back after a reload, permission asked and given; new, half-written, repeated and non-mail files; the
 first-connection question both ways; disconnecting; three languages, both themes, the accessibility scan; a private window; a
 browser without the feature on a computer and on a phone. `tests/browser/analyzerlink.py` B2 checks the switch's own message.
+
+
+## تعديل 9.90 — الإيميلات أولًا ثم المستندات
+كان `tdImportEmails()` ينتظر بعد كل دفعة من عشرة إيميلات قراءة كل كراساتها (`tdAnalyzeFiles()`)، وكل قراءة تحفظ السجل كله، فاستغرق فولدر من 129 إيميلًا قرابة الساعة والعدد يزحف. من الفولدر (`quiet`) تُضاف المناقصات إلى `tdDocQueue` وتُقرأ مستنداتها في `tdDrainDocs()` بعد أن يفرغ الفولدر. و«اقرأ الآن» يقول `md_nothing` حين لا جديد. الاختبار `tests/browser/mdspeed.py` (V1–V4)، فشل على 9.89 أولًا.

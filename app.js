@@ -1247,6 +1247,14 @@ function tdMergeInto(id) {
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal(); sel.focus();
 }
 let tdMailParser, tdDocumentReader;
+const tdDocQueue = new Set();   // v9.90: tenders whose documents are read once the mail folder has nothing left to register
+async function tdDrainDocs() {
+  while (tdDocQueue.size && !tdBusy && !mdState.busy) {
+    const id = tdDocQueue.values().next().value; tdDocQueue.delete(id);
+    const item = tenders?.items.find((row) => row.id === id); if (!item) continue;
+    await tdAnalyzeFiles(id, (item.files || []).filter((f) => f.kind !== 'original' && !f.analysis).map((f) => f.id));
+  }
+}
 const tdLoadMail = () => (tdMailParser ||= import('./assets/vendor/tender-mail.min.js').catch((error) => { tdMailParser = null; throw error; }));
 // v9.57 (ADR-0130): the conversation a mail carries — its own message and every message quoted beneath it
 const tdThreadOf = (mail) => mailThread(mail.body, { at: mailWall(mail.sentAt), name: mail.senderName, addr: mail.sender });
@@ -1946,7 +1954,10 @@ async function tdImportEmails(files, id = '', { quiet = false } = {}) {   // qui
   }
   tdMailResult = { a: added, l: linked, s: skipped, f: failed, w: warnings, failures };
   renderTenders();
-  for (const tenderId of new Set(imported)) {
+  // v9.90: from the mail folder the documents wait until every mail is registered. Reading a booklet takes seconds, and each
+  // batch of ten mails used to wait for all its booklets: 129 mails took most of an hour, and the count crept up meanwhile.
+  if (quiet) { for (const tenderId of imported) tdDocQueue.add(tenderId); }
+  else for (const tenderId of new Set(imported)) {
     const item = tenders.items.find(row => row.id === tenderId);
     await tdAnalyzeFiles(tenderId, (item.files || []).filter(file => file.kind !== 'original' && !file.analysis).map(file => file.id));
   }
@@ -2014,9 +2025,9 @@ async function mdConnect() {
 async function mdOff() { clearInterval(mdTimer); mdRec = null; mdState = { perm: '', busy: false, last: '', got: 0, waiting: 0, ask: 0, names: [], error: '' }; await store.kvPut(MD_KEY, null); mdDraw(); }
 // one round: list the folder, read what is new (ten at a time), hand it to the register; what could not be read yet (OneDrive is
 // still bringing it down) is tried again next round, and a folder that already holds many mails asks once before reading them all
-async function mdScan(all = false) {
+async function mdScan(all = false, asked = false) {   // asked (v9.90): the manager pressed «Read now», so an empty round is said aloud
   if (!mdRec || mdState.busy || mdState.perm !== 'granted') return;
-  if (tdBusy) { setTimeout(() => { void mdScan(all); }, 3000); return; }
+  if (tdBusy) { setTimeout(() => { void mdScan(all, asked); }, 3000); return; }
   mdState.busy = true; mdDraw();
   let again = false;
   try {
@@ -2037,11 +2048,12 @@ async function mdScan(all = false) {
     mdState = { ...mdState, last: mdRec.at, got: read.length, waiting: waiting + fresh.length - read.length, ask: 0, names: [], error: '' };
     await mdSave();
     if (res && (res.a || res.l)) toast(t('md_done', { a: res.a, l: res.l }));
+    else if (asked && !read.length && !waiting) toast(t('md_nothing', { n: mails }));
     again = waiting > 0;
   } catch (e) {
     mdState.error = 'lost'; if (e && e.name === 'NotAllowedError') mdState.perm = 'prompt';
   } finally { mdState.busy = false; mdDraw(); }
-  if (again) setTimeout(() => { void mdScan(true); }, 1500);
+  if (again) setTimeout(() => { void mdScan(true); }, 1500); else void tdDrainDocs();
 }
 async function mdFromNow() {   // the mails already in the folder are taken as read: only what arrives from now on is registered
   mdRec = { ...mdRec, first: false, seen: mailDirSeen([], mdState.names, mailDirNew(mdState.names, [], 1e9).fresh), at: tdNowWall() };
@@ -2060,7 +2072,7 @@ function mdRow() {
   const line = mdState.error ? t('md_lost') : mdState.busy ? t('td_mail_reading') : [mdState.last ? t('md_last', { at: tdWhen(mdState.last) }) : '',
     mdState.last ? (mdState.got ? t('md_new', { n: mdState.got }) : t('md_none')) : '', mdState.waiting ? t('md_wait', { n: mdState.waiting }) : ''].filter(Boolean).join(' · ');
   const bad = (mdRec.failed || []).length, ck = (cls) => el('button', { type: 'button', class: `btn tiny ${cls}`, disabled: mdState.busy, text: `🔍 ${t('md_ck')}`, onclick: () => { void mdAudit(); } });
-  return [el('div', { class: 'row md-row' }, name, el('button', { type: 'button', class: 'btn tiny md-read', disabled: mdState.busy || !!tdBusy, text: `↻ ${t('md_read')}`, onclick: () => { void mdScan(); } }), ck('md-ck-btn'), off, how),
+  return [el('div', { class: 'row md-row' }, name, el('button', { type: 'button', class: 'btn tiny md-read', disabled: mdState.busy || !!tdBusy, text: `↻ ${t('md_read')}`, onclick: () => { void mdScan(false, true); } }), ck('md-ck-btn'), off, how),
     el('p', { class: `hint md-line${mdState.error ? ' md-err' : ''}`, text: line }),   // not a live region: it changes every minute; what is new is said by the toast
     bad && !mdState.error ? el('p', { class: 'note md-failed' }, el('span', { text: t('md_failed', { n: bad }) })) : null,
     mdRec.keep ? null : el('p', { class: 'hint md-private', text: t('md_private') }),
