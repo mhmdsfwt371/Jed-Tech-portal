@@ -2486,6 +2486,38 @@ test('two entries of one tender become one: the older arrival, the further stage
   assert.equal(c.activity[0].action, 'merged');
 });
 
+// v9.88 (ADR-0155): where a tender stands, read from what its mails say
+test('a mail says where the tender stands: the branch stepping aside, or the tenders team reporting the offer submitted', () => {
+  assert.equal(core.mailSignal('السلام عليكم\nنوصي بعدم التقديم لعدم توفر الإيضاحات الفنية.\nتحياتي', false).kind, 'declined');
+  assert.equal(core.mailSignal('السلام عليكم\nنوصي بعدم التقديم لعدم توفر الإيضاحات الفنية.\nتحياتي', false).quote, 'نوصي بعدم التقديم لعدم توفر الإيضاحات الفنية.');
+  assert.equal(core.mailSignal('نعتذر عن المشاركة في هذه المنافسة', false).kind, 'declined');
+  assert.equal(core.mailSignal('We will not participate in this tender.', false).kind, 'declined');
+  assert.equal(core.mailSignal('تم تقديم العرضين على منصة اعتماد', true).kind, 'submitted');
+  assert.equal(core.mailSignal('تم تقديم العرضين على منصة اعتماد', false), null);        // only the team that submits can say it is submitted
+  assert.equal(core.mailSignal('نرجو عدم التأخر في التقديم', true), null);                  // the team does not decline for the branch
+  assert.equal(core.mailSignal('مرفق لكم الكراسة للدراسة', false), null);
+});
+test('the latest such mail is offered as the tender\'s stage — unless the stage already says so, the tender is closed, or the manager put it aside', () => {
+  const team = (a) => a === 'desk@example.com';
+  const base = { id: 't', subject: 'x', date: '2026-11-01', stage: 'received', thread: [
+    { at: '2026-11-01T09:00', name: 'Desk', addr: 'desk@example.com', text: 'مرفق الكراسة' },
+    { at: '2026-11-10T17:30', name: 'Branch Manager', addr: 'boss@example.com', text: 'نوصي بعدم التقديم لعدم توفر الإيضاحات' }] };
+  const s = core.tenderSignal(base, team);
+  assert.deepEqual([s.kind, s.at, s.who], ['declined', '2026-11-10T17:30', 'Branch Manager']);
+  assert.equal(core.tenderSignal({ ...base, stage: 'declined' }, team), null);
+  assert.equal(core.tenderSignal({ ...base, stage: 'lost' }, team), null);
+  assert.equal(core.tenderSignal({ ...base, sigOff: '2026-11-10T17:30' }, team), null);
+  assert.equal(core.tenderSignal({ ...base, stage: 'submitted' }, team).kind, 'declined');   // a stage set by mistake is corrected too
+  const later = { ...base, stage: 'prep', thread: [...base.thread, { at: '2026-11-18T13:39', name: 'Desk', addr: 'desk@example.com', text: 'تم تقديم العرضين على اعتماد' }] };
+  assert.equal(core.tenderSignal(later, team).kind, 'submitted');
+  assert.equal(core.tenderSignal({ ...later, stage: 'submitted' }, team), null);
+  const p = core.tenderSignalPatch(base, s);
+  assert.deepEqual([p.stage, p.stageAt, p.decidedOn, p.reason], ['declined', '2026-11-10', '2026-11-10', 'نوصي بعدم التقديم لعدم توفر الإيضاحات']);
+  const q = core.tenderSignalPatch(later, core.tenderSignal(later, team));
+  assert.deepEqual([q.stage, q.stageAt, q.submittedOn], ['submitted', '2026-11-18', '2026-11-18']);
+  assert.equal(core.cleanTenderDetails({ activity: [{ id: 'a', action: 'signal', label: 'declined', at: '2026-11-24T00:00:00.000Z', mailAt: '2026-11-10T17:30', who: 'Branch Manager' }] }).activity[0].action, 'signal');
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

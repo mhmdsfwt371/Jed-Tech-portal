@@ -3398,6 +3398,7 @@ export function tenderHistory(item) {
   const rows = acts.map((a, i) => {
     const base = { action: a.action, label: String(a.label || ''), who: String(a.who || ''), at: histWall(a.at), logged: histWall(a.at) };
     if (a.action === 'email') { const m = a.mailAt ? { at: a.mailAt, who: a.who } : mailOf.get(i); return m ? { ...base, at: m.at || base.at, who: m.who || base.who } : base; }
+    if (a.action === 'signal' && a.mailAt) return { ...base, at: a.mailAt };   // v9.88: the stage a mail spoke for stands at that mail's time
     if (a.action === 'handover') { if (a.mailAt) return { ...base, at: a.mailAt, who: a.who || base.label };
       const e = handed.find((x) => histLow(x.name) === histLow(a.label) || histLow(x.addr) === histLow(a.label)) || handed.at(-1);
       return e ? { ...base, at: e.at, who: e.name || e.addr || base.label } : { ...base, who: base.label }; }
@@ -3746,7 +3747,7 @@ export function cleanTenderDetails(item) {
     thread: list(item.thread).filter((e) => e && (string(e.name, 80) || string(e.addr, 120) || string(e.text, 1500))).slice(0, 300).map((e) => ({
       at: /^\d{4}-\d{2}-\d{2}(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/.test(e.at) ? e.at : '', name: string(e.name, 80), addr: string(e.addr, 120), text: string(e.text, 1500), ...(e.mark === 'handover' ? { mark: 'handover' } : {})
     })),
-    activity: list(item.activity).filter((entry) => entry && string(entry.id, 150) && ['email','add','remove','stage','date','study','read','category','thread','inq','etimad','handover','relinked','merged'].includes(entry.action)).map((entry) => ({
+    activity: list(item.activity).filter((entry) => entry && string(entry.id, 150) && ['email','add','remove','stage','date','study','read','category','thread','inq','etimad','handover','relinked','merged','signal'].includes(entry.action)).map((entry) => ({
       id: string(entry.id, 150), action: entry.action, at: string(entry.at, 35), label: string(entry.label, 300),
       // v9.86 (ADR-0153): a mail's line keeps the mail's own time and who wrote it, beside the moment it was registered
       ...(/^\d{4}-\d{2}-\d{2}(?:T(?:[01]\d|2[0-3]):[0-5]\d)?$/.test(entry.mailAt || '') ? { mailAt: entry.mailAt } : {}), ...(string(entry.who, 120) ? { who: string(entry.who, 120) } : {})
@@ -3842,6 +3843,36 @@ export function tenderMerge(keep, other, now = new Date().toISOString()) {
   if (mergeRank(other.stage) > mergeRank(keep.stage)) { out.stage = other.stage; out.stageAt = other.stageAt || keep.stageAt; if (other.status) out.status = other.status; if (other.reason) out.reason = other.reason; }
   const d = mergeTenderDetails(keep, other);
   return { ...out, ...d, activity: [{ id: `merged:${String(other.id).slice(0, 80)}:${now}`.slice(0, 150), action: 'merged', at: now, label: String(other.subject || '').slice(0, 300) }, ...d.activity] };
+}
+// ---------- v9.88 (ADR-0155): where a tender stands, read from what its mails say ----------
+// The card showed every mail in order, yet its stage moved only by the manager's hand or by the hand-over mail. A tender the
+// branch had stepped aside from by a reply stayed «arrived», and the count of what awaits a decision was wrong. The conversation
+// is already kept message by message, so the two sentences that settle a stage are read from it: the branch saying it will not
+// bid, and the tenders team saying the offer was submitted. A sentence is not a decision — «better not to submit unless the
+// date moves» reads the same — so the reading is offered, with its words and its writer, and the manager accepts it.
+const SIG_DECLINE = /عدم (?:ال)?(?:تقديم|مشارك|دخول|تقدم)|لن (?:ندخل|نشارك|نتقدم|نقدم|يتم (?:ال)?(?:تقديم|مشارك|دخول))|(?:نعتذر|اعتذار|الاعتذار) عن|مش هندخل|مش هنقدم|لا نرغب (?:في|ب)(?:ال)?(?:تقديم|مشارك|دخول)|will not (?:participate|bid|submit|be (?:participating|bidding|submitting))|not (?:to )?(?:participate|bid)\b|\bno[- ]bid\b|we (?:will )?pass on|\bdecline to\b/;
+const SIG_SUBMIT = /تم (?:ال)?(?:تقديم|تقدم)|تم رفع (?:ال)?(?:عرض|عروض|عرضين)|(?:has|have|was|were) (?:been )?submitted|\bsubmitted (?:on|to|through) /;
+/** What one message says of the tender's stage, and the line that says it: `declined` from anyone but the tenders team,
+ *  `submitted` from the tenders team alone — they are the ones who submit. null when it says neither. */
+export function mailSignal(text, fromTeam) {
+  const re = fromTeam ? SIG_SUBMIT : SIG_DECLINE;
+  for (const line of String(text || '').split(/\r?\n/)) { const l = line.trim(); if (l && re.test(mailPlain(l))) return { kind: fromTeam ? 'submitted' : 'declined', quote: l.slice(0, 300) }; }
+  return null;
+}
+/** The stage a tender's mails speak for, when it is not the stage it has: the latest message that says one. Nothing for a
+ *  tender whose result is recorded, nor for a reading the manager already put aside (`sigOff`: its message's time). */
+export function tenderSignal(item, isTeam) {
+  const i = item || {}; if (TENDER_CLOSED.includes(i.stage)) return null;
+  const all = (i.thread || []).filter((e) => e && e.at).map((e) => { const s = mailSignal(e.text, !!(isTeam && isTeam(e.addr))); return s ? { ...s, at: e.at, day: e.at.slice(0, 10), who: e.name || e.addr || '', addr: e.addr || '' } : null; })
+    .filter(Boolean).sort((a, b) => a.at.localeCompare(b.at));
+  const s = all.at(-1); if (!s || s.kind === (i.stage || 'received') || (i.sigOff && s.at <= i.sigOff)) return null;
+  return s;
+}
+/** What accepting that reading changes: the stage on the mail's own day, and the days and the reason that go with it. */
+export function tenderSignalPatch(item, s) {
+  const day = s.day;
+  return s.kind === 'declined' ? { stage: 'declined', stageAt: day, decidedOn: item.decidedOn || day, reason: item.reason || s.quote.slice(0, 300) }
+    : { stage: 'submitted', stageAt: day, status: 'ready', decidedOn: item.decidedOn || day, readyOn: item.readyOn || day, submittedOn: item.submittedOn || day };
 }
 // Project follow-up is additive: tender decisions and original register fields remain the source.
 const PW_SCHEMA = 'afaqy-project-followup/v1';

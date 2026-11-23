@@ -1,25 +1,25 @@
 {
-  "version": "9.87",
+  "version": "9.88",
   "date": "2026-11-24",
   "notes": {
     "ar": [
-      "سجل المناقصات للمناقصات وحدها: الإيميل الذي ليس مناقصة (شكوى، ملاحظات، رابط مشاركة) لا يُسجَّل بعد الآن كمناقصة جديدة، ويظهر لك سبب تركه.",
-      "كل إيميل يجد مناقصته من الرقم المرجعي في اعتماد أولًا — من عنوانه أو أسماء ملفاته أو نصه — فلا تتكرر المناقصة إذا تغيّر عنوان الإيميل، والرقم يُكتب على البطاقة تلقائيًّا.",
-      "سطر جديد «راجع ونظّف السجل» يظهر إذا كان في السجل ما ليس مناقصة أو مناقصة مسجلة مرتين: نافذة واحدة تحذف الأول وتدمج الثاني في بطاقة واحدة فيها كل الإيميلات بتسلسلها، ولا يتغير شيء قبل موافقتك."
+      "المرحلة تُقرأ من الإيميلات: إذا ردّ الفرع بالاعتذار عن التقديم، أو أبلغ قسم المنافسات بأن العرض قُدِّم، يظهر سطر «راجع المراحل من الإيميلات» ويعرض لك الجملة وكاتبها ووقتها لكل مناقصة؛ ما تعتمده تتغير مرحلته بتاريخ الرد نفسه ويُكتب في سجله.",
+      "ما تراه غير دقيق تزيل علامته فيبقى كما هو ولا يُعرض عليك مرة أخرى — القرار يبقى لك، والبوابة تقترح فقط.",
+      "زر جديد في بطاقة كل عنصر «ضمّها إلى مناقصة أخرى»: الإيميل الذي سُجِّل وحده وهو جزء من مناقصة (رابط مشاركة، قائمة استفسارات) تنتقل إيميلاته وملفاته إلى بطاقتها."
     ],
     "en": [
-      "The tender register is for tenders alone: an email that is not a tender (a complaint, notes, a shared link) is no longer registered as a new tender, and you are shown why it was left out.",
-      "Every email finds its tender by the Etimad reference number first — in its subject, its file names or its text — so a tender is not entered twice when an email’s subject changes, and the number is written on the card by itself.",
-      "A new line «Review and tidy the register» appears when the register holds something that is not a tender or one tender entered twice: one window removes the first and merges the second into a single card with every email in order, and nothing changes before you agree."
+      "The stage is read from the emails: when the branch replies that it will not bid, or the tenders team reports that the offer was submitted, a line «Review the stages from the emails» appears and shows you the sentence, its writer and its time for each tender; what you accept changes stage on the day of that reply and is written in its history.",
+      "What you find inaccurate you untick: it stays as it is and is not offered to you again — the decision remains yours, and the portal only suggests.",
+      "A new button on every entry’s card, «Put it into another tender»: an email registered on its own that is really part of a tender (a shared link, a list of questions) has its emails and files moved into that tender’s card."
     ],
     "ur": [
-      "ٹینڈر رجسٹر صرف ٹینڈرز کے لیے ہے: جو ای میل ٹینڈر نہیں (شکایت، نوٹس، شیئر کیا گیا لنک) وہ اب نئے ٹینڈر کے طور پر درج نہیں ہوتی، اور آپ کو بتایا جاتا ہے کہ اسے کیوں چھوڑا گیا۔",
-      "ہر ای میل سب سے پہلے اعتماد کے حوالہ نمبر سے اپنا ٹینڈر ڈھونڈتی ہے — اپنے عنوان، فائلوں کے ناموں یا متن میں سے — اس لیے ای میل کا عنوان بدلنے پر ٹینڈر دو بار درج نہیں ہوتا، اور نمبر خود بخود کارڈ پر لکھ دیا جاتا ہے۔",
-      "نئی سطر «رجسٹر دیکھیں اور صاف کریں» تب ظاہر ہوتی ہے جب رجسٹر میں کوئی ایسی چیز ہو جو ٹینڈر نہیں یا ایک ٹینڈر دو بار درج ہو: ایک ہی ونڈو پہلی کو حذف کرتی ہے اور دوسری کو ایک کارڈ میں ضم کرتی ہے جس میں ہر ای میل ترتیب سے موجود ہوتی ہے، اور آپ کی منظوری سے پہلے کچھ نہیں بدلتا۔"
+      "مرحلہ ای میلز سے پڑھا جاتا ہے: جب برانچ بولی سے معذرت کا جواب دے، یا ٹینڈرز ٹیم بتائے کہ آفر جمع ہو گئی، تو «ای میلز سے مراحل کا جائزہ لیں» کی سطر ظاہر ہوتی ہے اور ہر ٹینڈر کے لیے جملہ، لکھنے والا اور وقت دکھاتی ہے؛ جسے آپ منظور کریں اس کا مرحلہ اسی جواب کی تاریخ پر بدل کر اس کی تاریخ میں لکھ دیا جاتا ہے۔",
+      "جو آپ کو درست نہ لگے اس سے نشان ہٹا دیں: وہ جوں کا توں رہتا ہے اور دوبارہ آپ کے سامنے نہیں آتا — فیصلہ آپ ہی کا رہتا ہے، پورٹل صرف تجویز دیتا ہے۔",
+      "ہر اندراج کے کارڈ پر نیا بٹن «اسے کسی دوسرے ٹینڈر میں شامل کریں»: جو ای میل الگ سے درج ہو گئی مگر دراصل کسی ٹینڈر کا حصہ ہے (شیئر کیا گیا لنک، سوالات کی فہرست) اس کی ای میلز اور فائلیں اس ٹینڈر کے کارڈ میں منتقل ہو جاتی ہیں۔"
     ]
   },
   "counts": {
-    "versions": 212,
-    "decisions": 154
+    "versions": 213,
+    "decisions": 155
   }
 }

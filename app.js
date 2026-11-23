@@ -18,7 +18,7 @@ import {
   ANALYZER, parseAnalyzerHello, analyzerNote, cleanAnalyzerAuto, analyzerAuto, analyzerAutoNote, parseAnalyzerJob, analyzerJobId, analyzerSend, analyzerOutputKind, analyzerStudyFile, dateCheckTag,
   cleanProjectWork, projectWorkFind, projectWorkUpdate, mergeProjectWork, projectProgress, projectReport,
   tenderCanAdvance, cleanTenderDetails, mergeTenderDetails, pageStarts,
-  mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts, mailHandsOver, tenderForHandover, tenderHandoverPatch, tenderHandoverRelink, tenderHandoverKind, tenderHistory, mailsOnDay, tenderMailFacts, tendersFrom, mailEtimadRef, mailIsTender, tenderRefOf, tenderCleanup, tenderMerge,
+  mailThread, mailWall, mailGist, tenderThreadMerge, tenderThreadFacts, mailHandsOver, tenderForHandover, tenderHandoverPatch, tenderHandoverRelink, tenderHandoverKind, tenderHistory, mailsOnDay, tenderMailFacts, tendersFrom, mailEtimadRef, mailIsTender, tenderRefOf, tenderCleanup, tenderMerge, tenderSignal, tenderSignalPatch,
   TENDER_HANDOVER_DAYS, tenderMilestones, tenderAgenda, tenderNotices, tenderNoticeId, agendaFold, agendaByTender, tenderAgendaMove, MAILDIR_ASK, mailDirNew, mailDirSeen, mailDirReport, mailDirFailed, tenderDateChanges, crc32, zipLocalHeader, zipDirectory, zipFindEnd, zipEntries, zipDataStart, zipSafeName, SYNC_PIECE, syncPieceIv, TENDER_CLOSED, tenderHandoverDue, tenderHandedAt, tenderHandoverOnTime, tenderLead, minutesUntil, tenderShownFields, tenderYearReport, workDaysBetween } from './core.js';
 
 import { validateSystems } from './systems-core.js';
@@ -1081,7 +1081,7 @@ function cleanTenders(x) {
     status: i.status === 'ready' ? 'ready' : 'open', readyOn: d(i.readyOn), due: d(i.due), visit: d(i.visit), note: String(i.note || '').slice(0, 500),
     // ADR-0083: the lifecycle — older rows get their stage from the old status
     stage: TD_STAGES.includes(i.stage) ? i.stage : (i.status === 'ready' ? 'ready' : 'received'), stageAt: d(i.stageAt) || d(i.readyOn) || i.date,
-    reason: String(i.reason || '').slice(0, 300), owner: String(i.owner || '').slice(0, 80), etimadNo: String(i.etimadNo || '').slice(0, 40),
+    sigOff: /^\d{4}-\d{2}-\d{2}/.test(String(i.sigOff || '')) ? String(i.sigOff).slice(0, 16) : '', reason: String(i.reason || '').slice(0, 300), owner: String(i.owner || '').slice(0, 80), etimadNo: String(i.etimadNo || '').slice(0, 40),
     value: tenderAmount(i.value), fees: tenderAmount(i.fees), bond: String(i.bond || '').slice(0, 120),
     askDue: d(i.askDue), openAt: d(i.openAt), submittedOn: d(i.submittedOn), submitNo: String(i.submitNo || '').slice(0, 60), workStart: d(i.workStart), decidedOn: d(i.decidedOn), study: String(i.study || '').slice(0, 300),
     entity: String(i.entity || '').slice(0, 200), site: String(i.site || '').slice(0, 300), ...cleanTenderDetails(i) }));   // entity, site: v9.58
@@ -1216,6 +1216,35 @@ function tdCleanup() {
       for (const g of join) { const one = g.slice(1).reduce((keep, o) => tenderMerge(keep, o), g[0]), gone = new Set(g.slice(1).map((o) => o.id)); items = items.filter((i) => !gone.has(i.id)).map((i) => (i.id === one.id ? one : i)); }
       try { await tdCommit({ ...tenders, items }); dlg.close(); renderTenders(); toast(t('td_cl_done', { x: out.size, m: join.length })); } catch { toast(t('td_store_failed')); } } })));
   dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
+}
+// v9.88 (ADR-0155): the stage each tender's mails speak for, offered to the manager — a sentence is read, the decision stays his
+const tdSignalList = () => (tenders?.items || []).map((i) => ({ i, s: tenderSignal(i, tdIsAI) })).filter((x) => x.s);
+function tdSignals() {
+  const list = tdSignalList();
+  const dlg = el('dialog', { class: 'proj-edit td-sg tw tw-md', 'aria-labelledby': 'td-sg-h' }, twHead(el('h2', { id: 'td-sg-h', text: t('td_sg_h') })),
+    el('p', { class: 'hint', text: t('td_sg_lead') }),
+    el('section', { class: 'td-cl-sec' }, list.map(({ i, s }, k) => el('label', { class: 'td-cl-row' }, el('input', { type: 'checkbox', class: 'td-sg-x', value: String(k), checked: '' }),
+      el('span', { class: 'td-cl-t' }, el('b', { text: i.subject }), el('span', { class: 'td-sg-q', text: `«${s.quote}»` }),
+        el('small', { text: `${s.who} · ${tdWallText(s.at)} — ${t('td_sg_move', { a: t(`td_st_${i.stage || 'received'}`), b: t(`td_st_${s.kind}`) })}` }))))),
+    twFoot(el('button', { type: 'button', class: 'btn primary td-sg-go', text: t('td_sg_go'), onclick: async () => {
+      const yes = new Set([...dlg.querySelectorAll('.td-sg-x:checked')].map((b) => Number(b.value))), by = new Map(list.map((x, k) => [x.i.id, { ...x, k }]));
+      const items = tenders.items.map((row) => { const x = by.get(row.id); if (!x) return row;
+        return yes.has(x.k) ? { ...row, ...tenderSignalPatch(row, x.s), activity: [tdActivity('signal', x.s.kind, { mailAt: x.s.at, who: String(x.s.who).slice(0, 120) }), ...(row.activity || [])] } : { ...row, sigOff: x.s.at }; });
+      try { await tdCommit({ ...tenders, items }); dlg.close(); renderTenders(); toast(t('td_sg_done', { n: yes.size, m: list.length - yes.size })); } catch { toast(t('td_store_failed')); } } })));
+  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal();
+}
+// v9.88: an entry that is part of another tender (a shared link, a list of questions) is put into it — its mails and files go with it
+function tdMergeInto(id) {
+  const from = tenders?.items.find((x) => x.id === id); if (!from) return;
+  const others = tenders.items.filter((x) => x.id !== id).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  const sel = el('select', { class: 'td-mi-sel', 'aria-label': t('td_mi_pick') }, el('option', { value: '', text: t('td_mi_pick') }), others.map((o) => el('option', { value: o.id, text: `${o.date} · ${o.subject}`.slice(0, 140) })));
+  const dlg = el('dialog', { class: 'proj-edit td-mi tw tw-sm', 'aria-labelledby': 'td-mi-h' }, twHead(el('h2', { id: 'td-mi-h', text: t('td_mi_h') })),
+    el('p', { class: 'hint', text: t('td_mi_lead', { s: from.subject }) }), sel,
+    twFoot(el('button', { type: 'button', class: 'btn primary td-mi-go', text: t('td_mi_go'), onclick: async () => {
+      const to = tenders.items.find((x) => x.id === sel.value); if (!to) { sel.focus(); return; }
+      const one = { ...tenderMerge(to, from), date: to.date, dateSource: to.dateSource, stage: to.stage, stageAt: to.stageAt };   // the tender chosen keeps its own arrival and stage
+      try { await tdCommit({ ...tenders, items: tenders.items.filter((x) => x.id !== from.id).map((x) => (x.id === to.id ? one : x)) }); dlg.close(); document.querySelector('dialog.td-dlg')?.close(); renderTenders(); toast(t('td_mi_done')); } catch { toast(t('td_store_failed')); } } })));
+  dlg.addEventListener('close', () => dlg.remove()); document.body.append(dlg); dlg.showModal(); sel.focus();
 }
 let tdMailParser, tdDocumentReader;
 const tdLoadMail = () => (tdMailParser ||= import('./assets/vendor/tender-mail.min.js').catch((error) => { tdMailParser = null; throw error; }));
@@ -2304,6 +2333,7 @@ function tdCard(i, { field, needsFields, today }) {
       el('button', { type: 'button', class: 'btn tiny td-ics', disabled: !(i.askDue || i.visit || i.due || i.openAt), text: `📅 ${t('td_ics')}`, onclick: () => { const b = new Blob([tdIcs(i)], { type: 'text/calendar' }), u = URL.createObjectURL(b); const x = el('a', { href: u, download: `tender-${(i.etimadNo || i.date).replace(/[^\w-]/g, '')}.ics` }); document.body.append(x); x.click(); x.remove(); setTimeout(() => URL.revokeObjectURL(u), 5000); } }),
       el('button', { type: 'button', class: 'btn tiny quiet', text: `📊 ${t('td_study_import_one')}`, onclick: () => study.click() }), study,
       el('span', { class: 'hint td-card-from', dir: 'auto', text: i.from }),
+      (tenders?.items || []).length > 1 ? el('button', { type: 'button', class: 'btn tiny quiet td-mi-btn', disabled: !!tdBusy, text: `⇢ ${t('td_mi_btn')}`, onclick: () => tdMergeInto(i.id) }) : null,
       el('button', { type: 'button', class: 'btn tiny quiet', disabled: !!tdBusy, text: `✕ ${t('td_del')}`, onclick: async () => { if (!confirm(t('td_del_confirm', { s: i.subject }))) return; try { await tdCommit({ ...tenders, items: tenders.items.filter((x) => x.id !== i.id) }); renderTenders(); } catch { toast(t('td_store_failed')); } } }));
   return el('div', { class: 'td-detail td-card' }, acts,
     tdStepper(i), tiles, etBox, tdTimeline(i, now),
@@ -2567,7 +2597,7 @@ function tdHistory(item) {
     tenderHistory(item).map((entry) => el('div', { class: `td-history-entry td-h-${entry.action}`, title: entry.logged && entry.logged !== entry.at ? t('td_history_logged', { at: tdWallText(entry.logged) }) : null },
       el('small', { class: 'td-h-at', dir: 'ltr', text: tdWallText(entry.at) }),
       el('span', { dir: 'auto', text: entry.action === 'email' && entry.who ? t('td_history_mail', { who: entry.who, value: entry.label })
-        : t(`td_history_${entry.action}`, { value: entry.action === 'stage' ? t(`td_st_${entry.label}`) : entry.label }) }))));
+        : t(`td_history_${entry.action}`, { value: entry.action === 'stage' || entry.action === 'signal' ? t(`td_st_${entry.label}`) : entry.label }) }))));
 }
 // v9.58: the folds under a tender's card stay as the manager left them while he works on it; a new window starts with them closed
 const tdFoldSet = new Set(); let tdFoldsFor = null;
@@ -2738,7 +2768,10 @@ function renderTenders() {
       (() => { const d = mailsOnDay(tenders?.items, today); return el('p', { class: 'hint td-today-mails', text: d.mails ? t('td_today_mails', { n: d.mails, m: d.tenders }) : t('td_today_none') }); })(),
       // v9.87 (ADR-0154): what in the register is not a tender, or is one tender twice — said here, tidied by the manager
       (() => { const c = tenderCleanup(tenders?.items, tdIsAI); return c.notTenders.length || c.duplicates.length ? el('p', { class: 'td-cl-line' }, el('span', { text: t('td_cl_line', { x: c.notTenders.length, m: c.duplicates.length }) }), ' ',
-        el('button', { type: 'button', class: 'btn tiny td-cl-btn', disabled: !!tdBusy, text: t('td_cl_btn'), onclick: () => tdCleanup() })) : null; })()),
+        el('button', { type: 'button', class: 'btn tiny td-cl-btn', disabled: !!tdBusy, text: t('td_cl_btn'), onclick: () => tdCleanup() })) : null; })(),
+      // v9.88 (ADR-0155): tenders whose mails speak for a stage they do not have
+      (() => { const n = tdSignalList().length; return n ? el('p', { class: 'td-cl-line td-sg-line' }, el('span', { text: t('td_sg_line', { n }) }), ' ',
+        el('button', { type: 'button', class: 'btn tiny td-sg-btn', disabled: !!tdBusy, text: t('td_sg_btn'), onclick: () => tdSignals() })) : null; })()),
     el('div', { class: 'td-listbar' }, el('div', { class: 'row td-filter' }, kinds, pick, searchForm),
       el('div', { class: 'td-list-acts' }, el('button', { type: 'button', class: 'btn tiny td-year-btn', text: `📈 ${t('td_yr_btn')}`, onclick: () => tdYearReport() }),
         el('button', { type: 'button', class: 'btn tiny td-arch-btn', text: `🗄 ${t('td_arch_btn')}`, onclick: () => tdArchiveOpen() }),

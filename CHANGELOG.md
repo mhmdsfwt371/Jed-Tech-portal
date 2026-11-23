@@ -17,6 +17,32 @@
 
 <!-- releases -->
 
+## v9.88 — 2026-11-24
+
+- المرحلة تُقرأ من الإيميلات: إذا ردّ الفرع بالاعتذار عن التقديم، أو أبلغ قسم المنافسات بأن العرض قُدِّم، يظهر سطر «راجع المراحل من الإيميلات» ويعرض لك الجملة وكاتبها ووقتها لكل مناقصة؛ ما تعتمده تتغير مرحلته بتاريخ الرد نفسه ويُكتب في سجله.
+- ما تراه غير دقيق تزيل علامته فيبقى كما هو ولا يُعرض عليك مرة أخرى — القرار يبقى لك، والبوابة تقترح فقط.
+- زر جديد في بطاقة كل عنصر «ضمّها إلى مناقصة أخرى»: الإيميل الذي سُجِّل وحده وهو جزء من مناقصة (رابط مشاركة، قائمة استفسارات) تنتقل إيميلاته وملفاته إلى بطاقتها.
+
+<details><summary>English</summary>
+
+- The stage is read from the emails: when the branch replies that it will not bid, or the tenders team reports that the offer was submitted, a line «Review the stages from the emails» appears and shows you the sentence, its writer and its time for each tender; what you accept changes stage on the day of that reply and is written in its history.
+- What you find inaccurate you untick: it stays as it is and is not offered to you again — the decision remains yours, and the portal only suggests.
+- A new button on every entry’s card, «Put it into another tender»: an email registered on its own that is really part of a tender (a shared link, a list of questions) has its emails and files moved into that tender’s card.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- مرحلہ ای میلز سے پڑھا جاتا ہے: جب برانچ بولی سے معذرت کا جواب دے، یا ٹینڈرز ٹیم بتائے کہ آفر جمع ہو گئی، تو «ای میلز سے مراحل کا جائزہ لیں» کی سطر ظاہر ہوتی ہے اور ہر ٹینڈر کے لیے جملہ، لکھنے والا اور وقت دکھاتی ہے؛ جسے آپ منظور کریں اس کا مرحلہ اسی جواب کی تاریخ پر بدل کر اس کی تاریخ میں لکھ دیا جاتا ہے۔
+- جو آپ کو درست نہ لگے اس سے نشان ہٹا دیں: وہ جوں کا توں رہتا ہے اور دوبارہ آپ کے سامنے نہیں آتا — فیصلہ آپ ہی کا رہتا ہے، پورٹل صرف تجویز دیتا ہے۔
+- ہر اندراج کے کارڈ پر نیا بٹن «اسے کسی دوسرے ٹینڈر میں شامل کریں»: جو ای میل الگ سے درج ہو گئی مگر دراصل کسی ٹینڈر کا حصہ ہے (شیئر کیا گیا لنک، سوالات کی فہرست) اس کی ای میلز اور فائلیں اس ٹینڈر کے کارڈ میں منتقل ہو جاتی ہیں۔
+
+</div>
+</details>
+
+
 ## v9.87 — 2026-11-24
 
 - سجل المناقصات للمناقصات وحدها: الإيميل الذي ليس مناقصة (شكوى، ملاحظات، رابط مشاركة) لا يُسجَّل بعد الآن كمناقصة جديدة، ويظهر لك سبب تركه.
