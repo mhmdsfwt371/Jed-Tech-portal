@@ -2518,6 +2518,18 @@ test('the latest such mail is offered as the tender\'s stage — unless the stag
   assert.equal(core.cleanTenderDetails({ activity: [{ id: 'a', action: 'signal', label: 'declined', at: '2026-11-24T00:00:00.000Z', mailAt: '2026-11-10T17:30', who: 'Branch Manager' }] }).activity[0].action, 'signal');
 });
 
+// v9.89: what the first real register taught the three readings
+test('a supplier RFQ is not a tender; a title inside a longer one is the same tender; a mail-safety banner is not a decision', () => {
+  const no = { subject: '', names: [], number: '', booklet: false, fromTeam: false, threadHasTeam: false };
+  assert.equal(core.mailIsTender({ ...no, subject: 'RFQ AFAQY-RFQ-C2-01: routers and switches' }), false);
+  const mk = (id, subject, etimadNo = '') => ({ id, subject, date: '2026-11-01', stage: 'received', etimadNo, byFrom: true, messages: [], files: [], thread: [] });
+  const c = core.tenderCleanup([mk('a', 'FW: توفير الاشتراطات الفنية لنظام القيادة والسيطرة', '261039007901'), mk('b', 'منافسة توفير الاشتراطات الفنية لنظام القيادة والسيطرة C2'), mk('c', 'توفير كاميرات'), mk('d', 'توفير كاميرات مراقبة للمبنى الرئيسي')], () => false);
+  assert.deepEqual(c.duplicates, [['a', 'b']]);                                   // «توفير كاميرات» is too short a title to claim a longer one
+  assert.equal(core.mailSignal('يرجى عدم الدخول على الروابط أو تحميل المرفقات إلا بعد التأكد من هوية المُرسل', false), null);
+  assert.equal(core.mailSignal('أوصي بعدم شراء الكراسة أو استكمال إجراءات التقدم في الوقت الحالي للأسباب التالية:', false).kind, 'declined');
+  assert.equal(core.mailSignal('اوصي بعدم الدخول بها', false).kind, 'declined');
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

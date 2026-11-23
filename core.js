@@ -3791,7 +3791,8 @@ export function mailEtimadRef(subject, names, body) {
   return '';
 }
 // «tender» as a word of its own: a circular on «the tendering process» is not a tender
-const TENDER_WORD = /منافس|مناقص|كراس|\btenders?\b|\brf[pq]\b/i, TENDER_FILE = /كراس|منافس|مناقص|جدول الكميات|جدول_الكميات|boq|tender/i;
+// not «RFQ»: that is the branch asking its suppliers for prices
+const TENDER_WORD = /منافس|مناقص|كراس|\btenders?\b/i, TENDER_FILE = /كراس|منافس|مناقص|جدول الكميات|جدول_الكميات|boq|tender/i;
 /** Does this mail open a tender? One sign is enough: an Etimad reference, a conditions booklet among its files, the tenders
  *  team as its writer or quoted in it, the word in its subject, or a file named as a tender's papers. */
 export function mailIsTender(m) {
@@ -3815,7 +3816,9 @@ export function tenderLooksReal(item, isTeam) {
 }
 const DUP_PREFIX = /^\s*(?:(?:re|fw|fwd|aw|wg)\s*:|رد\s*:|إعادة توجيه\s*:|اعادة توجيه\s*:|تحويل\s*:)\s*/i;
 // the title with what people type differently taken out: the prefixes, the spaces and marks, and the alef («كاميرات» and «كميرات»)
-function titleBones(subject) { let s = String(subject || ''); while (DUP_PREFIX.test(s)) s = s.replace(DUP_PREFIX, ''); return mailPlain(s).replace(/ى/g, 'ي').replace(/[^\p{L}\p{N}]+/gu, '').replace(/ا/g, ''); }
+function titleBones(subject) { let s = String(subject || ''); while (DUP_PREFIX.test(s)) s = s.replace(DUP_PREFIX, ''); return mailPlain(s).replace(/ى/g, 'ي').replace(/^\s*(?:ال)?(?:منافسه|مناقصه)\s+/, '').replace(/[^\p{L}\p{N}]+/gu, '').replace(/ا/g, ''); }
+// one title inside the other — «the tender for X» and «X (C2)» — when the shorter is long enough to be a title of its own
+const bonesSame = (a, b) => a.length >= 8 && b.length >= 8 && (a === b || (Math.min(a.length, b.length) >= 24 && (a.includes(b) || b.includes(a))));
 /** What to tidy in the register: the entries that do not look like tenders, and the groups that are one tender entered more
  *  than once — the same reference, or the same title once spelling habits are taken out. Two entries with two different
  *  references are never one tender, whatever their titles. Nothing is changed here; the manager decides. */
@@ -3825,7 +3828,7 @@ export function tenderCleanup(items, isTeam) {
   const rest = list.filter((i) => !out.has(i.id)), ref = rest.map(tenderRefOf), bones = rest.map((i) => titleBones(i.subject));
   const head = rest.map((_, k) => k), find = (k) => (head[k] === k ? k : (head[k] = find(head[k])));
   for (let a = 0; a < rest.length; a++) for (let b = a + 1; b < rest.length; b++) {
-    if (ref[a] && ref[b] ? ref[a] !== ref[b] : !(bones[a].length >= 8 && bones[a] === bones[b])) continue;
+    if (ref[a] && ref[b] ? ref[a] !== ref[b] : !bonesSame(bones[a], bones[b])) continue;
     head[find(b)] = find(a);
   }
   const groups = new Map(); rest.forEach((i, k) => { const h = find(k); groups.set(h, [...(groups.get(h) || []), i.id]); });
@@ -3850,7 +3853,7 @@ export function tenderMerge(keep, other, now = new Date().toISOString()) {
 // is already kept message by message, so the two sentences that settle a stage are read from it: the branch saying it will not
 // bid, and the tenders team saying the offer was submitted. A sentence is not a decision — «better not to submit unless the
 // date moves» reads the same — so the reading is offered, with its words and its writer, and the manager accepts it.
-const SIG_DECLINE = /عدم (?:ال)?(?:تقديم|مشارك|دخول|تقدم)|لن (?:ندخل|نشارك|نتقدم|نقدم|يتم (?:ال)?(?:تقديم|مشارك|دخول))|(?:نعتذر|اعتذار|الاعتذار) عن|مش هندخل|مش هنقدم|لا نرغب (?:في|ب)(?:ال)?(?:تقديم|مشارك|دخول)|will not (?:participate|bid|submit|be (?:participating|bidding|submitting))|not (?:to )?(?:participate|bid)\b|\bno[- ]bid\b|we (?:will )?pass on|\bdecline to\b/;
+const SIG_DECLINE = /عدم (?:ال)?(?:تقديم|مشارك|تقدم|شراء (?:ال)?كراس|استكمال)|عدم (?:ال)?دخول(?! (?:على|الى|في) (?:ال)?(?:روابط|رابط|مواقع))|لن (?:ندخل|نشارك|نتقدم|نقدم|يتم (?:ال)?(?:تقديم|مشارك|دخول))|(?:نعتذر|اعتذار|الاعتذار) عن|مش هندخل|مش هنقدم|لا نرغب (?:في|ب)(?:ال)?(?:تقديم|مشارك|دخول)|will not (?:participate|bid|submit|be (?:participating|bidding|submitting))|not (?:to )?(?:participate|bid)\b|\bno[- ]bid\b|we (?:will )?pass on|\bdecline to\b/;
 const SIG_SUBMIT = /تم (?:ال)?(?:تقديم|تقدم)|تم رفع (?:ال)?(?:عرض|عروض|عرضين)|(?:has|have|was|were) (?:been )?submitted|\bsubmitted (?:on|to|through) /;
 /** What one message says of the tender's stage, and the line that says it: `declined` from anyone but the tenders team,
  *  `submitted` from the tenders team alone — they are the ones who submit. null when it says neither. */

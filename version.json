@@ -1,25 +1,19 @@
 {
-  "version": "9.88",
+  "version": "9.89",
   "date": "2026-11-24",
   "notes": {
     "ar": [
-      "المرحلة تُقرأ من الإيميلات: إذا ردّ الفرع بالاعتذار عن التقديم، أو أبلغ قسم المنافسات بأن العرض قُدِّم، يظهر سطر «راجع المراحل من الإيميلات» ويعرض لك الجملة وكاتبها ووقتها لكل مناقصة؛ ما تعتمده تتغير مرحلته بتاريخ الرد نفسه ويُكتب في سجله.",
-      "ما تراه غير دقيق تزيل علامته فيبقى كما هو ولا يُعرض عليك مرة أخرى — القرار يبقى لك، والبوابة تقترح فقط.",
-      "زر جديد في بطاقة كل عنصر «ضمّها إلى مناقصة أخرى»: الإيميل الذي سُجِّل وحده وهو جزء من مناقصة (رابط مشاركة، قائمة استفسارات) تنتقل إيميلاته وملفاته إلى بطاقتها."
+      "ثلاثة تصحيحات من أول قراءة حقيقية للسجل: طلب عرض الأسعار المرسل للموردين (RFQ) لا يُسجَّل كمناقصة؛ والمناقصة التي كُتب عنوانها مرة بكلمة «منافسة» في أوله ومرة بدونها تُعرض للدمج؛ وجملة التنبيه الأمني في أسفل الإيميل («عدم الدخول على الروابط») لا تُقرأ كاعتذار، بينما «أوصي بعدم شراء الكراسة» تُقرأ."
     ],
     "en": [
-      "The stage is read from the emails: when the branch replies that it will not bid, or the tenders team reports that the offer was submitted, a line «Review the stages from the emails» appears and shows you the sentence, its writer and its time for each tender; what you accept changes stage on the day of that reply and is written in its history.",
-      "What you find inaccurate you untick: it stays as it is and is not offered to you again — the decision remains yours, and the portal only suggests.",
-      "A new button on every entry’s card, «Put it into another tender»: an email registered on its own that is really part of a tender (a shared link, a list of questions) has its emails and files moved into that tender’s card."
+      "Three corrections from the first real reading of the register: a request for quotation sent to suppliers (RFQ) is not registered as a tender; a tender whose title was once written with the word «tender» in front and once without is offered for merging; and the mail-safety notice at the foot of an email («do not open links») is not read as stepping aside, while «I recommend not buying the booklet» is."
     ],
     "ur": [
-      "مرحلہ ای میلز سے پڑھا جاتا ہے: جب برانچ بولی سے معذرت کا جواب دے، یا ٹینڈرز ٹیم بتائے کہ آفر جمع ہو گئی، تو «ای میلز سے مراحل کا جائزہ لیں» کی سطر ظاہر ہوتی ہے اور ہر ٹینڈر کے لیے جملہ، لکھنے والا اور وقت دکھاتی ہے؛ جسے آپ منظور کریں اس کا مرحلہ اسی جواب کی تاریخ پر بدل کر اس کی تاریخ میں لکھ دیا جاتا ہے۔",
-      "جو آپ کو درست نہ لگے اس سے نشان ہٹا دیں: وہ جوں کا توں رہتا ہے اور دوبارہ آپ کے سامنے نہیں آتا — فیصلہ آپ ہی کا رہتا ہے، پورٹل صرف تجویز دیتا ہے۔",
-      "ہر اندراج کے کارڈ پر نیا بٹن «اسے کسی دوسرے ٹینڈر میں شامل کریں»: جو ای میل الگ سے درج ہو گئی مگر دراصل کسی ٹینڈر کا حصہ ہے (شیئر کیا گیا لنک، سوالات کی فہرست) اس کی ای میلز اور فائلیں اس ٹینڈر کے کارڈ میں منتقل ہو جاتی ہیں۔"
+      "رجسٹر کی پہلی حقیقی پڑھائی سے تین درستیاں: سپلائرز کو بھیجی گئی قیمتوں کی درخواست (RFQ) ٹینڈر کے طور پر درج نہیں ہوتی؛ جس ٹینڈر کا عنوان ایک بار شروع میں «ٹینڈر» کے لفظ کے ساتھ اور ایک بار اس کے بغیر لکھا گیا وہ ضم کرنے کے لیے پیش کیا جاتا ہے؛ اور ای میل کے آخر میں حفاظتی تنبیہ («لنکس نہ کھولیں») کو معذرت نہیں سمجھا جاتا، جبکہ «میں کتابچہ نہ خریدنے کی سفارش کرتا ہوں» کو سمجھا جاتا ہے۔"
     ]
   },
   "counts": {
-    "versions": 213,
+    "versions": 214,
     "decisions": 155
   }
 }

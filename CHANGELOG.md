@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.89 — 2026-11-24
+
+- ثلاثة تصحيحات من أول قراءة حقيقية للسجل: طلب عرض الأسعار المرسل للموردين (RFQ) لا يُسجَّل كمناقصة؛ والمناقصة التي كُتب عنوانها مرة بكلمة «منافسة» في أوله ومرة بدونها تُعرض للدمج؛ وجملة التنبيه الأمني في أسفل الإيميل («عدم الدخول على الروابط») لا تُقرأ كاعتذار، بينما «أوصي بعدم شراء الكراسة» تُقرأ.
+
+<details><summary>English</summary>
+
+- Three corrections from the first real reading of the register: a request for quotation sent to suppliers (RFQ) is not registered as a tender; a tender whose title was once written with the word «tender» in front and once without is offered for merging; and the mail-safety notice at the foot of an email («do not open links») is not read as stepping aside, while «I recommend not buying the booklet» is.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- رجسٹر کی پہلی حقیقی پڑھائی سے تین درستیاں: سپلائرز کو بھیجی گئی قیمتوں کی درخواست (RFQ) ٹینڈر کے طور پر درج نہیں ہوتی؛ جس ٹینڈر کا عنوان ایک بار شروع میں «ٹینڈر» کے لفظ کے ساتھ اور ایک بار اس کے بغیر لکھا گیا وہ ضم کرنے کے لیے پیش کیا جاتا ہے؛ اور ای میل کے آخر میں حفاظتی تنبیہ («لنکس نہ کھولیں») کو معذرت نہیں سمجھا جاتا، جبکہ «میں کتابچہ نہ خریدنے کی سفارش کرتا ہوں» کو سمجھا جاتا ہے۔
+
+</div>
+</details>
+
+
 ## v9.88 — 2026-11-24
 
 - المرحلة تُقرأ من الإيميلات: إذا ردّ الفرع بالاعتذار عن التقديم، أو أبلغ قسم المنافسات بأن العرض قُدِّم، يظهر سطر «راجع المراحل من الإيميلات» ويعرض لك الجملة وكاتبها ووقتها لكل مناقصة؛ ما تعتمده تتغير مرحلته بتاريخ الرد نفسه ويُكتب في سجله.
