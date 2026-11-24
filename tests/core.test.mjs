@@ -2538,6 +2538,21 @@ test('a moved reminder is a card of its own on the day it was put; the tender\'s
   assert.deepEqual(G.map((x) => [x.key, x.day, x.later.map((l) => l.key)]), [['due', '2026-11-24', ['openAt']], ['handover', '2026-11-27', []], ['bondCost', '2026-11-28', []]]);
 });
 
+// v9.92: every mail says when it was sent — in «Check the folder» (one column, newest first within each kind) and on each tender's row
+// in the register (how many mails, from the first to the last), so the dates are seen without opening anything.
+test('v9.92: the mail dates — on each row of the folder check, and the first and last mail of every tender', () => {
+  const items = [{ id: 'a', messages: [{ key: 'id:<m1>', hash: 'h1', at: '2026-11-02T12:18' }] }];
+  const r = core.mailDirReport([
+    { name: 'x.eml', size: 9, key: 'id:<m1>', hash: 'h1', at: '2026-11-02T12:18' },
+    { name: 'y.eml', size: 9, key: 'id:<m5>', hash: 'h5', at: '2026-11-15T19:35' },
+    { name: 'z.eml', size: 9, key: 'id:<m6>', hash: 'h6' }], items, [], []);
+  assert.deepEqual(r.rows.map((x) => x.at || ''), ['2026-11-02T12:18', '2026-11-15T19:35', ''], 'each row carries the mail\'s own time, empty when the mail has none');
+  assert.deepEqual(core.tenderMailSpan({ messages: [{ at: '2026-11-15T19:35' }, { date: '2026-11-02' }, { at: '2026-11-24T04:26' }, {}, { at: 'junk' }] }),
+    { n: 3, first: '2026-11-02', last: '2026-11-24T04:26' }, 'counted by the mails that have a time; the date stands in where the time is missing');
+  assert.deepEqual(core.tenderMailSpan({ messages: [{ at: '2026-11-15T19:35' }] }), { n: 1, first: '2026-11-15T19:35', last: '2026-11-15T19:35' });
+  assert.equal(core.tenderMailSpan({}), null, 'no mails, nothing to say');
+  assert.equal(core.tenderMailSpan({ messages: [{ subject: 'x' }] }), null);
+});
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

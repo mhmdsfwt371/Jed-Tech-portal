@@ -3552,11 +3552,19 @@ export function mailDirReport(files, items, seen, failed) {
       if (it) { row = { name: f.name, status: met.has(f.key) ? 'same' : 'in', id: it.id, subject: it.subject || '' }; ids.add(it.id); }
       else row = known.has(f.name) ? { name: f.name, status: 'out', why: why.get(f.name) || 'md_ck_gone' } : { name: f.name, status: 'wait' };
       met.add(f.key);
+      if (typeof f.at === 'string' && MAIL_AT_RE.test(f.at)) row.at = f.at;   // v9.92: the mail's own time, for the date column
     }
     rows.push(row); n.mails++; n[row.status]++;
   }
   n.tenders = ids.size;
   return { rows, n };
+}
+const MAIL_AT_RE = /^20\d{2}-\d{2}-\d{2}(?:T\d{2}:\d{2})?$/;
+/** v9.92: a tender's mails in one line — how many carry a time, the first and the last (the mail's own time, else its date). */
+export function tenderMailSpan(item) {
+  const at = (Array.isArray(item && item.messages) ? item.messages : []).map((m) => (m && typeof m.at === 'string' && MAIL_AT_RE.test(m.at) ? m.at : m && typeof m.date === 'string' && MAIL_AT_RE.test(m.date) ? m.date : ''))
+    .filter(Boolean).sort();
+  return at.length ? { n: at.length, first: at[0], last: at[at.length - 1] } : null;
 }
 /** The mails that could not be registered, kept by name with the reason: a name the folder no longer has is forgotten, and so is
  *  one registered since; a new failure is added (the latest reason wins). */

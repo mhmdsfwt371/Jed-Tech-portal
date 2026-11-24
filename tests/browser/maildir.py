@@ -154,15 +154,24 @@ with sync_playwright() as p:
     check('M20 a mail that could not be registered is said under the folder by count, and stays said after another round', fl.count()==1 and 'not registered: 1' in fl.inner_text() and (read_now(pg,2000) or True) and pg.locator('#tenders-body .td-dir .md-failed').count()==1, line(pg)[:200])
     write(pg,'2026-11-22_090000_c8.eml',eml('sample: Check late arrival','ck-6',1))
     pg.locator('#tenders-body .td-dir .md-ck-btn').click(); until(pg, lambda: 'Reading the files' not in (pg.locator('dialog.md-ck-dlg .md-ck-sum').inner_text() if pg.locator('dialog.md-ck-dlg').count() else 'Reading the files'), 20)
-    ck=pg.evaluate("()=>{const d=document.querySelector('dialog.md-ck-dlg[open]');if(!d)return null;return {sum:d.querySelector('.md-ck-sum').textContent,rows:[...d.querySelectorAll('tbody tr')].map(r=>[r.dataset.st,r.cells[0].textContent,r.cells[1].textContent,r.cells[2].textContent]),reg:d.querySelector('.md-ck-reg').hidden?'':d.querySelector('.md-ck-reg').textContent,x:document.activeElement===d.querySelector('.dlg-x')}}")
+    ck=pg.evaluate("()=>{const d=document.querySelector('dialog.md-ck-dlg[open]');if(!d)return null;return {sum:d.querySelector('.md-ck-sum').textContent,rows:[...d.querySelectorAll('tbody tr')].map(r=>[r.dataset.st,r.cells[1].textContent,r.cells[2].textContent,r.cells[3].textContent,r.cells[0].textContent]),head:[...d.querySelectorAll('thead th')].map(h=>h.textContent),reg:d.querySelector('.md-ck-reg').hidden?'':d.querySelector('.md-ck-reg').textContent,x:document.activeElement===d.querySelector('.dlg-x')}}")
     st={r[1]:r[0] for r in (ck['rows'] if ck else [])}
     check('M21 «Check the folder» says every mail against the register: in which tender, a second copy, not registered and why, not read yet, still being written — problems first, the counts above',
         ck and st.get('2026-11-22_080000_c1.eml')=='in' and st.get('2026-11-22_081000_c3.eml')=='same' and st.get('2026-11-22_081700_c6.eml')=='out' and st.get('2026-11-22_090000_c8.eml')=='wait' and st.get('2026-11-22_081800_c7.eml')=='empty'
         and ck['rows'][0][0]=='out' and 'Mails in the folder: 8' in ck['sum'] and 'In the register: 4, across 3 tenders' in ck['sum'] and 'missing' in ' '.join(r[2] for r in ck['rows'] if r[0]=='out').lower() and 'sample: Check cameras' in ' '.join(r[3] for r in ck['rows']) and ck['x'] and 'Register the ones not in the register (2)' in ck['reg'], ck)
+    # v9.92: the date column — the mail's own time on every mail that was read, newest first inside each kind, «—» where the mail has none
+    import re as _re
+    ins=[r[4] for r in (ck['rows'] if ck else []) if r[0]=='in']
+    check('M21b «Check the folder» shows each mail\'s date in its first column, newest first within each kind; a mail with no date shows «—»',
+        ck and ck['head'][0]=='Date' and ins and all(_re.match(r'^20\d\d-\d\d-\d\d \d\d:\d\d$', x) for x in ins) and ins==sorted(ins, reverse=True)
+        and next(r[4] for r in ck['rows'] if r[0]=='out')=='—' and next(r[4] for r in ck['rows'] if r[0]=='empty')=='—', ck and [ck['head'], [(r[0], r[4]) for r in ck['rows']]])
     n0=pg.evaluate(REG)['n']; pg.locator('dialog.md-ck-dlg .md-ck-reg').click()
-    ST2="()=>Object.fromEntries([...document.querySelectorAll('dialog.md-ck-dlg tbody tr')].map(r=>[r.cells[0].textContent,r.dataset.st]))"
+    ST2="()=>Object.fromEntries([...document.querySelectorAll('dialog.md-ck-dlg tbody tr')].map(r=>[r.cells[1].textContent,r.dataset.st]))"
     until(pg, lambda: pg.evaluate(ST2).get('2026-11-22_090000_c8.eml')=='in', 25); st2=pg.evaluate(ST2)
     check('M22 «Register the ones not in the register» registers the mail not read yet and checks again; the one that cannot be placed stays with its reason', pg.evaluate(REG)['n']==n0+1 and st2.get('2026-11-22_090000_c8.eml')=='in' and st2.get('2026-11-22_081700_c6.eml')=='out', (pg.evaluate(REG)['n']-n0, st2))
+    chips=pg.evaluate("()=>[...document.querySelectorAll('#tenders-body .td-mail-chip')].map(c=>[c.textContent,c.title])")
+    check('M22b every tender row with mails carries their dates: one mail and its day, or how many and the first and last day, the full times on hover',
+        chips and all(_re.match(r'^📧 (One mail · on \d{1,2} \w+|\d+ mails · (all on \d{1,2} \w+|from \d{1,2} \w+ to \d{1,2} \w+))$', c[0]) and ' → ' in c[1] for c in chips), chips)
     pg.locator('dialog.md-ck-dlg .md-ck-open').first.click(); pg.wait_for_timeout(900)
     op=pg.evaluate("()=>({ck:!!document.querySelector('dialog.md-ck-dlg'),card:document.querySelector('dialog.td-dlg[open] .td-dlg-h')?.textContent||''})")
     check('M23 a tender\'s name in the check opens its card', not op['ck'] and 'sample: Check' in op['card'], op)

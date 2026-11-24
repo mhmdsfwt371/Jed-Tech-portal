@@ -1,19 +1,19 @@
 {
-  "version": "9.91",
+  "version": "9.92",
   "date": "2026-11-24",
   "notes": {
     "ar": [
-      "سحب الموعد في شريط «المواعيد القادمة» صار يظهر كما تتوقع: التذكير الذي تسحبه إلى يوم يظهر بطاقة في ذلك اليوم نفسه ومعه «من أين نُقل» وزر الرجوع، بدل أن يبقى مطويًّا داخل بطاقة المناقصة في يوم آخر فيبدو كأن السحب لم ينجح."
+      "كل سطر في سجل المناقصات يعرض تواريخ إيميلاته: عدد الإيميلات ويوم أولها وآخرها، ونافذة «افحص الفولدر» فيها عمود للتاريخ والأحدث أولًا."
     ],
     "en": [
-      "Dragging a date in the «Upcoming dates» strip now shows what you expect: the reminder you drag onto a day appears as a card on that very day, with where it was moved from and the button that puts it back, instead of staying folded inside the tender’s card on another day as if the drop had not worked."
+      "Every row of the tender register shows its emails’ dates — how many emails and the day of the first and the last — and «Check the folder» has a date column with the newest first."
     ],
     "ur": [
-      "«آنے والی تاریخیں» کی پٹی میں تاریخ کو گھسیٹنا اب ویسا ہی دکھائی دیتا ہے جیسا آپ توقع کرتے ہیں: جس یاددہانی کو آپ کسی دن پر گھسیٹتے ہیں وہ اسی دن ایک کارڈ کے طور پر ظاہر ہوتی ہے، ساتھ یہ کہ اسے کہاں سے منتقل کیا گیا اور واپس رکھنے کا بٹن، بجائے اس کے کہ وہ کسی اور دن ٹینڈر کے کارڈ کے اندر تہہ رہے اور لگے کہ گھسیٹنا کام نہیں آیا۔"
+      "ٹینڈر رجسٹر کی ہر سطر اپنی ای میلز کی تاریخیں دکھاتی ہے — ای میلز کی تعداد اور پہلی اور آخری کا دن — اور «فولڈر چیک کریں» میں تاریخ کا کالم ہے جس میں سب سے نئی پہلے آتی ہے۔"
     ]
   },
   "counts": {
-    "versions": 216,
+    "versions": 217,
     "decisions": 155
   }
 }
