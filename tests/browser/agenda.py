@@ -77,18 +77,20 @@ with sync_playwright() as p:
     target=day(3); pg.locator('.td-agenda .ag-item', has_text='Agenda far tender').drag_to(pg.locator(f'.td-agenda .ag-day[data-day="{target}"]'), source_position={'x':40,'y':12})   # taken by its title, as a hand would; pg.wait_for_timeout(900)
     after=pg.evaluate(RG); f=far()
     check('G14 a card dragged onto another day moves its reminder there and says where it came from; the platform\'s inquiries deadline does not move',
-        after['moves'].get('askUp',{}).get('to')==target and after['askDue']==before['askDue'] and 'moved from' in f[2] and 'now falls on' in pg.locator('#toast').inner_text(), (f, before, after))
+        after['moves'].get('askUp',{}).get('to')==target and after['askDue']==before['askDue'] and 'now falls on' in pg.locator('#toast').inner_text(), (f, before, after))
+    INDAY=lambda d: pg.locator(f'.td-agenda .ag-day[data-day="{d}"] .ag-item.ag-moved', has_text='Agenda far tender')
+    check('G14b the card shows on the day it was dropped, saying where it came from — not folded into the tender\'s card on another day (v9.91)', INDAY(target).count()==1 and 'moved from' in INDAY(target).inner_text(), [x for x in items(pg) if 'Agenda far tender' in x[2]])
     pg.reload(); pg.wait_for_timeout(1500); pg.evaluate("location.hash='#tenders'"); pg.wait_for_timeout(900); pg.locator('.td-agenda .ag-range button', has_text='14').click(); pg.wait_for_timeout(500)
-    check('G15 the moved reminder is still where it was put after the page is opened again', pg.evaluate(RG)['moves'].get('askUp',{}).get('to')==target and 'moved from' in far()[2], far())
-    head=far()[0]; pg.locator('.td-agenda .ag-item', has_text='Agenda far tender').locator('.ag-move-in').fill(day(8)); pg.locator('.td-agenda .ag-item', has_text='Agenda far tender').locator('.ag-move-in').dispatch_event('change'); pg.wait_for_timeout(900)
+    check('G15 the moved reminder is still where it was put after the page is opened again', pg.evaluate(RG)['moves'].get('askUp',{}).get('to')==target and INDAY(target).count()==1, far())
+    own=pg.locator('.td-agenda .ag-item:not(.ag-moved)', has_text='Agenda far tender'); head=own.get_attribute('data-key'); own.locator('.ag-move-in').fill(day(8)); own.locator('.ag-move-in').dispatch_event('change'); pg.wait_for_timeout(900)
     g16=pg.evaluate(RG)
     check('G16 without a mouse (a phone, the keyboard): the day picked on the card moves its reminder the same way', g16['moves'].get(head,{}).get('to')==day(8) and g16['askDue']==before['askDue'], (head, g16))
     for _ in range(4):
-        u=pg.locator('.td-agenda .ag-item', has_text='Agenda far tender').locator('.ag-unmove')
+        u=pg.locator('.td-agenda .ag-item', has_text='Agenda far tender').locator('.ag-unmove')   # each moved card carries its own way back
         if not u.count(): break
         u.first.click(); pg.wait_for_timeout(700)
     back=pg.evaluate(RG)
-    check('G17 «Back to its own day» puts each reminder back where the deadline puts it, and the moves are forgotten', back['moves']=={} and 'moved from' not in far()[2] and far()[0]=='askUp', (far(), back))
+    check('G17 «Back to its own day» puts each reminder back where the deadline puts it, and the moves are forgotten', back['moves']=={} and 'moved from' not in far()[2] and far()[0]=='askUp' and pg.locator('.td-agenda .ag-item', has_text='Agenda far tender').count()==1, (far(), back))
     check('G11 no page error', not errs, errs[:2])
     for theme,vp,lang,word in (('dark',(390,800),'ar','المواعيد القادمة'),('light',(1366,800),'ur','آنے والی تاریخیں')):
         # the same register, opened again in another language, theme and width (the register lives in this browser's own store)

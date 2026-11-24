@@ -23,3 +23,7 @@ card from one day to another — «take tomorrow's and put it on Monday» — fi
 `tests/core.test.mjs` «v9.78» (failed on 9.77 first: no `agendaByTender`). `tests/browser/agenda.py` G3b and G13–G17, failed on 9.77
 first: one card per tender with its later dates, a column for every day, a card dragged by its title onto another day (the deadline
 unmoved), the move kept after reopening, the day picked on the card, «Back to its own day».
+
+
+## تعديل 9.91 — التذكير المنقول بطاقة في يومه
+كان التذكير المنقول يبقى مطويًّا داخل بطاقة المناقصة (في عمود أقرب مواعيدها)، فمن يسحبه إلى السبت يراه تحت «اليوم» ويظن أن السحب فشل. `agendaByTender()` يجعل كل تذكير منقول (`from`) بطاقة مستقلة في اليوم الذي وُضع فيه، وباقي مواعيد المناقصة تبقى في بطاقة واحدة. الاختبار: `tests/core.test.mjs` و`agenda.py` (G14b).

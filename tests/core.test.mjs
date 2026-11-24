@@ -2530,6 +2530,14 @@ test('a supplier RFQ is not a tender; a title inside a longer one is the same te
   assert.equal(core.mailSignal('اوصي بعدم الدخول بها', false).kind, 'declined');
 });
 
+// v9.91: a reminder dropped on a day shows on that day
+test('a moved reminder is a card of its own on the day it was put; the tender\'s other dates stay in one card', () => {
+  const A = [{ id: 't', key: 'due', day: '2026-11-24', left: 0 }, { id: 't', key: 'handover', day: '2026-11-27', left: 3, from: '2026-11-22' }, { id: 't', key: 'openAt', day: '2026-11-25', left: 1 },
+    { id: 't', key: 'bondCost', day: '2026-11-28', left: 4, from: '2026-11-19' }];
+  const G = core.agendaByTender(A);
+  assert.deepEqual(G.map((x) => [x.key, x.day, x.later.map((l) => l.key)]), [['due', '2026-11-24', ['openAt']], ['handover', '2026-11-27', []], ['bondCost', '2026-11-28', []]]);
+});
+
 for (const [name, fn] of tests) {
   try { fn(); } catch (e) { failed++; console.error(`FAIL ${name}\n  ${e.message}`); }
 }

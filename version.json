@@ -1,22 +1,19 @@
 {
-  "version": "9.90",
+  "version": "9.91",
   "date": "2026-11-24",
   "notes": {
     "ar": [
-      "قراءة فولدر الإيميلات أسرع كثيرًا: تُسجَّل الإيميلات كلها أولًا ثم تُقرأ الكراسات والمرفقات بعدها، بدل أن تنتظر كل عشرة إيميلات قراءة كراساتها. يظهر العدد الكامل للمناقصات خلال دقائق لا ساعة.",
-      "زر «اقرأ الآن» يقول لك صراحة إن لم يكن في الفولدر إيميل جديد، ومعه عدد الملفات المقروءة."
+      "سحب الموعد في شريط «المواعيد القادمة» صار يظهر كما تتوقع: التذكير الذي تسحبه إلى يوم يظهر بطاقة في ذلك اليوم نفسه ومعه «من أين نُقل» وزر الرجوع، بدل أن يبقى مطويًّا داخل بطاقة المناقصة في يوم آخر فيبدو كأن السحب لم ينجح."
     ],
     "en": [
-      "Reading the mail folder is much faster: every email is registered first and the booklets and attachments are read afterwards, instead of every ten emails waiting for their booklets to be read. The full count of tenders shows within minutes, not an hour.",
-      "«Read now» tells you plainly when the folder holds no new email, with the number of files already read."
+      "Dragging a date in the «Upcoming dates» strip now shows what you expect: the reminder you drag onto a day appears as a card on that very day, with where it was moved from and the button that puts it back, instead of staying folded inside the tender’s card on another day as if the drop had not worked."
     ],
     "ur": [
-      "ای میل فولڈر کو پڑھنا بہت تیز ہو گیا: پہلے تمام ای میلز درج ہوتی ہیں اور کتابچے اور منسلکات بعد میں پڑھے جاتے ہیں، بجائے اس کے کہ ہر دس ای میلز اپنے کتابچوں کے پڑھے جانے کا انتظار کریں۔ ٹینڈرز کی پوری تعداد ایک گھنٹے کے بجائے چند منٹ میں سامنے آ جاتی ہے۔",
-      "«ابھی پڑھیں» صاف بتاتا ہے جب فولڈر میں کوئی نئی ای میل نہ ہو، اور ساتھ ہی پہلے سے پڑھی گئی فائلوں کی تعداد بھی۔"
+      "«آنے والی تاریخیں» کی پٹی میں تاریخ کو گھسیٹنا اب ویسا ہی دکھائی دیتا ہے جیسا آپ توقع کرتے ہیں: جس یاددہانی کو آپ کسی دن پر گھسیٹتے ہیں وہ اسی دن ایک کارڈ کے طور پر ظاہر ہوتی ہے، ساتھ یہ کہ اسے کہاں سے منتقل کیا گیا اور واپس رکھنے کا بٹن، بجائے اس کے کہ وہ کسی اور دن ٹینڈر کے کارڈ کے اندر تہہ رہے اور لگے کہ گھسیٹنا کام نہیں آیا۔"
     ]
   },
   "counts": {
-    "versions": 215,
+    "versions": 216,
     "decisions": 155
   }
 }

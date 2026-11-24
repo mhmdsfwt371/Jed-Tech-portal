@@ -3483,7 +3483,9 @@ export const tenderNoticeId = (x) => `${x.id}:${x.key}:${x.day}`;
  *  ride inside that card as `later`. The agenda's own order (nearest first) decides which date leads. */
 export function agendaByTender(agenda) {
   const by = new Map(), out = [];
-  for (const x of Array.isArray(agenda) ? agenda : []) { const h = by.get(x.id); if (h) h.later.push(x); else { const y = { ...x, later: [] }; by.set(x.id, y); out.push(y); } }
+  // v9.91: a reminder the manager moved stands on the day he put it. Folded into the tender's card it stayed in the card's own
+  // column — dropped on Saturday, it showed under Today — and the drop looked as if it had not worked.
+  for (const x of Array.isArray(agenda) ? agenda : []) { const h = x.from ? null : by.get(x.id); if (x.from) out.push({ ...x, later: [] }); else if (h) h.later.push(x); else { const y = { ...x, later: [] }; by.set(x.id, y); out.push(y); } }
   return out;
 }
 /** The tender's reminder moves after one is moved: `key`'s date `from` (its own day) now reminds on `to`. Moved back to its own

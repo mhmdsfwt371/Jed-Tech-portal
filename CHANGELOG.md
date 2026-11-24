@@ -17,6 +17,26 @@
 
 <!-- releases -->
 
+## v9.91 — 2026-11-24
+
+- سحب الموعد في شريط «المواعيد القادمة» صار يظهر كما تتوقع: التذكير الذي تسحبه إلى يوم يظهر بطاقة في ذلك اليوم نفسه ومعه «من أين نُقل» وزر الرجوع، بدل أن يبقى مطويًّا داخل بطاقة المناقصة في يوم آخر فيبدو كأن السحب لم ينجح.
+
+<details><summary>English</summary>
+
+- Dragging a date in the «Upcoming dates» strip now shows what you expect: the reminder you drag onto a day appears as a card on that very day, with where it was moved from and the button that puts it back, instead of staying folded inside the tender’s card on another day as if the drop had not worked.
+
+</details>
+
+<details><summary>اردو</summary>
+
+<div dir="rtl">
+
+- «آنے والی تاریخیں» کی پٹی میں تاریخ کو گھسیٹنا اب ویسا ہی دکھائی دیتا ہے جیسا آپ توقع کرتے ہیں: جس یاددہانی کو آپ کسی دن پر گھسیٹتے ہیں وہ اسی دن ایک کارڈ کے طور پر ظاہر ہوتی ہے، ساتھ یہ کہ اسے کہاں سے منتقل کیا گیا اور واپس رکھنے کا بٹن، بجائے اس کے کہ وہ کسی اور دن ٹینڈر کے کارڈ کے اندر تہہ رہے اور لگے کہ گھسیٹنا کام نہیں آیا۔
+
+</div>
+</details>
+
+
 ## v9.90 — 2026-11-24
 
 - قراءة فولدر الإيميلات أسرع كثيرًا: تُسجَّل الإيميلات كلها أولًا ثم تُقرأ الكراسات والمرفقات بعدها، بدل أن تنتظر كل عشرة إيميلات قراءة كراساتها. يظهر العدد الكامل للمناقصات خلال دقائق لا ساعة.
