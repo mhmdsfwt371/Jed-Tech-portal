@@ -426,6 +426,20 @@
         "ar": "can-records",
         "en": "can-records"
       }
+    },
+    {
+      "id": "custom_fabedb7a2fb54908bf0896bf3e89615e",
+      "category": "afaqy",
+      "url": "https://copilot.afaqydev.me/dashboard",
+      "name": {
+        "ar": "CAN-Copilot",
+        "en": "CAN-Copilot",
+        "ur": "CAN-Copilot"
+      },
+      "desc": {
+        "ar": "داتا بيز لجميع الاجهزة و الكانات",
+        "en": "ALL CAN Devices"
+      }
     }
   ]
 }
