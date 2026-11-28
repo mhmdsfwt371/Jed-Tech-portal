@@ -6,7 +6,7 @@ import { parseViewLink, viewFileUrl, openView, viewGroups, tenderNext, VIEW_DATE
 const STR = {
   ar: {
     title: 'سجل المناقصات', refresh: 'تحديث', loading: 'جارٍ فتح السجل…', published: 'آخر نشر من صفووت: {t}', search: 'ابحث بالاسم أو الرقم المرجعي أو الجهة',
-    running: 'جارية', submitted: 'قُدِّم عرضها', archive: 'الأرشيف', soon: 'لها موعد خلال ٧ أيام',
+    running: 'جارية', submitted: 'قُدِّم عرضها', archive: 'الأرشيف', soon: 'لها موعد خلال 7 أيام',
     empty: 'لا توجد مناقصات في هذه القائمة.', noMatch: 'لا توجد نتيجة لهذا البحث.',
     'no-key': 'هذا الرابط لا يحمل مفتاح الفتح. افتح الرابط كاملًا كما أُرسل إليك، دون حذف شيء من آخره.',
     'bad-key': 'مفتاح هذا الرابط ناقص أو تالف. افتح الرابط كاملًا كما أُرسل إليك.',
