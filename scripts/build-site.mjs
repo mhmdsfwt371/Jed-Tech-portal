@@ -15,7 +15,7 @@ writeFileSync(join(out, 'version.json'), JSON.stringify(vj, null, 2) + '\n');
 // every file the app needs must be in the site: the offline shell (sw.js), local imports, and local src/href references
 const need = new Set();
 const sw = readFileSync(join(root, 'sw.js'), 'utf8'); for (const m of sw.match(/'\.\/[^']*'/g) || []) need.add(m.slice(3, -1));
-for (const f of ['index.html', 'app.js', 'core.js', 'config.js', 'manage-systems.html', 'manage-systems.js', 'tender-analyzer.html']) {
+for (const f of ['index.html', 'app.js', 'core.js', 'config.js', 'manage-systems.html', 'manage-systems.js', 'tender-analyzer.html', 'tenders-view.html', 'tenders-view.js']) {
   const s = readFileSync(join(root, f), 'utf8');
   for (const m of s.matchAll(/(?:import[^'"]*from\s*|src\s*[:=]\s*|href\s*[:=]\s*|fetch\(\s*|new URL\(\s*)['"`]\.\/([A-Za-z0-9_\-./]+?\.(?:js|json|html|png|svg|woff2|pdf|zip|webmanifest))['"`]/g)) need.add(m[1]);
 }

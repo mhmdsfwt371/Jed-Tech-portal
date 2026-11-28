@@ -127,6 +127,24 @@ for (const rule of ['READ-ONLY', 'NEVER GUESS AN API PATH', 'Never put tokens'])
 for (const pit of ['"dateOfCompletion" (always null)', '"isAutomaticTask"', 'Do NOT open tasks one by one', 'carry no time zone and are UTC',
                    'ABSOLUTE RULE — NOTHING MAY CHANGE IN MYAFAQY', 'Security/GetAllHierarchyUsersDropDown · Teams/GetAllTeams · Teams/GetTeamById · Task/GetMyTasksGrid', 'STOP and ask me']) if (!p.includes(pit)) note(`prompt lost a verified pitfall: ${pit}`);
 
+// 31. ADR-0156: the tender register's read-only page. It reads one sealed file, on this site's own address, and nothing else; the key
+//     is in the link after # and is never sent or kept; every text from the register is shown as text. The core that seals and
+//     opens is pure (no network) — Safwoot seals with it, the page opens with it.
+{
+  const page = exists('tenders-view.js') ? read('tenders-view.js') : '', core = exists('tenders-view-core.js') ? read('tenders-view-core.js') : '', html = exists('tenders-view.html') ? read('tenders-view.html') : '';
+  if (!page || !core || !html) note('tenders-view.html, tenders-view.js and tenders-view-core.js must ship together (ADR-0156)');
+  const calls = (page.match(/fetch\(/g) || []).length;
+  if (calls !== 1 || !page.includes('fetch(`${viewFileUrl(link.repo)}?t=${Date.now()}`, {')) note(`tenders-view.js: the page reads the sealed file only, through viewFileUrl() — found ${calls} network call(s) (ADR-0156)`);
+  if (/fetch\(|XMLHttpRequest|sendBeacon|WebSocket/.test(core)) note('tenders-view-core.js: the core seals and opens; it never reaches the network (ADR-0156)');
+  if (!/return `\.\.\/\$\{repo\}\/\$\{VIEW_FILE\}`;/.test(core) || !/const REPO = \/\^\(\?!\\\.\{1,2\}\$\)\[A-Za-z0-9\._-\]\{1,100\}\$\/;/.test(core)) note('tenders-view-core.js: the sealed file is read one folder up on this address, from a plain folder name only (ADR-0156)');
+  for (const [f, src] of [['tenders-view.js', page], ['tenders-view-core.js', core]]) if (/innerHTML|outerHTML|insertAdjacentHTML|document\.write|eval\(|new Function/.test(src)) note(`${f}: register text is shown as text only — no markup, no code from text (ADR-0156)`);
+  const keeps = [...page.matchAll(/(?:localStorage|sessionStorage)\.setItem\(\s*([^,]+),/g)].map((m) => m[1].trim());
+  if (keeps.some((k) => k !== "'afaqy.tv.lang'") || /indexedDB/.test(page)) note('tenders-view.js: the page keeps the reader\'s language and nothing else — never the key (ADR-0156)');
+  const csp = (html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/) || ['', ''])[1];
+  for (const part of ["default-src 'none'", "script-src 'self'", "connect-src 'self'", "frame-ancestors 'none'"]) if (!csp.includes(part + ';') && !csp.endsWith(part)) note(`tenders-view.html: the page's rules must say ${part} (ADR-0156)`);
+  if (/script-src[^;]*unsafe/.test(csp) || !/<meta name="referrer" content="no-referrer">/.test(html)) note('tenders-view.html: no inline script, and no address sent onward (ADR-0156)');
+}
+
 // 10. Nothing secret in a public repository.
 for (const f of ['index.html', 'app.js', 'core.js', 'config.js', 'sw.js', 'README.md', 'AGENTS.md']) {
   if (!exists(f)) continue;   // already reported as missing above
