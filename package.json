@@ -6,7 +6,7 @@
   "scripts": {
     "test": "node tests/core.test.mjs",
     "check": "node scripts/check.mjs",
-    "verify": "node tests/core.test.mjs && node tests/systems.test.mjs && node tests/mailact.test.mjs && npm run test:tenders && npm run test:projects && node scripts/check.mjs",
+    "verify": "node tests/core.test.mjs && node tests/systems.test.mjs && node tests/tenders-view.test.mjs && node tests/mailact.test.mjs && npm run test:tenders && npm run test:projects && node scripts/check.mjs",
     "test:browser": "node scripts/browser-suites.mjs",
     "test:tenders": "node tests/tender-documents.test.mjs && node tests/tender-integration.test.mjs",
     "bump": "node scripts/bump.mjs",

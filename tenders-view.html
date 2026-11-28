@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<meta name="referrer" content="no-referrer"><meta name="robots" content="noindex, nofollow">
+<title>سجل المناقصات</title>
+<link rel="icon" href="./assets/favicon.png">
+<!-- ADR-0156: a read-only page. The register is sealed; the key is in the link after #, which never reaches a server. -->
+<style>
+@font-face{font-family:Cairo;src:url(./assets/fonts/Cairo-var.woff2) format('woff2');font-weight:200 1000;font-display:swap}
+:root{--paper:#F2F4F7;--card:#FFFFFF;--ink:#18232E;--slate:#5C6B78;--line:#DBE2E8;--asphalt:#1E2A36;--on-asphalt:#FFFFFF;--accent:#0E7C86;--accent-wash:#E4F2F3;--sea:#1F4E79;
+--ok:#15803D;--ok-ink:#2A7130;--ok-wash:#E6F4EA;--accent-ink:#0A5F67;--info:#0369A1;--info-wash:#E2F0F9;--warn:#B45309;--warn-wash:#FDF1E1;--fail:#B42318;--fail-wash:#FDECEB;--field:#FFFFFF;--field-line:#C3CED7;--amber:#E0A32E;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--paper:#0E151D;--card:#16212C;--ink:#E4ECF3;--slate:#AEBAC6;--line:#2A3A4A;--asphalt:#2C3E52;--on-asphalt:#FFFFFF;--accent:#2CA6B0;--accent-wash:#0E3438;--sea:#7FB2E5;
+--ok:#4CC35A;--ok-ink:#4CC35A;--ok-wash:#14301C;--accent-ink:#2CA6B0;--info:#7FB2E5;--info-wash:#163A5B;--warn:#E0A32E;--warn-wash:#3A2A10;--fail:#F07167;--fail-wash:#3B1714;--field:#1B2836;--field-line:#3A4E62;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Axiforma,Cairo,'Noto Sans Arabic',-apple-system,'Segoe UI',Tahoma,sans-serif;font-size:15px;line-height:1.65}
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 18px;background:var(--card);border-bottom:1px solid var(--line)}
+.logo{height:34px;width:auto;background:#FFFFFF;border-radius:8px;padding:3px 6px}
+.head-text{flex:1;min-width:200px}.head-text h1{margin:0;font-size:20px;line-height:1.3}.muted{color:var(--slate);font-size:13px;margin:2px 0 0}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,input,button{font:inherit;font-size:14px;border-radius:10px;border:1px solid var(--field-line);background:var(--field);color:var(--ink);padding:7px 11px;max-width:100%}
+button{cursor:pointer;background:var(--asphalt);color:var(--on-asphalt);border-color:var(--asphalt)}button:focus-visible,select:focus-visible,input:focus-visible,.item:focus-visible,summary:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+main{max-width:1100px;margin:0 auto;padding:16px}
+#state{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:0 0 14px}#state:empty{display:none}#state.bad{border-color:var(--fail);background:var(--fail-wash)}
+.counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 14px}.tile b{display:block;font-size:24px;line-height:1.2}.tile span{color:var(--slate);font-size:13px}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}.tabs button{background:var(--card);color:var(--ink);border-color:var(--line);border-radius:999px;padding:6px 14px}
+.tabs button[aria-selected=true]{background:var(--asphalt);color:var(--on-asphalt);border-color:var(--asphalt)}
+#search{flex:1;min-width:180px}
+.list{display:grid;gap:10px}
+.item{display:block;width:100%;text-align:start;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:12px 14px;cursor:pointer}
+.item:hover{border-color:var(--accent)}
+.row1{display:flex;gap:10px;align-items:flex-start}.row1 strong{flex:1;font-size:16px;overflow-wrap:anywhere}
+.meta{display:block;color:var(--slate);font-size:13px;margin-top:2px;overflow-wrap:anywhere}
+.next{margin-top:6px;font-size:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid transparent}
+.s-new,.s-working,.s-other{background:var(--info-wash);color:var(--info)}.s-submitted{background:var(--ok-wash);color:var(--ok-ink)}
+.s-declined,.s-cancelled{background:var(--fail-wash);color:var(--fail)}.s-awarded{background:var(--accent-wash);color:var(--accent-ink)}
+/* text on a wash is one step darker than the plain status colour: #15803D on its wash is 4.4 to 1 */
+.v-go{background:var(--ok-wash);color:var(--ok-ink)}.v-no-go{background:var(--fail-wash);color:var(--fail)}.v-pending{background:var(--warn-wash);color:var(--warn)}
+.soon{color:var(--warn);font-weight:700}.past{color:var(--fail)}
+.empty{color:var(--slate);text-align:center;padding:24px;background:var(--card);border:1px dashed var(--line);border-radius:16px}
+dialog{border:0;border-radius:16px;padding:0;width:min(860px,96vw);max-height:92vh;background:var(--card);color:var(--ink)}
+dialog::backdrop{background:rgba(10,17,24,.55)}
+.dlg-head{position:sticky;top:0;display:flex;gap:10px;align-items:flex-start;padding:14px 16px;background:var(--card);border-bottom:1px solid var(--line);z-index:1}
+.dlg-head h2{flex:1;margin:0;font-size:18px;line-height:1.4;overflow-wrap:anywhere}
+.x{background:var(--card);color:var(--ink);border-color:var(--line);font-size:20px;line-height:1;padding:4px 11px}
+.dlg-body{padding:14px 16px 18px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:0 0 12px}
+.fact{border:1px solid var(--line);border-radius:10px;padding:8px 10px}.fact span{display:block;color:var(--slate);font-size:12px}.fact b{overflow-wrap:anywhere}
+h3{font-size:15px;margin:14px 0 6px}
+.note{border-radius:10px;padding:8px 12px;margin:6px 0}.note.ok{background:var(--ok-wash);color:var(--ok-ink)}.note.warn{background:var(--warn-wash);color:var(--warn)}
+details{border:1px solid var(--line);border-radius:12px;margin:8px 0;padding:0 12px}details[open]{padding-bottom:10px}
+summary{cursor:pointer;padding:9px 0;font-weight:700}
+ol.tl{list-style:none;margin:0;padding:0}ol.tl li{border-inline-start:3px solid var(--line);padding:4px 10px;margin:6px 0}ol.tl li.mine{border-inline-start-color:var(--accent)}
+.tl .when{color:var(--slate);font-size:12px}.tl .txt{white-space:pre-wrap;overflow-wrap:anywhere}
+ul.plain{margin:0;padding-inline-start:18px}ul.plain li{overflow-wrap:anywhere}
+.pre{white-space:pre-wrap;overflow-wrap:anywhere}
+footer{max-width:1100px;margin:0 auto;padding:8px 16px 26px;color:var(--slate);font-size:13px}
+@media (max-width:640px){.counts{grid-template-columns:repeat(2,minmax(0,1fr))}.top{padding:10px 12px}main{padding:10px}.head-text h1{font-size:18px}}
+</style>
+</head><body>
+<header class="top"><img src="./assets/afaqy-logo.png" alt="AFAQY" class="logo"><div class="head-text"><h1 id="title"></h1><p id="stamp" class="muted"></p></div>
+<div class="tools"><select id="language" aria-label="Language"><option value="ar">العربية</option><option value="en">English</option><option value="ur">اردو</option></select><button id="refresh" type="button"></button></div></header>
+<main>
+<p id="state" role="status" aria-live="polite"></p>
+<section id="board" hidden>
+<div class="counts" id="counts"></div>
+<div class="bar"><div class="tabs" role="tablist" id="tabs"></div><input id="search" type="search" autocomplete="off"></div>
+<div id="list" class="list"></div>
+</section>
+</main>
+<dialog id="card" aria-labelledby="card-title"><div class="dlg-head"><h2 id="card-title"></h2><button id="card-close" class="x" type="button">×</button></div><div class="dlg-body" id="card-body"></div></dialog>
+<footer id="foot"></footer>
+<script type="module" src="./tenders-view.js"></script>
+</body></html>
