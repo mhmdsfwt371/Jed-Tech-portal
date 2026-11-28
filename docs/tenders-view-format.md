@@ -71,9 +71,16 @@ Rules (`validateView()` holds them; anything else is refused whole, not shown in
   `page` (the tender's page on Etimad). `diffs` lists what Etimad says differently; Etimad never overwrites the register (ADR-0135).
 - `timeline` is oldest first. `who` is a person's name as written in the mail; `mine` marks the manager's own mails. `kind` is
   `mail`, `note`, `decision`, `study` or `register`. `text` is the mail's subject and its own words in short, not the full mail.
-- `changes` is the register's change log with its `source` (ملف اعتماد, الإيميلات, يدوي).
+- `changes` is the register's change log, oldest first, with its `source` (ملف اعتماد, الإيميلات, يدوي).
 - Text is plain text and is shown as text, never as markup.
 - Limits: 2,000 tenders; per tender 500 timeline lines, 500 changes, 200 file names; 20,000 characters per text.
+
+## Safwoot's side
+
+`tools/safwoot-link/` holds what Safwoot takes into its package, tested here against the same core:
+`view_export.py` builds the register above from Safwoot's tables (a date it cannot read for sure is left empty and reported,
+never guessed), and `publish.js` seals it in Safwoot's window and writes it to the sibling repository through GitHub's contents
+API with the manager's token. The token and the key stay in Safwoot's settings on his laptop.
 
 ## What is published, and what is not
 
