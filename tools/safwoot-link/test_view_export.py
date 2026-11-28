@@ -18,24 +18,24 @@ check("stages from the register's own words", [stage_of(x) for x in ("وصلت �
       ["new", "working", "submitted", "declined", "awarded", "cancelled", "other"])
 
 rows = [
-    {"ref": "261139003142", "title": "مشروع تجريبي", "entity": "جهة", "status": "قيد الدراسة", "inquiries": "13/12/2026", "submit": "2026-12-22 10:00",
+    {"ref": "261100000101", "title": "مشروع تجريبي", "entity": "جهة", "status": "قيد الدراسة", "inquiries": "13/12/2026", "submit": "2026-12-22 10:00",
      "opening": "1448/06/20", "examination": "", "award": None, "updated": "2026-11-28 09:00:12"},
-    {"ref": "261139003142", "title": "نفس الرقم مرة ثانية"},
-    {"ref": "ح/م/18/2026", "title": "منافسة خارج اعتماد", "status": "تم إرسال العرض", "submit": "2026-11-30"},
+    {"ref": "261100000101", "title": "نفس الرقم مرة ثانية"},
+    {"ref": "ك/ت/7/2099", "title": "منافسة خارج اعتماد", "status": "تم إرسال العرض", "submit": "2026-11-30"},
 ]
-mails = {"261139003142": [
+mails = {"261100000101": [
     {"at": "2026-11-24 02:00", "who": "المدير", "mine": True, "subject": "تكليف", "body": "الموزع " * 200, "files": []},
     {"at": "2026-11-23 19:33", "who": "زميل", "mine": False, "subject": "كراسة المنافسة", "body": "مرفق", "files": ["كراسة.pdf", "BOQ.xlsx"]}]}
-logs = {"261139003142": [{"field": "submit", "old": "", "new": "2026-12-22 10:00", "source": "ملف اعتماد", "at": "2026-11-26 10:02"}]}
-extras = {"261139003142": {"decision": {"verdict": "go", "reason": "في النطاق", "at": "2026-11-24 03:10"}, "summary": "خلاصة",
+logs = {"261100000101": [{"field": "submit", "old": "", "new": "2026-12-22 10:00", "source": "ملف اعتماد", "at": "2026-11-26 10:02"}]}
+extras = {"261100000101": {"decision": {"verdict": "go", "reason": "في النطاق", "at": "2026-11-24 03:10"}, "summary": "خلاصة",
                            "etimad": {"checkedAt": "2026-11-28 09:00", "source": "workbook", "diffs": []}}}
 view, problems = build_view(rows, logs, mails, extras, "2026-11-28 09:30", "سجل تجريبي", "Safwoot 2.15.0")
 t0 = view["tenders"][0]
-check("the repeated reference is reported, not published twice", len(view["tenders"]) == 2 and ("261139003142", "ref", "missing or repeated") in problems, problems)
-check("the Hijri opening date is left empty and reported", t0["dates"]["opening"] == "" and ("261139003142", "opening", "1448/06/20") in problems, problems)
+check("the repeated reference is reported, not published twice", len(view["tenders"]) == 2 and ("261100000101", "ref", "missing or repeated") in problems, problems)
+check("the Hijri opening date is left empty and reported", t0["dates"]["opening"] == "" and ("261100000101", "opening", "1448/06/20") in problems, problems)
 check("the mails are oldest first, the manager's marked, a long mail cut to its gist", [x["who"] for x in t0["timeline"]] == ["زميل", "المدير"] and t0["timeline"][1]["mine"] and len(t0["timeline"][1]["text"]) < 450, t0["timeline"])
 check("file names only, with their mail's time", t0["files"] == [{"name": "كراسة.pdf", "at": "2026-11-23 19:33"}, {"name": "BOQ.xlsx", "at": "2026-11-23 19:33"}], t0["files"])
-check("the non-Etimad reference is kept as written", view["tenders"][1]["ref"] == "ح/م/18/2026" and view["tenders"][1]["stage"] == "submitted")
+check("the non-Etimad reference is kept as written", view["tenders"][1]["ref"] == "ك/ت/7/2099" and view["tenders"][1]["stage"] == "submitted")
 
 # the result must open on the page: sealed and opened by the same core
 code = ("import {sealView,openView,newViewKey,b64urlDecode} from '" + (ROOT / "tenders-view-core.js").as_uri() + "';"

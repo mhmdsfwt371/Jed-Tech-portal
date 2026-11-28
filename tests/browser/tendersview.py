@@ -24,17 +24,17 @@ def new_key():
 
 def sample(title='سجل مناقصات فرع جدة (بيانات تجريبية)'):
     return {'schema': 'afaqy-tenders-view/v1', 'app': 'Safwoot 2.15.0', 'publishedAt': '2026-11-28 09:30', 'title': title, 'tenders': [
-        {'ref': '261139003142', 'title': 'مشروع شبكة رابغ (تجريبي)', 'entity': 'جهة تجريبية', 'status': 'قيد الدراسة', 'stage': 'working',
+        {'ref': '261100000101', 'title': 'منافسة شبكة تجريبية', 'entity': 'جهة تجريبية', 'status': 'قيد الدراسة', 'stage': 'working',
          'dates': {'inquiries': '2099-12-13', 'submit': '2099-12-22 10:00', 'opening': '', 'examination': '', 'award': ''},
-         'decision': {'verdict': 'go', 'reason': 'في نطاق أفاقي، وزيارة الموقع شرط', 'at': '2026-11-24 03:10'}, 'summary': 'شبكة مؤسسية كاملة لمباني الموقع',
+         'decision': {'verdict': 'go', 'reason': 'سبب تجريبي للقرار', 'at': '2026-11-24 03:10'}, 'summary': 'خلاصة تجريبية للمنافسة',
          'etimad': {'checkedAt': '2026-11-28 09:00', 'source': 'workbook', 'diffs': [{'field': 'submit', 'ours': '2099-12-22 10:00', 'etimad': '2099-12-23 10:00'}]},
          'files': [{'name': 'كراسة الشروط والمواصفات.pdf', 'at': '2026-11-23 19:33'}],
-         'timeline': [{'at': '2026-11-23 19:33', 'who': 'زميل من قسم اعتماد', 'mine': False, 'kind': 'mail', 'text': 'كراسة المنافسة مرفقة'},
-                      {'at': '2026-11-24 02:00', 'who': 'المدير', 'mine': True, 'kind': 'mail', 'text': 'تكليف: الموزع، واعتماد، والزيارة'}],
+         'timeline': [{'at': '2026-11-23 19:33', 'who': 'زميل تجريبي', 'mine': False, 'kind': 'mail', 'text': 'كراسة المنافسة مرفقة'},
+                      {'at': '2026-11-24 02:00', 'who': 'المدير', 'mine': True, 'kind': 'mail', 'text': 'رسالة تجريبية من المدير'}],
          'changes': [{'at': '2026-11-26 10:02', 'field': 'submit', 'old': '', 'new': '2099-12-22 10:00', 'source': 'ملف اعتماد'}], 'updatedAt': '2026-11-28 09:00'},
-        {'ref': '261139000999', 'title': '<img src=x onerror="window.__xss=1">عنوان فيه وسم', 'entity': 'جهة', 'stage': 'submitted',
+        {'ref': '261100000102', 'title': '<img src=x onerror="window.__xss=1">عنوان فيه وسم', 'entity': 'جهة', 'stage': 'submitted',
          'dates': {'inquiries': '2026-11-01', 'submit': '2099-11-30', 'opening': '', 'examination': '', 'award': ''}, 'updatedAt': '2026-11-27 12:00'},
-        {'ref': '261139005288', 'title': 'منافسة لن نتقدم لها (تجريبية)', 'entity': 'جهة', 'stage': 'declined', 'decision': {'verdict': 'no-go', 'reason': 'خارج النطاق'},
+        {'ref': '261100000103', 'title': 'منافسة تجريبية لن نتقدم لها', 'entity': 'جهة', 'stage': 'declined', 'decision': {'verdict': 'no-go', 'reason': 'سبب تجريبي'},
          'dates': {'inquiries': '', 'submit': '2026-12-01', 'opening': '', 'examination': '', 'award': ''}, 'updatedAt': '2026-11-24 10:00'}]}
 
 class Q(http.server.SimpleHTTPRequestHandler):
@@ -57,13 +57,13 @@ with sync_playwright() as p:
           (pg.inner_text('#title'), pg.inner_text('#stamp')))
     txt = clean(pg.inner_text('#list'))
     check('T2 «In progress» shows the running tender with its next date, how far it is, and the decision',
-          'مشروع شبكة رابغ' in txt and 'آخر موعد للاستفسارات: 2099-12-13' in txt and 'القرار: الدخول' in txt, txt[:300])
+          'منافسة شبكة تجريبية' in txt and 'آخر موعد للاستفسارات: 2099-12-13' in txt and 'القرار: الدخول' in txt, txt[:300])
     check('T3 a tag inside a title is shown as text, never run', not pg.evaluate('window.__xss') and pg.locator('#list img').count() == 0)
     pg.click('#tabs button:nth-child(2)'); pg.wait_for_timeout(200)
     check('T3b the title with a tag sits in «Offer submitted», written out as text', '<img src=x' in pg.inner_text('#list') and pg.evaluate('!window.__xss'))
     pg.click('#tabs button:nth-child(3)'); pg.wait_for_timeout(200)
     check('T4 the archive holds the declined tender', 'لن نتقدم لها' in pg.inner_text('#list') and 'القرار: عدم الدخول' in pg.inner_text('#list'))
-    pg.click('#tabs button:nth-child(1)'); pg.fill('#search', 'رابغ'); pg.wait_for_timeout(200)
+    pg.click('#tabs button:nth-child(1)'); pg.fill('#search', 'شبكة'); pg.wait_for_timeout(200)
     check('T5 search by name keeps the match', pg.locator('#list .item').count() == 1)
     pg.fill('#search', 'لا يوجد شيء بهذا الاسم'); pg.wait_for_timeout(200)
     check('T5b a search with no match says so', 'لا توجد نتيجة' in pg.inner_text('#list'))
@@ -72,18 +72,18 @@ with sync_playwright() as p:
     body = clean(pg.inner_text('#card-body'))
     check('T6 the tender opens in a window: dates, the Etimad check with its difference, decision, summary',
           pg.evaluate("document.getElementById('card').open") and '2099-12-22 10:00' in body and 'يختلف 1' in body and '2099-12-23 10:00' in body
-          and 'زيارة الموقع شرط' in body and 'شبكة مؤسسية' in body, body[:400])
+          and 'سبب تجريبي للقرار' in body and 'خلاصة تجريبية' in body, body[:400])
     check('T6b the history, files and change log are folded with their counts, and focus is on «Close»',
           'تسلسل الأحداث (2)' in body and 'الملفات (1)' in body and 'سجل التغييرات (1)' in body and pg.evaluate("document.activeElement.id") == 'card-close', body[-300:])
     pg.click('#card-body details:first-of-type summary'); pg.wait_for_timeout(150)
     check('T6c the history reads oldest first, with who and when, the manager\'s own mail marked',
-          'زميل من قسم اعتماد' in pg.inner_text('#card-body') and pg.locator('#card-body li.mine').count() == 1)
+          'زميل تجريبي' in pg.inner_text('#card-body') and pg.locator('#card-body li.mine').count() == 1)
     pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
     check('T7 Escape closes the window', not pg.evaluate("document.getElementById('card').open"))
     pg.click('#list .item'); pg.wait_for_timeout(200); pg.click('#card-close'); pg.wait_for_timeout(200)
     check('T7b the × closes it too', not pg.evaluate("document.getElementById('card').open"))
     # publish twice, see the second: a new copy, same link, with the page already open (and the portal's service worker running)
-    v2 = sample('سجل محدَّث (بيانات تجريبية)'); v2['tenders'].append({'ref': '261139007777', 'title': 'منافسة جديدة وصلت (تجريبية)', 'stage': 'new', 'dates': {'submit': '2099-12-30'}})
+    v2 = sample('سجل محدَّث (بيانات تجريبية)'); v2['tenders'].append({'ref': '261100000104', 'title': 'منافسة جديدة وصلت (تجريبية)', 'stage': 'new', 'dates': {'submit': '2099-12-30'}})
     seal(v2, KEY, DATA / 'tenders.afqv'); pg.click('#refresh'); pg.wait_for_timeout(800)
     check('T8 publish twice, see the second: «Refresh» shows the new copy, not a kept one',
           'سجل محدَّث' in pg.inner_text('#title') and 'منافسة جديدة وصلت' in pg.inner_text('#list'), pg.inner_text('#title'))

@@ -10,17 +10,17 @@ const test = (name, fn) => tests.push([name, fn]);
 const sample = () => ({
   schema: VIEW_SCHEMA, app: 'Safwoot 2.15.0', publishedAt: '2026-11-28 09:30', title: 'سجل مناقصات فرع جدة',
   tenders: [
-    { ref: '261139003142', title: 'مشروع شبكة رابغ', entity: 'الهيئة السعودية للمياه', status: 'قيد الدراسة', stage: 'working',
+    { ref: '261100000101', title: 'منافسة شبكة تجريبية', entity: 'جهة تجريبية أ', status: 'قيد الدراسة', stage: 'working',
       dates: { inquiries: '2026-12-13', submit: '2026-12-22 10:00', opening: '', examination: '', award: '' },
-      decision: { verdict: 'go', reason: 'في نطاق أفاقي، والزيارة شرط', at: '2026-11-24 03:10' }, summary: 'شبكة مؤسسية كاملة',
+      decision: { verdict: 'go', reason: 'سبب تجريبي', at: '2026-11-24 03:10' }, summary: 'خلاصة تجريبية',
       etimad: { checkedAt: '2026-11-28 09:00', source: 'workbook', diffs: [] },
       files: [{ name: 'كراسة الشروط والمواصفات.pdf', at: '2026-11-23 19:33' }],
-      timeline: [{ at: '2026-11-23 19:33', who: 'أحمد إبراهيم', mine: false, kind: 'mail', text: 'كراسة المنافسة' },
-        { at: '2026-11-24 02:00', who: 'محمد صفوت', mine: true, kind: 'mail', text: 'تكليف: الموزع، اعتماد، الزيارة' }],
+      timeline: [{ at: '2026-11-23 19:33', who: 'زميل تجريبي', mine: false, kind: 'mail', text: 'رسالة تجريبية' },
+        { at: '2026-11-24 02:00', who: 'المدير', mine: true, kind: 'mail', text: 'رسالة تجريبية من المدير' }],
       changes: [{ at: '2026-11-26 10:02', field: 'submit', old: '', new: '2026-12-22 10:00', source: 'ملف اعتماد' }], updatedAt: '2026-11-28 09:00' },
-    { ref: 'ح/م/18/2026', title: 'مخيمات حج وزارة الدفاع', entity: 'وزارة الدفاع', status: 'تم إرسال العرض', stage: 'submitted',
+    { ref: 'ك/ت/7/2099', title: 'منافسة أجهزة تجريبية', entity: 'جهة تجريبية ب', status: 'تم إرسال العرض', stage: 'submitted',
       dates: { inquiries: '2026-11-20', submit: '2026-11-30', opening: '2026-12-02', examination: '', award: '' }, files: [], timeline: [], changes: [], updatedAt: '2026-11-27 12:00' },
-    { ref: '261139005288', title: 'نظام حماية الرضع', entity: 'مستشفى قوى الأمن بمكة', status: 'لن نتقدم', stage: 'declined',
+    { ref: '261100000103', title: 'منافسة نظام تجريبي', entity: 'جهة تجريبية ج', status: 'لن نتقدم', stage: 'declined',
       dates: { inquiries: '', submit: '2026-12-01', opening: '', examination: '', award: '' }, files: [], timeline: [], changes: [], updatedAt: '2026-11-24 10:00' },
   ],
 });
@@ -32,7 +32,7 @@ test('a register sealed by Safwoot opens with the same key, whole', async () => 
   const r = await openView(sealed, k);
   assert.equal(r.ok, true, r.reason);
   assert.deepEqual(r.view, validateView(sample()));
-  assert.equal(r.view.tenders[0].timeline[1].who, 'محمد صفوت');
+  assert.equal(r.view.tenders[0].timeline[1].who, 'المدير');
 });
 
 test('every publish has its own nonce: the same register sealed twice is two different files', async () => {
@@ -106,9 +106,9 @@ test('the link: key and folder read from the part after #, anything malformed re
 
 test('the page\'s two lists: what is still running by its next date, and the archive', () => {
   const g = viewGroups(validateView(sample()), '2026-11-28 10:00');
-  assert.deepEqual(g.running.map((t) => t.ref), ['261139003142']);
-  assert.deepEqual(g.submitted.map((t) => t.ref), ['ح/م/18/2026']);
-  assert.deepEqual(g.archive.map((t) => t.ref), ['261139005288']);
+  assert.deepEqual(g.running.map((t) => t.ref), ['261100000101']);
+  assert.deepEqual(g.submitted.map((t) => t.ref), ['ك/ت/7/2099']);
+  assert.deepEqual(g.archive.map((t) => t.ref), ['261100000103']);
   const next = tenderNext(g.running[0], '2026-11-28 10:00');
   assert.deepEqual(next, { field: 'inquiries', at: '2026-12-13', days: 15 });
   assert.deepEqual(tenderNext(g.submitted[0], '2026-11-28 10:00'), { field: 'submit', at: '2026-11-30', days: 2 });
@@ -116,10 +116,10 @@ test('the page\'s two lists: what is still running by its next date, and the arc
   // a running tender whose every date has passed is not lost: it stays in «running», last, so it is noticed
   const v = validateView(sample()); v.tenders[0].dates = { inquiries: '2026-11-01', submit: '2026-11-10', opening: '', examination: '', award: '' };
   const v2 = viewGroups(v, '2026-11-28 10:00');
-  assert.deepEqual(v2.running.map((t) => t.ref), ['261139003142']);
+  assert.deepEqual(v2.running.map((t) => t.ref), ['261100000101']);
   // nearest date first among the running ones
   const many = validateView(sample()); many.tenders.push({ ...many.tenders[0], ref: '2', dates: { ...many.tenders[0].dates, inquiries: '2026-12-01' } });
-  assert.deepEqual(viewGroups(many, '2026-11-28 10:00').running.map((t) => t.ref), ['2', '261139003142']);
+  assert.deepEqual(viewGroups(many, '2026-11-28 10:00').running.map((t) => t.ref), ['2', '261100000101']);
 });
 
 let failed = 0;

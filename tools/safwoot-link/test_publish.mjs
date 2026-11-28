@@ -10,7 +10,7 @@ copyFileSync(new URL('./publish.js', import.meta.url), join(dir, 'publish.js'));
 const { publishView, shareLink, pagesFileUrl } = await import(join(dir, 'publish.js'));
 const { openView, newViewKey, b64urlDecode, VIEW_SCHEMA } = await import(join(dir, 'tenders-view-core.js'));
 
-const view = { schema: VIEW_SCHEMA, app: 'Safwoot', publishedAt: '2026-11-28 09:30', tenders: [{ ref: '261139003142', title: 'مشروع تجريبي', stage: 'working', dates: { submit: '2026-12-22 10:00' } }] };
+const view = { schema: VIEW_SCHEMA, app: 'Safwoot', publishedAt: '2026-11-28 09:30', tenders: [{ ref: '261100000101', title: 'مشروع تجريبي', stage: 'working', dates: { submit: '2026-12-22 10:00' } }] };
 function github({ file = null, repo = true, auth = true, conflictOnce = false } = {}) {
   const log = []; let stored = file, conflicted = false;
   const res = (status, body) => ({ status, json: async () => body });
@@ -36,7 +36,7 @@ await t('first publish: the folder has no file yet; the file written opens with 
   const r = await publishView({ view, key, owner: 'mhmdsfwt371', repo: 'jed-tenders', token: 'TEST', fetchImpl: gh.fetchImpl });
   assert.equal(r.ok, true, JSON.stringify(r));
   const put = gh.log.find((x) => x[0] === 'PUT'); assert.equal(put[3].sha, undefined); assert.equal(put[3].branch, 'main');
-  const opened = await openView(bytes(gh.file.content), b64urlDecode(key)); assert.equal(opened.ok, true); assert.equal(opened.view.tenders[0].ref, '261139003142');
+  const opened = await openView(bytes(gh.file.content), b64urlDecode(key)); assert.equal(opened.ok, true); assert.equal(opened.view.tenders[0].ref, '261100000101');
   assert.ok(gh.log.every((x) => x[1].startsWith('https://api.github.com/repos/mhmdsfwt371/jed-tenders') && x[2] === 'Bearer TEST'));
   assert.ok(!JSON.stringify(gh.log).includes(key), 'the key is never sent');
 });

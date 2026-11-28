@@ -42,7 +42,7 @@ and each tender's mails (`tenders.py`).
   "title": "سجل مناقصات فرع جدة",
   "tenders": [
     {
-      "ref": "261139003142",
+      "ref": "261100000101",
       "title": "…", "entity": "…",
       "status": "قيد الدراسة",
       "stage": "working",
@@ -62,7 +62,7 @@ and each tender's mails (`tenders.py`).
 Rules (`validateView()` holds them; anything else is refused whole, not shown in part)
 - Times are the Saudi wall clock: `YYYY-MM-DD` or `YYYY-MM-DD HH:MM`; an empty string means not known. Never a guess.
 - `ref` is the tender's reference as found in its mail or files (an Etimad number, or the entity's own number such as
-  `ح/م/18/2026` when the tender is not on Etimad). Unique in the file.
+  `ك/ت/7/2099` when the tender is not on Etimad). Unique in the file.
 - `status` is the register's own words. `stage` is one of `new` (وصلت للدراسة), `working` (قيد الدراسة), `submitted`
   (تم إرسال العرض), `declined` (لن نتقدم), `awarded`, `cancelled`, `other`. `submitted`, `declined`, `awarded` and `cancelled`
   are shown in the archive.
